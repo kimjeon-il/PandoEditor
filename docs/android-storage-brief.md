@@ -1,0 +1,13 @@
+# Android storage/UI implementation task
+
+Implement tasks 2 and 3 in android-plan.md. Read that plan first. Work only in Pandoeditor; no subagents, commits/push or installs. Existing files are all untracked; preserve existing features. Main agent owns SDK installation/tools/build configuration. You own app controller/storage adapter, QML, tests and app CMake source/test additions. Root CMake Android packaging belongs main agent. Coordinate any interface needs.
+
+Use TDD: add failing behavioral tests, run and record red, then implement and green. Existing desktop build: C:/Users/taeeu/Qt/Pandoeditor-build; source junction C:/Users/taeeu/Qt/Pandoeditor-source. Process PATH: C:/Users/taeeu/Qt/6.8.3/mingw_64/bin; C:/Users/taeeu/Qt/Tools/mingw1310_64/bin; C:/Users/taeeu/AppData/Local/Pandoeditor/installer/Scripts. CMake/Ninja already installed. ctest suite currently 3/3 passes. Qt-free core unchanged.
+
+Requirements: Qt platform storage adapter handles bounded reads (64MiB even when unknown stream size), local atomic writes (QSaveFile), content URI stream write export (not QSaveFile). Mobile mode testable via normal production configuration/constructor, not test-only methods. One private project using QStandardPaths; restore explicitly after QML signals connected, report corrupt file preserving it and prevent overwriting until user explicitly chooses recovery (safest refuse saves with error plus docs; don't implement new deletion). Import parse/validate/projection before replacement, pending failure/cancel retains all state; import dirty independent of saved model snapshot. Saving clean point only on successful atomic private write. Export internal save BEFORE chooser; on export failure local copy remains saved. Snapshot exports may read private saved file. Windows behavior unchanged. Do not interpret content URI via toLocalFile. Canceled URL a no-op with no error.
+
+Mobile labels 가져오기/기기에 저장/내보내기; responsive toolbar fits 360px, remove Android minimums, keyboard/landscape scrolling. Back first hides IME/dismisses popups, otherwise shared save/discard/cancel dialog. No broad storage permission. Rotation must not recreate state.
+
+Use official Qt docs/source if needed. Test real temporary files/storage adapter and controller for failures/cancel/corrupt recovery and unchanged desktop; extend UI tests for mobile flow where practical. Real Android content provider/IME/touch runtime main agent will verify if possible, do not claim it from desktop mocks.
+
+Write full report with files/tests/red-green evidence and remaining risks to docs/android-storage-report.md. Return concise status. Do not add other features or full-world map.

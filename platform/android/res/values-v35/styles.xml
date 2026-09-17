@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Qt 6.8 lacks public safe-area margins. Keep system bars outside the
+         editor on Android 15; revisit when upgrading Qt/target API. -->
+    <style name="PandoTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>

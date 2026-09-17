@@ -1,0 +1,10 @@
+#include <pandoeditor/version.h>
+
+namespace pandoeditor {
+
+std::string_view version() noexcept
+{
+    return "@PROJECT_VERSION@";
+}
+
+} // namespace pandoeditor

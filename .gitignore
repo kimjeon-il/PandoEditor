@@ -1,0 +1,25 @@
+# Out-of-source builds and generated files
+/build*/
+/out/
+CMakeUserPresets.json
+
+# Local IDE configuration
+/.vs/
+/.vscode/
+/.idea/
+*.user
+*.user.*
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Private Android SDKs, build caches and signing material
+/android-local/
+/.gradle/
+/.superpowers/
+*.apk
+*.aab
+*.keystore
+*.jks
+local.properties

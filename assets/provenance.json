@@ -1,0 +1,17 @@
+{
+  "sourceFile": "countries-ne-5.1.1-50m.geojson",
+  "sourceSha256": "3E458FC036AD0A66411F2C1E6CAC49C5D7BFB81CB1123BC513B22511A2B7FDEB",
+  "dataset": "Natural Earth 5.1.1, Admin 0 countries, 1:50m",
+  "sourceUrl": "https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/",
+  "termsUrl": "https://www.naturalearthdata.com/about/terms-of-use/",
+  "license": "Public domain",
+  "countryIds": [
+    "DEU",
+    "POL",
+    "CZE",
+    "AUT",
+    "SVK"
+  ],
+  "transformation": "Select ADM0_A3; retain every geometry coordinate; normalize Polygon to MultiPolygon; use NAME_KO; assign initial colors.",
+  "outputSha256": "9A1EE8D4C85553E458DD4B5F9BC838B4C3C5833B9B7042B6C593A927A4FE975D"
+}
