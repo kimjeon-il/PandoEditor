@@ -42,6 +42,7 @@ class EditorController : public QObject {
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY stateChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY stateChanged)
     Q_PROPERTY(QString fileName READ fileName NOTIFY stateChanged)
+    Q_PROPERTY(QString documentNotice READ documentNotice NOTIFY stateChanged)
     Q_PROPERTY(bool mobileMode READ mobileMode CONSTANT)
     Q_PROPERTY(bool privateRecoveryRequired READ privateRecoveryRequired NOTIFY privateRecoveryRequiredChanged)
 public:
@@ -72,6 +73,7 @@ public:
     double countryOpacity() const;
     double layerOpacity() const;
     QString fileName() const;
+    QString documentNotice() const;
     bool dirty() const;
     bool canUndo() const { return project_.canUndo(); }
     bool canRedo() const { return project_.canRedo(); }

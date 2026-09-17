@@ -23,6 +23,11 @@ qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}
 
 if(BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test)
+    add_executable(migration_tests ../tests/migration_tests.cpp)
+    target_link_libraries(migration_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(migration_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME migration_tests COMMAND migration_tests -o -,txt)
     add_executable(storage_tests ../tests/storage_tests.cpp)
     target_link_libraries(storage_tests PRIVATE pandoeditor_editor Qt6::Test)
     qt_add_resources(storage_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"

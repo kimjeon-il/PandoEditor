@@ -63,7 +63,7 @@ QVariantList EditorController::countryRows() const
     for(const auto& c:project_.countries()) {
         const auto l=project_.layer(c.layerId);
         result.append(QVariantMap{{"id",text(c.id)},{"name",text(c.name)},{"layerId",text(c.layerId)},
-            {"visible",l->visible},{"locked",l->locked}});
+            {"visible",l->visible},{"locked",l->locked || c.locked}});
     }
     return result;
 }
@@ -88,10 +88,22 @@ double EditorController::layerOpacity() const
 bool EditorController::canDeleteLayer() const
 {
     if(project_.layers().size()<=1) return false;
-    for(const auto& c:project_.countries()) if(text(c.layerId)==selectedLayer_) return false;
+    const auto dependents=project_.index().dependents.find({"userLayer",selectedLayer_.toStdString()});
+    if(dependents!=project_.index().dependents.end() && !dependents->second.empty()) return false;
+    if(!pandoeditor::effectAllowed(project_.document(),{"userLayer",selectedLayer_.toStdString()},"delete")) return false;
     return project_.layer(selectedLayer_.toStdString())!=nullptr;
 }
 QString EditorController::fileName() const { return filePath_.isEmpty() ? QStringLiteral("새 프로젝트") : QFileInfo(filePath_).fileName(); }
+QString EditorController::documentNotice() const
+{
+    QString notice=QStringLiteral("저장 형식: Qt v3 · 이전 앱에서는 열 수 없습니다. 열기만으로 원본 파일은 변경되지 않습니다.");
+    const auto& d=project_.document();
+    if(d.units.size()>project_.countries().size())
+        notice+=QStringLiteral(" 하위단위·지방 %1개는 보존되며 현재 화면에는 표시되지 않습니다.").arg(d.units.size()-project_.countries().size());
+    if(!d.extensions.empty())
+        notice+=QStringLiteral(" 미해석 데이터 %1개 보존 중: 관련 편집이 제한될 수 있습니다.").arg(d.extensions.size());
+    return notice;
+}
 bool EditorController::dirty() const
 {
     if(importedDirty_) return true;
@@ -140,6 +152,20 @@ bool EditorController::commitPendingEdits()
         layerNameDraft_=text(l->name); emit draftsChanged(); emit dirtyChanged();
         emit errorOccurred(QStringLiteral("레이어 이름을 입력해 주세요.")); return false;
     }
+    const auto allowed=[&](bool changed,const pandoeditor::ObjectRef& ref,const char* effect) {
+        return !changed || pandoeditor::effectAllowed(project_.document(),ref,effect);
+    };
+    bool safe=true;
+    if(c) {
+        const auto ref=pandoeditor::territorialRef(c->id);
+        safe=allowed(nameDraft_.trimmed().toStdString()!=c->name,ref,"name") &&
+             allowed(memoDraft_.toStdString()!=c->memo,ref,"notes") &&
+             allowed(colorDraft_.mid(1).toUInt(nullptr,16)!=c->color,ref,"color") &&
+             allowed(opacityPreview_ && *opacityPreview_!=c->opacity,ref,"opacity");
+    }
+    if(l) safe=safe && allowed(layerNameDraft_.trimmed().toStdString()!=l->name,{"userLayer",l->id},"name") &&
+        allowed(layerOpacityPreview_ && *layerOpacityPreview_!=l->opacity,{"userLayer",l->id},"opacity");
+    if(!safe) { emit errorOccurred(QStringLiteral("UNSUPPORTED_DEPENDENCY: 미해석 데이터 보호를 위해 이 편집을 제한합니다. 초안은 유지됩니다.")); return false; }
     bool changed=false;
     if(c && selectedEditable()) {
         changed|=project_.renameCountry(c->id,nameDraft_.trimmed().toStdString());
@@ -233,9 +259,10 @@ bool EditorController::save()
 
 bool EditorController::replaceFromBytes(const QByteArray& bytes, bool imported, const QString& path)
 {
-    auto document=projectcodec::decode(bytes);
-    MapProjection nextProjection; nextProjection.rebuild(document.countries);
-    project_.replace(std::move(document)); projection_=std::move(nextProjection);
+    pandoeditor::Project candidate;
+    candidate.replace(projectcodec::decode(bytes));
+    MapProjection nextProjection; nextProjection.rebuild(candidate.countries());
+    project_=std::move(candidate); projection_=std::move(nextProjection);
     filePath_=path; importedDirty_=imported; selected_.clear(); selectedLayer_=text(project_.layers().back().id);
     emit geometryChanged(); publish(false); return true;
 }

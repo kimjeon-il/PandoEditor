@@ -93,7 +93,7 @@ int main()
         check(p.moveLayer("top",1) && p.dirty());
         check(p.undo() && !p.dirty());
         check(p.setMemo("B","branch") && !p.canRedo());
-        auto invalid=p.document(); invalid.countries[0].layerId="missing";
+        auto invalid=p.document(); invalid.presentation.membership.at(territorialRef("A"))="missing";
         rejected=false;
         try { p.replace(invalid); } catch(const std::exception&) { rejected=true; }
         check(rejected && p.country("A")->layerId=="countries");

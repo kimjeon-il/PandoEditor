@@ -67,6 +67,75 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void desktopOpenRequestDoesNotCommitDraftBeforeFileValidation() {
+        EditorController editor;
+        QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY(!engine.rootObjects().isEmpty());
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); QVERIFY(window);
+        exposeForTest(window);
+        editor.selectCountry("DEU"); editor.setNameDraft("uncommitted");
+        const auto original=editor.selectedName();
+        QVERIFY(QMetaObject::invokeMethod(window,"requestAction",Q_ARG(QVariant,QVariant("open"))));
+        QCOMPARE(editor.selectedName(),original);
+        QCOMPARE(editor.nameDraft(),QString("uncommitted")); QVERIFY(!editor.canUndo());
+        QVERIFY(clickControl(window,"cancelUnsaved"));
+        auto notice=visualItem(window->contentItem(),"documentFormatNotice"); QVERIFY(notice);
+        QVERIFY(notice->property("text").toString().contains("v3"));
+        QVERIFY(clickControl(window,"documentFormatNotice"));
+        QVERIFY(notice->property("expanded").toBool());
+        window->setProperty("allowClose",true); window->close();
+    }
+    void desktopTitleBarKeepsWorkspaceBelowLargeWindowFrame() {
+        EditorController editor;
+        QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("editor", &editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY(!engine.rootObjects().isEmpty());
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); QVERIFY(window);
+        exposeForTest(window);
+        auto titleBar=visualItem(window->contentItem(),"desktopTitleBar"); QVERIFY(titleBar);
+        auto toolbar=visualItem(window->contentItem(),"storageToolbar"); QVERIFY(toolbar);
+#ifndef Q_OS_WIN
+        QVERIFY(!titleBar->isVisible());
+        QCOMPARE(toolbar->mapToScene(QPointF()).y(),0.0);
+        window->close();
+        return;
+#endif
+        QCOMPARE(titleBar->height(),32.0);
+        QCOMPARE(toolbar->mapToScene(QPointF()).y(),32.0);
+        QVERIFY(visualItem(window->contentItem(),"minimizeWindowButton"));
+        QVERIFY(visualItem(window->contentItem(),"maximizeWindowButton"));
+        QVERIFY(visualItem(window->contentItem(),"closeWindowButton"));
+        const auto normalSize=window->size();
+        QVERIFY(clickControl(window,"maximizeWindowButton"));
+        QTRY_COMPARE(window->visibility(),QWindow::Maximized);
+        QCOMPARE(titleBar->height(),32.0);
+        QCOMPARE(toolbar->mapToScene(QPointF()).y(),32.0);
+        QVERIFY(capture(window).save("titlebar-maximized.png"));
+        QVERIFY(clickControl(window,"maximizeWindowButton"));
+        QTRY_COMPARE(window->visibility(),QWindow::Windowed);
+        QTRY_COMPARE(window->size(),normalSize);
+        QTest::mouseDClick(window,Qt::LeftButton,Qt::NoModifier,QPoint(250,16));
+        QTRY_COMPARE(window->visibility(),QWindow::Maximized);
+        QTest::mouseDClick(window,Qt::LeftButton,Qt::NoModifier,QPoint(250,16));
+        QTRY_COMPARE(window->visibility(),QWindow::Windowed);
+        QVERIFY(clickControl(window,"minimizeWindowButton"));
+        QTRY_COMPARE(window->visibility(),QWindow::Minimized);
+        window->showNormal(); exposeForTest(window);
+        editor.selectCountry("DEU"); editor.setColor("#123456");
+        QVERIFY(editor.dirty());
+        QVERIFY(clickControl(window,"closeWindowButton"));
+        auto unsaved=window->findChild<QObject*>("unsavedDialog"); QVERIFY(unsaved);
+        QTRY_VERIFY(unsaved->property("visible").toBool());
+        QVERIFY(clickControl(window,"cancelUnsaved"));
+        QVERIFY(window->isVisible());
+        window->setProperty("allowClose",true);
+        QTest::qWait(250);
+        QVERIFY(clickControl(window,"closeWindowButton"));
+        QTRY_VERIFY(!window->isVisible());
+    }
     void mobileStorageFlow() {
         QTemporaryDir directory;
         QVERIFY(directory.isValid());
@@ -84,6 +153,9 @@ private slots:
         window->resize(360,640); QTest::qWait(200);
         QCOMPARE(window->minimumWidth(),0);
         QCOMPARE(window->minimumHeight(),0);
+        auto desktopTitleBar=visualItem(window->contentItem(),"desktopTitleBar"); QVERIFY(desktopTitleBar);
+        QVERIFY(!desktopTitleBar->isVisible());
+        QVERIFY(!window->flags().testFlag(Qt::FramelessWindowHint));
 
         auto toolbar=visualItem(window->contentItem(),"storageToolbar"); QVERIFY(toolbar);
         const QStringList buttonNames{"importButton","deviceSaveButton","exportButton","undoButton","redoButton"};

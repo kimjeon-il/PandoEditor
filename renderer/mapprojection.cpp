@@ -4,8 +4,9 @@
 #include <cmath>
 #include <limits>
 
-void MapProjection::rebuild(const std::vector<pandoeditor::Country>& countries)
+void MapProjection::rebuild(const std::vector<pandoeditor::CountryView>& countries)
 {
+    if(countries.empty()) { paths.clear(); width=height=cosLatitude=1; minX=maxLatitude=0; return; }
     double minLon=180,maxLon=-180,minLat=90,maxLat=-90;
     for (const auto& c:countries) for (const auto& p:c.polygons) for (const auto& r:p) for (auto v:r) {
         minLon=std::min(minLon,v.x); maxLon=std::max(maxLon,v.x);

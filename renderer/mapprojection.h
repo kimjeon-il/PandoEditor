@@ -5,7 +5,7 @@
 // View-only projection and paths; never owns or mutates the project.
 class MapProjection {
 public:
-    void rebuild(const std::vector<pandoeditor::Country>& countries);
+    void rebuild(const std::vector<pandoeditor::CountryView>& countries);
     pandoeditor::Point unproject(double x, double y) const;
     QVariantList paths;
     double width = 1, height = 1;

@@ -2,6 +2,7 @@ configure_file(src/version.cpp.in generated/version.cpp @ONLY)
 
 add_library(pandoeditor_core STATIC
     src/project.cpp
+    src/document.cpp
     "${CMAKE_CURRENT_BINARY_DIR}/generated/version.cpp"
 )
 add_library(Pandoeditor::Core ALIAS pandoeditor_core)
@@ -16,4 +17,7 @@ if(BUILD_TESTING)
     add_executable(core_tests ../tests/core_tests.cpp)
     target_link_libraries(core_tests PRIVATE Pandoeditor::Core)
     add_test(NAME core_tests COMMAND core_tests)
+    add_executable(model_tests ../tests/model_tests.cpp)
+    target_link_libraries(model_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME model_tests COMMAND model_tests)
 endif()

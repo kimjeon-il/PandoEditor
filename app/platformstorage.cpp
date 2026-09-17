@@ -74,6 +74,7 @@ QByteArray ProjectStorage::read(const QUrl& url) const
 
 void ProjectStorage::writeLocalAtomic(const QString& path, const QByteArray& data)
 {
+    if(data.size()>MaximumProjectBytes) fail(QStringLiteral("저장 결과가 64 MiB 제한을 초과합니다. 기존 파일을 유지합니다."));
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly))
         fail(file.errorString());
@@ -88,6 +89,7 @@ void ProjectStorage::writeLocalAtomic(const QString& path, const QByteArray& dat
 
 void ProjectStorage::write(const QUrl& url, const QByteArray& data) const
 {
+    if(data.size()>MaximumProjectBytes) fail(QStringLiteral("내보내기 결과가 64 MiB 제한을 초과합니다."));
     if (url.isLocalFile()) {
         writeLocalAtomic(url.toLocalFile(), data);
         return;
