@@ -1,0 +1,436 @@
+#include "editorcontroller.h"
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QQuickWindow>
+#include <QQuickItem>
+#include <QQuickStyle>
+#include <QSignalSpy>
+#include <QTest>
+#include <QTemporaryDir>
+#include <QImage>
+#include <QFontDatabase>
+#include <functional>
+#include <QFile>
+#include <algorithm>
+
+static QQuickItem* visualItem(QQuickItem* root,const QString& name)
+{
+    if(root->objectName()==name) return root;
+    for(auto child:root->childItems()) if(auto item=visualItem(child,name)) return item;
+    return nullptr;
+}
+static void exposeForTest(QQuickWindow* window)
+{
+    if(qEnvironmentVariable("QT_QPA_PLATFORM")=="windows") {
+        window->hide(); window->show(); QVERIFY(QTest::qWaitForWindowExposed(window));
+    }
+    QTest::qWait(200); window->grabWindow();
+}
+static QImage capture(QQuickWindow* window)
+{
+    window->grabWindow(); QTest::qWait(100);
+    window->grabWindow(); QTest::qWait(100);
+    return window->grabWindow();
+}
+static void typeText(QQuickWindow* window,const QByteArray& text)
+{
+    for(char character:text) QTest::keyClick(window,character);
+}
+static QByteArray readFile(const QString& path)
+{
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray{};
+}
+static bool clickControl(QQuickWindow* window,const QString& name)
+{
+    auto item=visualItem(window->contentItem(),name);
+    if(!item) return false;
+    for(auto parent=item->parentItem();parent;parent=parent->parentItem()) {
+        if(parent->property("contentY").isValid()) {
+            auto content=qvariant_cast<QQuickItem*>(parent->property("contentItem"));
+            if(content) {
+                auto y=item->mapToItem(content,QPointF()).y();
+                auto maxY=std::max(0.0,parent->property("contentHeight").toDouble()-parent->height());
+                parent->setProperty("contentY",std::clamp(y-16.0,0.0,maxY));
+            }
+            break;
+        }
+    }
+    window->grabWindow(); QTest::qWait(100);
+    auto center=item->mapToScene(QPointF(item->width()/2,item->height()/2)).toPoint();
+    if(!QRect(QPoint(),window->size()).contains(center)) return false;
+    QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,center);
+    QTest::qWait(80); return true;
+}
+
+class UiTests:public QObject {
+    Q_OBJECT
+private slots:
+    void mobileStorageFlow() {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto privatePath=directory.filePath("private.pando.json");
+        EditorController editor(EditorControllerConfig{true,privatePath});
+        QQmlApplicationEngine engine;
+        QStringList warnings;
+        QSignalSpy errors(&editor,&EditorController::errorOccurred);
+        connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& e:errors) warnings<<e.toString();});
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); QVERIFY(window);
+        exposeForTest(window);
+        window->resize(360,640); QTest::qWait(200);
+        QCOMPARE(window->minimumWidth(),0);
+        QCOMPARE(window->minimumHeight(),0);
+
+        auto toolbar=visualItem(window->contentItem(),"storageToolbar"); QVERIFY(toolbar);
+        const QStringList buttonNames{"importButton","deviceSaveButton","exportButton","undoButton","redoButton"};
+        QList<QQuickItem*> buttons;
+        for(const auto& name:buttonNames) {
+            auto button=visualItem(window->contentItem(),name); QVERIFY2(button,qPrintable(name));
+            QVERIFY(button->isVisible());
+            const auto bounds=button->mapRectToItem(toolbar,QRectF(0,0,button->width(),button->height()));
+            QVERIFY2(bounds.left()>=-0.5 && bounds.right()<=toolbar->width()+0.5,qPrintable(name));
+            buttons.append(button);
+        }
+        QCOMPARE(buttons[0]->property("text").toString(),QString("가져오기"));
+        QCOMPARE(buttons[1]->property("text").toString(),QString("기기에 저장"));
+        QCOMPARE(buttons[2]->property("text").toString(),QString("내보내기"));
+
+        editor.selectCountry("DEU");
+        editor.setMemoDraft("rotation draft");
+        window->resize(720,360); QTest::qWait(120);
+        window->resize(360,720); QTest::qWait(120);
+        QCOMPARE(editor.selectedId(),QString("DEU"));
+        QCOMPARE(editor.memoDraft(),QString("rotation draft"));
+        QVERIFY(!editor.canUndo());
+        auto unsaved=window->findChild<QObject*>("unsavedDialog"); QVERIFY(unsaved);
+        QVERIFY(clickControl(window,"countryPicker"));
+        auto picker=visualItem(window->contentItem(),"countryPicker"); QVERIFY(picker);
+        auto pickerPopup=qvariant_cast<QObject*>(picker->property("popup")); QVERIFY(pickerPopup);
+        QTRY_VERIFY(pickerPopup->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
+        QTRY_VERIFY(!pickerPopup->property("visible").toBool());
+        QVERIFY(!unsaved->property("visible").toBool());
+        QVERIFY(clickControl(window,"countryColor"));
+        QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"#bad");
+        QCOMPARE(editor.colorDraft(),QString("#bad"));
+        QVERIFY(clickControl(window,"importButton"));
+        QTRY_VERIFY(unsaved->property("visible").toBool());
+        QCOMPARE(editor.memoDraft(),QString("rotation draft"));
+        QCOMPARE(editor.colorDraft(),QString("#bad"));
+        QVERIFY(!editor.canUndo());
+        QCOMPARE(errors.count(),0);
+        QVERIFY(clickControl(window,"cancelUnsaved"));
+        QCOMPARE(editor.memoDraft(),QString("rotation draft"));
+        QCOMPARE(editor.colorDraft(),QString("#bad"));
+        QVERIFY(!editor.canUndo());
+        editor.setColorDraft(editor.colors()["DEU"].toString());
+
+        QVERIFY(clickControl(window,"deviceSaveButton"));
+        QVERIFY(QFile::exists(privatePath));
+        QVERIFY(!editor.dirty());
+        QVERIFY(capture(window).save("mobile-storage.png"));
+        editor.setColor("#123456");
+        QVERIFY(editor.dirty());
+        QVERIFY(QMetaObject::invokeMethod(window,"requestExport"));
+        QVERIFY(QFile::exists(privatePath));
+        QVERIFY(!editor.dirty());
+
+        editor.setColor("#654321");
+        QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
+        QTRY_VERIFY(unsaved->property("visible").toBool());
+        QVERIFY(clickControl(window,"cancelUnsaved"));
+        QVERIFY(window->isVisible());
+        QVERIFY(editor.dirty());
+        QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+        window->setProperty("allowClose",true); window->close();
+    }
+
+    void mobileCorruptRecoveryCanBeReopened() {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const auto privatePath=directory.filePath("private.pando.json");
+        QFile corrupt(privatePath);
+        QVERIFY(corrupt.open(QIODevice::WriteOnly));
+        QCOMPARE(corrupt.write("corrupt project"),qint64(15));
+        corrupt.close();
+
+        EditorController editor(EditorControllerConfig{true,privatePath});
+        QQmlApplicationEngine engine;
+        QStringList warnings;
+        connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& values){for(const auto& e:values) warnings<<e.toString();});
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); QVERIFY(window);
+        exposeForTest(window);
+        window->resize(360,640); QTest::qWait(120);
+        auto recovery=window->findChild<QObject*>("recoveryDialog"); QVERIFY(recovery);
+        QTRY_VERIFY(recovery->property("visible").toBool());
+        QVERIFY(clickControl(window,"cancelRecovery"));
+        QTRY_VERIFY(!recovery->property("visible").toBool());
+        QTest::qWait(250); // let the modal exit transition release its input overlay
+        QCOMPARE(readFile(privatePath),QByteArray("corrupt project"));
+
+        editor.selectCountry("DEU"); editor.setColor("#123456");
+        QVERIFY(clickControl(window,"deviceSaveButton"));
+        QTRY_VERIFY(recovery->property("visible").toBool());
+        QVERIFY(clickControl(window,"confirmRecovery"));
+        QTRY_VERIFY(!recovery->property("visible").toBool());
+        QCOMPARE(readFile(privatePath+".corrupt"),QByteArray("corrupt project"));
+        QVERIFY(clickControl(window,"deviceSaveButton"));
+        QVERIFY(!editor.dirty());
+        QVERIFY(readFile(privatePath).startsWith('{'));
+        QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+        window->setProperty("allowClose",true); window->close();
+    }
+
+    void attributesAndLayers() {
+        EditorController editor;
+        QQmlApplicationEngine engine;
+        QStringList warnings;
+        connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& e:errors) warnings<<e.toString();});
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY(!engine.rootObjects().isEmpty());
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); QVERIFY(window);
+        exposeForTest(window);
+        editor.selectCountry("DEU");
+        QVERIFY(clickControl(window,"countryName"));
+        QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Draft name");
+        QCOMPARE(editor.nameDraft(),QString("Draft name"));
+        window->resize(390,760); QTest::qWait(200);
+        QCOMPARE(editor.nameDraft(),QString("Draft name"));
+        QTest::keyClick(window,Qt::Key_Return);
+        QCOMPARE(editor.selectedName(),QString("Draft name"));
+        QVERIFY(clickControl(window,"countryColor"));
+        QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"#123456");
+        QTest::keyClick(window,Qt::Key_Return);
+        QCOMPARE(editor.colors()["DEU"].toString(),QString("#123456"));
+        QVERIFY(clickControl(window,"countryOpacity"));
+        // Complete one drag, then one undo must restore the pre-drag value.
+        auto slider=visualItem(window->contentItem(),"countryOpacity"); QVERIFY(slider);
+        double before=editor.countryOpacity();
+        auto start=slider->mapToScene(QPointF(slider->width()*before,slider->height()/2)).toPoint();
+        auto end=slider->mapToScene(QPointF(slider->width()*0.2,slider->height()/2)).toPoint();
+        QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,start);
+        QTest::mouseMove(window,(start+end)/2,20); QTest::mouseMove(window,end,20);
+        QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,end);
+        QVERIFY(editor.countryOpacity()<before);
+        editor.undo(); QCOMPARE(editor.countryOpacity(),before); editor.redo();
+        QVERIFY(clickControl(window,"layersTab"));
+        QVERIFY(clickControl(window,"addLayer"));
+        auto id=editor.selectedLayerId(); QVERIFY(id!="countries");
+        QVERIFY(clickControl(window,"layerName"));
+        QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Upper");
+        QTest::keyClick(window,Qt::Key_Return);
+        QCOMPARE(editor.layerNameDraft(),QString("Upper"));
+        editor.moveCountry(id); QCOMPARE(editor.countryLayerId(),id);
+        QVERIFY(!editor.canDeleteLayer());
+        QVERIFY(clickControl(window,"layerLocked"));
+        QVERIFY(editor.selectedId().isEmpty());
+        editor.selectCountry("DEU"); QVERIFY(!editor.selectedEditable());
+        QVERIFY(clickControl(window,"layerLocked"));
+        editor.selectCountry("DEU"); QVERIFY(editor.selectedEditable());
+        QVERIFY(clickControl(window,"layerVisible")); QVERIFY(editor.selectedId().isEmpty());
+        QVERIFY(clickControl(window,"layerVisible"));
+        editor.selectCountry("DEU");
+        editor.previewCountryOpacity(0); QVERIFY(editor.commitPendingEdits());
+        editor.selectCountry("DEU"); QVERIFY(editor.selectedEditable());
+        QTemporaryDir dir; auto path=QUrl::fromLocalFile(dir.path()+QString::fromUtf8("/속성 레이어.pando.json"));
+        QVERIFY(editor.saveFile(path)); QVERIFY(editor.openFile(path));
+        editor.selectCountry("DEU"); QCOMPARE(editor.selectedName(),QString("Draft name"));
+        QCOMPARE(editor.countryLayerId(),id); QCOMPARE(editor.countryOpacity(),0.0);
+        capture(window).save("layers-compact.png");
+        window->resize(1100,720); QTest::qWait(150); capture(window).save("layers-desktop.png");
+        QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+        window->close();
+    }
+    void compositing() {
+        using namespace pandoeditor;
+        Project project;
+        project.replace(ProjectDocument{
+            {{"A","Red",{{{{0,0},{4,0},{4,4},{0,4},{0,0}}}},0xff0000},
+             {"B","Blue",{{{{2,0},{6,0},{6,4},{2,4},{2,0}}}},0x0000ff}},
+            {{"countries","Base",true,false,0.5}}});
+        QTemporaryDir dir;
+        auto path=QUrl::fromLocalFile(dir.path()+"/overlap.pando.json");
+        QFile file(path.toLocalFile()); QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(projectcodec::encode(project)); file.close();
+        EditorController editor; QVERIFY(editor.openFile(path));
+        QQmlApplicationEngine engine; engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml")); QVERIFY(!engine.rootObjects().isEmpty());
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); exposeForTest(window);
+        auto map=window->findChild<QQuickItem*>("mapView"); QVERIFY(map);
+        auto pixel=[&](double lon,double lat) {
+            auto image=capture(window);
+            auto scale=map->property("mapScale").toDouble();
+            auto point=map->mapToScene(QPointF(map->property("originX").toDouble()+lon/6*editor.mapWidth()*scale,
+                                              map->property("originY").toDouble()+(4-lat)/4*editor.mapHeight()*scale));
+            return image.pixelColor((point*image.devicePixelRatio()).toPoint());
+        };
+        auto near=[](QColor a,QColor b) {return std::abs(a.red()-b.red())<=3 && std::abs(a.green()-b.green())<=3 && std::abs(a.blue()-b.blue())<=3;};
+        // Two overlapping opaque countries are composited once at 50% layer opacity.
+        auto overlap=pixel(3,2); QVERIFY2(near(overlap,QColor(116,120,250)),qPrintable(overlap.name()));
+        auto red=pixel(1,2); QVERIFY2(near(red,QColor(244,120,122)),qPrintable(red.name()));
+        editor.selectCountry("A"); editor.previewCountryOpacity(0.5); QVERIFY(editor.commitPendingEdits());
+        editor.selectCountry("");
+        auto quarter=pixel(1,2); QVERIFY2(near(quarter,QColor(238,179,183)),qPrintable(quarter.name()));
+        editor.selectCountry("A"); editor.previewCountryOpacity(1); QVERIFY(editor.commitPendingEdits());
+        editor.selectLayer("countries"); editor.previewLayerOpacity(1); QVERIFY(editor.commitPendingEdits());
+        editor.addLayer(); auto top=editor.selectedLayerId();
+        editor.selectCountry("B"); editor.moveCountry(top);
+        editor.previewLayerOpacity(0.5); QVERIFY(editor.commitPendingEdits()); editor.selectCountry("");
+        auto purple=pixel(3,2); QVERIFY2(near(purple,QColor(127,0,128)),qPrintable(purple.name()));
+        editor.selectCountry("B"); editor.previewCountryOpacity(0.5); QVERIFY(editor.commitPendingEdits()); editor.selectCountry("");
+        auto nested=pixel(3,2); QVERIFY2(near(nested,QColor(191,0,64)),qPrintable(nested.name()));
+        editor.moveLayer(-1);
+        auto reordered=pixel(3,2); QVERIFY2(near(reordered,QColor(255,0,0)),qPrintable(reordered.name()));
+        editor.undo(); QVERIFY(near(pixel(3,2),QColor(191,0,64)));
+        editor.setLayerVisible(false); QVERIFY(near(pixel(3,2),QColor(255,0,0)));
+        editor.setLayerVisible(true); editor.setLayerLocked(true);
+        QVERIFY(near(pixel(3,2),QColor(191,0,64)));
+        window->setProperty("allowClose",true); window->close();
+    }
+    void editingFlow() {
+        EditorController editor;
+        QQmlApplicationEngine engine;
+        QStringList warnings;
+        connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){ for(const auto& e:errors) warnings<<e.toString(); });
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); QVERIFY(window);
+        if (qEnvironmentVariable("QT_QPA_PLATFORM")=="windows") {
+            window->hide(); window->show();
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+        }
+        QTest::qWait(500);
+        // Hidden Windows launches defer scene polish until the first render.
+        QVERIFY(!window->grabWindow().isNull());
+        auto map=window->findChild<QQuickItem*>("mapView"); QVERIFY(map);
+        auto panel=window->findChild<QQuickItem*>("editorPanel"); QVERIFY(panel);
+        QVERIFY(!panel->property("compact").toBool());
+        auto clickItem=[&](const char* name) {
+            QTest::qWait(80); // settle layout before reading delegate coordinates
+            window->grabWindow();
+            std::function<QQuickItem*(QQuickItem*)> find=[&](QQuickItem* node)->QQuickItem* {
+                if (node->objectName()==QString::fromLatin1(name)) return node;
+                for(auto child:node->childItems()) if(auto result=find(child)) return result;
+                return nullptr;
+            };
+            auto item=find(window->contentItem());
+            if (!item) return false;
+            const auto center=item->mapToScene(QPointF(item->width()/2,item->height()/2)).toPoint();
+            if (!QRect(QPoint(0,0),window->size()).contains(center)) return false;
+            QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,center);
+            QTest::qWait(50); return true;
+        };
+        double px=0,py=0;
+        // Find a point inside Germany, then exercise actual UI hit testing with a click.
+        for (int y=50;y<99 && editor.selectedId()!="DEU";++y) for(int x=20;x<99;++x) {
+            px=editor.mapWidth()*x/100; py=editor.mapHeight()*y/100;
+            editor.selectAt(px,py); if(editor.selectedId()=="DEU") break;
+        }
+        QCOMPARE(editor.selectedId(),QString("DEU"));
+        editor.selectAt(-100,-100);
+        auto clickGermany=[&]() {
+            auto scale=map->property("mapScale").toDouble();
+            auto local=QPointF((map->width()-editor.mapWidth()*scale)/2+px*scale+map->property("panX").toDouble(),
+                              (map->height()-editor.mapHeight()*scale)/2+py*scale+map->property("panY").toDouble());
+            QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,map->mapToScene(local).toPoint());
+        };
+        clickGermany(); QTRY_COMPARE(editor.selectedId(),QString("DEU"));
+        QVERIFY(QMetaObject::invokeMethod(map,"zoomAt",Q_ARG(QVariant,1.5),Q_ARG(QVariant,map->width()/2),Q_ARG(QVariant,map->height()/2)));
+        QCOMPARE(map->property("zoom").toDouble(),1.5);
+        QVERIFY(QMetaObject::invokeMethod(map,"fit"));
+        auto dragStart=map->mapToScene(QPointF(10,100)).toPoint();
+        QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,dragStart);
+        QTest::mouseMove(window,dragStart+QPoint(25,0),30);
+        QTest::mouseMove(window,dragStart+QPoint(60,20),30);
+        QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,dragStart+QPoint(60,20));
+        QVERIFY(map->property("panX").toDouble()!=0);
+        QCOMPARE(editor.selectedId(),QString("DEU"));
+        editor.selectAt(-100,-100); clickGermany(); QTRY_COMPARE(editor.selectedId(),QString("DEU"));
+        QVERIFY(QMetaObject::invokeMethod(map,"fit"));
+        QVERIFY(clickItem("swatche56b6f")); QVERIFY(editor.dirty());
+        QCOMPARE(editor.colors()["DEU"].toString(),QString("#e56b6f"));
+        QVERIFY(clickItem("undoButton")); QVERIFY(!editor.dirty());
+        QVERIFY(clickItem("redoButton")); QVERIFY(editor.dirty());
+        QTest::qWait(150);
+        window->grabWindow(); QTest::qWait(100);
+        auto desktop=window->grabWindow(); QVERIFY(!desktop.isNull()); QVERIFY(desktop.save("desktop.png"));
+        window->resize(390,760); QTest::qWait(300);
+        QVERIFY(panel->property("compact").toBool());
+        QCOMPARE(editor.selectedId(),QString("DEU"));
+        QVERIFY(editor.dirty());
+        QVERIFY(map->height()>200);
+        QVERIFY(clickItem("swatch499c91"));
+        QCOMPARE(editor.colors()["DEU"].toString(),QString("#499c91"));
+        QVERIFY(clickItem("undoButton"));
+        QCOMPARE(editor.colors()["DEU"].toString(),QString("#e56b6f"));
+        QVERIFY(clickItem("redoButton"));
+        QCOMPARE(editor.colors()["DEU"].toString(),QString("#499c91"));
+        QTest::qWait(150);
+        window->grabWindow(); QTest::qWait(100);
+        auto mobile=window->grabWindow(); QVERIFY(!mobile.isNull()); QVERIFY(mobile.save("compact.png"));
+        auto scale=map->property("mapScale").toDouble();
+        auto colorPoint=map->mapToScene(QPointF((map->width()-editor.mapWidth()*scale)/2+px*scale,
+                                              (map->height()-editor.mapHeight()*scale)/2+py*scale));
+        QCOMPARE(mobile.pixelColor((colorPoint*mobile.devicePixelRatio()).toPoint()).name(),QString("#499c91"));
+        QTemporaryDir temporary;
+        auto path=QUrl::fromLocalFile(temporary.path()+QString::fromUtf8("/화면 테스트.pando.json"));
+        QVERIFY(editor.saveFile(path)); QVERIFY(!editor.dirty());
+        editor.setColor("#a8c7db"); QVERIFY(editor.dirty());
+        QVERIFY(QMetaObject::invokeMethod(window,"requestAction",Q_ARG(QVariant,QVariant("open"))));
+        auto unsaved=window->findChild<QObject*>("unsavedDialog"); QVERIFY(unsaved);
+        QTRY_VERIFY(unsaved->property("visible").toBool());
+        QTest::qWait(200);
+        QVERIFY(clickItem("cancelUnsaved"));
+        QTRY_VERIFY(!unsaved->property("visible").toBool());
+        QVERIFY(editor.dirty());
+        // Cancelling a Save As dialog also cancels the deferred destructive action.
+        auto saveDialog=window->findChild<QObject*>("saveDialog"); QVERIFY(saveDialog);
+        window->setProperty("pendingAction","close");
+        QVERIFY(QMetaObject::invokeMethod(saveDialog,"rejected"));
+        QCOMPARE(window->property("pendingAction").toString(),QString());
+        QVERIFY(window->isVisible() && editor.dirty());
+        window->close(); QTRY_VERIFY(unsaved->property("visible").toBool());
+        QTest::qWait(200); QVERIFY(clickItem("cancelUnsaved"));
+        QVERIFY(window->isVisible());
+        QVERIFY(editor.openFile(path));
+        QCOMPARE(editor.colors()["DEU"].toString(),QString("#499c91"));
+        QVERIFY(editor.selectedId().isEmpty());
+        QVERIFY(!editor.canUndo());
+        QCOMPARE(map->property("zoom").toDouble(),1.0);
+        QTest::qWait(250); // let the modal exit transition release its input overlay
+        clickGermany(); QTRY_COMPARE(editor.selectedId(),QString("DEU"));
+        editor.setColor("#e56b6f");
+        window->close(); QTRY_VERIFY(unsaved->property("visible").toBool());
+        QTest::qWait(200); QVERIFY(clickItem("saveUnsaved"));
+        QVERIFY(!editor.dirty());
+        QVERIFY(!window->isVisible());
+        window->setProperty("allowClose",false); window->show();
+        editor.setColor("#a8c7db");
+        window->close(); QTRY_VERIFY(unsaved->property("visible").toBool());
+        QTest::qWait(200); QVERIFY(clickItem("discardUnsaved"));
+        QVERIFY(!window->isVisible());
+        QVERIFY(editor.openFile(path));
+        QCOMPARE(editor.colors()["DEU"].toString(),QString("#e56b6f"));
+        QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+        window->close();
+    }
+};
+int main(int argc,char** argv) {
+    QQuickStyle::setStyle("Basic");
+    QGuiApplication app(argc,argv);
+    if (qEnvironmentVariable("QT_QPA_PLATFORM")=="offscreen") {
+        int font=QFontDatabase::addApplicationFont(qEnvironmentVariable("WINDIR")+"/Fonts/malgun.ttf");
+        if (font>=0) app.setFont(QFont(QFontDatabase::applicationFontFamilies(font).first()));
+    }
+    UiTests test; return QTest::qExec(&test,argc,argv);
+}
+#include "ui_tests.moc"

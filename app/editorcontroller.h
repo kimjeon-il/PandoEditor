@@ -1,0 +1,125 @@
+#pragma once
+#include "projectcodec.h"
+#include "platformstorage.h"
+#include "mapprojection.h"
+#include <QObject>
+#include <QUrl>
+#include <QVariantMap>
+#include <optional>
+
+struct EditorControllerConfig {
+#ifdef Q_OS_ANDROID
+    bool mobileMode = true;
+#else
+    bool mobileMode = false;
+#endif
+    QString privateProjectPath;
+};
+
+class EditorController : public QObject {
+    Q_OBJECT
+    Q_PROPERTY(QVariantList paths READ paths NOTIFY geometryChanged)
+    Q_PROPERTY(double mapWidth READ mapWidth NOTIFY geometryChanged)
+    Q_PROPERTY(double mapHeight READ mapHeight NOTIFY geometryChanged)
+    Q_PROPERTY(QVariantMap colors READ colors NOTIFY visualChanged)
+    Q_PROPERTY(QVariantMap countryVisuals READ countryVisuals NOTIFY visualChanged)
+    Q_PROPERTY(QVariantMap layerVisuals READ layerVisuals NOTIFY visualChanged)
+    Q_PROPERTY(QVariantList layers READ layers NOTIFY stateChanged)
+    Q_PROPERTY(QVariantList countryRows READ countryRows NOTIFY stateChanged)
+    Q_PROPERTY(QString selectedId READ selectedId NOTIFY stateChanged)
+    Q_PROPERTY(QString selectedName READ selectedName NOTIFY stateChanged)
+    Q_PROPERTY(bool selectedEditable READ selectedEditable NOTIFY stateChanged)
+    Q_PROPERTY(QString countryLayerId READ countryLayerId NOTIFY stateChanged)
+    Q_PROPERTY(QString selectedLayerId READ selectedLayerId NOTIFY stateChanged)
+    Q_PROPERTY(bool canDeleteLayer READ canDeleteLayer NOTIFY stateChanged)
+    Q_PROPERTY(QString nameDraft READ nameDraft WRITE setNameDraft NOTIFY draftsChanged)
+    Q_PROPERTY(QString memoDraft READ memoDraft WRITE setMemoDraft NOTIFY draftsChanged)
+    Q_PROPERTY(QString colorDraft READ colorDraft WRITE setColorDraft NOTIFY draftsChanged)
+    Q_PROPERTY(QString layerNameDraft READ layerNameDraft WRITE setLayerNameDraft NOTIFY draftsChanged)
+    Q_PROPERTY(double countryOpacity READ countryOpacity NOTIFY visualChanged)
+    Q_PROPERTY(double layerOpacity READ layerOpacity NOTIFY visualChanged)
+    Q_PROPERTY(bool dirty READ dirty NOTIFY dirtyChanged)
+    Q_PROPERTY(bool canUndo READ canUndo NOTIFY stateChanged)
+    Q_PROPERTY(bool canRedo READ canRedo NOTIFY stateChanged)
+    Q_PROPERTY(QString fileName READ fileName NOTIFY stateChanged)
+    Q_PROPERTY(bool mobileMode READ mobileMode CONSTANT)
+    Q_PROPERTY(bool privateRecoveryRequired READ privateRecoveryRequired NOTIFY privateRecoveryRequiredChanged)
+public:
+    explicit EditorController(QObject* parent=nullptr);
+    explicit EditorController(EditorControllerConfig config, QObject* parent=nullptr);
+    QVariantList paths() const { return projection_.paths; }
+    double mapWidth() const { return projection_.width; }
+    double mapHeight() const { return projection_.height; }
+    QVariantMap colors() const;
+    QVariantMap countryVisuals() const;
+    QVariantMap layerVisuals() const;
+    QVariantList layers() const;
+    QVariantList countryRows() const;
+    QString selectedId() const { return selected_; }
+    QString selectedName() const;
+    bool selectedEditable() const { return project_.editable(selected_.toStdString()); }
+    QString countryLayerId() const;
+    QString selectedLayerId() const { return selectedLayer_; }
+    bool canDeleteLayer() const;
+    QString nameDraft() const { return nameDraft_; }
+    QString memoDraft() const { return memoDraft_; }
+    QString colorDraft() const { return colorDraft_; }
+    QString layerNameDraft() const { return layerNameDraft_; }
+    void setNameDraft(const QString&);
+    void setMemoDraft(const QString&);
+    void setColorDraft(const QString&);
+    void setLayerNameDraft(const QString&);
+    double countryOpacity() const;
+    double layerOpacity() const;
+    QString fileName() const;
+    bool dirty() const;
+    bool canUndo() const { return project_.canUndo(); }
+    bool canRedo() const { return project_.canRedo(); }
+    bool mobileMode() const { return mobileMode_; }
+    bool privateRecoveryRequired() const { return privateRecoveryRequired_; }
+    Q_INVOKABLE void selectAt(double x,double y);
+    Q_INVOKABLE void selectCountry(const QString& id);
+    Q_INVOKABLE void selectLayer(const QString& id);
+    Q_INVOKABLE void setColor(const QString& color);
+    Q_INVOKABLE void previewCountryOpacity(double value);
+    Q_INVOKABLE void previewLayerOpacity(double value);
+    Q_INVOKABLE bool commitPendingEdits();
+    Q_INVOKABLE void addLayer();
+    Q_INVOKABLE void removeLayer();
+    Q_INVOKABLE void moveLayer(int delta);
+    Q_INVOKABLE void setLayerVisible(bool value);
+    Q_INVOKABLE void setLayerLocked(bool value);
+    Q_INVOKABLE void moveCountry(const QString& layerId);
+    Q_INVOKABLE void undo();
+    Q_INVOKABLE void redo();
+    Q_INVOKABLE bool openFile(const QUrl& url);
+    Q_INVOKABLE bool saveFile(const QUrl& url);
+    Q_INVOKABLE bool save();
+    Q_INVOKABLE bool hasFile() const { return mobileMode_ ? storage_.privateProjectExists() : !filePath_.isEmpty(); }
+    Q_INVOKABLE bool restorePrivateProject();
+    Q_INVOKABLE bool importProject(const QUrl& url);
+    Q_INVOKABLE bool savePrivate();
+    Q_INVOKABLE bool exportProject(const QUrl& url);
+    Q_INVOKABLE bool confirmPrivateRecovery();
+signals:
+    void stateChanged();
+    void visualChanged();
+    void draftsChanged();
+    void dirtyChanged();
+    void geometryChanged();
+    void errorOccurred(const QString& message);
+    void privateRecoveryRequiredChanged();
+private:
+    void publish(bool pruneSelection=true);
+    void reloadDrafts();
+    bool replaceFromBytes(const QByteArray& bytes, bool imported, const QString& path = {});
+    pandoeditor::Project project_;
+    MapProjection projection_;
+    QString selected_,selectedLayer_="countries",filePath_;
+    QString nameDraft_,memoDraft_,colorDraft_,layerNameDraft_;
+    std::optional<double> opacityPreview_,layerOpacityPreview_;
+    ProjectStorage storage_;
+    bool mobileMode_ = false;
+    bool importedDirty_ = false;
+    bool privateRecoveryRequired_ = false;
+};
