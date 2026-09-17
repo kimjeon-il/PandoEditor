@@ -36,7 +36,13 @@ ApplicationWindow {
         if (!editor.commitPendingEdits()) return
         if (editor.mobileMode) {
             if (editor.savePrivate()) finishAction()
-            else pendingAction=""
+            else {
+                pendingAction=""
+                if (editor.privateRecoveryRequired) {
+                    errorDialog.close()
+                    recoveryDialog.open()
+                }
+            }
             return
         }
         if (!asNew && editor.hasFile()) {
@@ -47,6 +53,10 @@ ApplicationWindow {
     function requestExport() {
         if (!editor.mobileMode) { requestSave(true); return }
         if (editor.savePrivate()) exportDialog.open()
+        else if (editor.privateRecoveryRequired) {
+            errorDialog.close()
+            recoveryDialog.open()
+        }
     }
     function handleBack() {
         if (Qt.inputMethod.visible) { Qt.inputMethod.hide(); return }
@@ -158,7 +168,10 @@ ApplicationWindow {
         target: editor
         function onErrorOccurred(message) { errorDialog.message=message; errorDialog.open() }
         function onPrivateRecoveryRequiredChanged() {
-            if (editor.privateRecoveryRequired) recoveryDialog.open()
+            if (editor.privateRecoveryRequired) {
+                errorDialog.close()
+                recoveryDialog.open()
+            }
         }
     }
 }

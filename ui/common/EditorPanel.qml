@@ -108,7 +108,7 @@ Rectangle {
                         placeholderText: "#123456"
                         Accessible.name: "RGB 색상"
                         onTextEdited: editor.colorDraft=text
-                        onEditingFinished: editor.commitPendingEdits()
+                        onEditingFinished: if (/^#[0-9a-fA-F]{6}$/.test(text)) editor.commitPendingEdits()
                     }
                     Label { text: "국가 불투명도 "+Math.round(editor.countryOpacity*100)+"%"; Layout.leftMargin: 12 }
                     Slider {

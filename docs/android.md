@@ -57,6 +57,14 @@ Debug 서명은 개발용이며 배포용 키가 아닙니다. APK·키·SDK는 
 Android 크로스 빌드에서는 Windows용 테스트 실행 파일을 만들지 않습니다.
 테스트는 기존 Windows 빌드 디렉터리에서 실행합니다.
 
+2026-09-17 최종 검증 결과:
+
+- APK 크기: 25,974,960 bytes (24.77 MiB)
+- SHA-256: `8CD24CE75ADF36E51A16AB8641F6DB6738540CD0542CA7B7408C57B9950D8257`
+- Debug APK Signature Scheme v2 서명 정상
+- 패키지 `org.pandolab.pandoeditor`, ABI `x86_64`, 최소 API 28, target/compile API 35
+- Windows 공통 테스트 `core_tests`, `storage_tests`, `editor_tests`, `ui_tests` 4/4 통과
+
 ## 에뮬레이터
 
 ```powershell
@@ -88,7 +96,9 @@ APK 빌드 성공은 실제 Android 조작 검증을 의미하지 않습니다.
 
 `content://`는 로컬 경로로 변환하지 않고 Qt의 Android 파일 엔진을 통해 읽고 씁니다.
 외부 문서에 QSaveFile을 적용하지 않습니다. 관련 제한은 [QFile Android 안내](https://doc.qt.io/qt-6.8/qfile.html)에 있습니다.
-광범위 저장소 권한을 요청하지 않습니다.
+Qt가 기본 추가하는 `WRITE_EXTERNAL_STORAGE`는 매니페스트에서 `maxSdkVersion="27"`로 재정의했습니다.
+최소 API가 28이므로 지원 대상 기기에서는 이 권한이 적용되지 않습니다. APK에는
+`READ_EXTERNAL_STORAGE`와 `MANAGE_EXTERNAL_STORAGE`가 없습니다.
 
 Qt 6.8에는 공개 safe-area API가 없어 Android 15 테마에서 edge-to-edge 강제를 해제했습니다.
 [Qt 안내](https://doc.qt.io/qt-6.8/android-manifest-file-configuration.html)의 대응 방식이며,
@@ -105,5 +115,7 @@ Qt 또는 target API를 올릴 때 화면 여백 처리를 다시 검증해야 �
 - 시스템 선택기 v1 가져오기, 내부 v2 저장과 종료 후 복원
 - 한글 파일명으로 내보내기와 재가져오기
 - 선택 취소, 저장 실패, 뒤로 가기 저장/버리기/취소
+- 실제 Android SAF 제공자의 truncate/flush 동작과 앱 재실행 복원
 
 Windows의 모바일 모드 테스트는 공통 제어 흐름만 검증하며 SAF 제공자·Android IME·물리 터치를 대체하지 않습니다.
+ARM64 실기 APK와 스토어용 서명도 이번 단계 범위 밖입니다.

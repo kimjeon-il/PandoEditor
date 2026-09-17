@@ -4,7 +4,7 @@ Date: 2026-09-17
 
 ## Result
 
-Tasks 2 and 3 from `android-plan.md` are implemented in the shared Qt application. The existing desktop open/save flow remains local-file based, while Android mode uses one atomically written private project plus Storage Access Framework URLs for import and export. The implementation does not request broad storage permission and does not treat `content:` URLs as local paths.
+Tasks 2 and 3 from `android-plan.md` are implemented in the shared Qt application. The existing desktop open/save flow remains local-file based, while Android mode uses one atomically written private project plus Storage Access Framework URLs for import and export. The implementation does not treat `content:` URLs as local paths. Qt's legacy `WRITE_EXTERNAL_STORAGE` declaration is overridden with `maxSdkVersion="27"`; because the app's minimum API is 28, it is inapplicable to every supported device.
 
 ## Files
 
@@ -45,14 +45,17 @@ The feature was developed as RED/GREEN cycles:
 3. Mobile UI RED: `mobileStorageFlow` reported `Actual window->minimumWidth(): 360; Expected: 0` before the Android-responsive QML branch.
 4. Stream-error RED: `boundedReadDoesNotAcceptTruncatedDataAfterStreamError` reported that no `std::runtime_error` was thrown before switching from `QByteArray QIODevice::read()` to checked `qint64` reads.
 5. Import-cancel RED: `mobileStorageFlow` reported `!editor.canUndo() returned FALSE` because opening the import flow committed a draft before the chooser; the mobile import path now preserves drafts/history until a real import succeeds.
-6. Final GREEN verification is recorded below.
+6. Recovery-dialog RED: after canceling recovery, the underlying generic error dialog retained the modal overlay and the recovery dialog was not reopened by a later save. Recovery-required state now owns the visible dialog, and the UI test waits for the close transition before clicking through.
+7. Final GREEN verification is recorded below.
 
 ## Verification
 
-- Desktop source/build directory: `C:/Users/taeeu/Qt/Pandoeditor-build`.
-- Final verification command: `cmake --build ...` followed by full `ctest --output-on-failure` (final counts to be recorded after the last build).
-- Focused mobile flow: `UiTests::mobileStorageFlow` passed with 3 passed, 0 failed; its 360 px capture is `C:/Users/taeeu/Qt/Pandoeditor-build/mobile-storage.png`.
-- Android native compile: the x86_64 shared library linked after replacing the initial raw-JNI content stream with Qt's content-URI file engine. Final APK/package result belongs to the integration task and is recorded there.
+- Fresh desktop build directory: `C:/Users/taeeu/Qt/Pandoeditor-build-android-final-20260917` (configured from an absent directory).
+- Final Windows verification: fresh CMake configure and build followed by full `ctest --output-on-failure`; `core_tests`, `storage_tests`, `editor_tests`, and `ui_tests` passed, 4/4.
+- The fresh 360 x 720 mobile capture is `C:/Users/taeeu/Qt/Pandoeditor-build-android-final-20260917/app/mobile-storage.png`. It was visually checked for the Korean storage buttons, five-control toolbar, map, tabs, and scrollable lower editor panel.
+- Final debug APK: `C:/Users/taeeu/AppData/Local/Pandoeditor/android/build-x86_64/app/android-build/build/outputs/apk/debug/android-build-debug.apk` (25,974,960 bytes / 24.77 MiB, SHA-256 `8CD24CE75ADF36E51A16AB8641F6DB6738540CD0542CA7B7408C57B9950D8257`).
+- `apksigner` verifies APK Signature Scheme v2 with the Android debug certificate. `aapt` verifies package `org.pandolab.pandoeditor`, version `0.1.0`, ABI `x86_64`, minimum API 28, target/compile API 35.
+- The merged APK manifest contains `WRITE_EXTERNAL_STORAGE` only with `maxSdkVersion="27"`; it contains no `READ_EXTERNAL_STORAGE` or `MANAGE_EXTERNAL_STORAGE`. Remaining permissions are Qt's expected `ACCESS_NETWORK_STATE`, `INTERNET`, and the package-scoped dynamic-receiver permission.
 
 ## Remaining runtime risks
 

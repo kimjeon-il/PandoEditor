@@ -5,6 +5,7 @@
 #include <QQuickWindow>
 #include <QQuickItem>
 #include <QQuickStyle>
+#include <QSignalSpy>
 #include <QTest>
 #include <QTemporaryDir>
 #include <QImage>
@@ -171,6 +172,7 @@ private slots:
         QTRY_VERIFY(recovery->property("visible").toBool());
         QVERIFY(clickControl(window,"cancelRecovery"));
         QTRY_VERIFY(!recovery->property("visible").toBool());
+        QTest::qWait(250); // let the modal exit transition release its input overlay
         QCOMPARE(readFile(privatePath),QByteArray("corrupt project"));
 
         editor.selectCountry("DEU"); editor.setColor("#123456");

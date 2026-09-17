@@ -1,9 +1,14 @@
 <?xml version="1.0"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.pandolab.pandoeditor"
     android:installLocation="auto"
     android:versionCode="-- %%INSERT_VERSION_CODE%% --"
     android:versionName="-- %%INSERT_VERSION_NAME%% --">
+    <!-- Qt 6.8 Core declares legacy external storage access. This app only
+         uses app-private files and SAF content URIs. Since minSdk is 28,
+         limiting the declaration to API 27 makes it inapplicable on every
+         supported device while retaining Qt's permission override contract. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="27" />
     <!-- %%INSERT_PERMISSIONS -->
     <!-- %%INSERT_FEATURES -->
     <supports-screens android:anyDensity="true" android:largeScreens="true"
