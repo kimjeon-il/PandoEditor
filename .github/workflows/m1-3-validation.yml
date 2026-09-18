@@ -29,7 +29,7 @@ jobs:
           path: ${{ runner.temp }}/source.tar.gz
           retention-days: 3
       - name: Install Linux dependencies
-        run: sudo apt-get update && sudo apt-get install -y ninja-build libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
@@ -47,5 +47,6 @@ jobs:
           path: |
             build/results.xml
             build/Testing/Temporary/LastTest.log
+            build/app/*.png
           if-no-files-found: ignore
           retention-days: 7

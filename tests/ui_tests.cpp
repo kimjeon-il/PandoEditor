@@ -389,13 +389,18 @@ private slots:
         window->resize(390,760); QTest::qWait(200);
         QCOMPARE(editor.nameDraft(),QString("Draft name"));
         QTest::keyClick(window,Qt::Key_Return);
+        QVERIFY(clickControl(window,"applyEdits"));
         QCOMPARE(editor.selectedName(),QString("Draft name"));
         QVERIFY(clickControl(window,"countryColor"));
         QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"#123456");
         QTest::keyClick(window,Qt::Key_Return);
+        QVERIFY(clickControl(window,"applyEdits"));
         QCOMPARE(editor.colors()["DEU"].toString(),QString("#123456"));
+        // Position the slider in the scroll area, then discard the positioning
+        // click's draft before measuring the actual drag's baseline.
         QVERIFY(clickControl(window,"countryOpacity"));
-        // Complete one drag, then one undo must restore the pre-drag value.
+        editor.discardPendingEdits();
+        // A drag remains a draft until Apply; Undo restores its baseline.
         auto slider=visualItem(window->contentItem(),"countryOpacity"); QVERIFY(slider);
         double before=editor.countryOpacity();
         auto start=slider->mapToScene(QPointF(slider->width()*before,slider->height()/2)).toPoint();
@@ -404,6 +409,7 @@ private slots:
         QTest::mouseMove(window,(start+end)/2,20); QTest::mouseMove(window,end,20);
         QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,end);
         QVERIFY(editor.countryOpacity()<before);
+        QVERIFY(clickControl(window,"applyEdits"));
         editor.undo(); QCOMPARE(editor.countryOpacity(),before); editor.redo();
         QVERIFY(clickControl(window,"layersTab"));
         QVERIFY(clickControl(window,"addLayer"));
@@ -432,6 +438,45 @@ private slots:
         window->resize(1100,720); QTest::qWait(150); capture(window).save("layers-desktop.png");
         QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
         window->close();
+    }
+    void atomicApplyCancelAcrossPcAnd360px() {
+        for(bool mobile:{false,true}) {
+            QTemporaryDir dir; QVERIFY(dir.isValid());
+            EditorController editor(EditorControllerConfig{mobile,dir.filePath("private.json")});
+            QQmlApplicationEngine engine; QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& e:errors) warnings<<e.toString();});
+            engine.rootContext()->setContextProperty("editor",&editor);
+            engine.load(QUrl("qrc:/common/Main.qml")); QVERIFY(!engine.rootObjects().isEmpty());
+            auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); QVERIFY(window);
+            window->resize(mobile?360:1100,mobile?640:760); exposeForTest(window);
+            editor.selectCountry("DEU");
+            const auto name=editor.selectedName(),layerName=editor.layerNameDraft(),color=editor.colorDraft();
+            QVERIFY(clickControl(window,"countryName"));
+            QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Atomic name");
+            QVERIFY(clickControl(window,"countryColor"));
+            QCOMPARE(editor.selectedName(),name); QVERIFY(!editor.canUndo());
+            QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"#102030");
+            QVERIFY(clickControl(window,"layersTab"));
+            QCOMPARE(editor.selectedName(),name); QCOMPARE(editor.revision(),qulonglong(0));
+            QVERIFY(clickControl(window,"layerName"));
+            QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Atomic layer");
+            QVERIFY(clickControl(window,"applyEdits"));
+            QCOMPARE(editor.selectedName(),QString("Atomic name")); QCOMPARE(editor.colorDraft(),QString("#102030"));
+            QCOMPARE(editor.layerNameDraft(),QString("Atomic layer")); QCOMPARE(editor.revision(),qulonglong(1));
+            QVERIFY(!editor.hasPendingEdits());
+            QVERIFY(clickControl(window,"undoButton"));
+            QCOMPARE(editor.selectedName(),name); QCOMPARE(editor.colorDraft(),color); QCOMPARE(editor.layerNameDraft(),layerName);
+            QCOMPARE(editor.revision(),qulonglong(2)); QVERIFY(!editor.canUndo()); QVERIFY(!editor.dirty());
+            QVERIFY(clickControl(window,"redoButton")); QCOMPARE(editor.revision(),qulonglong(3));
+            QVERIFY(clickControl(window,"layerName"));
+            QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Discard me");
+            QVERIFY(clickControl(window,"cancelEdits"));
+            QCOMPARE(editor.layerNameDraft(),QString("Atomic layer")); QCOMPARE(editor.revision(),qulonglong(3));
+            QVERIFY(!editor.hasPendingEdits());
+            QVERIFY(capture(window).save(mobile?"commands-mobile-360.png":"commands-desktop.png"));
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+            window->setProperty("allowClose",true); window->close();
+        }
     }
     void compositing() {
         using namespace pandoeditor;

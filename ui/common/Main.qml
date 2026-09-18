@@ -236,6 +236,9 @@ ApplicationWindow {
         width: Math.min(460,window.width-24)
         contentWidth: availableWidth
         contentHeight: recoveryText.implicitHeight
+        height: topPadding + bottomPadding + contentHeight
+                + (header ? header.implicitHeight + spacing : 0)
+                + (footer ? footer.implicitHeight + spacing : 0)
         title: "저장 파일 복구 필요"
         modal: true
         closePolicy: Popup.NoAutoClose
