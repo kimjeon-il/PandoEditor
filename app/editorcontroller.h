@@ -39,6 +39,9 @@ class EditorController : public QObject {
     Q_PROPERTY(double countryOpacity READ countryOpacity NOTIFY visualChanged)
     Q_PROPERTY(double layerOpacity READ layerOpacity NOTIFY visualChanged)
     Q_PROPERTY(bool dirty READ dirty NOTIFY dirtyChanged)
+    Q_PROPERTY(bool hasPendingEdits READ hasPendingEdits NOTIFY draftsChanged)
+    Q_PROPERTY(bool hasPreparedPreview READ hasPreparedPreview NOTIFY previewChanged)
+    Q_PROPERTY(qulonglong revision READ revision NOTIFY stateChanged)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY stateChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY stateChanged)
     Q_PROPERTY(QString fileName READ fileName NOTIFY stateChanged)
@@ -75,6 +78,9 @@ public:
     QString fileName() const;
     QString documentNotice() const;
     bool dirty() const;
+    bool hasPendingEdits() const;
+    bool hasPreparedPreview() const { return pendingPreview_.has_value(); }
+    qulonglong revision() const { return project_.revision(); }
     bool canUndo() const { return project_.canUndo(); }
     bool canRedo() const { return project_.canRedo(); }
     bool mobileMode() const { return mobileMode_; }
@@ -86,6 +92,10 @@ public:
     Q_INVOKABLE void previewCountryOpacity(double value);
     Q_INVOKABLE void previewLayerOpacity(double value);
     Q_INVOKABLE bool commitPendingEdits();
+    Q_INVOKABLE bool preparePendingEdits();
+    Q_INVOKABLE bool confirmPreview();
+    Q_INVOKABLE void cancelPreview();
+    Q_INVOKABLE void discardPendingEdits();
     Q_INVOKABLE void addLayer();
     Q_INVOKABLE void removeLayer();
     Q_INVOKABLE void moveLayer(int delta);
@@ -109,13 +119,20 @@ signals:
     void draftsChanged();
     void dirtyChanged();
     void geometryChanged();
+    void previewChanged();
     void errorOccurred(const QString& message);
     void privateRecoveryRequiredChanged();
 private:
+    bool collectPendingEdits(pandoeditor::CommandArguments& args);
+    pandoeditor::CommandStatus prepareCommand(const std::string& commandId, pandoeditor::CommandArguments args);
+    bool confirmCommand();
+    bool executeCommand(const std::string& commandId, pandoeditor::CommandAction action);
+    void commandError(pandoeditor::CommandError error, const QString& detail = {});
     void publish(bool pruneSelection=true);
     void reloadDrafts();
     bool replaceFromBytes(const QByteArray& bytes, bool imported, const QString& path = {});
     pandoeditor::Project project_;
+    std::optional<pandoeditor::CommandPreview> pendingPreview_;
     MapProjection projection_;
     QString selected_,selectedLayer_="countries",filePath_;
     QString nameDraft_,memoDraft_,colorDraft_,layerNameDraft_;

@@ -1,7 +1,7 @@
 qt_add_executable(pandoeditor main.cpp)
 
 add_library(pandoeditor_editor STATIC
-    editorcontroller.cpp editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
+    editorcontroller.cpp editorcommands.cpp editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
 )

@@ -1,7 +1,6 @@
 #include "editorcontroller.h"
 #include <QFile>
 #include <QFileInfo>
-#include <QRegularExpression>
 #include <QUuid>
 #include <cmath>
 #include <stdexcept>
@@ -9,7 +8,6 @@
 namespace {
 QString text(const std::string& value) { return QString::fromStdString(value); }
 QString rgb(std::uint32_t color) { return QString("#%1").arg(color,6,16,QChar('0')); }
-bool validColor(const QString& value) { return QRegularExpression("^#[0-9a-fA-F]{6}$").match(value).hasMatch(); }
 }
 EditorController::EditorController(QObject* parent):EditorController(EditorControllerConfig{}, parent) {}
 EditorController::EditorController(EditorControllerConfig config, QObject* parent)
@@ -104,20 +102,19 @@ QString EditorController::documentNotice() const
         notice+=QStringLiteral(" 미해석 데이터 %1개 보존 중: 관련 편집이 제한될 수 있습니다.").arg(d.extensions.size());
     return notice;
 }
-bool EditorController::dirty() const
+bool EditorController::dirty() const { return importedDirty_ || project_.dirty() || hasPendingEdits(); }
+bool EditorController::hasPendingEdits() const
 {
-    if(importedDirty_) return true;
-    if(project_.dirty()) return true;
     const auto c=project_.country(selected_.toStdString());
     if(c && (nameDraft_!=text(c->name) || memoDraft_!=text(c->memo) || colorDraft_!=rgb(c->color) ||
              (opacityPreview_ && *opacityPreview_!=c->opacity))) return true;
     const auto l=project_.layer(selectedLayer_.toStdString());
     return l && (layerNameDraft_!=text(l->name) || (layerOpacityPreview_ && *layerOpacityPreview_!=l->opacity));
 }
-void EditorController::setNameDraft(const QString& value) { if(selectedEditable()) { nameDraft_=value; emit draftsChanged(); emit dirtyChanged(); } }
-void EditorController::setMemoDraft(const QString& value) { if(selectedEditable()) { memoDraft_=value; emit draftsChanged(); emit dirtyChanged(); } }
-void EditorController::setColorDraft(const QString& value) { if(selectedEditable()) { colorDraft_=value; emit draftsChanged(); emit dirtyChanged(); } }
-void EditorController::setLayerNameDraft(const QString& value) { layerNameDraft_=value; emit draftsChanged(); emit dirtyChanged(); }
+void EditorController::setNameDraft(const QString& value) { if(selectedEditable()) { cancelPreview(); nameDraft_=value; emit draftsChanged(); emit dirtyChanged(); } }
+void EditorController::setMemoDraft(const QString& value) { if(selectedEditable()) { cancelPreview(); memoDraft_=value; emit draftsChanged(); emit dirtyChanged(); } }
+void EditorController::setColorDraft(const QString& value) { if(selectedEditable()) { cancelPreview(); colorDraft_=value; emit draftsChanged(); emit dirtyChanged(); } }
+void EditorController::setLayerNameDraft(const QString& value) { cancelPreview(); layerNameDraft_=value; emit draftsChanged(); emit dirtyChanged(); }
 void EditorController::reloadDrafts()
 {
     const auto c=project_.country(selected_.toStdString());
@@ -136,62 +133,15 @@ void EditorController::publish(bool pruneSelection)
     reloadDrafts();
     emit stateChanged(); emit visualChanged(); emit draftsChanged(); emit dirtyChanged();
 }
-bool EditorController::commitPendingEdits()
-{
-    const auto c=project_.country(selected_.toStdString());
-    if(c && selectedEditable()) {
-        if(nameDraft_.trimmed().isEmpty() || !validColor(colorDraft_)) {
-            nameDraft_=text(c->name); colorDraft_=rgb(c->color);
-            emit draftsChanged(); emit dirtyChanged();
-            emit errorOccurred(QStringLiteral("국가 이름을 비우거나 RGB 색상을 잘못 입력할 수 없습니다."));
-            return false;
-        }
-    }
-    const auto l=project_.layer(selectedLayer_.toStdString());
-    if(l && layerNameDraft_.trimmed().isEmpty()) {
-        layerNameDraft_=text(l->name); emit draftsChanged(); emit dirtyChanged();
-        emit errorOccurred(QStringLiteral("레이어 이름을 입력해 주세요.")); return false;
-    }
-    const auto allowed=[&](bool changed,const pandoeditor::ObjectRef& ref,const char* effect) {
-        return !changed || pandoeditor::effectAllowed(project_.document(),ref,effect);
-    };
-    bool safe=true;
-    if(c) {
-        const auto ref=pandoeditor::territorialRef(c->id);
-        safe=allowed(nameDraft_.trimmed().toStdString()!=c->name,ref,"name") &&
-             allowed(memoDraft_.toStdString()!=c->memo,ref,"notes") &&
-             allowed(colorDraft_.mid(1).toUInt(nullptr,16)!=c->color,ref,"color") &&
-             allowed(opacityPreview_ && *opacityPreview_!=c->opacity,ref,"opacity");
-    }
-    if(l) safe=safe && allowed(layerNameDraft_.trimmed().toStdString()!=l->name,{"userLayer",l->id},"name") &&
-        allowed(layerOpacityPreview_ && *layerOpacityPreview_!=l->opacity,{"userLayer",l->id},"opacity");
-    if(!safe) { emit errorOccurred(QStringLiteral("UNSUPPORTED_DEPENDENCY: 미해석 데이터 보호를 위해 이 편집을 제한합니다. 초안은 유지됩니다.")); return false; }
-    bool changed=false;
-    if(c && selectedEditable()) {
-        changed|=project_.renameCountry(c->id,nameDraft_.trimmed().toStdString());
-        changed|=project_.setMemo(c->id,memoDraft_.toStdString());
-        changed|=project_.setColor(c->id,colorDraft_.mid(1).toUInt(nullptr,16));
-        if(opacityPreview_) changed|=project_.setCountryOpacity(c->id,*opacityPreview_);
-    }
-    if(l) {
-        // Layer mutation replaces the layer vector; use the stable ID, not the pointer afterwards.
-        const auto id=l->id;
-        changed|=project_.renameLayer(id,layerNameDraft_.trimmed().toStdString());
-        if(layerOpacityPreview_) changed|=project_.setLayerOpacity(id,*layerOpacityPreview_);
-    }
-    if(changed) publish(false);
-    else { reloadDrafts(); emit draftsChanged(); emit visualChanged(); emit dirtyChanged(); }
-    return true;
-}
 void EditorController::previewCountryOpacity(double value)
 {
     if(!selectedEditable() || !std::isfinite(value) || value<0 || value>1) return;
-    opacityPreview_=value; emit visualChanged(); emit dirtyChanged();
+    cancelPreview(); opacityPreview_=value; emit visualChanged(); emit draftsChanged(); emit dirtyChanged();
 }
 void EditorController::previewLayerOpacity(double value)
 {
     if(!std::isfinite(value) || value<0 || value>1) return;
-    layerOpacityPreview_=value; emit visualChanged(); emit dirtyChanged();
+    cancelPreview(); layerOpacityPreview_=value; emit visualChanged(); emit draftsChanged(); emit dirtyChanged();
 }
 void EditorController::selectAt(double x,double y)
 {
@@ -205,36 +155,50 @@ void EditorController::selectCountry(const QString& id)
 }
 void EditorController::selectLayer(const QString& id)
 {
-    if(!commitPendingEdits() || !project_.layer(id.toStdString())) return;
+    if(!project_.layer(id.toStdString()) || !commitPendingEdits()) return;
     selectedLayer_=id; publish(false);
-}
-void EditorController::setColor(const QString& color)
-{
-    if(!validColor(color) || !commitPendingEdits()) return;
-    if(project_.setColor(selected_.toStdString(),color.mid(1).toUInt(nullptr,16))) publish(false);
 }
 void EditorController::addLayer()
 {
-    if(!commitPendingEdits()) return;
-    auto id=QUuid::createUuid().toString(QUuid::WithoutBraces);
-    if(project_.addLayer(id.toStdString(),"새 레이어")) { selectedLayer_=id; publish(false); }
+    const auto id=QUuid::createUuid().toString(QUuid::WithoutBraces);
+    if(executeCommand("layer.add",pandoeditor::AddLayer{id.toStdString(),"새 레이어"})) {
+        selectedLayer_=id; publish(false);
+    }
 }
 void EditorController::removeLayer()
 {
-    if(!commitPendingEdits()) return;
-    if(project_.removeLayer(selectedLayer_.toStdString())) publish();
-    else emit errorOccurred(QStringLiteral("빈 레이어만 삭제할 수 있으며 마지막 레이어는 유지해야 합니다."));
+    if(executeCommand("layer.remove",pandoeditor::RemoveLayer{selectedLayer_.toStdString()})) publish();
 }
-void EditorController::moveLayer(int delta) { if(commitPendingEdits() && project_.moveLayer(selectedLayer_.toStdString(),delta)) publish(false); }
-void EditorController::setLayerVisible(bool value) { if(commitPendingEdits() && project_.setLayerVisible(selectedLayer_.toStdString(),value)) publish(); }
-void EditorController::setLayerLocked(bool value) { if(commitPendingEdits() && project_.setLayerLocked(selectedLayer_.toStdString(),value)) publish(); }
+void EditorController::moveLayer(int delta)
+{
+    if(executeCommand("layer.move",pandoeditor::MoveLayer{selectedLayer_.toStdString(),delta})) publish(false);
+}
+void EditorController::setLayerVisible(bool value)
+{
+    if(executeCommand("layer.visibility",pandoeditor::SetLayerVisible{selectedLayer_.toStdString(),value})) publish();
+}
+void EditorController::setLayerLocked(bool value)
+{
+    if(executeCommand("layer.lock",pandoeditor::SetLayerLocked{selectedLayer_.toStdString(),value})) publish();
+}
 void EditorController::moveCountry(const QString& layerId)
 {
-    if(!commitPendingEdits()) return;
-    if(project_.moveCountry(selected_.toStdString(),layerId.toStdString())) publish();
+    if(executeCommand("country.move",pandoeditor::MoveCountry{selected_.toStdString(),layerId.toStdString()})) publish();
 }
-void EditorController::undo() { if(commitPendingEdits() && project_.undo()) publish(); }
-void EditorController::redo() { if(commitPendingEdits() && project_.redo()) publish(); }
+void EditorController::undo()
+{
+    if(hasPendingEdits()) {
+        emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요.")); return;
+    }
+    cancelPreview(); if(project_.undo()) publish();
+}
+void EditorController::redo()
+{
+    if(hasPendingEdits()) {
+        emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요.")); return;
+    }
+    cancelPreview(); if(project_.redo()) publish();
+}
 bool EditorController::openFile(const QUrl& url)
 {
     try {
@@ -262,6 +226,7 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes, bool imported, 
     pandoeditor::Project candidate;
     candidate.replace(projectcodec::decode(bytes));
     MapProjection nextProjection; nextProjection.rebuild(candidate.countries());
+    cancelPreview();
     project_=std::move(candidate); projection_=std::move(nextProjection);
     filePath_=path; importedDirty_=imported; selected_.clear(); selectedLayer_=text(project_.layers().back().id);
     emit geometryChanged(); publish(false); return true;

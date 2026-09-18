@@ -1,21 +1,16 @@
 #pragma once
-#include <pandoeditor/document.h>
+#include <pandoeditor/commands.h>
 #include <string>
-#include <variant>
+#include <memory>
 #include <vector>
 
 namespace pandoeditor {
-struct CountryProperties {
-    std::string name, memo;
-    std::uint32_t color;
-    double opacity;
-    std::string layerId;
-    bool operator==(const CountryProperties& other) const;
-};
 
 class Project {
 public:
-    Project() = default;
+    Project();
+    const std::string& instanceId() const { return instanceId_; }
+    std::uint64_t revision() const { return revision_; }
     Project(const Project&) = delete;
     Project& operator=(const Project&) = delete;
     Project(Project&&) noexcept = default;
@@ -25,10 +20,10 @@ public:
     static void validate(const std::vector<Country>& countries);
     void replace(ProjectDocument document);
     void replace(std::vector<Country> countries);
-    const ProjectDocument& document() const noexcept { return document_; }
-    const std::vector<CountryView>& countries() const noexcept { return countryViews_; }
-    const std::vector<Layer>& layers() const noexcept { return document_.presentation.userLayers; }
-    const DocumentIndex& index() const noexcept { return index_; }
+    const ProjectDocument& document() const noexcept;
+    const std::vector<CountryView>& countries() const noexcept;
+    const std::vector<Layer>& layers() const noexcept;
+    const DocumentIndex& index() const noexcept;
     const CountryView* country(const std::string& id) const;
     const Layer* layer(const std::string& id) const;
     bool editable(const std::string& id) const;
@@ -50,21 +45,19 @@ public:
     bool canUndo() const noexcept { return cursor_ > 0; }
     bool canRedo() const noexcept { return cursor_ < commands_.size(); }
     bool dirty() const;
-    void markSaved();
+    void markSaved() noexcept;
 private:
-    struct CountryChange { std::string id; CountryProperties before, after; };
-    struct LayersChange { std::vector<Layer> before, after; };
-    using Command = std::variant<CountryChange, LayersChange>;
-    bool changeCountry(const std::string& id, const CountryProperties& next);
-    bool changeLayers(std::vector<Layer> next);
-    void apply(const Command& command, bool forward);
-    ProjectDocument document_;
-    DocumentIndex index_;
-    std::vector<CountryView> countryViews_;
-    std::map<std::string,std::size_t> countryIndex_;
-    std::vector<Command> commands_;
-    std::vector<CountryProperties> savedCountries_;
-    std::vector<Layer> savedLayers_;
+    friend class CommandProcessor;
+    bool execute(std::string commandId, CommandArguments args);
+    bool changeCountry(const std::string& id, CountryProperties next);
+    bool changeLayer(Layer next);
+    void apply(const ChangeSet& change);
+    // All mutation (including prepare/confirm) is serialized by the caller.
+    // Immutable snapshots can be retained; background jobs are M1.4 scope.
+    std::shared_ptr<const detail::DocumentState> state_, saved_;
+    std::vector<ChangeSet> commands_;
+    std::string instanceId_;
+    std::uint64_t revision_ = 0;
     std::size_t cursor_ = 0;
 };
 } // namespace pandoeditor

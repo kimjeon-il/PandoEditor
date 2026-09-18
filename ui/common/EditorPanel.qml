@@ -21,6 +21,13 @@ Rectangle {
             TabButton { text: "국가"; objectName: "countryTab" }
             TabButton { text: "레이어"; objectName: "layersTab" }
         }
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.margins: 8
+            Label { text: editor.hasPendingEdits ? "미적용 편집" : "편집 내용"; Layout.fillWidth: true; elide: Text.ElideRight }
+            Button { objectName: "cancelEdits"; text: "취소"; enabled: editor.hasPendingEdits; onClicked: editor.discardPendingEdits() }
+            Button { objectName: "applyEdits"; text: "적용"; enabled: editor.hasPendingEdits; onClicked: editor.commitPendingEdits() }
+        }
         StackLayout {
             currentIndex: tabs.currentIndex
             Layout.fillWidth: true
@@ -83,7 +90,6 @@ Rectangle {
                         text: editor.nameDraft
                         Accessible.name: "국가 이름"
                         onTextEdited: editor.nameDraft=text
-                        onEditingFinished: editor.commitPendingEdits()
                     }
                     Label { text: "메모"; Layout.leftMargin: 12 }
                     TextArea {
@@ -96,7 +102,6 @@ Rectangle {
                         placeholderText: "국가에 대한 메모"
                         Accessible.name: "국가 메모"
                         onTextChanged: if (activeFocus) editor.memoDraft=text
-                        onActiveFocusChanged: if (!activeFocus) editor.commitPendingEdits()
                         background: Rectangle { color: "#f5f7f9"; border.color: "#c4cdd5"; radius: 4 }
                     }
                     Label { text: "RGB 색상"; Layout.leftMargin: 12 }
@@ -108,7 +113,6 @@ Rectangle {
                         placeholderText: "#123456"
                         Accessible.name: "RGB 색상"
                         onTextEdited: editor.colorDraft=text
-                        onEditingFinished: if (/^#[0-9a-fA-F]{6}$/.test(text)) editor.commitPendingEdits()
                     }
                     Label { text: "국가 불투명도 "+Math.round(editor.countryOpacity*100)+"%"; Layout.leftMargin: 12 }
                     Slider {
@@ -118,8 +122,7 @@ Rectangle {
                         from: 0; to: 1; stepSize: 0.01
                         value: editor.countryOpacity
                         Accessible.name: "국가 불투명도"
-                        onMoved: { editor.previewCountryOpacity(value); if (!pressed) editor.commitPendingEdits() }
-                        onPressedChanged: if (!pressed) editor.commitPendingEdits()
+                        onMoved: editor.previewCountryOpacity(value)
                     }
                     Label { text: "소속 레이어"; Layout.leftMargin: 12 }
                     ComboBox {
@@ -176,7 +179,6 @@ Rectangle {
                         text: editor.layerNameDraft
                         Accessible.name: "레이어 이름"
                         onTextEdited: editor.layerNameDraft=text
-                        onEditingFinished: editor.commitPendingEdits()
                     }
                     CheckBox {
                         objectName: "layerVisible"
@@ -199,8 +201,7 @@ Rectangle {
                         from: 0; to: 1; stepSize: 0.01
                         value: editor.layerOpacity
                         Accessible.name: "레이어 불투명도"
-                        onMoved: { editor.previewLayerOpacity(value); if (!pressed) editor.commitPendingEdits() }
-                        onPressedChanged: if (!pressed) editor.commitPendingEdits()
+                        onMoved: editor.previewLayerOpacity(value)
                     }
                     Label {
                         Layout.fillWidth: true; Layout.margins: 12
