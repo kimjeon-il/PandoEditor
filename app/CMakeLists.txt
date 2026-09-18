@@ -65,3 +65,11 @@ set_target_properties(pandoeditor PROPERTIES
 if(ANDROID)
     include("${PROJECT_SOURCE_DIR}/platform/android/packaging.cmake")
 endif()
+
+if(BUILD_TESTING)
+    add_executable(command_editor_tests ../tests/command_editor_tests.cpp)
+    target_link_libraries(command_editor_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(command_editor_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME command_editor_tests COMMAND command_editor_tests -o -,txt)
+endif()
