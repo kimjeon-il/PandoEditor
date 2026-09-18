@@ -403,7 +403,9 @@ private slots:
         // A drag remains a draft until Apply; Undo restores its baseline.
         auto slider=visualItem(window->contentItem(),"countryOpacity"); QVERIFY(slider);
         double before=editor.countryOpacity();
-        auto start=slider->mapToScene(QPointF(slider->width()*before,slider->height()/2)).toPoint();
+        window->grabWindow(); QTest::qWait(100); // settle the reset handle position
+        auto handle=qvariant_cast<QQuickItem*>(slider->property("handle")); QVERIFY(handle);
+        auto start=handle->mapToScene(QPointF(handle->width()/2,handle->height()/2)).toPoint();
         auto end=slider->mapToScene(QPointF(slider->width()*0.2,slider->height()/2)).toPoint();
         QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,start);
         QTest::mouseMove(window,(start+end)/2,20); QTest::mouseMove(window,end,20);

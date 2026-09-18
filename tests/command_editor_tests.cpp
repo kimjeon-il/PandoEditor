@@ -93,8 +93,7 @@ private slots:
         QVERIFY(pc.saveFile(QUrl::fromLocalFile(dir.filePath("pc.json")))); QVERIFY(mobile.savePrivate());
         auto a=projectcodec::decode(bytes(dir.filePath("pc.json")));
         auto b=projectcodec::decode(bytes(dir.filePath("mobile-private.json")));
-        // Legacy sample imports may receive fresh document IDs; identities are not domain edits.
-        b.documentId=a.documentId;
+        QCOMPARE(a.documentId,b.documentId);
         pandoeditor::Project ap,bp; ap.replace(a); bp.replace(b);
         QCOMPARE(projectcodec::encode(ap),projectcodec::encode(bp));
         QCOMPARE(revision(pc),quint64(3)); QCOMPARE(revision(mobile),quint64(3));
