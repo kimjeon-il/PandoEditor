@@ -2,7 +2,7 @@
 
 ## 범위와 시작 조건
 
-[기능 조사](web-feature-audit.md)와 [데이터 모델](qt-data-model-design.md)을 구현 단위로 나눈다. 기준 웹 17c3dbe / 0.33.0, Qt 5a1717d. 이후 M1.1–M1.2 구현과 검증은 [별도 기록](qt-v3-implementation.md)에 정리했다. M1.3 범용 명령·M1.4 백그라운드 세션 및 M2 이후는 여전히 후속 계획이다. 기존 속성 Undo를 유지한 것이 범용 ChangeSet 구현 완료를 뜻하지 않는다.
+[기능 조사](web-feature-audit.md)와 [데이터 모델](qt-data-model-design.md)을 구현 단위로 나눈다. 기준 웹 17c3dbe / 0.33.0, Qt 5a1717d. 이후 M1.1–M1.2 구현과 검증은 [별도 기록](qt-v3-implementation.md)에 정리했다. M1.3 공통 명령·스냅샷 ChangeSet과 기존 PC/모바일 편집 진입점 전환은 [명령 구현 기록](qt-command-implementation.md)에 정리했다. M1.4 백그라운드 세션 및 M2 이후는 후속 계획이다. 모바일 공통 경로·360px 검증과 실제 Android 기기 검증은 구분한다.
 
 순서: M1 공통 문서·명령 → M2 가져오기 → M3 영토 객체·웹 조작 → M4 국경·영토 → M5 지명·수계·분포 → M6 역사·GIS → M7 전체 세계지도·대규모 렌더링. M1–M6는 작은 합성 지도/자료만 사용한다. 세계지도 때문에 도메인 의미 설계를 미루지 않는다.
 
@@ -16,7 +16,7 @@
 |---|---|---|---|
 | M1.1 식별자·도형·관계 | legacy decoded document 또는 typed fixture → immutable document + 인덱스 | 중복/없는 참조, 순환, 소속 불일치, 기간 충돌 거절 | 아직 UI 노출 없음; 두 어댑터가 동일 core 사용 |
 | M1.2 Qt v1/v2 migration | 기존 파일 bytes → v3 candidate/report → v3 저장 bytes | 기존 id/name/color/memo/opacity/layerId/모든 레이어 속성·순서·도형 보존 | PC 열기/저장; 모바일 열기/저장·내보내기 |
-| M1.3 CommandProcessor | Request(projectInstanceId/documentId/revision/targets/args) → preview → ChangeSet | prepare/validate 실패·취소 무변경, no-op 무이력, 단일 Undo | PC 확정/취소·Undo/Redo; 모바일 확정/취소·Undo/Redo |
+| M1.3 CommandProcessor | Request(commandId/projectInstanceId/documentId/revision/targets/args) → preview → ChangeSet | prepare/validate 실패·취소 무변경, no-op 무이력, 단일 Undo | PC 확정/취소·Undo/Redo; 모바일 확정/취소·Undo/Redo |
 | M1.4 jobs/session | snapshot + cancelToken → candidate result | 늦은 결과·재열기·Undo 후 결과 폐기 | PC 진행 표시/취소; 모바일 진행 표시/취소 |
 
 구현 파일 경계 제안: core document/refs/geometry/validation/commands, app codec/migrations 및 Qt models. 현재 core/project.h API는 어댑터로 점진 전환하여 기존 테스트를 한꺼번에 버리지 않는다. 문자열 Qt 의존성은 codec/model 경계에 둔다.
@@ -24,6 +24,8 @@
 M1 입력 fixture는 Qt v1 최소 국가 1개, v2 국가 2개+레이어 3개(숨김/잠금/opacity/순서 포함), holes/MultiPolygon, 동일 좌표를 공유하는 속성 변경, 중첩 A→S1→S2 및 지방 R, BCE/year/date 구간을 포함한다. expected 파일은 개발자가 새 구현 출력으로 자동 덮어쓰지 않고 기존 codec/웹 의미와 대조한다.
 
 완료: v1/v2→v3→재열기의 semantic equality, 새 v3 codec 실패 원자성, 관계 validation, 속성 변경에서 GeometryRef identity 유지, 한 ChangeSet Undo/Redo, 취소/오래된 job 테스트 통과. 현재 core/storage/editor/ui 회귀 테스트를 모두 실행하고 결과를 별도 기록. 성능 수치를 측정하지 않았다면 빠르다고 주장하지 않는다.
+
+M1.3 계약 보완: before/after는 문서·인덱스·CountryView를 함께 소유하는 불변 스냅샷이다. 하나의 적용 또는 즉시 명령은 국가·레이어 초안까지 묶어 한 ChangeSet으로 처리한다. prepare/실패/취소/NoOp는 기존 Redo도 보존한다. confirm/Undo/Redo는 revision을 증가시키고, dirty는 별도 저장 스냅샷과의 의미상 차이로 판단한다. preview는 일회성이며 같은 파일 재열기도 새 projectInstanceId를 갖는다. 미확정 초안이 있는 Undo/Redo는 자동 확정하지 않고 적용/취소를 요구한다. M1.4의 오래된 worker 결과 처리는 아직 완료 항목이 아니다.
 
 ## M2 — 웹 완전 저장본 가져오기와 보존 장벽
 
@@ -121,7 +123,7 @@ PC·모바일 동일 dataset manifest와 문서 로딩 명령을 사용하되 �
 
 ## 검증 실행 및 플랫폼 기록 원칙
 
-이번 설계 조사에서 실행한 웹 단위 검증은 **85개 중 84 통과/1 오류 문구 불일치 실패**다. 신규 v3 fixture나 C++ 테스트는 아직 작성·실행하지 않았다. 기존 Qt 테스트도 이번 문서 작업에서는 재실행하지 않았다. 상세 재현 목록은 기능 조사 문서를 참조한다.
+최초 설계 조사 당시 웹 단위 검증은 **85개 중 84 통과/1 오류 문구 불일치 실패**였고, 그 조사 단계에서는 신규 v3 fixture/C++ 테스트나 기존 Qt 테스트를 실행하지 않았다. 이는 당시 기록이다. 이후 M1.1–M1.2 검증은 [v3 구현 기록](qt-v3-implementation.md), M1.3과 전체 회귀 검증은 [명령 구현 기록](qt-command-implementation.md)을 참조한다. 웹 상세 재현 목록은 기능 조사 문서에 유지한다.
 
 후속 UI 단위마다 desktop과 360px 레이아웃에서 한글 버튼·툴바·하단 시트·다중 선택·확정/취소를 확인한다. 데스크톱 창을 좁힌 검증을 실제 Android로 기록하지 않는다. Android SAF, touch/long-press/pinch, 한글 IME, 화면 회전, 물리 Back은 실제 실행 기록이 있을 때만 통과다. 하이퍼바이저/OS 기능 변경·재부팅, ARM64 배포/스토어 서명은 이 문서 작업에 포함되지 않는다.
 
@@ -129,4 +131,4 @@ PC·모바일 동일 dataset manifest와 문서 로딩 명령을 사용하되 �
 
 문서 수용 기준: 등록 객체 8종/공통 action 9개 및 생성·속성·파일·보조 작업이 F행에 있고, root 저장 필드 전체가 매핑되며, 확인되지 않은 동작과 테스트 실패가 드러나고, M1/M2의 입력·출력·실패·검증 기준이 지정된 상태. 브라우저 동작 동등성은 후속 구현 gate이며 이번 문서 수용과 구분한다.
 
-다음 구현 요청의 최소 범위는 **M1.1–M1.2: 기존 Qt 문서 보존 fixture와 v3 모델/codec migration**이다. M1.3–M1.4, M2를 순서대로 이어간다. 앱 기능을 구현할 때도 별도 요청 없이 웹 저장소/배포본을 변경하거나 커밋·푸시하지 않는다.
+다음 구현 요청의 최소 범위는 **M1.4: 백그라운드 작업·세션 수명과 취소/오래된 결과 폐기**다. 이후 M2를 순서대로 이어간다. 앱 기능을 구현할 때도 별도 요청 없이 웹 저장소/배포본을 변경하거나 커밋·푸시하지 않는다.
