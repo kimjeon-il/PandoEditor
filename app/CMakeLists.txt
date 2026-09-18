@@ -2,10 +2,14 @@ qt_add_executable(pandoeditor main.cpp)
 
 add_library(pandoeditor_editor STATIC
     editorcontroller.cpp editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
+    windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
 )
 target_include_directories(pandoeditor_editor PUBLIC . ../renderer)
 target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick)
+if(WIN32)
+    target_link_libraries(pandoeditor_editor PRIVATE dwmapi user32)
+endif()
 target_link_libraries(pandoeditor PRIVATE pandoeditor_editor Qt6::QuickControls2)
 
 qt_add_resources(pandoeditor ui
@@ -13,6 +17,7 @@ qt_add_resources(pandoeditor ui
     BASE "${PROJECT_SOURCE_DIR}/ui"
     FILES
         "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
+        "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
         "${PROJECT_SOURCE_DIR}/ui/desktop/DesktopWorkspace.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/EditorPanel.qml"
@@ -42,6 +47,7 @@ if(BUILD_TESTING)
     target_link_libraries(ui_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
     qt_add_resources(ui_tests ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui"
         FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
+              "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
               "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml"
               "${PROJECT_SOURCE_DIR}/ui/common/EditorPanel.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/DesktopWorkspace.qml")

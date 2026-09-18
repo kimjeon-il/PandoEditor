@@ -1,4 +1,5 @@
 #include "editorcontroller.h"
+#include "windowsframe.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -13,6 +14,14 @@
 #include <functional>
 #include <QFile>
 #include <algorithm>
+#ifdef Q_OS_WIN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <windowsx.h>
+#undef near
+#endif
 
 static QQuickItem* visualItem(QQuickItem* root,const QString& name)
 {
@@ -67,6 +76,50 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void frameHitTargetsAtFractionalScale() {
+        // Losing local DPI conversion would route a scaled maximize click to
+        // the map; treating maximized corners as resize would break snapping.
+        const std::array<QRectF,3> buttons{QRectF(862,0,46,32),
+                                         QRectF(908,0,46,32),QRectF(954,0,46,32)};
+        for(qreal ratio : {1.0,1.25,1.5}) {
+            auto hit=[&](QPointF pixel,bool max=false) {
+                return WindowsFrame::hitTest(WindowsFrame::logicalPoint(pixel,ratio),
+                    QSizeF(1000,720),8,max,QRectF(0,0,1000,32),buttons);
+            };
+            QCOMPARE(hit(QPointF(931,16)*ratio),WindowsFrame::Maximize);
+            QCOMPARE(hit(QPointF(977,16)*ratio),WindowsFrame::Close);
+            QCOMPARE(hit(QPointF(885,16)*ratio),WindowsFrame::Minimize);
+            QCOMPARE(hit(QPointF(300,16)*ratio),WindowsFrame::Caption);
+            QCOMPARE(hit(QPointF(300,60)*ratio),WindowsFrame::Client);
+            QCOMPARE(hit(QPointF(2,2)*ratio),WindowsFrame::TopLeft);
+            QCOMPARE(hit(QPointF(998,2)*ratio),WindowsFrame::TopRight);
+            QCOMPARE(hit(QPointF(2,718)*ratio),WindowsFrame::BottomLeft);
+            QCOMPARE(hit(QPointF(998,718)*ratio),WindowsFrame::BottomRight);
+            QCOMPARE(hit(QPointF(2,300)*ratio),WindowsFrame::Left);
+            QCOMPARE(hit(QPointF(998,300)*ratio),WindowsFrame::Right);
+            QCOMPARE(hit(QPointF(500,2)*ratio),WindowsFrame::Top);
+            QCOMPARE(hit(QPointF(500,718)*ratio),WindowsFrame::Bottom);
+            QCOMPARE(hit(QPointF(2,2)*ratio,true),WindowsFrame::Caption);
+            QCOMPARE(hit(QPointF(998,2)*ratio,true),WindowsFrame::Close);
+            QCOMPARE(hit(QPointF(500,718)*ratio,true),WindowsFrame::Client);
+        }
+    }
+    void nativeFrameAdapterHasSafeFallback() {
+        EditorController editor;
+        QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("editor", &editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY(!engine.rootObjects().isEmpty());
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); QVERIFY(window);
+        auto frame=window->findChild<QObject*>("windowsFrame");
+        QVERIFY2(frame,"Main window must own the native frame lifecycle adapter");
+        if(QGuiApplication::platformName()!="windows") {
+            QVERIFY(!frame->property("active").toBool());
+            QVERIFY(!window->flags().testFlag(Qt::FramelessWindowHint));
+            QVERIFY(!visualItem(window->contentItem(),"desktopTitleBar")->isVisible());
+        }
+        window->close();
+    }
     void desktopOpenRequestDoesNotCommitDraftBeforeFileValidation() {
         EditorController editor;
         QQmlApplicationEngine engine;
@@ -97,29 +150,65 @@ private slots:
         exposeForTest(window);
         auto titleBar=visualItem(window->contentItem(),"desktopTitleBar"); QVERIFY(titleBar);
         auto toolbar=visualItem(window->contentItem(),"storageToolbar"); QVERIFY(toolbar);
-#ifndef Q_OS_WIN
+        if(QGuiApplication::platformName()!="windows") {
         QVERIFY(!titleBar->isVisible());
         QCOMPARE(toolbar->mapToScene(QPointF()).y(),0.0);
         window->close();
         return;
-#endif
+        }
+#ifdef Q_OS_WIN
+        auto frame=window->findChild<WindowsFrame*>("windowsFrame"); QVERIFY(frame);
+        QTRY_VERIFY(frame->active());
         QCOMPARE(titleBar->height(),32.0);
         QCOMPARE(toolbar->mapToScene(QPointF()).y(),32.0);
         QVERIFY(visualItem(window->contentItem(),"minimizeWindowButton"));
         QVERIFY(visualItem(window->contentItem(),"maximizeWindowButton"));
         QVERIFY(visualItem(window->contentItem(),"closeWindowButton"));
+        auto maxButton=visualItem(window->contentItem(),"maximizeWindowButton");
+        QCOMPARE(maxButton->width(),46.0);
+        QCOMPARE(maxButton->height(),32.0);
+        const auto hwnd=reinterpret_cast<HWND>(window->winId());
+        auto nativePoint=[&](QPointF local) {
+            POINT point{qRound(local.x()*window->devicePixelRatio()),qRound(local.y()*window->devicePixelRatio())};
+            ClientToScreen(reinterpret_cast<HWND>(window->winId()),&point);
+            return MAKELPARAM(point.x,point.y);
+        };
+        QCOMPARE(SendMessage(hwnd,WM_NCHITTEST,0,nativePoint(maxButton->mapToScene(QPointF(23,16)))),LRESULT(HTMAXBUTTON));
+        QCOMPARE(SendMessage(hwnd,WM_NCHITTEST,0,nativePoint(QPointF(250,16))),LRESULT(HTCAPTION));
+        QCOMPARE(SendMessage(hwnd,WM_NCHITTEST,0,nativePoint(QPointF(1,1))),LRESULT(HTTOPLEFT));
+        MSG queuedClick{};
+        queuedClick.hwnd=hwnd;
+        queuedClick.message=WM_NCLBUTTONDOWN;
+        queuedClick.wParam=HTMAXBUTTON;
+        queuedClick.lParam=nativePoint(maxButton->mapToScene(QPointF(23,16)));
+        QVERIFY(frame->nativeEventFilter("windows_generic_MSG",&queuedClick,nullptr));
+        QCOMPARE(frame->pressedButton(),2);
+        const auto releasePoint=maxButton->mapToScene(QPointF(23,16))*window->devicePixelRatio();
+        PostMessage(hwnd,WM_LBUTTONUP,0,MAKELPARAM(qRound(releasePoint.x()),qRound(releasePoint.y())));
+        QTRY_COMPARE(window->visibility(),QWindow::Maximized);
+        QVERIFY(clickControl(window,"maximizeWindowButton"));
+        QTRY_COMPARE(window->visibility(),QWindow::Windowed);
+        QVERIFY(capture(window).save("titlebar-normal.png"));
         const auto normalSize=window->size();
         QVERIFY(clickControl(window,"maximizeWindowButton"));
         QTRY_COMPARE(window->visibility(),QWindow::Maximized);
         QCOMPARE(titleBar->height(),32.0);
         QCOMPARE(toolbar->mapToScene(QPointF()).y(),32.0);
         QVERIFY(capture(window).save("titlebar-maximized.png"));
+        RECT client{}; GetClientRect(hwnd,&client);
+        POINT origin{0,0}; ClientToScreen(hwnd,&origin);
+        MONITORINFO monitor{sizeof(MONITORINFO)};
+        QVERIFY(GetMonitorInfo(MonitorFromWindow(hwnd,MONITOR_DEFAULTTONEAREST),&monitor));
+        QCOMPARE(origin.x,monitor.rcWork.left);
+        QCOMPARE(origin.y,monitor.rcWork.top);
+        QCOMPARE(client.right,monitor.rcWork.right-monitor.rcWork.left);
+        QCOMPARE(client.bottom,monitor.rcWork.bottom-monitor.rcWork.top);
         QVERIFY(clickControl(window,"maximizeWindowButton"));
         QTRY_COMPARE(window->visibility(),QWindow::Windowed);
         QTRY_COMPARE(window->size(),normalSize);
-        QTest::mouseDClick(window,Qt::LeftButton,Qt::NoModifier,QPoint(250,16));
+        SendMessage(hwnd,WM_NCLBUTTONDBLCLK,HTCAPTION,nativePoint(QPointF(250,16)));
         QTRY_COMPARE(window->visibility(),QWindow::Maximized);
-        QTest::mouseDClick(window,Qt::LeftButton,Qt::NoModifier,QPoint(250,16));
+        SendMessage(hwnd,WM_NCLBUTTONDBLCLK,HTCAPTION,nativePoint(QPointF(250,16)));
         QTRY_COMPARE(window->visibility(),QWindow::Windowed);
         QVERIFY(clickControl(window,"minimizeWindowButton"));
         QTRY_COMPARE(window->visibility(),QWindow::Minimized);
@@ -131,10 +220,33 @@ private slots:
         QTRY_VERIFY(unsaved->property("visible").toBool());
         QVERIFY(clickControl(window,"cancelUnsaved"));
         QVERIFY(window->isVisible());
+        // SC_CLOSE is shared by Alt+F4 and system-menu Close, never DestroyWindow.
+        SendMessage(hwnd,WM_SYSCOMMAND,SC_CLOSE,0);
+        QTRY_VERIFY(unsaved->property("visible").toBool());
+        QVERIFY(clickControl(window,"cancelUnsaved"));
+        // The native frame can be detached/re-attached without a frameless orphan.
+        frame->setEnabled(false);
+        QVERIFY(!frame->active());
+        QVERIFY(!titleBar->isVisible());
+        QCOMPARE(toolbar->mapToScene(QPointF()).y(),0.0);
+        frame->setEnabled(true);
+        QTRY_VERIFY(frame->active());
+        QCOMPARE(titleBar->height(),32.0);
+        window->hide();
+        window->destroy();
+        QVERIFY(!frame->active());
+        QTest::qWait(100);
+        QVERIFY(!frame->active());
+        window->create(); window->show();
+        QTRY_VERIFY(frame->active());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        QCOMPARE(SendMessage(reinterpret_cast<HWND>(window->winId()),WM_NCHITTEST,0,
+                   nativePoint(maxButton->mapToScene(QPointF(23,16)))),LRESULT(HTMAXBUTTON));
         window->setProperty("allowClose",true);
         QTest::qWait(250);
         QVERIFY(clickControl(window,"closeWindowButton"));
         QTRY_VERIFY(!window->isVisible());
+#endif
     }
     void mobileStorageFlow() {
         QTemporaryDir directory;
@@ -499,6 +611,7 @@ private slots:
 int main(int argc,char** argv) {
     QQuickStyle::setStyle("Basic");
     QGuiApplication app(argc,argv);
+    registerWindowsFrameType();
     if (qEnvironmentVariable("QT_QPA_PLATFORM")=="offscreen") {
         int font=QFontDatabase::addApplicationFont(qEnvironmentVariable("WINDIR")+"/Fonts/malgun.ttf");
         if (font>=0) app.setFont(QFont(QFontDatabase::applicationFontFamilies(font).first()));

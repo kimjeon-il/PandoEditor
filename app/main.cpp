@@ -6,6 +6,7 @@
 #include <QString>
 #include <QQmlContext>
 #include "editorcontroller.h"
+#include "windowsframe.h"
 #include <QQuickStyle>
 
 #include <cstdlib>
@@ -14,6 +15,7 @@ int main(int argc, char *argv[])
 {
     QQuickStyle::setStyle("Basic");
     QGuiApplication application(argc, argv);
+    registerWindowsFrameType();
     QCoreApplication::setApplicationName(QStringLiteral("Pandoeditor"));
 
     const auto version = pandoeditor::version();

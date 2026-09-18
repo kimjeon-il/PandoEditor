@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Native
 import "../desktop" as Desktop
+import Pandoeditor.Windowing 1.0
 
 ApplicationWindow {
     id: window
@@ -16,7 +17,8 @@ ApplicationWindow {
     footer: Label {
         objectName: "documentFormatNotice"
         property bool expanded: false
-        height: expanded ? implicitHeight+12 : 26
+        width: window.width
+        height: expanded ? contentHeight+12 : 26
         leftPadding: 8
         rightPadding: 8
         verticalAlignment: Text.AlignVCenter
@@ -27,9 +29,20 @@ ApplicationWindow {
         background: Rectangle { color: "#edf1f5" }
         TapHandler { onTapped: parent.expanded = !parent.expanded }
     }
-    property bool desktopFrameEnabled: !editor.mobileMode && Qt.platform.os === "windows"
+    readonly property bool desktopFrameEnabled: nativeFrame.active
     property bool maximized: visibility === Window.Maximized
-    flags: desktopFrameEnabled ? (Qt.FramelessWindowHint | Qt.Window) : Qt.Window
+    flags: Qt.Window
+    WindowsFrame {
+        id: nativeFrame
+        objectName: "windowsFrame"
+        window: window
+        enabled: !editor.mobileMode && Qt.platform.os === "windows"
+        blocked: unsaved.visible || errorDialog.visible || recoveryDialog.visible
+        caption: desktopTitleBar
+        minimizeButton: minimizeWindowButton
+        maximizeButton: maximizeWindowButton
+        closeButton: closeWindowButton
+    }
 
     property string pendingAction: ""
     property bool allowClose: false
@@ -101,9 +114,12 @@ ApplicationWindow {
         anchors.left: parent.left
         anchors.right: parent.right
         z: 100
-        color: "#f3f3f3"
-        border.color: "#d5d5d5"
-        border.width: 1
+        color: window.active ? "#f3f3f3" : "#fafafa"
+        Rectangle {
+            anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+            height: 1 / Screen.devicePixelRatio
+            color: window.active ? "#dddddd" : "#e8e8e8"
+        }
         Label {
             anchors.left: parent.left
             anchors.leftMargin: 10
@@ -112,93 +128,38 @@ ApplicationWindow {
             anchors.verticalCenter: parent.verticalCenter
             text: window.title
             elide: Text.ElideRight
-            color: "#222222"
-            font.pixelSize: 13
-        }
-        MouseArea {
-            objectName: "titleBarDragArea"
-            anchors.fill: parent
-            anchors.rightMargin: windowControls.width
-            property point pressPoint
-            property bool moving: false
-            onPressed: function(mouse) {
-                pressPoint = Qt.point(mouse.x, mouse.y)
-                moving = false
-            }
-            onPositionChanged: function(mouse) {
-                if (!pressed || moving || Math.hypot(mouse.x-pressPoint.x, mouse.y-pressPoint.y) < Qt.styleHints.startDragDistance) return
-                moving = true
-                if (window.maximized) {
-                    let globalPoint = mapToGlobal(mouse.x, mouse.y)
-                    let horizontalRatio = pressPoint.x / window.width
-                    window.showNormal()
-                    window.x = Math.round(globalPoint.x - window.width * horizontalRatio)
-                    window.y = Math.round(globalPoint.y - pressPoint.y)
-                }
-                window.startSystemMove()
-            }
-            onDoubleClicked: function(mouse) {
-                if (mouse.button === Qt.LeftButton) window.toggleMaximized()
-            }
+            color: window.active ? "#222222" : "#777777"
+            font: nativeFrame.captionFont
         }
         Row {
             id: windowControls
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            ToolButton {
+            Desktop.CaptionButton {
+                id: minimizeWindowButton
                 objectName: "minimizeWindowButton"
-                Accessible.name: "최소화"
-                width: 46
-                height: parent.height
-                text: "−"
-                font.pixelSize: 17
-                onClicked: window.showMinimized()
+                captionAction: 1
+                frame: nativeFrame
+                windowActive: window.active
             }
-            ToolButton {
+            Desktop.CaptionButton {
+                id: maximizeWindowButton
                 objectName: "maximizeWindowButton"
-                Accessible.name: window.maximized ? "이전 크기로 복원" : "최대화"
-                width: 46
-                height: parent.height
-                text: window.maximized ? "❐" : "□"
-                font.pixelSize: 15
-                onClicked: window.toggleMaximized()
+                captionAction: 2
+                frame: nativeFrame
+                maximized: window.maximized
+                windowActive: window.active
             }
-            ToolButton {
+            Desktop.CaptionButton {
+                id: closeWindowButton
                 objectName: "closeWindowButton"
-                Accessible.name: "닫기"
-                width: 46
-                height: parent.height
-                text: "×"
-                font.pixelSize: 20
-                onClicked: window.close()
-                background: Rectangle { color: parent.hovered ? "#c42b1c" : "transparent" }
-                contentItem: Text {
-                    text: parent.text
-                    color: parent.hovered ? "white" : "#222222"
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    font: parent.font
-                }
+                captionAction: 3
+                frame: nativeFrame
+                windowActive: window.active
             }
         }
     }
-    component ResizeHandle: MouseArea {
-        property int resizeEdges: 0
-        enabled: window.desktopFrameEnabled && !window.maximized
-        z: 200
-        onPressed: function(mouse) {
-            if (mouse.button === Qt.LeftButton) window.startSystemResize(resizeEdges)
-        }
-    }
-    ResizeHandle { anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 6; resizeEdges: Qt.LeftEdge; cursorShape: Qt.SizeHorCursor }
-    ResizeHandle { anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 6; resizeEdges: Qt.RightEdge; cursorShape: Qt.SizeHorCursor }
-    ResizeHandle { anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; height: 6; resizeEdges: Qt.TopEdge; cursorShape: Qt.SizeVerCursor }
-    ResizeHandle { anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; height: 6; resizeEdges: Qt.BottomEdge; cursorShape: Qt.SizeVerCursor }
-    ResizeHandle { anchors.left: parent.left; anchors.top: parent.top; width: 8; height: 8; resizeEdges: Qt.LeftEdge | Qt.TopEdge; cursorShape: Qt.SizeFDiagCursor }
-    ResizeHandle { anchors.right: parent.right; anchors.top: parent.top; width: 8; height: 8; resizeEdges: Qt.RightEdge | Qt.TopEdge; cursorShape: Qt.SizeBDiagCursor }
-    ResizeHandle { anchors.left: parent.left; anchors.bottom: parent.bottom; width: 8; height: 8; resizeEdges: Qt.LeftEdge | Qt.BottomEdge; cursorShape: Qt.SizeBDiagCursor }
-    ResizeHandle { anchors.right: parent.right; anchors.bottom: parent.bottom; width: 8; height: 8; resizeEdges: Qt.RightEdge | Qt.BottomEdge; cursorShape: Qt.SizeFDiagCursor }
     Desktop.DesktopWorkspace {
         id: workspace
         anchors.left: parent.left
