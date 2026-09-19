@@ -511,6 +511,19 @@ private slots:
             QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));window->setProperty("allowClose",true);window->close();
         }
     }
+    void territorialConversionSetupDoesNotMutateDocumentAcrossPcAnd360px() {
+        for(bool mobile:{false,true}) {
+            EditorController editor(EditorControllerConfig{mobile,{}}); QQmlApplicationEngine engine; QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& e:errors) warnings<<e.toString();});
+            engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+            auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);window->resize(mobile?360:1100,mobile?640:760);exposeForTest(window);QVERIFY(clickControl(window,"countryTab"));editor.selectCountry("DEU");
+            const auto revision=editor.revision();auto button=visualItem(window->contentItem(),"convertTerritorial");QVERIFY(button&&button->isVisible());QVERIFY(QMetaObject::invokeMethod(button,"clicked"));QTRY_VERIFY(editor.structureDialogOpen());
+            QCOMPARE(editor.revision(),revision);QVERIFY(editor.structureState().value("conversionSetup").toBool());QVERIFY(!editor.structureState().value("generatedId").toString().isEmpty());
+            auto dialog=window->findChild<QObject*>("territorialStructureDialog");QVERIFY(dialog&&dialog->property("visible").toBool());auto confirm=visualItem(window->contentItem(),"confirmTerritorialStructure");QVERIFY(confirm&&!confirm->isEnabled());
+            editor.cancelStructureMutation();QTRY_VERIFY(!editor.structureDialogOpen());QCOMPARE(editor.revision(),revision);
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));window->setProperty("allowClose",true);window->close();
+        }
+    }
     void compositing() {
         using namespace pandoeditor;
         Project project;

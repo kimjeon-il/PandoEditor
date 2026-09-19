@@ -176,7 +176,7 @@ public:
     QVariantMap structureState() const;
     QVariantList relationCountryOptions() const;
     QVariantList relationParentOptions() const;
-    bool structureDialogOpen() const { return structureSession_.has_value(); }
+    bool structureDialogOpen() const { return structureSession_.has_value() || conversionDraft_.has_value(); }
     Q_INVOKABLE bool changeSelectedParent(const QString& parentId);
     Q_INVOKABLE bool changeSelectedRegionSovereign(const QString& countryId);
     Q_INVOKABLE bool beginDeleteSelection();
@@ -290,7 +290,12 @@ private:
     bool fieldCommitInProgress_=false;
     std::optional<pandoeditor::CommandPreview> pendingPreview_;
     struct StructureSession { pandoeditor::ProjectSnapshot base; pandoeditor::TerritorialMutationPlan plan; };
+    // A country-to-subunit conversion needs a destination sovereign and parent
+    // before the core can create a valid immutable plan.  Keep those UI-only
+    // choices out of the document until the user has supplied both values.
+    struct ConversionDraft { pandoeditor::ProjectSnapshot base; pandoeditor::ConvertTerritorialTypeIntent intent; };
     std::optional<StructureSession> structureSession_;
+    std::optional<ConversionDraft> conversionDraft_;
     bool setStructurePlan(const pandoeditor::TerritorialMutationIntent&);
     MapProjection projection_;
     QString selected_,selectedLayer_="countries",filePath_;

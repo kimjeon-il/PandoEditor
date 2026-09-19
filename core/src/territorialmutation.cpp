@@ -61,7 +61,14 @@ TerritorialMutationPlan planTransfer(const ProjectSnapshot& s,const TransferSubu
 }
 TerritorialMutationPlan planConversion(const ProjectSnapshot& s,const ConvertTerritorialTypeIntent& in) {
     const auto& u=unit(s,in.source);unlocked(u);if((u.kind==UnitKind::Subunit&&in.targetKind!=UnitKind::Country)||(u.kind==UnitKind::Country&&in.targetKind!=UnitKind::Subunit))throw std::invalid_argument("VALIDATION_FAILED");
-    if(u.kind==UnitKind::Country&& (in.generatedId.empty()||in.generatedId==u.id||!in.sovereign||!in.parent))throw std::invalid_argument("INVALID_ARGUMENTS");
+    if(u.kind==UnitKind::Country) {
+        if(in.generatedId.empty()||in.generatedId==u.id||s.index().objects.count(territorialRef(in.generatedId))||!in.sovereign||!in.parent)throw std::invalid_argument("INVALID_ARGUMENTS");
+        const auto& sovereign=unit(s,*in.sovereign);const auto& parent=unit(s,*in.parent);unlocked(sovereign);unlocked(parent);
+        if(sovereign.kind!=UnitKind::Country||!(parent.kind==UnitKind::Country||parent.kind==UnitKind::Subunit))throw std::invalid_argument("SOVEREIGN_MISMATCH");
+        if(parent.kind==UnitKind::Country && !(*in.parent==*in.sovereign))throw std::invalid_argument("SOVEREIGN_MISMATCH");
+        if(parent.kind==UnitKind::Subunit) {const auto r=base(s.document(),*in.parent);if(!r||!r->sovereign||!(*r->sovereign==*in.sovereign))throw std::invalid_argument("SOVEREIGN_MISMATCH");}
+        if(!geometryContains(*s.document().geometries.get(parent.geometry),*s.document().geometries.get(u.geometry)))throw std::invalid_argument("GEOMETRY_OUTSIDE_PARENT");
+    }
     std::vector<ObjectRef> sources{in.source};
     if(u.kind==UnitKind::Subunit) {const auto r=base(s.document(),in.source);if(!r||!r->sovereign)throw std::invalid_argument("SOVEREIGN_MISMATCH");sources.push_back(*r->sovereign);}
     else sources.push_back(*in.sovereign);
@@ -70,6 +77,7 @@ TerritorialMutationPlan planConversion(const ProjectSnapshot& s,const ConvertTer
         if(e.jsonPointer=="/distributionEntries"||e.jsonPointer=="/genericFeatures")p.rewrites.push_back({e.jsonPointer,ReferenceRewriteOperation::ReplaceId,in.source.id,p.selectedAfter->id});
         else if(e.jsonPointer=="/itemVisibility"||e.jsonPointer=="/labelSettings")p.rewrites.push_back({e.jsonPointer,ReferenceRewriteOperation::ReplaceId,in.source.id,p.selectedAfter->id});
     }
+    guard(p,s.document(),in.source,"convert");
     p.impacts.push_back({"convert",in.source,"territorial.convert.requiresGeometry"});return p;
 }
 }

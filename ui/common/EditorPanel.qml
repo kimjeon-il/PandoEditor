@@ -344,12 +344,34 @@ Rectangle {
         contentItem: ColumnLayout {
             spacing: 10
             Label { Layout.fillWidth: true; text: editor.structureState.detail; wrapMode: Text.WordWrap }
+            Label { visible: editor.structureState.conversionSetup === true; text: "새 객체 ID: " + (editor.structureState.generatedId || "") ; wrapMode: Text.WrapAnywhere }
+            ComboBox {
+                id: conversionSovereign
+                objectName: "conversionSovereign"
+                visible: editor.structureState.conversionSetup === true
+                Layout.fillWidth: true; model: editor.relationCountryOptions; textRole: "name"; valueRole: "id"
+                displayText: "소속 국가 선택"
+            }
+            ComboBox {
+                id: conversionParent
+                objectName: "conversionParent"
+                visible: editor.structureState.conversionSetup === true
+                Layout.fillWidth: true; model: editor.relationParentOptions; textRole: "name"; valueRole: "id"
+                displayText: "상위 영역 선택"
+            }
+            Button {
+                objectName: "applyConversionTarget"
+                visible: editor.structureState.conversionSetup === true
+                text: "전환 대상 설정"
+                enabled: conversionSovereign.currentValue !== "" && conversionParent.currentValue !== ""
+                onClicked: editor.updateTypeConversionTarget(conversionSovereign.currentValue, conversionParent.currentValue)
+            }
             Repeater { model: editor.structureState.impacts || []; delegate: Label { required property var modelData; text: modelData.messageKey + " · " + modelData.id } }
             RowLayout {
                 Layout.fillWidth: true
                 Button { text: "취소"; onClicked: editor.cancelStructureMutation() }
                 Item { Layout.fillWidth: true }
-                Button { objectName: "confirmTerritorialStructure"; text: "확인"; enabled: !editor.structureState.geometryRequired; onClicked: editor.confirmStructureMutation() }
+                Button { objectName: "confirmTerritorialStructure"; text: "확인"; enabled: editor.structureState.geometryRequired !== true && editor.structureState.conversionSetup !== true; onClicked: editor.confirmStructureMutation() }
             }
         }
     }
