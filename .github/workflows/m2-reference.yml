@@ -1,0 +1,30 @@
+name: M2 pinned reference
+on:
+  push:
+    branches: [codex/m2-web-import]
+    paths: ['.github/workflows/m2-reference.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: kimjeon-il/world-map
+          ref: 58e4087f85aa51884bc4ab80959e05010d94d7d5
+          persist-credentials: false
+      - name: Archive pinned sources
+        run: |
+          git archive --format=tar.gz -o "$RUNNER_TEMP/web-reference.tar.gz" HEAD assets/js tests/unit package.json
+          sudo apt-get update
+          sudo apt-get install -y libgl-dev libegl-dev libopengl-dev
+          tar -czf "$RUNNER_TEMP/gl-headers.tar.gz" -C /usr/include GL EGL KHR
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m2-pinned-web-reference
+          path: |
+            ${{ runner.temp }}/web-reference.tar.gz
+            ${{ runner.temp }}/gl-headers.tar.gz
+          retention-days: 3
