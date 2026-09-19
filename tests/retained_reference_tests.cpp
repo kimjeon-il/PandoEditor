@@ -39,6 +39,20 @@ private slots:
   auto callback=[](const ProjectDocument& before,const TerritorialMutationPlan& mutation,std::vector<PreservedExtension>& candidate){auto r=retainedrefs::rewrite(before,mutation,candidate);return ExtensionRewriteResult{r.ok,r.detail,r.handledExtensionIds};};auto prepared=CommandProcessor::prepare(project,request,callback);QVERIFY(prepared.ok());QVERIFY(CommandProcessor::confirm(project,*prepared.preview).ok());
   const auto saved=projectcodec::encode(project);QVERIFY(saved.contains("9007199254740993123456789"));pandoeditor::Project reopened;reopened.replace(projectcodec::decode(saved));QCOMPARE(projectcodec::encode(reopened),saved);QVERIFY(!reopened.index().objects.count(territorialRef("S")));QVERIFY(reopened.index().objects.count(territorialRef("R")));QCOMPARE(reopened.document().extensions.front().payload,std::string(R"([{"share":9007199254740993123456789,"territorialUnitId":"R"}])"));
  }
+ void unknownAndArchiveDependenciesBlockStructuralDelete() {
+  Geometry g;g.type="Polygon";g.polygons.push_back(Polygon{Ring{{0,0},{3,0},{3,3},{0,3},{0,0}}});
+  for(const auto status:{std::string("unsupported"),std::string("migrationArchive")}) {
+   ProjectDocument d({{"A","A",g.polygons,0x112233,"",1,"countries"}},{{"countries","Countries"}});auto geo=GeometryRef{"s",1};d.geometries.insert(geo,g);d.units.push_back({"S","S","",UnitKind::Region,geo});d.presentation.membership[territorialRef("S")]="countries";d.presentation.objectStyles[territorialRef("S")]={};
+   PreservedExtension ext;ext.id="opaque";ext.status=status;ext.jsonPointer="/future";ext.payload=R"({"ownerId":"S"})";ext.dependencyKnowledge="unknown";ext.envelopeExtras=status=="migrationArchive"?R"({"future":true})":"{}";d.extensions.push_back(ext);
+   Project project;project.replace(d);const auto revision=project.revision();auto planned=CommandProcessor::planTerritorial(project,DeleteTerritorialIntent{{territorialRef("S")}});QCOMPARE(planned.error,CommandError::UnsupportedDependency);QCOMPARE(project.revision(),revision);QVERIFY(project.index().objects.count(territorialRef("S")));
+  }
+ }
+ void conversionRewritesAllKnownPathsLosslessly() {
+  ProjectDocument before;TerritorialMutationPlan plan;plan.rewrites={{"/distributionEntries",ReferenceRewriteOperation::ReplaceId,"A","B"},{"/genericFeatures",ReferenceRewriteOperation::ReplaceId,"A","B"},{"/itemVisibility",ReferenceRewriteOperation::ReplaceId,"A","B"},{"/labelSettings",ReferenceRewriteOperation::ReplaceId,"A","B"}};
+  std::vector<PreservedExtension> candidate;auto add=[&](std::string id,std::string path,std::string payload){PreservedExtension e;e.id=std::move(id);e.jsonPointer=std::move(path);e.payload=std::move(payload);candidate.push_back(std::move(e));};
+  add("d","/distributionEntries",R"([{"territorialUnitId":"A","n":9007199254740993}])");add("g","/genericFeatures",R"([{"properties":{"ownerId":"A"},"raw":1e999}])");add("v","/itemVisibility",R"({"subunits":{"A":false}})");add("l","/labelSettings",R"({"territorial:subunit:A":{"pinned":true}})");
+  const auto rewritten=retainedrefs::rewrite(before,plan,candidate);QVERIFY(rewritten.ok);QCOMPARE(rewritten.handledExtensionIds.size(),std::size_t(4));QVERIFY(QByteArray::fromStdString(candidate[0].payload).contains("9007199254740993"));QVERIFY(QByteArray::fromStdString(candidate[1].payload).contains("1e999"));QVERIFY(QByteArray::fromStdString(candidate[2].payload).contains("\"B\""));QVERIFY(QByteArray::fromStdString(candidate[3].payload).contains("territorial:subunit:B"));
+ }
 };
 QTEST_MAIN(RetainedReferenceTests)
 #include "retained_reference_tests.moc"

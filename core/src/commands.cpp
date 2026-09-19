@@ -455,7 +455,7 @@ TerritorialPlanResult CommandProcessor::planTerritorial(const ProjectSnapshot& p
             else if constexpr(std::is_same_v<T,TransferSubunitIntent>)result.plan=planTransfer(project,value);
             else if constexpr(std::is_same_v<T,ConvertTerritorialTypeIntent>)result.plan=planConversion(project,value);
         },intent);result.status=CommandStatus::Prepared;
-    } catch(const std::invalid_argument& e) { result.detail=e.what();result.error=result.detail=="LOCKED"?CommandError::Locked:result.detail=="INVALID_TARGETS"?CommandError::InvalidTargets:CommandError::ValidationFailed; }
+    } catch(const std::invalid_argument& e) { result.detail=e.what();result.error=result.detail=="LOCKED"?CommandError::Locked:result.detail=="INVALID_TARGETS"?CommandError::InvalidTargets:result.detail=="UNSUPPORTED_DEPENDENCY"?CommandError::UnsupportedDependency:CommandError::ValidationFailed; }
     catch(...) { result.error=CommandError::PrepareFailed; }
     return result;
 }

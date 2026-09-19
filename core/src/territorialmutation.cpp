@@ -21,6 +21,13 @@ TerritorialMutationPlan initial(const ProjectSnapshot& s,TerritorialMutationKind
 void guard(TerritorialMutationPlan& p,const ProjectDocument& d,const ObjectRef& ref,const std::string& effect) {
     for(const auto& id:blockingExtensions(d,ref,effect)) { auto it=std::find_if(d.extensions.begin(),d.extensions.end(),[&](const auto& e){return e.id==id;}); if(it!=d.extensions.end())p.retainedGuards.push_back({id,it->payload}); }
 }
+bool rewritable(const PreservedExtension& e) {
+    if(e.status=="migrationArchive"||e.dependencyKnowledge!="known"||e.envelopeExtras!="{}")return false;
+    return e.jsonPointer=="/distributionEntries"||e.jsonPointer=="/itemVisibility"||e.jsonPointer=="/labelSettings"||e.jsonPointer=="/genericFeatures";
+}
+void requireRewritableGuards(const TerritorialMutationPlan& p,const ProjectDocument& d) {
+    for(const auto& g:p.retainedGuards) {auto it=std::find_if(d.extensions.begin(),d.extensions.end(),[&](const auto& e){return e.id==g.id;});if(it==d.extensions.end()||!rewritable(*it))throw std::invalid_argument("UNSUPPORTED_DEPENDENCY");}
+}
 bool descendant(const ProjectDocument& d,const ObjectRef& child,const ObjectRef& ancestor) {
     auto current=child; for(std::size_t steps=0;steps<d.units.size();++steps){auto r=base(d,current);if(!r||!r->parent)return false;if(*r->parent==ancestor)return true;current=*r->parent;}return false;
 }
@@ -47,7 +54,7 @@ TerritorialMutationPlan planCreate(const ProjectSnapshot& s,const CreateTerritor
 }
 TerritorialMutationPlan planDelete(const ProjectSnapshot& s,const DeleteTerritorialIntent& in) {
     if(in.targets.empty())throw std::invalid_argument("INVALID_TARGETS");auto p=initial(s,TerritorialMutationKind::DeleteUnits,in);p.targets=in.targets;p.affectedObjects=in.targets;p.requiresConfirmation=true;
-    for(const auto& ref:in.targets){const auto& u=unit(s,ref);unlocked(u);for(const auto& r:s.document().relations)if(!r.dated&&r.parent&&*r.parent==ref&&std::find(in.targets.begin(),in.targets.end(),r.unit)==in.targets.end())throw std::invalid_argument("HAS_BASE_CHILD");guard(p,s.document(),ref,"delete");
+    for(const auto& ref:in.targets){const auto& u=unit(s,ref);unlocked(u);for(const auto& r:s.document().relations)if(!r.dated&&r.parent&&*r.parent==ref&&std::find(in.targets.begin(),in.targets.end(),r.unit)==in.targets.end())throw std::invalid_argument("HAS_BASE_CHILD");guard(p,s.document(),ref,"delete");requireRewritableGuards(p,s.document());
         for(const auto& extension:s.document().extensions) {
             if(extension.status=="migrationArchive")continue;
             if(extension.jsonPointer=="/distributionEntries"||extension.jsonPointer=="/genericFeatures")p.rewrites.push_back({extension.jsonPointer,ReferenceRewriteOperation::RemoveEntry,ref.id,{}});
@@ -77,7 +84,7 @@ TerritorialMutationPlan planConversion(const ProjectSnapshot& s,const ConvertTer
         if(e.jsonPointer=="/distributionEntries"||e.jsonPointer=="/genericFeatures")p.rewrites.push_back({e.jsonPointer,ReferenceRewriteOperation::ReplaceId,in.source.id,p.selectedAfter->id});
         else if(e.jsonPointer=="/itemVisibility"||e.jsonPointer=="/labelSettings")p.rewrites.push_back({e.jsonPointer,ReferenceRewriteOperation::ReplaceId,in.source.id,p.selectedAfter->id});
     }
-    guard(p,s.document(),in.source,"convert");
+    guard(p,s.document(),in.source,"convert");requireRewritableGuards(p,s.document());
     p.impacts.push_back({"convert",in.source,"territorial.convert.requiresGeometry"});return p;
 }
 }
