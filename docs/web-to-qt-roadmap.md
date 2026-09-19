@@ -2,7 +2,7 @@
 
 ## 범위와 시작 조건
 
-[기능 조사](web-feature-audit.md)와 [데이터 모델](qt-data-model-design.md)을 구현 단위로 나눈다. 기준 웹 17c3dbe / 0.33.0, Qt 5a1717d. 이후 M1.1–M1.2 구현과 검증은 [별도 기록](qt-v3-implementation.md)에 정리했다. M1.3 공통 명령·스냅샷 ChangeSet과 기존 PC/모바일 편집 진입점 전환은 [명령 구현 기록](qt-command-implementation.md)에 정리했다. M1.4 백그라운드 세션 및 M2 이후는 후속 계획이다. 모바일 공통 경로·360px 검증과 실제 Android 기기 검증은 구분한다.
+[기능 조사](web-feature-audit.md)와 [데이터 모델](qt-data-model-design.md)을 구현 단위로 나눈다. 기준 웹 17c3dbe / 0.33.0, Qt 5a1717d. 이후 M1.1–M1.2 구현과 검증은 [별도 기록](qt-v3-implementation.md)에 정리했다. M1.3 공통 명령·스냅샷 ChangeSet과 기존 PC/모바일 편집 진입점 전환은 [명령 구현 기록](qt-command-implementation.md)에 정리했다. M1.4 스냅샷 작업·취소·세션 수명은 [작업 구현 기록](qt-job-implementation.md)에 정리했다. M2 이후의 웹 기능 이식은 후속 계획이다. [기능 동등성 계약](web-parity-contract.md)에 따라 실제 웹 진입·입력·결과·확정 경계를 임의로 변형하지 않는다. 모바일 공통 경로·360px 검증과 실제 Android 기기 검증은 구분한다.
 
 순서: M1 공통 문서·명령 → M2 가져오기 → M3 영토 객체·웹 조작 → M4 국경·영토 → M5 지명·수계·분포 → M6 역사·GIS → M7 전체 세계지도·대규모 렌더링. M1–M6는 작은 합성 지도/자료만 사용한다. 세계지도 때문에 도메인 의미 설계를 미루지 않는다.
 
@@ -25,7 +25,7 @@ M1 입력 fixture는 Qt v1 최소 국가 1개, v2 국가 2개+레이어 3개(숨
 
 완료: v1/v2→v3→재열기의 semantic equality, 새 v3 codec 실패 원자성, 관계 validation, 속성 변경에서 GeometryRef identity 유지, 한 ChangeSet Undo/Redo, 취소/오래된 job 테스트 통과. 현재 core/storage/editor/ui 회귀 테스트를 모두 실행하고 결과를 별도 기록. 성능 수치를 측정하지 않았다면 빠르다고 주장하지 않는다.
 
-M1.3 계약 보완: before/after는 문서·인덱스·CountryView를 함께 소유하는 불변 스냅샷이다. 하나의 적용 또는 즉시 명령은 국가·레이어 초안까지 묶어 한 ChangeSet으로 처리한다. prepare/실패/취소/NoOp는 기존 Redo도 보존한다. confirm/Undo/Redo는 revision을 증가시키고, dirty는 별도 저장 스냅샷과의 의미상 차이로 판단한다. preview는 일회성이며 같은 파일 재열기도 새 projectInstanceId를 갖는다. 미확정 초안이 있는 Undo/Redo는 자동 확정하지 않고 적용/취소를 요구한다. M1.4의 오래된 worker 결과 처리는 아직 완료 항목이 아니다.
+M1.3 계약 보완: before/after는 문서·인덱스·CountryView를 함께 소유하는 불변 스냅샷이다. 하나의 적용 또는 즉시 명령은 국가·레이어 초안까지 묶어 한 ChangeSet으로 처리한다. prepare/실패/취소/NoOp는 기존 Redo도 보존한다. confirm/Undo/Redo는 revision을 증가시키고, dirty는 별도 저장 스냅샷과의 의미상 차이로 판단한다. preview는 일회성이며 같은 파일 재열기도 새 projectInstanceId를 갖는다. 미확정 초안이 있는 Undo/Redo는 자동 확정하지 않고 적용/취소를 요구한다. M1.4에서는 스냅샷 기반 실제 백그라운드 준비, 최신 key 대체, 취소, 재열기/Undo/Redo 후 늦은 결과 폐기를 구현한다. 실제 웹 도형 worker/RPC는 M4 후속이다. 이름·메모 UI는 웹 change 확정과 일치하도록 M1.4에서 독립 확정으로 정정했으며, 모든 필드에 일괄 적용을 강제하지 않는다.
 
 ## M2 — 웹 완전 저장본 가져오기와 보존 장벽
 
@@ -131,4 +131,4 @@ PC·모바일 동일 dataset manifest와 문서 로딩 명령을 사용하되 �
 
 문서 수용 기준: 등록 객체 8종/공통 action 9개 및 생성·속성·파일·보조 작업이 F행에 있고, root 저장 필드 전체가 매핑되며, 확인되지 않은 동작과 테스트 실패가 드러나고, M1/M2의 입력·출력·실패·검증 기준이 지정된 상태. 브라우저 동작 동등성은 후속 구현 gate이며 이번 문서 수용과 구분한다.
 
-다음 구현 요청의 최소 범위는 **M1.4: 백그라운드 작업·세션 수명과 취소/오래된 결과 폐기**다. 이후 M2를 순서대로 이어간다. 앱 기능을 구현할 때도 별도 요청 없이 웹 저장소/배포본을 변경하거나 커밋·푸시하지 않는다.
+다음 구현 요청의 최소 범위는 **M2.1–M2.2: 실제 웹 완전 저장본 형식 판정·migration**이다. M2.3–M2.5의 보고/보존/확정까지 검증되기 전에는 웹 가져오기 전체를 완료로 표시하지 않는다. 앱 기능을 구현할 때도 별도 요청 없이 웹 저장소/배포본을 변경하거나 커밋·푸시하지 않는다.

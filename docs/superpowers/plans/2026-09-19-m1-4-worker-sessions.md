@@ -19,11 +19,14 @@
 - Cancellation is cooperative: mark obsolete immediately, retain the running slot until actual completion, discard any late candidate.
 
 ## Tasks
-- [ ] Baseline: verify exact archived tree of upstream 2b0440f; isolated checkout; run existing core regression.
-- [ ] Add assertion-based failing core tests for web latest-key/coalescing, priority/FIFO, cancellation, stale after edit/Undo/Redo/reopen and snapshot reference lifetime. Compile against minimal API scaffolding, execute and retain the failing log.
-- [ ] Implement ProjectSnapshot + prepare overload and scheduler. Re-run existing 4 core suites and new job suite.
-- [ ] Add failing Qt tests through meta-object entry points for async Apply/cancel/stale input plus real runner lifetime tests; run against the pre-adapter tree in CI.
-- [ ] Implement snapshot-only QtConcurrent runner, common controller async Apply entry and progress/cancel presentation. Preserve synchronous command helpers and immediate command transaction boundaries.
-- [ ] Verify desktop/mobile same document, revision, history, save/reopen and QML Apply/cancel path. Use controlled completion gates instead of sleeps for concurrency assertions.
-- [ ] ASan/UBSan core, full Qt regression, exact tree comparison, independent final code audit and document validation limits.
-- [ ] Update web parity policy/README/roadmap and implementation record; publish only isolated branch; leave main and web unchanged.
+- [x] Baseline: verify exact archived tree of upstream 2b0440f; isolated checkout; run existing core regression.
+- [x] Add assertion-based failing core tests for web latest-key/coalescing, priority/FIFO, cancellation, stale after edit/Undo/Redo/reopen and snapshot reference lifetime. Compile against minimal API scaffolding, execute and retain the failing log.
+- [x] Implement ProjectSnapshot + prepare overload and scheduler. Re-run existing 4 core suites and new job suite.
+- [x] Add failing Qt tests through meta-object entry points for async Apply/cancel/stale input; run against the pre-adapter tree in CI. Add semaphore-controlled runner lifetime tests and execute with the adapter.
+- [x] Implement snapshot-only QtConcurrent runner, common controller async Apply entry and progress/cancel presentation. Preserve synchronous command helpers and immediate command transaction boundaries.
+- [x] Verify desktop/mobile same document, revision, history, save/reopen and QML Apply/cancel path. Use controlled completion gates instead of sleeps for concurrency assertions.
+- [x] ASan/UBSan core, full Qt regression, exact tree comparison, separate final self-review and document validation limits.
+- [x] Update web parity policy/README/roadmap and implementation record; publish only isolated branch; leave main and web unchanged.
+
+## Web fidelity correction
+Country name/notes use independent web change commits, not mandatory batched Apply. Remaining prototype controls must not be labelled full web parity. Source paths and the checked SHA are in docs/web-parity-contract.md.
