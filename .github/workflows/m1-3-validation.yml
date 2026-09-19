@@ -1,0 +1,52 @@
+name: M1.3 validation
+
+on:
+  push:
+    branches: [codex/m1-3-atomic-commands]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m1-3-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive exact tested source
+        run: git archive --format=tar.gz --output=${{ runner.temp }}/source.tar.gz HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-${{ github.sha }}
+          path: ${{ runner.temp }}/source.tar.gz
+          retention-days: 3
+      - name: Install Linux dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          cache: true
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+      - name: Build
+        run: cmake --build build --parallel 2
+      - name: Run regression tests
+        run: ctest --test-dir build --output-on-failure --output-junit results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ github.sha }}
+          path: |
+            build/results.xml
+            build/Testing/Temporary/LastTest.log
+            build/app/*.png
+          if-no-files-found: ignore
+          retention-days: 7

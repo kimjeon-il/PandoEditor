@@ -89,7 +89,9 @@ ProjectDocument::ProjectDocument(std::vector<Country> countries,std::vector<Laye
     for(auto& c:countries) {
         GeometryRef geometry{"legacy-geometry-"+c.id,1};
         geometries.insert(geometry,Geometry{"MultiPolygon",{},{},std::move(c.polygons)});
+        const auto baseName=c.name;
         units.push_back({c.id,std::move(c.name),std::move(c.memo),UnitKind::Country,geometry});
+        units.back().baseName=baseName;
         presentation.membership.emplace(territorialRef(c.id),std::move(c.layerId));
         presentation.objectStyles.emplace(territorialRef(c.id),ObjectStyle{c.color,c.opacity});
     }
@@ -115,7 +117,7 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
     std::map<ObjectRef,std::pair<std::int64_t,std::int64_t>> life;
     for(std::size_t i=0;i<d.units.size();++i) {
         const auto& u=d.units[i]; auto ref=territorialRef(u.id);
-        require(!u.id.empty()&&named(u.name),"INVALID_UNIT: id/name");
+        require(!u.id.empty(),"INVALID_UNIT: id");
         require(u.kind==UnitKind::Country || u.kind==UnitKind::Subunit || u.kind==UnitKind::Region,"INVALID_UNIT: kind");
         require(u.coverageMode=="partition"||u.coverageMode=="explicit","INVALID_UNIT: coverageMode");
         require(idx.objects.emplace(ref,i).second,"DUPLICATE_ID: territorial unit");
@@ -203,10 +205,11 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
     return idx;
 }
 std::vector<CountryView> countryViews(const ProjectDocument& d) {
+    static const std::uint32_t countryDefault=0xcccccc;
     std::vector<CountryView> result;
     for(const auto& u:d.units) if(u.kind==UnitKind::Country) {
         auto ref=territorialRef(u.id); const auto& s=d.presentation.objectStyles.at(ref);
-        result.push_back({u.id,u.name,d.geometries.get(u.geometry)->polygons,s.color,u.notes,s.opacity,d.presentation.membership.at(ref),u.locked});
+        result.push_back({u.id,(u.nameExplicit&&!u.name.empty()?u.name:u.baseName),d.geometries.get(u.geometry)->polygons,(s.explicitColor?s.color:countryDefault),u.notes,s.opacity,d.presentation.membership.at(ref),u.locked});
     }
     return result;
 }

@@ -47,7 +47,8 @@ int main()
         const auto geometryAddress=p.countries()[0].polygons.data();
         check(p.renameCountry("A","  이름  "));
         check(p.country("A")->name=="이름");
-        check(!p.renameCountry("A"," \t "));
+        check(p.renameCountry("A"," \t ")); // web empty-name override falls back to the base name
+        check(p.undo() && p.country("A")->name=="이름");
         check(p.setMemo("A","메모"));
         check(p.setCountryOpacity("A",0.25));
         check(!p.setCountryOpacity("A",1.1));

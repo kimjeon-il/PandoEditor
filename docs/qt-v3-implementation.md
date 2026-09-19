@@ -1,5 +1,7 @@
 # M1.1–M1.2: 공통 문서 모델과 Qt v3
 
+> 이 문서는 M1.1–M1.2 당시의 기록이다. 후속 M1.3의 범용 명령·revision·스냅샷 Undo/Redo 및 현재 검증 결과는 [명령 구현 기록](qt-command-implementation.md)을 참조한다. 아래 Windows 검증과 작업 트리 상태는 당시 기준이며 후속 변경의 실행 결과가 아니다.
+
 ## 범위
 
 2026-09-18. `core/include/pandoeditor/document.h`가 공통 도메인 모델이다.

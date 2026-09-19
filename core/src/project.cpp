@@ -1,12 +1,25 @@
 #include <pandoeditor/project.h>
+#include "documentstate.h"
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cctype>
-#include <set>
+#include <limits>
 #include <stdexcept>
 
 namespace pandoeditor {
 namespace {
+std::string nextInstanceId()
+{
+    // Process-local session identity, deliberately not persisted in a document.
+    static std::atomic<std::uint64_t> counter{0};
+    auto value = counter.load(std::memory_order_relaxed);
+    do {
+        if (value == std::numeric_limits<std::uint64_t>::max())
+            throw std::overflow_error("PROJECT_INSTANCE_OVERFLOW");
+    } while (!counter.compare_exchange_weak(value, value + 1, std::memory_order_relaxed));
+    return "project-session-" + std::to_string(value + 1);
+}
 int inRing(Point p, const Ring& ring)
 {
     bool inside = false;
@@ -35,61 +48,60 @@ bool contains(Point point, const CountryView& country)
     }
     return false;
 }
-bool validOpacity(double value) { return std::isfinite(value) && value>=0 && value<=1; }
+// The pinned web history restore prunes country overrides. Build a validated
+// replacement before touching cursor/revision, retaining immutable geometry.
+std::shared_ptr<const detail::DocumentState> restoredHistoryState(
+    const std::shared_ptr<const detail::DocumentState>& target)
+{
+    if(!target->needsHistoryPruning)return target;
+    auto document=target->document;
+    for(auto& u:document.units)if(u.kind==UnitKind::Country) {
+        u.notes=trimWebText(u.notes);
+        if(u.name.empty())u.nameExplicit=false;
+    }
+    return std::make_shared<const detail::DocumentState>(std::move(document));
+}
 CountryProperties properties(const CountryView& c) { return {c.name,c.memo,c.color,c.opacity,c.layerId}; }
-bool sameLayers(const std::vector<Layer>& a,const std::vector<Layer>& b)
-{
-    if (a.size()!=b.size()) return false;
-    for(std::size_t i=0;i<a.size();++i)
-        if (a[i].id!=b[i].id || a[i].name!=b[i].name || a[i].visible!=b[i].visible ||
-            a[i].locked!=b[i].locked || a[i].opacity!=b[i].opacity) return false;
-    return true;
 }
-}
-bool CountryProperties::operator==(const CountryProperties& b) const
-{
-    return name==b.name && memo==b.memo && color==b.color && opacity==b.opacity && layerId==b.layerId;
-}
+Project::Project() : state_(std::make_shared<const detail::DocumentState>()),
+                     saved_(state_), instanceId_(nextInstanceId()) {}
 std::string Project::normalizeName(const std::string& name)
 {
     auto first=std::find_if_not(name.begin(),name.end(),[](unsigned char c){return std::isspace(c);});
     auto last=std::find_if_not(name.rbegin(),name.rend(),[](unsigned char c){return std::isspace(c);}).base();
     return first<last ? std::string(first,last) : std::string();
 }
-void Project::validate(const std::vector<Country>& countries)
-{
-    validate(ProjectDocument{countries,{{"countries","국가"}}});
-}
-void Project::validate(const ProjectDocument& document)
-{
-    (void)validateDocument(document);
-}
+void Project::validate(const std::vector<Country>& countries) { validate(ProjectDocument{countries,{{"countries","국가"}}}); }
+void Project::validate(const ProjectDocument& document) { (void)validateDocument(document); }
 void Project::replace(std::vector<Country> countries) { replace(ProjectDocument{std::move(countries),{{"countries","국가"}}}); }
 void Project::replace(ProjectDocument document)
 {
-    Project candidate;
-    candidate.document_=std::move(document);
-    candidate.index_=validateDocument(candidate.document_);
-    candidate.countryViews_=countryViews(candidate.document_);
-    for(std::size_t i=0;i<candidate.countryViews_.size();++i)
-        candidate.countryIndex_.emplace(candidate.countryViews_[i].id,i);
-    candidate.markSaved();
-    *this=std::move(candidate);
+    auto next=std::make_shared<const detail::DocumentState>(std::move(document));
+    auto identity=nextInstanceId();
+    // No allocation or validation after this point: replace is all-or-nothing.
+    state_=std::move(next); saved_=state_; instanceId_.swap(identity);
+    commands_.clear(); cursor_=0; revision_=0; checkpoint_=savedCheckpoint_=checkpointSequence_=0;
 }
+const ProjectDocument& Project::document() const noexcept { return state_->document; }
+const std::vector<CountryView>& Project::countries() const noexcept { return state_->countries; }
+const std::vector<Layer>& Project::layers() const noexcept { return state_->document.presentation.userLayers; }
+const DocumentIndex& Project::index() const noexcept { return state_->index; }
 const CountryView* Project::country(const std::string& id) const
 {
-    auto it=countryIndex_.find(id);
-    return it==countryIndex_.end()?nullptr:&countryViews_[it->second];
+    auto it=state_->countryIndex.find(id);
+    return it==state_->countryIndex.end()?nullptr:&countries()[it->second];
 }
 const Layer* Project::layer(const std::string& id) const
 {
-    auto it=index_.layers.find(id);
-    return it==index_.layers.end()?nullptr:&layers()[it->second];
+    auto it=index().layers.find(id);
+    return it==index().layers.end()?nullptr:&layers()[it->second];
+}
+const ObjectPropertyView* Project::propertyView(const ObjectRef& ref) const {
+    auto it=state_->properties.find(ref);return it==state_->properties.end()?nullptr:&it->second;
 }
 bool Project::editable(const std::string& id) const
 {
-    const auto c=country(id);
-    const auto l=c ? layer(c->layerId) : nullptr;
+    const auto c=country(id); const auto l=c ? layer(c->layerId) : nullptr;
     return l && !l->locked && !c->locked;
 }
 std::string Project::pick(Point point) const
@@ -102,155 +114,112 @@ std::string Project::pick(Point point) const
     }
     return {};
 }
-bool Project::changeCountry(const std::string& id,const CountryProperties& next)
+void Project::apply(const ChangeSet& change)
 {
-    const auto c=country(id);
-    if(!c || !editable(id) || next.name.empty() || next.color>0xffffff || !validOpacity(next.opacity)) return false;
-    const auto destination=layer(next.layerId);
-    if(!destination || (c->layerId!=next.layerId && destination->locked)) return false;
-    auto before=properties(*c);
-    if(before==next) return false;
-    const auto allowed=[&](bool changed,const char* effect){return !changed||effectAllowed(document_,territorialRef(id),effect);};
-    if(!allowed(before.name!=next.name,"name") || !allowed(before.memo!=next.memo,"notes") ||
-       !allowed(before.color!=next.color,"color") || !allowed(before.opacity!=next.opacity,"opacity") ||
-       !allowed(before.layerId!=next.layerId,"membership")) return false;
-    if(before.layerId!=next.layerId &&
-       (!effectAllowed(document_,{"userLayer",before.layerId},"membership") ||
-        !effectAllowed(document_,{"userLayer",next.layerId},"membership"))) return false;
-    commands_.resize(cursor_); commands_.push_back(CountryChange{id,before,next});
-    apply(commands_.back(),true); ++cursor_; return true;
-}
-void Project::apply(const Command& command,bool forward)
-{
-    if(auto change=std::get_if<CountryChange>(&command)) {
-        auto& value=forward ? change->after : change->before;
-        auto ref=territorialRef(change->id);
-        auto& unit=document_.units[index_.objects.at(ref)];
-        auto& style=document_.presentation.objectStyles.at(ref);
-        unit.name=value.name; unit.notes=value.memo;
-        style.color=value.color; style.opacity=value.opacity;
-        document_.presentation.membership.at(ref)=value.layerId;
-    } else {
-        const auto& layerChange=std::get<LayersChange>(command);
-        document_.presentation.userLayers=forward ? layerChange.after : layerChange.before;
+    // Stage the entire prospective history, including metadata allocations.
+    // Erasing the redo branch before this succeeds would break failure atomicity.
+    std::vector<ChangeSet> next;
+    next.reserve(cursor_+1);
+    next.insert(next.end(),commands_.begin(),commands_.begin()+cursor_);
+    next.push_back(change);
+    auto& staged=next.back();staged.checkpointBefore_=checkpoint_;staged.checkpointAfter_=checkpoint_;
+    const bool checkpoint=change.historyCheckpoint_;
+    if(checkpoint) {
+        if(checkpointSequence_==std::numeric_limits<std::uint64_t>::max())throw std::overflow_error("CHECKPOINT_OVERFLOW");
+        staged.checkpointAfter_=checkpointSequence_+1;
     }
-    index_=validateDocument(document_);
+    checkpoint_=staged.checkpointAfter_;if(checkpoint)++checkpointSequence_;
+    commands_.swap(next);
+    state_=change.after_;
+    ++cursor_; ++revision_;
 }
-bool Project::changeLayers(std::vector<Layer> next)
+bool Project::execute(std::string commandId, CommandArguments args)
 {
-    if(sameLayers(layers(),next)) return false;
-    for(std::size_t i=0;i<layers().size();++i) {
-        const auto& old=layers()[i];
-        auto it=std::find_if(next.begin(),next.end(),[&](const auto& l){return l.id==old.id;});
-        const ObjectRef ref{"userLayer",old.id};
-        auto allow=[&](bool changed,const char* effect){return !changed||effectAllowed(document_,ref,effect);};
-        if(it==next.end()) { if(!allow(true,"delete")) return false; continue; }
-        if(!allow(old.name!=it->name,"name") || !allow(old.opacity!=it->opacity,"opacity") ||
-           !allow(old.visible!=it->visible,"visibility") || !allow(old.locked!=it->locked,"locked") ||
-           !allow(static_cast<std::size_t>(it-next.begin())!=i,"order")) return false;
-    }
-    for(const auto& l:next) if(!layer(l.id)&&!effectAllowed(document_,{"userLayer",l.id},"add")) return false;
-    // Validate the entire candidate before touching document or undo history.
-    // GeometryStore snapshots share immutable geometry; existing canonical views
-    // continue to refer to the original units, styles, and memberships.
-    auto candidate=document_;
-    candidate.presentation.userLayers=std::move(next);
-    DocumentIndex candidateIndex;
-    try { candidateIndex=validateDocument(candidate); }
-    catch(const std::invalid_argument&) { return false; }
-    Command command=LayersChange{layers(),candidate.presentation.userLayers};
-    commands_.reserve(cursor_+1);
-    commands_.resize(cursor_); commands_.push_back(std::move(command));
-    document_.presentation.userLayers.swap(candidate.presentation.userLayers);
-    index_=std::move(candidateIndex); ++cursor_; return true;
+    auto result=CommandProcessor::prepare(*this,CommandProcessor::makeRequest(*this,std::move(commandId),std::move(args)));
+    return result.preview && CommandProcessor::confirm(*this,*result.preview).changed();
+}
+bool Project::changeCountry(const std::string& id,CountryProperties next)
+{
+    CommandArguments args; args.properties.countries.push_back({id,std::move(next)});
+    return execute("edit.properties",std::move(args));
+}
+bool Project::changeLayer(Layer next)
+{
+    CommandArguments args; args.properties.layers.push_back(std::move(next));
+    return execute("edit.properties",std::move(args));
 }
 bool Project::setColor(const std::string& id,std::uint32_t color)
 {
-    auto c=country(id); if(!c) return false;
-    auto next=properties(*c); next.color=color; return changeCountry(id,next);
+    CommandArguments args; args.action=SetCountryColor{id,color}; return execute("country.color",std::move(args));
 }
 bool Project::renameCountry(const std::string& id,const std::string& name)
 {
-    auto c=country(id); if(!c) return false;
-    auto next=properties(*c); next.name=normalizeName(name); return changeCountry(id,next);
+    if(!country(id))return false;
+    CommandArguments args;args.action=TerritorialFieldEdit{territorialRef(id),TerritorialField::Name,name};
+    return execute("territorial.field",std::move(args));
 }
 bool Project::setMemo(const std::string& id,const std::string& memo)
 {
-    auto c=country(id); if(!c) return false;
-    auto next=properties(*c); next.memo=memo; return changeCountry(id,next);
+    if(!country(id))return false;
+    CommandArguments args;args.action=TerritorialFieldEdit{territorialRef(id),TerritorialField::Notes,memo};
+    return execute("territorial.field",std::move(args));
 }
 bool Project::setCountryOpacity(const std::string& id,double opacity)
 {
     auto c=country(id); if(!c) return false;
-    auto next=properties(*c); next.opacity=opacity; return changeCountry(id,next);
+    auto next=properties(*c); next.opacity=opacity; return changeCountry(id,std::move(next));
 }
 bool Project::moveCountry(const std::string& id,const std::string& layerId)
 {
-    auto c=country(id); if(!c) return false;
-    auto next=properties(*c); next.layerId=layerId; return changeCountry(id,next);
+    CommandArguments args; args.action=MoveCountry{id,layerId}; return execute("country.move",std::move(args));
 }
 bool Project::addLayer(const std::string& id,const std::string& name)
 {
-    const auto clean=normalizeName(name);
-    if(id.empty() || clean.empty() || layer(id)) return false;
-    auto next=layers(); next.push_back({id,clean}); return changeLayers(std::move(next));
+    CommandArguments args; args.action=AddLayer{id,name}; return execute("layer.add",std::move(args));
 }
 bool Project::removeLayer(const std::string& id)
 {
-    if(layers().size()<=1 || !layer(id)) return false;
-    const auto dependents=index_.dependents.find({"userLayer",id});
-    if(dependents!=index_.dependents.end() && !dependents->second.empty()) return false;
-    if(!effectAllowed(document_,{"userLayer",id},"delete")) return false;
-    auto next=layers();
-    next.erase(std::remove_if(next.begin(),next.end(),[&](const auto& l){return l.id==id;}),next.end());
-    return changeLayers(std::move(next));
+    CommandArguments args; args.action=RemoveLayer{id}; return execute("layer.remove",std::move(args));
 }
 bool Project::renameLayer(const std::string& id,const std::string& name)
 {
-    const auto clean=normalizeName(name); if(clean.empty()) return false;
-    auto next=layers(); for(auto& l:next) if(l.id==id) l.name=clean;
-    return changeLayers(std::move(next));
+    auto l=layer(id); if(!l) return false; auto next=*l; next.name=name; return changeLayer(std::move(next));
 }
 bool Project::setLayerVisible(const std::string& id,bool visible)
 {
-    auto next=layers(); for(auto& l:next) if(l.id==id) l.visible=visible;
-    return changeLayers(std::move(next));
+    CommandArguments args; args.action=SetLayerVisible{id,visible}; return execute("layer.visibility",std::move(args));
 }
 bool Project::setLayerLocked(const std::string& id,bool locked)
 {
-    auto next=layers(); for(auto& l:next) if(l.id==id) l.locked=locked;
-    return changeLayers(std::move(next));
+    CommandArguments args; args.action=SetLayerLocked{id,locked}; return execute("layer.lock",std::move(args));
 }
 bool Project::setLayerOpacity(const std::string& id,double opacity)
 {
-    if(!validOpacity(opacity)) return false;
-    auto next=layers(); for(auto& l:next) if(l.id==id) l.opacity=opacity;
-    return changeLayers(std::move(next));
+    auto l=layer(id); if(!l) return false; auto next=*l; next.opacity=opacity; return changeLayer(std::move(next));
 }
 bool Project::moveLayer(const std::string& id,int delta)
 {
-    if(delta!=-1 && delta!=1) return false;
-    auto next=layers();
-    for(std::size_t i=0;i<next.size();++i) if(next[i].id==id) {
-        const auto destination=static_cast<int>(i)+delta;
-        if(destination<0 || destination>=static_cast<int>(next.size())) return false;
-        std::swap(next[i],next[static_cast<std::size_t>(destination)]);
-        return changeLayers(std::move(next));
-    }
-    return false;
+    CommandArguments args; args.action=MoveLayer{id,delta}; return execute("layer.move",std::move(args));
 }
-bool Project::undo() { if(!canUndo()) return false; apply(commands_[--cursor_],false); return true; }
-bool Project::redo() { if(!canRedo()) return false; apply(commands_[cursor_++],true); return true; }
-void Project::markSaved()
+bool Project::undo()
 {
-    savedCountries_.clear();
-    for(const auto& c:countries()) savedCountries_.push_back(properties(c));
-    savedLayers_=layers();
+    if(!canUndo() || revision_==std::numeric_limits<std::uint64_t>::max()) return false;
+    const auto& target=commands_[cursor_-1].before_;
+    auto next=restoredHistoryState(target);
+    const bool savedTarget=target==saved_ || semanticallyEqual(target->document,saved_->document);
+    // The saved bytes were already pruned by the codec; preserve that baseline.
+    if(savedTarget)saved_=next;
+    state_=std::move(next);checkpoint_=commands_[cursor_-1].checkpointBefore_;--cursor_;++revision_;return true;
 }
-bool Project::dirty() const
+bool Project::redo()
 {
-    if(!sameLayers(layers(),savedLayers_) || savedCountries_.size()!=countries().size()) return true;
-    for(std::size_t i=0;i<countries().size();++i) if(!(properties(countries()[i])==savedCountries_[i])) return true;
-    return false;
+    if(!canRedo() || revision_==std::numeric_limits<std::uint64_t>::max()) return false;
+    const auto& target=commands_[cursor_].after_;
+    auto next=restoredHistoryState(target);
+    const bool savedTarget=target==saved_ || semanticallyEqual(target->document,saved_->document);
+    if(savedTarget)saved_=next;
+    state_=std::move(next);checkpoint_=commands_[cursor_].checkpointAfter_;++cursor_;++revision_;return true;
 }
-}
+void Project::markSaved() noexcept { saved_=state_; savedCheckpoint_=checkpoint_; }
+bool Project::dirty() const { return checkpoint_!=savedCheckpoint_ || (state_!=saved_ && !semanticallyEqual(document(),saved_->document)); }
+} // namespace pandoeditor

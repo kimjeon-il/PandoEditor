@@ -1,0 +1,44 @@
+name: M2 validation
+on:
+  push:
+    branches: [codex/m2-web-import]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux-regression:
+    runs-on: ubuntu-24.04
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Archive exact source
+        run: git archive --format=tar.gz -o "$RUNNER_TEMP/source.tar.gz" HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m2-source-${{ github.sha }}
+          path: ${{ runner.temp }}/source.tar.gz
+          retention-days: 3
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          cache: true
+      - name: Configure and build
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --output-junit results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m2-test-results-${{ github.sha }}
+          path: |
+            build/results.xml
+            build/Testing/Temporary/LastTest.log
+            build/app/*.png
+          retention-days: 7

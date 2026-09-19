@@ -1,0 +1,21 @@
+{
+  "repository": "kimjeon-il/world-map",
+  "commit": "58e4087f85aa51884bc4ab80959e05010d94d7d5",
+  "oracle": "migrateProjectToCurrent (unmodified original JavaScript)",
+  "sourceSha256": {
+    "assets/js/modules/project-migrations.js": "1f1f596d1290b8b4b8ab90acec0fb73e027b56faf24c15accd35a292961a3a60",
+    "assets/js/modules/subunit-migration.js": "666d4637c3f349cfbab2ccf62493ad4b7efd4a413b719bdf5c0bba10ec019890",
+    "assets/js/modules/country-feature.js": "0701ad4e128fa724ca9de52d75246c085d128a88c7fe5456db39da467f763410",
+    "assets/js/modules/generic-feature-service.js": "cc487bd16bd5fb35031093df3b154be284eab20149c0f57184db5e07a4c844aa",
+    "assets/js/modules/source-provenance.js": "4fa2497d2b6bef1b55c8dcb052675c65a706dae51ef6c73923a28ecc202b8aaa",
+    "assets/js/modules/version-contract.js": "32631e9a5db4cbfc75179c477a7b874692e98807f1bbd972eb8ab85034d1bbf8",
+    "assets/js/modules/document-mutation-runner.js": "637f3edb263c732a82ed942ba75a1c1f9802149ca91d84f2ab0a4c774fcb43b9"
+  },
+  "fixtures": [
+    "v3",
+    "v4",
+    "v5",
+    "scalars"
+  ],
+  "note": "Expected JSON files are generated only by the pinned original JavaScript, never by the C++ implementation. Opaque-number token retention is tested separately, since JSON.parse in JavaScript uses binary64."
+}

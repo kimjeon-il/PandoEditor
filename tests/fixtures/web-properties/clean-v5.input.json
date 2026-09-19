@@ -1,0 +1,320 @@
+{
+  "format": "pandolab-project-state",
+  "schemaVersion": 5,
+  "version": "fixture",
+  "savedAt": "2026-09-19T00:00:00.000Z",
+  "countriesData": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": "A",
+        "properties": {
+          "name": "Alpha"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                8,
+                0
+              ],
+              [
+                8,
+                8
+              ],
+              [
+                0,
+                8
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "countryOverrides": {},
+  "territorialUnits": [
+    {
+      "type": "Feature",
+      "id": "00000000-0000-4000-8000-000000000003",
+      "properties": {
+        "schemaVersion": 2,
+        "unitType": "subunit",
+        "name": "Child",
+        "parentId": "A",
+        "sovereignId": "A",
+        "coverageMode": "partition",
+        "style": {},
+        "locked": false,
+        "validFrom": null,
+        "validTo": null,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              8,
+              0
+            ],
+            [
+              8,
+              8
+            ],
+            [
+              0,
+              8
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "00000000-0000-4000-8000-000000000004",
+      "properties": {
+        "schemaVersion": 2,
+        "unitType": "region",
+        "name": "Region",
+        "parentId": "00000000-0000-4000-8000-000000000003",
+        "sovereignId": "A",
+        "coverageMode": "explicit",
+        "style": {},
+        "locked": false,
+        "validFrom": null,
+        "validTo": null,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              8,
+              0
+            ],
+            [
+              8,
+              8
+            ],
+            [
+              0,
+              8
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "territorialRelations": [],
+  "labels": [],
+  "hydroEdits": [],
+  "genericFeatures": [],
+  "distributionLayers": [],
+  "distributionEntries": [],
+  "layerVisibility": {
+    "countries": true,
+    "subunits": true,
+    "regions": true
+  },
+  "itemVisibility": {},
+  "layerPresentation": {
+    "schemaVersion": 3,
+    "overlayOrder": [
+      "religions",
+      "ethnicities",
+      "languages",
+      "subunits",
+      "regions",
+      "genericFeatures"
+    ],
+    "styles": {
+      "labels": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "countryLabels": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "religions": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "ethnicities": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "languages": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "subunits": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "regions": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "genericFeatures": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "rivers": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "lakes": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "countries": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      },
+      "terrain": {
+        "opacity": 1,
+        "boundaryVisible": true,
+        "boundaryWidth": 1,
+        "labelsVisible": true,
+        "blendMode": "normal"
+      }
+    },
+    "objectStyles": {},
+    "objectOrder": []
+  },
+  "labelSettings": {},
+  "physicalSettings": {},
+  "distributionSettings": {
+    "renderMode": "dominant",
+    "boundaryVisible": true
+  },
+  "sourceInfo": {},
+  "baseDataset": "fixture-base",
+  "landObjectModel": {
+    "schemaVersion": 2,
+    "coastlineAuthority": "countries",
+    "purpose": "lossless-fallback",
+    "directCreation": false,
+    "sourceProvenanceSchemaVersion": 1,
+    "canonicalProperties": [
+      "name",
+      "notes",
+      "color",
+      "locked",
+      "source"
+    ]
+  },
+  "territorialModel": {
+    "schemaVersion": 2,
+    "coastlineAuthority": "countriesData",
+    "countryStorage": "countriesData-adapter",
+    "types": [
+      "country",
+      "subunit",
+      "region"
+    ],
+    "coverageModes": [
+      "partition",
+      "explicit"
+    ]
+  },
+  "distributionModel": {
+    "schemaVersion": 2,
+    "types": [
+      "language",
+      "ethnicity",
+      "religion"
+    ],
+    "sourceModes": [
+      "territorial",
+      "geometry"
+    ],
+    "shareRange": [
+      0,
+      100
+    ],
+    "sharesAreIndependent": true
+  },
+  "physicalSourceInfo": {
+    "terrain": {
+      "dataset": "fixture-terrain",
+      "version": "0.12.6"
+    },
+    "hydro": {
+      "dataset": "fixture-hydro",
+      "version": "fixture",
+      "coordinatePolicy": "selected source coordinates retained without simplification",
+      "selection": {}
+    }
+  }
+}

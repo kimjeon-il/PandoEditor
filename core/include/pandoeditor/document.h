@@ -53,6 +53,9 @@ struct TerritorialUnit {
     bool locked=false;
     Validity validity;
     std::string coverageMode="explicit";
+    // Country base name is immutable source data; name is the current override.
+    std::string baseName;
+    bool nameExplicit=true;
 };
 struct TerritorialRelation {
     std::string id;
@@ -66,7 +69,7 @@ struct Layer {
     bool visible=true, locked=false;
     double opacity=1;
 };
-struct ObjectStyle { std::uint32_t color=0xa8c7db; double opacity=1; };
+struct ObjectStyle { std::uint32_t color=0xa8c7db; double opacity=1; bool explicitColor=true; };
 struct PresentationState {
     std::vector<Layer> userLayers; // bottom to top; independent of territorial ancestry
     std::map<ObjectRef,std::string> membership;
@@ -92,6 +95,8 @@ struct Country {
     std::string layerId="countries";
 };
 struct ProjectDocument {
+    // Read-time provenance for a migration notice, not document content or wire data.
+    int nativeSourceVersion=4;
     std::string documentId;
     std::vector<TerritorialUnit> units;
     std::vector<TerritorialRelation> relations;

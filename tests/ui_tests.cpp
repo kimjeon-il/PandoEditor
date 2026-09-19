@@ -1,3 +1,4 @@
+#include "ui_navigation.h"
 #include "editorcontroller.h"
 #include "windowsframe.h"
 #include <QGuiApplication>
@@ -53,8 +54,9 @@ static QByteArray readFile(const QString& path)
 }
 static bool clickControl(QQuickWindow* window,const QString& name)
 {
+    enterExistingControlRoute(window,name);
     auto item=visualItem(window->contentItem(),name);
-    if(!item) return false;
+    if(!item||!item->isVisible()||!item->isEnabled()) return false;
     for(auto parent=item->parentItem();parent;parent=parent->parentItem()) {
         if(parent->property("contentY").isValid()) {
             auto content=qvariant_cast<QQuickItem*>(parent->property("contentItem"));
@@ -135,7 +137,7 @@ private slots:
         QCOMPARE(editor.nameDraft(),QString("uncommitted")); QVERIFY(!editor.canUndo());
         QVERIFY(clickControl(window,"cancelUnsaved"));
         auto notice=visualItem(window->contentItem(),"documentFormatNotice"); QVERIFY(notice);
-        QVERIFY(notice->property("text").toString().contains("v3"));
+        QVERIFY(notice->property("text").toString().contains("v4"));
         QVERIFY(clickControl(window,"documentFormatNotice"));
         QVERIFY(notice->property("expanded").toBool());
         window->setProperty("allowClose",true); window->close();
@@ -390,20 +392,29 @@ private slots:
         QCOMPARE(editor.nameDraft(),QString("Draft name"));
         QTest::keyClick(window,Qt::Key_Return);
         QCOMPARE(editor.selectedName(),QString("Draft name"));
+        QVERIFY(!editor.hasPendingEdits()); // web name change commits independently, no whole-form Apply.
         QVERIFY(clickControl(window,"countryColor"));
         QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"#123456");
         QTest::keyClick(window,Qt::Key_Return);
-        QCOMPARE(editor.colors()["DEU"].toString(),QString("#123456"));
+        QVERIFY(clickControl(window,"applyEdits"));
+        QTRY_COMPARE(editor.colors()["DEU"].toString(),QString("#123456"));
+        // Position the slider in the scroll area, then discard the positioning
+        // click's draft before measuring the actual drag's baseline.
         QVERIFY(clickControl(window,"countryOpacity"));
-        // Complete one drag, then one undo must restore the pre-drag value.
+        editor.discardPendingEdits();
+        // A drag remains a draft until Apply; Undo restores its baseline.
         auto slider=visualItem(window->contentItem(),"countryOpacity"); QVERIFY(slider);
         double before=editor.countryOpacity();
-        auto start=slider->mapToScene(QPointF(slider->width()*before,slider->height()/2)).toPoint();
+        window->grabWindow(); QTest::qWait(100); // settle the reset handle position
+        auto handle=qvariant_cast<QQuickItem*>(slider->property("handle")); QVERIFY(handle);
+        auto start=handle->mapToScene(QPointF(handle->width()/2,handle->height()/2)).toPoint();
         auto end=slider->mapToScene(QPointF(slider->width()*0.2,slider->height()/2)).toPoint();
         QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,start);
         QTest::mouseMove(window,(start+end)/2,20); QTest::mouseMove(window,end,20);
         QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,end);
         QVERIFY(editor.countryOpacity()<before);
+        QVERIFY(clickControl(window,"applyEdits"));
+        QTRY_VERIFY(!editor.jobBusy());
         editor.undo(); QCOMPARE(editor.countryOpacity(),before); editor.redo();
         QVERIFY(clickControl(window,"layersTab"));
         QVERIFY(clickControl(window,"addLayer"));
@@ -415,11 +426,13 @@ private slots:
         editor.moveCountry(id); QCOMPARE(editor.countryLayerId(),id);
         QVERIFY(!editor.canDeleteLayer());
         QVERIFY(clickControl(window,"layerLocked"));
-        QVERIFY(editor.selectedId().isEmpty());
+        QCOMPARE(editor.selectedId(),QString("DEU"));
+        QVERIFY(!editor.selectedEditable());
         editor.selectCountry("DEU"); QVERIFY(!editor.selectedEditable());
         QVERIFY(clickControl(window,"layerLocked"));
         editor.selectCountry("DEU"); QVERIFY(editor.selectedEditable());
-        QVERIFY(clickControl(window,"layerVisible")); QVERIFY(editor.selectedId().isEmpty());
+        QVERIFY(clickControl(window,"layerVisible")); QCOMPARE(editor.selectedId(),QString("DEU"));
+        QVERIFY(!editor.countryVisuals()["DEU"].toMap()["visible"].toBool());
         QVERIFY(clickControl(window,"layerVisible"));
         editor.selectCountry("DEU");
         editor.previewCountryOpacity(0); QVERIFY(editor.commitPendingEdits());
@@ -432,6 +445,56 @@ private slots:
         window->resize(1100,720); QTest::qWait(150); capture(window).save("layers-desktop.png");
         QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
         window->close();
+    }
+    void webFieldsAndAsyncApplyCancelAcrossPcAnd360px() {
+        for(bool mobile:{false,true}) {
+            QTemporaryDir dir; QVERIFY(dir.isValid());
+            EditorController editor(EditorControllerConfig{mobile,dir.filePath("private.json")});
+            QQmlApplicationEngine engine; QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& e:errors) warnings<<e.toString();});
+            engine.rootContext()->setContextProperty("editor",&editor);
+            engine.load(QUrl("qrc:/common/Main.qml")); QVERIFY(!engine.rootObjects().isEmpty());
+            auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); QVERIFY(window);
+            window->resize(mobile?360:1100,mobile?640:760); exposeForTest(window);
+            editor.selectCountry("DEU");
+            const auto name=editor.selectedName(),layerName=editor.layerNameDraft(),color=editor.colorDraft();
+            QVERIFY(clickControl(window,"countryName"));
+            QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Web name");
+            QVERIFY(clickControl(window,"countryMemo"));
+            // Web change events commit each text field independently, without Apply.
+            QCOMPARE(editor.selectedName(),QString("Web name")); QCOMPARE(editor.revision(),qulonglong(1));
+            typeText(window,"Web notes"); QVERIFY(clickControl(window,"countryColor"));
+            QCOMPARE(editor.revision(),qulonglong(2));
+            QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"#102030");
+            QVERIFY(clickControl(window,"layersTab"));
+            QVERIFY(clickControl(window,"layerName"));
+            QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Atomic layer");
+            QVERIFY(clickControl(window,"applyEdits")); QTRY_COMPARE(editor.revision(),qulonglong(3));
+            QCOMPARE(editor.colorDraft(),QString("#102030")); QCOMPARE(editor.layerNameDraft(),QString("Atomic layer"));
+            QVERIFY(!editor.hasPendingEdits());
+            QVERIFY(clickControl(window,"undoButton"));
+            QCOMPARE(editor.selectedName(),QString("Web name")); QCOMPARE(editor.memoDraft(),QString("Web notes"));
+            QCOMPARE(editor.colorDraft(),color); QCOMPARE(editor.layerNameDraft(),layerName);
+            QVERIFY(clickControl(window,"undoButton")); QCOMPARE(editor.memoDraft(),QString());
+            QVERIFY(clickControl(window,"undoButton")); QCOMPARE(editor.selectedName(),name);
+            QCOMPARE(editor.revision(),qulonglong(6)); QVERIFY(!editor.canUndo()); QVERIFY(!editor.dirty());
+            for(int i=0;i<3;++i) QVERIFY(clickControl(window,"redoButton"));
+            QCOMPARE(editor.revision(),qulonglong(9));
+            QVERIFY(clickControl(window,"layerName"));
+            QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Discard me");
+            QVERIFY(clickControl(window,"cancelEdits"));
+            QCOMPARE(editor.layerNameDraft(),QString("Atomic layer")); QCOMPARE(editor.revision(),qulonglong(9));
+            editor.setLayerNameDraft("Keep cancelled draft"); QVERIFY(editor.applyPendingEditsAsync()); QVERIFY(editor.jobBusy());
+            auto cancel=visualItem(window->contentItem(),"cancelBackgroundWork"); QVERIFY(cancel);
+            // Directly dispatch the real button signal before processing queued
+            // completion events, so fast machines cannot race this cancellation.
+            QVERIFY(QMetaObject::invokeMethod(cancel,"clicked")); QVERIFY(!editor.jobBusy());
+            QCoreApplication::processEvents(); QCOMPARE(editor.revision(),qulonglong(9));
+            QCOMPARE(editor.layerNameDraft(),QString("Keep cancelled draft")); editor.discardPendingEdits();
+            QVERIFY(capture(window).save(mobile?"jobs-mobile-360.png":"jobs-desktop.png"));
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+            window->setProperty("allowClose",true); window->close();
+        }
     }
     void compositing() {
         using namespace pandoeditor;
@@ -499,6 +562,7 @@ private slots:
         auto panel=window->findChild<QQuickItem*>("editorPanel"); QVERIFY(panel);
         QVERIFY(!panel->property("compact").toBool());
         auto clickItem=[&](const char* name) {
+            enterExistingControlRoute(window,QString::fromLatin1(name));
             QTest::qWait(80); // settle layout before reading delegate coordinates
             window->grabWindow();
             std::function<QQuickItem*(QQuickItem*)> find=[&](QQuickItem* node)->QQuickItem* {

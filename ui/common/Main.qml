@@ -37,13 +37,35 @@ ApplicationWindow {
         objectName: "windowsFrame"
         window: window
         enabled: !editor.mobileMode && Qt.platform.os === "windows"
-        blocked: unsaved.visible || errorDialog.visible || recoveryDialog.visible
+        blocked: unsaved.visible || errorDialog.visible || recoveryDialog.visible || webReport.visible
         caption: desktopTitleBar
         minimizeButton: minimizeWindowButton
         maximizeButton: maximizeWindowButton
         closeButton: closeWindowButton
     }
 
+    property bool webImportFlowActive: false
+    function requestWebImport() {
+        webImportFlowActive=true
+        webOpenDialog.open()
+    }
+    function beginWebImport(url) {
+        webImportFlowActive=true
+        webReport.extraError=""
+        editor.prepareWebImport(url)
+        webReport.open()
+    }
+    function cancelWebImportFlow() {
+        editor.cancelWebImport()
+        webReport.close()
+        webImportFlowActive=false
+    }
+    function finishWebImport(disposition, saveUrl) {
+        if (editor.confirmWebImport(webReport.reviewedHash, disposition, saveUrl)) {
+            webReport.close()
+            webImportFlowActive=false
+        }
+    }
     property string pendingAction: ""
     property bool allowClose: false
     function toggleMaximized() {
@@ -94,14 +116,16 @@ ApplicationWindow {
     }
     function handleBack() {
         if (Qt.inputMethod.visible) { Qt.inputMethod.hide(); return }
-        if (workspace.dismissPopup()) return
+        if (webReport.visible) { cancelWebImportFlow(); return }
         if (errorDialog.visible) { errorDialog.close(); return }
         if (recoveryDialog.visible) { recoveryDialog.close(); return }
         if (unsaved.visible) { unsaved.close(); pendingAction=""; return }
+        if (workspace.dismissPopup()) return
         requestAction("close")
     }
     onClosing: function(close) {
         if (allowClose) return
+        if (webReport.visible) { close.accepted=false; cancelWebImportFlow(); return }
         if (editor.mobileMode) { close.accepted=false; handleBack(); return }
         if (editor.dirty) { close.accepted=false; requestAction("close") }
     }
@@ -167,14 +191,42 @@ ApplicationWindow {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         mobileMode: editor.mobileMode
+        holdFieldCommits: window.webImportFlowActive
+        onWebImportRequested: window.requestWebImport()
         onOpenRequested: window.requestAction(editor.mobileMode ? "import" : "open")
         onSaveRequested: window.requestSave(false)
         onSaveAsRequested: editor.mobileMode ? window.requestExport() : window.requestSave(true)
     }
-    Shortcut { sequences: [StandardKey.Undo]; enabled: editor.canUndo; onActivated: editor.undo() }
-    Shortcut { sequences: [StandardKey.Redo]; enabled: editor.canRedo; onActivated: editor.redo() }
-    Shortcut { sequence: StandardKey.Save; onActivated: window.requestSave(false) }
-    Shortcut { sequence: StandardKey.Open; onActivated: window.requestAction(editor.mobileMode ? "import" : "open") }
+    Shortcut { sequences: [StandardKey.Undo]; enabled: editor.canUndo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.undo() }
+    Shortcut { sequences: [StandardKey.Redo]; enabled: editor.canRedo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.redo() }
+    Shortcut { sequence: StandardKey.Save; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestSave(false) }
+    Shortcut { sequence: StandardKey.Open; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestAction(editor.mobileMode ? "import" : "open") }
+    Native.FileDialog {
+        id: webOpenDialog
+        objectName: "webOpenDialog"
+        title: "웹 프로젝트 가져오기"
+        nameFilters: ["판도연구소 웹 완전 저장본 (*.json)"]
+        onAccepted: window.beginWebImport(selectedFile)
+        onRejected: window.webImportFlowActive=false
+    }
+    Native.FileDialog {
+        id: webSaveDialog
+        objectName: "webImportSaveDialog"
+        title: "기존 작업 저장"
+        fileMode: Native.FileDialog.SaveFile
+        defaultSuffix: "pando.json"
+        nameFilters: ["Pandoeditor 프로젝트 (*.pando.json)"]
+        onAccepted: window.finishWebImport("save",selectedFile)
+    }
+    WebImportDialog {
+        id: webReport
+        onCancelRequested: window.cancelWebImportFlow()
+        onConfirmRequested: function(disposition) {
+            if (disposition === "save" && !editor.mobileMode && !editor.hasFile()) webSaveDialog.open()
+            else window.finishWebImport(disposition, "")
+        }
+        onSaveLocationRequested: webSaveDialog.open()
+    }
     Native.FileDialog {
         id: openDialog
         objectName: "openDialog"
@@ -221,13 +273,14 @@ ApplicationWindow {
     }
     Dialog {
         id: errorDialog
+        objectName: "errorDialog"
         anchors.centerIn: parent
         width: Math.min(460,window.width-24)
         title: "작업을 완료하지 못했습니다"
         modal: true
         standardButtons: Dialog.Ok
         property string message: ""
-        contentItem: Label { text: errorDialog.message; wrapMode: Text.WrapAnywhere }
+        contentItem: Label { textFormat:Text.PlainText; text: errorDialog.message; wrapMode: Text.WrapAnywhere }
     }
     Dialog {
         id: recoveryDialog
@@ -236,6 +289,9 @@ ApplicationWindow {
         width: Math.min(460,window.width-24)
         contentWidth: availableWidth
         contentHeight: recoveryText.implicitHeight
+        height: topPadding + bottomPadding + contentHeight
+                + (header ? header.implicitHeight + spacing : 0)
+                + (footer ? footer.implicitHeight + spacing : 0)
         title: "저장 파일 복구 필요"
         modal: true
         closePolicy: Popup.NoAutoClose
@@ -262,7 +318,10 @@ ApplicationWindow {
     }
     Connections {
         target: editor
-        function onErrorOccurred(message) { errorDialog.message=message; errorDialog.open() }
+        function onErrorOccurred(message) {
+            if (window.webImportFlowActive) webReport.extraError=message
+            else { errorDialog.message=message; errorDialog.open() }
+        }
         function onPrivateRecoveryRequiredChanged() {
             if (editor.privateRecoveryRequired) {
                 errorDialog.close()

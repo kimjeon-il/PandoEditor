@@ -1,0 +1,5 @@
+# These are pinned byte-for-byte copies of the web application's source.
+# Their parity tests validate Git blob identities, so Windows checkout
+# conversion must never alter their line endings.
+tests/reference/*.mjs text eol=lf
+tests/fixtures/web-properties/source/** text eol=lf

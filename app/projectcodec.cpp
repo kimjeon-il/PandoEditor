@@ -1,4 +1,5 @@
 #include "projectcodec.h"
+#include <pandoeditor/objectproperties.h>
 #include "losslessjson.h"
 #include <QCryptographicHash>
 #include <QRegularExpression>
@@ -58,23 +59,23 @@ ObjectRef ref(const V& v,ProjectDocument& d,const std::string& path) {
     ObjectRef r{str(field(v,"domain")),str(field(v,"id"))};
     const std::set<std::string> domains={"territorial","distributionLayer","distributionEntry","label","hydro","generic","userLayer"};
     require(domains.count(r.domain),"INVALID_JSON: invalid ObjectRef domain");
-    unknown(d,3,v,path,{"domain","id"}); return r;
+    unknown(d,d.nativeSourceVersion,v,path,{"domain","id"}); return r;
 }
 V refValue(const ObjectRef& r) { return object({{"domain",V::str(r.domain)},{"id",V::str(r.id)}}); }
 GeometryRef geometryRef(const V& v,ProjectDocument& d,const std::string& path) {
     GeometryRef r{str(field(v,"id")),integer(field(v,"version"))};
-    unknown(d,3,v,path,{"id","version"}); return r;
+    unknown(d,d.nativeSourceVersion,v,path,{"id","version"}); return r;
 }
 V geometryRefValue(const GeometryRef& r) { return object({{"id",V::str(r.id)},{"version",V::num(r.version)}}); }
 std::optional<std::string> endpoint(const V& v,ProjectDocument& d,const std::string& path) {
     if (v.kind==V::Null) return {};
     auto text=str(field(v,"text")); auto temporal=parseTemporal(text);
     require(str(field(v,"precision"))==temporal.precision,"INVALID_DATE: precision does not match text");
-    unknown(d,3,v,path,{"text","precision"}); return text;
+    unknown(d,d.nativeSourceVersion,v,path,{"text","precision"}); return text;
 }
 Validity validity(const V& v,ProjectDocument& d,const std::string& path) {
     Validity r{endpoint(field(v,"from"),d,path+"/from"),endpoint(field(v,"to"),d,path+"/to")};
-    unknown(d,3,v,path,{"from","to"}); temporalBounds(r); return r;
+    unknown(d,d.nativeSourceVersion,v,path,{"from","to"}); temporalBounds(r); return r;
 }
 V endpointValue(const std::optional<std::string>& s) {
     if (!s) return {};
@@ -149,15 +150,15 @@ V extensionValue(const PreservedExtension& e) {
 pandoeditor::ProjectDocument decode(const QByteArray& data) {
     const auto root=losslessjson::parse(data);
     require(str(field(root,"format"))=="pandoeditor-project","UNSUPPORTED_FORMAT: expected Qt project");
-    const auto schema=integer(field(root,"version")); require(schema>=1 && schema<=3,"UNSUPPORTED_VERSION: expected Qt v1, v2 or v3");
-    ProjectDocument d;
+    const auto schema=integer(field(root,"version")); require(schema>=1 && schema<=4,"UNSUPPORTED_VERSION: expected Qt v1 through v4");
+    ProjectDocument d;d.nativeSourceVersion=int(schema);
     if (schema<3) {
         d.documentId="legacy-"+QCryptographicHash::hash(root.encode(),QCryptographicHash::Sha256).toHex().toStdString();
         if (schema==1) d.presentation.userLayers.push_back({"countries","국가"});
         else for (const auto& v:array(field(root,"layers"))) d.presentation.userLayers.push_back(layer(v,d,schema,"/layers/"+std::to_string(d.presentation.userLayers.size())));
         for (const auto& v:array(field(root,"countries"))) {
             const auto path="/countries/"+std::to_string(d.units.size());
-            TerritorialUnit u; u.id=str(field(v,"id")); u.name=str(field(v,"name"));
+            TerritorialUnit u; u.id=str(field(v,"id")); u.name=str(field(v,"name")); u.baseName=u.name;
             u.geometry={"legacy-geometry-"+std::to_string(d.units.size()),1};
             auto g=geometry(field(v,"geometry"),d,schema,path+"/geometry"); require(g.type=="MultiPolygon","INVALID_GEOMETRY: legacy country requires MultiPolygon");
             d.geometries.insert(u.geometry,std::move(g));
@@ -180,18 +181,27 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
             auto path="/geometries/"+std::to_string(d.geometries.versions().size());
             GeometryRef r{str(field(v,"id")),integer(field(v,"version"))};
             require(!d.geometries.get(r),"DUPLICATE_ID: geometry version");
-            d.geometries.insert(r,geometry(field(v,"geojson"),d,3,path+"/geojson"));
-            unknown(d,3,v,path,{"id","version","geojson"});
+            d.geometries.insert(r,geometry(field(v,"geojson"),d,d.nativeSourceVersion,path+"/geojson"));
+            unknown(d,d.nativeSourceVersion,v,path,{"id","version","geojson"});
         }
         for (const auto& v:array(field(root,"units"))) {
             auto path="/units/"+std::to_string(d.units.size()); TerritorialUnit u;
-            u.id=str(field(v,"id")); u.name=str(field(v,"name")); u.notes=str(field(v,"notes"));
+            u.id=str(field(v,"id")); u.name=str(field(v,"name")); u.baseName=u.name; u.notes=str(field(v,"notes"));
             auto kind=str(field(v,"kind")); require(kind=="country"||kind=="subunit"||kind=="region","INVALID_JSON: territorial kind");
             u.kind=kind=="country"?UnitKind::Country:kind=="subunit"?UnitKind::Subunit:UnitKind::Region;
             u.geometry=geometryRef(field(v,"geometryRef"),d,path+"/geometryRef");
             u.locked=boolean(field(v,"locked")); u.coverageMode=str(field(v,"coverageMode"));
             u.validity=validity(field(v,"validity"),d,path+"/validity");
-            unknown(d,3,v,path,{"id","kind","name","notes","geometryRef","locked","coverageMode","validity"}); d.units.push_back(std::move(u));
+            if(schema==4) {
+                u.baseName=str(field(v,"baseName"));u.nameExplicit=boolean(field(v,"nameExplicit"));
+                require(u.kind==UnitKind::Country || (u.baseName.empty() && u.nameExplicit),"INVALID_JSON: country-only name state");
+                require(u.nameExplicit || u.name.empty(),"INVALID_JSON: automatic country name must be empty");
+                unknown(d,4,v,path,{"id","kind","name","notes","geometryRef","locked","coverageMode","validity","baseName","nameExplicit"});
+            } else {
+                if(u.kind!=UnitKind::Country)u.baseName.clear();
+                unknown(d,d.nativeSourceVersion,v,path,{"id","kind","name","notes","geometryRef","locked","coverageMode","validity"});
+            }
+            d.units.push_back(std::move(u));
         }
         for (const auto& v:array(field(root,"relations"))) {
             auto path="/relations/"+std::to_string(d.relations.size()); TerritorialRelation r;
@@ -200,7 +210,7 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
             if (field(v,"sovereignRef").kind!=V::Null) r.sovereign=ref(field(v,"sovereignRef"),d,path+"/sovereignRef");
             const auto mode=str(field(v,"mode")); require(mode=="base"||mode=="dated","INVALID_JSON: relation mode"); r.dated=mode=="dated";
             r.validity=validity(field(v,"validity"),d,path+"/validity");
-            unknown(d,3,v,path,{"id","unitRef","parentRef","sovereignRef","mode","validity"}); d.relations.push_back(std::move(r));
+            unknown(d,d.nativeSourceVersion,v,path,{"id","unitRef","parentRef","sovereignRef","mode","validity"}); d.relations.push_back(std::move(r));
         }
         const auto& p=field(root,"presentation");
         for (const auto& v:array(field(p,"userLayers"))) d.presentation.userLayers.push_back(layer(v,d,3,"/presentation/userLayers/"+std::to_string(d.presentation.userLayers.size())));
@@ -210,7 +220,7 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
             auto r=ref(field(v,"ref"),d,path+"/ref"); auto l=str(field(v,"layerId"));
             if (r.domain=="territorial") {
                 require(d.presentation.membership.emplace(r,l).second,"DUPLICATE_ID: membership");
-                unknown(d,3,v,path,{"ref","layerId"});
+                unknown(d,d.nativeSourceVersion,v,path,{"ref","layerId"});
             } else preserve(d,3,path,v);
         }
         const auto& styles=field(p,"objectStyles"); require(styles.kind==V::Object,"INVALID_JSON: objectStyles");
@@ -219,12 +229,13 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
             if (domain!="territorial") { preserve(d,3,path,items); continue; }
             require(items.kind==V::Object,"INVALID_JSON: domain styles");
             for (const auto& [id,v]:items.object) {
-                d.presentation.objectStyles.emplace(ObjectRef{domain,id},ObjectStyle{color(field(v,"color")),number(field(v,"opacity"))});
-                unknown(d,3,v,pointer(path,id),{"color","opacity"});
+                const bool automatic=schema==4 && field(v,"color").kind==V::Null;
+                d.presentation.objectStyles.emplace(ObjectRef{domain,id},ObjectStyle{automatic?0:color(field(v,"color")),number(field(v,"opacity")),!automatic});
+                unknown(d,d.nativeSourceVersion,v,pointer(path,id),{"color","opacity"});
             }
         }
-        unknown(d,3,p,"/presentation",{"userLayers","membership","objectStyles"});
-        unknown(d,3,root,"",{"format","version","documentId","units","relations","geometries","presentation","extensions"});
+        unknown(d,d.nativeSourceVersion,p,"/presentation",{"userLayers","membership","objectStyles"});
+        unknown(d,d.nativeSourceVersion,root,"",{"format","version","documentId","units","relations","geometries","presentation","extensions"});
     }
     validateDocument(d); return d;
 }
@@ -232,7 +243,7 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
 QByteArray encode(const pandoeditor::Project& project) {
     const auto& d=project.document(); validateDocument(d);
     V units=V::arr(),relations=V::arr(),geometries=V::arr(),layers=V::arr(),membership=V::arr(),styles=V::obj(),extensions=V::arr();
-    for (const auto& u:d.units) units.array.push_back(object({{"id",V::str(u.id)},{"kind",V::str(u.kind==UnitKind::Country?"country":u.kind==UnitKind::Subunit?"subunit":"region")},{"name",V::str(u.name)},{"notes",V::str(u.notes)},{"geometryRef",geometryRefValue(u.geometry)},{"locked",V::boolean(u.locked)},{"coverageMode",V::str(u.coverageMode)},{"validity",validityValue(u.validity)}}));
+    for (const auto& u:d.units) units.array.push_back(object({{"id",V::str(u.id)},{"kind",V::str(u.kind==UnitKind::Country?"country":u.kind==UnitKind::Subunit?"subunit":"region")},{"name",V::str(u.name)},{"baseName",V::str(u.baseName)},{"nameExplicit",V::boolean(u.kind==UnitKind::Country?u.nameExplicit&&!u.name.empty():u.nameExplicit)},{"notes",V::str(u.kind==UnitKind::Country?trimWebText(u.notes):u.notes)},{"geometryRef",geometryRefValue(u.geometry)},{"locked",V::boolean(u.locked)},{"coverageMode",V::str(u.coverageMode)},{"validity",validityValue(u.validity)}}));
     for (const auto& r:d.relations) relations.array.push_back(object({{"id",V::str(r.id)},{"unitRef",refValue(r.unit)},{"parentRef",r.parent?refValue(*r.parent):V{}},{"sovereignRef",r.sovereign?refValue(*r.sovereign):V{}},{"mode",V::str(r.dated?"dated":"base")},{"validity",validityValue(r.validity)}}));
     // Opaque domains may reference otherwise unreferenced stored geometries.
     for (const auto& [r,g]:d.geometries.versions()) geometries.array.push_back(object({{"id",V::str(r.id)},{"version",V::num(r.version)},{"geojson",geometryValue(*g)}}));
@@ -240,10 +251,10 @@ QByteArray encode(const pandoeditor::Project& project) {
     for (const auto& [r,l]:d.presentation.membership) membership.array.push_back(object({{"ref",refValue(r)},{"layerId",V::str(l)}}));
     for (const auto& [r,s]:d.presentation.objectStyles) {
         if (!styles.object.count(r.domain)) styles.object[r.domain]=V::obj();
-        styles.object[r.domain].object[r.id]=object({{"color",colorValue(s.color)},{"opacity",V::num(s.opacity)}});
+        styles.object[r.domain].object[r.id]=object({{"color",s.explicitColor?colorValue(s.color):V{}},{"opacity",V::num(s.opacity)}});
     }
     for (const auto& e:d.extensions) extensions.array.push_back(extensionValue(e));
-    auto root=object({{"format",V::str("pandoeditor-project")},{"version",V::num(3)},{"documentId",V::str(d.documentId)},{"units",units},{"relations",relations},{"geometries",geometries},{"presentation",object({{"userLayers",layers},{"membership",membership},{"objectStyles",styles}})},{"extensions",extensions}});
+    auto root=object({{"format",V::str("pandoeditor-project")},{"version",V::num(4)},{"documentId",V::str(d.documentId)},{"units",units},{"relations",relations},{"geometries",geometries},{"presentation",object({{"userLayers",layers},{"membership",membership},{"objectStyles",styles}})},{"extensions",extensions}});
     auto bytes=root.encode()+"\n";
     require(bytes.size()<=256ll*1024*1024,"LIMIT_EXCEEDED: encoded JSON exceeds 256 MiB");
     return bytes;

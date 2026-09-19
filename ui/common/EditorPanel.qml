@@ -5,6 +5,15 @@ import QtQuick.Layouts
 Rectangle {
     id: panel
     property bool compact: false
+    function showCountryControls(){tabs.currentIndex=0}
+    function showLayers(){tabs.currentIndex=1}
+    property bool holdFieldCommits: false
+    property bool selectionNavigation: false
+    readonly property bool fieldCommitsHeld: holdFieldCommits || selectionNavigation || editor.objectChooserOpen
+    function beginSelectionNavigation() {
+        selectionNavigation = true
+        Qt.callLater(function() { panel.selectionNavigation = false })
+    }
     function dismissPopup() {
         if (countryPicker.popup.visible) { countryPicker.popup.close(); return true }
         if (countryLayer.popup.visible) { countryLayer.popup.close(); return true }
@@ -18,8 +27,43 @@ Rectangle {
         TabBar {
             id: tabs
             Layout.fillWidth: true
-            TabButton { text: "국가"; objectName: "countryTab" }
+            TabButton { text: "Qt 국가 속성"; objectName: "countryTab" }
             TabButton { text: "레이어"; objectName: "layersTab" }
+
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.margins: 8
+            Label { text: editor.selectionItems.length>1 ? editor.selectionItems.length+"개 선택" : editor.hasPendingEdits ? "미적용 편집" : "편집 내용"; Layout.fillWidth: true; elide: Text.ElideRight }
+            Button { objectName: "cancelEdits"; text: "취소"; enabled: editor.hasPendingEdits; onClicked: editor.discardPendingEdits() }
+            Button { objectName: "applyEdits"; text: "적용"; enabled: editor.hasPendingEdits; onClicked: editor.applyPendingEditsAsync() }
+        }
+        ColumnLayout {
+            objectName: "backgroundWorkPanel"
+            visible: editor.jobBusy
+            Layout.fillWidth: true
+            Layout.leftMargin: 8; Layout.rightMargin: 8
+            RowLayout {
+                Layout.fillWidth: true
+                Label {
+                    Layout.fillWidth: true
+                    text: editor.jobProgress < 0 ? "작업 대기 중…" : "계산 중…"
+                    elide: Text.ElideRight
+                }
+                Button {
+                    objectName: "cancelBackgroundWork"
+                    text: "작업 취소"
+                    Accessible.name: "계산 작업 취소"
+                    onClicked: editor.cancelBackgroundWork()
+                }
+            }
+            ProgressBar {
+                objectName: "backgroundProgress"
+                Layout.fillWidth: true
+                indeterminate: editor.jobProgress <= 0
+                from: 0; to: 100; value: Math.max(0, editor.jobProgress)
+                Accessible.name: "계산 진행 상태"
+            }
         }
         StackLayout {
             currentIndex: tabs.currentIndex
@@ -43,7 +87,37 @@ Rectangle {
                         valueRole: "id"
                         currentIndex: indexOfValue(editor.selectedId)
                         displayText: editor.selectedName || "국가 선택"
+                        focusPolicy: Qt.NoFocus
+                        onPressedChanged: if (pressed) panel.beginSelectionNavigation()
                         onActivated: editor.selectCountry(currentValue)
+                        delegate: ItemDelegate {
+                            required property var modelData
+                            width: countryPicker.width
+                            text: modelData.name + (modelData.limited ? " · 제한" : "")
+                        }
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 12; Layout.rightMargin: 12
+                        Button {
+                            objectName: "legacyFocusSelection"; text: "선택 객체로 이동"
+                            focusPolicy: Qt.NoFocus
+                            enabled: editor.selectionItems.length === 1
+                            onClicked: { panel.beginSelectionNavigation(); editor.focusObject() }
+                        }
+                        Button {
+                            objectName: "clearObjectSelection"; text: "선택 해제"
+                            focusPolicy: Qt.NoFocus
+                            enabled: editor.selectionItems.length > 0
+                            onClicked: { panel.beginSelectionNavigation(); editor.clearSelection() }
+                        }
+                    }
+                    Label {
+                        objectName: "legacyPreservedDataNotice"
+                        Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
+                        visible: editor.countryRows.some(function(row) { return row.id === editor.selectedId && row.limited })
+                        text: "보존 데이터가 있어 일부 편집이 제한됩니다. 이름·메모 외 변경은 거절될 수 있습니다."
+                        wrapMode: Text.WordWrap
                     }
                     Flow {
                         Layout.fillWidth: true
@@ -72,22 +146,24 @@ Rectangle {
                     Label {
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
                         visible: editor.selectedId !== "" && !editor.selectedEditable
-                        text: "잠긴 레이어입니다. 레이어 탭에서 잠금을 해제하세요."
+                        text: editor.selectionItems.length>1 ? "여러 객체가 선택되었습니다."
+                            : editor.primaryObject.type !== "country" ? "이 객체의 속성 편집은 후속 단계에서 지원합니다."
+                            : "객체 또는 소속 레이어가 잠겨 있습니다."
                         wrapMode: Text.WordWrap
                     }
                     Label { text: "이름"; Layout.leftMargin: 12 }
                     TextField {
-                        objectName: "countryName"
+                        objectName: "legacyCountryName"
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
                         enabled: editor.selectedEditable
                         text: editor.nameDraft
                         Accessible.name: "국가 이름"
                         onTextEdited: editor.nameDraft=text
-                        onEditingFinished: editor.commitPendingEdits()
+                        onEditingFinished: if (!panel.fieldCommitsHeld) editor.commitCountryField("name")
                     }
                     Label { text: "메모"; Layout.leftMargin: 12 }
                     TextArea {
-                        objectName: "countryMemo"
+                        objectName: "legacyCountryMemo"
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
                         Layout.preferredHeight: 90
                         enabled: editor.selectedEditable
@@ -95,8 +171,15 @@ Rectangle {
                         wrapMode: TextEdit.Wrap
                         placeholderText: "국가에 대한 메모"
                         Accessible.name: "국가 메모"
+                        property bool wasEditing: false
                         onTextChanged: if (activeFocus) editor.memoDraft=text
-                        onActiveFocusChanged: if (!activeFocus) editor.commitPendingEdits()
+                        onActiveFocusChanged: {
+                            if (activeFocus) wasEditing = true
+                            else if (wasEditing) {
+                                wasEditing = false
+                                if (!panel.fieldCommitsHeld) editor.commitCountryField("notes")
+                            }
+                        }
                         background: Rectangle { color: "#f5f7f9"; border.color: "#c4cdd5"; radius: 4 }
                     }
                     Label { text: "RGB 색상"; Layout.leftMargin: 12 }
@@ -108,7 +191,6 @@ Rectangle {
                         placeholderText: "#123456"
                         Accessible.name: "RGB 색상"
                         onTextEdited: editor.colorDraft=text
-                        onEditingFinished: if (/^#[0-9a-fA-F]{6}$/.test(text)) editor.commitPendingEdits()
                     }
                     Label { text: "국가 불투명도 "+Math.round(editor.countryOpacity*100)+"%"; Layout.leftMargin: 12 }
                     Slider {
@@ -118,8 +200,7 @@ Rectangle {
                         from: 0; to: 1; stepSize: 0.01
                         value: editor.countryOpacity
                         Accessible.name: "국가 불투명도"
-                        onMoved: { editor.previewCountryOpacity(value); if (!pressed) editor.commitPendingEdits() }
-                        onPressedChanged: if (!pressed) editor.commitPendingEdits()
+                        onMoved: editor.previewCountryOpacity(value)
                     }
                     Label { text: "소속 레이어"; Layout.leftMargin: 12 }
                     ComboBox {
@@ -176,7 +257,6 @@ Rectangle {
                         text: editor.layerNameDraft
                         Accessible.name: "레이어 이름"
                         onTextEdited: editor.layerNameDraft=text
-                        onEditingFinished: editor.commitPendingEdits()
                     }
                     CheckBox {
                         objectName: "layerVisible"
@@ -199,8 +279,7 @@ Rectangle {
                         from: 0; to: 1; stepSize: 0.01
                         value: editor.layerOpacity
                         Accessible.name: "레이어 불투명도"
-                        onMoved: { editor.previewLayerOpacity(value); if (!pressed) editor.commitPendingEdits() }
-                        onPressedChanged: if (!pressed) editor.commitPendingEdits()
+                        onMoved: editor.previewLayerOpacity(value)
                     }
                     Label {
                         Layout.fillWidth: true; Layout.margins: 12
@@ -209,6 +288,7 @@ Rectangle {
                     }
                 }
             }
+
         }
     }
 }

@@ -1,3 +1,7 @@
+> **M3.2 갱신:** 현재 쓰기 형식은 Qt v4이며 아래 v3 설명은 도입 당시 기록이다.
+> v4의 baseName/nameExplicit 및 자동 색상(null), 이전 형식의 제한은
+> [속성 구현 기록](qt-property-implementation.md)을 우선한다.
+
 # Qt 공통 데이터 모델 및 웹 가져오기 설계
 
 ## 결정과 적용 범위

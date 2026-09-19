@@ -8,7 +8,8 @@
 #include <iostream>
 #include <stdexcept>
 
-void check(bool value) { if (!value) throw std::runtime_error("check failed"); }
+void checkAt(bool value,int line) { if (!value) throw std::runtime_error("check failed at line "+std::to_string(line)); }
+#define check(value) checkAt((value),__LINE__)
 int main(int argc,char** argv)
 {
     QCoreApplication application(argc,argv);
@@ -74,7 +75,7 @@ int main(int argc,char** argv)
         editor.moveCountry(layerId);
         check(editor.countryLayerId()==layerId && !editor.canDeleteLayer());
         editor.setLayerLocked(true);
-        check(editor.selectedId().isEmpty());
+        check(editor.selectedId()=="DEU" && !editor.selectedEditable()); // lock is not deselection
         editor.selectCountry("DEU");
         check(!editor.selectedEditable());
         editor.setColor("#ffffff");
@@ -84,12 +85,12 @@ int main(int argc,char** argv)
         editor.previewCountryOpacity(0);
         check(editor.commitPendingEdits());
         editor.selectCountry("DEU"); check(editor.selectedEditable() && editor.countryOpacity()==0);
-        editor.setLayerVisible(false); check(editor.selectedId().isEmpty());
+        editor.setLayerVisible(false); check(editor.selectedId()=="DEU" && !editor.countryVisuals()["DEU"].toMap()["visible"].toBool());
         editor.setLayerVisible(true);
         check(editor.saveFile(path));
         QFile saved(path.toLocalFile()); check(saved.open(QIODevice::ReadOnly));
         auto v2=QJsonDocument::fromJson(saved.readAll()).object(); saved.close();
-        check(v2["version"].toInt()==3 && v2["presentation"].toObject()["userLayers"].toArray().size()==2);
+        check(v2["version"].toInt()==4 && v2["presentation"].toObject()["userLayers"].toArray().size()==2);
         editor.selectCountry("DEU"); editor.setMemoDraft("changed"); check(editor.commitPendingEdits());
         const auto protectedColors=editor.colors();
         auto rejectV2=[&](QJsonObject obj) {
@@ -117,7 +118,8 @@ int main(int argc,char** argv)
         check(editor.memoDraft()=="한글 메모\n둘째 줄" && editor.selectedName()=="새 독일");
         check(editor.countryLayerId()==layerId && editor.countryOpacity()==0);
         check(!editor.dirty());
-        editor.setNameDraft("   ");
+        // Empty names are valid in the source web; invalid legacy layer name tests failed save.
+        editor.setLayerNameDraft("   ");
         check(!editor.saveFile(path));
         check(editor.selectedName()=="새 독일");
         std::cout << "JSON round trip, Korean path, failed open/save and editor tests passed\n";

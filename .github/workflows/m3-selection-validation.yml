@@ -1,0 +1,52 @@
+name: M3.1 selection validation
+on:
+  push:
+    branches: [codex/m3-1-selection]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux-regression:
+    runs-on: ubuntu-24.04
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          cache: true
+      - name: Verify pinned selection reference
+        run: |
+          if test -f tools/m3-selection-oracle.mjs; then
+            node tools/m3-selection-oracle.mjs --verify
+          fi
+      - name: Configure and build
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
+      - name: Test complete suite
+        run: ctest --test-dir build --output-on-failure --output-junit results.xml
+      - name: Archive tested source
+        if: always()
+        run: |
+          git rev-parse HEAD > build/commit.txt
+          git rev-parse HEAD^{tree} > build/tree.txt
+          git archive --format=tar.gz -o build/source.tar.gz HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m3-selection-results-${{ github.sha }}
+          path: |
+            build/results.xml
+            build/Testing/Temporary/LastTest.log
+            build/app/*.png
+            build/*.png
+            build/commit.txt
+            build/tree.txt
+            build/source.tar.gz
+          retention-days: 7

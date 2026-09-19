@@ -227,11 +227,11 @@ private slots:
         QVERIFY_EXCEPTION_THROWN(projectcodec::decode(deep),std::invalid_argument);
         QVERIFY_EXCEPTION_THROWN(projectcodec::decode(R"({"format":"pandoeditor-project","version":3.00000000000000000000001})"),std::invalid_argument);
     }
-    void legacySavesV3() {
+    void legacySavesV4() {
         pandoeditor::Project project;
         project.replace(projectcodec::decode(sample()));
         const auto saved=projectcodec::encode(project);
-        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),3);
+        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),4);
         pandoeditor::Project reopened;
         reopened.replace(projectcodec::decode(saved));
         QCOMPARE(projectcodec::encode(reopened),saved);
