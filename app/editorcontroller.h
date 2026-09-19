@@ -176,7 +176,7 @@ public:
     QVariantMap structureState() const;
     QVariantList relationCountryOptions() const;
     QVariantList relationParentOptions() const;
-    bool structureDialogOpen() const { return structureSession_.has_value() || conversionDraft_.has_value(); }
+    bool structureDialogOpen() const { return structureSession_.has_value() || conversionDraft_.has_value() || createDraft_.has_value(); }
     Q_INVOKABLE bool changeSelectedParent(const QString& parentId);
     Q_INVOKABLE bool changeSelectedRegionSovereign(const QString& countryId);
     Q_INVOKABLE bool beginDeleteSelection();
@@ -186,6 +186,7 @@ public:
     Q_INVOKABLE bool updateTypeConversionTarget(const QString& sovereignId,const QString& parentId);
     Q_INVOKABLE bool beginTerritorialCreate(const QString& type);
     Q_INVOKABLE bool updateTerritorialCreateSetup(const QString& name,const QString& sovereignId,const QString& parentId,const QString& sourceId);
+    bool beginTerritorialCreatePrepared(const pandoeditor::CreateTerritorialIntent& intent);
     Q_INVOKABLE void selectAt(double x,double y);
     Q_INVOKABLE void selectCountry(const QString& id);
     Q_INVOKABLE void selectLayer(const QString& id);
@@ -294,8 +295,10 @@ private:
     // before the core can create a valid immutable plan.  Keep those UI-only
     // choices out of the document until the user has supplied both values.
     struct ConversionDraft { pandoeditor::ProjectSnapshot base; pandoeditor::ConvertTerritorialTypeIntent intent; };
+    struct CreateDraft { pandoeditor::ProjectSnapshot base; pandoeditor::CreateTerritorialIntent intent; };
     std::optional<StructureSession> structureSession_;
     std::optional<ConversionDraft> conversionDraft_;
+    std::optional<CreateDraft> createDraft_;
     bool setStructurePlan(const pandoeditor::TerritorialMutationIntent&);
     MapProjection projection_;
     QString selected_,selectedLayer_="countries",filePath_;
