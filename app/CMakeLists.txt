@@ -2,7 +2,7 @@ find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 qt_add_executable(pandoeditor main.cpp)
 
 add_library(pandoeditor_editor STATIC
-    webimport.cpp webmigration.cpp editorwebimport.cpp
+    webimport.cpp webmigration.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
     editorcontroller.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
@@ -34,6 +34,9 @@ qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}
 
 if(BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test)
+    add_executable(retained_reference_tests ../tests/retained_reference_tests.cpp)
+    target_link_libraries(retained_reference_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME retained_reference_tests COMMAND retained_reference_tests -o -,txt)
     foreach(test_name web_import_tests web_import_editor_tests selection_editor_tests)
         add_executable(${test_name} ../tests/${test_name}.cpp)
         target_link_libraries(${test_name} PRIVATE pandoeditor_editor Qt6::Test)

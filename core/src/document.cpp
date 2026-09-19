@@ -213,14 +213,18 @@ std::vector<CountryView> countryViews(const ProjectDocument& d) {
     }
     return result;
 }
-bool effectAllowed(const ProjectDocument& d,const ObjectRef& ref,const std::string& effect) {
+std::vector<std::string> blockingExtensions(const ProjectDocument& d,const ObjectRef& ref,const std::string& effect) {
+    std::vector<std::string> result;
     for(const auto& e:d.extensions) {
-        if(e.envelopeExtras!="{}" && effect!="name" && effect!="notes") return false;
+        if(e.envelopeExtras!="{}" && effect!="name" && effect!="notes") { result.push_back(e.id); continue; }
         if(e.status=="migrationArchive") continue;
         bool related=std::find(e.dependencies.begin(),e.dependencies.end(),ref)!=e.dependencies.end();
-        if(e.dependencyKnowledge=="unknown" && effect!="name" && effect!="notes") return false;
-        if(related && (e.forbiddenEffects.empty()||std::find(e.forbiddenEffects.begin(),e.forbiddenEffects.end(),effect)!=e.forbiddenEffects.end())) return false;
+        if(e.dependencyKnowledge=="unknown" && effect!="name" && effect!="notes") { result.push_back(e.id); continue; }
+        if(related && (e.forbiddenEffects.empty()||std::find(e.forbiddenEffects.begin(),e.forbiddenEffects.end(),effect)!=e.forbiddenEffects.end())) result.push_back(e.id);
     }
-    return true;
+    return result;
+}
+bool effectAllowed(const ProjectDocument& d,const ObjectRef& ref,const std::string& effect) {
+    return blockingExtensions(d,ref,effect).empty();
 }
 } // namespace pandoeditor

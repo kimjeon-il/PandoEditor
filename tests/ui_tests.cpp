@@ -496,6 +496,21 @@ private slots:
             window->setProperty("allowClose",true); window->close();
         }
     }
+    void territorialStructureDeleteDialogAcrossPcAnd360px() {
+        for(bool mobile:{false,true}) {
+            EditorController editor(EditorControllerConfig{mobile,{}}); QQmlApplicationEngine engine; QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& e:errors) warnings<<e.toString();});
+            engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+            auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);window->resize(mobile?360:1100,mobile?640:760);exposeForTest(window);QVERIFY(clickControl(window,"countryTab"));editor.selectCountry("DEU");
+            auto panel=visualItem(window->contentItem(),"territorialStructurePanel");QVERIFY(panel&&panel->isVisible());
+            auto deleteButton=visualItem(window->contentItem(),"deleteTerritorial");QVERIFY(deleteButton&&deleteButton->isVisible()&&deleteButton->isEnabled());
+            QVERIFY(QMetaObject::invokeMethod(deleteButton,"clicked"));QTRY_VERIFY(editor.structureDialogOpen());
+            auto dialog=window->findChild<QObject*>("territorialStructureDialog");QVERIFY(dialog&&dialog->property("visible").toBool());
+            QVERIFY(capture(window).save(mobile?"structure-mobile-360.png":"structure-desktop-1100.png"));
+            QVERIFY(clickControl(window,"confirmTerritorialStructure"));QTRY_VERIFY(!editor.structureDialogOpen());editor.undo();editor.selectCountry("DEU");QCOMPARE(editor.selectedId(),QString("DEU"));
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));window->setProperty("allowClose",true);window->close();
+        }
+    }
     void compositing() {
         using namespace pandoeditor;
         Project project;

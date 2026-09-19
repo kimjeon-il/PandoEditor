@@ -35,6 +35,7 @@ std::vector<ObjectRef> targetsFor(const CommandArguments& args)
             if constexpr(std::is_same_v<T,MoveCountry>) refs.insert({"userLayer",action.layerId});
         } else if constexpr(std::is_same_v<T,TerritorialFieldEdit>) refs.insert(action.target);
         else if constexpr(std::is_same_v<T,TerritorialColorEdit> || std::is_same_v<T,TerritorialLockEdit>) refs.insert(action.targets.begin(),action.targets.end());
+        else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>) refs.insert(action.plan.affectedObjects.begin(),action.plan.affectedObjects.end());
         else if constexpr(!std::is_same_v<T,std::monostate>) refs.insert({"userLayer",action.id});
     },args.action);
     return {refs.begin(),refs.end()};
@@ -48,7 +49,9 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
         {"edit.properties",0},{"country.color",1},{"layer.add",2},{"layer.remove",3},
         {"layer.move",4},{"layer.visibility",5},{"layer.lock",6},{"country.move",7},
         {"territorial.field",8},{"territorial.color",9},{"territorial.color.reset",9},
-        {"territorial.batch-color",9},{"territorial.lock",10}};
+        {"territorial.batch-color",9},{"territorial.lock",10},{"territorial.create",11},
+        {"territorial.relation.parent",11},{"territorial.relation.sovereign",11},
+        {"territorial.delete",11},{"territorial.geometry.commit",11}};
     auto found=std::find_if(std::begin(commands),std::end(commands),[&](const auto& c){return request.commandId==c.first;});
     require(found!=std::end(commands),CommandError::InvalidCommand,"unknown commandId");
     require(request.args.action.index()==found->second,CommandError::InvalidArguments,"commandId/action mismatch");
@@ -66,6 +69,10 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                     require(request.commandId=="territorial.color.reset"?!action.color:bool(action.color),CommandError::InvalidArguments,"explicit/reset color contract");
                     require(!action.color || *action.color<=0xffffff,CommandError::InvalidArguments,"invalid RGB");
                 }
+            }
+            else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>) {
+                require(action.plan.projectInstanceId==project.instanceId()&&action.plan.documentId==project.document().documentId&&action.plan.baseRevision==project.revision(),CommandError::StaleRevision,"territorial plan stale");
+                require(!action.plan.affectedObjects.empty(),CommandError::InvalidTargets,"empty territorial plan");
             }
         },request.args.action);
     }
@@ -102,8 +109,11 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
     if(request.args.action.index()>=8)for(const auto& ref:refs)require(ref.domain=="territorial",CommandError::InvalidTargets,"non-territorial target");
     const auto* added=std::get_if<AddLayer>(&request.args.action);
     for(const auto& ref:refs) {
-        if(ref.domain=="territorial")
-            require((request.args.action.index()>=8 || std::any_of(request.args.properties.fields.begin(),request.args.properties.fields.end(),[&](const auto& f){return f.target==ref;}))?project.index().objects.count(ref)!=0:project.country(ref.id)!=nullptr,CommandError::InvalidTargets,"territorial target not found");
+        if(ref.domain=="territorial") {
+            const auto create=std::get_if<ApplyTerritorialMutation>(&request.args.action);
+            const bool newCreate=create && (create->plan.kind==TerritorialMutationKind::CreateCountry||create->plan.kind==TerritorialMutationKind::CreateSubunit||create->plan.kind==TerritorialMutationKind::CreateRegion) && ref==create->plan.targets.front();
+            require(newCreate || ((request.args.action.index()>=8 || std::any_of(request.args.properties.fields.begin(),request.args.properties.fields.end(),[&](const auto& f){return f.target==ref;}))?project.index().objects.count(ref)!=0:project.country(ref.id)!=nullptr),CommandError::InvalidTargets,"territorial target not found");
+        }
         else
             require(ref.domain=="userLayer" && (project.layer(ref.id) || (added && ref.id==added->id)),
                     CommandError::InvalidTargets,"layer target not found");
@@ -126,6 +136,36 @@ void applyField(ProjectDocument& candidate,const DocumentIndex& index,const Terr
                 (action.field==TerritorialField::ValidFrom?u.validity.from:u.validity.to)=value.empty()?std::nullopt:std::optional<std::string>(value);
                 (void)temporalBounds(u.validity);break;
             }
+}
+TerritorialRelation* baseRelation(ProjectDocument& d,const ObjectRef& ref) {
+    for(auto& relation:d.relations) if(!relation.dated&&relation.unit==ref)return &relation;
+    return nullptr;
+}
+void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action) {
+    const auto& plan=action.plan;
+    auto relationId=[&](const std::string& id){std::string value="relation-"+id;unsigned n=1;auto exists=[&](const std::string& key){return std::any_of(d.relations.begin(),d.relations.end(),[&](const auto& r){return r.id==key;});};while(exists(value))value="relation-"+id+"-"+std::to_string(n++);return value;};
+    std::visit([&](const auto& in) {
+        using T=std::decay_t<decltype(in)>;
+        if constexpr(std::is_same_v<T,ChangeParentIntent>) {
+            auto* relation=baseRelation(d,in.target);if(!relation)throw Rejection{CommandError::ValidationFailed,"missing base relation"};relation->parent=in.parent;
+        } else if constexpr(std::is_same_v<T,ChangeRegionSovereignIntent>) {
+            auto* relation=baseRelation(d,in.target);if(!relation){if(!in.sovereign)return;d.relations.push_back({relationId(in.target.id),in.target,{},{in.sovereign},false,{}});}
+            else {relation->sovereign=in.sovereign;if(!relation->parent&&!relation->sovereign)d.relations.erase(std::remove_if(d.relations.begin(),d.relations.end(),[&](const auto& r){return !r.dated&&r.unit==in.target;}),d.relations.end());}
+        } else if constexpr(std::is_same_v<T,CreateTerritorialIntent>) {
+            GeometryRef geometry{"geometry-"+in.id,1};unsigned n=1;while(d.geometries.get(geometry))geometry={"geometry-"+in.id+"-"+std::to_string(n++),1};d.geometries.insert(geometry,in.geometry);
+            TerritorialUnit unit;unit.id=in.id;unit.name=in.name;unit.baseName=in.kind==UnitKind::Country?in.name:"";unit.nameExplicit=true;unit.notes=in.notes;unit.kind=in.kind;unit.geometry=geometry;unit.coverageMode=in.kind==UnitKind::Subunit?"partition":"explicit";unit.validity=in.validity;d.units.push_back(unit);
+            const auto ref=territorialRef(in.id);const auto layer=d.presentation.userLayers.front().id;d.presentation.membership.emplace(ref,layer);d.presentation.objectStyles.emplace(ref,ObjectStyle{in.explicitColor.value_or(0),1,in.explicitColor.has_value()});
+            if(in.kind!=UnitKind::Country)d.relations.push_back({relationId(in.id),ref,in.parent,in.sovereign,false,{}});
+        } else if constexpr(std::is_same_v<T,DeleteTerritorialIntent>) {
+            std::set<ObjectRef> removed(in.targets.begin(),in.targets.end());
+            d.relations.erase(std::remove_if(d.relations.begin(),d.relations.end(),[&](const auto& r){return removed.count(r.unit)||(r.parent&&removed.count(*r.parent))||(r.sovereign&&removed.count(*r.sovereign));}),d.relations.end());
+            for(const auto& ref:removed){d.presentation.membership.erase(ref);d.presentation.objectStyles.erase(ref);}d.units.erase(std::remove_if(d.units.begin(),d.units.end(),[&](const auto& u){return removed.count(territorialRef(u.id));}),d.units.end());
+        } else if constexpr(std::is_same_v<T,TransferSubunitIntent> || std::is_same_v<T,ConvertTerritorialTypeIntent>) {
+            if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"M4 geometry patch required"};
+            if(action.geometry->sourceRevision!=plan.baseRevision)throw Rejection{CommandError::StaleRevision,"geometry patch stale"};
+            throw Rejection{CommandError::InvalidArguments,"M4 geometry conversion is not available"};
+        }
+    },plan.intent);
 }
 void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const CommandArguments& args)
 {
@@ -170,6 +210,8 @@ void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const 
             for(const auto& ref:action.targets){auto& s=candidate.presentation.objectStyles.at(ref);s.explicitColor=action.color.has_value();s.color=action.color.value_or(0);}
         } else if constexpr(std::is_same_v<T,TerritorialLockEdit>) {
             for(const auto& ref:action.targets)candidate.units.at(index.objects.at(ref)).locked=action.locked;
+        } else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>) {
+            applyTerritorial(candidate,action);
         }
     },args.action);
     for(const auto& field:args.properties.fields)applyField(candidate,index,field);
@@ -177,6 +219,15 @@ void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const 
 void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,const CommandRequest& request)
 {
     const auto& before=project.document();
+    if(const auto structural=std::get_if<ApplyTerritorialMutation>(&request.args.action)) {
+        for(const auto& ref:structural->plan.affectedObjects) {
+            if(project.index().objects.count(ref)) {
+                const auto& u=before.units.at(project.index().objects.at(ref));
+                require(!u.locked,CommandError::Locked,"object locked");
+            }
+        }
+        return;
+    }
     auto allow=[&](bool changed,const ObjectRef& ref,const char* effect) {
         require(!changed || effectAllowed(before,ref,effect),CommandError::UnsupportedDependency,effect);
     };
@@ -280,13 +331,40 @@ CommandRequest CommandProcessor::makeRequest(const Project& project,std::string 
     return {std::move(commandId),project.instanceId(),project.document().documentId,project.revision(),std::move(refs),std::move(args)};
 }
 PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const CommandRequest& request)
+{ return prepare(project,request,{}); }
+PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const CommandRequest& request,const ExtensionRewriter& rewriter)
 {
     PrepareResult result;
     try {
         validateRequest(project,request);
+        const auto structural=std::get_if<ApplyTerritorialMutation>(&request.args.action);
+        if(structural) {
+            auto rederived=planTerritorial(project,structural->plan.intent);
+            // Planning is intentionally repeated against the current snapshot.  An
+            // allocation failure while doing so is not evidence that a valid plan
+            // has gone stale; preserve the candidate and report the preparation
+            // failure to callers instead.
+            if(!rederived.ok()) {
+                require(false,rederived.error==CommandError::PrepareFailed
+                              ?CommandError::PrepareFailed:rederived.error,
+                        "territorial plan preparation failed");
+            }
+            require(rederived.plan&&rederived.plan->kind==structural->plan.kind&&rederived.plan->affectedObjects==structural->plan.affectedObjects,CommandError::ValidationFailed,"territorial plan changed");
+            for(const auto& guard:structural->plan.retainedGuards) {
+                const auto found=std::find_if(project.document().extensions.begin(),project.document().extensions.end(),[&](const auto& e){return e.id==guard.id&&e.payload==guard.payload;});
+                require(found!=project.document().extensions.end(),CommandError::UnsupportedDependency,"retained extension changed");
+            }
+            require(structural->plan.retainedGuards.empty()||bool(rewriter),CommandError::UnsupportedDependency,"retained references require a rewriter");
+        }
         auto candidate=project.document();
         try { applyArguments(candidate,project.index(),request.args); }
         catch(const std::invalid_argument& e){ result.error=CommandError::ValidationFailed;result.detail=e.what();return result; }
+        if(structural && !structural->plan.retainedGuards.empty()) {
+            const auto rewritten=rewriter(project.document(),structural->plan,candidate.extensions);
+            require(rewritten.ok,CommandError::UnsupportedDependency,"retained reference rewrite failed");
+            for(const auto& guard:structural->plan.retainedGuards)
+                require(std::find(rewritten.handledExtensionIds.begin(),rewritten.handledExtensionIds.end(),guard.id)!=rewritten.handledExtensionIds.end(),CommandError::UnsupportedDependency,"retained reference not handled");
+        }
         checkEffects(project,candidate,request);
         // Full candidate validation and all derived allocations precede preview.
         std::shared_ptr<const detail::DocumentState> after;
@@ -322,6 +400,26 @@ PrepareResult CommandProcessor::prepare(const Project& project,const CommandRequ
     try { return prepare(project.snapshot(),request); }
     catch(const std::exception&) { PrepareResult r; r.error=CommandError::PrepareFailed; return r; }
 }
+PrepareResult CommandProcessor::prepare(const Project& project,const CommandRequest& request,const ExtensionRewriter& rewriter)
+{ return prepare(project.snapshot(),request,rewriter); }
+TerritorialPlanResult CommandProcessor::planTerritorial(const ProjectSnapshot& project,const TerritorialMutationIntent& intent)
+{
+    TerritorialPlanResult result;
+    try {
+        std::visit([&](const auto& value){using T=std::decay_t<decltype(value)>;
+            if constexpr(std::is_same_v<T,ChangeParentIntent>)result.plan=planChangeParent(project,value);
+            else if constexpr(std::is_same_v<T,ChangeRegionSovereignIntent>)result.plan=planRegionSovereign(project,value);
+            else if constexpr(std::is_same_v<T,CreateTerritorialIntent>)result.plan=planCreate(project,value);
+            else if constexpr(std::is_same_v<T,DeleteTerritorialIntent>)result.plan=planDelete(project,value);
+            else if constexpr(std::is_same_v<T,TransferSubunitIntent>)result.plan=planTransfer(project,value);
+            else if constexpr(std::is_same_v<T,ConvertTerritorialTypeIntent>)result.plan=planConversion(project,value);
+        },intent);result.status=CommandStatus::Prepared;
+    } catch(const std::invalid_argument& e) { result.detail=e.what();result.error=result.detail=="LOCKED"?CommandError::Locked:result.detail=="INVALID_TARGETS"?CommandError::InvalidTargets:CommandError::ValidationFailed; }
+    catch(...) { result.error=CommandError::PrepareFailed; }
+    return result;
+}
+TerritorialPlanResult CommandProcessor::planTerritorial(const Project& project,const TerritorialMutationIntent& intent)
+{ return planTerritorial(project.snapshot(),intent); }
 CommandResult CommandProcessor::confirm(Project& project,CommandPreview& preview)
 {
     // Every attempt consumes the token, including stale, foreign or failed commits.

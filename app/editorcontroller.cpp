@@ -161,6 +161,7 @@ void EditorController::publish(bool pruneSelection)
     reloadDrafts();
     emit stateChanged();emit selectionChanged();emit searchChanged();emit hoverChanged();
     emit visualChanged();emit draftsChanged();emit dirtyChanged();
+    emit structureChanged();
 }
 void EditorController::previewCountryOpacity(double value)
 {

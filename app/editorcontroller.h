@@ -79,6 +79,10 @@ class EditorController : public QObject {
     Q_PROPERTY(QString documentNotice READ documentNotice NOTIFY stateChanged)
     Q_PROPERTY(bool mobileMode READ mobileMode CONSTANT)
     Q_PROPERTY(bool privateRecoveryRequired READ privateRecoveryRequired NOTIFY privateRecoveryRequiredChanged)
+    Q_PROPERTY(QVariantMap structureState READ structureState NOTIFY structureChanged)
+    Q_PROPERTY(QVariantList relationCountryOptions READ relationCountryOptions NOTIFY structureChanged)
+    Q_PROPERTY(QVariantList relationParentOptions READ relationParentOptions NOTIFY structureChanged)
+    Q_PROPERTY(bool structureDialogOpen READ structureDialogOpen NOTIFY structureChanged)
 public:
     QObject* screenColorPicker() { return &screenColorPicker_; }
     QVariantMap objectProperties() const;
@@ -169,6 +173,19 @@ public:
     bool canRedo() const { return project_.canRedo(); }
     bool mobileMode() const { return mobileMode_; }
     bool privateRecoveryRequired() const { return privateRecoveryRequired_; }
+    QVariantMap structureState() const;
+    QVariantList relationCountryOptions() const;
+    QVariantList relationParentOptions() const;
+    bool structureDialogOpen() const { return structureSession_.has_value(); }
+    Q_INVOKABLE bool changeSelectedParent(const QString& parentId);
+    Q_INVOKABLE bool changeSelectedRegionSovereign(const QString& countryId);
+    Q_INVOKABLE bool beginDeleteSelection();
+    Q_INVOKABLE bool confirmStructureMutation();
+    Q_INVOKABLE void cancelStructureMutation();
+    Q_INVOKABLE bool beginTypeConversion();
+    Q_INVOKABLE bool updateTypeConversionTarget(const QString& sovereignId,const QString& parentId);
+    Q_INVOKABLE bool beginTerritorialCreate(const QString& type);
+    Q_INVOKABLE bool updateTerritorialCreateSetup(const QString& name,const QString& sovereignId,const QString& parentId,const QString& sourceId);
     Q_INVOKABLE void selectAt(double x,double y);
     Q_INVOKABLE void selectCountry(const QString& id);
     Q_INVOKABLE void selectLayer(const QString& id);
@@ -219,6 +236,7 @@ signals:
     void previewChanged();
     void errorOccurred(const QString& message);
     void privateRecoveryRequiredChanged();
+    void structureChanged();
 private:
     ScreenColorPicker screenColorPicker_;
     std::vector<pandoeditor::ObjectRef> mapCandidates(double x,double y,double pixelsPerUnit) const;
@@ -271,6 +289,9 @@ private:
     std::optional<pandoeditor::JobTicket> background_;
     bool fieldCommitInProgress_=false;
     std::optional<pandoeditor::CommandPreview> pendingPreview_;
+    struct StructureSession { pandoeditor::ProjectSnapshot base; pandoeditor::TerritorialMutationPlan plan; };
+    std::optional<StructureSession> structureSession_;
+    bool setStructurePlan(const pandoeditor::TerritorialMutationIntent&);
     MapProjection projection_;
     QString selected_,selectedLayer_="countries",filePath_;
     QString nameDraft_,memoDraft_,colorDraft_,layerNameDraft_;

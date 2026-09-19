@@ -127,5 +127,6 @@ struct DocumentIndex {
 DocumentIndex validateDocument(const ProjectDocument& document);
 std::vector<CountryView> countryViews(const ProjectDocument& document);
 const TerritorialRelation* effectiveRelation(const ProjectDocument&, const std::string& unitId, std::int64_t date);
+std::vector<std::string> blockingExtensions(const ProjectDocument&, const ObjectRef&, const std::string& effect);
 bool effectAllowed(const ProjectDocument&, const ObjectRef&, const std::string& effect);
 } // namespace pandoeditor

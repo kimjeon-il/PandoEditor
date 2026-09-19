@@ -151,6 +151,49 @@ Rectangle {
                             : "객체 또는 소속 레이어가 잠겨 있습니다."
                         wrapMode: Text.WordWrap
                     }
+                    GroupBox {
+                        objectName: "territorialStructurePanel"
+                        title: "영토 구조"
+                        Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
+                        visible: editor.primaryObject.type === "subunit" || editor.primaryObject.type === "region" || editor.primaryObject.type === "country"
+                        ColumnLayout {
+                            anchors.fill: parent
+                            ComboBox {
+                                id: parentChoice
+                                Layout.fillWidth: true
+                                visible: editor.primaryObject.type === "subunit"
+                                model: editor.relationParentOptions
+                                textRole: "name"; valueRole: "id"
+                                displayText: editor.objectProperties.parentId || "상위 영역 선택"
+                            }
+                            Button {
+                                objectName: "changeTerritorialParent"
+                                visible: editor.primaryObject.type === "subunit"
+                                text: "상위 영역 변경"
+                                enabled: parentChoice.currentValue !== ""
+                                onClicked: editor.changeSelectedParent(parentChoice.currentValue)
+                            }
+                            ComboBox {
+                                id: sovereignChoice
+                                Layout.fillWidth: true
+                                visible: editor.primaryObject.type === "region"
+                                model: editor.relationCountryOptions
+                                textRole: "name"; valueRole: "id"
+                                displayText: editor.objectProperties.sovereignId || "소속 국가 없음"
+                            }
+                            Button {
+                                objectName: "changeRegionSovereign"
+                                visible: editor.primaryObject.type === "region"
+                                text: "소속 국가 변경"
+                                onClicked: editor.changeSelectedRegionSovereign(sovereignChoice.currentValue)
+                            }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Button { objectName: "deleteTerritorial"; text: "삭제"; enabled: editor.selectionItems.length > 0; onClicked: editor.beginDeleteSelection() }
+                                Button { objectName: "convertTerritorial"; text: "종류 전환"; visible: editor.primaryObject.type === "subunit" || editor.primaryObject.type === "country"; onClicked: editor.beginTypeConversion() }
+                            }
+                        }
+                    }
                     Label { text: "이름"; Layout.leftMargin: 12 }
                     TextField {
                         objectName: "legacyCountryName"
@@ -289,6 +332,25 @@ Rectangle {
                 }
             }
 
+        }
+    }
+    Dialog {
+        id: structureDialog
+        objectName: "territorialStructureDialog"
+        modal: true; anchors.centerIn: parent; width: Math.min(parent.width - 32, 380)
+        visible: editor.structureDialogOpen
+        title: "영토 구조 변경"
+        closePolicy: Popup.NoAutoClose
+        contentItem: ColumnLayout {
+            spacing: 10
+            Label { Layout.fillWidth: true; text: editor.structureState.detail; wrapMode: Text.WordWrap }
+            Repeater { model: editor.structureState.impacts || []; delegate: Label { required property var modelData; text: modelData.messageKey + " · " + modelData.id } }
+            RowLayout {
+                Layout.fillWidth: true
+                Button { text: "취소"; onClicked: editor.cancelStructureMutation() }
+                Item { Layout.fillWidth: true }
+                Button { objectName: "confirmTerritorialStructure"; text: "확인"; enabled: !editor.structureState.geometryRequired; onClicked: editor.confirmStructureMutation() }
+            }
         }
     }
 }

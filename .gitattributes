@@ -3,3 +3,4 @@
 # conversion must never alter their line endings.
 tests/reference/*.mjs text eol=lf
 tests/fixtures/web-properties/source/** text eol=lf
+tests/fixtures/web-structure/source/** text eol=lf
