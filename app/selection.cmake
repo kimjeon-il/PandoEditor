@@ -1,4 +1,5 @@
 # M3.1 component targets. Included after the existing application targets.
+target_sources(pandoeditor_editor PRIVATE "${PROJECT_SOURCE_DIR}/app/editorselection.cpp")
 if(BUILD_TESTING)
     add_executable(selection_probe "${PROJECT_SOURCE_DIR}/tests/selection_probe.cpp")
     target_link_libraries(selection_probe PRIVATE Pandoeditor::Core Qt6::Core)

@@ -3,9 +3,11 @@
 #include "commandjobrunner.h"
 #include "platformstorage.h"
 #include "mapprojection.h"
+#include <pandoeditor/selection.h>
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
+#include <map>
 #include <optional>
 
 struct EditorControllerConfig {
@@ -16,11 +18,18 @@ struct EditorControllerConfig {
 #endif
     QString privateProjectPath;
 };
-
 struct WebImportSession;
 
 class EditorController : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QVariantList selectionItems READ selectionItems NOTIFY selectionChanged)
+    Q_PROPERTY(QVariantMap primaryObject READ primaryObject NOTIFY selectionChanged)
+    Q_PROPERTY(qulonglong selectionRevision READ selectionRevision NOTIFY selectionChanged)
+    Q_PROPERTY(QVariantList objectRows READ objectRows NOTIFY stateChanged)
+    Q_PROPERTY(QString searchQuery READ searchQuery WRITE setSearchQuery NOTIFY searchChanged)
+    Q_PROPERTY(QVariantList searchResults READ searchResults NOTIFY searchChanged)
+    Q_PROPERTY(QVariantMap hoverObject READ hoverObject NOTIFY hoverChanged)
+    Q_PROPERTY(qulonglong hoverRevision READ hoverRevision NOTIFY hoverChanged)
     Q_PROPERTY(bool webImportBusy READ webImportBusy NOTIFY webImportChanged)
     Q_PROPERTY(bool hasWebImportPreview READ hasWebImportPreview NOTIFY webImportChanged)
     Q_PROPERTY(QString webImportHash READ webImportHash NOTIFY webImportChanged)
@@ -62,6 +71,27 @@ class EditorController : public QObject {
     Q_PROPERTY(bool mobileMode READ mobileMode CONSTANT)
     Q_PROPERTY(bool privateRecoveryRequired READ privateRecoveryRequired NOTIFY privateRecoveryRequiredChanged)
 public:
+    explicit EditorController(QObject* parent=nullptr);
+    explicit EditorController(EditorControllerConfig config,QObject* parent=nullptr);
+    QVariantList selectionItems() const;
+    QVariantMap primaryObject() const;
+    qulonglong selectionRevision() const { return selection_.revision(); }
+    QVariantList objectRows() const;
+    QString searchQuery() const { return searchQuery_; }
+    void setSearchQuery(const QString& query);
+    QVariantList searchResults() const;
+    QVariantMap hoverObject() const;
+    qulonglong hoverRevision() const { return hoverRevision_; }
+    Q_INVOKABLE QVariantMap rangeAnchor(const QString& scope) const;
+    Q_INVOKABLE bool selectObject(const QVariantMap& ref,const QString& mode="replace",const QString& scope="",const QVariantList& ordered={},bool additive=false);
+    Q_INVOKABLE bool setSelection(const QVariantList& refs,const QVariantMap& primary={},const QString& scope="");
+    Q_INVOKABLE void clearSelection();
+    Q_INVOKABLE bool setHoverObject(const QVariantMap& ref,const QString& source="",const QString& expectedKey="");
+    Q_INVOKABLE QVariantMap pickObject(double x,double y) const;
+    Q_INVOKABLE void selectMapAt(double x,double y,bool additive=false);
+    Q_INVOKABLE bool focusObject(const QVariantMap& ref={});
+    // Read-only canonical serialization for non-mutating inspection/tests.
+    QByteArray documentBytes() const { return projectcodec::encode(project_); }
     bool webImportBusy() const;
     bool hasWebImportPreview() const;
     QString webImportHash() const;
@@ -71,10 +101,8 @@ public:
     QString projectInstanceId() const { return QString::fromStdString(project_.instanceId()); }
     QString documentId() const { return QString::fromStdString(project_.document().documentId); }
     Q_INVOKABLE bool prepareWebImport(const QUrl& url);
-    Q_INVOKABLE bool confirmWebImport(const QString& candidateHash, const QString& disposition={}, const QUrl& saveUrl={});
+    Q_INVOKABLE bool confirmWebImport(const QString& candidateHash,const QString& disposition={},const QUrl& saveUrl={});
     Q_INVOKABLE void cancelWebImport();
-    explicit EditorController(QObject* parent=nullptr);
-    explicit EditorController(EditorControllerConfig config, QObject* parent=nullptr);
     QVariantList paths() const { return projection_.paths; }
     double mapWidth() const { return projection_.width; }
     double mapHeight() const { return projection_.height; }
@@ -85,7 +113,7 @@ public:
     QVariantList countryRows() const;
     QString selectedId() const { return selected_; }
     QString selectedName() const;
-    bool selectedEditable() const { return project_.editable(selected_.toStdString()); }
+    bool selectedEditable() const { return selection_.items().size()==1 && project_.editable(selected_.toStdString()); }
     QString countryLayerId() const;
     QString selectedLayerId() const { return selectedLayer_; }
     bool canDeleteLayer() const;
@@ -144,6 +172,10 @@ public:
     Q_INVOKABLE bool exportProject(const QUrl& url);
     Q_INVOKABLE bool confirmPrivateRecovery();
 signals:
+    void selectionChanged();
+    void searchChanged();
+    void hoverChanged();
+    void focusRequested(double left,double top,double width,double height,double maxZoom);
     void webImportChanged();
     void stateChanged();
     void jobChanged();
@@ -155,20 +187,38 @@ signals:
     void errorOccurred(const QString& message);
     void privateRecoveryRequiredChanged();
 private:
+    struct CountryDraft { QString name,memo,color; std::optional<double> opacity; };
+    struct LayerDraft { QString name; std::optional<double> opacity; };
+    std::map<QString,CountryDraft> parkedCountryDrafts_;
+    std::map<QString,LayerDraft> parkedLayerDrafts_;
+    void parkDrafts();
+    void restoreParkedDrafts();
+    void clearParkedDrafts();
+    void reconcileSelection();
+    void applySelection(pandoeditor::SelectionState next);
+    std::optional<pandoeditor::ObjectRef> existingObjectRef(const QVariantMap&) const;
+    QVariantMap objectRefValue(const pandoeditor::ObjectRef&) const;
+    bool objectVisible(const pandoeditor::ObjectRef&) const;
+    pandoeditor::SelectionState selection_;
+    std::optional<pandoeditor::ObjectRef> hover_;
+    std::string selectionInstance_;
+    QString searchQuery_,hoverSource_;
+    qulonglong hoverRevision_=0;
+    bool selectionTransition_=false;
     bool isProtectedWebSource(const QUrl& url) const;
     void webImportFailure(const QString& message);
     std::shared_ptr<WebImportSession> webImport_;
-    QString webImportError_, protectedWebSource_;
+    QString webImportError_,protectedWebSource_;
     qulonglong importEditEpoch_=0;
     bool beginPendingWork(bool apply);
     bool collectPendingEdits(pandoeditor::CommandArguments& args);
-    pandoeditor::CommandStatus prepareCommand(const std::string& commandId, pandoeditor::CommandArguments args);
+    pandoeditor::CommandStatus prepareCommand(const std::string& commandId,pandoeditor::CommandArguments args);
     bool confirmCommand();
-    bool executeCommand(const std::string& commandId, pandoeditor::CommandAction action);
-    void commandError(pandoeditor::CommandError error, const QString& detail = {});
+    bool executeCommand(const std::string& commandId,pandoeditor::CommandAction action);
+    void commandError(pandoeditor::CommandError error,const QString& detail={});
     void publish(bool pruneSelection=true);
     void reloadDrafts();
-    bool replaceFromBytes(const QByteArray& bytes, bool imported, const QString& path = {});
+    bool replaceFromBytes(const QByteArray& bytes,bool imported,const QString& path={});
     pandoeditor::Project project_;
     std::unique_ptr<CommandJobRunner> jobs_;
     std::optional<pandoeditor::JobTicket> background_;
@@ -179,7 +229,7 @@ private:
     QString nameDraft_,memoDraft_,colorDraft_,layerNameDraft_;
     std::optional<double> opacityPreview_,layerOpacityPreview_;
     ProjectStorage storage_;
-    bool mobileMode_ = false;
-    bool importedDirty_ = false;
-    bool privateRecoveryRequired_ = false;
+    bool mobileMode_=false;
+    bool importedDirty_=false;
+    bool privateRecoveryRequired_=false;
 };
