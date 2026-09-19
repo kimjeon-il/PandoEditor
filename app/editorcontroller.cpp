@@ -17,6 +17,7 @@ EditorController::EditorController(EditorControllerConfig config, QObject* paren
     if(!sample.open(QIODevice::ReadOnly)) throw std::runtime_error("Cannot read bundled sample");
     project_.replace(projectcodec::decode(sample.readAll()));
     projection_.rebuild(project_.countries()); reloadDrafts();
+    connect(this,&EditorController::dirtyChanged,this,[this](){++importEditEpoch_;});
     jobs_=std::make_unique<CommandJobRunner>([this]() ->const pandoeditor::Project& {return project_;});
     connect(jobs_.get(),&CommandJobRunner::changed,this,&EditorController::jobChanged,Qt::QueuedConnection);
 }
@@ -63,7 +64,7 @@ QVariantList EditorController::countryRows() const
     for(const auto& c:project_.countries()) {
         const auto l=project_.layer(c.layerId);
         result.append(QVariantMap{{"id",text(c.id)},{"name",text(c.name)},{"layerId",text(c.layerId)},
-            {"visible",l->visible},{"locked",l->locked || c.locked}});
+            {"visible",l->visible},{"locked",l->locked || c.locked},{"limited",!pandoeditor::effectAllowed(project_.document(),pandoeditor::territorialRef(c.id),"color")}});
     }
     return result;
 }
@@ -210,6 +211,7 @@ bool EditorController::openFile(const QUrl& url)
 }
 bool EditorController::saveFile(const QUrl& url)
 {
+    if(isProtectedWebSource(url)) {webImportFailure(QStringLiteral("SOURCE_OVERWRITE_BLOCKED: 웹 원본은 덮어쓰지 않습니다. 다른 이름으로 저장하세요."));return false;}
     if(!commitPendingEdits()) return false;
     if(!url.isLocalFile()) { emit errorOccurred(QStringLiteral("로컬 파일을 선택해 주세요.")); return false; }
     try {
@@ -267,6 +269,7 @@ bool EditorController::importProject(const QUrl& url)
 
 bool EditorController::savePrivate()
 {
+    if(isProtectedWebSource(QUrl::fromLocalFile(storage_.privateProjectPath()))) {webImportFailure(QStringLiteral("SOURCE_OVERWRITE_BLOCKED: 웹 원본은 덮어쓰지 않습니다."));return false;}
     if(privateRecoveryRequired_) {
         emit errorOccurred(QStringLiteral("손상된 저장 파일이 보존되어 있습니다. 덮어쓰기를 허용한 뒤 다시 저장해 주세요."));
         return false;
@@ -283,6 +286,7 @@ bool EditorController::savePrivate()
 
 bool EditorController::exportProject(const QUrl& url)
 {
+    if(isProtectedWebSource(url)) {webImportFailure(QStringLiteral("SOURCE_OVERWRITE_BLOCKED: 웹 원본은 덮어쓰지 않습니다."));return false;}
     if(url.isEmpty()) return true;
     try {
         const auto snapshot=storage_.readPrivate();

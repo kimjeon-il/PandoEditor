@@ -5,6 +5,7 @@ import QtQuick.Layouts
 Rectangle {
     id: panel
     property bool compact: false
+    property bool holdFieldCommits: false
     function dismissPopup() {
         if (countryPicker.popup.visible) { countryPicker.popup.close(); return true }
         if (countryLayer.popup.visible) { countryLayer.popup.close(); return true }
@@ -78,6 +79,18 @@ Rectangle {
                         currentIndex: indexOfValue(editor.selectedId)
                         displayText: editor.selectedName || "국가 선택"
                         onActivated: editor.selectCountry(currentValue)
+                        delegate: ItemDelegate {
+                            required property var modelData
+                            width: countryPicker.width
+                            text: modelData.name + (modelData.limited ? " · 제한" : "")
+                        }
+                    }
+                    Label {
+                        objectName: "preservedDataNotice"
+                        Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
+                        visible: editor.countryRows.some(function(row) { return row.id === editor.selectedId && row.limited })
+                        text: "보존 데이터가 있어 일부 편집이 제한됩니다. 이름·메모 외 변경은 거절될 수 있습니다."
+                        wrapMode: Text.WordWrap
                     }
                     Flow {
                         Layout.fillWidth: true
@@ -117,7 +130,7 @@ Rectangle {
                         text: editor.nameDraft
                         Accessible.name: "국가 이름"
                         onTextEdited: editor.nameDraft=text
-                        onEditingFinished: editor.commitCountryField("name")
+                        onEditingFinished: if (!panel.holdFieldCommits) editor.commitCountryField("name")
                     }
                     Label { text: "메모"; Layout.leftMargin: 12 }
                     TextArea {
@@ -135,7 +148,7 @@ Rectangle {
                             if (activeFocus) wasEditing = true
                             else if (wasEditing) {
                                 wasEditing = false
-                                editor.commitCountryField("notes")
+                                if (!panel.holdFieldCommits) editor.commitCountryField("notes")
                             }
                         }
                         background: Rectangle { color: "#f5f7f9"; border.color: "#c4cdd5"; radius: 4 }

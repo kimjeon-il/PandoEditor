@@ -2,7 +2,7 @@
 
 ## 범위와 시작 조건
 
-[기능 조사](web-feature-audit.md)와 [데이터 모델](qt-data-model-design.md)을 구현 단위로 나눈다. 기준 웹 17c3dbe / 0.33.0, Qt 5a1717d. 이후 M1.1–M1.2 구현과 검증은 [별도 기록](qt-v3-implementation.md)에 정리했다. M1.3 공통 명령·스냅샷 ChangeSet과 기존 PC/모바일 편집 진입점 전환은 [명령 구현 기록](qt-command-implementation.md)에 정리했다. M1.4 스냅샷 작업·취소·세션 수명은 [작업 구현 기록](qt-job-implementation.md)에 정리했다. M2 이후의 웹 기능 이식은 후속 계획이다. [기능 동등성 계약](web-parity-contract.md)에 따라 실제 웹 진입·입력·결과·확정 경계를 임의로 변형하지 않는다. 모바일 공통 경로·360px 검증과 실제 Android 기기 검증은 구분한다.
+[기능 조사](web-feature-audit.md)와 [데이터 모델](qt-data-model-design.md)을 구현 단위로 나눈다. 기준 웹 17c3dbe / 0.33.0, Qt 5a1717d. 이후 M1.1–M1.2 구현과 검증은 [별도 기록](qt-v3-implementation.md)에 정리했다. M1.3 공통 명령·스냅샷 ChangeSet과 기존 PC/모바일 편집 진입점 전환은 [명령 구현 기록](qt-command-implementation.md)에 정리했다. M1.4 스냅샷 작업·취소·세션 수명은 [작업 구현 기록](qt-job-implementation.md)에 정리했다. M2.1–M2.5의 완전 저장본 판정·migration·매핑/보존·검토/확정·roundtrip 장벽은 [웹 가져오기 기록](qt-web-import-implementation.md)에 정리했다. M3 이후는 후속 계획이다. [기능 동등성 계약](web-parity-contract.md)에 따라 실제 웹 진입·입력·결과·확정 경계를 임의로 변형하지 않는다. 모바일 공통 경로·360px 검증과 실제 Android 기기 검증은 구분한다.
 
 순서: M1 공통 문서·명령 → M2 가져오기 → M3 영토 객체·웹 조작 → M4 국경·영토 → M5 지명·수계·분포 → M6 역사·GIS → M7 전체 세계지도·대규모 렌더링. M1–M6는 작은 합성 지도/자료만 사용한다. 세계지도 때문에 도메인 의미 설계를 미루지 않는다.
 
@@ -42,6 +42,8 @@ M1.3 계약 보완: before/after는 문서·인덱스·CountryView를 함께 소
 첫 가져오기는 객체를 보존하는 것과 편집/표시하는 것을 분리한다. 아직 구현되지 않은 지명·분포·수계는 retained로 표시한다. 초기에는 전체 원본 archive 및 미해석 fragment가 보수적 구조 변경 제한을 유발할 수 있다. M3–M6에서 도메인을 해석하면서 그 제한을 좁힌다.
 
 완료: schema3/4/5 및 autosave-full 성공, delta 거절 안내, override 우선순위, flag(Default/None/Embedded), migration styles/order/visibility, 미지원 알려진/알 수 없는 dependencies, 외부 dataset unavailable 사례 모두 검증. 가져오기 성공 전의 Undo 보존과 성공 후 새 이력 시작을 각각 테스트한다. 웹 원본 파일에는 쓰지 않는다.
+
+M2 구현 상태: 공통 PC/360px 가져오기·취소·저장 실패·stale 후보·새 세션 확정·보존 후 재열기를 검증했다. 실제 Android/Windows 및 전체 세계지도는 별도 gate다. 출력 archive 확장에 따른 저장 한도와 지원하지 않는 추가 좌표 차원은 명시적으로 거절한다.
 
 ## M3 — 국가·하위단위·지방과 웹 작업 흐름
 
@@ -131,4 +133,4 @@ PC·모바일 동일 dataset manifest와 문서 로딩 명령을 사용하되 �
 
 문서 수용 기준: 등록 객체 8종/공통 action 9개 및 생성·속성·파일·보조 작업이 F행에 있고, root 저장 필드 전체가 매핑되며, 확인되지 않은 동작과 테스트 실패가 드러나고, M1/M2의 입력·출력·실패·검증 기준이 지정된 상태. 브라우저 동작 동등성은 후속 구현 gate이며 이번 문서 수용과 구분한다.
 
-다음 구현 요청의 최소 범위는 **M2.1–M2.2: 실제 웹 완전 저장본 형식 판정·migration**이다. M2.3–M2.5의 보고/보존/확정까지 검증되기 전에는 웹 가져오기 전체를 완료로 표시하지 않는다. 앱 기능을 구현할 때도 별도 요청 없이 웹 저장소/배포본을 변경하거나 커밋·푸시하지 않는다.
+다음 구현 단위는 **M3: 국가·하위단위·지방과 웹 작업 흐름**이다. M2는 2차원 영토·64 MiB 저장 경계에서 완전본을 가져오고 미지원 데이터를 보존한다. retained 데이터를 표시/편집까지 지원한 것으로 판정하지 않는다. 앱 기능을 구현할 때도 별도 요청 없이 웹 저장소/배포본을 변경하거나 커밋·푸시하지 않는다.

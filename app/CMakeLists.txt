@@ -2,6 +2,7 @@ find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 qt_add_executable(pandoeditor main.cpp)
 
 add_library(pandoeditor_editor STATIC
+    webimport.cpp webmigration.cpp editorwebimport.cpp
     editorcontroller.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
@@ -18,6 +19,7 @@ qt_add_resources(pandoeditor ui
     BASE "${PROJECT_SOURCE_DIR}/ui"
     FILES
         "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
         "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
         "${PROJECT_SOURCE_DIR}/ui/desktop/DesktopWorkspace.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml"
@@ -29,6 +31,14 @@ qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}
 
 if(BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test)
+    foreach(test_name web_import_tests web_import_editor_tests)
+        add_executable(${test_name} ../tests/${test_name}.cpp)
+        target_link_libraries(${test_name} PRIVATE pandoeditor_editor Qt6::Test)
+        target_compile_definitions(${test_name} PRIVATE WEB_IMPORT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/web-import")
+        qt_add_resources(${test_name} sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+            FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+        add_test(NAME ${test_name} COMMAND ${test_name} -o -,txt)
+    endforeach()
     add_executable(migration_tests ../tests/migration_tests.cpp)
     target_link_libraries(migration_tests PRIVATE pandoeditor_editor Qt6::Test)
     qt_add_resources(migration_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
@@ -48,6 +58,7 @@ if(BUILD_TESTING)
     target_link_libraries(ui_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
     qt_add_resources(ui_tests ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui"
         FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
               "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml"
               "${PROJECT_SOURCE_DIR}/ui/common/EditorPanel.qml"
@@ -88,4 +99,21 @@ if(BUILD_TESTING)
     target_link_libraries(job_runner_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME job_runner_tests COMMAND job_runner_tests -o -,txt)
     set_tests_properties(job_runner_tests job_editor_tests PROPERTIES TIMEOUT 30)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(web_import_ui_tests ../tests/web_import_ui_tests.cpp)
+    target_link_libraries(web_import_ui_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
+    target_compile_definitions(web_import_ui_tests PRIVATE WEB_IMPORT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/web-import")
+    qt_add_resources(web_import_ui_tests ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui"
+        FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
+              "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
+              "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml"
+              "${PROJECT_SOURCE_DIR}/ui/common/EditorPanel.qml"
+              "${PROJECT_SOURCE_DIR}/ui/desktop/DesktopWorkspace.qml")
+    qt_add_resources(web_import_ui_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME web_import_ui_tests COMMAND web_import_ui_tests -o -,txt)
+    set_tests_properties(web_import_ui_tests PROPERTIES TIMEOUT 45 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()

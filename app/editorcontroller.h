@@ -17,8 +17,18 @@ struct EditorControllerConfig {
     QString privateProjectPath;
 };
 
+struct WebImportSession;
+
 class EditorController : public QObject {
     Q_OBJECT
+    Q_PROPERTY(bool webImportBusy READ webImportBusy NOTIFY webImportChanged)
+    Q_PROPERTY(bool hasWebImportPreview READ hasWebImportPreview NOTIFY webImportChanged)
+    Q_PROPERTY(QString webImportHash READ webImportHash NOTIFY webImportChanged)
+    Q_PROPERTY(QString webImportError READ webImportError NOTIFY webImportChanged)
+    Q_PROPERTY(QVariantList webImportReport READ webImportReport NOTIFY webImportChanged)
+    Q_PROPERTY(QString webImportSummary READ webImportSummary NOTIFY webImportChanged)
+    Q_PROPERTY(QString projectInstanceId READ projectInstanceId NOTIFY stateChanged)
+    Q_PROPERTY(QString documentId READ documentId NOTIFY stateChanged)
     Q_PROPERTY(QVariantList paths READ paths NOTIFY geometryChanged)
     Q_PROPERTY(double mapWidth READ mapWidth NOTIFY geometryChanged)
     Q_PROPERTY(double mapHeight READ mapHeight NOTIFY geometryChanged)
@@ -52,6 +62,17 @@ class EditorController : public QObject {
     Q_PROPERTY(bool mobileMode READ mobileMode CONSTANT)
     Q_PROPERTY(bool privateRecoveryRequired READ privateRecoveryRequired NOTIFY privateRecoveryRequiredChanged)
 public:
+    bool webImportBusy() const;
+    bool hasWebImportPreview() const;
+    QString webImportHash() const;
+    QString webImportError() const { return webImportError_; }
+    QVariantList webImportReport() const;
+    QString webImportSummary() const;
+    QString projectInstanceId() const { return QString::fromStdString(project_.instanceId()); }
+    QString documentId() const { return QString::fromStdString(project_.document().documentId); }
+    Q_INVOKABLE bool prepareWebImport(const QUrl& url);
+    Q_INVOKABLE bool confirmWebImport(const QString& candidateHash, const QString& disposition={}, const QUrl& saveUrl={});
+    Q_INVOKABLE void cancelWebImport();
     explicit EditorController(QObject* parent=nullptr);
     explicit EditorController(EditorControllerConfig config, QObject* parent=nullptr);
     QVariantList paths() const { return projection_.paths; }
@@ -123,6 +144,7 @@ public:
     Q_INVOKABLE bool exportProject(const QUrl& url);
     Q_INVOKABLE bool confirmPrivateRecovery();
 signals:
+    void webImportChanged();
     void stateChanged();
     void jobChanged();
     void visualChanged();
@@ -133,6 +155,11 @@ signals:
     void errorOccurred(const QString& message);
     void privateRecoveryRequiredChanged();
 private:
+    bool isProtectedWebSource(const QUrl& url) const;
+    void webImportFailure(const QString& message);
+    std::shared_ptr<WebImportSession> webImport_;
+    QString webImportError_, protectedWebSource_;
+    qulonglong importEditEpoch_=0;
     bool beginPendingWork(bool apply);
     bool collectPendingEdits(pandoeditor::CommandArguments& args);
     pandoeditor::CommandStatus prepareCommand(const std::string& commandId, pandoeditor::CommandArguments args);

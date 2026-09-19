@@ -40,3 +40,11 @@ Qt 프로토타입의 RGB 직접 입력·불투명도·사용자 레이어의 �
 기존 `web-feature-audit.md`의 웹 기준 17c3dbe를 이 문서 하나로 모두 최신화한 것으로 보지 않는다. 후속 기능마다 실제 원본을 다시 읽고 기준 SHA와 차이를 기록한다. 이번 M1.4는 웹 저장본 가져오기·합병/분할·국경/해안선 알고리즘·분포·역사/GIS·전체 세계지도를 추가하지 않는다.
 
 Android 실기기 입력·한글 IME·SAF·Back·회전과 Windows 네이티브 실행은 해당 플랫폼에서 실제 검증할 때만 완료로 기록한다. 360px QML 모드 테스트는 모바일 공통 경로의 증거이지 Android 실기기 증거가 아니다.
+
+## M2 추가 대조 (2026-09-19)
+
+같은 웹 SHA의 project-migrations/subunit-migration/country-feature/generic-feature-service/source-provenance/version-contract/project-serializer/project-state와 영토·분포·색상 어댑터를 대조했다. 원본 JS로 생성한 v3/v4/v5/scalars 정답과 C++ 결과를 비교하며, 원본 파일 해시는 `tests/fixtures/web-import/provenance.json`에 고정한다. [M2 구현·검증 기록](qt-web-import-implementation.md)이 범위와 입력 한계를 설명한다.
+
+웹 full의 국가·영토와 관계는 매핑하고, 지명·수계·분포·국기·수도·표시/객체 순서·출처와 알 수 없는 값은 보존한다. 기본값/명시값, flag 미존재/null/embedded, 독립 분포 share를 합치거나 바꾸지 않는다. 알려지지 않은 fragment는 지원으로 승격하지 않고 위험 편집을 차단한다. 일괄 원본 archive가 이후 이름·메모 편집을 덮어쓰지 않는다.
+
+M2 보고서는 이식 중인 데이터의 손실/미지원 상태를 확인하는 전환 경계다. 웹판의 일반 편집을 이 보고서나 공통 적용 버튼으로 대체한 것은 아니다. M1.4의 이름·메모 change 확정은 유지하되, 파일 선택/가져오기 보고 도중의 초안 보호만 예외로 한다. country flags·객체별 표시·혼합과 렌더링까지 같아졌다는 의미가 아니며 M3 이후에 각각 원본을 대조한다.

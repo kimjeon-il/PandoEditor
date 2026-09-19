@@ -7,6 +7,8 @@ Item {
     id: workspace
     property bool compact: width < 800
     property bool mobileMode: false
+    property bool holdFieldCommits: false
+    signal webImportRequested()
     signal openRequested()
     signal saveRequested()
     signal saveAsRequested()
@@ -63,12 +65,24 @@ Item {
                 }
             }
         }
-        Label {
+        RowLayout {
             Layout.fillWidth: true
-            padding: 12
-            text: editor.fileName + (editor.dirty ? " · 저장하지 않은 변경" : " · 저장됨")
-            elide: Text.ElideMiddle
-            color: "#526377"
+            spacing: 4
+            Label {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                padding: 8
+                text: editor.fileName + (editor.dirty ? " · 저장하지 않은 변경" : " · 저장됨")
+                elide: Text.ElideMiddle
+                color: "#526377"
+            }
+            ToolButton {
+                objectName: "webImportButton"
+                text: "웹 프로젝트 가져오기"
+                font.pixelSize: workspace.compact ? 11 : 13
+                focusPolicy: Qt.NoFocus
+                onClicked: workspace.webImportRequested()
+            }
         }
         Item {
             Layout.fillWidth: true
@@ -84,6 +98,7 @@ Item {
                 id: panel
                 objectName: "editorPanel"
                 compact: workspace.compact
+                holdFieldCommits: workspace.holdFieldCommits
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 width: workspace.compact ? parent.width : 320

@@ -1,0 +1,413 @@
+{
+  "format": "pandolab-project-state",
+  "schemaVersion": 3,
+  "version": "0.30.0",
+  "savedAt": "2026-09-01T00:00:00Z",
+  "countriesData": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": 100000000000000000000,
+        "properties": {
+          "name": "Power"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": 1.2345678901234567,
+        "properties": {
+          "name": "Fraction"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": 0.000001,
+        "properties": {
+          "name": "Micro"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": 1e-7,
+        "properties": {
+          "name": "Tiny"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": 1e+21,
+        "properties": {
+          "name": "Huge"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": 0,
+        "properties": {
+          "name": "Zero"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": "﻿A﻿",
+        "properties": {
+          "name": "﻿ Trim BOM ﻿"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": "B",
+        "properties": {
+          "name": " No NEL trim "
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": " C ",
+        "properties": {
+          "name": " Trim spaces "
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "countryOverrides": {},
+  "genericFeatures": [
+    {
+      "type": "Feature",
+      "id": "00000000-0000-4000-8000-000000000001",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1,
+          2
+        ]
+      },
+      "properties": {
+        "schemaVersion": 1,
+        "name": " legacy ",
+        "notes": " note ",
+        "role": "territory",
+        "ownerId": "A",
+        "color": "#FF0000",
+        "custom": [
+          null,
+          1
+        ],
+        "source": {
+          "dataset": "old",
+          "extra": "retained"
+        }
+      }
+    }
+  ],
+  "drawings": [
+    {
+      "type": "Feature",
+      "id": "00000000-0000-4000-8000-000000000002",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            0,
+            0
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Drawing",
+        "category": "custom"
+      }
+    }
+  ],
+  "layerVisibility": {
+    "userDrawings": false,
+    "countries": true
+  },
+  "itemVisibility": {
+    "drawings": {
+      "00000000-0000-4000-8000-000000000002": false
+    }
+  },
+  "layerPresentation": {
+    "schemaVersion": 2,
+    "overlayOrder": [
+      "countries",
+      "userDrawings"
+    ],
+    "styles": {
+      "userDrawings": {
+        "opacity": 0.5
+      }
+    }
+  },
+  "territorialUnits": [],
+  "territorialRelations": [],
+  "landObjectModel": {
+    "schemaVersion": 1
+  },
+  "territorialModel": {
+    "schemaVersion": 1
+  },
+  "distributionModel": {
+    "schemaVersion": 2
+  },
+  "distributionLayers": [],
+  "distributionEntries": [],
+  "labels": [],
+  "hydroEdits": [],
+  "future": {
+    "nested": [
+      null,
+      "territorial:admin:unrelated"
+    ],
+    "large": 1234567
+  }
+}

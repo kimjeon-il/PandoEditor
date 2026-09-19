@@ -1,0 +1,472 @@
+{
+  "format": "pandolab-project-state",
+  "schemaVersion": 4,
+  "version": "0.30.0",
+  "savedAt": "2026-09-01T00:00:00Z",
+  "countriesData": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": "A",
+        "properties": {
+          "name": "Alpha"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                4,
+                0
+              ],
+              [
+                4,
+                4
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            [
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "id": "B",
+        "properties": {
+          "name": "Beta"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                10,
+                0
+              ],
+              [
+                12,
+                0
+              ],
+              [
+                12,
+                2
+              ],
+              [
+                10,
+                2
+              ],
+              [
+                10,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "countryOverrides": {
+    "A": {
+      "name": "Override",
+      "color": "#123456",
+      "notes": "legacy notes",
+      "flagDataUrl": null
+    }
+  },
+  "genericFeatures": [
+    {
+      "type": "Feature",
+      "id": "00000000-0000-4000-8000-000000000001",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1,
+          2
+        ]
+      },
+      "properties": {
+        "schemaVersion": 2,
+        "name": "legacy",
+        "notes": "note",
+        "color": "#FF0000",
+        "locked": false,
+        "source": {
+          "schemaVersion": 1,
+          "kind": "legacy",
+          "dataset": "old",
+          "sourceId": "",
+          "sourceFormat": "pandolab-generic-v1",
+          "sourceType": "",
+          "version": "",
+          "importedAt": "",
+          "details": {
+            "unmappedSourceFields": {
+              "extra": "retained"
+            },
+            "legacyGenericSemantics": {
+              "role": "territory",
+              "ownerId": "A"
+            },
+            "legacyProperties": {
+              "custom": [
+                null,
+                1
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "00000000-0000-4000-8000-000000000002",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            0,
+            0
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      "properties": {
+        "schemaVersion": 2,
+        "name": "Drawing",
+        "notes": "",
+        "color": "#8c68d8",
+        "locked": false,
+        "source": {
+          "schemaVersion": 1,
+          "kind": "legacy",
+          "dataset": "",
+          "sourceId": "",
+          "sourceFormat": "pandolab-generic-v1",
+          "sourceType": "",
+          "version": "",
+          "importedAt": "",
+          "details": {
+            "legacyProperties": {
+              "category": "custom"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "layerVisibility": {
+    "countries": true,
+    "administrative": false,
+    "territories": true,
+    "subunits": false
+  },
+  "itemVisibility": {
+    "subunits": {
+      "00000000-0000-4000-8000-000000000004": false
+    },
+    "administrative": {
+      "00000000-0000-4000-8000-000000000003": true
+    },
+    "territories": {
+      "00000000-0000-4000-8000-000000000005": false
+    }
+  },
+  "layerPresentation": {
+    "schemaVersion": 2,
+    "styles": {
+      "administrative": {
+        "opacity": 0.4,
+        "boundaryVisible": false
+      },
+      "territories": {
+        "opacity": 0.7,
+        "blendMode": "multiply"
+      }
+    },
+    "objectStyles": {},
+    "objectOrder": [
+      "territorial:admin:00000000-0000-4000-8000-000000000003"
+    ],
+    "overlayOrder": [
+      "territories",
+      "administrative"
+    ]
+  },
+  "territorialUnits": [
+    {
+      "type": "Feature",
+      "id": "00000000-0000-4000-8000-000000000003",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              4,
+              0
+            ],
+            [
+              4,
+              4
+            ],
+            [
+              0,
+              4
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "schemaVersion": 1,
+        "unitType": "admin",
+        "name": "Sub",
+        "parentId": "A",
+        "sovereignId": "A",
+        "coverageMode": "explicit",
+        "adminLevel": 2,
+        "isRemainder": true,
+        "metadata": {
+          "legacyTerritorialPartition": {
+            "x": 1
+          },
+          "note": "territorial:admin:keep"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "00000000-0000-4000-8000-000000000004",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              4,
+              0
+            ],
+            [
+              4,
+              4
+            ],
+            [
+              0,
+              4
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "schemaVersion": 2,
+        "unitType": "subunit",
+        "name": "Nested",
+        "parentId": "00000000-0000-4000-8000-000000000003",
+        "sovereignId": "A",
+        "coverageMode": "partition"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "00000000-0000-4000-8000-000000000005",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              4,
+              0
+            ],
+            [
+              4,
+              4
+            ],
+            [
+              0,
+              4
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "schemaVersion": 1,
+        "unitType": "territory",
+        "name": "Old territory",
+        "parentId": "B",
+        "sovereignId": "B",
+        "coverageMode": "explicit"
+      }
+    }
+  ],
+  "territorialRelations": [],
+  "landObjectModel": {
+    "schemaVersion": 2,
+    "coastlineAuthority": "countries",
+    "purpose": "lossless-fallback",
+    "directCreation": false,
+    "sourceProvenanceSchemaVersion": 1,
+    "canonicalProperties": [
+      "name",
+      "notes",
+      "color",
+      "locked",
+      "source"
+    ]
+  },
+  "territorialModel": {
+    "schemaVersion": 2,
+    "types": [
+      "country",
+      "subunit",
+      "region"
+    ]
+  },
+  "distributionModel": {
+    "schemaVersion": 2
+  },
+  "distributionLayers": [],
+  "distributionEntries": [],
+  "labels": [],
+  "hydroEdits": [],
+  "future": {
+    "nested": [
+      null,
+      "territorial:admin:unrelated"
+    ],
+    "large": 1234567
+  },
+  "selected": {
+    "domain": "territorial",
+    "type": "admin",
+    "id": "00000000-0000-4000-8000-000000000003",
+    "key": "territorial:admin:00000000-0000-4000-8000-000000000003"
+  },
+  "selectionAnchor": {
+    "domain": "other",
+    "type": "admin",
+    "key": "territorial:admin:keep"
+  }
+}
