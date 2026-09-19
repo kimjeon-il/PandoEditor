@@ -31,7 +31,7 @@ qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}
 
 if(BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test)
-    foreach(test_name web_import_tests web_import_editor_tests)
+    foreach(test_name web_import_tests web_import_editor_tests selection_editor_tests)
         add_executable(${test_name} ../tests/${test_name}.cpp)
         target_link_libraries(${test_name} PRIVATE pandoeditor_editor Qt6::Test)
         target_compile_definitions(${test_name} PRIVATE WEB_IMPORT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/web-import")
