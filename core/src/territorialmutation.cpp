@@ -40,7 +40,8 @@ TerritorialMutationPlan planRegionSovereign(const ProjectSnapshot& s,const Chang
 }
 TerritorialMutationPlan planCreate(const ProjectSnapshot& s,const CreateTerritorialIntent& in) {
     if(in.id.empty()||s.index().objects.count(territorialRef(in.id)))throw std::invalid_argument("DUPLICATE_ID");
-    if(in.kind==UnitKind::Subunit) {if(!in.parent||!in.sovereign)throw std::invalid_argument("SOVEREIGN_MISMATCH");const auto& parent=unit(s,*in.parent);const auto& sovereign=unit(s,*in.sovereign);if(sovereign.kind!=UnitKind::Country)throw std::invalid_argument("SOVEREIGN_MISMATCH");if(parent.kind==UnitKind::Country&&!(*in.parent==*in.sovereign))throw std::invalid_argument("SOVEREIGN_MISMATCH");}
+    GeometryStore preflight;preflight.insert({"create-preflight",1},in.geometry);
+    if(in.kind==UnitKind::Subunit) {if(!in.parent||!in.sovereign)throw std::invalid_argument("SOVEREIGN_MISMATCH");const auto& parent=unit(s,*in.parent);const auto& sovereign=unit(s,*in.sovereign);if(sovereign.kind!=UnitKind::Country)throw std::invalid_argument("SOVEREIGN_MISMATCH");if(parent.kind==UnitKind::Country&&!(*in.parent==*in.sovereign))throw std::invalid_argument("SOVEREIGN_MISMATCH");if(parent.kind==UnitKind::Subunit){const auto r=base(s.document(),*in.parent);if(!r||!r->sovereign||!(*r->sovereign==*in.sovereign))throw std::invalid_argument("SOVEREIGN_MISMATCH");}}
     auto kind=in.kind==UnitKind::Country?TerritorialMutationKind::CreateCountry:in.kind==UnitKind::Subunit?TerritorialMutationKind::CreateSubunit:TerritorialMutationKind::CreateRegion;
     auto p=initial(s,kind,in);p.targets={territorialRef(in.id)};p.affectedObjects=p.targets;p.selectedAfter=p.targets.front();p.geometry={GeometryRequirementKind::Prepared,"create",{}};p.impacts.push_back({"create",p.targets.front(),"territorial.create"});guard(p,s.document(),p.targets.front(),"add");return p;
 }

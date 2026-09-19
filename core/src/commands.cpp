@@ -175,7 +175,7 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
             else {relation->sovereign=in.sovereign;if(!relation->parent&&!relation->sovereign)d.relations.erase(std::remove_if(d.relations.begin(),d.relations.end(),[&](const auto& r){return !r.dated&&r.unit==in.target;}),d.relations.end());}
         } else if constexpr(std::is_same_v<T,CreateTerritorialIntent>) {
             GeometryRef geometry{"geometry-"+in.id,1};unsigned n=1;while(d.geometries.get(geometry))geometry={"geometry-"+in.id+"-"+std::to_string(n++),1};d.geometries.insert(geometry,in.geometry);
-            TerritorialUnit unit;unit.id=in.id;unit.name=in.name;unit.baseName=in.kind==UnitKind::Country?in.name:"";unit.nameExplicit=true;unit.notes=in.notes;unit.kind=in.kind;unit.geometry=geometry;unit.coverageMode=in.kind==UnitKind::Subunit?"partition":"explicit";unit.validity=in.validity;d.units.push_back(unit);
+            TerritorialUnit unit;unit.id=in.id;unit.name=in.name;unit.baseName=in.kind==UnitKind::Country?in.name:"";unit.nameExplicit=true;unit.notes=in.notes;unit.kind=in.kind;unit.geometry=geometry;unit.coverageMode=in.coverageMode.empty()?(in.kind==UnitKind::Subunit?"partition":"explicit"):in.coverageMode;unit.validity=in.validity;d.units.push_back(unit);
             const auto ref=territorialRef(in.id);const auto layer=d.presentation.userLayers.front().id;d.presentation.membership.emplace(ref,layer);d.presentation.objectStyles.emplace(ref,ObjectStyle{in.explicitColor.value_or(0),1,in.explicitColor.has_value()});
             if(in.kind!=UnitKind::Country)d.relations.push_back({relationId(in.id),ref,in.parent,in.sovereign,false,{}});
         } else if constexpr(std::is_same_v<T,DeleteTerritorialIntent>) {
