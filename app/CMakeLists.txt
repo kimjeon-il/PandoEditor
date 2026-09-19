@@ -73,3 +73,11 @@ if(BUILD_TESTING)
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME command_editor_tests COMMAND command_editor_tests -o -,txt)
 endif()
+
+if(BUILD_TESTING)
+    add_executable(job_editor_tests ../tests/job_editor_tests.cpp)
+    target_link_libraries(job_editor_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(job_editor_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME job_editor_tests COMMAND job_editor_tests -o -,txt)
+endif()
