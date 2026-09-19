@@ -1,12 +1,13 @@
+find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 qt_add_executable(pandoeditor main.cpp)
 
 add_library(pandoeditor_editor STATIC
-    editorcontroller.cpp editorcommands.cpp editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
+    editorcontroller.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
 )
 target_include_directories(pandoeditor_editor PUBLIC . ../renderer)
-target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick)
+target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent)
 if(WIN32)
     target_link_libraries(pandoeditor_editor PRIVATE dwmapi user32)
 endif()
@@ -80,4 +81,11 @@ if(BUILD_TESTING)
     qt_add_resources(job_editor_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME job_editor_tests COMMAND job_editor_tests -o -,txt)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(job_runner_tests ../tests/job_runner_tests.cpp)
+    target_link_libraries(job_runner_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME job_runner_tests COMMAND job_runner_tests -o -,txt)
+    set_tests_properties(job_runner_tests job_editor_tests PROPERTIES TIMEOUT 30)
 endif()

@@ -3,12 +3,35 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <utility>
 
 namespace pandoeditor {
+
+class Project;
+class ProjectSnapshot {
+public:
+    const std::string& instanceId() const { return instanceId_; }
+    std::uint64_t revision() const { return revision_; }
+    const ProjectDocument& document() const noexcept;
+    const DocumentIndex& index() const noexcept;
+    const std::vector<Layer>& layers() const noexcept;
+    const CountryView* country(const std::string&) const;
+    const Layer* layer(const std::string&) const;
+    bool matches(const Project&) const noexcept;
+private:
+    friend class Project;
+    friend class CommandProcessor;
+    ProjectSnapshot(std::shared_ptr<const detail::DocumentState> state, std::string instanceId, std::uint64_t revision)
+        : state_(std::move(state)), instanceId_(std::move(instanceId)), revision_(revision) {}
+    std::shared_ptr<const detail::DocumentState> state_;
+    std::string instanceId_;
+    std::uint64_t revision_;
+};
 
 class Project {
 public:
     Project();
+    ProjectSnapshot snapshot() const { return {state_,instanceId_,revision_}; }
     const std::string& instanceId() const { return instanceId_; }
     std::uint64_t revision() const { return revision_; }
     Project(const Project&) = delete;
@@ -52,8 +75,8 @@ private:
     bool changeCountry(const std::string& id, CountryProperties next);
     bool changeLayer(Layer next);
     void apply(const ChangeSet& change);
-    // All mutation (including prepare/confirm) is serialized by the caller.
-    // Immutable snapshots can be retained; background jobs are M1.4 scope.
+    // Capture snapshots and mutate Project only on the owner/editor thread.
+    // Workers may prepare against ProjectSnapshot, never against live Project.
     std::shared_ptr<const detail::DocumentState> state_, saved_;
     std::vector<ChangeSet> commands_;
     std::string instanceId_;

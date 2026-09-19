@@ -84,6 +84,7 @@ bool EditorController::confirmPreview()
 }
 void EditorController::cancelPreview()
 {
+    cancelBackgroundWork();
     if(pendingPreview_) {
         pandoeditor::CommandProcessor::cancel(*pendingPreview_); pendingPreview_.reset(); emit previewChanged();
     }

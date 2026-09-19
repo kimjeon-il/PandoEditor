@@ -9,6 +9,7 @@
 
 namespace pandoeditor {
 class Project;
+class ProjectSnapshot;
 namespace detail { struct DocumentState; }
 
 struct CountryProperties {
@@ -84,6 +85,7 @@ class CommandProcessor {
 public:
     static CommandRequest makeRequest(const Project&, std::string commandId, CommandArguments);
     static PrepareResult prepare(const Project&, const CommandRequest&);
+    static PrepareResult prepare(const ProjectSnapshot&, const CommandRequest&);
     static CommandResult confirm(Project&, CommandPreview&);
     static void cancel(CommandPreview& preview) noexcept { preview.change_.reset(); }
 };

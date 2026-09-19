@@ -26,7 +26,34 @@ Rectangle {
             Layout.margins: 8
             Label { text: editor.hasPendingEdits ? "미적용 편집" : "편집 내용"; Layout.fillWidth: true; elide: Text.ElideRight }
             Button { objectName: "cancelEdits"; text: "취소"; enabled: editor.hasPendingEdits; onClicked: editor.discardPendingEdits() }
-            Button { objectName: "applyEdits"; text: "적용"; enabled: editor.hasPendingEdits; onClicked: editor.commitPendingEdits() }
+            Button { objectName: "applyEdits"; text: "적용"; enabled: editor.hasPendingEdits; onClicked: editor.applyPendingEditsAsync() }
+        }
+        ColumnLayout {
+            objectName: "backgroundWorkPanel"
+            visible: editor.jobBusy
+            Layout.fillWidth: true
+            Layout.leftMargin: 8; Layout.rightMargin: 8
+            RowLayout {
+                Layout.fillWidth: true
+                Label {
+                    Layout.fillWidth: true
+                    text: editor.jobProgress < 0 ? "작업 대기 중…" : "계산 중…"
+                    elide: Text.ElideRight
+                }
+                Button {
+                    objectName: "cancelBackgroundWork"
+                    text: "작업 취소"
+                    Accessible.name: "계산 작업 취소"
+                    onClicked: editor.cancelBackgroundWork()
+                }
+            }
+            ProgressBar {
+                objectName: "backgroundProgress"
+                Layout.fillWidth: true
+                indeterminate: editor.jobProgress <= 0
+                from: 0; to: 100; value: Math.max(0, editor.jobProgress)
+                Accessible.name: "계산 진행 상태"
+            }
         }
         StackLayout {
             currentIndex: tabs.currentIndex
@@ -90,6 +117,7 @@ Rectangle {
                         text: editor.nameDraft
                         Accessible.name: "국가 이름"
                         onTextEdited: editor.nameDraft=text
+                        onEditingFinished: editor.commitCountryField("name")
                     }
                     Label { text: "메모"; Layout.leftMargin: 12 }
                     TextArea {
@@ -101,7 +129,15 @@ Rectangle {
                         wrapMode: TextEdit.Wrap
                         placeholderText: "국가에 대한 메모"
                         Accessible.name: "국가 메모"
+                        property bool wasEditing: false
                         onTextChanged: if (activeFocus) editor.memoDraft=text
+                        onActiveFocusChanged: {
+                            if (activeFocus) wasEditing = true
+                            else if (wasEditing) {
+                                wasEditing = false
+                                editor.commitCountryField("notes")
+                            }
+                        }
                         background: Rectangle { color: "#f5f7f9"; border.color: "#c4cdd5"; radius: 4 }
                     }
                     Label { text: "RGB 색상"; Layout.leftMargin: 12 }

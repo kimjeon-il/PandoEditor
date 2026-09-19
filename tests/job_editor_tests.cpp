@@ -62,6 +62,14 @@ private slots:
         QVERIFY(pc.saveFile(QUrl::fromLocalFile(dir.filePath("pc.json")))); QVERIFY(mobile.savePrivate());
         QCOMPARE(bytes(dir.filePath("pc.json")),bytes(dir.filePath("mobile.json")));
     }
+    void newerDraftDuringPreviewNotificationWins() {
+        EditorController c; c.selectCountry(firstCountry(c)); const auto name=c.selectedName();
+        c.setNameDraft("old result");
+        connect(&c,&EditorController::previewChanged,&c,[&](){ if(c.hasPreparedPreview()) c.setNameDraft("new input"); });
+        bool ok=false; QVERIFY(invoke(c,"applyPendingEditsAsync",ok)); QVERIFY(ok);
+        QTRY_VERIFY(!c.property("jobBusy").toBool());
+        QCOMPARE(c.nameDraft(),QString("new input")); QCOMPARE(c.selectedName(),name); QCOMPARE(c.revision(),qulonglong(0));
+    }
     void webNameAndNotesCommitIndependently() {
         EditorController c; c.selectCountry(firstCountry(c)); const auto original=c.selectedName();
         c.setNameDraft("  web name  "); c.setMemoDraft("uncommitted notes"); bool ok=false;

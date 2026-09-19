@@ -17,6 +17,8 @@ EditorController::EditorController(EditorControllerConfig config, QObject* paren
     if(!sample.open(QIODevice::ReadOnly)) throw std::runtime_error("Cannot read bundled sample");
     project_.replace(projectcodec::decode(sample.readAll()));
     projection_.rebuild(project_.countries()); reloadDrafts();
+    jobs_=std::make_unique<CommandJobRunner>([this]() ->const pandoeditor::Project& {return project_;});
+    connect(jobs_.get(),&CommandJobRunner::changed,this,&EditorController::jobChanged,Qt::QueuedConnection);
 }
 QVariantMap EditorController::colors() const
 {

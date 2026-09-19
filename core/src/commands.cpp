@@ -35,7 +35,7 @@ std::vector<ObjectRef> targetsFor(const CommandArguments& args)
     },args.action);
     return {refs.begin(),refs.end()};
 }
-void validateRequest(const Project& project,const CommandRequest& request)
+void validateRequest(const ProjectSnapshot& project,const CommandRequest& request)
 {
     require(request.projectInstanceId==project.instanceId(),CommandError::ProjectMismatch,"project instance changed");
     require(request.documentId==project.document().documentId,CommandError::DocumentMismatch,"document changed");
@@ -122,7 +122,7 @@ void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const 
             candidate.presentation.membership.at(territorialRef(action.id))=action.layerId;
     },args.action);
 }
-void checkEffects(const Project& project,const ProjectDocument& after)
+void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after)
 {
     const auto& before=project.document();
     auto allow=[&](bool changed,const ObjectRef& ref,const char* effect) {
@@ -213,7 +213,7 @@ CommandRequest CommandProcessor::makeRequest(const Project& project,std::string 
     auto refs=targetsFor(args);
     return {std::move(commandId),project.instanceId(),project.document().documentId,project.revision(),std::move(refs),std::move(args)};
 }
-PrepareResult CommandProcessor::prepare(const Project& project,const CommandRequest& request)
+PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const CommandRequest& request)
 {
     PrepareResult result;
     try {
@@ -240,6 +240,11 @@ PrepareResult CommandProcessor::prepare(const Project& project,const CommandRequ
         result.error=CommandError::PrepareFailed; result.detail.clear();
     }
     return result;
+}
+PrepareResult CommandProcessor::prepare(const Project& project,const CommandRequest& request)
+{
+    try { return prepare(project.snapshot(),request); }
+    catch(const std::exception&) { PrepareResult r; r.error=CommandError::PrepareFailed; return r; }
 }
 CommandResult CommandProcessor::confirm(Project& project,CommandPreview& preview)
 {

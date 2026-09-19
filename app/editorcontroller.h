@@ -1,5 +1,6 @@
 #pragma once
 #include "projectcodec.h"
+#include "commandjobrunner.h"
 #include "platformstorage.h"
 #include "mapprojection.h"
 #include <QObject>
@@ -38,6 +39,8 @@ class EditorController : public QObject {
     Q_PROPERTY(QString layerNameDraft READ layerNameDraft WRITE setLayerNameDraft NOTIFY draftsChanged)
     Q_PROPERTY(double countryOpacity READ countryOpacity NOTIFY visualChanged)
     Q_PROPERTY(double layerOpacity READ layerOpacity NOTIFY visualChanged)
+    Q_PROPERTY(bool jobBusy READ jobBusy NOTIFY jobChanged)
+    Q_PROPERTY(int jobProgress READ jobProgress NOTIFY jobChanged)
     Q_PROPERTY(bool dirty READ dirty NOTIFY dirtyChanged)
     Q_PROPERTY(bool hasPendingEdits READ hasPendingEdits NOTIFY draftsChanged)
     Q_PROPERTY(bool hasPreparedPreview READ hasPreparedPreview NOTIFY previewChanged)
@@ -78,6 +81,8 @@ public:
     QString fileName() const;
     QString documentNotice() const;
     bool dirty() const;
+    bool jobBusy() const { return background_ && !background_->token().cancelled(); }
+    int jobProgress() const { return background_ ? background_->token().progress() : -1; }
     bool hasPendingEdits() const;
     bool hasPreparedPreview() const { return pendingPreview_.has_value(); }
     qulonglong revision() const { return project_.revision(); }
@@ -92,6 +97,10 @@ public:
     Q_INVOKABLE void previewCountryOpacity(double value);
     Q_INVOKABLE void previewLayerOpacity(double value);
     Q_INVOKABLE bool commitPendingEdits();
+    Q_INVOKABLE bool commitCountryField(const QString& field);
+    Q_INVOKABLE bool applyPendingEditsAsync();
+    Q_INVOKABLE bool preparePendingEditsAsync();
+    Q_INVOKABLE void cancelBackgroundWork();
     Q_INVOKABLE bool preparePendingEdits();
     Q_INVOKABLE bool confirmPreview();
     Q_INVOKABLE void cancelPreview();
@@ -115,6 +124,7 @@ public:
     Q_INVOKABLE bool confirmPrivateRecovery();
 signals:
     void stateChanged();
+    void jobChanged();
     void visualChanged();
     void draftsChanged();
     void dirtyChanged();
@@ -123,6 +133,7 @@ signals:
     void errorOccurred(const QString& message);
     void privateRecoveryRequiredChanged();
 private:
+    bool beginPendingWork(bool apply);
     bool collectPendingEdits(pandoeditor::CommandArguments& args);
     pandoeditor::CommandStatus prepareCommand(const std::string& commandId, pandoeditor::CommandArguments args);
     bool confirmCommand();
@@ -132,6 +143,9 @@ private:
     void reloadDrafts();
     bool replaceFromBytes(const QByteArray& bytes, bool imported, const QString& path = {});
     pandoeditor::Project project_;
+    std::unique_ptr<CommandJobRunner> jobs_;
+    std::optional<pandoeditor::JobTicket> background_;
+    bool fieldCommitInProgress_=false;
     std::optional<pandoeditor::CommandPreview> pendingPreview_;
     MapProjection projection_;
     QString selected_,selectedLayer_="countries",filePath_;
