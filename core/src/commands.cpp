@@ -141,6 +141,28 @@ TerritorialRelation* baseRelation(ProjectDocument& d,const ObjectRef& ref) {
     for(auto& relation:d.relations) if(!relation.dated&&relation.unit==ref)return &relation;
     return nullptr;
 }
+void applyGeometryPatch(ProjectDocument& d,const TerritorialMutationPlan& plan,const GeometryPatch& patch) {
+    if(patch.sourceRevision!=plan.baseRevision) throw Rejection{CommandError::StaleRevision,"geometry patch stale"};
+    std::set<ObjectRef> expected(plan.geometry.sources.begin(),plan.geometry.sources.end()), seen;
+    if(expected.empty()) throw Rejection{CommandError::InvalidArguments,"geometry patch has no owners"};
+    for(const auto& replacement:patch.replacements) {
+        if(!expected.count(replacement.owner)||!seen.insert(replacement.owner).second)
+            throw Rejection{CommandError::InvalidArguments,"geometry patch owner mismatch"};
+        if(!d.presentation.membership.count(replacement.owner)) throw Rejection{CommandError::InvalidArguments,"geometry patch owner missing"};
+    }
+    for(const auto& owner:patch.removedGeometryOwners) {
+        if(!expected.count(owner)||!seen.insert(owner).second)
+            throw Rejection{CommandError::InvalidArguments,"geometry patch removed owner mismatch"};
+    }
+    if(seen!=expected) throw Rejection{CommandError::InvalidArguments,"geometry patch owner set incomplete"};
+    for(const auto& replacement:patch.replacements) {
+        auto unit=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==replacement.owner;});
+        if(unit==d.units.end()) throw Rejection{CommandError::InvalidArguments,"geometry patch owner missing"};
+        GeometryRef next{unit->geometry.id,unit->geometry.version+1};
+        while(d.geometries.get(next)) ++next.version;
+        d.geometries.insert(next,replacement.geometry); unit->geometry=next;
+    }
+}
 void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action) {
     const auto& plan=action.plan;
     auto relationId=[&](const std::string& id){std::string value="relation-"+id;unsigned n=1;auto exists=[&](const std::string& key){return std::any_of(d.relations.begin(),d.relations.end(),[&](const auto& r){return r.id==key;});};while(exists(value))value="relation-"+id+"-"+std::to_string(n++);return value;};
@@ -160,10 +182,29 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
             std::set<ObjectRef> removed(in.targets.begin(),in.targets.end());
             d.relations.erase(std::remove_if(d.relations.begin(),d.relations.end(),[&](const auto& r){return removed.count(r.unit)||(r.parent&&removed.count(*r.parent))||(r.sovereign&&removed.count(*r.sovereign));}),d.relations.end());
             for(const auto& ref:removed){d.presentation.membership.erase(ref);d.presentation.objectStyles.erase(ref);}d.units.erase(std::remove_if(d.units.begin(),d.units.end(),[&](const auto& u){return removed.count(territorialRef(u.id));}),d.units.end());
-        } else if constexpr(std::is_same_v<T,TransferSubunitIntent> || std::is_same_v<T,ConvertTerritorialTypeIntent>) {
+        } else if constexpr(std::is_same_v<T,TransferSubunitIntent>) {
             if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"M4 geometry patch required"};
-            if(action.geometry->sourceRevision!=plan.baseRevision)throw Rejection{CommandError::StaleRevision,"geometry patch stale"};
-            throw Rejection{CommandError::InvalidArguments,"M4 geometry conversion is not available"};
+            applyGeometryPatch(d,plan,*action.geometry);
+            auto* relation=baseRelation(d,in.target);if(!relation)throw Rejection{CommandError::ValidationFailed,"missing base relation"};
+            relation->parent=in.destinationCountry;relation->sovereign=in.destinationCountry;
+        } else if constexpr(std::is_same_v<T,ConvertTerritorialTypeIntent>) {
+            if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"M4 geometry patch required"};
+            applyGeometryPatch(d,plan,*action.geometry);
+            auto unit=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==in.source;});
+            if(unit==d.units.end())throw Rejection{CommandError::ValidationFailed,"conversion source missing"};
+            if(unit->kind==UnitKind::Subunit) {
+                unit->kind=UnitKind::Country;unit->coverageMode="explicit";unit->baseName=unit->name;unit->nameExplicit=true;
+                d.relations.erase(std::remove_if(d.relations.begin(),d.relations.end(),[&](const auto& r){return r.unit==in.source&&!r.dated;}),d.relations.end());
+                for(auto& r:d.relations)if(!r.dated&&r.parent&&*r.parent==in.source)r.sovereign=in.source;
+            } else {
+                const auto old=in.source,newRef=territorialRef(in.generatedId);const auto oldId=unit->id;
+                unit->id=in.generatedId;unit->kind=UnitKind::Subunit;unit->coverageMode="partition";unit->baseName.clear();
+                auto membership=d.presentation.membership.extract(old);membership.key()=newRef;d.presentation.membership.insert(std::move(membership));
+                auto style=d.presentation.objectStyles.extract(old);style.key()=newRef;d.presentation.objectStyles.insert(std::move(style));
+                for(auto& relation:d.relations) {if(relation.unit==old)relation.unit=newRef;if(relation.parent&&*relation.parent==old)relation.parent=newRef;if(relation.sovereign&&*relation.sovereign==old)relation.sovereign=in.sovereign;}
+                d.relations.push_back({relationId(in.generatedId),newRef,in.parent,in.sovereign,false,{}});
+                (void)oldId;
+            }
         }
     },plan.intent);
 }

@@ -61,6 +61,14 @@ TerritorialMutationPlan planTransfer(const ProjectSnapshot& s,const TransferSubu
 TerritorialMutationPlan planConversion(const ProjectSnapshot& s,const ConvertTerritorialTypeIntent& in) {
     const auto& u=unit(s,in.source);unlocked(u);if((u.kind==UnitKind::Subunit&&in.targetKind!=UnitKind::Country)||(u.kind==UnitKind::Country&&in.targetKind!=UnitKind::Subunit))throw std::invalid_argument("VALIDATION_FAILED");
     if(u.kind==UnitKind::Country&& (in.generatedId.empty()||in.generatedId==u.id||!in.sovereign||!in.parent))throw std::invalid_argument("INVALID_ARGUMENTS");
-    auto p=initial(s,u.kind==UnitKind::Subunit?TerritorialMutationKind::PromoteSubunitToCountry:TerritorialMutationKind::ConvertCountryToSubunit,in);p.targets={in.source};p.affectedObjects={in.source};p.selectedAfter=territorialRef(u.kind==UnitKind::Country?in.generatedId:u.id);p.geometry={GeometryRequirementKind::WorkerPatch,u.kind==UnitKind::Country?"country-to-subunit":"promote",{in.source}};p.impacts.push_back({"convert",in.source,"territorial.convert.requiresGeometry"});return p;
+    std::vector<ObjectRef> sources{in.source};
+    if(u.kind==UnitKind::Subunit) {const auto r=base(s.document(),in.source);if(!r||!r->sovereign)throw std::invalid_argument("SOVEREIGN_MISMATCH");sources.push_back(*r->sovereign);}
+    else sources.push_back(*in.sovereign);
+    auto p=initial(s,u.kind==UnitKind::Subunit?TerritorialMutationKind::PromoteSubunitToCountry:TerritorialMutationKind::ConvertCountryToSubunit,in);p.targets={in.source};p.affectedObjects=sources;p.selectedAfter=territorialRef(u.kind==UnitKind::Country?in.generatedId:u.id);p.geometry={GeometryRequirementKind::WorkerPatch,u.kind==UnitKind::Country?"country-to-subunit":"promote",sources};
+    for(const auto& e:s.document().extensions)if(e.status!="migrationArchive") {
+        if(e.jsonPointer=="/distributionEntries"||e.jsonPointer=="/genericFeatures")p.rewrites.push_back({e.jsonPointer,ReferenceRewriteOperation::ReplaceId,in.source.id,p.selectedAfter->id});
+        else if(e.jsonPointer=="/itemVisibility"||e.jsonPointer=="/labelSettings")p.rewrites.push_back({e.jsonPointer,ReferenceRewriteOperation::ReplaceId,in.source.id,p.selectedAfter->id});
+    }
+    p.impacts.push_back({"convert",in.source,"territorial.convert.requiresGeometry"});return p;
 }
 }
