@@ -5,6 +5,10 @@
 #include <stdexcept>
 
 namespace pandoeditor {
+bool LabelSettings::operator==(const LabelSettings& b) const {
+    const auto point=[](const std::optional<Point>& p){return p?std::make_tuple(true,p->x,p->y):std::make_tuple(false,0.,0.);};
+    return priority==b.priority&&minZoom==b.minZoom&&maxZoom==b.maxZoom&&point(manualPosition)==point(b.manualPosition)&&pinned==b.pinned&&collisionGroup==b.collisionGroup;
+}
 std::string territorialGroup(UnitKind k) { return k==UnitKind::Country?"countries":k==UnitKind::Subunit?"subunits":"regions"; }
 std::string territorialPresentationKey(UnitKind k,const std::string& id) { return "territorial:"+std::string(k==UnitKind::Country?"country":k==UnitKind::Subunit?"subunit":"region")+":"+id; }
 bool groupVisible(const WebPresentation& p,const std::string& g) { auto i=p.visibility.find(g);return i==p.visibility.end()||i->second; }
@@ -12,11 +16,18 @@ bool itemVisible(const WebPresentation& p,const std::string& g,const std::string
 namespace {
 const TerritorialUnit* unit(const ProjectDocument& d,const ObjectRef& ref) { if(ref.domain!="territorial")return nullptr;for(const auto& u:d.units)if(u.id==ref.id)return &u;return nullptr; }
 PresentationStyle style(const std::map<std::string,PresentationStyle>& m,const std::string& key) { auto i=m.find(key);return i==m.end()?PresentationStyle{}:i->second; }
+std::vector<ObjectRef> contentRefs(const ProjectDocument& d) {
+    std::vector<ObjectRef> refs;
+    auto add=[&](const auto& values,const char* domain){for(const auto& v:values)refs.push_back({domain,v.id});};
+    add(d.labels,"label");add(d.hydro,"hydro");add(d.genericFeatures,"generic");add(d.distributionLayers,"distributionLayer");add(d.distributionEntries,"distributionEntry");return refs;
+}
 }
 bool effectiveMapVisibility(const ProjectDocument& d,const ObjectRef& ref) {
-    auto u=unit(d,ref);if(!u)return false;
-    auto g=territorialGroup(u->kind);const auto& p=d.presentation.webPresentation;
-    if(!groupVisible(p,g)||!itemVisible(p,g,u->id))return false;
+    auto u=unit(d,ref);
+    auto g=u?territorialGroup(u->kind):contentGroup(d,ref);const auto& p=d.presentation.webPresentation;
+    if(g.empty()||!groupVisible(p,g)||!itemVisible(p,g,ref.id))return false;
+    if(ref.domain=="hydro"&&std::find(d.physicalData.hiddenHydroIds.begin(),d.physicalData.hiddenHydroIds.end(),ref.id)!=d.physicalData.hiddenHydroIds.end())for(const auto& h:d.hydro)if(h.id==ref.id&&h.source.kind=="builtin")return false;
+    if(ref.domain=="distributionEntry") for(const auto& e:d.distributionEntries) if(e.id==ref.id && !itemVisible(p,g,e.layerId)) return false;
     auto m=d.presentation.membership.find(ref);
     if(m!=d.presentation.membership.end())for(const auto& l:d.presentation.userLayers)if(l.id==m->second)return l.visible;
     return m==d.presentation.membership.end();
@@ -57,10 +68,16 @@ double territorialRenderOrder(const ProjectDocument& d,const ObjectRef& ref,doub
 void normalizePresentation(ProjectDocument& d) {
     auto& p=d.presentation.webPresentation;std::set<std::string> keys;std::map<std::string,std::set<std::string>> ids;
     for(const auto& u:d.units){ids[territorialGroup(u.kind)].insert(u.id);if(u.kind!=UnitKind::Country)keys.insert(territorialPresentationKey(u.kind,u.id));}
+    for(const auto& ref:contentRefs(d))ids[contentGroup(d,ref)].insert(ref.id);
     for(auto& [g,hidden]:p.hiddenItems)for(auto i=hidden.begin();i!=hidden.end();)if(!ids[g].count(*i))i=hidden.erase(i);else ++i;
     for(auto i=p.hiddenItems.begin();i!=p.hiddenItems.end();)if(i->second.empty())i=p.hiddenItems.erase(i);else ++i;
     for(auto i=p.objectStyles.begin();i!=p.objectStyles.end();)if(!keys.count(i->first))i=p.objectStyles.erase(i);else ++i;
     std::set<std::string> seen;p.objectOrder.erase(std::remove_if(p.objectOrder.begin(),p.objectOrder.end(),[&](const auto& k){return !keys.count(k)||!seen.insert(k).second;}),p.objectOrder.end());
+    for(auto i=p.labelSettings.begin();i!=p.labelSettings.end();) {
+        if(!d.units.empty()&&!std::any_of(d.units.begin(),d.units.end(),[&](const auto& u){return i->first==territorialRef(u.id);})&&
+           !std::any_of(d.labels.begin(),d.labels.end(),[&](const auto& v){return i->first==ObjectRef{"label",v.id};})) i=p.labelSettings.erase(i);
+        else {if(i->second.collisionGroup.empty())i->second.collisionGroup="map";++i;}
+    }
     for(auto* styles:{&p.styles,&p.objectStyles})for(auto& [key,s]:*styles){if(s.opacity&&std::isfinite(*s.opacity))s.opacity=std::clamp(*s.opacity,0.,1.);if(s.boundaryWidth)s.boundaryWidth=1;if(s.blendMode&&*s.blendMode!="multiply")s.blendMode="normal";}
 }
 void validatePresentation(const ProjectDocument& d) {
@@ -68,15 +85,56 @@ void validatePresentation(const ProjectDocument& d) {
     for(const auto* styles:{&p.styles,&p.objectStyles})for(const auto& [key,s]:*styles) {
         if((s.opacity&&(!std::isfinite(*s.opacity)||*s.opacity<0||*s.opacity>1))||(s.boundaryWidth&&*s.boundaryWidth!=1)||(s.blendMode&&*s.blendMode!="normal"&&*s.blendMode!="multiply"))throw std::invalid_argument("INVALID_PRESENTATION_STYLE");
     }
+    for(const auto& [ref,s]:p.labelSettings) {
+        auto finite=[](const auto& v){return !v||std::isfinite(*v);};
+        if((ref.domain!="territorial"&&ref.domain!="label")||!finite(s.priority)||!finite(s.minZoom)||!finite(s.maxZoom)||
+           (s.minZoom&&s.maxZoom&&*s.minZoom>*s.maxZoom)||s.collisionGroup.empty()||
+           (s.manualPosition&&(!std::isfinite(s.manualPosition->x)||!std::isfinite(s.manualPosition->y))))throw std::invalid_argument("INVALID_LABEL_SETTINGS");
+    }
 }
+
+LabelSettings automaticLabelSettings(const std::string& kind,const LabelSettings& stored) {
+    LabelSettings r=stored;
+    struct Policy{double priority,min,max;const char* group;};
+    static const std::map<std::string,Policy> policies={{"country",{100,0,INFINITY,"country"}},{"capital",{90,0,INFINITY,"place"}},
+        {"city",{70,1.25,INFINITY,"place"}},{"region",{60,1,INFINITY,"place"}},{"town",{40,2.5,INFINITY,"place"}},
+        {"mountain",{40,2,INFINITY,"place"}},{"water",{40,1.5,INFINITY,"place"}},{"custom",{40,1.5,INFINITY,"place"}}};
+    const auto i=policies.find(kind);const auto& p=i==policies.end()?policies.at("custom"):i->second;
+    r.priority=p.priority;r.minZoom=p.min;r.maxZoom=p.max;r.collisionGroup=p.group;r.pinned=r.pinned||r.manualPosition.has_value();return r;
+}
+std::vector<ObjectRef> layoutLabels(const std::vector<LabelLayoutCandidate>& input,double zoom,double padding) {
+    auto rows=input;rows.erase(std::remove_if(rows.begin(),rows.end(),[&](const auto& c){return zoom<c.minZoom||zoom>c.maxZoom;}),rows.end());
+    std::stable_sort(rows.begin(),rows.end(),[](const auto& a,const auto& b){if(a.selected!=b.selected)return a.selected>b.selected;if(a.pinned!=b.pinned)return a.pinned>b.pinned;if(a.priority!=b.priority)return a.priority>b.priority;return a.key<b.key;});
+    struct Box{double l,t,r,b;std::string group;};std::vector<Box> placed;std::vector<ObjectRef> result;
+    for(const auto& c:rows){Box box{c.x-c.width/2-padding,c.y-c.height/2-padding,c.x+c.width/2+padding,c.y+c.height/2+padding,c.collisionGroup};
+        bool overlap=false;for(const auto& p:placed)if(p.group==box.group&&box.l<p.r&&box.r>p.l&&box.t<p.b&&box.b>p.t){overlap=true;break;}
+        if(overlap&&!c.selected&&!c.pinned)continue;placed.push_back(box);result.push_back(c.ref);
+    }return result;
+}
+std::vector<ObjectRef> visibleDistributionEntries(const ProjectDocument& d,const std::optional<std::string>& selectedLayer) {
+    const auto& settings=d.presentation.webPresentation.distributionSettings;std::vector<std::string> visible;
+    for(const auto& layer:d.distributionLayers){const auto group=contentGroup(d,{"distributionLayer",layer.id});if(groupVisible(d.presentation.webPresentation,group)&&itemVisible(d.presentation.webPresentation,group,layer.id))visible.push_back(layer.id);}
+    if(settings.renderMode==DistributionRenderMode::Intensity){if(!selectedLayer||std::find(visible.begin(),visible.end(),*selectedLayer)==visible.end())return {};std::vector<ObjectRef> result;for(const auto& e:d.distributionEntries)if(e.layerId==*selectedLayer)result.push_back({"distributionEntry",e.id});return result;}
+    std::vector<ObjectRef> result;for(const auto& type:{"language","ethnicity","religion"}){std::vector<std::string> subset;for(const auto& id:visible)for(const auto& layer:d.distributionLayers)if(layer.id==id&&layer.type==type)subset.push_back(id);auto rows=dominantDistributionEntries(d,subset);result.insert(result.end(),rows.begin(),rows.end());}return result;
+}
+double distributionFillAlpha(double share,double opacity){return (0.12+std::clamp(share,0.,100.)/100.*0.58)*std::clamp(opacity,0.,1.);}
 WebPresentation rebasePresentation(const ProjectDocument& current,const ProjectDocument& from,const ProjectDocument& to) {
     auto candidate=to;candidate.presentation.webPresentation=current.presentation.webPresentation;
     auto& out=candidate.presentation.webPresentation;
+    const auto priorContent=contentRefs(from);
+    for(const auto& ref:contentRefs(to)) {
+        if(std::find(priorContent.begin(),priorContent.end(),ref)!=priorContent.end())continue;
+        const auto group=contentGroup(to,ref);
+        if(!itemVisible(to.presentation.webPresentation,group,ref.id))out.hiddenItems[group].insert(ref.id);
+        else out.hiddenItems[group].erase(ref.id);
+        if(auto settings=to.presentation.webPresentation.labelSettings.find(ref);settings!=to.presentation.webPresentation.labelSettings.end())out.labelSettings[ref]=settings->second;
+    }
     for(const auto& u:to.units) {
         const auto prior=unit(from,territorialRef(u.id));if(prior&&prior->kind==u.kind)continue;
         const auto group=territorialGroup(u.kind),key=territorialPresentationKey(u.kind,u.id);
         const auto& restore=to.presentation.webPresentation;
         if(!itemVisible(restore,group,u.id))out.hiddenItems[group].insert(u.id);else out.hiddenItems[group].erase(u.id);
+        if(auto settings=restore.labelSettings.find(territorialRef(u.id));settings!=restore.labelSettings.end())out.labelSettings[territorialRef(u.id)]=settings->second;
         if(auto s=restore.objectStyles.find(key);s!=restore.objectStyles.end())out.objectStyles[key]=s->second;
         const auto position=std::find(restore.objectOrder.begin(),restore.objectOrder.end(),key);
         if(position!=restore.objectOrder.end()) {

@@ -63,7 +63,7 @@ private slots:
  }
  void writesNewSemanticVersion() {
   EditorController editor;
-  QCOMPARE(QJsonDocument::fromJson(editor.documentBytes()).object()["version"].toInt(),5);
+  QCOMPARE(QJsonDocument::fromJson(editor.documentBytes()).object()["version"].toInt(),6);
  }
  void automaticAndExplicitColorHaveDifferentMeaning() {
   Project p;p.replace(fixture());auto ref=territorialRef("S");auto g=p.document().geometries.get(p.document().units[1].geometry);

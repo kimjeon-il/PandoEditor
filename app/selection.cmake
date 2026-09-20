@@ -56,6 +56,7 @@ if(BUILD_TESTING)
 endif()
 
 set(M32_PROPERTY_RESOURCES
+    "${PROJECT_SOURCE_DIR}/ui/common/ContentPanel.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/MapDisplayControls.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/ColorMath.js"
     "${PROJECT_SOURCE_DIR}/ui/common/ColorPalette.js"

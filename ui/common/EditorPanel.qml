@@ -8,6 +8,7 @@ Rectangle {
     property bool compact: false
     function showCountryControls(){tabs.currentIndex=0}
     function showLayers(){tabs.currentIndex=1}
+    function showContent(){tabs.currentIndex=2}
     property bool holdFieldCommits: false
     property bool selectionNavigation: false
     readonly property bool fieldCommitsHeld: holdFieldCommits || selectionNavigation || editor.objectChooserOpen
@@ -30,6 +31,7 @@ Rectangle {
             Layout.fillWidth: true
             TabButton { text: "Qt 국가 속성"; objectName: "countryTab" }
             TabButton { text: "레이어"; objectName: "layersTab" }
+            TabButton { text: "지명·수계 등"; objectName: "contentTab" }
 
         }
         RowLayout {
@@ -363,6 +365,7 @@ Rectangle {
                 }
             }
 
+            ContentPanel { Layout.fillWidth: true; Layout.fillHeight: true }
         }
     }
     Dialog {

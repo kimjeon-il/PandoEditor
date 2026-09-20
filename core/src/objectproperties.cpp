@@ -57,6 +57,14 @@ std::uint32_t effectiveObjectColor(const ProjectDocument& d,const ObjectRef& ref
 std::map<ObjectRef,ObjectPropertyView> objectPropertyViews(const ProjectDocument& d) {
     std::map<ObjectRef,ObjectPropertyView> result;
     for(const auto& u:d.units){auto ref=territorialRef(u.id);result.emplace(ref,ObjectPropertyView{objectDisplayName(u),effectiveObjectColor(d,ref)});}
+    for(const auto& v:d.labels) result.emplace(ObjectRef{"label",v.id},ObjectPropertyView{v.name.empty()?v.id:v.name,0x253b50});
+    for(const auto& v:d.hydro) result.emplace(ObjectRef{"hydro",v.id},ObjectPropertyView{v.name.empty()?v.id:v.name,v.color});
+    for(const auto& v:d.genericFeatures) result.emplace(ObjectRef{"generic",v.id},ObjectPropertyView{v.name.empty()?v.id:v.name,v.color});
+    for(const auto& v:d.distributionLayers) result.emplace(ObjectRef{"distributionLayer",v.id},ObjectPropertyView{v.name.empty()?v.id:v.name,v.color});
+    for(const auto& v:d.distributionEntries) {
+        const auto layer=result.find({"distributionLayer",v.layerId});
+        if(layer!=result.end()) result.emplace(ObjectRef{"distributionEntry",v.id},ObjectPropertyView{layer->second.displayName+" · "+v.id,layer->second.effectiveColor});
+    }
     return result;
 }
 }

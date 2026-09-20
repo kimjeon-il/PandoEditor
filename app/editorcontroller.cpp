@@ -1,4 +1,5 @@
 #include "editorcontroller.h"
+#include "defaultflagresolver.h"
 #include <QFile>
 #include <QFileInfo>
 #include <QScopedValueRollback>
@@ -67,7 +68,13 @@ QVariantMap EditorController::colors() const
 }
 QVariantMap EditorController::countryVisuals() const
 {
-    QVariantMap result;
+    QVariantMap result;std::optional<std::string> selectedDistribution;
+    if(const auto primary=selection_.primary()) {
+        if(primary->domain=="distributionLayer")selectedDistribution=primary->id;
+        else if(primary->domain=="distributionEntry")for(const auto& entry:project_.document().distributionEntries)if(entry.id==primary->id){selectedDistribution=entry.layerId;break;}
+    }
+    const auto distributionRows=pandoeditor::visibleDistributionEntries(project_.document(),selectedDistribution);
+    const std::set<pandoeditor::ObjectRef> visibleDistribution(distributionRows.begin(),distributionRows.end());
     for(const auto& unit:project_.document().units) {
         const auto ref=pandoeditor::territorialRef(unit.id);
         const auto style=project_.document().presentation.objectStyles.find(ref);
@@ -75,13 +82,14 @@ QVariantMap EditorController::countryVisuals() const
         const auto resolved=pandoeditor::resolvedTerritorialPresentation(project_.document(),ref);
         const auto nativeLayer=pandoeditor::nativeLayerId(project_.document(),ref);double nativeOpacity=1;int nativeOrder=-1;
         for(std::size_t i=0;i<project_.document().presentation.userLayers.size();++i)if(project_.document().presentation.userLayers[i].id==nativeLayer){nativeOpacity=project_.document().presentation.userLayers[i].opacity;nativeOrder=int(i);break;}
-        QString flag;
+        QString flag;bool flagAvailable=false;QString flagReason;bool retainedFlag=false;
         for(const auto& e:project_.document().extensions)if(e.status=="unsupported" && e.jsonPointer.size()>=12 && e.jsonPointer.compare(e.jsonPointer.size()-12,12,"/flagDataUrl")==0 && std::find(e.dependencies.begin(),e.dependencies.end(),ref)!=e.dependencies.end()) {
             const auto value=QJsonDocument::fromJson("["+QByteArray::fromStdString(e.payload)+"]").array();
-            if(!value.isEmpty()&&value[0].isString()&&validImageDataUrl(value[0].toString())) flag=value[0].toString();
+            if(!value.isEmpty()&&value[0].isString()&&validImageDataUrl(value[0].toString())) {flag=value[0].toString();flagAvailable=true;retainedFlag=true;}
         }
+        if(!retainedFlag||project_.document().symbols.count(ref)){const auto resolvedFlag=resolveDefaultFlag(project_.document(),ref);flag=resolvedFlag.source;flagAvailable=resolvedFlag.available;flagReason=resolvedFlag.reason;}
         result[text(unit.id)]=QVariantMap{{"color",rgb(pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(unit.id)))},
-            {"name",text(project_.propertyView(ref)->displayName)},{"nameVisible",resolved.nameVisible},{"flagVisible",resolved.flagVisible},{"flagSource",flag},
+            {"name",text(project_.propertyView(ref)->displayName)},{"nameVisible",resolved.nameVisible},{"flagVisible",resolved.flagVisible},{"flagSource",flag},{"flagAvailable",flagAvailable},{"flagReason",flagReason},
             {"boundary",pandoeditor::resolvedTerritorialPresentation(project_.document(),ref).boundaryVisible},
             {"blendMode",text(resolved.blendMode)},
             {"kind",unit.kind==pandoeditor::UnitKind::Country?QStringLiteral("country"):unit.kind==pandoeditor::UnitKind::Subunit?QStringLiteral("subunit"):QStringLiteral("region")},
@@ -89,6 +97,23 @@ QVariantMap EditorController::countryVisuals() const
             {"rank",pandoeditor::territorialRenderOrder(project_.document(),ref)},
             {"visible",objectVisible(ref)},
             {"opacity",(text(unit.id)==selected_&&opacityPreview_?*opacityPreview_:style->second.opacity)*resolved.opacity}};
+    }
+    for(const auto& [ref,index]:project_.index().objects) if(ref.domain!="territorial") {
+        const auto properties=project_.propertyView(ref); if(!properties) continue;
+        const auto group=pandoeditor::contentGroup(project_.document(),ref);
+        double opacity=1; const auto style=project_.document().presentation.webPresentation.styles.find(group);
+        if(style!=project_.document().presentation.webPresentation.styles.end()) opacity=style->second.opacity.value_or(1);
+        const auto layerId=pandoeditor::nativeLayerId(project_.document(),ref); double layerOpacity=1; int layerOrder=-1;
+        for(std::size_t i=0;i<project_.layers().size();++i) if(project_.layers()[i].id==layerId) {layerOrder=int(i);layerOpacity=project_.layers()[i].opacity;}
+        if(ref.domain=="distributionEntry") {
+            if(!visibleDistribution.count(ref))continue;
+            opacity=pandoeditor::distributionFillAlpha(project_.document().distributionEntries.at(index).share,opacity);
+        }
+        result[QStringLiteral("content/")+text(ref.domain)+"/"+text(ref.id)]=QVariantMap{
+            {"color",rgb(properties->effectiveColor)},{"name",text(properties->displayName)},
+            {"nameVisible",ref.domain=="label"},{"visible",objectVisible(ref)},{"opacity",opacity},
+            {"kind",text(ref.domain)},{"rank",ref.domain=="label"?100:ref.domain=="hydro"?60:ref.domain=="generic"?70:50},
+            {"layerId",text(layerId)},{"layerOrder",layerOrder},{"layerOpacity",layerOpacity},{"boundary",ref.domain=="distributionEntry"&&project_.document().presentation.webPresentation.distributionSettings.boundaryVisible},{"blendMode","normal"}};
     }
     return result;
 }
@@ -132,8 +157,8 @@ QVariantList EditorController::countryRows() const
 }
 QString EditorController::selectedName() const
 {
-    const auto it=project_.index().objects.find(pandoeditor::territorialRef(selected_.toStdString()));
-    return it==project_.index().objects.end()?QString():text(project_.propertyView(pandoeditor::territorialRef(selected_.toStdString()))->displayName);
+    const auto ref=selection_.primary();if(!ref)return {};
+    const auto view=project_.propertyView(*ref);return view?text(view->displayName):QString{};
 }
 QString EditorController::countryLayerId() const
 {
@@ -161,7 +186,7 @@ bool EditorController::canDeleteLayer() const
 QString EditorController::fileName() const {return filePath_.isEmpty()?QStringLiteral("새 프로젝트"):QFileInfo(filePath_).fileName();}
 QString EditorController::documentNotice() const
 {
-    QString notice=QStringLiteral("저장 형식: Qt v5 · 이전 앱에서는 열 수 없습니다. 열기만으로 원본 파일은 변경되지 않습니다.");
+    QString notice=QStringLiteral("저장 형식: Qt v6 · 이전 앱에서는 열 수 없습니다. 열기만으로 원본 파일은 변경되지 않습니다.");
     const auto& d=project_.document();
     if(d.nativeSourceVersion<4)notice+=QStringLiteral(" 이전 Qt 파일의 색은 명시값으로 보존했습니다. 과거 상속 의도와 최초 국명은 복원할 수 없으며 현재 값을 우선합니다.");
     if(d.units.size()>project_.countries().size())
@@ -176,7 +201,7 @@ bool EditorController::hasPendingEdits() const
     // GeometryEditSession is intentionally not document data.  Treat it as a
     // pending draft so document-level undo/navigation cannot silently replace
     // its baseline while a user is dragging vertices.
-    if(geometryEdit_) return true;
+    if(geometryEdit_||contentSession_) return true;
     if(!parkedCountryDrafts_.empty()||!parkedLayerDrafts_.empty()) return true;
     const auto u=selectedUnit();
     if(u && (nameDraft_!=QString::fromStdString(u->kind==pandoeditor::UnitKind::Country?pandoeditor::objectDisplayName(*u):u->name)

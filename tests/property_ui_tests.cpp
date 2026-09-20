@@ -147,6 +147,18 @@ struct Harness {
 class PropertyUiTests:public QObject {
  Q_OBJECT
 private slots:
+    void contentPanelSharedCommands_data(){modes();}
+    void contentPanelSharedCommands(){
+        QFETCH(bool,mobile);Harness h(mobile);QVERIFY2(h.window,qPrintable(h.warnings.join('\n')));
+        QVERIFY(h.click("contentPanelButton"));QVERIFY(h.editor.beginContentEdit("distributionLayer","language",true));
+        QVERIFY(h.editor.updateContentField("name",QStringLiteral("언어 분포")));
+        const auto before=h.editor.documentBytes();QTest::qWait(50);
+        QVERIFY(h.click("contentPreview"));QCOMPARE(h.editor.documentBytes(),before);
+        QVERIFY(h.click("contentConfirm"));QVERIFY(!h.editor.contentEditState()["active"].toBool());
+        auto d=projectcodec::decode(h.editor.documentBytes());QCOMPARE(d.distributionLayers.size(),std::size_t(1));
+        QCOMPARE(d.distributionLayers.front().name,std::string("언어 분포"));h.editor.undo();QCOMPARE(h.editor.documentBytes(),before);
+        QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join('\n')));
+    }
     void objectNamesRenderAsLiteralText_data(){modes();}
     void objectNamesRenderAsLiteralText(){
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);h.editor.selectCountry("A");

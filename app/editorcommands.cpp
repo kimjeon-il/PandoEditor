@@ -101,6 +101,7 @@ void EditorController::cancelPreview()
 }
 void EditorController::discardPendingEdits()
 {
+    cancelContentEdit();cancelGeometryEdit();
     cancelPreview();clearParkedDrafts();reloadDrafts();emit draftsChanged();emit visualChanged();emit dirtyChanged();
 }
 bool EditorController::executeCommand(const std::string& commandId,pandoeditor::CommandAction action)
@@ -110,7 +111,7 @@ bool EditorController::executeCommand(const std::string& commandId,pandoeditor::
     if(status==pandoeditor::CommandStatus::NoOp){clearParkedDrafts();return true;}
     return status==pandoeditor::CommandStatus::Prepared&&confirmCommand();
 }
-bool EditorController::commitPendingEdits(){if(!executeCommand("edit.properties",std::monostate{}))return false;publish(false);return true;}
+bool EditorController::commitPendingEdits(){if(contentSession_||geometryEdit_)return false;if(!executeCommand("edit.properties",std::monostate{}))return false;publish(false);return true;}
 void EditorController::setColor(const QString& color)
 {
     if(!validColor(color)){commandError(pandoeditor::CommandError::InvalidArguments);return;}

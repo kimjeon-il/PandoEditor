@@ -111,7 +111,8 @@ Item {
             ToolButton { objectName:"searchTab";text:"검색";focusPolicy:Qt.NoFocus;onPressed:workspace.navigationPointer(true);onReleased:workspace.navigationPointer(false);onCanceled:workspace.navigationPointer(false);onClicked:{workspace.navigationStarted();workspace.searchOpen=true;workspace.editorOpen=false;workspace.legacyOpen=false} }
             ToolButton { objectName:"mapDisplayButton";text:"지도 표시";focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();displayControls.open()} }
             ToolButton { objectName:"openObjectEditor";text:"편집";enabled:editor.selectionItems.length>0;focusPolicy:Qt.NoFocus;onClicked:workspace.toggleEditor() }
-            ToolButton { objectName:"legacyPanelButton";text:"Qt 레이어·기존 속성";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.legacyOpen=!workspace.legacyOpen;workspace.editorOpen=false;workspace.searchOpen=false;panel.showCountryControls()} }
+            ToolButton { objectName:"legacyPanelButton";text:workspace.compact?"레이어":"Qt 레이어·기존 속성";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.legacyOpen=!workspace.legacyOpen;workspace.editorOpen=false;workspace.searchOpen=false;panel.showCountryControls()} }
+            ToolButton { objectName:"contentPanelButton";text:"지명·수계";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.legacyOpen=true;workspace.editorOpen=false;workspace.searchOpen=false;panel.showContent()} }
             Item { Layout.fillWidth:true }
             ToolButton { objectName:"closeSidePanel";text:"닫기";visible:workspace.sideOpen;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.searchOpen=false;workspace.editorOpen=false;workspace.legacyOpen=false} }
         }

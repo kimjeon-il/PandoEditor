@@ -4,6 +4,7 @@
 #include <QLocale>
 #include <algorithm>
 #include <cmath>
+#include <set>
 
 using namespace pandoeditor;
 namespace {
@@ -13,11 +14,12 @@ double segmentDistance(Point p,Point a,Point b) {
     return std::hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
 }
 int chooserKindRank(const Project& project,const ObjectRef& ref) {
+    if(ref.domain!="territorial") return ref.domain=="label"?7:ref.domain=="generic"?6:ref.domain=="hydro"?5:4;
     const auto kind=project.document().units.at(project.index().objects.at(ref)).kind;
     return kind==UnitKind::Region?2:kind==UnitKind::Subunit?1:0;
 }
 }
-std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double pixelsPerUnit) const {
+std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double pixelsPerUnit,double zoom) const {
     std::vector<ObjectRef> found;
     if(!std::isfinite(x)||!std::isfinite(y)||!std::isfinite(pixelsPerUnit)||pixelsPerUnit<0)return found;
     const auto point=projection_.unproject(x,y);
@@ -46,6 +48,27 @@ std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double 
             if(hit){found.push_back(ref);if(unit->kind==UnitKind::Country)countryFound=true;}
         }
     }
+    const double tolerance=(mobileMode_?18.:10.)/(pixelsPerUnit>0?pixelsPerUnit:1.);
+    const Point cursor{point.x*xScale,point.y};
+    std::set<ObjectRef> placedLabels;
+    for(const auto& row:labelLayout(pixelsPerUnit>0?pixelsPerUnit:1,0,0,zoom,1e9,1e9))if(const auto ref=existingObjectRef(row.toMap().value("ref").toMap()))placedLabels.insert(*ref);
+    std::optional<std::string> selectedDistribution;if(const auto primary=selection_.primary()) {
+        if(primary->domain=="distributionLayer")selectedDistribution=primary->id;
+        else if(primary->domain=="distributionEntry")for(const auto& entry:project_.document().distributionEntries)if(entry.id==primary->id){selectedDistribution=entry.layerId;break;}
+    }
+    const auto distributionRows=visibleDistributionEntries(project_.document(),selectedDistribution);const std::set<ObjectRef> displayedDistribution(distributionRows.begin(),distributionRows.end());
+    for(const auto& [ref,index]:project_.index().objects) {
+        if(ref.domain=="territorial" || !objectVisible(ref)) continue;
+        if(ref.domain=="label"&&!placedLabels.count(ref))continue;
+        if(ref.domain=="distributionEntry"&&!displayedDistribution.count(ref))continue;
+        const auto gr=objectGeometry(project_.document(),project_.index(),ref); if(!gr) continue;
+        const auto g=project_.document().geometries.get(*gr); if(!g) continue;
+        bool hit=!g->polygons.empty() && pointInCountry(point,g->polygons);
+        for(auto p:g->points) hit=hit||std::hypot(cursor.x-p.x*xScale,cursor.y-p.y)<=tolerance;
+        for(const auto& line:g->lines) for(std::size_t i=1;i<line.size();++i)
+            hit=hit||segmentDistance(cursor,{line[i-1].x*xScale,line[i-1].y},{line[i].x*xScale,line[i].y})<=tolerance;
+        if(hit) found.push_back(ref);
+    }
     QCollator names(QLocale(QLocale::Korean));
     std::stable_sort(found.begin(),found.end(),[&](const ObjectRef& a,const ObjectRef& b){
         // Chooser order is independent of paint order: kinds first, then names.
@@ -62,7 +85,7 @@ QVariantList EditorController::objectChooserCandidates() const {
     const auto all=objectRows();
     for(const auto& ref:chooserRefs_){
         auto row=objectRefValue(ref);
-        for(const auto& value:all)if(value.toMap()["id"]==row["id"]){row=value.toMap();break;}
+        for(const auto& value:all)if(value.toMap()["id"]==row["id"] && value.toMap()["domain"]==row["domain"]){row=value.toMap();break;}
         rows.append(row);
     }
     return rows;
@@ -71,9 +94,11 @@ void EditorController::closeObjectChooser(){
     if(!chooserBase_&&chooserRefs_.empty())return;
     chooserRefs_.clear();chooserBase_.reset();chooserToggle_=false;emit objectChooserChanged();
 }
-void EditorController::beginMapSelection(double x,double y,bool additive,double pixelsPerUnit){
+void EditorController::beginMapSelection(double x,double y,bool additive,double pixelsPerUnit,double zoom){
     if(!std::isfinite(x)||!std::isfinite(y)||!std::isfinite(pixelsPerUnit)||pixelsPerUnit<0)return;
-    auto refs=mapCandidates(x,y,pixelsPerUnit);
+    auto refs=mapCandidates(x,y,pixelsPerUnit,zoom);
+    for(auto& ref:refs)if(ref.domain=="distributionEntry")for(const auto& entry:project_.document().distributionEntries)if(entry.id==ref.id){ref={"distributionLayer",entry.layerId};break;}
+    std::set<ObjectRef> uniqueRefs;refs.erase(std::remove_if(refs.begin(),refs.end(),[&](const auto& ref){return !uniqueRefs.insert(ref).second;}),refs.end());
     closeObjectChooser();
     if(refs.empty()){clearSelection();return;} // web background clears even with Ctrl
     if(refs.size()==1){selectObject(objectRefValue(refs.front()),additive?"toggle":"replace","map");return;}

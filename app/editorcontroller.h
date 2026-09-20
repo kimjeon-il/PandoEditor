@@ -26,6 +26,8 @@ struct WebImportSession;
 class EditorController : public QObject {
     Q_OBJECT
     Q_PROPERTY(QVariantList presentationGroups READ presentationGroups NOTIFY presentationChanged)
+    Q_PROPERTY(QVariantMap distributionDisplay READ distributionDisplay NOTIFY visualChanged)
+    Q_PROPERTY(QVariantMap hydroDataStatus READ hydroDataStatus NOTIFY stateChanged)
     Q_PROPERTY(qulonglong presentationRevision READ presentationRevision NOTIFY presentationChanged)
     Q_PROPERTY(bool presentationRecoveryAvailable READ presentationRecoveryAvailable NOTIFY presentationRecoveryChanged)
     Q_PROPERTY(QObject* screenColorPicker READ screenColorPicker CONSTANT)
@@ -88,6 +90,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantList relationParentOptions READ relationParentOptions NOTIFY structureChanged)
     Q_PROPERTY(bool structureDialogOpen READ structureDialogOpen NOTIFY structureChanged)
     Q_PROPERTY(QVariantMap geometryEditState READ geometryEditState NOTIFY geometryEditChanged)
+    Q_PROPERTY(QVariantMap contentEditState READ contentEditState NOTIFY contentEditChanged)
     Q_PROPERTY(QVariantList geometryDraftPaths READ geometryDraftPaths NOTIFY geometryEditChanged)
 public:
     bool presentationRecoveryAvailable() const;
@@ -95,10 +98,18 @@ public:
     Q_INVOKABLE bool discardPresentationRecovery();
     Q_INVOKABLE bool flushPresentationRecovery();
     QVariantList presentationGroups() const;
+    QVariantMap distributionDisplay() const;
+    QVariantMap hydroDataStatus() const;
     qulonglong presentationRevision() const { return project_.presentationRevision(); }
     Q_INVOKABLE bool setPresentationVisibility(const QString& key,bool visible);
     Q_INVOKABLE bool setPresentationOpacity(const QString& group,double opacity);
     Q_INVOKABLE bool setPresentationBoundary(const QString& group,bool visible);
+    Q_INVOKABLE bool setDistributionDisplay(const QString& mode,bool boundaryVisible);
+    Q_INVOKABLE QVariantList labelLayout(double mapScale,double originX,double originY,double zoom,double viewportWidth,double viewportHeight) const;
+    Q_INVOKABLE bool setLabelPinned(const QVariantMap& ref,bool pinned,double longitude=0,double latitude=0,bool hasPosition=false);
+    Q_INVOKABLE bool setLabelMapPosition(const QVariantMap& ref,double mapX,double mapY);
+    Q_INVOKABLE bool resetLabelPosition(const QVariantMap& ref);
+    Q_INVOKABLE bool configureHydroData(const QUrl& path);
     Q_INVOKABLE bool toggleSelectionVisibility();
     Q_INVOKABLE bool setScopedObjectVisibility(const QVariantMap& ref,bool visible);
     QObject* screenColorPicker() { return &screenColorPicker_; }
@@ -135,10 +146,10 @@ public:
     Q_INVOKABLE bool setHoverObject(const QVariantMap& ref,const QString& source="",const QString& expectedKey="");
     QVariantList objectChooserCandidates() const;
     bool objectChooserOpen() const { return chooserBase_.has_value() && chooserRefs_.size()>1; }
-    Q_INVOKABLE void beginMapSelection(double x,double y,bool additive=false,double pixelsPerUnit=0);
+    Q_INVOKABLE void beginMapSelection(double x,double y,bool additive=false,double pixelsPerUnit=0,double zoom=1);
     Q_INVOKABLE bool chooseMapCandidate(int index,bool toggle=false);
     Q_INVOKABLE void closeObjectChooser();
-    Q_INVOKABLE QVariantMap pickObject(double x,double y) const;
+    Q_INVOKABLE QVariantMap pickObject(double x,double y,double pixelsPerUnit=1,double zoom=1) const;
     Q_INVOKABLE void selectMapAt(double x,double y,bool additive=false);
     Q_INVOKABLE bool focusObject(const QVariantMap& ref={});
     // Read-only canonical serialization for non-mutating inspection/tests.
@@ -214,6 +225,14 @@ public:
     QVariantList geometryDraftPaths() const;
     Q_INVOKABLE bool beginGeometryEdit(const QString& tool="edit");
     Q_INVOKABLE bool beginGeometryDraw();
+    QVariantMap contentEditState() const;
+    Q_INVOKABLE bool beginContentEdit(const QString& domain,const QString& type=QString(),bool create=false);
+    Q_INVOKABLE bool updateContentField(const QString& field,const QVariant& value);
+    Q_INVOKABLE bool loadContentFlag(const QUrl& url);
+    Q_INVOKABLE bool beginContentGeometry();
+    Q_INVOKABLE bool previewContentEdit(bool remove=false);
+    Q_INVOKABLE bool confirmContentEdit();
+    Q_INVOKABLE void cancelContentEdit();
     Q_INVOKABLE bool geometryAddPoint(double x,double y,double tolerance=0);
     Q_INVOKABLE bool geometrySelectNearest(double x,double y,double tolerance);
     Q_INVOKABLE bool geometryMoveSelectedVertex(double x,double y,double tolerance=0);
@@ -280,6 +299,7 @@ signals:
     void privateRecoveryRequiredChanged();
     void structureChanged();
     void geometryEditChanged();
+    void contentEditChanged();
 private:
     QTimer presentationSaveTimer_;
     std::string presentationSaveInstance_;
@@ -288,7 +308,7 @@ private:
     bool discardOwnPresentationRecovery();
     void publishPresentation();
     ScreenColorPicker screenColorPicker_;
-    std::vector<pandoeditor::ObjectRef> mapCandidates(double x,double y,double pixelsPerUnit) const;
+    std::vector<pandoeditor::ObjectRef> mapCandidates(double x,double y,double pixelsPerUnit,double zoom=1) const;
     std::vector<pandoeditor::ObjectRef> chooserRefs_;
     std::optional<pandoeditor::ProjectSnapshot> chooserBase_;
     bool chooserToggle_=false;
@@ -354,6 +374,13 @@ private:
     std::optional<StructureSession> structureSession_;
     std::optional<ConversionDraft> conversionDraft_;
     std::optional<CreateDraft> createDraft_;
+    struct ContentSession {
+        pandoeditor::ProjectSnapshot base;
+        pandoeditor::ContentEdit edit;
+        std::optional<pandoeditor::CommandPreview> preview;
+        QString error;
+    };
+    std::optional<ContentSession> contentSession_;
     struct GeometryEditSession {
         pandoeditor::ProjectSnapshot base;
         pandoeditor::ObjectRef target;
@@ -376,6 +403,7 @@ private:
         std::optional<pandoeditor::CoastlineIntent> coastIntent;
         std::optional<pandoeditor::Geometry> dragBefore;
         std::optional<pandoeditor::Point> snapPoint;
+        bool content=false;
     };
     std::optional<GeometryEditSession> geometryEdit_;
     bool setStructurePlan(const pandoeditor::TerritorialMutationIntent&);

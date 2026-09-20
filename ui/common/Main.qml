@@ -84,13 +84,13 @@ ApplicationWindow {
         if (action === "close") { allowClose=true; window.close() }
     }
     function requestAction(action) {
-        if (action !== "open" && action !== "import" && !editor.commitPendingEdits()) return
+        if (action !== "open" && action !== "import" && !editor.contentEditState.active && !editor.geometryEditState.active && !editor.commitPendingEdits()) return
         pendingAction=action
         if (editor.dirty) unsaved.open()
         else finishAction()
     }
     function requestSave(asNew) {
-        if (!editor.commitPendingEdits()) return
+        if (!editor.contentEditState.active && !editor.geometryEditState.active && !editor.commitPendingEdits()) return
         if (editor.mobileMode) {
             if (editor.savePrivate()) finishAction()
             else {

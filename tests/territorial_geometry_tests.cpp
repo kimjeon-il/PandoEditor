@@ -33,6 +33,32 @@ PrepareResult prepare(Project& p,const TerritorialMutationIntent& intent) {
 class TerritorialGeometryTests:public QObject {
     Q_OBJECT
 private slots:
+    void contentPointLineSession_data(){QTest::addColumn<bool>("mobile");QTest::newRow("desktop")<<false;QTest::newRow("mobile")<<true;}
+    void contentPointLineSession(){
+        QFETCH(bool,mobile);QTemporaryDir dir;Project source;source.replace(fixture());
+        QFile f(dir.filePath("input.json"));QVERIFY(f.open(QIODevice::WriteOnly));f.write(projectcodec::encode(source));f.close();
+        EditorController c({mobile,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(f.fileName())));
+        const auto original=c.documentBytes();
+        QVERIFY(c.beginContentEdit("label","city",true));QVERIFY(c.updateContentField("name","도시"));
+        QVERIFY(c.hasPendingEdits());QVERIFY(c.beginContentGeometry());QVERIFY(c.geometryAddPoint(2,2,0));
+        QVERIFY(c.requestGeometryPreview());QCOMPARE(c.documentBytes(),original);QVERIFY(c.confirmGeometryEdit());
+        auto doc=projectcodec::decode(c.documentBytes());QCOMPARE(doc.labels.size(),std::size_t(1));QCOMPARE(doc.labels.front().name,std::string("도시"));
+        const auto labelId=QString::fromStdString(doc.labels.front().id);QVERIFY(!c.hasPendingEdits());
+        c.undo();QCOMPARE(c.documentBytes(),original);c.redo();
+        QVERIFY(c.selectObject({{"domain","label"},{"id",labelId}},"replace","test"));
+        QVERIFY(c.beginContentEdit("label","",false));QVERIFY(c.beginContentGeometry());QVERIFY(c.geometrySelectNearest(2,2,1));
+        QVERIFY(c.geometryMoveSelectedVertex(3,3,0));QVERIFY(c.geometryUndoDraft());c.cancelContentEdit();
+        const auto pointState=c.documentBytes();
+        QVERIFY(c.beginContentEdit("hydro","river",true));QVERIFY(c.updateContentField("name","강"));QVERIFY(c.beginContentGeometry());
+        QVERIFY(c.geometryAddPoint(1,1,0));QVERIFY(!c.requestGeometryPreview());QVERIFY(c.geometryAddPoint(5,1,0));
+        QVERIFY(c.geometryInsertNearest(3,1,1));QVERIFY(c.geometryDeleteSelectedVertex());
+        QVERIFY(c.requestGeometryPreview());QCOMPARE(c.documentBytes(),pointState);QVERIFY(c.confirmGeometryEdit());
+        doc=projectcodec::decode(c.documentBytes());QCOMPARE(doc.hydro.size(),std::size_t(1));
+        const auto geometry=doc.geometries.get(doc.hydro.front().geometry);QCOMPARE(geometry->type,std::string("LineString"));QCOMPARE(geometry->lines.front().size(),std::size_t(2));
+        c.undo();QCOMPARE(c.documentBytes(),pointState);c.redo();
+        const auto output=QUrl::fromLocalFile(dir.filePath("output.json"));QVERIFY(c.saveFile(output));QVERIFY(c.openFile(output));
+        QCOMPARE(projectcodec::decode(c.documentBytes()).hydro.size(),std::size_t(1));
+    }
     void retainedReferencesPresentationAndStale(){
         auto d=fixture();PreservedExtension e;e.id="generic";e.jsonPointer="/genericFeatures";
         e.payload=R"([{"properties":{"ownerId":"A","topologyGroup":"land:A"},"number":1e+09,"order":[3,1,2]}])";

@@ -1,15 +1,19 @@
 find_package(Qt6 REQUIRED COMPONENTS Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Svg)
 qt_add_executable(pandoeditor main.cpp)
 
 add_library(pandoeditor_editor STATIC
     referencewarp.cpp referencewarp.h
     referencetracing.cpp referencetracing.h
     referenceimagelibrary.cpp referenceimagelibrary.h
+    defaultflagresolver.cpp defaultflagresolver.h
+    hydrodataprovider.cpp hydrodataprovider.h
     geometrycalculator.cpp geometrycalculator.h
     territorialgeometry.cpp territorialgeometry.h
     editorpresentation.cpp
     webimport.cpp webmigration.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
     editorgeometry.cpp
+    editorcontent.cpp
     editorcontroller.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
@@ -17,7 +21,7 @@ add_library(pandoeditor_editor STATIC
     ../renderer/referenceimageitem.cpp ../renderer/referenceimageitem.h
 )
 target_include_directories(pandoeditor_editor PUBLIC . ../renderer)
-target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent)
+target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg)
 qt_add_resources(pandoeditor_editor m4_geometry
     PREFIX "/geometry" BASE "${PROJECT_SOURCE_DIR}/assets/geometry"
     FILES "${PROJECT_SOURCE_DIR}/assets/geometry/polygon-clipping-0.15.7.js"
@@ -44,6 +48,8 @@ qt_add_resources(pandoeditor ui
 
 qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+file(GLOB_RECURSE DEFAULT_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/assets/defaults/flags/*")
+qt_add_resources(pandoeditor default_flags PREFIX "/defaults/flags" BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags" FILES ${DEFAULT_FLAG_FILES})
 
 if(BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test)
@@ -106,7 +112,7 @@ if(BUILD_TESTING)
     qt_add_resources(ui_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME ui_tests COMMAND ui_tests -o -,txt)
-    set_tests_properties(ui_tests PROPERTIES TIMEOUT 60 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    set_tests_properties(ui_tests PROPERTIES TIMEOUT 120 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()
 
 set_target_properties(pandoeditor PROPERTIES

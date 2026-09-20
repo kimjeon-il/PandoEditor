@@ -80,6 +80,7 @@ bool EditorController::beginSplitGeometry(){
     geometryEdit_->splitIntent=SplitTerritorialIntent{*primary,{},0,QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString(),objectDisplayName(*unit)+" 분할"};emit geometryEditChanged();return true;
 }
 bool EditorController::beginSharedBoundaryGeometry(){
+    for(const auto& ref:selection_.items())if(ref.domain!="territorial")return false;
     if(geometryEdit_||selection_.items().size()!=2||structureDialogOpen()||hasPendingEdits())return false;const auto primary=selection_.primary();if(!primary)return false;const auto found=project_.index().objects.find(*primary);if(found==project_.index().objects.end())return false;const auto& unit=project_.document().units.at(found->second);const auto geometry=project_.document().geometries.get(unit.geometry);if(!geometry)return false;geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*geometry,{},{},0,0,-1,QStringLiteral("boundary"),{}};geometryEdit_->boundaryOwners=selection_.items();emit geometryEditChanged();return true;
 }
 bool EditorController::beginCoastlineGeometry(const QString& authority){

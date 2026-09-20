@@ -9,15 +9,9 @@
 #include <vector>
 
 namespace pandoeditor {
-struct Point { double x, y; };
 using Ring = std::vector<Point>;
 using Polygon = std::vector<Ring>;
 using MultiPolygon = std::vector<Polygon>;
-struct ObjectRef {
-    std::string domain, id;
-    bool operator<(const ObjectRef& b) const { return std::tie(domain,id)<std::tie(b.domain,b.id); }
-    bool operator==(const ObjectRef& b) const { return domain==b.domain && id==b.id; }
-};
 inline ObjectRef territorialRef(const std::string& id) { return {"territorial",id}; }
 struct GeometryRef {
     std::string id;
@@ -41,6 +35,59 @@ private:
 };
 enum class UnitKind { Country, Subunit, Region };
 struct Validity { std::optional<std::string> from, to; };
+struct SourceProvenance {
+    std::string kind="user", dataset, version, sourceId, sourceFormat, sourceType, importedAt;
+    // Lossless JSON object; parsing is owned by the codec boundary.
+    std::string details="{}";
+};
+enum class FlagPolicy { Default, None, Embedded };
+struct TerritorialSymbolStyle {
+    FlagPolicy policy=FlagPolicy::Default;
+    std::string embeddedDataUrl;
+};
+struct CountryDetails { std::string capital; };
+struct PlaceLabel {
+    std::string id, name, kind="custom", notes;
+    GeometryRef geometry;
+    std::optional<ObjectRef> territory;
+    SourceProvenance source;
+};
+struct HydroFeature {
+    std::string id, name, kind="river", notes;
+    GeometryRef geometry;
+    std::uint32_t color=0x3388cc;
+    bool locked=false;
+    SourceProvenance source;
+    std::optional<std::string> sourceFeatureId;
+};
+struct DistributionLayer {
+    std::string id, name, type="language";
+    std::uint32_t color=0x3388cc;
+    bool locked=false;
+    std::optional<std::string> parentId;
+    std::vector<std::string> groups;
+    Validity validity;
+    std::string metadata="{}";
+};
+struct DistributionEntry {
+    std::string id, layerId;
+    std::optional<ObjectRef> territory;
+    std::optional<GeometryRef> geometry;
+    double share=100;
+    std::string certainty="unknown", metadata="{}";
+    Validity validity;
+};
+struct GenericFeature {
+    std::string id, name, notes;
+    GeometryRef geometry;
+    std::uint32_t color=0x888888;
+    bool locked=false, fallbackOnly=true;
+    SourceProvenance source;
+};
+struct PhysicalDataSettings {
+    std::string dataset, version, source;
+    std::vector<std::string> hiddenHydroIds;
+};
 struct TemporalValue {
     std::string text, precision;
     std::int64_t start, end;
@@ -98,10 +145,18 @@ struct Country {
 };
 struct ProjectDocument {
     // Read-time provenance for a migration notice, not document content or wire data.
-    int nativeSourceVersion=5;
+    int nativeSourceVersion=6;
     std::string documentId;
     std::vector<TerritorialUnit> units;
     std::vector<TerritorialRelation> relations;
+    std::map<ObjectRef,CountryDetails> countryDetails;
+    std::map<ObjectRef,TerritorialSymbolStyle> symbols;
+    std::vector<PlaceLabel> labels;
+    std::vector<HydroFeature> hydro;
+    std::vector<DistributionLayer> distributionLayers;
+    std::vector<DistributionEntry> distributionEntries;
+    std::vector<GenericFeature> genericFeatures;
+    PhysicalDataSettings physicalData;
     GeometryStore geometries;
     PresentationState presentation;
     std::vector<PreservedExtension> extensions;
@@ -127,6 +182,12 @@ struct DocumentIndex {
     std::map<GeometryRef,std::vector<ObjectRef>> geometryUsers;
 };
 DocumentIndex validateDocument(const ProjectDocument& document);
+void indexContent(const ProjectDocument&, DocumentIndex&);
+bool sameContent(const ProjectDocument&, const ProjectDocument&);
+std::vector<ObjectRef> dominantDistributionEntries(const ProjectDocument&, const std::vector<std::string>& visibleLayers);
+std::optional<GeometryRef> objectGeometry(const ProjectDocument&,const DocumentIndex&,const ObjectRef&);
+bool objectLocked(const ProjectDocument&,const DocumentIndex&,const ObjectRef&);
+std::string contentGroup(const ProjectDocument&,const ObjectRef&);
 std::vector<CountryView> countryViews(const ProjectDocument& document);
 const std::string& nativeLayerId(const ProjectDocument&,const ObjectRef&);
 const TerritorialRelation* effectiveRelation(const ProjectDocument&, const std::string& unitId, std::int64_t date);

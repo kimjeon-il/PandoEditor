@@ -5,6 +5,7 @@ add_library(pandoeditor_core STATIC
     src/presentation.cpp
     src/presentationcommands.cpp
     src/document.cpp
+    src/content.cpp
     src/objectproperties.cpp
     src/geometrypredicates.cpp
     src/territorialmutation.cpp
@@ -26,6 +27,8 @@ if(BUILD_TESTING)
     target_link_libraries(presentation_tests PRIVATE Pandoeditor::Core)
     add_test(NAME presentation_tests COMMAND presentation_tests)
     find_package(Qt6 REQUIRED COMPONENTS Core)
+    add_executable(content_probe ../tests/content_probe.cpp)
+    target_link_libraries(content_probe PRIVATE Pandoeditor::Core Qt6::Core)
     add_executable(presentation_parity_probe ../tests/presentation_parity_probe.cpp)
     target_link_libraries(presentation_parity_probe PRIVATE Pandoeditor::Core Qt6::Core)
     add_executable(command_allocation_tests ../tests/command_allocation_tests.cpp)

@@ -130,7 +130,7 @@ private slots:
         QCOMPARE(readFile(path),original); QVERIFY(!editor.dirty());
         QVERIFY(editor.documentNotice().contains("v5"));
         QVERIFY(editor.saveFile(QUrl::fromLocalFile(path)));
-        QCOMPARE(QJsonDocument::fromJson(readFile(path)).object()["version"].toInt(),5);
+        QCOMPARE(QJsonDocument::fromJson(readFile(path)).object()["version"].toInt(),6);
         auto extended=original; extended.insert(extended.indexOf('{')+1,"\"future\":{\"x\":true},");
         QVERIFY(file.open(QIODevice::WriteOnly)); file.write(extended); file.close();
         QVERIFY(editor.openFile(QUrl::fromLocalFile(path))); editor.selectCountry("DEU");

@@ -5,6 +5,30 @@
 class PresentationEditorTests:public QObject {
     Q_OBJECT
 private slots:
+    void labelLayoutAndDistributionMatchWebRules() {
+        using namespace pandoeditor;
+        LabelLayoutCandidate ordinary{{"label","a"},"label:a","place",10,10,20,10,70,0,10,false,false};
+        auto selected=ordinary;selected.ref={"label","b"};selected.key="label:b";selected.selected=true;
+        QCOMPARE(layoutLabels({ordinary,selected},1,3),std::vector<ObjectRef>({{"label","b"}}));
+        auto pinned=ordinary;pinned.ref={"label","c"};pinned.key="label:c";pinned.pinned=true;
+        QCOMPARE(layoutLabels({ordinary,pinned},1,3),std::vector<ObjectRef>({{"label","c"}}));
+        const auto city=automaticLabelSettings("city",LabelSettings{12.,0.,99.,Point{1,2},false,"foreign"});
+        QCOMPARE(*city.priority,70.);QCOMPARE(*city.minZoom,1.25);QCOMPARE(city.collisionGroup,std::string("place"));QVERIFY(city.pinned);
+        QCOMPARE(distributionFillAlpha(50,.5),.205);
+    }
+    void distributionModeUsesSelectedVisibleLayer() {
+        using namespace pandoeditor;ProjectDocument d;d.distributionLayers={{"a","A","language"},{"b","B","language"},{"c","C","religion"}};
+        d.distributionEntries={{"a1","a",territorialRef("T"),{},50},{"b1","b",territorialRef("T"),{},50},{"c1","c",territorialRef("T"),{},30}};
+        d.presentation.webPresentation.hiddenItems["languages"].insert("b");
+        auto dominant=visibleDistributionEntries(d);QCOMPARE(dominant,std::vector<ObjectRef>({{"distributionEntry","a1"},{"distributionEntry","c1"}}));
+        d.presentation.webPresentation.distributionSettings.renderMode=DistributionRenderMode::Intensity;
+        QVERIFY(visibleDistributionEntries(d,"b").empty());QCOMPARE(visibleDistributionEntries(d,"a"),std::vector<ObjectRef>({{"distributionEntry","a1"}}));
+    }
+    void localHydroManifestConfiguresAtomically() {
+        QTemporaryDir dir;QFile manifest(dir.filePath("manifest.json"));QVERIFY(manifest.open(QIODevice::WriteOnly));manifest.write(R"({"version":"0.13.1","schema":"pandolab-water-shards-v5","dataset":"Fixture"})");manifest.close();
+        QFile index(dir.filePath("index.bin.gz"));QVERIFY(index.open(QIODevice::WriteOnly));index.write("fixture");index.close();
+        EditorController controller({false,dir.filePath("private.json")});const auto revision=controller.revision();QVERIFY(controller.configureHydroData(QUrl::fromLocalFile(dir.path())));QCOMPARE(controller.revision(),revision+1);QVERIFY(controller.hydroDataStatus()["ready"].toBool());controller.undo();QVERIFY(!controller.hydroDataStatus()["ready"].toBool());
+    }
     void visibilityKeepsSelectionDraftAndRedo() {
         QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});
         c.selectCountry("DEU");c.setColor("#112233");c.undo();QVERIFY(c.canRedo());

@@ -36,9 +36,20 @@ struct MoveLayer { std::string id; int delta; };
 struct SetLayerVisible { std::string id; bool value; };
 struct SetLayerLocked { std::string id; bool value; };
 struct MoveCountry { std::string id, layerId; };
+// A null value deletes the target. Geometry is an immutable new version and is
+// inserted only into the candidate; the live document changes at confirm.
+using ContentValue=std::variant<std::monostate,PlaceLabel,HydroFeature,DistributionLayer,
+    DistributionEntry,GenericFeature,CountryDetails,TerritorialSymbolStyle>;
+struct ContentEdit {
+    ObjectRef target;
+    ContentValue value;
+    std::optional<std::pair<GeometryRef,Geometry>> geometry;
+    bool create=false;
+};
+struct SetPhysicalData { PhysicalDataSettings settings; };
 using CommandAction = std::variant<std::monostate, SetCountryColor, AddLayer,
     RemoveLayer, MoveLayer, SetLayerVisible, SetLayerLocked, MoveCountry,
-    TerritorialFieldEdit, TerritorialColorEdit, TerritorialLockEdit, ApplyTerritorialMutation>;
+    TerritorialFieldEdit, TerritorialColorEdit, TerritorialLockEdit, ApplyTerritorialMutation, ContentEdit, SetPhysicalData>;
 struct CommandArguments { PropertyEdits properties; CommandAction action; };
 struct CommandRequest {
     std::string commandId, projectInstanceId, documentId;

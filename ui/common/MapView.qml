@@ -34,7 +34,7 @@ Rectangle {
         }
     }
     readonly property var selectedPaths: {
-        const keys = editor.selectionItems.map(function(ref) { return ref.id })
+        const keys = editor.selectionItems.map(function(ref) { return ref.domain === "territorial" ? ref.id : "content/" + ref.domain + "/" + ref.id })
         return editor.paths.filter(function(path) {
             return keys.indexOf(path.countryId)>=0 && editor.countryVisuals[path.countryId]
                 && editor.countryVisuals[path.countryId].visible
@@ -163,7 +163,7 @@ Rectangle {
         paths: editor.paths
         visuals: editor.countryVisuals
         selectedPaths: view.selectedPaths
-        primaryId: editor.primaryObject.id || ""
+        primaryId: editor.primaryObject.domain === "territorial" ? editor.primaryObject.id : editor.primaryObject.id ? "content/" + editor.primaryObject.domain + "/" + editor.primaryObject.id : ""
         originX: view.originX; originY: view.originY; mapScale: view.mapScale
         z: 0
     }
@@ -212,17 +212,28 @@ Rectangle {
         nameFilters: ["Images (*.png *.jpg *.jpeg *.webp)"]
         onAccepted: referenceImages.importImage(selectedFile)
     }
+    readonly property var placedLabels: {
+        const revision = editor.presentationRevision
+        const selection = editor.selectionRevision
+        return editor.labelLayout(mapScale,originX,originY,zoom,width,height)
+    }
     Repeater {
-        model: editor.paths
+        model: view.placedLabels
         delegate: Column {
             required property var modelData
-            readonly property var visual: editor.countryVisuals[modelData.countryId] || ({})
-            x: view.originX + (modelData.left+modelData.width/2)*view.mapScale-width/2
-            y: view.originY + (modelData.top+modelData.height/2)*view.mapScale-height/2
+            x: modelData.x-width/2
+            y: modelData.y-height/2
             z: editor.layers.length+2
-            visible: !!visual.visible
-            Image { anchors.horizontalCenter: parent.horizontalCenter; width:24; height:16; fillMode:Image.PreserveAspectFit; source:parent.visual.flagSource||""; visible:!!parent.visual.flagVisible&&source.toString()!=="" }
-            Label { textFormat:Text.PlainText; anchors.horizontalCenter:parent.horizontalCenter; text:parent.visual.name||""; visible:!!parent.visual.nameVisible; color:"#243746"; font.pixelSize:12 }
+            Image { anchors.horizontalCenter: parent.horizontalCenter; width:24; height:16; fillMode:Image.PreserveAspectFit; source:parent.modelData.flagSource||""; visible:!!parent.modelData.flagVisible&&source.toString()!=="" }
+            Label { textFormat:Text.PlainText; anchors.horizontalCenter:parent.horizontalCenter; text:parent.modelData.name||""; color:"#243746"; font.pixelSize:12 }
+            DragHandler {
+                enabled: !view.geometryEditing
+                target: null
+                onActiveChanged: if(!active && activeTranslation.x*activeTranslation.x+activeTranslation.y*activeTranslation.y>4)
+                    editor.setLabelMapPosition(parent.modelData.ref,
+                        (parent.modelData.x+activeTranslation.x-view.originX)/view.mapScale,
+                        (parent.modelData.y+activeTranslation.y-view.originY)/view.mapScale)
+            }
         }
     }
     TapHandler {
@@ -239,7 +250,7 @@ Rectangle {
             view.chooserPoint = eventPoint.position
             editor.beginMapSelection((eventPoint.position.x-view.originX)/view.mapScale,
                                      (eventPoint.position.y-view.originY)/view.mapScale,
-                                     !!(gestureModifiers & (Qt.ControlModifier | Qt.MetaModifier)),view.mapScale)
+                                     !!(gestureModifiers & (Qt.ControlModifier | Qt.MetaModifier)),view.mapScale,view.zoom)
         }
     }
     TapHandler {
@@ -266,7 +277,7 @@ Rectangle {
         function updateHover() {
             if (!hovered || editor.objectChooserOpen) return
             const ref=editor.pickObject((point.position.x-view.originX)/view.mapScale,
-                                        (point.position.y-view.originY)/view.mapScale)
+                                        (point.position.y-view.originY)/view.mapScale, view.mapScale,view.zoom)
             editor.setHoverObject(ref,"map")
             view.mapHoverKey=ref.key || ""
         }

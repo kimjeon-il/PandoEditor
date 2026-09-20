@@ -14,6 +14,7 @@ std::optional<TerritorialField> fieldKind(const QString& field) {
 }
 }
 const TerritorialUnit* EditorController::selectedUnit() const {
+ if(selection_.primary() && selection_.primary()->domain!="territorial") return nullptr;
  const auto pos=project_.index().objects.find(territorialRef(selected_.toStdString()));
  return pos==project_.index().objects.end()?nullptr:&project_.document().units.at(pos->second);
 }
@@ -26,6 +27,11 @@ bool EditorController::selectedEditable() const {
 }
 QVariantMap EditorController::objectProperties() const {
  QVariantMap result{{"count",int(selection_.items().size())},{"busy",propertyBusy()}};
+ if(std::any_of(selection_.items().begin(),selection_.items().end(),[](const auto& ref){return ref.domain!="territorial";})) {
+  result["lockEnabled"]=false;result["colorEnabled"]=false;result["editable"]=false;
+  if(selection_.items().size()==1){const auto& ref=selection_.items().front();const auto view=project_.propertyView(ref);result["id"]=q(ref.id);result["type"]=q(ref.domain);if(view)result["displayName"]=q(view->displayName);}
+  return result;
+ }
  bool allLocked=!selection_.items().empty(),anyLocked=false,layerLocked=false;
  for(const auto& ref:selection_.items()){
   const auto& u=project_.document().units.at(project_.index().objects.at(ref));allLocked=allLocked&&u.locked;anyLocked=anyLocked||u.locked;

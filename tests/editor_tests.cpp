@@ -90,7 +90,7 @@ int main(int argc,char** argv)
         check(editor.saveFile(path));
         QFile saved(path.toLocalFile()); check(saved.open(QIODevice::ReadOnly));
         auto v2=QJsonDocument::fromJson(saved.readAll()).object(); saved.close();
-        check(v2["version"].toInt()==5 && v2["presentation"].toObject()["userLayers"].toArray().size()==2);
+        check(v2["version"].toInt()==6 && v2["presentation"].toObject()["userLayers"].toArray().size()==2);
         editor.selectCountry("DEU"); editor.setMemoDraft("changed"); check(editor.commitPendingEdits());
         const auto protectedColors=editor.colors();
         auto rejectV2=[&](QJsonObject obj) {

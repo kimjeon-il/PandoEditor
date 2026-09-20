@@ -245,7 +245,7 @@ struct Builder {
         extras(at(root,"landObjectModel"),"/landObjectModel",{"schemaVersion","coastlineAuthority","purpose","directCreation","sourceProvenanceSchemaVersion","canonicalProperties"});
         extras(at(root,"territorialModel"),"/territorialModel",{"schemaVersion","coastlineAuthority","countryStorage","types","coverageModes"});
         extras(at(root,"distributionModel"),"/distributionModel",{"schemaVersion","types","sourceModes","shareRange","sharesAreIndependent"});
-        report("","notice",QStringLiteral("국가·하위단위·지방의 기본 속성을 편집할 수 있습니다. 국기·지명·수계·분포·혼합 등의 표시/편집은 후속 범위이며, 알 수 없는 데이터는 관련 변경을 제한할 수 있습니다."));
+        report("","notice",QStringLiteral("검증된 영토·지명·수계·분포·기타 객체는 앱 모델로 변환합니다. 해석할 수 없는 데이터와 외부 자료는 원본을 보존하며 관련 변경이 제한될 수 있습니다."));
     }
 };
 }
@@ -288,7 +288,16 @@ Candidate prepare(const QByteArray& bytes,const std::function<bool()>& cancelled
     }
     i=0;for(const auto& f:optionalArray(at(root,"territorialUnits"),"/territorialUnits"))b.unit(f,"/territorialUnits/"+std::to_string(i++),false);
     b.relations();b.retainedValidation();b.roots();
+    for(const auto& reason:projectcodec::promoteContent(b.output.document))
+        b.report("/content","retained",QString::fromStdString(reason));
     presentationmigration::promote(b.output.document);
+    for(auto& value:b.output.report) {
+        auto row=value.toMap();
+        if(row["status"]!="retained")continue;
+        const auto path=row["path"].toString().toStdString();
+        const bool promoted=std::any_of(b.output.document.extensions.begin(),b.output.document.extensions.end(),[&](const auto& e){return e.jsonPointer==path&&e.status=="migrationArchive";});
+        if(promoted){row["status"]="mapped";row["message"]=QStringLiteral("검증 후 앱 모델로 승격 · 원본은 이관 기록에 보존");value=row;}
+    }
     b.preserve("",original,true,{},true);
     if(migration.sourceSchema<5)b.report("/schemaVersion","migrated",QStringLiteral("웹 schema %1 → 5 변환. 변환 전 원본은 migrationArchive로 보존.").arg(migration.sourceSchema));
     b.check();

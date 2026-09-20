@@ -16,11 +16,11 @@ QString typeLabel(UnitKind kind) { return kind==UnitKind::Country?QStringLiteral
 std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& value) const {
     const auto domain=value.value("domain").toString().trimmed();
     const auto id=value.value("id").toString().trimmed();
-    if(domain!="territorial" || id.isEmpty()) return {};
-    const auto ref=territorialRef(id.toStdString());
+    if(id.isEmpty()) return {};
+    const ObjectRef ref{domain.toStdString(),id.toStdString()};
     const auto found=project_.index().objects.find(ref);
     if(found==project_.index().objects.end()) return {};
-    const auto expected=typeName(project_.document().units.at(found->second).kind);
+    const auto expected=ref.domain=="territorial"?typeName(project_.document().units.at(found->second).kind):q(ref.domain);
     const auto requested=value.value("type").toString().trimmed();
     if(!requested.isEmpty() && requested!=expected) return {};
     return ref;
@@ -28,7 +28,7 @@ std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& 
 QVariantMap EditorController::objectRefValue(const ObjectRef& ref) const {
     const auto it=project_.index().objects.find(ref);
     if(it==project_.index().objects.end()) return {{"domain",q(ref.domain)},{"id",q(ref.id)}};
-    const auto type=typeName(project_.document().units.at(it->second).kind);
+    const auto type=ref.domain=="territorial"?typeName(project_.document().units.at(it->second).kind):q(ref.domain);
     const auto id=q(ref.id);
     return {{"domain",q(ref.domain)},{"type",type},{"id",id},
         {"key",q(ref.domain)+":"+type+":"+QString::fromLatin1(QUrl::toPercentEncoding(id,"-_.!~*'()"))}};
@@ -61,6 +61,14 @@ QVariantList EditorController::objectRows() const {
         row["editable"]=!row["locked"].toBool();
         row["selectionOnly"]=false;
         rows.append(row);
+    }
+    for(const auto& [ref,index]:project_.index().objects) if(ref.domain!="territorial") {
+        auto row=objectRefValue(ref); const auto properties=project_.propertyView(ref);
+        row["name"]=properties?q(properties->displayName):q(ref.id);
+        row["typeLabel"]=ref.domain=="label"?QStringLiteral("지명"):ref.domain=="hydro"?QStringLiteral("수계"):
+            ref.domain=="generic"?QStringLiteral("기타 객체"):ref.domain=="distributionLayer"?QStringLiteral("분포 레이어"):QStringLiteral("분포 항목");
+        row["visible"]=objectVisible(ref); row["locked"]=objectLocked(project_.document(),project_.index(),ref);
+        row["editable"]=!row["locked"].toBool(); row["selectionOnly"]=false; rows.append(row);
     }
     return rows;
 }
@@ -158,27 +166,18 @@ void EditorController::selectLayer(const QString& id) {
     parkDrafts();selectedLayer_=id;reloadDrafts();
     emit stateChanged();emit draftsChanged();emit visualChanged();
 }
-QVariantMap EditorController::pickObject(double x,double y) const {
+QVariantMap EditorController::pickObject(double x,double y,double pixelsPerUnit,double zoom) const {
     if(!std::isfinite(x)||!std::isfinite(y)) return {};
-    const auto point=projection_.unproject(x,y);
-    // Match the existing renderer: layers bottom-to-top, paths in document order.
-    auto renderLayers=project_.layers();renderLayers.insert(renderLayers.begin(),Layer{"",""});
-    for(auto layer=renderLayers.rbegin();layer!=renderLayers.rend();++layer) {
-        if(!layer->visible) continue;
-        std::optional<ObjectRef> top;
-        double topRank=-std::numeric_limits<double>::infinity();
-        for(const auto& unit:project_.document().units) {
-            const auto ref=territorialRef(unit.id);
-            if(nativeLayerId(project_.document(),ref)!=layer->id||!objectVisible(ref)) continue;
-            const auto geometry=project_.document().geometries.get(unit.geometry);
-            if(geometry && pointInCountry(point,geometry->polygons)) {
-                const auto rank=territorialRenderOrder(project_.document(),ref);
-                  if(!top || rank>=topRank) { top=ref;topRank=rank; }
-            }
-        }
-        if(top) return objectRefValue(*top);
+    const auto hits=mapCandidates(x,y,pixelsPerUnit,zoom);const auto visuals=countryVisuals();
+    std::optional<ObjectRef> top;int topLayer=std::numeric_limits<int>::min();double topRank=-std::numeric_limits<double>::infinity();
+    for(const auto& path:projection_.paths) {
+        const auto row=path.toMap();const ObjectRef ref=row.contains("domain")?ObjectRef{row["domain"].toString().toStdString(),row["objectId"].toString().toStdString()}:territorialRef(row["countryId"].toString().toStdString());
+        if(std::find(hits.begin(),hits.end(),ref)==hits.end())continue;
+        const auto visual=visuals[row["countryId"].toString()].toMap();const auto layer=visual["layerOrder"].toInt();const auto rank=visual["rank"].toDouble();
+        if(!top||layer>topLayer||(layer==topLayer&&rank>=topRank)){top=ref;topLayer=layer;topRank=rank;}
     }
-    return {};
+    if(top&&top->domain=="distributionEntry")for(const auto& entry:project_.document().distributionEntries)if(entry.id==top->id){top=ObjectRef{"distributionLayer",entry.layerId};break;}
+    return top?objectRefValue(*top):QVariantMap{};
 }
 void EditorController::selectAt(double x,double y) { selectMapAt(x,y,false); }
 void EditorController::selectMapAt(double x,double y,bool additive) {
@@ -198,7 +197,9 @@ bool EditorController::focusObject(const QVariantMap& value) {
     const auto ref=value.isEmpty()?selection_.primary():existingObjectRef(value);
     if(!ref) return false;
     for(const auto& path:projection_.paths) {
-        const auto p=path.toMap();if(p["countryId"].toString()!=q(ref->id)) continue;
+        const auto p=path.toMap();
+        if(ref->domain=="territorial" ? p["countryId"].toString()!=q(ref->id) :
+            (p["domain"].toString()!=q(ref->domain) || p["objectId"].toString()!=q(ref->id))) continue;
         emit focusRequested(p["left"].toDouble(),p["top"].toDouble(),p["width"].toDouble(),p["height"].toDouble(),mobileMode_?12:10);
         return true;
     }
@@ -207,6 +208,7 @@ bool EditorController::focusObject(const QVariantMap& value) {
 void EditorController::reconcileSelection() {
     closeObjectChooser();cancelColorEdit();fieldSessions_.clear();
     if(selectionInstance_!=project_.instanceId()) {
+        cancelContentEdit();cancelGeometryEdit();
         selectionInstance_=project_.instanceId();selection_.reset();hover_.reset();hoverSource_.clear();hoverRevision_=0;
         searchQuery_.clear();clearParkedDrafts();
     } else {

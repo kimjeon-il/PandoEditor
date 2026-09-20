@@ -127,6 +127,7 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
         auto b=temporalBounds(u.validity); life[ref]=b; boundaries.insert(b.first); if(b.second<infinity) boundaries.insert(nextCalendarDay(b.second));
         require(d.presentation.objectStyles.count(ref),"DANGLING_REF: presentation missing");
     }
+    indexContent(d,idx);
     for(const auto& [ref,layer]:d.presentation.membership) {
         require(idx.objects.count(ref)&&idx.layers.count(layer),"DANGLING_REF: membership");
         idx.dependents[{"userLayer",layer}].push_back(ref);
@@ -136,14 +137,14 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
     std::map<ObjectRef,std::vector<const TerritorialRelation*>> dated;
     for(const auto& r:d.relations) {
         require(!r.id.empty()&&relationIds.insert(r.id).second,"DUPLICATE_ID: relation");
-        require(idx.objects.count(r.unit),"DANGLING_REF: relation unit");
+        require(r.unit.domain=="territorial" && idx.objects.count(r.unit),"DANGLING_REF: relation unit");
         idx.relationsByUnit[r.unit].push_back(static_cast<std::size_t>(&r-d.relations.data()));
         if(r.parent) {
-            require(idx.objects.count(*r.parent),"DANGLING_REF: parent");
+            require(r.parent->domain=="territorial" && idx.objects.count(*r.parent),"DANGLING_REF: parent");
             idx.children[*r.parent].push_back(r.unit); idx.dependents[*r.parent].push_back(r.unit);
         }
         if(r.sovereign) {
-            require(idx.objects.count(*r.sovereign)&&d.units[idx.objects.at(*r.sovereign)].kind==UnitKind::Country,"DANGLING_REF: sovereign country");
+            require(r.sovereign->domain=="territorial" && idx.objects.count(*r.sovereign)&&d.units[idx.objects.at(*r.sovereign)].kind==UnitKind::Country,"DANGLING_REF: sovereign country");
             idx.dependents[*r.sovereign].push_back(r.unit);
             idx.sovereignMembers[*r.sovereign].push_back(r.unit);
         }

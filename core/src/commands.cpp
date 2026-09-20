@@ -37,6 +37,8 @@ std::vector<ObjectRef> targetsFor(const CommandArguments& args)
         } else if constexpr(std::is_same_v<T,TerritorialFieldEdit>) refs.insert(action.target);
         else if constexpr(std::is_same_v<T,TerritorialColorEdit> || std::is_same_v<T,TerritorialLockEdit>) refs.insert(action.targets.begin(),action.targets.end());
         else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>) refs.insert(action.plan.affectedObjects.begin(),action.plan.affectedObjects.end());
+        else if constexpr(std::is_same_v<T,ContentEdit>) refs.insert(action.target);
+        else if constexpr(std::is_same_v<T,SetPhysicalData>) {}
         else if constexpr(!std::is_same_v<T,std::monostate>) refs.insert({"userLayer",action.id});
     },args.action);
     return {refs.begin(),refs.end()};
@@ -52,7 +54,8 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
         {"territorial.field",8},{"territorial.color",9},{"territorial.color.reset",9},
         {"territorial.batch-color",9},{"territorial.lock",10},{"territorial.create",11},
         {"territorial.relation.parent",11},{"territorial.relation.sovereign",11},
-        {"territorial.delete",11},{"territorial.geometry.commit",11},{"territorial.geometry.replace",11}};
+        {"territorial.delete",11},{"territorial.geometry.commit",11},{"territorial.geometry.replace",11},
+        {"content.edit",12},{"physical-data.configure",13}};
     auto found=std::find_if(std::begin(commands),std::end(commands),[&](const auto& c){return request.commandId==c.first;});
     require(found!=std::end(commands),CommandError::InvalidCommand,"unknown commandId");
     require(request.args.action.index()==found->second,CommandError::InvalidArguments,"commandId/action mismatch");
@@ -107,9 +110,13 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
     std::sort(refs.begin(),refs.end());
     require(std::adjacent_find(refs.begin(),refs.end())==refs.end() && refs==targetsFor(request.args),
             CommandError::InvalidTargets,"targets do not match arguments");
-    if(request.args.action.index()>=8)for(const auto& ref:refs)require(ref.domain=="territorial",CommandError::InvalidTargets,"non-territorial target");
+    if(request.args.action.index()>=8 && request.args.action.index()<12)for(const auto& ref:refs)require(ref.domain=="territorial",CommandError::InvalidTargets,"non-territorial target");
     const auto* added=std::get_if<AddLayer>(&request.args.action);
     for(const auto& ref:refs) {
+        if(std::holds_alternative<ContentEdit>(request.args.action)) {
+            require(!ref.id.empty(),CommandError::InvalidTargets,"empty content target");
+            continue; // The typed payload and target are checked together below.
+        }
         if(ref.domain=="territorial") {
             const auto create=std::get_if<ApplyTerritorialMutation>(&request.args.action);
             const bool newCreate=create && (create->plan.kind==TerritorialMutationKind::CreateCountry||create->plan.kind==TerritorialMutationKind::CreateSubunit||create->plan.kind==TerritorialMutationKind::CreateRegion) && ref==create->plan.targets.front();
@@ -189,6 +196,7 @@ void applyGeometryPatch(ProjectDocument& d,const TerritorialMutationPlan& plan,c
 }
 void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action) {
     const auto& plan=action.plan;
+    const auto contentBefore=d;
     auto relationId=[&](const std::string& id){std::string value="relation-"+id;unsigned n=1;auto exists=[&](const std::string& key){return std::any_of(d.relations.begin(),d.relations.end(),[&](const auto& r){return r.id==key;});};while(exists(value))value="relation-"+id+"-"+std::to_string(n++);return value;};
     std::visit([&](const auto& in) {
         using T=std::decay_t<decltype(in)>;
@@ -290,6 +298,38 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
             if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"coast geometry patch required"};applyGeometryPatch(d,plan,*action.geometry);
         }
     },plan.intent);
+    std::map<ObjectRef,ObjectRef> redirected;
+    if(const auto merge=std::get_if<MergeTerritorialIntent>(&plan.intent))for(const auto& ref:merge->donors)redirected[ref]=merge->target;
+    if(const auto conversion=std::get_if<ConvertTerritorialTypeIntent>(&plan.intent))if(conversion->targetKind==UnitKind::Subunit)redirected[conversion->source]=territorialRef(conversion->generatedId);
+    auto survives=[&](const ObjectRef& ref){return std::any_of(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==ref;});};
+    for(auto& label:d.labels)if(label.territory&&!survives(*label.territory)) {
+        require(effectAllowed(contentBefore,{"label",label.id},"relation"),CommandError::UnsupportedDependency,"label territorial dependency");
+        const auto replacement=redirected.find(*label.territory);
+        label.territory=replacement==redirected.end()?std::nullopt:std::optional<ObjectRef>(replacement->second);
+    }
+    for(auto it=d.distributionEntries.begin();it!=d.distributionEntries.end();) {
+        if(!it->territory||survives(*it->territory)){++it;continue;}
+        const auto ref=ObjectRef{"distributionEntry",it->id};const auto replacement=redirected.find(*it->territory);
+        const auto layer=std::find_if(d.distributionLayers.begin(),d.distributionLayers.end(),[&](const auto& l){return l.id==it->layerId;});
+        require(layer!=d.distributionLayers.end()&&!layer->locked,CommandError::Locked,"distribution reference locked");
+        require(effectAllowed(contentBefore,ref,replacement==redirected.end()?"delete":"relation"),CommandError::UnsupportedDependency,"distribution territorial dependency");
+        if(replacement!=redirected.end()){it->territory=replacement->second;++it;}
+        else {d.presentation.membership.erase(ref);d.presentation.objectStyles.erase(ref);it=d.distributionEntries.erase(it);}
+    }
+    for(auto it=d.symbols.begin();it!=d.symbols.end();) {
+        if(survives(it->first)){++it;continue;}const auto replacement=redirected.find(it->first);
+        if(replacement!=redirected.end()) {
+            require(!d.symbols.count(replacement->second),CommandError::UnsupportedDependency,"conflicting territorial symbols");
+            d.symbols.emplace(replacement->second,it->second);
+        }
+        it=d.symbols.erase(it);
+    }
+    for(auto it=d.countryDetails.begin();it!=d.countryDetails.end();) {
+        const auto unit=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==it->first&&u.kind==UnitKind::Country;});
+        if(unit!=d.units.end()){++it;continue;}
+        require(it->second.capital.empty()||!redirected.count(it->first),CommandError::UnsupportedDependency,"capital requires explicit resolution before merge/conversion");
+        it=d.countryDetails.erase(it);
+    }
     // Reparent the moved hierarchy before removing relationships to a vanished
     // former parent; otherwise the target loses its base relation mid-command.
     if(action.geometry)for(const auto& ref:action.geometry->removedGeometryOwners)
@@ -300,6 +340,77 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
         if(child!=d.units.end()&&parent!=d.units.end()&&child->kind==UnitKind::Subunit)
             require(geometryContains(*d.geometries.get(parent->geometry),*d.geometries.get(child->geometry)),CommandError::ValidationFailed,"final geometry outside parent");
     }
+}
+template<class Rows,class Value> void replaceContentRow(Rows& rows,const Value& value) {
+    auto found=std::find_if(rows.begin(),rows.end(),[&](const auto& row){return row.id==value.id;});
+    if(found==rows.end()) rows.push_back(value); else *found=value;
+}
+void applyContent(ProjectDocument& d,const DocumentIndex& before,const ContentEdit& edit) {
+    require(!edit.target.id.empty(),CommandError::InvalidTargets,"empty content ID");
+    const bool exists=before.objects.count(edit.target)!=0;
+    require(edit.create?!exists:exists,CommandError::InvalidTargets,"content creation/update existence mismatch");
+    require(!edit.create || (!std::holds_alternative<std::monostate>(edit.value) && edit.target.domain!="territorial"),
+        CommandError::InvalidArguments,"invalid content creation");
+    if(edit.geometry) {
+        require(!d.geometries.get(edit.geometry->first),CommandError::InvalidArguments,"geometry version already exists");
+        d.geometries.insert(edit.geometry->first,edit.geometry->second);
+    }
+    std::visit([&](const auto& value) {
+        using T=std::decay_t<decltype(value)>;
+        if constexpr(std::is_same_v<T,std::monostate>) {
+            require(exists && edit.target.domain!="territorial",CommandError::InvalidTargets,"content deletion target missing");
+            auto erase=[&](auto& rows){rows.erase(std::remove_if(rows.begin(),rows.end(),[&](const auto& row){return row.id==edit.target.id;}),rows.end());};
+            if(edit.target.domain=="label") erase(d.labels);
+            else if(edit.target.domain=="hydro") erase(d.hydro);
+            else if(edit.target.domain=="generic") erase(d.genericFeatures);
+            else if(edit.target.domain=="distributionEntry") erase(d.distributionEntries);
+            else if(edit.target.domain=="distributionLayer") {
+                erase(d.distributionLayers);
+                for(const auto& entry:d.distributionEntries) if(entry.layerId==edit.target.id) {
+                    d.presentation.membership.erase({"distributionEntry",entry.id});
+                    d.presentation.objectStyles.erase({"distributionEntry",entry.id});
+                }
+                d.distributionEntries.erase(std::remove_if(d.distributionEntries.begin(),d.distributionEntries.end(),
+                    [&](const auto& row){return row.layerId==edit.target.id;}),d.distributionEntries.end());
+                for(auto& child:d.distributionLayers) if(child.parentId==edit.target.id) child.parentId.reset();
+            } else require(false,CommandError::InvalidTargets,"invalid content domain");
+            d.presentation.membership.erase(edit.target); d.presentation.objectStyles.erase(edit.target);
+        } else if constexpr(std::is_same_v<T,CountryDetails>) {
+            require(edit.target.domain=="territorial" && exists,CommandError::InvalidTargets,"country missing");
+            d.countryDetails[edit.target]=value;
+        } else if constexpr(std::is_same_v<T,TerritorialSymbolStyle>) {
+            require(edit.target.domain=="territorial" && exists,CommandError::InvalidTargets,"symbol owner missing");
+            d.symbols[edit.target]=value;
+        } else {
+            const char* domain=std::is_same_v<T,PlaceLabel>?"label":std::is_same_v<T,HydroFeature>?"hydro":
+                std::is_same_v<T,DistributionLayer>?"distributionLayer":std::is_same_v<T,DistributionEntry>?"distributionEntry":"generic";
+            require(edit.target.domain==domain && edit.target.id==value.id,CommandError::InvalidTargets,"content ID/domain mismatch");
+            if constexpr(std::is_same_v<T,PlaceLabel>) replaceContentRow(d.labels,value);
+            else if constexpr(std::is_same_v<T,HydroFeature>) {
+                if(edit.create&&value.sourceFeatureId) {
+                    const auto original=std::find_if(d.hydro.begin(),d.hydro.end(),[&](const auto& h){return h.id==*value.sourceFeatureId&&h.source.kind=="builtin";});
+                    require(original!=d.hydro.end(),CommandError::InvalidArguments,"source hydro dataset feature unavailable");
+                    auto& hidden=d.physicalData.hiddenHydroIds;
+                    if(std::find(hidden.begin(),hidden.end(),*value.sourceFeatureId)==hidden.end())hidden.push_back(*value.sourceFeatureId);
+                }
+                replaceContentRow(d.hydro,value);
+            }
+            else if constexpr(std::is_same_v<T,DistributionLayer>) replaceContentRow(d.distributionLayers,value);
+            else if constexpr(std::is_same_v<T,DistributionEntry>) replaceContentRow(d.distributionEntries,value);
+            else {
+                require(exists,CommandError::InvalidArguments,"generic creation is import-only");
+                replaceContentRow(d.genericFeatures,value);
+            }
+            if(edit.geometry) {
+                if constexpr(std::is_same_v<T,PlaceLabel> || std::is_same_v<T,HydroFeature> || std::is_same_v<T,GenericFeature>)
+                    require(value.geometry==edit.geometry->first,CommandError::InvalidArguments,"unused content geometry");
+                else if constexpr(std::is_same_v<T,DistributionEntry>)
+                    require(value.geometry && *value.geometry==edit.geometry->first,CommandError::InvalidArguments,"unused distribution geometry");
+                else require(false,CommandError::InvalidArguments,"layer cannot own geometry");
+            }
+        }
+    },edit.value);
+    require(!edit.geometry || (edit.value.index()>=1 && edit.value.index()<=5),CommandError::InvalidArguments,"unexpected geometry payload");
 }
 void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const CommandArguments& args)
 {
@@ -338,6 +449,8 @@ void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const 
             layers.at(index.layers.at(action.id)).locked=action.value;
         else if constexpr(std::is_same_v<T,MoveCountry>)
             candidate.presentation.membership[territorialRef(action.id)]=action.layerId;
+        else if constexpr(std::is_same_v<T,SetPhysicalData>)
+            candidate.physicalData=action.settings;
         else if constexpr(std::is_same_v<T,TerritorialFieldEdit>) {
             applyField(candidate,index,action);
         } else if constexpr(std::is_same_v<T,TerritorialColorEdit>) {
@@ -346,6 +459,8 @@ void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const 
             for(const auto& ref:action.targets)candidate.units.at(index.objects.at(ref)).locked=action.locked;
         } else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>) {
             applyTerritorial(candidate,action);
+        } else if constexpr(std::is_same_v<T,ContentEdit>) {
+            applyContent(candidate,index,action);
         }
     },args.action);
     for(const auto& field:args.properties.fields)applyField(candidate,index,field);
@@ -353,6 +468,83 @@ void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const 
 void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,const CommandRequest& request)
 {
     const auto& before=project.document();
+    if(const auto edit=std::get_if<ContentEdit>(&request.args.action)) {
+        const auto& ref=edit->target;
+        const auto found=project.index().objects.find(ref);
+        const bool exists=found!=project.index().objects.end();
+        const auto layer=project.layer(nativeLayerId(before,ref));
+        require(!layer || !layer->locked,CommandError::Locked,"content layer locked");
+        bool locked=false;
+        if(exists) {
+            const auto i=found->second;
+            if(ref.domain=="territorial") locked=before.units.at(i).locked;
+            else if(ref.domain=="hydro") {
+                require(before.hydro.at(i).source.kind!="builtin",CommandError::Locked,"builtin hydro requires copy-on-edit");
+                locked=before.hydro.at(i).locked;
+            }
+            else if(ref.domain=="generic") locked=before.genericFeatures.at(i).locked;
+            else if(ref.domain=="distributionLayer") locked=before.distributionLayers.at(i).locked;
+            else if(ref.domain=="distributionEntry") {
+                const auto& entry=before.distributionEntries.at(i);
+                locked=before.distributionLayers.at(project.index().objects.at({"distributionLayer",entry.layerId})).locked;
+            }
+        }
+        bool unlockOnly=false;
+        if(locked && exists && !edit->geometry) {
+            auto unlocked=before;
+            const auto i=found->second;
+            if(ref.domain=="hydro") unlocked.hydro.at(i).locked=false;
+            else if(ref.domain=="generic") unlocked.genericFeatures.at(i).locked=false;
+            else if(ref.domain=="distributionLayer") unlocked.distributionLayers.at(i).locked=false;
+            unlockOnly=sameContent(unlocked,after);
+        }
+        require(!locked || unlockOnly,CommandError::Locked,"content object locked");
+        // Derive effects from the candidate, not from UI claims. An opaque
+        // geometry dependency must not prevent a safe name-only correction.
+        const bool deleting=std::holds_alternative<std::monostate>(edit->value);
+        if(!exists) require(effectAllowed(before,ref,"add"),CommandError::UnsupportedDependency,"content creation dependency");
+        else if(deleting) require(effectAllowed(before,ref,"delete"),CommandError::UnsupportedDependency,"content deletion dependency");
+        else if(unlockOnly) require(effectAllowed(before,ref,"locked"),CommandError::UnsupportedDependency,"content lock dependency");
+        else {
+            auto allow=[&](bool changed,const char* effect){require(!changed||effectAllowed(before,ref,effect),CommandError::UnsupportedDependency,effect);};
+            auto fields=[&](const auto& old,const auto& next){
+                using T=std::decay_t<decltype(old)>;
+                if constexpr(!std::is_same_v<T,DistributionEntry>)allow(old.name!=next.name,"name");
+                if constexpr(std::is_same_v<T,PlaceLabel>||std::is_same_v<T,HydroFeature>||std::is_same_v<T,GenericFeature>) {
+                    allow(old.notes!=next.notes,"notes");allow(!(old.geometry==next.geometry),"geometry");
+                    const auto sourceKey=[](const SourceProvenance& s){return std::tie(s.kind,s.dataset,s.version,s.sourceId,s.sourceFormat,s.sourceType,s.importedAt,s.details);};
+                    allow(sourceKey(old.source)!=sourceKey(next.source),"source");
+                }
+                if constexpr(std::is_same_v<T,PlaceLabel>||std::is_same_v<T,HydroFeature>)allow(old.kind!=next.kind,"kind");
+                if constexpr(std::is_same_v<T,PlaceLabel>)allow(!(old.territory==next.territory),"relation");
+                if constexpr(std::is_same_v<T,GenericFeature>)allow(old.fallbackOnly!=next.fallbackOnly,"source");
+                if constexpr(std::is_same_v<T,HydroFeature>)allow(old.sourceFeatureId!=next.sourceFeatureId,"source");
+                if constexpr(std::is_same_v<T,HydroFeature>||std::is_same_v<T,GenericFeature>||std::is_same_v<T,DistributionLayer>){allow(old.color!=next.color,"color");allow(old.locked!=next.locked,"locked");}
+                if constexpr(std::is_same_v<T,DistributionLayer>){allow(old.parentId!=next.parentId||old.type!=next.type,"relation");allow(old.groups!=next.groups||old.metadata!=next.metadata,"metadata");}
+                if constexpr(std::is_same_v<T,DistributionEntry>){allow(!(old.territory==next.territory)||old.layerId!=next.layerId,"relation");allow(!(old.geometry==next.geometry),"geometry");allow(old.share!=next.share||old.certainty!=next.certainty||old.metadata!=next.metadata,"metadata");}
+                if constexpr(std::is_same_v<T,DistributionLayer>||std::is_same_v<T,DistributionEntry>)allow(old.validity.from!=next.validity.from||old.validity.to!=next.validity.to,"validity");
+            };
+            const auto i=found->second;
+            if(ref.domain=="label")fields(before.labels.at(i),after.labels.at(i));
+            else if(ref.domain=="hydro")fields(before.hydro.at(i),after.hydro.at(i));
+            else if(ref.domain=="generic")fields(before.genericFeatures.at(i),after.genericFeatures.at(i));
+            else if(ref.domain=="distributionLayer")fields(before.distributionLayers.at(i),after.distributionLayers.at(i));
+            else if(ref.domain=="distributionEntry")fields(before.distributionEntries.at(i),after.distributionEntries.at(i));
+            else allow(!sameContent(before,after),std::holds_alternative<CountryDetails>(edit->value)?"capital":"flag");
+        }
+        if(const auto entry=std::get_if<DistributionEntry>(&edit->value)) {
+            const auto destination=project.index().objects.find({"distributionLayer",entry->layerId});
+            require(destination!=project.index().objects.end() && !before.distributionLayers.at(destination->second).locked,
+                CommandError::Locked,"destination distribution layer locked");
+        }
+        if(deleting && ref.domain=="distributionLayer") {
+            for(const auto& child:before.distributionLayers) if(child.parentId==ref.id)
+                require(!child.locked && effectAllowed(before,{"distributionLayer",child.id},"relation"),CommandError::Locked,"child layer is protected");
+            for(const auto& entry:before.distributionEntries) if(entry.layerId==ref.id)
+                require(effectAllowed(before,{"distributionEntry",entry.id},"delete"),CommandError::UnsupportedDependency,"entry is protected");
+        }
+        return;
+    }
     if(const auto structural=std::get_if<ApplyTerritorialMutation>(&request.args.action)) {
         for(const auto& ref:structural->plan.affectedObjects) {
             if(project.index().objects.count(ref)) {
@@ -598,7 +790,7 @@ CommandResult CommandProcessor::confirm(Project& project,CommandPreview& preview
 bool semanticallyEqual(const ProjectDocument& a,const ProjectDocument& b)
 {
     if(&a==&b) return true;
-    return a.documentId==b.documentId &&
+    return a.documentId==b.documentId && sameContent(a,b) &&
         same(a.units,b.units,[](const auto& x,const auto& y) {
             return x.id==y.id && x.name==y.name && x.baseName==y.baseName && x.nameExplicit==y.nameExplicit && x.notes==y.notes && x.kind==y.kind &&
                 x.geometry==y.geometry && x.locked==y.locked && sameValidity(x.validity,y.validity) && x.coverageMode==y.coverageMode;
