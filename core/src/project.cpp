@@ -80,7 +80,7 @@ void Project::replace(ProjectDocument document)
     auto identity=nextInstanceId();
     // No allocation or validation after this point: replace is all-or-nothing.
     state_=std::move(next); saved_=state_; instanceId_.swap(identity);
-    commands_.clear(); cursor_=0; revision_=0; checkpoint_=savedCheckpoint_=checkpointSequence_=0;
+    commands_.clear(); cursor_=0; revision_=0; presentationRevision_=0; checkpoint_=savedCheckpoint_=checkpointSequence_=0;
 }
 const ProjectDocument& Project::document() const noexcept { return state_->document; }
 const std::vector<CountryView>& Project::countries() const noexcept { return state_->countries; }
@@ -102,26 +102,48 @@ const ObjectPropertyView* Project::propertyView(const ObjectRef& ref) const {
 bool Project::editable(const std::string& id) const
 {
     const auto c=country(id); const auto l=c ? layer(c->layerId) : nullptr;
-    return l && !l->locked && !c->locked;
+    return c && (!l || !l->locked) && !c->locked;
 }
 std::string Project::pick(Point point) const
 {
     if (!std::isfinite(point.x) || !std::isfinite(point.y)) return {};
-    for(auto it=layers().rbegin();it!=layers().rend();++it) {
+    auto renderLayers=layers();renderLayers.insert(renderLayers.begin(),Layer{"",""});
+    for(auto it=renderLayers.rbegin();it!=renderLayers.rend();++it) {
         if(!it->visible || it->locked || it->opacity==0) continue;
         for(const auto& c:countries())
-            if(!c.locked && c.layerId==it->id && c.opacity>0 && contains(point,c)) return c.id;
+            if(!c.locked && c.layerId==it->id && c.opacity>0 && effectiveMapVisibility(document(),territorialRef(c.id)) && contains(point,c)) return c.id;
     }
     return {};
 }
 void Project::apply(const ChangeSet& change)
 {
+    auto rebased=change.after_;
+    if(!(document().presentation.webPresentation==change.before_->document.presentation.webPresentation)) {
+        auto candidate=change.after_->document;
+        candidate.presentation.webPresentation=rebasePresentation(document(),change.before_->document,candidate);
+        if(const auto mutation=std::get_if<ApplyTerritorialMutation>(&change.request_.args.action))
+            if(const auto conversion=std::get_if<ConvertTerritorialTypeIntent>(&mutation->plan.intent)) {
+                const auto& source=document().units.at(index().objects.at(conversion->source));
+                const auto id=conversion->targetKind==UnitKind::Country?source.id:conversion->generatedId;
+                const auto fromGroup=territorialGroup(source.kind),toGroup=territorialGroup(conversion->targetKind);
+                auto& out=candidate.presentation.webPresentation;
+                if(itemVisible(document().presentation.webPresentation,fromGroup,source.id))out.hiddenItems[toGroup].erase(id);
+                else out.hiddenItems[toGroup].insert(id);
+                const auto fromKey=territorialPresentationKey(source.kind,source.id),toKey=territorialPresentationKey(conversion->targetKind,id);
+                const auto latest=document().presentation.webPresentation.objectStyles.find(fromKey);
+                if(latest!=document().presentation.webPresentation.objectStyles.end())out.objectStyles[toKey]=latest->second;
+                normalizePresentation(candidate);
+            }
+        rebased=std::make_shared<const detail::DocumentState>(std::move(candidate));
+    }
     // Stage the entire prospective history, including metadata allocations.
     // Erasing the redo branch before this succeeds would break failure atomicity.
     std::vector<ChangeSet> next;
     next.reserve(cursor_+1);
     next.insert(next.end(),commands_.begin(),commands_.begin()+cursor_);
     next.push_back(change);
+    next.back().before_=state_;
+    next.back().after_=rebased;
     auto& staged=next.back();staged.checkpointBefore_=checkpoint_;staged.checkpointAfter_=checkpoint_;
     const bool checkpoint=change.historyCheckpoint_;
     if(checkpoint) {
@@ -130,7 +152,8 @@ void Project::apply(const ChangeSet& change)
     }
     checkpoint_=staged.checkpointAfter_;if(checkpoint)++checkpointSequence_;
     commands_.swap(next);
-    state_=change.after_;
+    state_=std::move(rebased);
+    ++presentationRevision_;
     ++cursor_; ++revision_;
 }
 bool Project::execute(std::string commandId, CommandArguments args)
@@ -206,19 +229,29 @@ bool Project::undo()
     if(!canUndo() || revision_==std::numeric_limits<std::uint64_t>::max()) return false;
     const auto& target=commands_[cursor_-1].before_;
     auto next=restoredHistoryState(target);
+    if(!(document().presentation.webPresentation==commands_[cursor_-1].after_->document.presentation.webPresentation)) {
+        auto candidate=next->document;
+        candidate.presentation.webPresentation=rebasePresentation(document(),commands_[cursor_-1].after_->document,candidate);
+        next=std::make_shared<const detail::DocumentState>(std::move(candidate));
+    }
     const bool savedTarget=target==saved_ || semanticallyEqual(target->document,saved_->document);
     // The saved bytes were already pruned by the codec; preserve that baseline.
-    if(savedTarget)saved_=next;
-    state_=std::move(next);checkpoint_=commands_[cursor_-1].checkpointBefore_;--cursor_;++revision_;return true;
+    if(savedTarget)saved_=restoredHistoryState(target);
+    state_=std::move(next);checkpoint_=commands_[cursor_-1].checkpointBefore_;--cursor_;++revision_;++presentationRevision_;return true;
 }
 bool Project::redo()
 {
     if(!canRedo() || revision_==std::numeric_limits<std::uint64_t>::max()) return false;
     const auto& target=commands_[cursor_].after_;
     auto next=restoredHistoryState(target);
+    if(!(document().presentation.webPresentation==commands_[cursor_].before_->document.presentation.webPresentation)) {
+        auto candidate=next->document;
+        candidate.presentation.webPresentation=rebasePresentation(document(),commands_[cursor_].before_->document,candidate);
+        next=std::make_shared<const detail::DocumentState>(std::move(candidate));
+    }
     const bool savedTarget=target==saved_ || semanticallyEqual(target->document,saved_->document);
-    if(savedTarget)saved_=next;
-    state_=std::move(next);checkpoint_=commands_[cursor_].checkpointAfter_;++cursor_;++revision_;return true;
+    if(savedTarget)saved_=restoredHistoryState(target);
+    state_=std::move(next);checkpoint_=commands_[cursor_].checkpointAfter_;++cursor_;++revision_;++presentationRevision_;return true;
 }
 void Project::markSaved() noexcept { saved_=state_; savedCheckpoint_=checkpoint_; }
 bool Project::dirty() const { return checkpoint_!=savedCheckpoint_ || (state_!=saved_ && !semanticallyEqual(document(),saved_->document)); }

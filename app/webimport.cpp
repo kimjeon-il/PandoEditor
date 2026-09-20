@@ -2,6 +2,7 @@
 #include "webjson.h"
 #include "webpropertypreservation.h"
 #include "projectcodec.h"
+#include "presentationmigration.h"
 #include <pandoeditor/project.h>
 #include <QCryptographicHash>
 #include <algorithm>
@@ -129,7 +130,6 @@ struct Builder {
         catch(const std::exception& e){throw std::invalid_argument(std::string(e.what())+" at "+path);}
         output.document.units.push_back(u);
         const std::string group=country?"countries":u.kind==UnitKind::Subunit?"subunits":"regions";
-        output.document.presentation.membership[ref]=group;
         const auto& style=at(props,"style");
         // Source preference theme is not serialized. Qt's initial light map uses
         // the source light-theme #cccccc, while explicit colors remain explicit.
@@ -274,7 +274,6 @@ Candidate prepare(const QByteArray& bytes,const std::function<bool()>& cancelled
     // Semantic base groups are not fabricated user layer memberships from web
     // folders. They are isolated adapters; original presentation stays retained.
     const auto& visibility=at(root,"layerVisibility");const auto& styles=at(at(root,"layerPresentation"),"styles");
-    for(auto group:{"countries","subunits","regions"})b.output.document.presentation.userLayers.push_back({group,group==std::string("countries")?"국가":group==std::string("subunits")?"하위단위":"지방",!isFalse(at(visibility,group)),false,b.opacity(at(styles,group))});
     std::size_t i=0;for(const auto& f:array(at(collection,"features"),"/countriesData/features"))b.unit(f,"/countriesData/features/"+std::to_string(i++),true);
     for(const auto& [id,override]:at(root,"countryOverrides").object) {
         require(b.ids.count(id),"DANGLING_REF: /countryOverrides/"+id);
@@ -289,6 +288,7 @@ Candidate prepare(const QByteArray& bytes,const std::function<bool()>& cancelled
     }
     i=0;for(const auto& f:optionalArray(at(root,"territorialUnits"),"/territorialUnits"))b.unit(f,"/territorialUnits/"+std::to_string(i++),false);
     b.relations();b.retainedValidation();b.roots();
+    presentationmigration::promote(b.output.document);
     b.preserve("",original,true,{},true);
     if(migration.sourceSchema<5)b.report("/schemaVersion","migrated",QStringLiteral("웹 schema %1 → 5 변환. 변환 전 원본은 migrationArchive로 보존.").arg(migration.sourceSchema));
     b.check();

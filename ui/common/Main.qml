@@ -75,6 +75,7 @@ ApplicationWindow {
     Component.onCompleted: {
         if (editor.mobileMode)
             Qt.callLater(function() { editor.restorePrivateProject() })
+        Qt.callLater(function() { if(editor.presentationRecoveryAvailable) presentationRecoveryDialog.open() })
     }
     function finishAction() {
         let action=pendingAction
@@ -267,7 +268,7 @@ ApplicationWindow {
         contentItem: Label { text: "저장하지 않은 편집 내용이 있습니다."; wrapMode: Text.WordWrap }
         footer: DialogButtonBox {
             Button { objectName: "saveUnsaved"; text: "저장"; DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole; onClicked: { unsaved.close(); window.requestSave(false) } }
-            Button { objectName: "discardUnsaved"; text: "버리기"; DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole; onClicked: { unsaved.close(); window.finishAction() } }
+            Button { objectName: "discardUnsaved"; text: "버리기"; DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole; onClicked: { if(editor.discardPresentationRecovery()){unsaved.close(); window.finishAction()} } }
             Button { objectName: "cancelUnsaved"; text: "취소"; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: { unsaved.close(); window.pendingAction="" } }
         }
     }
@@ -281,6 +282,18 @@ ApplicationWindow {
         standardButtons: Dialog.Ok
         property string message: ""
         contentItem: Label { textFormat:Text.PlainText; text: errorDialog.message; wrapMode: Text.WrapAnywhere }
+    }
+    Dialog {
+        id: presentationRecoveryDialog
+        objectName: "presentationRecoveryDialog"
+        anchors.centerIn: parent; width: Math.min(360,window.width-24)
+        modal: true; title: "자동저장 복구본"
+        contentItem: Label { text: "이전 작업의 복구본을 열까요?"; wrapMode: Text.Wrap }
+        footer: DialogButtonBox {
+            Button { text:"복구"; onClicked:if(editor.restorePresentationRecovery())presentationRecoveryDialog.close() }
+            Button { text:"복구본 버리기"; onClicked:if(editor.discardPresentationRecovery())presentationRecoveryDialog.close() }
+            Button { text:"나중에"; onClicked:presentationRecoveryDialog.close() }
+        }
     }
     Dialog {
         id: recoveryDialog

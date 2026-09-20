@@ -18,7 +18,14 @@ inline void enterExistingControlRoute(QQuickWindow* window,const QString& name) 
   auto memo=navigationItem(window->contentItem(),name);
   if(!memo||!memo->isVisible())navigationClick(window,"objectNotesTrigger");
  }
- const QStringList legacy={"countryPicker","countryColor","countryOpacity","layerName","layerLocked","layerVisible","layerOpacity","layersTab","countryTab","addLayer","removeLayer","applyEdits","cancelEdits","cancelBackgroundWork"};
+  const QStringList layerControls={"layerName","layerLocked","layerVisible","layerOpacity","addLayer","removeLayer"};
+  // Content Undo/Redo must not rely on whichever tab happened to be open.
+  // Route legacy layer controls through the real tab before locating them.
+  if(layerControls.contains(name)) {
+   auto layersTab=navigationItem(window->contentItem(),"layersTab");
+   if(layersTab&&layersTab->isVisible()&&layersTab->isEnabled()) navigationClick(window,"layersTab");
+  }
+  const QStringList legacy={"countryPicker","countryColor","countryOpacity","layerName","layerLocked","layerVisible","layerOpacity","layersTab","countryTab","addLayer","removeLayer","applyEdits","cancelEdits","cancelBackgroundWork"};
  if(legacy.contains(name)||name.startsWith("swatch")) {
   auto c=navigationItem(window->contentItem(),name);
   if(!c||!c->isVisible()) {

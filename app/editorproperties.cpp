@@ -22,14 +22,14 @@ bool EditorController::selectedEditable() const {
  const auto u=selectedUnit();if(!u||selection_.items().size()!=1)return false;
  const auto member=project_.document().presentation.membership.find(territorialRef(u->id));
  const auto layer=member==project_.document().presentation.membership.end()?nullptr:project_.layer(member->second);
- return layer && !layer->locked && !u->locked;
+ return (!layer || !layer->locked) && !u->locked;
 }
 QVariantMap EditorController::objectProperties() const {
  QVariantMap result{{"count",int(selection_.items().size())},{"busy",propertyBusy()}};
  bool allLocked=!selection_.items().empty(),anyLocked=false,layerLocked=false;
  for(const auto& ref:selection_.items()){
   const auto& u=project_.document().units.at(project_.index().objects.at(ref));allLocked=allLocked&&u.locked;anyLocked=anyLocked||u.locked;
-  auto layer=project_.layer(project_.document().presentation.membership.at(ref));layerLocked=layerLocked||(layer&&layer->locked);
+  auto layer=project_.layer(nativeLayerId(project_.document(),ref));layerLocked=layerLocked||(layer&&layer->locked);
  }
  result["allLocked"]=allLocked;result["someLocked"]=anyLocked&&!allLocked;result["layerLocked"]=layerLocked;
  result["lockEnabled"]=!selection_.items().empty()&&!propertyBusy()&&!layerLocked;

@@ -1,6 +1,7 @@
 #include "projectcodec.h"
 #include <pandoeditor/objectproperties.h>
 #include "losslessjson.h"
+#include "presentationmigration.h"
 #include <QCryptographicHash>
 #include <QRegularExpression>
 #include <climits>
@@ -150,7 +151,7 @@ V extensionValue(const PreservedExtension& e) {
 pandoeditor::ProjectDocument decode(const QByteArray& data) {
     const auto root=losslessjson::parse(data);
     require(str(field(root,"format"))=="pandoeditor-project","UNSUPPORTED_FORMAT: expected Qt project");
-    const auto schema=integer(field(root,"version")); require(schema>=1 && schema<=4,"UNSUPPORTED_VERSION: expected Qt v1 through v4");
+    const auto schema=integer(field(root,"version")); require(schema>=1 && schema<=5,"UNSUPPORTED_VERSION: expected Qt v1 through v5");
     ProjectDocument d;d.nativeSourceVersion=int(schema);
     if (schema<3) {
         d.documentId="legacy-"+QCryptographicHash::hash(root.encode(),QCryptographicHash::Sha256).toHex().toStdString();
@@ -192,7 +193,7 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
             u.geometry=geometryRef(field(v,"geometryRef"),d,path+"/geometryRef");
             u.locked=boolean(field(v,"locked")); u.coverageMode=str(field(v,"coverageMode"));
             u.validity=validity(field(v,"validity"),d,path+"/validity");
-            if(schema==4) {
+            if(schema>=4) {
                 u.baseName=str(field(v,"baseName"));u.nameExplicit=boolean(field(v,"nameExplicit"));
                 require(u.kind==UnitKind::Country || (u.baseName.empty() && u.nameExplicit),"INVALID_JSON: country-only name state");
                 require(u.nameExplicit || u.name.empty(),"INVALID_JSON: automatic country name must be empty");
@@ -229,13 +230,67 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
             if (domain!="territorial") { preserve(d,3,path,items); continue; }
             require(items.kind==V::Object,"INVALID_JSON: domain styles");
             for (const auto& [id,v]:items.object) {
-                const bool automatic=schema==4 && field(v,"color").kind==V::Null;
+                const bool automatic=schema>=4 && field(v,"color").kind==V::Null;
                 d.presentation.objectStyles.emplace(ObjectRef{domain,id},ObjectStyle{automatic?0:color(field(v,"color")),number(field(v,"opacity")),!automatic});
                 unknown(d,d.nativeSourceVersion,v,pointer(path,id),{"color","opacity"});
             }
         }
-        unknown(d,d.nativeSourceVersion,p,"/presentation",{"userLayers","membership","objectStyles"});
+        if(schema>=5) {
+            const auto& w=field(p,"webPresentation");auto& out=d.presentation.webPresentation;
+            require(field(w,"visibility").kind==V::Object && field(w,"hiddenItems").kind==V::Object,"INVALID_JSON: presentation visibility");
+            for(const auto& [key,value]:field(w,"visibility").object) {
+                if(presentationmigration::group(key)||presentationmigration::symbol(key))out.visibility[key]=boolean(value);
+                else preserve(d,5,pointer("/presentation/webPresentation/visibility",key),value);
+            }
+            for(const auto& [group,values]:field(w,"hiddenItems").object) {
+                if(presentationmigration::group(group))for(const auto& id:array(values))out.hiddenItems[group].insert(str(id));
+                else preserve(d,5,pointer("/presentation/webPresentation/hiddenItems",group),values);
+            }
+            auto readStyles=[&](const char* name,auto& target){
+                const auto& values=field(w,name);require(values.kind==V::Object,"INVALID_JSON: presentation styles");
+                for(const auto& [key,value]:values.object){
+                    const bool supported=std::string(name)=="styles"?presentationmigration::group(key):key.rfind("territorial:subunit:",0)==0||key.rfind("territorial:region:",0)==0;
+                    if(!supported){preserve(d,5,pointer(std::string("/presentation/webPresentation/")+name,key),value);continue;}
+                    PresentationStyle s;require(value.kind==V::Object,"INVALID_JSON: presentation style");
+                    if(value.object.count("opacity"))s.opacity=number(field(value,"opacity"));
+                    if(value.object.count("boundaryVisible"))s.boundaryVisible=boolean(field(value,"boundaryVisible"));
+                    if(value.object.count("labelsVisible"))s.labelsVisible=boolean(field(value,"labelsVisible"));
+                    if(value.object.count("boundaryWidth"))s.boundaryWidth=number(field(value,"boundaryWidth"));
+                    if(value.object.count("blendMode"))s.blendMode=str(field(value,"blendMode"));
+                    target[key]=s;unknown(d,5,value,pointer(std::string("/presentation/webPresentation/")+name,key),{"opacity","boundaryVisible","labelsVisible","boundaryWidth","blendMode"});
+                }
+            };
+            readStyles("styles",out.styles);readStyles("objectStyles",out.objectStyles);
+            const auto& encodedOrder=field(w,"objectOrder");
+            bool retainedOrder=false;
+            for(const auto& key:array(encodedOrder)) {
+                if(key.kind==V::String &&
+                    (key.string.rfind("territorial:subunit:",0)==0||key.string.rfind("territorial:region:",0)==0))
+                    out.objectOrder.push_back(key.string);
+                else retainedOrder=true;
+            }
+            // Keep the original array when a foreign entry is present.  The
+            // canonical order only owns territorial subunit/region keys;
+            // silently normalizing other domains here would be destructive.
+            if(retainedOrder) preserve(d,5,"/presentation/webPresentation/objectOrder",encodedOrder);
+            unknown(d,5,w,"/presentation/webPresentation",{"visibility","hiddenItems","styles","objectStyles","objectOrder"});
+            validatePresentation(d);normalizePresentation(d);
+        }
+        if(schema>=5)unknown(d,d.nativeSourceVersion,p,"/presentation",{"userLayers","membership","objectStyles","webPresentation"});
+        else unknown(d,d.nativeSourceVersion,p,"/presentation",{"userLayers","membership","objectStyles"});
         unknown(d,d.nativeSourceVersion,root,"",{"format","version","documentId","units","relations","geometries","presentation","extensions"});
+    }
+    if(schema<5) {
+        const bool webSource=std::any_of(d.extensions.begin(),d.extensions.end(),[](const auto& e){return e.status=="migrationArchive"&&e.sourceFormat.rfind("pandolab-",0)==0;});
+        if(webSource) {
+            presentationmigration::promote(d);
+            const auto& p=d.presentation.webPresentation;
+            bool adapters=d.presentation.userLayers.size()==3;
+            const std::map<std::string,std::string> names={{"countries","국가"},{"subunits","하위단위"},{"regions","지방"}};
+            for(const auto& l:d.presentation.userLayers){auto n=names.find(l.id);auto s=p.styles.find(l.id);const double opacity=s==p.styles.end()?1:s->second.opacity.value_or(1);adapters=adapters&&n!=names.end()&&n->second==l.name&&!l.locked&&l.visible==groupVisible(p,l.id)&&l.opacity==opacity;}
+            for(const auto& u:d.units)adapters=adapters&&nativeLayerId(d,territorialRef(u.id))==territorialGroup(u.kind);
+            if(adapters){d.presentation.userLayers.clear();d.presentation.membership.clear();}
+        }
     }
     validateDocument(d); return d;
 }
@@ -254,7 +309,14 @@ QByteArray encode(const pandoeditor::Project& project) {
         styles.object[r.domain].object[r.id]=object({{"color",s.explicitColor?colorValue(s.color):V{}},{"opacity",V::num(s.opacity)}});
     }
     for (const auto& e:d.extensions) extensions.array.push_back(extensionValue(e));
-    auto root=object({{"format",V::str("pandoeditor-project")},{"version",V::num(4)},{"documentId",V::str(d.documentId)},{"units",units},{"relations",relations},{"geometries",geometries},{"presentation",object({{"userLayers",layers},{"membership",membership},{"objectStyles",styles}})},{"extensions",extensions}});
+    const auto& web=d.presentation.webPresentation;
+    V visibility=V::obj(),hidden=V::obj(),groups=V::obj(),overrides=V::obj(),order=V::arr();
+    for(const auto& [key,value]:web.visibility)visibility.object[key]=V::boolean(value);
+    for(const auto& [key,ids]:web.hiddenItems){V values=V::arr();for(const auto& id:ids)values.array.push_back(V::str(id));hidden.object[key]=values;}
+    auto writeStyles=[](const auto& source,V& target){for(const auto& [key,s]:source){V v=V::obj();if(s.opacity)v.object["opacity"]=V::num(*s.opacity);if(s.boundaryVisible)v.object["boundaryVisible"]=V::boolean(*s.boundaryVisible);if(s.labelsVisible)v.object["labelsVisible"]=V::boolean(*s.labelsVisible);if(s.boundaryWidth)v.object["boundaryWidth"]=V::num(*s.boundaryWidth);if(s.blendMode)v.object["blendMode"]=V::str(*s.blendMode);target.object[key]=v;}};
+    writeStyles(web.styles,groups);writeStyles(web.objectStyles,overrides);for(const auto& key:web.objectOrder)order.array.push_back(V::str(key));
+    auto webValue=object({{"visibility",visibility},{"hiddenItems",hidden},{"styles",groups},{"objectStyles",overrides},{"objectOrder",order}});
+    auto root=object({{"format",V::str("pandoeditor-project")},{"version",V::num(5)},{"documentId",V::str(d.documentId)},{"units",units},{"relations",relations},{"geometries",geometries},{"presentation",object({{"userLayers",layers},{"membership",membership},{"objectStyles",styles},{"webPresentation",webValue}})},{"extensions",extensions}});
     auto bytes=root.encode()+"\n";
     require(bytes.size()<=256ll*1024*1024,"LIMIT_EXCEEDED: encoded JSON exceeds 256 MiB");
     return bytes;

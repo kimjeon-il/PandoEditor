@@ -139,6 +139,35 @@ struct Harness {
 class SelectionUiTests:public QObject{
     Q_OBJECT
 private slots:
+    void territorialGeometryPreview_data(){modes();}
+    void territorialGeometryPreview(){
+        QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
+        auto document=fixture();document.units[2].locked=false;
+        Project p;p.replace(document);QFile f(h.path.toLocalFile());QVERIFY(f.open(QIODevice::WriteOnly));f.write(projectcodec::encode(p));f.close();
+        QVERIFY(h.editor.openFile(h.path));QVERIFY(h.editor.selectObject(ref("S","subunit"),"replace","test"));
+        const auto before=h.editor.documentBytes();QVERIFY(h.editor.transferSelectedSubunit("B"));
+        QTRY_VERIFY_WITH_TIMEOUT(!h.editor.structureState()["calculating"].toBool(),10000);
+        QVERIFY2(!h.editor.structureState()["geometryRequired"].toBool(),qPrintable(h.editor.structureState()["detail"].toString()));
+        auto preview=h.control("territorialGeometryPreview"),confirm=h.control("confirmTerritorialStructure");
+        QVERIFY(preview&&preview->isVisible());QVERIFY(confirm&&confirm->isEnabled());QCOMPARE(h.editor.documentBytes(),before);
+        QTest::qWait(100);QVERIFY(h.window->grabWindow().save(mobile?"m4-preview-mobile-360.png":"m4-preview-desktop-1100.png"));
+        QVERIFY(QMetaObject::invokeMethod(confirm,"clicked"));QVERIFY(h.editor.documentBytes()!=before);
+        h.editor.undo();QCOMPARE(h.editor.documentBytes(),before);h.editor.redo();QVERIFY(h.editor.documentBytes()!=before);
+        QVERIFY2(h.warnings.empty(),qPrintable(h.warnings.join('\n')));
+    }
+    void presentationMenu_data(){modes();}
+    void presentationMenu(){
+        QFETCH(bool,mobile);Harness h(mobile);QVERIFY2(h.window,qPrintable(h.warnings.join('\n')));
+        h.editor.selectCountry("A");const auto revision=h.editor.revision(),selection=h.editor.selectionRevision();
+        QVERIFY(h.click("mapDisplayButton"));QTest::qWait(100);
+        auto popup=h.window->findChild<QObject*>("mapDisplayPopup");QVERIFY(popup);QVERIFY(popup->property("visible").toBool());
+        QVERIFY(h.editor.setPresentationVisibility("countries",false));
+        QCOMPARE(h.editor.revision(),revision);QCOMPARE(h.editor.selectionRevision(),selection);
+        QVERIFY(!h.editor.countryVisuals()["A"].toMap()["visible"].toBool());
+        h.window->grabWindow().save(mobile?"presentation-mobile-360.png":"presentation-desktop-1100.png");
+        QVERIFY2(h.warnings.empty(),qPrintable(h.warnings.join('\n')));
+        QVERIFY(h.editor.discardPresentationRecovery());
+    }
     void searchAndModifiers_data(){modes();}
     void searchAndModifiers(){
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY2(h.window,qPrintable(h.warnings.join('\n')));

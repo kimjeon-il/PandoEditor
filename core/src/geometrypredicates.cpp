@@ -34,6 +34,12 @@ bool geometryContains(const Geometry& container,const Geometry& subject) {
 bool geometrySignificantOverlap(const Geometry& a,const Geometry& b) {
     if(a.polygons.empty()||b.polygons.empty())return false;
     if(crosses(a,b)) return true;
+    // Aligned edges may overlap without any proper crossing (and a polygon's
+    // vertex average can lie in a hole). Check boundary samples in both ways.
+    bool interiorHit=false;
+    edges(a,[&](Point p,Point q){interiorHit=interiorHit||location(b,p)==1||location(b,{(p.x+q.x)/2,(p.y+q.y)/2})==1;});
+    edges(b,[&](Point p,Point q){interiorHit=interiorHit||location(a,p)==1||location(a,{(p.x+q.x)/2,(p.y+q.y)/2})==1;});
+    if(interiorHit||geometryContains(a,b)||geometryContains(b,a))return true;
     for(const auto& p:a.polygons)if(!p.empty()&&location(b,interior(p.front()))==1&&significantArea(planarArea(a),planarArea(b)))return true;
     for(const auto& p:b.polygons)if(!p.empty()&&location(a,interior(p.front()))==1&&significantArea(planarArea(b),planarArea(a)))return true;
     return false;

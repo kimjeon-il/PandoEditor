@@ -1,0 +1,74 @@
+#include "referenceimagelibrary.h"
+#include "referencewarp.h"
+#include "referencetracing.h"
+
+#include <QImage>
+#include <QSignalSpy>
+#include <QStandardPaths>
+#include <QTemporaryDir>
+#include <QTest>
+
+class ReferenceImageTests : public QObject
+{
+    Q_OBJECT
+private slots:
+    void initTestCase() { QStandardPaths::setTestModeEnabled(true); }
+
+    void solvesSimilarityAffineProjectiveAndTps()
+    {
+        const QVector<ReferenceControlPoint> similarity{{{0,0},{5,7}},{{10,0},{25,7}}};
+        auto result=solveReferenceWarp(ReferenceWarpMode::Similarity,similarity);
+        QVERIFY(result.valid);QCOMPARE(result.map({4,3}),QPointF(13,13));QVERIFY(result.rmsError<1e-8);
+
+        const QVector<ReferenceControlPoint> affine{{{0,0},{2,3}},{{10,0},{22,3}},{{0,10},{2,33}}};
+        result=solveReferenceWarp(ReferenceWarpMode::Affine,affine);
+        QVERIFY(result.valid);QVERIFY(QLineF(result.map({4,5}),QPointF(10,18)).length()<1e-8);
+
+        const QVector<ReferenceControlPoint> projective{{{0,0},{0,0}},{{10,0},{12,1}},{{10,10},{11,12}},{{0,10},{1,10}}};
+        result=solveReferenceWarp(ReferenceWarpMode::Projective,projective);
+        QVERIFY(result.valid);QVERIFY(result.maximumError<1e-7);
+
+        result=solveReferenceWarp(ReferenceWarpMode::ThinPlateSpline,affine);
+        QVERIFY(result.valid);QVERIFY(result.maximumError<1e-7);
+    }
+
+    void rejectsInsufficientAndDuplicateControlPoints()
+    {
+        QVERIFY(!solveReferenceWarp(ReferenceWarpMode::Affine,{{{0,0},{0,0}},{{1,0},{1,0}}}).valid);
+        QVERIFY(!solveReferenceWarp(ReferenceWarpMode::Similarity,{{{0,0},{0,0}},{{0,0},{1,1}}}).valid);
+    }
+
+    void persistsSeparatelyAndKeepsFiftyStepHistory()
+    {
+        QTemporaryDir source;QVERIFY(source.isValid());const QString path=source.path()+"/reference.png";
+        QImage image(8,6,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::red);QVERIFY(image.save(path));
+        ReferenceImageLibrary library;for(const auto &item:library.images())library.removeImage(item.toMap()["id"].toString());
+        QVERIFY(library.importImage(QUrl::fromLocalFile(path),"reference"));QCOMPARE(library.images().size(),1);
+        const auto id=library.images().front().toMap()["id"].toString();
+        for(int index=0;index<55;++index)QVERIFY(library.updateImage(id,{{"opacity",double(index%10)/10.}}));
+        int undos=0;while(library.undo())++undos;QCOMPARE(undos,50);QVERIFY(library.canRedo());
+        QVERIFY(library.redo());ReferenceImageLibrary reopened;QCOMPARE(reopened.images().size(),1);
+        QCOMPARE(reopened.images().front().toMap()["name"].toString(),QStringLiteral("reference"));
+    }
+
+    void lockedRecordsRejectTransformsButCanUnlock()
+    {
+        QTemporaryDir source;const QString path=source.path()+"/locked.png";QImage image(2,2,QImage::Format_ARGB32);image.fill(Qt::blue);QVERIFY(image.save(path));
+        ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(path),"locked"));const auto id=library.images().back().toMap()["id"].toString();
+        QVERIFY(library.updateImage(id,{{"locked",true}}));QVERIFY(!library.updateImage(id,{{"x",10}}));QVERIFY(library.updateImage(id,{{"locked",false}}));QVERIFY(library.updateImage(id,{{"blend","difference"},{"x",10}}));
+        QVERIFY(library.beginGesture(id));QVERIFY(library.updateGesture({{"x",25},{"rotation",15}}));library.cancelGesture();QCOMPARE(library.images().back().toMap()["x"].toDouble(),10.);
+        QVERIFY(library.beginGesture(id));QVERIFY(library.updateGesture({{"x",25},{"rotation",15}}));QVERIFY(library.commitGesture());QCOMPARE(library.images().back().toMap()["x"].toDouble(),25.);QVERIFY(library.undo());QCOMPARE(library.images().back().toMap()["x"].toDouble(),10.);
+    }
+
+    void liveWireAndGradientRefinerFollowImageEdge()
+    {
+        QImage image(32,24,QImage::Format_RGB32);image.fill(Qt::white);
+        for(int y=0;y<image.height();++y)for(int x=0;x<16;++x)image.setPixel(x,y,qRgb(0,0,0));
+        const auto path=referenceLiveWire(image,{15,2},{15,21});QVERIFY(path.size()>=20);
+        for(const auto& point:path)QVERIFY(std::abs(point.x()-15)<=1);
+        const QVector<QPointF> draft{{12,3},{12,10},{12,20}};const auto refined=refineReferenceLine(image,draft,5);QCOMPARE(refined.size(),draft.size());
+        for(const auto& point:refined)QVERIFY(point.x()>=14&&point.x()<=16);
+    }
+};
+QTEST_MAIN(ReferenceImageTests)
+#include "reference_image_tests.moc"

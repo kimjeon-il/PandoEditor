@@ -137,7 +137,7 @@ private slots:
         QCOMPARE(editor.nameDraft(),QString("uncommitted")); QVERIFY(!editor.canUndo());
         QVERIFY(clickControl(window,"cancelUnsaved"));
         auto notice=visualItem(window->contentItem(),"documentFormatNotice"); QVERIFY(notice);
-        QVERIFY(notice->property("text").toString().contains("v4"));
+        QVERIFY(notice->property("text").toString().contains("v5"));
         QVERIFY(clickControl(window,"documentFormatNotice"));
         QVERIFY(notice->property("expanded").toBool());
         window->setProperty("allowClose",true); window->close();

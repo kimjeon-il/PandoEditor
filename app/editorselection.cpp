@@ -1,8 +1,5 @@
 #include "editorcontroller.h"
 #include <QCollator>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QLocale>
 #include <QScopedValueRollback>
 #include <algorithm>
@@ -15,16 +12,6 @@ QString q(const std::string& value) { return QString::fromStdString(value); }
 QString rgb(std::uint32_t color) { return QString("#%1").arg(color,6,16,QChar('0')); }
 QString typeName(UnitKind kind) { return kind==UnitKind::Country?"country":kind==UnitKind::Subunit?"subunit":"region"; }
 QString typeLabel(UnitKind kind) { return kind==UnitKind::Country?QStringLiteral("국가"):kind==UnitKind::Subunit?QStringLiteral("하위단위"):QStringLiteral("지방"); }
-QString groupName(UnitKind kind) { return kind==UnitKind::Country?"countries":kind==UnitKind::Subunit?"subunits":"regions"; }
-QJsonValue retained(const ProjectDocument& document,const QString& pointer) {
-    for(const auto& e:document.extensions) {
-        if(e.status!="unsupported" || q(e.jsonPointer)!=pointer) continue;
-        QJsonParseError error;
-        const auto value=QJsonDocument::fromJson("["+QByteArray::fromStdString(e.payload)+"]",&error);
-        if(error.error==QJsonParseError::NoError && value.isArray() && value.array().size()==1) return value.array().at(0);
-    }
-    return {};
-}
 }
 std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& value) const {
     const auto domain=value.value("domain").toString().trimmed();
@@ -54,18 +41,10 @@ QVariantMap EditorController::rangeAnchor(const QString& scope) const {
     const auto ref=selection_.rangeAnchor(scope.toStdString());return ref?objectRefValue(*ref):QVariantMap{};
 }
 bool EditorController::objectVisible(const ObjectRef& ref) const {
-    const auto& document=project_.document();
-    const auto found=project_.index().objects.find(ref);
-    if(found==project_.index().objects.end()) return false;
-    const auto member=document.presentation.membership.find(ref);
-    if(member==document.presentation.membership.end()) return false;
-    const auto layer=project_.layer(member->second);
-    if(!layer || !layer->visible) return false;
-    const auto group=groupName(document.units.at(found->second).kind);
-    // Read preserved web visibility without promoting or rewriting an extension.
-    const auto groups=retained(document,"/layerVisibility").toObject();
-    const auto items=retained(document,"/itemVisibility").toObject();
-    return groups[group]!=QJsonValue(false) && items[group].toObject()[q(ref.id)]!=QJsonValue(false);
+    // Presentation migration promotes the supported web fields into the common
+    // model.  Keeping a second extension-based check here made rendering and
+    // picking disagree whenever a retained payload was only partially known.
+    return effectiveMapVisibility(project_.document(),ref);
 }
 QVariantList EditorController::objectRows() const {
     QVariantList rows;
@@ -183,15 +162,21 @@ QVariantMap EditorController::pickObject(double x,double y) const {
     if(!std::isfinite(x)||!std::isfinite(y)) return {};
     const auto point=projection_.unproject(x,y);
     // Match the existing renderer: layers bottom-to-top, paths in document order.
-    for(auto layer=project_.layers().rbegin();layer!=project_.layers().rend();++layer) {
+    auto renderLayers=project_.layers();renderLayers.insert(renderLayers.begin(),Layer{"",""});
+    for(auto layer=renderLayers.rbegin();layer!=renderLayers.rend();++layer) {
         if(!layer->visible) continue;
-        for(auto unit=project_.document().units.rbegin();unit!=project_.document().units.rend();++unit) {
-            const auto ref=territorialRef(unit->id);
-            const auto member=project_.document().presentation.membership.find(ref);
-            if(member==project_.document().presentation.membership.end()||member->second!=layer->id||!objectVisible(ref)) continue;
-            const auto geometry=project_.document().geometries.get(unit->geometry);
-            if(geometry && pointInCountry(point,geometry->polygons)) return objectRefValue(ref);
+        std::optional<ObjectRef> top;
+        double topRank=-std::numeric_limits<double>::infinity();
+        for(const auto& unit:project_.document().units) {
+            const auto ref=territorialRef(unit.id);
+            if(nativeLayerId(project_.document(),ref)!=layer->id||!objectVisible(ref)) continue;
+            const auto geometry=project_.document().geometries.get(unit.geometry);
+            if(geometry && pointInCountry(point,geometry->polygons)) {
+                const auto rank=territorialRenderOrder(project_.document(),ref);
+                  if(!top || rank>=topRank) { top=ref;topRank=rank; }
+            }
         }
+        if(top) return objectRefValue(*top);
     }
     return {};
 }

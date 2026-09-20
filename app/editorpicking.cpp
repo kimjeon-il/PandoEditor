@@ -12,9 +12,9 @@ double segmentDistance(Point p,Point a,Point b) {
     const double t=length>0?std::clamp(((p.x-a.x)*dx+(p.y-a.y)*dy)/length,0.,1.):0.;
     return std::hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
 }
-int rank(UnitKind kind) {
-    // Pinned OVERLAY_GROUPS: subunits before regions; countries are the base map.
-    return kind==UnitKind::Subunit?997:kind==UnitKind::Region?996:500;
+int chooserKindRank(const Project& project,const ObjectRef& ref) {
+    const auto kind=project.document().units.at(project.index().objects.at(ref)).kind;
+    return kind==UnitKind::Region?2:kind==UnitKind::Subunit?1:0;
 }
 }
 std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double pixelsPerUnit) const {
@@ -24,12 +24,12 @@ std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double 
     const auto origin=projection_.unproject(0,0),unitX=projection_.unproject(1,0);
     const double xScale=1./(unitX.x-origin.x);
     bool countryFound=false;
-    for(auto layer=project_.layers().rbegin();layer!=project_.layers().rend();++layer){
+    auto renderLayers=project_.layers();renderLayers.insert(renderLayers.begin(),Layer{"",""});
+    for(auto layer=renderLayers.rbegin();layer!=renderLayers.rend();++layer){
         if(!layer->visible)continue;
         for(auto unit=project_.document().units.rbegin();unit!=project_.document().units.rend();++unit){
             const auto ref=territorialRef(unit->id);
-            const auto membership=project_.document().presentation.membership.find(ref);
-            if(membership==project_.document().presentation.membership.end()||membership->second!=layer->id||!objectVisible(ref))continue;
+            if(nativeLayerId(project_.document(),ref)!=layer->id||!objectVisible(ref))continue;
             if(unit->kind==UnitKind::Country&&countryFound)continue;
             const auto geometry=project_.document().geometries.get(unit->geometry);
             if(!geometry)continue;
@@ -48,10 +48,11 @@ std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double 
     }
     QCollator names(QLocale(QLocale::Korean));
     std::stable_sort(found.begin(),found.end(),[&](const ObjectRef& a,const ObjectRef& b){
-        const auto& left=project_.document().units.at(project_.index().objects.at(a));
-        const auto& right=project_.document().units.at(project_.index().objects.at(b));
-        if(rank(left.kind)!=rank(right.kind))return rank(left.kind)>rank(right.kind);
-        return names.compare(QString::fromStdString(left.name),QString::fromStdString(right.name))<0;
+        // Chooser order is independent of paint order: kinds first, then names.
+        const auto leftRank=chooserKindRank(project_,a);
+        const auto rightRank=chooserKindRank(project_,b);
+        if(leftRank!=rightRank)return leftRank>rightRank;
+        return names.compare(QString::fromStdString(project_.propertyView(a)->displayName),QString::fromStdString(project_.propertyView(b)->displayName))<0;
     });
     return found;
 }

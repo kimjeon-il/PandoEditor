@@ -12,7 +12,7 @@ void MapProjection::rebuild(const pandoeditor::ProjectDocument& document)
     for(const auto& unit:document.units) {
         const auto ref=pandoeditor::territorialRef(unit.id);
         const auto& style=document.presentation.objectStyles.at(ref);
-        const auto& layer=document.presentation.membership.at(ref);
+        const auto& layer=pandoeditor::nativeLayerId(document,ref);
         const auto geometry=document.geometries.get(unit.geometry);
         objects.push_back({unit.id,unit.name,geometry->polygons,style.color,unit.notes,style.opacity,layer,unit.locked});
     }
@@ -46,4 +46,5 @@ void MapProjection::rebuild(const std::vector<pandoeditor::CountryView>& countri
             {"left",left},{"top",top},{"width",right-left},{"height",bottom-top}});
     }
 }
+pandoeditor::Point MapProjection::project(pandoeditor::Point point) const{return {point.x*cosLatitude-minX,maxLatitude-point.y};}
 pandoeditor::Point MapProjection::unproject(double x,double y) const{return {(x+minX)/cosLatitude,maxLatitude-y};}

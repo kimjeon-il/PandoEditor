@@ -6,6 +6,8 @@ if(BUILD_TESTING)
     add_test(NAME selection_state_tests COMMAND selection_probe --self-test)
     find_program(PANDOEDITOR_NODE_EXECUTABLE NAMES node)
     if(PANDOEDITOR_NODE_EXECUTABLE)
+        add_test(NAME m4_geometry_web_parity COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m4-geometry-oracle.mjs" "$<TARGET_FILE:m4_geometry_probe>")
+        add_test(NAME presentation_web_parity COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m34-presentation-oracle.mjs" "$<TARGET_FILE:presentation_parity_probe>")
         add_test(NAME selection_web_parity
             COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m3-selection-oracle.mjs" "$<TARGET_FILE:selection_probe>")
     else()
@@ -54,6 +56,7 @@ if(BUILD_TESTING)
 endif()
 
 set(M32_PROPERTY_RESOURCES
+    "${PROJECT_SOURCE_DIR}/ui/common/MapDisplayControls.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/ColorMath.js"
     "${PROJECT_SOURCE_DIR}/ui/common/ColorPalette.js"
     "${PROJECT_SOURCE_DIR}/ui/common/CustomColorEditor.qml"

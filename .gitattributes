@@ -4,3 +4,6 @@
 tests/reference/*.mjs text eol=lf
 tests/fixtures/web-properties/source/** text eol=lf
 tests/fixtures/web-structure/source/** text eol=lf
+tests/fixtures/web-presentation/source/** text eol=lf
+assets/geometry/*.js text eol=lf
+tests/fixtures/web-m4/source/** text eol=lf

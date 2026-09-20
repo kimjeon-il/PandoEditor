@@ -2,13 +2,41 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QScopedValueRollback>
+#include <QJsonDocument>
+#include <QJsonArray>
 #include <QUuid>
 #include <cmath>
+#include <map>
 #include <stdexcept>
 
 namespace {
 QString text(const std::string& value) { return QString::fromStdString(value); }
 QString rgb(std::uint32_t color) { return QString("#%1").arg(color,6,16,QChar('0')); }
+
+bool validImageDataUrl(const QString& source)
+{
+    const auto separator=source.indexOf(QStringLiteral(";base64,"));
+    if(!source.startsWith(QStringLiteral("data:image/")) || separator < 11) return false;
+    const auto bytes=QByteArray::fromBase64(source.mid(separator+8).toLatin1());
+    if(bytes.isEmpty()) return false;
+    return bytes.startsWith("\x89PNG\r\n\x1a\n") || bytes.startsWith("\xff\xd8\xff") ||
+           bytes.startsWith("GIF87a") || bytes.startsWith("GIF89a") ||
+           (bytes.startsWith("RIFF") && bytes.mid(8,4)=="WEBP") ||
+           bytes.trimmed().startsWith("<svg");
+}
+
+bool geometryBindingsChanged(const pandoeditor::ProjectDocument& before,
+                            const pandoeditor::ProjectDocument& after)
+{
+    if(before.units.size()!=after.units.size()) return true;
+    std::map<std::string,pandoeditor::GeometryRef> bindings;
+    for(const auto& unit:before.units) bindings.emplace(unit.id,unit.geometry);
+    for(const auto& unit:after.units) {
+        const auto found=bindings.find(unit.id);
+        if(found==bindings.end() || !(found->second==unit.geometry)) return true;
+    }
+    return false;
+}
 }
 EditorController::EditorController(QObject* parent):EditorController(EditorControllerConfig{},parent) {}
 EditorController::EditorController(EditorControllerConfig config,QObject* parent)
@@ -25,6 +53,8 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::webImportChanged,this,&EditorController::propertyChanged);
     jobs_=std::make_unique<CommandJobRunner>([this]() ->const pandoeditor::Project& {return project_;});
     connect(jobs_.get(),&CommandJobRunner::changed,this,&EditorController::jobChanged,Qt::QueuedConnection);
+    presentationSaveTimer_.setSingleShot(true);presentationSaveTimer_.setInterval(500);
+    connect(&presentationSaveTimer_,&QTimer::timeout,this,&EditorController::flushPresentationRecovery);
 }
 QVariantMap EditorController::colors() const
 {
@@ -42,9 +72,23 @@ QVariantMap EditorController::countryVisuals() const
         const auto ref=pandoeditor::territorialRef(unit.id);
         const auto style=project_.document().presentation.objectStyles.find(ref);
         if(style==project_.document().presentation.objectStyles.end()) continue;
+        const auto resolved=pandoeditor::resolvedTerritorialPresentation(project_.document(),ref);
+        const auto nativeLayer=pandoeditor::nativeLayerId(project_.document(),ref);double nativeOpacity=1;int nativeOrder=-1;
+        for(std::size_t i=0;i<project_.document().presentation.userLayers.size();++i)if(project_.document().presentation.userLayers[i].id==nativeLayer){nativeOpacity=project_.document().presentation.userLayers[i].opacity;nativeOrder=int(i);break;}
+        QString flag;
+        for(const auto& e:project_.document().extensions)if(e.status=="unsupported" && e.jsonPointer.size()>=12 && e.jsonPointer.compare(e.jsonPointer.size()-12,12,"/flagDataUrl")==0 && std::find(e.dependencies.begin(),e.dependencies.end(),ref)!=e.dependencies.end()) {
+            const auto value=QJsonDocument::fromJson("["+QByteArray::fromStdString(e.payload)+"]").array();
+            if(!value.isEmpty()&&value[0].isString()&&validImageDataUrl(value[0].toString())) flag=value[0].toString();
+        }
         result[text(unit.id)]=QVariantMap{{"color",rgb(pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(unit.id)))},
+            {"name",text(project_.propertyView(ref)->displayName)},{"nameVisible",resolved.nameVisible},{"flagVisible",resolved.flagVisible},{"flagSource",flag},
+            {"boundary",pandoeditor::resolvedTerritorialPresentation(project_.document(),ref).boundaryVisible},
+            {"blendMode",text(resolved.blendMode)},
+            {"kind",unit.kind==pandoeditor::UnitKind::Country?QStringLiteral("country"):unit.kind==pandoeditor::UnitKind::Subunit?QStringLiteral("subunit"):QStringLiteral("region")},
+            {"layerId",text(nativeLayer)},{"layerOpacity",nativeOpacity},{"layerOrder",nativeOrder},
+            {"rank",pandoeditor::territorialRenderOrder(project_.document(),ref)},
             {"visible",objectVisible(ref)},
-            {"opacity",text(unit.id)==selected_&&opacityPreview_?*opacityPreview_:style->second.opacity}};
+            {"opacity",(text(unit.id)==selected_&&opacityPreview_?*opacityPreview_:style->second.opacity)*resolved.opacity}};
     }
     return result;
 }
@@ -59,6 +103,9 @@ QVariantList EditorController::layers() const
 {
     QVariantList result;
     const auto& layers=project_.layers();
+    QVariantList unassigned;
+    for(const auto& path:projection_.paths)if(pandoeditor::nativeLayerId(project_.document(),pandoeditor::territorialRef(path.toMap()["countryId"].toString().toStdString())).empty())unassigned.append(path);
+    if(!unassigned.empty())result.append(QVariantMap{{"id",""},{"name",QStringLiteral("웹 기본 표시")},{"visible",true},{"locked",false},{"opacity",1.},{"order",-1},{"paths",unassigned},{"count",unassigned.size()}});
     for(int i=static_cast<int>(layers.size())-1;i>=0;--i) {
         const auto& l=layers[static_cast<std::size_t>(i)];
         QVariantList paths;
@@ -78,7 +125,7 @@ QVariantList EditorController::countryRows() const
     for(const auto& c:project_.countries()) {
         const auto l=project_.layer(c.layerId);
         result.append(QVariantMap{{"id",text(c.id)},{"name",text(project_.propertyView(pandoeditor::territorialRef(c.id))->displayName)},{"layerId",text(c.layerId)},
-            {"visible",objectVisible(pandoeditor::territorialRef(c.id))},{"locked",l->locked||c.locked},
+            {"visible",objectVisible(pandoeditor::territorialRef(c.id))},{"locked",(l&&l->locked)||c.locked},
             {"limited",!pandoeditor::effectAllowed(project_.document(),pandoeditor::territorialRef(c.id),"color")}});
     }
     return result;
@@ -114,7 +161,7 @@ bool EditorController::canDeleteLayer() const
 QString EditorController::fileName() const {return filePath_.isEmpty()?QStringLiteral("새 프로젝트"):QFileInfo(filePath_).fileName();}
 QString EditorController::documentNotice() const
 {
-    QString notice=QStringLiteral("저장 형식: Qt v4 · 이전 앱에서는 열 수 없습니다. 열기만으로 원본 파일은 변경되지 않습니다.");
+    QString notice=QStringLiteral("저장 형식: Qt v5 · 이전 앱에서는 열 수 없습니다. 열기만으로 원본 파일은 변경되지 않습니다.");
     const auto& d=project_.document();
     if(d.nativeSourceVersion<4)notice+=QStringLiteral(" 이전 Qt 파일의 색은 명시값으로 보존했습니다. 과거 상속 의도와 최초 국명은 복원할 수 없으며 현재 값을 우선합니다.");
     if(d.units.size()>project_.countries().size())
@@ -126,6 +173,10 @@ QString EditorController::documentNotice() const
 bool EditorController::dirty() const {return importedDirty_||project_.dirty()||hasPendingEdits();}
 bool EditorController::hasPendingEdits() const
 {
+    // GeometryEditSession is intentionally not document data.  Treat it as a
+    // pending draft so document-level undo/navigation cannot silently replace
+    // its baseline while a user is dragging vertices.
+    if(geometryEdit_) return true;
     if(!parkedCountryDrafts_.empty()||!parkedLayerDrafts_.empty()) return true;
     const auto u=selectedUnit();
     if(u && (nameDraft_!=QString::fromStdString(u->kind==pandoeditor::UnitKind::Country?pandoeditor::objectDisplayName(*u):u->name)
@@ -157,11 +208,16 @@ void EditorController::publish(bool pruneSelection)
     QScopedValueRollback<bool> guard(selectionTransition_,true);
     // Hidden/locked is not missing. A selected object remains addressable from a list.
     reconcileSelection();
-    if(!project_.layer(selectedLayer_.toStdString())) selectedLayer_=text(project_.layers().back().id);
+    if(!project_.layer(selectedLayer_.toStdString())) selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
     reloadDrafts();
     emit stateChanged();emit selectionChanged();emit searchChanged();emit hoverChanged();
     emit visualChanged();emit draftsChanged();emit dirtyChanged();
     emit structureChanged();
+    emit presentationChanged();
+    if(presentationSaveInstance_==project_.instanceId()) {
+        if(project_.dirty()||importedDirty_)presentationSaveTimer_.start();
+        else discardOwnPresentationRecovery();
+    }
 }
 void EditorController::previewCountryOpacity(double value)
 {
@@ -186,15 +242,18 @@ void EditorController::moveCountry(const QString& layerId) {if(executeCommand("c
 void EditorController::undo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
-    cancelPreview();if(project_.undo())publish();
+    const auto before=project_.document();
+    cancelPreview();if(project_.undo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());publish();if(changed) emit geometryChanged();}
 }
 void EditorController::redo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
-    cancelPreview();if(project_.redo())publish();
+    const auto before=project_.document();
+    cancelPreview();if(project_.redo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());publish();if(changed) emit geometryChanged();}
 }
 bool EditorController::openFile(const QUrl& url)
 {
+    if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 도형 편집을 확인하거나 취소한 뒤 프로젝트를 여세요."));return false;}
     try {
         if(!url.isLocalFile())throw std::runtime_error("Please choose a local file");
         return replaceFromBytes(storage_.read(url),false,url.toLocalFile());
@@ -202,6 +261,7 @@ bool EditorController::openFile(const QUrl& url)
 }
 bool EditorController::saveFile(const QUrl& url)
 {
+    if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 미확정 도형은 저장되지 않습니다. 먼저 확인하거나 취소하세요."));return false;}
     if(isProtectedWebSource(url)){webImportFailure(QStringLiteral("SOURCE_OVERWRITE_BLOCKED: 웹 원본은 덮어쓰지 않습니다. 다른 이름으로 저장하세요."));return false;}
     if(!commitPendingEdits())return false;
     if(!url.isLocalFile()){emit errorOccurred(QStringLiteral("로컬 파일을 선택해 주세요."));return false;}
@@ -213,10 +273,11 @@ bool EditorController::saveFile(const QUrl& url)
 bool EditorController::save(){if(mobileMode_)return savePrivate();return saveFile(QUrl::fromLocalFile(filePath_));}
 bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,const QString& path)
 {
+    if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 도형 편집을 확인하거나 취소한 뒤 프로젝트를 바꾸세요."));return false;}
     pandoeditor::Project candidate;candidate.replace(projectcodec::decode(bytes));
     MapProjection nextProjection;nextProjection.rebuild(candidate.document());
-    cancelPreview();project_=std::move(candidate);projection_=std::move(nextProjection);
-    filePath_=path;importedDirty_=imported;selected_.clear();selectedLayer_=text(project_.layers().back().id);
+    cancelPreview();cancelStructureMutation();project_=std::move(candidate);projection_=std::move(nextProjection);
+    filePath_=path;importedDirty_=imported;selected_.clear();selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
     emit geometryChanged();publish(false);return true;
 }
 bool EditorController::restorePrivateProject()
@@ -240,6 +301,7 @@ bool EditorController::importProject(const QUrl& url)
 }
 bool EditorController::savePrivate()
 {
+    if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 미확정 도형은 저장되지 않습니다. 먼저 확인하거나 취소하세요."));return false;}
     if(isProtectedWebSource(QUrl::fromLocalFile(storage_.privateProjectPath()))){webImportFailure(QStringLiteral("SOURCE_OVERWRITE_BLOCKED: 웹 원본은 덮어쓰지 않습니다."));return false;}
     if(privateRecoveryRequired_){emit errorOccurred(QStringLiteral("손상된 저장 파일이 보존되어 있습니다. 덮어쓰기를 허용한 뒤 다시 저장해 주세요."));return false;}
     if(!commitPendingEdits())return false;

@@ -1,5 +1,6 @@
 #include <pandoeditor/project.h>
 #include <pandoeditor/commands.h>
+#include <pandoeditor/presentationcommands.h>
 #include <cstdlib>
 #include <iostream>
 #include <new>
@@ -44,6 +45,33 @@ CommandRequest deletion(const Project& p) {
 }
 int main() {
     try {
+        int geometryFailures=0;
+        for(long position=0;position<5000;++position) {
+            auto d=deleteFixture();d.units[1].kind=UnitKind::Subunit;d.units[1].coverageMode="partition";
+            d.relations.push_back({"s-base",territorialRef("S"),territorialRef("A"),territorialRef("A")});
+            Project p;p.replace(d);check(p.setMemo("A","redo")&&p.undo());
+            const auto plan=CommandProcessor::planTerritorial(p,ConvertTerritorialTypeIntent{territorialRef("S"),UnitKind::Country,{},{},{}});check(plan.ok());
+            const auto source=*d.geometries.get(d.units[1].geometry);auto remainder=*d.geometries.get(d.units[0].geometry);remainder.polygons[0].push_back(source.polygons[0][0]);
+            CommandArguments args;args.action=ApplyTerritorialMutation{*plan.plan,GeometryPatch{p.revision(),{{territorialRef("S"),source},{territorialRef("A"),remainder}},{},{}}};
+            const auto request=CommandProcessor::makeRequest(p,"territorial.geometry.commit",args);
+            const auto before=&p.document();const auto rev=p.revision();
+            failAfter=position;auto prepared=CommandProcessor::prepare(p,request);failAfter=-1;
+            check(&p.document()==before&&p.revision()==rev&&p.canRedo()&&!p.dirty());
+            if(prepared.preview){check(CommandProcessor::confirm(p,*prepared.preview).ok());check(p.undo());check(p.redo());break;}
+            check(prepared.error==CommandError::PrepareFailed);++geometryFailures;check(position<4999);
+        }
+        check(geometryFailures>0);std::cout<<"Geometry patch preparation allocation failures verified: "<<geometryFailures<<"\n";
+        int presentationFailures=0;
+        for(long position=0;position<5000;++position) {
+            Project p;p.replace(fixture());check(p.setMemo("A","redo")&&p.undo());
+            auto before=&p.document();const auto rev=p.revision(),pr=p.presentationRevision();
+            PresentationAction action=SetPresentationVisibility{"countries",false};
+            failAfter=position;auto result=PresentationCommandProcessor::apply(p,action);failAfter=-1;
+            if(result==PresentationResult::Applied){check(p.revision()==rev&&p.canRedo()&&p.dirty());break;}
+            check(result==PresentationResult::Failed);check(&p.document()==before&&p.revision()==rev&&p.presentationRevision()==pr&&p.canRedo()&&!p.dirty());
+            ++presentationFailures;check(position<4999);
+        }
+        check(presentationFailures>0);
         int prepareFailures=0,commitFailures=0,replaceFailures=0,historyFailures=0,deleteFailures=0,deleteCommitFailures=0;
         for(long position=0;position<5000;++position) {
             Project p; p.replace(fixture()); check(p.setMemo("A","redo") && p.undo());

@@ -8,6 +8,7 @@ class MapProjection {
 public:
     void rebuild(const std::vector<pandoeditor::CountryView>& countries);
     void rebuild(const pandoeditor::ProjectDocument& document);
+    pandoeditor::Point project(pandoeditor::Point point) const;
     pandoeditor::Point unproject(double x,double y) const;
     QVariantList paths;
     double width=1,height=1;

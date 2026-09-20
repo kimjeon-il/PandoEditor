@@ -14,6 +14,46 @@ private:
         return file.readAll();
     }
 private slots:
+    void v5UnknownPresentationTokensRemainLossless() {
+        pandoeditor::Project p;p.replace(projectcodec::decode(sample()));
+        auto bytes=projectcodec::encode(p);
+        bytes.replace("\"webPresentation\":{","\"webPresentation\":{\"future\":{\"big\":900719925474099312345,\"ordered\":[3,1,2],\"decimal\":1.2300e+02},");
+        p.replace(projectcodec::decode(bytes));QVERIFY(p.renameCountry(p.document().units.front().id,"safe edit"));
+        auto saved=projectcodec::encode(p);QVERIFY(saved.contains("900719925474099312345"));QVERIFY(saved.contains("1.2300e+02"));QVERIFY(saved.contains("[3,1,2]"));
+        pandoeditor::Project reopened;reopened.replace(projectcodec::decode(saved));QCOMPARE(projectcodec::encode(reopened),saved);
+    }
+    void v5ForeignObjectOrderIsRetainedOutsideCanonicalOrder() {
+        try {
+            pandoeditor::Project p;p.replace(projectcodec::decode(sample()));
+            auto bytes=projectcodec::encode(p);
+            bytes.replace("\"objectOrder\":[]","\"objectOrder\":[\"foreign:overlay\"]");
+            p.replace(projectcodec::decode(bytes));
+            QVERIFY(p.renameCountry(p.document().units.front().id,"safe edit"));
+            const auto saved=projectcodec::encode(p);
+            QVERIFY(saved.contains("foreign:overlay"));
+            QVERIFY(p.document().presentation.webPresentation.objectOrder.empty());
+        } catch(const std::exception& error) { QFAIL(error.what()); }
+    }
+    void v5PresentationPresenceRoundTrip() {
+        auto d=projectcodec::decode(sample());
+        auto u=d.units.front();u.id="presentation-S";u.kind=pandoeditor::UnitKind::Subunit;
+        u.baseName.clear();u.nameExplicit=true;
+        const auto ref=pandoeditor::territorialRef(u.id),parent=pandoeditor::territorialRef(d.units.front().id);
+        d.units.push_back(u);d.relations.push_back({"presentation-rel",ref,parent,parent});
+        d.presentation.membership[ref]=d.presentation.userLayers.front().id;d.presentation.objectStyles[ref]={};
+        auto& p=d.presentation.webPresentation;
+        p.visibility["subunits"]=false;p.visibility["subunitFlags"]=false;
+        p.hiddenItems["subunits"].insert(u.id);p.styles["countries"].opacity=.6;
+        p.objectStyles["territorial:subunit:presentation-S"].blendMode="normal";
+        p.objectOrder={"territorial:subunit:presentation-S"};
+        pandoeditor::Project project;project.replace(d);
+        const auto bytes=projectcodec::encode(project);QCOMPARE(QJsonDocument::fromJson(bytes).object()["version"].toInt(),5);
+        auto reopened=projectcodec::decode(bytes);QVERIFY(reopened.presentation.webPresentation==p);
+        QVERIFY(!reopened.presentation.webPresentation.objectStyles.at("territorial:subunit:presentation-S").opacity);
+        p.objectStyles["territorial:subunit:presentation-S"].opacity=1;
+        project.replace(d);reopened=projectcodec::decode(projectcodec::encode(project));
+        QCOMPARE(*reopened.presentation.webPresentation.objectStyles.at("territorial:subunit:presentation-S").opacity,1.);
+    }
     void v1MinimumDefaultsRemainExactAfterSaving() {
         const auto d=projectcodec::decode("{\"format\":\"pandoeditor-project\",\"version\":1,\"countries\":["
           "{\"id\":\"original-id\",\"name\":\" original name \",\"color\":\"#A1b2C3\","
@@ -227,11 +267,11 @@ private slots:
         QVERIFY_EXCEPTION_THROWN(projectcodec::decode(deep),std::invalid_argument);
         QVERIFY_EXCEPTION_THROWN(projectcodec::decode(R"({"format":"pandoeditor-project","version":3.00000000000000000000001})"),std::invalid_argument);
     }
-    void legacySavesV4() {
+    void legacySavesV5() {
         pandoeditor::Project project;
         project.replace(projectcodec::decode(sample()));
         const auto saved=projectcodec::encode(project);
-        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),4);
+        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),5);
         pandoeditor::Project reopened;
         reopened.replace(projectcodec::decode(saved));
         QCOMPARE(projectcodec::encode(reopened),saved);

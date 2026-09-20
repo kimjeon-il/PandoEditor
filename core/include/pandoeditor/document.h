@@ -1,4 +1,5 @@
 #pragma once
+#include <pandoeditor/presentation.h>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -71,6 +72,7 @@ struct Layer {
 };
 struct ObjectStyle { std::uint32_t color=0xa8c7db; double opacity=1; bool explicitColor=true; };
 struct PresentationState {
+    WebPresentation webPresentation;
     std::vector<Layer> userLayers; // bottom to top; independent of territorial ancestry
     std::map<ObjectRef,std::string> membership;
     std::map<ObjectRef,ObjectStyle> objectStyles;
@@ -96,7 +98,7 @@ struct Country {
 };
 struct ProjectDocument {
     // Read-time provenance for a migration notice, not document content or wire data.
-    int nativeSourceVersion=4;
+    int nativeSourceVersion=5;
     std::string documentId;
     std::vector<TerritorialUnit> units;
     std::vector<TerritorialRelation> relations;
@@ -126,6 +128,7 @@ struct DocumentIndex {
 };
 DocumentIndex validateDocument(const ProjectDocument& document);
 std::vector<CountryView> countryViews(const ProjectDocument& document);
+const std::string& nativeLayerId(const ProjectDocument&,const ObjectRef&);
 const TerritorialRelation* effectiveRelation(const ProjectDocument&, const std::string& unitId, std::int64_t date);
 std::vector<std::string> blockingExtensions(const ProjectDocument&, const ObjectRef&, const std::string& effect);
 bool effectAllowed(const ProjectDocument&, const ObjectRef&, const std::string& effect);

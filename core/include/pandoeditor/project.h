@@ -31,6 +31,7 @@ private:
 
 class Project {
 public:
+    std::uint64_t presentationRevision() const noexcept { return presentationRevision_; }
     Project();
     ProjectSnapshot snapshot() const { return {state_,instanceId_,revision_}; }
     const std::string& instanceId() const { return instanceId_; }
@@ -73,6 +74,7 @@ public:
     void markSaved() noexcept;
 private:
     friend class CommandProcessor;
+    friend class PresentationCommandProcessor;
     bool execute(std::string commandId, CommandArguments args);
     bool changeCountry(const std::string& id, CountryProperties next);
     bool changeLayer(Layer next);
@@ -83,6 +85,7 @@ private:
     std::vector<ChangeSet> commands_;
     std::string instanceId_;
     std::uint64_t revision_ = 0;
+    std::uint64_t presentationRevision_ = 0;
     std::uint64_t checkpoint_=0, savedCheckpoint_=0, checkpointSequence_=0;
     std::size_t cursor_ = 0;
 };

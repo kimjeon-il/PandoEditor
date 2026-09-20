@@ -105,8 +105,8 @@ const TerritorialRelation* effectiveRelation(const ProjectDocument& d,const std:
     return base;
 }
 DocumentIndex validateDocument(const ProjectDocument& d) {
+    validatePresentation(d);
     require(!d.documentId.empty(),"INVALID_DOCUMENT: documentId");
-    require(!d.presentation.userLayers.empty(),"INVALID_DOCUMENT: empty layers");
     DocumentIndex idx;
     for(std::size_t i=0;i<d.presentation.userLayers.size();++i) {
         const auto& l=d.presentation.userLayers[i];
@@ -125,7 +125,7 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
         require(g && (g->type=="Polygon"||g->type=="MultiPolygon"),"INVALID_GEOMETRY: territorial reference");
         idx.geometryUsers[u.geometry].push_back(ref);
         auto b=temporalBounds(u.validity); life[ref]=b; boundaries.insert(b.first); if(b.second<infinity) boundaries.insert(nextCalendarDay(b.second));
-        require(d.presentation.membership.count(ref)&&d.presentation.objectStyles.count(ref),"DANGLING_REF: presentation missing");
+        require(d.presentation.objectStyles.count(ref),"DANGLING_REF: presentation missing");
     }
     for(const auto& [ref,layer]:d.presentation.membership) {
         require(idx.objects.count(ref)&&idx.layers.count(layer),"DANGLING_REF: membership");
@@ -209,7 +209,7 @@ std::vector<CountryView> countryViews(const ProjectDocument& d) {
     std::vector<CountryView> result;
     for(const auto& u:d.units) if(u.kind==UnitKind::Country) {
         auto ref=territorialRef(u.id); const auto& s=d.presentation.objectStyles.at(ref);
-        result.push_back({u.id,(u.nameExplicit&&!u.name.empty()?u.name:u.baseName),d.geometries.get(u.geometry)->polygons,(s.explicitColor?s.color:countryDefault),u.notes,s.opacity,d.presentation.membership.at(ref),u.locked});
+        result.push_back({u.id,(u.nameExplicit&&!u.name.empty()?u.name:u.baseName),d.geometries.get(u.geometry)->polygons,(s.explicitColor?s.color:countryDefault),u.notes,s.opacity,nativeLayerId(d,ref),u.locked});
     }
     return result;
 }
@@ -223,6 +223,10 @@ std::vector<std::string> blockingExtensions(const ProjectDocument& d,const Objec
         if(related && (e.forbiddenEffects.empty()||std::find(e.forbiddenEffects.begin(),e.forbiddenEffects.end(),effect)!=e.forbiddenEffects.end())) result.push_back(e.id);
     }
     return result;
+}
+const std::string& nativeLayerId(const ProjectDocument& d,const ObjectRef& ref) {
+    static const std::string none;
+    const auto i=d.presentation.membership.find(ref);return i==d.presentation.membership.end()?none:i->second;
 }
 bool effectAllowed(const ProjectDocument& d,const ObjectRef& ref,const std::string& effect) {
     return blockingExtensions(d,ref,effect).empty();

@@ -1,4 +1,7 @@
 #include "windowsframe.h"
+#include "maprenderitem.h"
+#include "referenceimageitem.h"
+#include "referenceimagelibrary.h"
 #include <QFontDatabase>
 #include <QGuiApplication>
 #include <QPlatformSurfaceEvent>
@@ -19,6 +22,9 @@
 void registerWindowsFrameType()
 {
     qmlRegisterType<WindowsFrame>("Pandoeditor.Windowing", 1, 0, "WindowsFrame");
+    qmlRegisterType<MapRenderItem>("Pandoeditor.Windowing", 1, 0, "MapRenderItem");
+    qmlRegisterType<ReferenceImageItem>("Pandoeditor.Windowing", 1, 0, "ReferenceImageItem");
+    qmlRegisterType<ReferenceImageLibrary>("Pandoeditor.Windowing", 1, 0, "ReferenceImageLibrary");
 }
 
 WindowsFrame::WindowsFrame(QObject* parent) : QObject(parent)

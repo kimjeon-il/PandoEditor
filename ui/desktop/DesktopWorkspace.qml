@@ -15,6 +15,7 @@ Item {
     property bool editorOpen:false
     property bool searchOpen:false
     property bool legacyOpen:false
+    Common.MapDisplayControls { id: displayControls; parent: workspace }
     readonly property bool sideOpen:editorOpen||searchOpen||legacyOpen
     property bool pointerNavigation:false
     function navigationStarted(){
@@ -26,6 +27,7 @@ Item {
         else Qt.callLater(function(){workspace.pointerNavigation=false;toolbar.navigating=false;properties.navigating=false;panel.selectionNavigation=false})
     }
     function dismissPopup() {
+        if(displayControls.visible){displayControls.close();return true}
         if(toolbar.dismissPopup()||mapView.dismissPopup()||properties.dismissPopup()||panel.dismissPopup())return true
         if(editorOpen||searchOpen){navigationStarted();editorOpen=false;searchOpen=false;return true}
         return false
@@ -107,6 +109,7 @@ Item {
         RowLayout {
             Layout.fillWidth:true;spacing:4
             ToolButton { objectName:"searchTab";text:"검색";focusPolicy:Qt.NoFocus;onPressed:workspace.navigationPointer(true);onReleased:workspace.navigationPointer(false);onCanceled:workspace.navigationPointer(false);onClicked:{workspace.navigationStarted();workspace.searchOpen=true;workspace.editorOpen=false;workspace.legacyOpen=false} }
+            ToolButton { objectName:"mapDisplayButton";text:"지도 표시";focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();displayControls.open()} }
             ToolButton { objectName:"openObjectEditor";text:"편집";enabled:editor.selectionItems.length>0;focusPolicy:Qt.NoFocus;onClicked:workspace.toggleEditor() }
             ToolButton { objectName:"legacyPanelButton";text:"Qt 레이어·기존 속성";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.legacyOpen=!workspace.legacyOpen;workspace.editorOpen=false;workspace.searchOpen=false;panel.showCountryControls()} }
             Item { Layout.fillWidth:true }
