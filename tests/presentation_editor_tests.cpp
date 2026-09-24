@@ -27,7 +27,13 @@ private slots:
     void localHydroManifestConfiguresAtomically() {
         QTemporaryDir dir;
         const QString manifest=QStringLiteral(WEB_HYDRO_FIXTURE)+"/v0.13.1/manifest.json";
-        EditorController controller({false,dir.filePath("private.json")});const auto revision=controller.revision();QVERIFY(controller.configureHydroData(QUrl::fromLocalFile(manifest)));QCOMPARE(controller.revision(),revision+1);QVERIFY(controller.hydroDataStatus()["ready"].toBool());controller.undo();QVERIFY(!controller.hydroDataStatus()["ready"].toBool());
+        EditorController controller({false,dir.filePath("private.json")});const auto revision=controller.revision();QVERIFY(controller.configureHydroData(QUrl::fromLocalFile(manifest)));QCOMPARE(controller.revision(),revision+1);QVERIFY(controller.hydroDataStatus()["ready"].toBool());
+        controller.requestHydroViewport(7.5,1500,0,0,800,500);
+        QTRY_VERIFY_WITH_TIMEOUT(controller.hydroViewportLoaded(),5000);
+        QCOMPARE(controller.revision(),revision+1);
+        controller.undo();QVERIFY(!controller.hydroDataStatus()["ready"].toBool());
+        QVERIFY(!controller.hydroViewportLoaded());
+        controller.redo();QVERIFY(controller.hydroDataStatus()["ready"].toBool());
     }
     void visibilityKeepsSelectionDraftAndRedo() {
         QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});

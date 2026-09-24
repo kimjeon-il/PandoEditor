@@ -47,6 +47,8 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     if(!sample.open(QIODevice::ReadOnly)) throw std::runtime_error("Cannot read bundled sample");
     project_.replace(projectcodec::decode(sample.readAll()));
     projection_.rebuild(project_.document());selectionInstance_=project_.instanceId();reloadDrafts();
+    connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::hydroFrameChanged);
+    connect(&hydroRuntime_,&HydroRuntimeProvider::loadFailed,this,&EditorController::errorOccurred);
     connect(this,&EditorController::dirtyChanged,this,[this](){++importEditEpoch_;});
     connect(this,&EditorController::stateChanged,this,&EditorController::propertyChanged);
     connect(this,&EditorController::draftsChanged,this,&EditorController::propertyChanged);
@@ -268,13 +270,13 @@ void EditorController::undo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
     const auto before=project_.document();
-    cancelPreview();if(project_.undo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());publish();if(changed) emit geometryChanged();}
+    cancelPreview();if(project_.undo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());if(before.physicalData.source!=project_.document().physicalData.source)syncHydroData();publish();if(changed) emit geometryChanged();}
 }
 void EditorController::redo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
     const auto before=project_.document();
-    cancelPreview();if(project_.redo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());publish();if(changed) emit geometryChanged();}
+    cancelPreview();if(project_.redo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());if(before.physicalData.source!=project_.document().physicalData.source)syncHydroData();publish();if(changed) emit geometryChanged();}
 }
 bool EditorController::openFile(const QUrl& url)
 {
@@ -302,6 +304,7 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
     pandoeditor::Project candidate;candidate.replace(projectcodec::decode(bytes));
     MapProjection nextProjection;nextProjection.rebuild(candidate.document());
     cancelPreview();cancelStructureMutation();project_=std::move(candidate);projection_=std::move(nextProjection);
+    syncHydroData();
     filePath_=path;importedDirty_=imported;selected_.clear();selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
     emit geometryChanged();publish(false);return true;
 }

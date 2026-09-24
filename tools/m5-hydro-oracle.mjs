@@ -85,6 +85,6 @@ if (!process.argv.includes('--fixture-only')) {
     geometry:feature.geometry,widths:feature.properties.stroke_widths,
   }))}));
   assert.deepEqual(native,process.argv.includes('--index-only')
-    ? {index:actual.index,metadata:actual.metadata} : packMode?packExpected:actual);
+    ? {index:actual.index,metadata:actual.metadata} : packMode?plain(packExpected):actual);
 }
 console.log('web hydro fixture oracle passed');

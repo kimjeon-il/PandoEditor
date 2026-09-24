@@ -10,6 +10,7 @@
 #include <QGuiApplication>
 #include <QStringList>
 #include <cmath>
+#include <algorithm>
 #include <limits>
 using namespace pandoeditor;
 namespace { QString displayText(const std::string& value){return QString::fromStdString(value);} }
@@ -40,13 +41,37 @@ QVariantMap EditorController::distributionDisplay() const {
 }
 QVariantMap EditorController::hydroDataStatus() const {
     const auto& settings=project_.document().physicalData;if(settings.source.empty())return QVariantMap{{"ready",false},{"version",displayText(settings.version)},{"dataset",displayText(settings.dataset)},{"error",QStringLiteral("로컬 수계 자료가 선택되지 않았습니다.")}};
+    if(hydroRuntime_.isOpen())return QVariantMap{{"ready",true},{"root",displayText(settings.source)},
+        {"version",displayText(settings.version)},{"dataset",displayText(settings.dataset)},
+        {"viewportLoaded",hydroViewportLoaded()},{"error",QString()}};
     const auto inspected=inspectHydroData(displayText(settings.source));return QVariantMap{{"ready",inspected.ready},{"root",inspected.root},{"version",inspected.version},{"dataset",inspected.dataset},{"error",inspected.error}};
+}
+void EditorController::requestHydroViewport(double zoom,double mapScale,double originX,double originY,
+                                            double width,double height) {
+    if(!hydroRuntime_.isOpen()||!std::isfinite(mapScale)||mapScale<=0||
+       !std::isfinite(originX)||!std::isfinite(originY)||width<=0||height<=0)return;
+    try {
+        const auto center=projection_.unproject((width/2-originX)/mapScale,(height/2-originY)/mapScale);
+        const auto unitX=projection_.project({1,0}).x-projection_.project({0,0}).x;
+        const auto webScale=mapScale*std::min(1.,unitX)*180./3.14159265358979323846;
+        hydroRuntime_.requestViewport({pandoeditor::webHydroThreshold(zoom),width,height,webScale,center.x,center.y});
+    }catch(const std::exception& error){emit errorOccurred(QString::fromUtf8(error.what()));}
 }
 bool EditorController::configureHydroData(const QUrl& value) {
     if(hasPendingEdits()||jobBusy()||hasWebImportPreview())return false;
     const auto path=value.isLocalFile()?value.toLocalFile():value.toString();const auto inspected=inspectHydroData(path);if(!inspected.ready){emit errorOccurred(inspected.error);return false;}
     auto settings=project_.document().physicalData;settings.dataset=inspected.dataset.toStdString();settings.version=inspected.version.toStdString();settings.source=inspected.root.toStdString();
-    CommandArguments args;args.action=SetPhysicalData{settings};auto request=CommandProcessor::makeRequest(project_,"physical-data.configure",args);auto prepared=CommandProcessor::prepare(project_,request);if(!prepared.ok()||!prepared.preview)return false;const auto result=CommandProcessor::confirm(project_,*prepared.preview);if(!result.ok())return false;publish(false);return true;
+    CommandArguments args;args.action=SetPhysicalData{settings};auto request=CommandProcessor::makeRequest(project_,"physical-data.configure",args);auto prepared=CommandProcessor::prepare(project_,request);if(!prepared.ok()||!prepared.preview)return false;const auto result=CommandProcessor::confirm(project_,*prepared.preview);if(!result.ok())return false;
+    syncHydroData();
+    publish(false);return true;
+}
+void EditorController::syncHydroData() {
+    hydroRuntime_.close(projectInstanceId());
+    const auto& source=project_.document().physicalData.source;
+    if(source.empty())return;
+    QString error;
+    if(!hydroRuntime_.open(QString::fromStdString(source),projectInstanceId(),mobileMode_,error))
+        emit errorOccurred(error);
 }
 bool EditorController::setDistributionDisplay(const QString& mode,bool boundaryVisible) {
     if(mode!="dominant"&&mode!="intensity")return false;

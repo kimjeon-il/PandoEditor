@@ -4,6 +4,7 @@
 #include "commandjobrunner.h"
 #include "platformstorage.h"
 #include "mapprojection.h"
+#include "hydroruntimeprovider.h"
 #include <pandoeditor/selection.h>
 #include <QObject>
 #include <QUrl>
@@ -28,6 +29,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantList presentationGroups READ presentationGroups NOTIFY presentationChanged)
     Q_PROPERTY(QVariantMap distributionDisplay READ distributionDisplay NOTIFY visualChanged)
     Q_PROPERTY(QVariantMap hydroDataStatus READ hydroDataStatus NOTIFY stateChanged)
+    Q_PROPERTY(bool hydroViewportLoaded READ hydroViewportLoaded NOTIFY hydroFrameChanged)
     Q_PROPERTY(qulonglong presentationRevision READ presentationRevision NOTIFY presentationChanged)
     Q_PROPERTY(bool presentationRecoveryAvailable READ presentationRecoveryAvailable NOTIFY presentationRecoveryChanged)
     Q_PROPERTY(QObject* screenColorPicker READ screenColorPicker CONSTANT)
@@ -100,6 +102,9 @@ public:
     QVariantList presentationGroups() const;
     QVariantMap distributionDisplay() const;
     QVariantMap hydroDataStatus() const;
+    bool hydroViewportLoaded() const {return bool(hydroRuntime_.frame());}
+    Q_INVOKABLE void requestHydroViewport(double zoom,double mapScale,double originX,double originY,
+                                          double width,double height);
     qulonglong presentationRevision() const { return project_.presentationRevision(); }
     Q_INVOKABLE bool setPresentationVisibility(const QString& key,bool visible);
     Q_INVOKABLE bool setPresentationOpacity(const QString& group,double opacity);
@@ -300,6 +305,7 @@ signals:
     void structureChanged();
     void geometryEditChanged();
     void contentEditChanged();
+    void hydroFrameChanged();
 private:
     QTimer presentationSaveTimer_;
     std::string presentationSaveInstance_;
@@ -307,6 +313,7 @@ private:
     QString availablePresentationRecoveryPath() const;
     bool discardOwnPresentationRecovery();
     void publishPresentation();
+    void syncHydroData();
     ScreenColorPicker screenColorPicker_;
     std::vector<pandoeditor::ObjectRef> mapCandidates(double x,double y,double pixelsPerUnit,double zoom=1) const;
     std::vector<pandoeditor::ObjectRef> chooserRefs_;
@@ -354,6 +361,7 @@ private:
     void reloadDrafts();
     bool replaceFromBytes(const QByteArray& bytes,bool imported,const QString& path={});
     pandoeditor::Project project_;
+    HydroRuntimeProvider hydroRuntime_;
     std::unique_ptr<CommandJobRunner> jobs_;
     std::optional<pandoeditor::JobTicket> background_;
     bool fieldCommitInProgress_=false;

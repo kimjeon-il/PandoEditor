@@ -57,11 +57,16 @@ Rectangle {
         panY = (editor.mapHeight/2-top-objectHeight/2)*mapScale
     }
     function invalidatePick() { editor.closeObjectChooser() }
-    onZoomChanged: invalidatePick()
-    onPanXChanged: invalidatePick()
-    onPanYChanged: invalidatePick()
-    onWidthChanged: invalidatePick()
-    onHeightChanged: invalidatePick()
+    Timer {
+        id: hydroRequest
+        interval: 40; repeat: false
+        onTriggered: editor.requestHydroViewport(view.zoom,view.mapScale,view.originX,view.originY,view.width,view.height)
+    }
+    onZoomChanged: { invalidatePick(); hydroRequest.restart() }
+    onPanXChanged: { invalidatePick(); hydroRequest.restart() }
+    onPanYChanged: { invalidatePick(); hydroRequest.restart() }
+    onWidthChanged: { invalidatePick(); hydroRequest.restart() }
+    onHeightChanged: { invalidatePick(); hydroRequest.restart() }
     function fit() { zoom=1; panX=0; panY=0 }
     function zoomAt(factor, px, py) {
         let newZoom=Math.max(0.5,Math.min(20,zoom*factor))
@@ -74,7 +79,8 @@ Rectangle {
         target: editor
         // Geometry edits retain the user's inspection position.  Explicit focus
         // and the '전체' button remain the only viewport-reset routes.
-        function onGeometryChanged() { view.invalidatePick() }
+        function onGeometryChanged() { view.invalidatePick(); hydroRequest.restart() }
+        function onStateChanged() { hydroRequest.restart() }
         function onFocusRequested(left,top,width,height,maxZoom) { view.focusRect(left,top,width,height,maxZoom) }
         function onObjectChooserChanged() {
             if (editor.objectChooserOpen) objectChooser.openAt(view.chooserPoint)

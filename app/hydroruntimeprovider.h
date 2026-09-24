@@ -15,6 +15,7 @@ public:
     void close(const QString& projectInstance);
     void requestViewport(const pandoeditor::HydroFlatWindow& view);
     std::shared_ptr<const HydroRuntimeFrame> frame() const {return scheduler_.frame();}
+    bool isOpen() const {return bool(dataset_);}
     const HydroMetadata* coreMetadata() const;
     bool pinLogical(quint32 logicalFid);
     void clearPinned();
