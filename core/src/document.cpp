@@ -4,7 +4,6 @@
 #include <functional>
 #include <limits>
 #include <random>
-#include <regex>
 #include <set>
 #include <stdexcept>
 
@@ -61,26 +60,6 @@ void GeometryStore::insert(GeometryRef ref,Geometry geometry) {
 std::shared_ptr<const Geometry> GeometryStore::get(const GeometryRef& ref) const {
     auto it=versions_.find(ref); return it==versions_.end()?nullptr:it->second;
 }
-TemporalValue parseTemporal(const std::string& text) {
-    static const std::regex pattern("^([+-]?)([0-9]{4,6})(?:-([0-9]{2})-([0-9]{2}))?$");
-    std::smatch m;
-    require(std::regex_match(text,m,pattern),"INVALID_DATE: format");
-    require(!m[1].str().empty() || m[2].length()==4,"INVALID_DATE: extended year needs sign");
-    int magnitude=std::stoi(m[2]), year=m[1]=="-"?-magnitude:magnitude;
-    require(year!=0,"INVALID_DATE: year zero");
-    bool date=m[3].matched;
-    int month=date?std::stoi(m[3]):1, day=date?std::stoi(m[4]):1;
-    require(month>=1&&month<=12,"INVALID_DATE: month");
-    int days=monthDays(year,month);
-    require(day>=1&&day<=days,"INVALID_DATE: day");
-    auto key=static_cast<std::int64_t>(year)*10000;
-    return {text,date?"date":"year",key+month*100+day,date?key+month*100+day:key+1231};
-}
-std::pair<std::int64_t,std::int64_t> temporalBounds(const Validity& v) {
-    auto lo=v.from?parseTemporal(*v.from).start:-infinity;
-    auto hi=v.to?parseTemporal(*v.to).end:infinity;
-    require(lo<=hi,"INVALID_DATE: reversed interval"); return {lo,hi};
-}
 ProjectDocument::ProjectDocument(std::vector<Country> countries,std::vector<Layer> layers) {
     std::random_device random;
     static const char hex[]="0123456789abcdef";
@@ -103,6 +82,21 @@ const TerritorialRelation* effectiveRelation(const ProjectDocument& d,const std:
         else { auto b=temporalBounds(r.validity); if(date>=b.first&&date<=b.second) return &r; }
     }
     return base;
+}
+const TerritorialRelation* effectiveRelationAt(const ProjectDocument& document,
+                                               const std::string& unitId,
+                                               const std::string& referenceDate) {
+    const auto point=parseTemporal(referenceDate);
+    const TerritorialRelation* base=nullptr;
+    const TerritorialRelation* dated=nullptr;
+    for(const auto& relation:document.relations)if(relation.unit==territorialRef(unitId)) {
+        if(!relation.dated){base=&relation;continue;}
+        const auto interval=normalizeTemporalInterval(relation.validity.from,relation.validity.to);
+        if(!temporalContains(interval,point))continue;
+        require(!dated,"PERIOD_CONFLICT: ambiguous reference date");
+        dated=&relation;
+    }
+    return dated?dated:base;
 }
 DocumentIndex validateDocument(const ProjectDocument& d) {
     validatePresentation(d);

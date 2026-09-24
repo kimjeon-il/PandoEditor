@@ -8,3 +8,4 @@ tests/fixtures/web-presentation/source/** text eol=lf
 assets/geometry/*.js text eol=lf
 tests/fixtures/web-m4/source/** text eol=lf
 tests/fixtures/web-content/source/** text eol=lf
+tests/fixtures/web-m6/source/** text eol=lf whitespace=-blank-at-eol

@@ -1,5 +1,6 @@
 #pragma once
 #include <pandoeditor/presentation.h>
+#include <pandoeditor/temporal.h>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -88,11 +89,6 @@ struct PhysicalDataSettings {
     std::string dataset, version, source;
     std::vector<std::string> hiddenHydroIds;
 };
-struct TemporalValue {
-    std::string text, precision;
-    std::int64_t start, end;
-};
-TemporalValue parseTemporal(const std::string& text);
 std::pair<std::int64_t,std::int64_t> temporalBounds(const Validity& validity);
 struct TerritorialUnit {
     std::string id, name, notes;
@@ -191,6 +187,8 @@ std::string contentGroup(const ProjectDocument&,const ObjectRef&);
 std::vector<CountryView> countryViews(const ProjectDocument& document);
 const std::string& nativeLayerId(const ProjectDocument&,const ObjectRef&);
 const TerritorialRelation* effectiveRelation(const ProjectDocument&, const std::string& unitId, std::int64_t date);
+const TerritorialRelation* effectiveRelationAt(const ProjectDocument&,const std::string& unitId,
+                                               const std::string& referenceDate);
 std::vector<std::string> blockingExtensions(const ProjectDocument&, const ObjectRef&, const std::string& effect);
 bool effectAllowed(const ProjectDocument&, const ObjectRef&, const std::string& effect);
 } // namespace pandoeditor

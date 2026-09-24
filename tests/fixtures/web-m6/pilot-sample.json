@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 2,
+  "entities": [
+    {
+      "libraryId": "historical-country:czechoslovakia",
+      "type": "country",
+      "canonicalName": "Czechoslovakia",
+      "displayNames": {
+        "ko": "체코슬로바키아",
+        "en": "Czechoslovakia",
+        "cs": "Československo"
+      },
+      "alternateNames": [
+        "체코슬로바키아 공화국",
+        "Czecho-Slovakia"
+      ],
+      "startDate": "1918",
+      "endDate": "1992",
+      "geometryVersions": [
+        {
+          "id": "historical-country:czechoslovakia:pilot-successor-union",
+          "validFrom": "1918",
+          "validTo": "1992",
+          "memberCountryIds": [
+            "CZE",
+            "SVK"
+          ],
+          "datePrecision": "approximate",
+          "certainty": "low",
+          "sourceId": "natural-earth-5.1.1-successor-union",
+          "notes": "현대 후계국 외곽선 합집으로 만든 기능 시험용 근사 경계입니다."
+        }
+      ],
+      "metadata": {
+        "geographicRegion": "Europe",
+        "pilot": true,
+        "approximateGeometry": true,
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzIDIiIGlkPSJmbGFnLWN6ZWNob3Nsb3Zha2lhIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCAwaDN2MUgweiIvPjxwYXRoIGZpbGw9IiNkNzE0MWEiIGQ9Ik0wIDFoM3YxSDB6Ii8+PHBhdGggZmlsbD0iIzExNDU3ZSIgZD0iTTAgMHYybDEuNS0xeiIvPjwvc3ZnPg=="
+      },
+      "sourceInfo": {
+        "title": "판도연구소 pilot derived from Natural Earth 5.1.1 successor states",
+        "license": "Public domain derivative",
+        "notes": "역사 경계 검증용이 아닌 라이브러리 작동 시험용입니다."
+      },
+      "instantiation": {
+        "mode": "territory-replacement",
+        "countryUpdates": {}
+      }
+    },
+    {
+      "libraryId": "historical-country:yugoslavia",
+      "type": "country",
+      "canonicalName": "Yugoslavia",
+      "displayNames": {
+        "ko": "유고슬라비아",
+        "en": "Yugoslavia"
+      },
+      "alternateNames": [
+        "유고슬라비아 왕국",
+        "Kingdom of Yugoslavia",
+        "Kingdom of Serbs, Croats and Slovenes",
+        "유고슬라비아 사회주의 연방공화국",
+        "Socialist Federal Republic of Yugoslavia",
+        "SFR Yugoslavia",
+        "SFRY",
+        "유고슬라비아 연방공화국",
+        "Federal Republic of Yugoslavia",
+        "세르비아-몬테네그로",
+        "FRY"
+      ],
+      "startDate": "1918-12-01",
+      "endDate": "2003-02-04",
+      "geometryVersions": [
+        {
+          "id": "historical-country:kingdom-of-yugoslavia:1918-1941-r1",
+          "validFrom": "1918-12-01",
+          "validTo": "1941-04-17",
+          "memberCountryIds": [
+            "SRB",
+            "MNE",
+            "HRV",
+            "SVN",
+            "BIH",
+            "MKD",
+            "KOS"
+          ],
+          "datePrecision": "reference-date",
+          "certainty": "medium",
+          "sourceId": "natural-earth-5.1.1-historical-successor-union",
+          "notes": "현재 후계국 외곽선 합집으로 재구성한 유고슬라비아 왕국의 참고 경계입니다."
+        },
+        {
+          "id": "historical-country:sfr-yugoslavia:1945-1992-r1",
+          "validFrom": "1945-11-29",
+          "validTo": "1992-04-27",
+          "memberCountryIds": [
+            "SRB",
+            "MNE",
+            "HRV",
+            "SVN",
+            "BIH",
+            "MKD",
+            "KOS"
+          ],
+          "datePrecision": "reference-date",
+          "certainty": "medium",
+          "sourceId": "natural-earth-5.1.1-historical-successor-union",
+          "notes": "현재 후계국 외곽선 합집으로 재구성한 유고슬라비아 사회주의 연방공화국의 참고 경계입니다."
+        },
+        {
+          "id": "historical-country:federal-republic-of-yugoslavia:1992-2003-r1",
+          "validFrom": "1992-04-27",
+          "validTo": "2003-02-04",
+          "memberCountryIds": [
+            "SRB",
+            "MNE",
+            "KOS"
+          ],
+          "datePrecision": "reference-date",
+          "certainty": "medium",
+          "sourceId": "natural-earth-5.1.1-historical-successor-union",
+          "notes": "세르비아·몬테네그로와 당시 세르비아에 포함된 코소보를 합친 참고 경계입니다."
+        }
+      ],
+      "metadata": {
+        "geographicRegion": "Europe",
+        "pilot": true,
+        "approximateGeometry": true,
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyIDEiIGlkPSJmbGFnLXl1Z29zbGF2aWEiPjxwYXRoIGZpbGw9IiMwMDM4OTMiIGQ9Ik0wIDBoMnYuMzMzSDB6Ii8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgLjMzM2gydi4zMzRIMHoiLz48cGF0aCBmaWxsPSIjZGQwMDAwIiBkPSJNMCAuNjY3aDJ2LjMzM0gweiIvPjxwYXRoIGZpbGw9IiNkZDAwMDAiIHN0cm9rZT0iI2Y1YmYyMiIgc3Ryb2tlLXdpZHRoPSIuMDI1IiBkPSJtMSAuMjM1LjA2LjE4aC4xOWwtLjE1NS4xMS4wNi4xOEwxIC41OTUuODQ1LjcwNWwuMDYtLjE4TC43NS40MTVoLjE5eiIvPjwvc3ZnPg=="
+      },
+      "sourceInfo": {
+        "title": "Natural Earth 5.1.1 Admin 0 with historical Yugoslav state versions",
+        "license": "Natural Earth public domain",
+        "sources": [
+          {
+            "title": "Natural Earth 5.1.1 Admin 0 Countries",
+            "license": "Public domain"
+          }
+        ],
+        "notes": "유고슬라비아 왕국·사회주의 연방공화국·연방공화국을 하나의 국가 정체성 아래 기간별 경계 버전으로 보존한 참고 자료입니다."
+      },
+      "instantiation": {
+        "mode": "territory-replacement",
+        "countryUpdates": {}
+      }
+    },
+    {
+      "libraryId": "historical-subunit:soviet-union:latvian-ssr",
+      "type": "subunit",
+      "canonicalName": "Latvian Soviet Socialist Republic",
+      "displayNames": {
+        "ko": "라트비아 소비에트 사회주의 공화국",
+        "en": "Latvian Soviet Socialist Republic"
+      },
+      "alternateNames": [
+        "라트비아 SSR",
+        "Latvian SSR"
+      ],
+      "startDate": "1940-08-05",
+      "endDate": "1991-12-25",
+      "parentLibraryId": "historical-country:soviet-union",
+      "sovereignLibraryId": "historical-country:soviet-union",
+      "geometryVersions": [
+        {
+          "id": "historical-subunit:soviet-union:latvian-ssr:1991-r1",
+          "validFrom": "1991-01-01",
+          "validTo": "1991-12-25",
+          "memberCountryIds": [
+            "LVA"
+          ],
+          "datePrecision": "reference-year",
+          "certainty": "medium",
+          "sourceId": "natural-earth-5.1.1-late-soviet-adjustment",
+          "notes": "현재 Natural Earth 국가 외곽선을 1991년 가맹공화국 근사 경계로 재사용했습니다."
+        }
+      ],
+      "metadata": {
+        "geographicRegion": "Europe/Asia",
+        "pilot": true,
+        "approximateGeometry": true,
+        "referenceDate": "1991-01-01",
+        "constituentRepublic": true,
+        "defaultFlagDataUrl": "data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjYwMCIgd2lkdGg9IjEyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+DQogICAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjYzAwIiAvPg0KICAgIDxwYXRoDQogICAgICAgIGQ9Im0yNDAuMDAwMDEgMzcuNS04LjQxOTMzIDI1LjkxMTg4aC0yNy4yNDUxN2wyMi4wNDE3NyAxNi4wMTQyNC04LjQxOTMzIDI1LjkxMTg4IDIyLjA0MjA2LTE2LjAxNDU0IDIyLjA0MjA3IDE2LjAxNDU0LTguNDE5MzMtMjUuOTExODggMjIuMDQxNzYtMTYuMDE0MjRoLTI3LjI0NTE2em0wIDEzLjQ5OTk4IDUuMzg4MjggMTYuNTgzNDhoMTcuNDM3MThsLTE0LjEwNyAxMC4yNDk0OSA1LjM4ODI3IDE2LjU4MzQ4LTE0LjEwNjczLTEwLjI0OTIxLTE0LjEwNjcyIDEwLjI0OTIxIDUuMzg4MjctMTYuNTgzNDgtMTQuMTA3MDEtMTAuMjQ5NDloMTcuNDM3MTh6Ig0KICAgICAgICBmaWxsPSIjZmZkNzAwIiAvPg0KICAgIDxnIGZpbGw9IiNmZmQ3MDAiIHRyYW5zZm9ybT0ibWF0cml4KC45ODkzMTg3OSAwIDAgLjk4NjczODExIDQzLjgyOTI3MyAzLjc2NTk0MSkiPg0KICAgICAgICA8cGF0aA0KICAgICAgICAgICAgZD0ibTEzNy40Mzc0NCAxNzEuNjk0MjEgMTguODYyOTYgMTguOTkzNyAxNy43ODgzNC0xNy42NjU4OWMyNy4wNTg0NyAyOS4wMjEgNTUuNDM4MDcgNTYuOTk1MDEgODIuMjg3MDQgODYuMTI3ODIgNC4wMzQ0NCA0LjA2MjMzIDEwLjU5ODE1IDQuMDg1IDE0LjY2MDU2LjA1MDYgNC4wNjIzMi00LjAzNDQ1IDQuMDg0OTktMTAuNTk4MTUuMDUwNi0xNC42NjA1Ni0yOC44MTg3MS0yNy4xOTAxLTU3LjcyNTQ1LTU0LjYwMTQzLTg2LjU1MzI4LTgxLjg5MDk1bDIzLjk2NDk5LTIzLjgwMDAzLTMzLjM0MDI2LTQuNjE2MDV6IiAvPg0KICAgICAgICA8cGF0aA0KICAgICAgICAgICAgZD0ibTE5OC4yODg3IDExMC4xOTU1YzE1LjUxNzQzIDguNzM5NCAyNy4yOTg3MiAyMS4yODEyMiAzNC4yNDg0IDM0LjM5MjQgNy4wNDM5NCAxMy4yODkwMiAxMC4xMzk1OSAyNy4xNjIxOCAxMC4yMDMyNSAzOC4yNTQzMy4xMzA1NCAyMi43NDM3NC0xOC40Mzc3MSA0MS4xODE4NC00MS4xODE4MyA0MS4xODE4NC0xMi4xMzU5NyAwLTIzLjA0NjA3LTUuMjQ4NjgtMzAuNTgzMDItMTMuNjAwODVsLTQuMTY4NjMgMy41MTAzM2MtLjcwOTk5LS4yNzIzMS0xLjQ2Mzg3LS40MTIyMS0yLjIyNDI5LS40MTI3Ni0xLjgyOTQ4LjAwMDE5LTMuNTY2MjEuODA1MzEtNC43NDg1OSAyLjIwMTM2LTIuOTczNjguMzg4OTYtNS40NjI1MSAyLjQ0NTI5LTYuNDA1MzQgNS4yOTIyNC0zLjEzNDg2IDYuMjg4NDMtOC42MzUyNCAxMS4yMTk5Ny0xNS4yOTEwNCAxMy40Nzc2LS4wNjM3LjAyMTYtLjExOTkyLjA1LS4xNzU4LjA3ODMtMy4wNzc0OSAxLjEyNzU4LTYuMTYyNTkgMy4xNjQzLTguNzg5MTkgNS44MDI0NS01LjE5MTU1IDUuMjM2NTYtNy43Mjg1OCAxMS45MzY1OC02LjMwMDI0IDE2LjYzODIyLS4xNDA5OC40MDg1Ny0uMjEzNjEuODM3NTktLjIxNDk4IDEuMjY5NzkuMDAwMTUgMi4xNzA4MiAxLjc1OTkxIDMuOTMwNTggMy45MzA3MyAzLjkzMDczLjU0MzQxLS4wMDIgMS4wODA1My0uMTE2MzkgMS41Nzc0NS0uMzM2MzIgNC42OTM2OSAxLjA1ODgxIDExLjA2ODg1LTEuNTQ1ODIgMTYuMDU0NDQtNi41NTkxNyAyLjgyNjI0LTIuODUwNzIgNC45NDM1Ni02LjIyMzQ5IDUuOTgzMDMtOS41MzA2MiAyLjMxNjk2LTYuNjIyNzggNy4yOTY5OS0xMi4wMTg1NiAxMy42MjI4MS0xNS4wNTMxMi4xNTEwNS0uMDcyNS4yNzMwMy0uMTQ3MTQuMzgyMTgtLjIyMzU4IDIuMTIwODItMS4wMTQwOCAzLjY3MjUxLTIuOTI4OTUgNC4yMjUtNS4yMTM5IDkuNzAyMjIgMTEuNDQ0ODEgMjQuMjUyNTUgMTguNzUyOTkgNDAuNTE4NzYgMTkuMTM1NzcgMjkuODMzNTIuNzAyMDUgNTIuMTMyOTktMjEuMjU4MDIgNTMuMTY0MTQtNTIuODM2NDIuNTE4OTQtMTUuODkyNTktNS42Mjk5My0zNi4zODQ3LTE5LjY0MTItNTMuMTkwODktMTAuNzA4MzUtMTIuODQ0NDEtMjYuNDA5ODctMjMuNTA3OTUtNDQuMTg2OTktMjguMjA3Nzd6IiAvPg0KICAgIDwvZz4NCiAgICA8ZyBmaWxsLXJ1bGU9ImV2ZW5vZGQiPg0KICAgICAgICA8cmVjdCB4PSIwIiB5PSI0ODAiIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjEyMCIgZmlsbD0iIzAzOSIgLz4NCiAgICAgICAgPHBhdGgNCiAgICAgICAgICAgIGQ9Im0xMjAwIDUwMGMtNDAgMC04MCAzMC0xMjAgMzBzLTgwLTMwLTEyMC0zMC04MCAzMC0xMjAgMzAtODAtMzAtMTIwLTMwLTgwIDMwLTEyMCAzMC04MC0zMC0xMjAtMzAtODAgMzAtMTIwIDMwLTgwLTMwLTEyMC0zMC04MCAzMC0xMjAgMzAtODAtMzAtMTIwLTMwbDAtMTAwYzQwIDAgODAgMzAgMTIwIDMwczgwLTMwIDEyMC0zMGM0MCAwIDgwIDMwIDEyMCAzMHM4MC0zMCAxMjAtMzBjNDAgMCA4MCAzMCAxMjAgMzBzODAtMzAgMTIwLTMwYzQwIDAgODAgMzAgMTIwIDMwczgwLTMwIDEyMC0zMGM0MCAwIDgwIDMwIDEyMCAzMHM4MC0zMCAxMjAtMzB6Ig0KICAgICAgICAgICAgZmlsbD0iI2ZmZiIgLz4NCiAgICAgICAgPHBhdGgNCiAgICAgICAgICAgIGQ9Im0xMjAwIDQyMGMtNDAgMC04MCAzMC0xMjAgMzBzLTgwLTMwLTEyMC0zMGMtNDAgMC04MCAzMC0xMjAgMzBzLTgwLTMwLTEyMC0zMGMtNDAgMC04MCAzMC0xMjAgMzBzLTgwLTMwLTEyMC0zMGMtNDAgMC04MCAzMC0xMjAgMzBzLTgwLTMwLTEyMC0zMGMtNDAgMC04MCAzMC0xMjAgMzBzLTgwLTMwLTEyMC0zMGwtMCA0MGM0MCAwIDgwIDMwIDEyMCAzMHM4MC0zMCAxMjAtMzAgODAgMzAgMTIwIDMwIDgwLTMwIDEyMC0zMCA4MCAzMCAxMjAgMzAgODAtMzAgMTIwLTMwIDgwIDMwIDEyMCAzMCA4MC0zMCAxMjAtMzAgODAgMzAgMTIwIDMwIDgwLTMwIDEyMC0zMHoiDQogICAgICAgICAgICBmaWxsPSIjMDM5IiAvPg0KICAgIDwvZz4NCjwvc3ZnPg=="
+      },
+      "sourceInfo": {
+        "title": "Natural Earth 5.1.1 Admin 0 with late-Soviet boundary adjustments",
+        "license": "Natural Earth public domain; flag file license is recorded on Wikimedia Commons",
+        "sources": [
+          {
+            "title": "Natural Earth 5.1.1 Admin 0 Countries",
+            "license": "Public domain"
+          },
+          {
+            "title": "Wikimedia Commons: Flag_of_Latvian_SSR.svg",
+            "url": "https://commons.wikimedia.org/wiki/File:Flag_of_Latvian_SSR.svg",
+            "license": "See file page"
+          }
+        ],
+        "notes": "1991년 말 소련 가맹공화국 구성을 현재 Natural Earth 외곽선으로 근사했습니다."
+      }
+    }
+  ],
+  "snapshots": [
+    {
+      "id": "pilot-1991",
+      "name": "1991년 기능 시험",
+      "referenceDate": "1991",
+      "entityRefs": [
+        "historical-country:czechoslovakia",
+        "historical-country:soviet-union"
+      ],
+      "metadata": {
+        "partial": true,
+        "pilot": true
+      },
+      "sourceInfo": {
+        "notes": "전체 세계 스냅샷이 아닌 라이브러리 기능 시험용 부분 구성입니다."
+      }
+    }
+  ]
+}

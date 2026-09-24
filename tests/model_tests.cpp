@@ -86,6 +86,10 @@ int main() {
         check(index.dependents.at({"userLayer","other"}).size()==3,"layer reverse index");
         check(effectiveRelation(d,"N",parseTemporal("1900").start)->parent->id=="A","dated replaces base");
         check(effectiveRelation(d,"N",parseTemporal("1902").start)->parent->id=="S","return to base");
+        check(effectiveRelationAt(d,"N","1900")->parent->id=="A","date-aware relationship at year precision");
+        check(effectiveRelationAt(d,"N","1901-12-31")->parent->id=="A","date-aware inclusive end");
+        check(effectiveRelationAt(d,"N","1902-01-01")->parent->id=="S","date-aware return to base");
+        rejects([&]{effectiveRelationAt(d,"N","0000");},"date-aware relationship rejects year zero");
         check(parseTemporal("-0044").start==-439899,"BCE ordering");
         check(parseTemporal("-0001-12-31").end<parseTemporal("0001-01-01").start,"no year zero gap");
         check(parseTemporal("+010000-02-29").precision=="date","extended leap date");

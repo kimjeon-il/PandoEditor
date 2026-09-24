@@ -8,6 +8,8 @@ add_library(pandoeditor_core STATIC
     src/presentation.cpp
     src/presentationcommands.cpp
     src/document.cpp
+    src/temporal.cpp
+    src/historicallibrary.cpp
     src/content.cpp
     src/objectproperties.cpp
     src/geometrypredicates.cpp
@@ -26,6 +28,25 @@ target_compile_features(pandoeditor_core PUBLIC cxx_std_17)
 set_target_properties(pandoeditor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_TESTING)
+    add_executable(temporal_tests ../tests/temporal_tests.cpp)
+    target_link_libraries(temporal_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME temporal_tests COMMAND temporal_tests)
+    add_executable(historical_library_tests ../tests/historical_library_tests.cpp)
+    target_link_libraries(historical_library_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME historical_library_tests COMMAND historical_library_tests)
+    add_executable(historical_library_probe ../tests/historical_library_probe.cpp)
+    target_link_libraries(historical_library_probe PRIVATE Pandoeditor::Core)
+    add_executable(temporal_probe ../tests/temporal_probe.cpp)
+    target_link_libraries(temporal_probe PRIVATE Pandoeditor::Core)
+    find_program(PANDOEDITOR_M6_NODE_EXECUTABLE NAMES node)
+    if(PANDOEDITOR_M6_NODE_EXECUTABLE)
+        add_test(NAME m6_temporal_web_parity
+            COMMAND "${PANDOEDITOR_M6_NODE_EXECUTABLE}"
+                "${PROJECT_SOURCE_DIR}/tools/m6-temporal-oracle.mjs" "$<TARGET_FILE:temporal_probe>")
+        add_test(NAME m6_historical_catalog_web_parity
+            COMMAND "${PANDOEDITOR_M6_NODE_EXECUTABLE}"
+                "${PROJECT_SOURCE_DIR}/tools/m6-historical-oracle.mjs" "$<TARGET_FILE:historical_library_probe>")
+    endif()
     find_package(ZLIB REQUIRED)
     add_executable(hydro_format_tests ../tests/hydro_format_tests.cpp)
     target_link_libraries(hydro_format_tests PRIVATE Pandoeditor::Core ZLIB::ZLIB)

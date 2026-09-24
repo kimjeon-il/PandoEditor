@@ -1,0 +1,23 @@
+{
+  "repository": "kimjeon-il/world-map",
+  "revision": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+  "historicalPilot": {
+    "path": "assets/data/historical-library-pilot.json",
+    "blobSha": "94ef368befa665b4ed61892622a71ffa6520457f",
+    "fixture": "pilot-sample.json",
+    "fixtureKind": "selected verbatim entities and the original snapshot"
+  },
+  "sourceBlobs": {
+    "temporal.js": "31faf94894e302b3eadf61d79a32efd0490affe3",
+    "country-flags.js": "827bb4b1579fb33e5711000d70940b374db8e623",
+    "historical-library.js": "dce9ebb1e0326e1156dffe5282b01208b6b9dd01",
+    "historical-library-service.js": "d71a90aae1ac4ecc8b9630316340267f6fd92294",
+    "historical-library-controller.js": "1060331d23f96e9ee4fedab6143c6fbe61a0abc3",
+    "gis-import-plan.js": "f99e9031adfcd33b52249990417c2ab6a79bc5b3",
+    "gis-import-transaction.js": "78a80e50d52c9d1d510c71f4f1ff48ca3c942104",
+    "gis-file-controller.js": "5222a552fbb800a8a42bcaeeb119d128a73cc9b6",
+    "gis-export-controller.js": "871293159a55d13f88f14813f8b706765d6368f9",
+    "exchange-adapter-registry.js": "634fab3cfa6e19d5dd4488eb330c9add02df7237"
+  },
+  "missingNamedPath": "assets/js/modules/gis-adapters.js"
+}
