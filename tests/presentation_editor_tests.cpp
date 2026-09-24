@@ -67,6 +67,34 @@ private slots:
         controller.undo();QVERIFY(controller.hiddenHydroIds().isEmpty());
         QCOMPARE(controller.revision(),revision+2);
     }
+    void fragmentedBuiltinCopiesAtomicallyAndSurvivesReopen(){
+        QTemporaryDir dir;const auto manifest=QStringLiteral(WEB_HYDRO_FIXTURE)+"/v0.13.1/manifest.json";
+        const auto path=dir.filePath("copied-hydro.json");
+        EditorController controller({false,dir.filePath("private.json")});
+        QVERIFY(controller.configureHydroData(QUrl::fromLocalFile(manifest)));
+        QVERIFY(controller.selectObject({{"domain","hydroBuiltin"},{"id","fixture:5"}}));
+        const auto revision=controller.revision();
+        QVERIFY(controller.copyBuiltinHydro());
+        QTRY_COMPARE_WITH_TIMEOUT(controller.hiddenHydroIds().size(),1,5000);
+        QCOMPARE(controller.revision(),revision+1);
+        QCOMPARE(controller.primaryObject().value("domain").toString(),QStringLiteral("hydro"));
+        QCOMPARE(controller.hiddenHydroIds().front().toString(),QStringLiteral("fixture:5"));
+        const auto copiedId=controller.primaryObject().value("id").toString();
+        controller.setSearchQuery("Split");
+        const auto results=controller.searchResults();
+        const auto original=std::find_if(results.begin(),results.end(),[](const QVariant& row){
+            return row.toMap().value("id").toString()=="fixture:5";
+        });
+        QVERIFY(original!=results.end());QVERIFY(!original->toMap().value("visible").toBool());
+        QVERIFY(controller.saveFile(QUrl::fromLocalFile(path)));
+        EditorController reopened({false,dir.filePath("second-private.json")});
+        QVERIFY(reopened.openFile(QUrl::fromLocalFile(path)));
+        QCOMPARE(reopened.hiddenHydroIds().front().toString(),QStringLiteral("fixture:5"));
+        QVERIFY(reopened.selectObject({{"domain","hydro"},{"id",copiedId}}));
+        QCOMPARE(reopened.primaryObject().value("id").toString(),copiedId);
+        controller.undo();QVERIFY(controller.hiddenHydroIds().isEmpty());
+        controller.redo();QCOMPARE(controller.hiddenHydroIds().size(),1);
+    }
     void visibilityKeepsSelectionDraftAndRedo() {
         QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});
         c.selectCountry("DEU");c.setColor("#112233");c.undo();QVERIFY(c.canRedo());

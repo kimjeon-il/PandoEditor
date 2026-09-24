@@ -1,7 +1,9 @@
 # M5 implementation contract and progress
 
-Baseline: Pandoeditor `00ac06a`; web `bc46720`. This document describes work in
-progress, not an M5 completion report.
+Original content baseline: Pandoeditor `00ac06a`; web `bc46720`. The M5 closing
+branch is based on editor `168fb7cf` and web `c0bd31d1`. This document records
+the original content pass and subsequent closing work; its current gate is in
+`m5-closure-audit.md`.
 
 ## Canonical data
 
@@ -73,22 +75,16 @@ the same candidate. Locks and unknown extension dependencies are conservative.
   `unavailable` instead of inventing an image.
 - A local hydro provider validates an explicitly selected `0.13.1`
   `pandolab-water-shards-v5` manifest and index. Configuration is an undoable
-  content command. It does not download, substitute or yet decode the packed
-  worldwide feature data; existing loaded builtin records retain copy-on-edit.
+  content command. The closing branch decodes the packed index, metadata and
+  viewport packs into a separate read-only runtime, renders active river/lake
+  geometry, and supports pick/search/focus and copy-on-edit. It does not download
+  or bundle the external worldwide dataset.
 
-## Required remaining implementation
+## M5 acceptance still open
 
-- Decode the selected packed hydro index/shards into read-only map features;
-  only provider identity and availability are connected in this pass.
-- Complete whole-object translation and exact web content primitive ordering,
-  plus broader all-domain hover/render-cache evidence.
-- Add the remaining allocation-failure and typed-reference regression cases,
-  then run the final M5-wide CTest/Oracle integration pass.
-- Perform visible Windows interaction and physical Android touch/SAF/IME checks.
-  Offscreen QML coverage must not be reported as either of those checks.
-
-M5 remains open until those items and the previously scoped domain flows are
-verified end to end.
-
-Windows frame, deployment assets and the web working tree are outside these edits.
-No commit, push or deployment is part of this work.
+The hydro format and runtime implementation, allocation-failure cases and
+central draw/pick policy are on `codex/m5-completion`. The fresh complete CI,
+actual `0.13.1` worldwide dataset check, exhaustive draw/pick pair evidence,
+whole-object translation and all-domain hover/cache evidence are tracked in
+`m5-closure-audit.md`. Visible Windows interaction and physical Android input
+remain separate platform gates; offscreen Qt does not satisfy either.
