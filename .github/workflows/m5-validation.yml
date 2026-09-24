@@ -1,7 +1,7 @@
-name: M5 validation
+name: M5/M6 validation
 on:
   push:
-    branches: [codex/m5-completion]
+    branches: [codex/m5-completion, codex/m6-temporal-library-gis]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -28,7 +28,7 @@ jobs:
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
       - name: Fetch pinned full hydro dataset
         id: real_hydro
-        continue-on-error: true
+        continue-on-error: false
         uses: actions/checkout@v4
         with:
           repository: kimjeon-il/world-map
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m5-results-${{ github.sha }}
+          name: m6-results-${{ github.sha }}
           path: |
             build/results.xml
             build/Testing/Temporary/LastTest.log
