@@ -10,14 +10,15 @@ class MapRenderTests:public QObject {
 private slots:
     void overlayPairsFollowWebDrawGroups_data(){
         QTest::addColumn<QString>("left");QTest::addColumn<QString>("right");
-        QTest::newRow("religion-ethnicity")<<"religion"<<"ethnicity";
-        QTest::newRow("ethnicity-language")<<"ethnicity"<<"language";
-        QTest::newRow("language-subunit")<<"language"<<"subunit";
-        QTest::newRow("subunit-region")<<"subunit"<<"region";
-        QTest::newRow("region-generic")<<"region"<<"generic";
+        QTest::addColumn<QString>("top");
+        QTest::newRow("religion-ethnicity")<<"religion"<<"ethnicity"<<"ethnicity";
+        QTest::newRow("ethnicity-language")<<"ethnicity"<<"language"<<"language";
+        QTest::newRow("language-subunit")<<"language"<<"subunit"<<"language";
+        QTest::newRow("subunit-region")<<"subunit"<<"region"<<"region";
+        QTest::newRow("region-generic")<<"region"<<"generic"<<"generic";
     }
     void overlayPairsFollowWebDrawGroups(){
-        QFETCH(QString,left);QFETCH(QString,right);
+        QFETCH(QString,left);QFETCH(QString,right);QFETCH(QString,top);
         using namespace pandoeditor;
         ProjectDocument document;
         for(const auto& [id,kind]:std::vector<std::pair<std::string,UnitKind>>{
@@ -45,7 +46,7 @@ private slots:
         item.setVisuals({{left,visual(left,"#ff0000")},{right,visual(right,"#0000ff")}});
         QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
         QPainter painter(&image);item.paint(&painter);painter.end();
-        QCOMPARE(image.pixelColor(20,20),QColor("#0000ff"));
+        QCOMPARE(image.pixelColor(20,20),QColor(top==left?"#ff0000":"#0000ff"));
     }
     void webPassesPlaceLakeAboveCountryAndStrokeAboveLake(){
         MapRenderItem item;item.setWidth(40);item.setHeight(40);item.setMapScale(1);
