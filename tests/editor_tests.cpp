@@ -1,5 +1,5 @@
 #include "editorcontroller.h"
-#include <QCoreApplication>
+#include <QGuiApplication>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -12,7 +12,7 @@ void checkAt(bool value,int line) { if (!value) throw std::runtime_error("check 
 #define check(value) checkAt((value),__LINE__)
 int main(int argc,char** argv)
 {
-    QCoreApplication application(argc,argv);
+    QGuiApplication application(argc,argv);
     try {
         QFile input(":/assets/sample.pando.json"); check(input.open(QIODevice::ReadOnly));
         auto sample=input.readAll();

@@ -121,9 +121,19 @@ private slots:
         auto doc=losslessjson::parse(full());
         doc.object["distributionLayers"]=losslessjson::parse(R"([{"id":"00000000-0000-4000-8000-000000000011","schemaVersion":2,"type":"religion","name":"R"}])");
         doc.object["distributionEntries"]=losslessjson::parse(R"([{"id":"00000000-0000-4000-8000-000000000012","schemaVersion":2,"layerId":"00000000-0000-4000-8000-000000000011","mode":"territorial","territorialUnitId":"A","share":60},{"id":"00000000-0000-4000-8000-000000000013","schemaVersion":2,"layerId":"00000000-0000-4000-8000-000000000011","mode":"territorial","territorialUnitId":"A","share":70}])");
-        auto c=webimport::prepare(doc.encode());bool dependent=false;
-        for(const auto& e:c.document.extensions)if(e.jsonPointer=="/distributionEntries") {QCOMPARE(e.payload,doc.object["distributionEntries"].encode().toStdString());dependent=!e.dependencies.empty();}
-        QVERIFY(dependent);
+        auto c=webimport::prepare(doc.encode());bool archived=false;
+        for(const auto& e:c.document.extensions)if(e.jsonPointer=="/distributionEntries") {
+            QCOMPARE(e.payload,doc.object["distributionEntries"].encode().toStdString());
+            archived=e.status=="migrationArchive";
+        }
+        QVERIFY(archived);
+        QCOMPARE(c.document.distributionEntries.size(),std::size_t(2));
+        for(const auto& entry:c.document.distributionEntries) {
+            QVERIFY(entry.territory.has_value());
+            QCOMPARE(*entry.territory,territorialRef("A"));
+        }
+        QCOMPARE(c.document.distributionEntries[0].share,60.);
+        QCOMPARE(c.document.distributionEntries[1].share,70.);
         doc.object["distributionEntries"].array[0].object["territorialUnitId"]=losslessjson::Value::str("missing");
         QVERIFY(errorFor([&]{webimport::prepare(doc.encode());}).contains("DANGLING_REF"));
     }

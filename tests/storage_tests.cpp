@@ -128,7 +128,7 @@ private slots:
         QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(original); file.close();
         EditorController editor; QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
         QCOMPARE(readFile(path),original); QVERIFY(!editor.dirty());
-        QVERIFY(editor.documentNotice().contains("v5"));
+        QVERIFY(editor.documentNotice().contains("Qt v6"));
         QVERIFY(editor.saveFile(QUrl::fromLocalFile(path)));
         QCOMPARE(QJsonDocument::fromJson(readFile(path)).object()["version"].toInt(),6);
         auto extended=original; extended.insert(extended.indexOf('{')+1,"\"future\":{\"x\":true},");

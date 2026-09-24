@@ -1,5 +1,6 @@
 #include "editorcontroller.h"
 #include <QtTest>
+#include <QGuiApplication>
 #include <QFile>
 #include <QTemporaryDir>
 #include <cmath>
@@ -180,5 +181,9 @@ private slots:
         QVERIFY(editor.confirmWebImport(hash,"discard"));QVERIFY(editor.selectionItems().isEmpty());QVERIFY(editor.searchQuery().isEmpty());
     }
 };
-QTEST_GUILESS_MAIN(SelectionEditorTests)
+int main(int argc,char** argv) {
+    QGuiApplication app(argc,argv);
+    SelectionEditorTests tests;
+    return QTest::qExec(&tests,argc,argv);
+}
 #include "selection_editor_tests.moc"
