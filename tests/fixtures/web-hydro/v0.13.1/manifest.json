@@ -41,8 +41,8 @@
     "featureCount": 6,
     "core": {
       "url": "metadata-core.json.gz",
-      "bytes": 342,
-      "sha256": "acb0fa66d21fdeab14b8c8769c5c3238375860abeb80e2bf44bbf60aeda53900"
+      "bytes": 350,
+      "sha256": "802d827ac087c073f230aeee332215d9e1df3e65c74e0f8cfe5828b56d0fc744"
     },
     "detail": {
       "url": "../v0.13.0/metadata-detail.json.gz",

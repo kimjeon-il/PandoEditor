@@ -134,7 +134,7 @@ HydroIndex decodeHydroIndex(HydroByteView bytes,
     checkCount(logicalCount,6,reader.remaining());
     for(std::uint32_t i=0;i<logicalCount;i++){
         const auto logical=reader.number(4),count=reader.number(2);
-        if(!logical||!count||!index.logicalPacks.emplace(logical,packList(reader,count)).second)
+        if(!count||!index.logicalPacks.emplace(logical,packList(reader,count)).second)
             throw std::runtime_error("invalid hydro logical feature");
     }
     checkCount(packCount,15,reader.remaining());

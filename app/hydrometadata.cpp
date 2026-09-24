@@ -10,7 +10,7 @@ namespace {
 bool unsignedId(const QJsonValue& value,quint32& output) {
     if(!value.isDouble())return false;
     const double number=value.toDouble();
-    if(!std::isfinite(number)||number<1||number>std::numeric_limits<quint32>::max()||std::floor(number)!=number)return false;
+    if(!std::isfinite(number)||number<0||number>std::numeric_limits<quint32>::max()||std::floor(number)!=number)return false;
     output=static_cast<quint32>(number);return true;
 }
 bool payload(const QByteArray& bytes,QJsonArray& features,QString& error) {
@@ -52,12 +52,15 @@ bool parseHydroCoreMetadata(const QByteArray& bytes,int expectedCount,
         record.awId=row.value("awId").toString();record.name=row.value("name").toString();
         record.layerId=row.value("layerId").toString();record.category=row.value("category").toString();
         for(const auto& coordinate:bounds){
-            if(!coordinate.isDouble()||!std::isfinite(coordinate.toDouble())){
+            if(!coordinate.isDouble()||!std::isfinite(coordinate.toDouble())||
+               std::floor(coordinate.toDouble())!=coordinate.toDouble()||
+               std::abs(coordinate.toDouble())>180000000.){
                 error=QStringLiteral("수계 metadata bounds가 올바르지 않습니다.");return false;
             }
-            record.bounds.append(coordinate.toDouble());
+            record.bounds.append(coordinate.toDouble()/1000000.);
         }
-        if(record.bounds[0]>record.bounds[2]||record.bounds[1]>record.bounds[3]){
+        if(record.bounds[0]<-180||record.bounds[2]>180||record.bounds[1]<-90||
+           record.bounds[3]>90||record.bounds[0]>record.bounds[2]||record.bounds[1]>record.bounds[3]){
             error=QStringLiteral("수계 metadata bounds 순서가 올바르지 않습니다.");return false;
         }
         parsed.insert(record.fid,std::move(record));

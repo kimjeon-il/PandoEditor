@@ -56,6 +56,16 @@ int main() {
     assert(index.packSpecs.size()==6);
     assert(index.logicalPacks.at(5)==(std::vector<std::uint32_t>{4,5}));
     assert(index.packSpecs.at(5).offset==423);
+    {
+        auto zeroBased=bytes;
+        std::size_t offset=20;
+        for(std::size_t i=0;i<index.tilePacks.size();i++){
+            const auto count=std::size_t(zeroBased[offset+5])|(std::size_t(zeroBased[offset+6])<<8);
+            offset+=7+4*count;
+        }
+        assert(zeroBased[offset]==1);zeroBased[offset]=0;
+        assert(decode(zeroBased).logicalPacks.count(0)==1);
+    }
     for(std::size_t cut=0;cut<bytes.size();cut++){
         auto truncated=bytes;truncated.resize(cut);assert(rejected(truncated));
     }
@@ -68,6 +78,11 @@ int main() {
     const std::map<std::uint32_t,std::uint32_t> metadata{{1,1},{2,2},{3,3},{4,4},{5,5},{6,5}};
     const auto first=pack(index.packSpecs.at(0));
     const auto river=pandoeditor::decodeHydroPack({first.data(),first.size()},0,metadata);
+    {
+        auto zeroBased=first;zeroBased[12]=0;zeroBased[16]=0;
+        const auto decoded=pandoeditor::decodeHydroPack({zeroBased.data(),zeroBased.size()},0,{{0,0}});
+        assert(decoded.features.front().fid==0&&decoded.features.front().logicalFid==0);
+    }
     assert(river.features.size()==1);
     assert(river.features[0].geometry.lines.size()==1);
     assert(river.features[0].widths[0]==(std::vector<double>{0.8,1.2,1.6}));

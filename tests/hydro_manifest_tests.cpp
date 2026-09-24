@@ -126,7 +126,16 @@ private slots:
         QVERIFY2(parseHydroCoreMetadata(coreBytes,6,records,error),qPrintable(error));
         QCOMPARE(records.size(),6);
         QCOMPARE(records.value(5).logicalFid,quint32(5));
+        QCOMPARE(records.value(5).bounds[0],40.);
+        QCOMPARE(records.value(5).bounds[2],41.);
         QVERIFY(records.value(5).sourceId.isEmpty());
+        auto zeroBased=coreBytes;
+        QVERIFY(zeroBased.contains("\"fid\":1"));
+        zeroBased.replace("\"fid\":1","\"fid\":0");
+        zeroBased.replace("\"logicalFid\":1","\"logicalFid\":0");
+        HydroMetadata zeroRecords;
+        QVERIFY2(parseHydroCoreMetadata(zeroBased,6,zeroRecords,error),qPrintable(error));
+        QCOMPARE(zeroRecords.value(0).logicalFid,quint32(0));
         auto detailBytes=readHydroAsset(manifest.metadataDetail,true,error);
         QVERIFY2(mergeHydroDetailMetadata(detailBytes,records,error),qPrintable(error));
         QCOMPARE(records.value(5).sourceId,QStringLiteral("500"));

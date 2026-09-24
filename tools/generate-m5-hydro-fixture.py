@@ -141,6 +141,7 @@ def build() -> None:
         metadata.append({key: item[key] for key in ("fid", "logicalFid", "awId", "name",
             "layerId", "category", "stage", "flags", "fragmentIndex", "fragmentCount",
             "bounds", "systemId", "role")})
+        metadata[-1]["bounds"] = [round(v * 1_000_000) for v in item["bounds"]]
     shard_path = OLD / "shards/s0.bin"
     shard_path.write_bytes(shard)
     index = bytearray(struct.pack("<4sHHIII", b"AWI4", 4, 0, len(tiles), len(logical), len(packs)))
