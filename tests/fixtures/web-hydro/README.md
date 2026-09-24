@@ -32,7 +32,15 @@ node tools/m5-hydro-oracle.mjs --write-golden --fixture-only
 node tools/m5-hydro-oracle.mjs --fixture-only
 ```
 
-The full `--fixture-only` check runs without Qt. Native probe parity will be
-registered after the parser and native probe are implemented. Original source
-notices and licenses are retained with their pinned upstream files; the vendored
-Earcut runtime remains subject to its upstream license.
+The `--fixture-only` check runs without Qt. CTest now compares the native index
+and core metadata probe against the worker, and compares flat viewport tile IDs
+with `hydro-tile-window.js` at the zoom thresholds, antimeridian and high
+latitudes. The remaining native pack/mesh/logical-merge JSON parity is tracked
+separately. The web's hydro visibility threshold is
+`2.4 + log2(max(1, flatZoom)) * 2.05`, from
+`assets/js/modules/app-physical-resources.js` (blob
+`513828c12f366e70f1f9854d1652e3e81286b015`). The metadata **core** omits
+`source` and `sourceId`; the v5 detail file carries them and is lazy.
+
+Original source notices and licenses are retained with their pinned upstream
+files; the vendored Earcut runtime remains subject to its upstream license.

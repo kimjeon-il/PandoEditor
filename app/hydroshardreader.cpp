@@ -3,8 +3,10 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QMutexLocker>
 
 QByteArray HydroShardReader::readPack(quint32 offset,quint32 length,QString& error) {
+    QMutexLocker lock(&mutex_);
     error.clear();
     const QFileInfo info(asset_.path);
     const auto canonical=info.canonicalFilePath();
