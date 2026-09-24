@@ -102,8 +102,14 @@ LabelSettings automaticLabelSettings(const std::string& kind,const LabelSettings
     const auto i=policies.find(kind);const auto& p=i==policies.end()?policies.at("custom"):i->second;
     r.priority=p.priority;r.minZoom=p.min;r.maxZoom=p.max;r.collisionGroup=p.group;r.pinned=r.pinned||r.manualPosition.has_value();return r;
 }
-std::vector<ObjectRef> layoutLabels(const std::vector<LabelLayoutCandidate>& input,double zoom,double padding) {
-    auto rows=input;rows.erase(std::remove_if(rows.begin(),rows.end(),[&](const auto& c){return zoom<c.minZoom||zoom>c.maxZoom;}),rows.end());
+std::vector<ObjectRef> layoutLabels(const std::vector<LabelLayoutCandidate>& input,double zoom,double padding,
+                                    std::optional<LabelLayoutBounds> bounds) {
+    auto rows=input;rows.erase(std::remove_if(rows.begin(),rows.end(),[&](const auto& c){
+        if(zoom<c.minZoom||zoom>c.maxZoom)return true;
+        return bounds&&!c.selected&&!c.pinned&&
+            (c.x-c.width/2<bounds->left||c.x+c.width/2>bounds->right||
+             c.y-c.height/2<bounds->top||c.y+c.height/2>bounds->bottom);
+    }),rows.end());
     std::stable_sort(rows.begin(),rows.end(),[](const auto& a,const auto& b){if(a.selected!=b.selected)return a.selected>b.selected;if(a.pinned!=b.pinned)return a.pinned>b.pinned;if(a.priority!=b.priority)return a.priority>b.priority;return a.key<b.key;});
     struct Box{double l,t,r,b;std::string group;};std::vector<Box> placed;std::vector<ObjectRef> result;
     for(const auto& c:rows){Box box{c.x-c.width/2-padding,c.y-c.height/2-padding,c.x+c.width/2+padding,c.y+c.height/2+padding,c.collisionGroup};

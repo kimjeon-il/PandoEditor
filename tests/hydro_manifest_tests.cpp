@@ -139,7 +139,7 @@ private slots:
         auto detailBytes=readHydroAsset(manifest.metadataDetail,true,error);
         QVERIFY2(mergeHydroDetailMetadata(detailBytes,records,error),qPrintable(error));
         QCOMPARE(records.value(5).sourceId,QStringLiteral("500"));
-        auto bad=coreBytes;bad.replace("\"logicalFid\":1","\"logicalFid\":0");
+        auto bad=coreBytes;bad.replace("\"logicalFid\":1","\"logicalFid\":-1");
         QVERIFY(!parseHydroCoreMetadata(bad,6,records,error));
         QCOMPARE(records.value(5).sourceId,QStringLiteral("500"));
     }

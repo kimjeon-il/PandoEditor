@@ -13,6 +13,11 @@ private slots:
         QCOMPARE(layoutLabels({ordinary,selected},1,3),std::vector<ObjectRef>({{"label","b"}}));
         auto pinned=ordinary;pinned.ref={"label","c"};pinned.key="label:c";pinned.pinned=true;
         QCOMPARE(layoutLabels({ordinary,pinned},1,3),std::vector<ObjectRef>({{"label","c"}}));
+        ordinary.x=5;ordinary.width=20;
+        QVERIFY(layoutLabels({ordinary},1,3,LabelLayoutBounds{0,0,100,100}).empty());
+        ordinary.selected=true;
+        QCOMPARE(layoutLabels({ordinary},1,3,LabelLayoutBounds{0,0,100,100}),
+                 std::vector<ObjectRef>({{"label","a"}}));
         const auto city=automaticLabelSettings("city",LabelSettings{12.,0.,99.,Point{1,2},false,"foreign"});
         QCOMPARE(*city.priority,70.);QCOMPARE(*city.minZoom,1.25);QCOMPARE(city.collisionGroup,std::string("place"));QVERIFY(city.pinned);
         QCOMPARE(distributionFillAlpha(50,.5),.205);

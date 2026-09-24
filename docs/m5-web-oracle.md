@@ -47,5 +47,14 @@ in that fixture's README. `tools/m5-hydro-oracle.mjs --fixture-only` executes
 the real web decoder on a six-record v4 pack/v5 metadata dataset. It checks
 index, metadata, geometry, widths, mesh, viewport tile enumeration and logical
 fragment merge against golden output produced by that same web decoder.
-Native parity is a subsequent parser task; this pin alone is not evidence of
-native hydro support.
+`m5_hydro_index_parity`, `m5_hydro_pack_parity` and
+`m5_hydro_logical_merge_parity` compare native probes with the pinned worker;
+`m5_hydro_viewport_parity` checks native tile selection against the pinned
+tile-window module. `m5_render_pick_order_parity` calls the current web scene
+pass and picker rank function. The actual full dataset is a separate gate.
+
+From `bc46720..c0bd31d`, label layout gained viewport bounds: ordinary labels
+whose boxes cross the safe area are dropped before collision placement;
+selected and pinned labels bypass the bounds filter. Qt now applies viewport
+bounds. Web theme-specific safe-area insets and the new `colorVisible` display
+channel have not been asserted as M5 pixel parity.

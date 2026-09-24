@@ -115,7 +115,10 @@ QVariantList EditorController::labelLayout(double scale,double originX,double or
         LabelLayoutCandidate candidate{ref,ref.domain+":"+ref.id,settings.collisionGroup,x,y,std::max(22.,metrics.horizontalAdvance(name)+16),std::max(19.,metrics.height()),settings.priority.value_or(0),settings.minZoom.value_or(0),settings.maxZoom.value_or(std::numeric_limits<double>::infinity()),selection_.has(ref),settings.pinned};candidates.push_back(candidate);
         rows[ref]=QVariantMap{{"ref",objectRefValue(ref)},{"x",x},{"y",y},{"name",name},{"pinned",settings.pinned},{"flagSource",visual.value("flagSource")},{"flagVisible",visual.value("flagVisible")}};
     }
-    QVariantList result;for(const auto& ref:layoutLabels(candidates,zoom,mobileMode_?5:3)){const auto row=rows.find(ref);if(row!=rows.end()&&row->second["x"].toDouble()>=-100&&row->second["x"].toDouble()<=viewportWidth+100&&row->second["y"].toDouble()>=-100&&row->second["y"].toDouble()<=viewportHeight+100)result.append(row->second);}return result;
+    QVariantList result;for(const auto& ref:layoutLabels(candidates,zoom,mobileMode_?5:3,
+            LabelLayoutBounds{0,0,viewportWidth,viewportHeight})){
+        const auto row=rows.find(ref);if(row!=rows.end())result.append(row->second);
+    }return result;
 }
 bool EditorController::setLabelPinned(const QVariantMap& value,bool pinned,double longitude,double latitude,bool hasPosition) {
     const auto ref=existingObjectRef(value);if(!ref||(ref->domain!="territorial"&&ref->domain!="label"))return false;

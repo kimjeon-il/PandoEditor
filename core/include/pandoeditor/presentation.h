@@ -55,8 +55,10 @@ struct LabelLayoutCandidate {
     double x=0,y=0,width=1,height=1,priority=0,minZoom=0,maxZoom=std::numeric_limits<double>::infinity();
     bool selected=false,pinned=false;
 };
+struct LabelLayoutBounds { double left=0,top=0,right=0,bottom=0; };
 LabelSettings automaticLabelSettings(const std::string& kind,const LabelSettings& stored={});
-std::vector<ObjectRef> layoutLabels(const std::vector<LabelLayoutCandidate>&,double zoom,double padding);
+std::vector<ObjectRef> layoutLabels(const std::vector<LabelLayoutCandidate>&,double zoom,double padding,
+                                    std::optional<LabelLayoutBounds> bounds={});
 std::vector<ObjectRef> visibleDistributionEntries(const ProjectDocument&,const std::optional<std::string>& selectedLayer={});
 double distributionFillAlpha(double share,double resolvedOpacity=1);
 struct ResolvedTerritorialPresentation {
