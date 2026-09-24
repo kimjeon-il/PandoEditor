@@ -1,6 +1,7 @@
 configure_file(src/version.cpp.in generated/version.cpp @ONLY)
 
 add_library(pandoeditor_core STATIC
+    src/hydroformat.cpp
     src/project.cpp
     src/presentation.cpp
     src/presentationcommands.cpp
@@ -23,6 +24,11 @@ target_compile_features(pandoeditor_core PUBLIC cxx_std_17)
 set_target_properties(pandoeditor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_TESTING)
+    find_package(ZLIB REQUIRED)
+    add_executable(hydro_format_tests ../tests/hydro_format_tests.cpp)
+    target_link_libraries(hydro_format_tests PRIVATE Pandoeditor::Core ZLIB::ZLIB)
+    target_compile_definitions(hydro_format_tests PRIVATE WEB_HYDRO_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-hydro")
+    add_test(NAME hydro_format_tests COMMAND hydro_format_tests)
     add_executable(presentation_tests ../tests/presentation_tests.cpp)
     target_link_libraries(presentation_tests PRIVATE Pandoeditor::Core)
     add_test(NAME presentation_tests COMMAND presentation_tests)

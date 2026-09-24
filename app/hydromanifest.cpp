@@ -23,7 +23,8 @@ bool integer(const QJsonValue& value,int& result) {
 bool asset(const QJsonValue& value,const HydroManifest& manifest,HydroAssetSpec& result,QString& error,const QString& label) {
     if(!value.isObject()){error=label+QStringLiteral(" 항목이 없습니다.");return false;}
     const auto object=value.toObject();result.url=object.value("url").toString();
-    const auto size=object.value("bytes"),count=size.toDouble(-1);
+    const auto size=object.value("bytes");
+    const auto count=size.toDouble(-1);
     result.sha256=object.value("sha256").toString();
     static const QRegularExpression digest("^[0-9a-f]{64}$");
     if(result.url.isEmpty()||QDir::isAbsolutePath(result.url)||result.url.startsWith("//")||

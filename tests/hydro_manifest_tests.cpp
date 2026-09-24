@@ -1,4 +1,7 @@
 #include "hydrodataprovider.h"
+#include "hydrometadata.h"
+#include "hydromanifest.h"
+#include "hydroassetreader.h"
 #include <QtTest>
 #include <QDir>
 #include <QFileInfo>
@@ -80,6 +83,24 @@ private slots:
         const QString manifest=copyFixture(dir);QVERIFY(!manifest.isEmpty());
         QVERIFY(QFile::remove(dir.filePath("v0.13.0/metadata-detail.json.gz")));
         QVERIFY2(inspectHydroData(manifest).ready,qPrintable(inspectHydroData(manifest).error));
+    }
+    void parsesCoreAndMergesDetailLazily() {
+        const auto manifest=readHydroManifest(QStringLiteral(WEB_HYDRO_FIXTURE)+"/v0.13.1/manifest.json");
+        QVERIFY2(manifest.valid(),qPrintable(manifest.error));
+        QString error;
+        auto coreBytes=readHydroAsset(manifest.metadataCore,true,error);
+        QVERIFY2(error.isEmpty(),qPrintable(error));
+        HydroMetadata records;
+        QVERIFY2(parseHydroCoreMetadata(coreBytes,6,records,error),qPrintable(error));
+        QCOMPARE(records.size(),6);
+        QCOMPARE(records.value(5).logicalFid,quint32(5));
+        QVERIFY(records.value(5).sourceId.isEmpty());
+        auto detailBytes=readHydroAsset(manifest.metadataDetail,true,error);
+        QVERIFY2(mergeHydroDetailMetadata(detailBytes,records,error),qPrintable(error));
+        QCOMPARE(records.value(5).sourceId,QStringLiteral("500"));
+        auto bad=coreBytes;bad.replace("\"logicalFid\":1","\"logicalFid\":0");
+        QVERIFY(!parseHydroCoreMetadata(bad,6,records,error));
+        QCOMPARE(records.value(5).sourceId,QStringLiteral("500"));
     }
 };
 
