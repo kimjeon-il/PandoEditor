@@ -48,6 +48,8 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     project_.replace(projectcodec::decode(sample.readAll()));
     projection_.rebuild(project_.document());selectionInstance_=project_.instanceId();reloadDrafts();
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::hydroFrameChanged);
+    connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::searchChanged);
+    connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::stateChanged);
     connect(&hydroRuntime_,&HydroRuntimeProvider::loadFailed,this,&EditorController::errorOccurred);
     connect(this,&EditorController::dirtyChanged,this,[this](){++importEditEpoch_;});
     connect(this,&EditorController::stateChanged,this,&EditorController::propertyChanged);
@@ -160,6 +162,7 @@ QVariantList EditorController::countryRows() const
 QString EditorController::selectedName() const
 {
     const auto ref=selection_.primary();if(!ref)return {};
+    if(ref->domain=="hydroBuiltin")if(const auto record=hydroRuntime_.recordById(text(ref->id)))return record->name;
     const auto view=project_.propertyView(*ref);return view?text(view->displayName):QString{};
 }
 QString EditorController::countryLayerId() const

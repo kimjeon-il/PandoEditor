@@ -172,6 +172,7 @@ Rectangle {
         hydroProjection: editor.hydroProjection
         hydroStyle: editor.hydroStyle
         hiddenHydroIds: editor.hiddenHydroIds
+        selectedHydroId: editor.primaryObject.domain === "hydroBuiltin" ? editor.primaryObject.id : ""
         selectedPaths: view.selectedPaths
         primaryId: editor.primaryObject.domain === "territorial" ? editor.primaryObject.id : editor.primaryObject.id ? "content/" + editor.primaryObject.domain + "/" + editor.primaryObject.id : ""
         originX: view.originX; originY: view.originY; mapScale: view.mapScale

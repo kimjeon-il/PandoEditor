@@ -2,6 +2,7 @@
 #include <QTemporaryDir>
 #include <QFile>
 #include <QtTest>
+#include <algorithm>
 class PresentationEditorTests:public QObject {
     Q_OBJECT
 private slots:
@@ -34,6 +35,29 @@ private slots:
         controller.undo();QVERIFY(!controller.hydroDataStatus()["ready"].toBool());
         QVERIFY(!controller.hydroViewportLoaded());
         controller.redo();QVERIFY(controller.hydroDataStatus()["ready"].toBool());
+    }
+    void builtinHydroSearchPickAndFocusUseRuntimeMetadata(){
+        QTemporaryDir dir;EditorController controller({false,dir.filePath("private.json")});
+        const auto manifest=QStringLiteral(WEB_HYDRO_FIXTURE)+"/v0.13.1/manifest.json";
+        QVERIFY(controller.configureHydroData(QUrl::fromLocalFile(manifest)));
+        auto* runtime=qobject_cast<HydroRuntimeProvider*>(controller.hydroSource());
+        QVERIFY(runtime);
+        runtime->requestViewport({7.5,800,500,1500,20,1});
+        QTRY_VERIFY_WITH_TIMEOUT(controller.hydroViewportLoaded(),5000);
+        controller.setSearchQuery("Hole");
+        const auto results=controller.searchResults();
+        QVERIFY(std::any_of(results.begin(),results.end(),[](const QVariant& row){
+            return row.toMap().value("id").toString()=="fixture:4";
+        }));
+        const auto projection=controller.hydroProjection();
+        const auto px=[&](double lon){return lon*projection.value("cosLatitude").toDouble()-projection.value("minX").toDouble();};
+        const auto py=[&](double lat){return projection.value("maxLatitude").toDouble()-lat;};
+        const auto hit=controller.pickObject(px(30.5),py(0.5),100,7.5);
+        QCOMPARE(hit.value("id").toString(),QStringLiteral("fixture:4"));
+        QVERIFY(controller.selectObject(hit));
+        QCOMPARE(controller.primaryObject().value("domain").toString(),QStringLiteral("hydroBuiltin"));
+        QSignalSpy focus(&controller,&EditorController::focusRequested);
+        QVERIFY(controller.focusObject());QCOMPARE(focus.count(),1);
     }
     void visibilityKeepsSelectionDraftAndRedo() {
         QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});

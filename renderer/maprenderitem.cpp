@@ -43,6 +43,7 @@ void MapRenderItem::setHydroSource(QObject* value) {
 void MapRenderItem::setHydroProjection(QVariantMap value){if(hydroProjection_==value)return;hydroProjection_=std::move(value);emit hydroPresentationChanged();update();}
 void MapRenderItem::setHydroStyle(QVariantMap value){if(hydroStyle_==value)return;hydroStyle_=std::move(value);emit hydroPresentationChanged();update();}
 void MapRenderItem::setHiddenHydroIds(QVariantList value){if(hiddenHydroIds_==value)return;hiddenHydroIds_=std::move(value);emit hydroPresentationChanged();update();}
+void MapRenderItem::setSelectedHydroId(QString value){if(selectedHydroId_==value)return;selectedHydroId_=std::move(value);emit hydroPresentationChanged();update();}
 void MapRenderItem::setHydroFrame(std::shared_ptr<const HydroRuntimeFrame> value){hydroFrame_=std::move(value);update();}
 void MapRenderItem::paint(QPainter* painter) {
     struct Row{QString id;QVariantMap visual;Parsed geometry;QString type;QVariantList points;};std::vector<Row> rows;rows.reserve(paths_.size());
@@ -73,7 +74,13 @@ void MapRenderItem::paint(QPainter* painter) {
             originY_+(maxLatitude-point.latitude*1e-6)*scale_);};
         std::set<QString> hidden;for(const auto& id:hiddenHydroIds_)hidden.insert(id.toString());
         auto visible=[&](std::uint32_t fid,std::uint32_t logical){
-            return !hidden.count(QString::number(fid))&&!hidden.count(QString::number(logical));};
+            if(hidden.count(QString::number(fid))||hidden.count(QString::number(logical)))return false;
+            if(hydroSource_)if(const auto record=hydroSource_->recordByFid(fid))
+                return !hidden.count(record->awId);
+            return true;
+        };
+        auto selected=[&](std::uint32_t fid){if(!hydroSource_||selectedHydroId_.isEmpty())return false;
+            const auto record=hydroSource_->recordByFid(fid);return record&&record->awId==selectedHydroId_;};
         if(hydroStyle_.value("lakesVisible",true).toBool()){
             painter->save();painter->setOpacity(std::clamp(hydroStyle_.value("lakeOpacity",1.).toDouble(),0.,1.));
             painter->setPen(Qt::NoPen);painter->setBrush(color(hydroStyle_.value("lakeColor"),QColor("#82bfd7")));
@@ -86,6 +93,9 @@ void MapRenderItem::paint(QPainter* painter) {
                     path.closeSubpath();
                 }
                 painter->drawPath(path);
+                if(selected(lake.fid)){painter->save();painter->setOpacity(1);
+                    painter->setPen(QPen(QColor("#163e64"),2));painter->setBrush(Qt::NoBrush);
+                    painter->drawPath(path);painter->restore();}
             }
             painter->restore();
         }
@@ -101,6 +111,9 @@ void MapRenderItem::paint(QPainter* painter) {
                 const double wb=std::clamp(river.endWidth,0.,100.)/2;
                 painter->drawPolygon(QPolygonF{a+normal*wa,b+normal*wb,b-normal*wb,a-normal*wa});
                 painter->drawEllipse(a,wa,wa);painter->drawEllipse(b,wb,wb);
+                if(selected(river.fid)){painter->save();painter->setOpacity(1);
+                    painter->setPen(QPen(QColor("#163e64"),std::max(2.,std::max(wa,wb)*2+2)));
+                    painter->setBrush(Qt::NoBrush);painter->drawLine(a,b);painter->restore();}
             }
             painter->restore();
         }

@@ -18,6 +18,12 @@ std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& 
     const auto id=value.value("id").toString().trimmed();
     if(id.isEmpty()) return {};
     const ObjectRef ref{domain.toStdString(),id.toStdString()};
+    if(ref.domain=="hydroBuiltin"){
+        const auto record=hydroRuntime_.recordById(id);
+        const auto requested=value.value("type").toString().trimmed();
+        if(!record||(!requested.isEmpty()&&requested!="hydroBuiltin"))return {};
+        return ref;
+    }
     const auto found=project_.index().objects.find(ref);
     if(found==project_.index().objects.end()) return {};
     const auto expected=ref.domain=="territorial"?typeName(project_.document().units.at(found->second).kind):q(ref.domain);
@@ -26,6 +32,11 @@ std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& 
     return ref;
 }
 QVariantMap EditorController::objectRefValue(const ObjectRef& ref) const {
+    if(ref.domain=="hydroBuiltin"){
+        const auto id=q(ref.id);
+        return {{"domain","hydroBuiltin"},{"type","hydroBuiltin"},{"id",id},
+            {"key",QStringLiteral("hydroBuiltin:hydroBuiltin:")+QString::fromLatin1(QUrl::toPercentEncoding(id,"-_.!~*'()"))}};
+    }
     const auto it=project_.index().objects.find(ref);
     if(it==project_.index().objects.end()) return {{"domain",q(ref.domain)},{"id",q(ref.id)}};
     const auto type=ref.domain=="territorial"?typeName(project_.document().units.at(it->second).kind):q(ref.domain);
@@ -41,6 +52,14 @@ QVariantMap EditorController::rangeAnchor(const QString& scope) const {
     const auto ref=selection_.rangeAnchor(scope.toStdString());return ref?objectRefValue(*ref):QVariantMap{};
 }
 bool EditorController::objectVisible(const ObjectRef& ref) const {
+    if(ref.domain=="hydroBuiltin"){
+        const auto record=hydroRuntime_.recordById(q(ref.id));
+        if(!record)return false;
+        const auto& hidden=project_.document().physicalData.hiddenHydroIds;
+        if(std::find(hidden.begin(),hidden.end(),ref.id)!=hidden.end())return false;
+        return groupVisible(project_.document().presentation.webPresentation,
+            record->category=="lake"?"lakes":"rivers");
+    }
     // Presentation migration promotes the supported web fields into the common
     // model.  Keeping a second extension-based check here made rendering and
     // picking disagree whenever a retained payload was only partially known.
@@ -70,6 +89,17 @@ QVariantList EditorController::objectRows() const {
         row["visible"]=objectVisible(ref); row["locked"]=objectLocked(project_.document(),project_.index(),ref);
         row["editable"]=!row["locked"].toBool(); row["selectionOnly"]=false; rows.append(row);
     }
+    if(const auto frame=hydroRuntime_.frame()){
+        std::set<QString> seen;
+        for(const auto& feature:frame->features)if(const auto record=hydroRuntime_.recordByFid(feature.fid)){
+            if(!seen.insert(record->awId).second)continue;
+            const ObjectRef ref{"hydroBuiltin",record->awId.toStdString()};
+            auto row=objectRefValue(ref);row["name"]=record->name;
+            row["typeLabel"]=record->category=="lake"?QStringLiteral("호수"):QStringLiteral("강");
+            row["visible"]=objectVisible(ref);row["locked"]=true;
+            row["editable"]=false;row["selectionOnly"]=false;rows.append(row);
+        }
+    }
     return rows;
 }
 void EditorController::setSearchQuery(const QString& query) {
@@ -84,6 +114,22 @@ QVariantList EditorController::searchResults() const {
         const auto row=value.toMap();
         if((row["name"].toString()+" "+row["typeLabel"].toString()+" "+row["id"].toString()).toLower().contains(query)) rows.append(row);
     }
+    if(const auto metadata=hydroRuntime_.coreMetadata()){
+        std::set<QString> seen;
+        for(auto it=metadata->cbegin();it!=metadata->cend();++it){
+            const auto& record=it.value();if(!seen.insert(record.awId).second)continue;
+            if(!(record.name+" "+record.systemId+" "+record.awId).toLower().contains(query))continue;
+            const ObjectRef ref{"hydroBuiltin",record.awId.toStdString()};
+            auto row=objectRefValue(ref);row["name"]=record.name;
+            row["typeLabel"]=record.category=="lake"?QStringLiteral("호수"):QStringLiteral("강");
+            row["visible"]=objectVisible(ref);row["locked"]=true;
+            row["editable"]=false;row["selectionOnly"]=false;rows.append(row);
+        }
+    }
+    std::set<QString> resultIds;
+    rows.erase(std::remove_if(rows.begin(),rows.end(),[&](const QVariant& value){
+        const auto row=value.toMap();const auto key=row["key"].toString();return !resultIds.insert(key).second;
+    }),rows.end());
     QCollator compare(QLocale(QLocale::Korean));
     std::stable_sort(rows.begin(),rows.end(),[&](const QVariant& a,const QVariant& b){
         const auto left=a.toMap(),right=b.toMap();
@@ -168,14 +214,8 @@ void EditorController::selectLayer(const QString& id) {
 }
 QVariantMap EditorController::pickObject(double x,double y,double pixelsPerUnit,double zoom) const {
     if(!std::isfinite(x)||!std::isfinite(y)) return {};
-    const auto hits=mapCandidates(x,y,pixelsPerUnit,zoom);const auto visuals=countryVisuals();
-    std::optional<ObjectRef> top;int topLayer=std::numeric_limits<int>::min();double topRank=-std::numeric_limits<double>::infinity();
-    for(const auto& path:projection_.paths) {
-        const auto row=path.toMap();const ObjectRef ref=row.contains("domain")?ObjectRef{row["domain"].toString().toStdString(),row["objectId"].toString().toStdString()}:territorialRef(row["countryId"].toString().toStdString());
-        if(std::find(hits.begin(),hits.end(),ref)==hits.end())continue;
-        const auto visual=visuals[row["countryId"].toString()].toMap();const auto layer=visual["layerOrder"].toInt();const auto rank=visual["rank"].toDouble();
-        if(!top||layer>topLayer||(layer==topLayer&&rank>=topRank)){top=ref;topLayer=layer;topRank=rank;}
-    }
+    const auto hits=mapCandidates(x,y,pixelsPerUnit,zoom);
+    auto top=hits.empty()?std::optional<ObjectRef>{}:std::optional<ObjectRef>(hits.front());
     if(top&&top->domain=="distributionEntry")for(const auto& entry:project_.document().distributionEntries)if(entry.id==top->id){top=ObjectRef{"distributionLayer",entry.layerId};break;}
     return top?objectRefValue(*top):QVariantMap{};
 }
@@ -196,6 +236,15 @@ bool EditorController::setHoverObject(const QVariantMap& value,const QString& so
 bool EditorController::focusObject(const QVariantMap& value) {
     const auto ref=value.isEmpty()?selection_.primary():existingObjectRef(value);
     if(!ref) return false;
+    if(ref->domain=="hydroBuiltin"){
+        const auto record=hydroRuntime_.recordById(q(ref->id));
+        if(!record||record->bounds.size()!=4)return false;
+        const auto topLeft=projection_.project({record->bounds[0],record->bounds[3]});
+        const auto bottomRight=projection_.project({record->bounds[2],record->bounds[1]});
+        emit focusRequested(topLeft.x,topLeft.y,std::max(.001,bottomRight.x-topLeft.x),
+            std::max(.001,bottomRight.y-topLeft.y),mobileMode_?12:10);
+        return true;
+    }
     for(const auto& path:projection_.paths) {
         const auto p=path.toMap();
         if(ref->domain=="territorial" ? p["countryId"].toString()!=q(ref->id) :
@@ -213,8 +262,10 @@ void EditorController::reconcileSelection() {
         selectionInstance_=project_.instanceId();selection_.reset();hover_.reset();hoverSource_.clear();hoverRevision_=0;
         searchQuery_.clear();clearParkedDrafts();
     } else {
-        selection_.prune([this](const ObjectRef& ref){return project_.index().objects.count(ref)!=0;});
-        if(hover_&&!project_.index().objects.count(*hover_)) {hover_.reset();hoverSource_.clear();++hoverRevision_;}
+        selection_.prune([this](const ObjectRef& ref){return ref.domain=="hydroBuiltin"?
+            bool(hydroRuntime_.recordById(q(ref.id))):project_.index().objects.count(ref)!=0;});
+        if(hover_&&!(hover_->domain=="hydroBuiltin"?bool(hydroRuntime_.recordById(q(hover_->id))):
+            project_.index().objects.count(*hover_))) {hover_.reset();hoverSource_.clear();++hoverRevision_;}
     }
     selected_=selection_.primary()?q(selection_.primary()->id):QString();
     closeObjectChooser();cancelColorEdit();fieldSessions_.clear();

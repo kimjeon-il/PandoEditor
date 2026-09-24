@@ -1,5 +1,6 @@
 #include "editorcontroller.h"
 #include <pandoeditor/picking.h>
+#include <pandoeditor/maprenderorder.h>
 #include <QCollator>
 #include <QLocale>
 #include <algorithm>
@@ -14,9 +15,7 @@ double segmentDistance(Point p,Point a,Point b) {
     return std::hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
 }
 int chooserKindRank(const Project& project,const ObjectRef& ref) {
-    if(ref.domain!="territorial") return ref.domain=="label"?7:ref.domain=="generic"?6:ref.domain=="hydro"?5:4;
-    const auto kind=project.document().units.at(project.index().objects.at(ref)).kind;
-    return kind==UnitKind::Region?2:kind==UnitKind::Subunit?1:0;
+    return ref.domain=="hydroBuiltin"?mapBuiltinHydroPickOrder():mapPickOrder(project.document(),ref);
 }
 }
 std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double pixelsPerUnit,double zoom) const {
@@ -69,13 +68,46 @@ std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double 
             hit=hit||segmentDistance(cursor,{line[i-1].x*xScale,line[i-1].y},{line[i].x*xScale,line[i].y})<=tolerance;
         if(hit) found.push_back(ref);
     }
+    if(const auto frame=hydroRuntime_.frame()){
+        std::set<ObjectRef> seen;
+        for(const auto& feature:frame->features){
+            const auto record=hydroRuntime_.recordByFid(feature.fid);if(!record)continue;
+            const ObjectRef ref{"hydroBuiltin",record->awId.toStdString()};
+            if(seen.count(ref)||!objectVisible(ref))continue;
+            if(record->bounds.size()==4 &&
+                (point.x<record->bounds[0]-tolerance/xScale||point.x>record->bounds[2]+tolerance/xScale||
+                 point.y<record->bounds[1]-tolerance||point.y>record->bounds[3]+tolerance))continue;
+            bool hit=false;
+            for(const auto& polygon:feature.geometry.polygons){
+                pandoeditor::MultiPolygon rings(1);
+                for(const auto& sourceRing:polygon){pandoeditor::Ring ring;ring.reserve(sourceRing.size());
+                    for(const auto p:sourceRing)ring.push_back({p.longitude*1e-6,p.latitude*1e-6});
+                    rings.front().push_back(std::move(ring));
+                }
+                if(pointInCountry(point,rings)){hit=true;break;}
+            }
+            for(const auto& line:feature.geometry.lines)for(std::size_t i=1;i<line.size()&&!hit;i++){
+                const Point a{line[i-1].longitude*1e-6*xScale,line[i-1].latitude*1e-6};
+                const Point b{line[i].longitude*1e-6*xScale,line[i].latitude*1e-6};
+                hit=segmentDistance(cursor,a,b)<=tolerance;
+            }
+            if(hit){found.push_back(ref);seen.insert(ref);}
+        }
+    }
     QCollator names(QLocale(QLocale::Korean));
     std::stable_sort(found.begin(),found.end(),[&](const ObjectRef& a,const ObjectRef& b){
         // Chooser order is independent of paint order: kinds first, then names.
         const auto leftRank=chooserKindRank(project_,a);
         const auto rightRank=chooserKindRank(project_,b);
         if(leftRank!=rightRank)return leftRank>rightRank;
-        return names.compare(QString::fromStdString(project_.propertyView(a)->displayName),QString::fromStdString(project_.propertyView(b)->displayName))<0;
+        const auto title=[&](const ObjectRef& ref){if(ref.domain=="hydroBuiltin"){
+                const auto record=hydroRuntime_.recordById(QString::fromStdString(ref.id));
+                return record?record->name:QString::fromStdString(ref.id);
+            }
+            const auto property=project_.propertyView(ref);
+            return property?QString::fromStdString(property->displayName):QString::fromStdString(ref.id);
+        };
+        return names.compare(title(a),title(b))<0;
     });
     return found;
 }

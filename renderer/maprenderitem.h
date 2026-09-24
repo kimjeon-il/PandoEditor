@@ -22,6 +22,7 @@ class MapRenderItem : public QQuickPaintedItem {
     Q_PROPERTY(QVariantMap hydroProjection READ hydroProjection WRITE setHydroProjection NOTIFY hydroPresentationChanged)
     Q_PROPERTY(QVariantMap hydroStyle READ hydroStyle WRITE setHydroStyle NOTIFY hydroPresentationChanged)
     Q_PROPERTY(QVariantList hiddenHydroIds READ hiddenHydroIds WRITE setHiddenHydroIds NOTIFY hydroPresentationChanged)
+    Q_PROPERTY(QString selectedHydroId READ selectedHydroId WRITE setSelectedHydroId NOTIFY hydroPresentationChanged)
 public:
     explicit MapRenderItem(QQuickItem* parent=nullptr);
     void paint(QPainter*) override;
@@ -36,6 +37,7 @@ public:
     QVariantMap hydroProjection() const{return hydroProjection_;} void setHydroProjection(QVariantMap);
     QVariantMap hydroStyle() const{return hydroStyle_;} void setHydroStyle(QVariantMap);
     QVariantList hiddenHydroIds() const{return hiddenHydroIds_;} void setHiddenHydroIds(QVariantList);
+    QString selectedHydroId() const{return selectedHydroId_;} void setSelectedHydroId(QString);
     void setHydroFrame(std::shared_ptr<const HydroRuntimeFrame>);
 signals:
     void pathsChanged();void visualsChanged();void selectedPathsChanged();void primaryIdChanged();void viewportChanged();
@@ -47,4 +49,5 @@ private:
     std::shared_ptr<const HydroRuntimeFrame> hydroFrame_;
     QVariantMap hydroProjection_,hydroStyle_;
     QVariantList hiddenHydroIds_;
+    QString selectedHydroId_;
 };

@@ -6,6 +6,7 @@
 #include <pandoeditor/hydroviewport.h>
 #include <QObject>
 #include <memory>
+#include <optional>
 
 class HydroRuntimeProvider : public QObject {
     Q_OBJECT
@@ -17,6 +18,8 @@ public:
     std::shared_ptr<const HydroRuntimeFrame> frame() const {return scheduler_.frame();}
     bool isOpen() const {return bool(dataset_);}
     const HydroMetadata* coreMetadata() const;
+    std::optional<HydroMetadataRecord> recordById(const QString& id) const;
+    std::optional<HydroMetadataRecord> recordByFid(quint32 fid) const;
     bool pinLogical(quint32 logicalFid);
     void clearPinned();
     std::size_t cachedPackCount() const;

@@ -12,6 +12,7 @@ struct HydroRuntimeProvider::Dataset {
     HydroManifest manifest;
     pandoeditor::HydroIndex index;
     HydroMetadata metadata;
+    QHash<QString,HydroMetadataRecord> logicalMetadata;
     std::map<std::uint32_t,std::uint32_t> logicalIds;
     std::vector<std::shared_ptr<HydroShardReader>> shards;
     std::vector<pandoeditor::HydroStageGrid> stages;
@@ -55,7 +56,8 @@ bool HydroRuntimeProvider::open(const QString& path,const QString& projectInstan
            candidate->index.logicalPacks.size()!=static_cast<std::size_t>(candidate->manifest.logicalFeatureCount))
             throw std::runtime_error("hydro index counts differ from manifest");
         for(auto it=candidate->metadata.cbegin();it!=candidate->metadata.cend();++it)
-            candidate->logicalIds.emplace(it.key(),it.value().logicalFid);
+            {candidate->logicalIds.emplace(it.key(),it.value().logicalFid);
+             candidate->logicalMetadata.insert(it.value().awId,it.value());}
         for(const auto& shard:candidate->manifest.shards)
             candidate->shards.push_back(std::make_shared<HydroShardReader>(shard.asset));
         for(const auto& stage:candidate->manifest.stages)
@@ -72,6 +74,16 @@ void HydroRuntimeProvider::close(const QString& projectInstance) {
 }
 const HydroMetadata* HydroRuntimeProvider::coreMetadata() const {
     return dataset_?&dataset_->metadata:nullptr;
+}
+std::optional<HydroMetadataRecord> HydroRuntimeProvider::recordById(const QString& id) const {
+    if(!dataset_)return {};
+    const auto found=dataset_->logicalMetadata.constFind(id);
+    return found==dataset_->logicalMetadata.cend()?std::nullopt:std::optional<HydroMetadataRecord>(*found);
+}
+std::optional<HydroMetadataRecord> HydroRuntimeProvider::recordByFid(quint32 fid) const {
+    if(!dataset_)return {};
+    const auto found=dataset_->metadata.constFind(fid);
+    return found==dataset_->metadata.cend()?std::nullopt:std::optional<HydroMetadataRecord>(*found);
 }
 bool HydroRuntimeProvider::pinLogical(quint32 logicalFid) {
     if(!dataset_)return false;
