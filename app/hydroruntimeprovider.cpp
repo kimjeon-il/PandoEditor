@@ -40,6 +40,7 @@ HydroRuntimeProvider::HydroRuntimeProvider(QObject* parent):QObject(parent) {
 }
 bool HydroRuntimeProvider::open(const QString& path,const QString& projectInstance,bool mobile,QString& error) {
     error.clear();
+    try {
     auto candidate=std::make_shared<Dataset>(mobile);
     candidate->manifest=readHydroManifest(path);
     if(!candidate->manifest.valid()){error=candidate->manifest.error;return false;}
@@ -47,7 +48,6 @@ bool HydroRuntimeProvider::open(const QString& path,const QString& projectInstan
     if(!error.isEmpty())return false;
     const auto core=readHydroAsset(candidate->manifest.metadataCore,true,error);
     if(!error.isEmpty()||!parseHydroCoreMetadata(core,candidate->manifest.metadataFeatureCount,candidate->metadata,error))return false;
-    try {
         std::vector<std::uint64_t> lengths;
         for(const auto& shard:candidate->manifest.shards)lengths.push_back(shard.asset.bytes);
         candidate->index=pandoeditor::decodeHydroIndex(
@@ -63,11 +63,11 @@ bool HydroRuntimeProvider::open(const QString& path,const QString& projectInstan
         for(const auto& stage:candidate->manifest.stages)
             candidate->stages.push_back({static_cast<std::uint8_t>(stage.id),stage.minZoom,
                 static_cast<std::uint16_t>(stage.columns),static_cast<std::uint16_t>(stage.rows)});
-    }catch(const std::exception& exception){error=QString::fromUtf8(exception.what());return false;}
     dataset_=std::move(candidate);
     scheduler_.resetDataset(projectInstance);
     emit frameChanged();
     return true;
+    }catch(const std::exception& exception){error=QString::fromUtf8(exception.what());return false;}
 }
 void HydroRuntimeProvider::close(const QString& projectInstance) {
     dataset_.reset();scheduler_.resetDataset(projectInstance);emit frameChanged();

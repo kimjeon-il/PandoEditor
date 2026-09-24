@@ -7,6 +7,16 @@
 class HydroRuntimeTests:public QObject {
     Q_OBJECT
 private slots:
+    void loadsAdditionalStagesOnlyAfterManifestThreshold(){
+        HydroRuntimeProvider provider;QString error;
+        QVERIFY2(provider.open(QStringLiteral(WEB_HYDRO_FIXTURE)+"/v0.13.1/manifest.json",
+            "stages",false,error),qPrintable(error));
+        for(const auto [threshold,count]:std::vector<std::pair<double,std::size_t>>{
+            {5.99,0},{6.,1},{6.69,1},{6.7,2},{7.,5},{7.5,6}}){
+            provider.requestViewport({threshold,800,500,1500,20,1});
+            QTRY_VERIFY_WITH_TIMEOUT(provider.frame()!=nullptr&&provider.frame()->packIds.size()==count,5000);
+        }
+    }
     void loadsPhysicalFeaturesWithoutMutatingDocument() {
         HydroRuntimeProvider provider;
         QString error;

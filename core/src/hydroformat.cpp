@@ -243,8 +243,12 @@ Geometry mergeHydroLogicalFragments(std::vector<HydroPhysicalFeature> fragments)
             merged.lines.push_back(std::move(line));
         }
         for(const auto& source:fragment.geometry.polygons){
-            Polygon polygon;for(const auto& sourceRing:source){Ring ring;ring.reserve(sourceRing.size());
-                for(const auto p:sourceRing)ring.push_back(point(p));polygon.push_back(std::move(ring));}
+            Polygon polygon;
+            for(const auto& sourceRing:source){
+                Ring ring;ring.reserve(sourceRing.size());
+                for(const auto p:sourceRing)ring.push_back(point(p));
+                polygon.push_back(std::move(ring));
+            }
             merged.polygons.push_back(std::move(polygon));
         }
     }

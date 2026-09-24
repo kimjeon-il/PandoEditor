@@ -114,11 +114,26 @@ void MapRenderItem::paint(QPainter* painter) {
                     painter->drawPath(path);painter->restore();}
             }
             painter->restore();
+            if(hydroStyle_.value("lakeBoundaryVisible",true).toBool()){
+                painter->save();
+                painter->setOpacity(std::clamp(hydroStyle_.value("lakeOpacity",1.).toDouble(),0.,1.));
+                painter->setBrush(Qt::NoBrush);painter->setPen(QPen(QColor("#5f9cba"),.8));
+                for(const auto& lake:hydroFrame_->packet.lakes)if(visible(lake.fid,lake.logicalFid))
+                    for(const auto& polygon:lake.polygons)for(const auto& ring:polygon){
+                        if(ring.empty())continue;
+                        QPainterPath boundary;boundary.moveTo(screen(ring.front()));
+                        for(std::size_t i=1;i<ring.size();i++)boundary.lineTo(screen(ring[i]));
+                        boundary.closeSubpath();painter->drawPath(boundary);
+                    }
+                painter->restore();
+            }
         }
         if(hydroStyle_.value("riversVisible",true).toBool()){
             painter->save();painter->setOpacity(std::clamp(hydroStyle_.value("riverOpacity",1.).toDouble(),0.,1.));
             painter->setPen(Qt::NoPen);painter->setBrush(color(hydroStyle_.value("riverColor"),QColor("#4b9cc6")));
-            for(const auto& river:hydroFrame_->packet.rivers)if(visible(river.fid,river.logicalFid)){
+            for(int borderPass=0;borderPass<2;borderPass++)
+            for(const auto& river:hydroFrame_->packet.rivers)
+                if(river.borderAligned==bool(borderPass)&&visible(river.fid,river.logicalFid)){
                 const auto a=screen(river.start),b=screen(river.end);
                 const double dx=b.x()-a.x(),dy=b.y()-a.y(),length=std::hypot(dx,dy);
                 if(length<1e-9)continue;

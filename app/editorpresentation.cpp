@@ -52,6 +52,7 @@ QVariantMap EditorController::hydroStyle() const {
     const auto rivers=presentation.styles.find("rivers"),lakes=presentation.styles.find("lakes");
     return {{"riversVisible",groupVisible(presentation,"rivers")},
         {"lakesVisible",groupVisible(presentation,"lakes")},
+        {"lakeBoundaryVisible",lakes==presentation.styles.end()?true:lakes->second.boundaryVisible.value_or(true)},
         {"riverOpacity",rivers==presentation.styles.end()?1.:rivers->second.opacity.value_or(1.)},
         {"lakeOpacity",lakes==presentation.styles.end()?1.:lakes->second.opacity.value_or(1.)}};
 }
@@ -74,6 +75,10 @@ void EditorController::requestHydroViewport(double zoom,double mapScale,double o
 bool EditorController::configureHydroData(const QUrl& value) {
     if(hasPendingEdits()||jobBusy()||hasWebImportPreview())return false;
     const auto path=value.isLocalFile()?value.toLocalFile():value.toString();const auto inspected=inspectHydroData(path);if(!inspected.ready){emit errorOccurred(inspected.error);return false;}
+    HydroRuntimeProvider verified;QString hydroError;
+    if(!verified.open(path,projectInstanceId(),mobileMode_,hydroError)){
+        emit errorOccurred(hydroError);return false;
+    }
     auto settings=project_.document().physicalData;settings.dataset=inspected.dataset.toStdString();settings.version=inspected.version.toStdString();settings.source=inspected.root.toStdString();
     CommandArguments args;args.action=SetPhysicalData{settings};auto request=CommandProcessor::makeRequest(project_,"physical-data.configure",args);auto prepared=CommandProcessor::prepare(project_,request);if(!prepared.ok()||!prepared.preview)return false;const auto result=CommandProcessor::confirm(project_,*prepared.preview);if(!result.ok())return false;
     syncHydroData();
