@@ -26,6 +26,29 @@ struct HydroIndex {
     std::map<std::uint32_t,std::vector<std::uint32_t>> logicalPacks;
     std::map<std::uint32_t,HydroPackSpec> packSpecs;
 };
+struct HydroPoint {std::int32_t longitude=0,latitude=0;};
+using HydroLine = std::vector<HydroPoint>;
+using HydroPolygon = std::vector<HydroLine>;
+struct HydroDecodedGeometry {
+    std::uint8_t kind=0;
+    std::vector<HydroLine> lines;
+    std::vector<HydroPolygon> polygons;
+};
+struct HydroPhysicalFeature {
+    std::uint32_t fid=0,logicalFid=0;
+    std::uint8_t kind=0,stage=0,flags=0;
+    std::uint16_t fragmentIndex=0,fragmentCount=0;
+    float strokeWidth=0;
+    std::int32_t bounds[4]{};
+    HydroDecodedGeometry geometry;
+    std::vector<std::vector<float>> widths;
+};
+struct HydroPack {
+    std::uint8_t stage=0;
+    std::vector<HydroPhysicalFeature> features;
+};
 HydroIndex decodeHydroIndex(HydroByteView bytes,
                             const std::vector<std::uint64_t>& shardLengths);
+HydroPack decodeHydroPack(HydroByteView bytes,std::uint32_t packId,
+                          const std::map<std::uint32_t,std::uint32_t>& metadataLogicalIds);
 }

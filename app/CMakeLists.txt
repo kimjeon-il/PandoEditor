@@ -12,6 +12,7 @@ add_library(pandoeditor_editor STATIC
     hydromanifest.cpp hydromanifest.h
     hydroassetreader.cpp hydroassetreader.h
     hydrometadata.cpp hydrometadata.h
+    hydroshardreader.cpp hydroshardreader.h
     geometrycalculator.cpp geometrycalculator.h
     territorialgeometry.cpp territorialgeometry.h
     editorpresentation.cpp

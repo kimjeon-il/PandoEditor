@@ -33,11 +33,13 @@ bool digest(QFile& file,const HydroAssetSpec& asset,QString& error) {
 }
 
 bool verifyHydroAsset(const HydroAssetSpec& asset,QString& error) {
+    error.clear();
     QFile file;
     return openChecked(asset,file,error)&&digest(file,asset,error);
 }
 
 QByteArray readHydroAsset(const HydroAssetSpec& asset,bool gzip,QString& error,qsizetype maxDecoded) {
+    error.clear();
     QFile file;
     if(!openChecked(asset,file,error)||!digest(file,asset,error))return {};
     if(!file.seek(0)){error=QStringLiteral("수계 자산 seek에 실패했습니다: ")+asset.url;return {};}
@@ -47,6 +49,11 @@ QByteArray readHydroAsset(const HydroAssetSpec& asset,bool gzip,QString& error,q
         error=QStringLiteral("수계 자산 읽기에 실패했습니다: ")+asset.url;return {};
     }
     if(!gzip)return compressed;
+    return inflateHydroGzip(compressed,error,maxDecoded);
+}
+
+QByteArray inflateHydroGzip(const QByteArray& compressed,QString& error,qsizetype maxDecoded) {
+    error.clear();
     if(compressed.size()>std::numeric_limits<uInt>::max()||maxDecoded<1){
         error=QStringLiteral("수계 gzip 크기가 한도를 초과했습니다.");return {};
     }
@@ -69,6 +76,6 @@ QByteArray readHydroAsset(const HydroAssetSpec& asset,bool gzip,QString& error,q
     } while(status==Z_OK);
     const bool valid=status==Z_STREAM_END && stream.avail_in==0 && error.isEmpty();
     inflateEnd(&stream);
-    if(!valid){if(error.isEmpty())error=QStringLiteral("수계 gzip 자료가 손상되었습니다: ")+asset.url;return {};}
+    if(!valid){if(error.isEmpty())error=QStringLiteral("수계 gzip 자료가 손상되었습니다.");return {};}
     return output;
 }

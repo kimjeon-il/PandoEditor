@@ -5,3 +5,5 @@
 bool verifyHydroAsset(const HydroAssetSpec& asset,QString& error);
 QByteArray readHydroAsset(const HydroAssetSpec& asset,bool gzip,QString& error,
                           qsizetype maxDecoded=64*1024*1024);
+QByteArray inflateHydroGzip(const QByteArray& compressed,QString& error,
+                            qsizetype maxDecoded=64*1024*1024);

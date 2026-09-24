@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iterator>
+#include <map>
 #include <stdexcept>
 #include <vector>
 #include <zlib.h>
@@ -16,6 +17,21 @@ std::vector<std::uint8_t> fixture() {
     std::ifstream file(std::string(WEB_HYDRO_FIXTURE)+"/v0.13.0/index.bin.gz",std::ios::binary);
     assert(file);
     std::vector<std::uint8_t> compressed(std::istreambuf_iterator<char>{file},{});
+    z_stream stream{};
+    stream.next_in=compressed.data();stream.avail_in=static_cast<uInt>(compressed.size());
+    assert(inflateInit2(&stream,MAX_WBITS+16)==Z_OK);
+    std::vector<std::uint8_t> bytes(4096);
+    stream.next_out=bytes.data();stream.avail_out=static_cast<uInt>(bytes.size());
+    assert(inflate(&stream,Z_FINISH)==Z_STREAM_END);
+    bytes.resize(stream.total_out);inflateEnd(&stream);
+    return bytes;
+}
+std::vector<std::uint8_t> pack(const pandoeditor::HydroPackSpec& spec) {
+    std::ifstream file(std::string(WEB_HYDRO_FIXTURE)+"/v0.13.0/shards/s0.bin",std::ios::binary);
+    assert(file);file.seekg(spec.offset);
+    std::vector<std::uint8_t> compressed(spec.length);
+    file.read(reinterpret_cast<char*>(compressed.data()),spec.length);
+    assert(file.gcount()==spec.length);
     z_stream stream{};
     stream.next_in=compressed.data();stream.avail_in=static_cast<uInt>(compressed.size());
     assert(inflateInit2(&stream,MAX_WBITS+16)==Z_OK);
@@ -49,4 +65,41 @@ int main() {
     bytes[8]=255;assert(rejected(bytes));bytes[8]=5;
     bytes[20]=9;assert(rejected(bytes));bytes[20]=0;
     assert(rejected(std::vector<std::uint8_t>{}));
+    const std::map<std::uint32_t,std::uint32_t> metadata{{1,1},{2,2},{3,3},{4,4},{5,5},{6,5}};
+    const auto first=pack(index.packSpecs.at(0));
+    const auto river=pandoeditor::decodeHydroPack({first.data(),first.size()},0,metadata);
+    assert(river.features.size()==1);
+    assert(river.features[0].geometry.lines.size()==1);
+    assert(river.features[0].widths[0]==(std::vector<float>{0.8f,1.2f,1.6f}));
+    const auto hole=pack(index.packSpecs.at(3));
+    const auto lake=pandoeditor::decodeHydroPack({hole.data(),hole.size()},3,metadata);
+    assert(lake.features[0].geometry.polygons[0].size()==2);
+    const auto border=pack(index.packSpecs.at(1));
+    const auto borderRiver=pandoeditor::decodeHydroPack({border.data(),border.size()},1,metadata);
+    assert(borderRiver.features[0].flags&1);
+    assert(borderRiver.features[0].geometry.kind==2);
+    assert(borderRiver.features[0].widths.size()==2);
+    assert(borderRiver.features[0].widths[1][1]==1.3f);
+    for(std::size_t id=0;id<6;id++){
+        const auto data=pack(index.packSpecs.at(id));
+        const auto decoded=pandoeditor::decodeHydroPack({data.data(),data.size()},static_cast<std::uint32_t>(id),metadata);
+        assert(decoded.features.size()==1);
+        assert(decoded.features[0].logicalFid==(id==5?5:id+1));
+    }
+    auto corrupt=first;corrupt[0]^=1;
+    try {pandoeditor::decodeHydroPack({corrupt.data(),corrupt.size()},0,metadata);assert(false);}
+    catch(const std::runtime_error&){}
+    const auto packRejected=[&metadata](const std::vector<std::uint8_t>& data){
+        try {pandoeditor::decodeHydroPack({data.data(),data.size()},0,metadata);return false;}
+        catch(const std::runtime_error&){return true;}
+    };
+    for(std::size_t cut=0;cut<first.size();cut++){
+        auto truncated=first;truncated.resize(cut);assert(packRejected(truncated));
+    }
+    corrupt=first;corrupt[4]=3;assert(packRejected(corrupt));
+    corrupt=first;corrupt[22]=9;assert(packRejected(corrupt)); // geometry kind
+    corrupt=first;corrupt[48]=255;assert(packRejected(corrupt)); // geometryLength
+    corrupt=first;corrupt[52]=255;assert(packRejected(corrupt)); // widthLength
+    corrupt=first;corrupt.push_back(0);assert(packRejected(corrupt));
+    corrupt=first;corrupt[16]=9;assert(packRejected(corrupt)); // logicalFid
 }

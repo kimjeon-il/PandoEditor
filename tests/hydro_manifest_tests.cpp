@@ -2,6 +2,7 @@
 #include "hydrometadata.h"
 #include "hydromanifest.h"
 #include "hydroassetreader.h"
+#include "hydroshardreader.h"
 #include <QtTest>
 #include <QDir>
 #include <QFileInfo>
@@ -60,6 +61,35 @@ private slots:
         QVERIFY(replace(manifest,"https://example.invalid/index.bin.gz","../../outside.bin"));
         QVERIFY(!inspectHydroData(manifest).ready);
     }
+    void rejectsWrongVersionCrsAndMissingRelativeAsset() {
+        QTemporaryDir dir;QVERIFY(dir.isValid());
+        const auto manifest=copyFixture(dir);QVERIFY(!manifest.isEmpty());
+        QVERIFY(replace(manifest,"\"version\": \"0.13.1\"","\"version\": \"0.13.2\""));
+        QVERIFY(!inspectHydroData(manifest).ready);
+        QVERIFY(replace(manifest,"\"version\": \"0.13.2\"","\"version\": \"0.13.1\""));
+        QVERIFY(replace(manifest,"EPSG:4326","EPSG:3857"));
+        QVERIFY(!inspectHydroData(manifest).ready);
+        QVERIFY(replace(manifest,"EPSG:3857","EPSG:4326"));
+        QVERIFY(QFile::remove(dir.filePath("v0.13.0/index.bin.gz")));
+        QVERIFY(!inspectHydroData(manifest).ready);
+    }
+    void rejectsSymlinkEscapeAndChangedAsset() {
+        QTemporaryDir dir,outside;QVERIFY(dir.isValid());QVERIFY(outside.isValid());
+        const auto manifest=copyFixture(dir);QVERIFY(!manifest.isEmpty());
+        const auto index=dir.filePath("v0.13.0/index.bin.gz");
+        const auto external=outside.filePath("index.bin.gz");
+        QVERIFY(QFile::copy(index,external));
+        QVERIFY(QFile::remove(index));
+        if(!QFile::link(external,index))QSKIP("symbolic link unavailable on this platform");
+        QVERIFY(!inspectHydroData(manifest).ready);
+        QVERIFY(QFile::remove(index));
+        QVERIFY(QFile::copy(external,index));
+        auto spec=readHydroManifest(manifest).index;
+        QString error;
+        QVERIFY(verifyHydroAsset(spec,error));
+        QFile asset(index);QVERIFY(asset.open(QIODevice::Append));QCOMPARE(asset.write("X"),qint64(1));asset.close();
+        QVERIFY(!verifyHydroAsset(spec,error));
+    }
     void rejectsLengthHashAndInvalidGzip() {
         QTemporaryDir dir;QVERIFY(dir.isValid());
         const QString manifest=copyFixture(dir);QVERIFY(!manifest.isEmpty());
@@ -101,6 +131,21 @@ private slots:
         auto bad=coreBytes;bad.replace("\"logicalFid\":1","\"logicalFid\":0");
         QVERIFY(!parseHydroCoreMetadata(bad,6,records,error));
         QCOMPARE(records.value(5).sourceId,QStringLiteral("500"));
+    }
+    void readsOnlyPackRangeAndRejectsChangedShard() {
+        QTemporaryDir dir;QVERIFY(dir.isValid());
+        const auto path=copyFixture(dir);QVERIFY(!path.isEmpty());
+        const auto manifest=readHydroManifest(path);
+        QVERIFY2(manifest.valid(),qPrintable(manifest.error));
+        HydroShardReader reader(manifest.shards[0].asset);
+        QString error;
+        const auto bytes=reader.readPack(0,68,error);
+        QVERIFY2(error.isEmpty(),qPrintable(error));
+        QVERIFY(bytes.startsWith("AWHF"));
+        QFile shard(manifest.shards[0].asset.path);
+        QVERIFY(shard.open(QIODevice::Append));QCOMPARE(shard.write("X"),qint64(1));shard.close();
+        QVERIFY(reader.readPack(68,90,error).isEmpty());
+        QVERIFY(!error.isEmpty());
     }
 };
 
