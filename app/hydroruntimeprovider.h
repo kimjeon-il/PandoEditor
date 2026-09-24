@@ -16,6 +16,10 @@ public:
     void requestViewport(const pandoeditor::HydroFlatWindow& view);
     std::shared_ptr<const HydroRuntimeFrame> frame() const {return scheduler_.frame();}
     const HydroMetadata* coreMetadata() const;
+    bool pinLogical(quint32 logicalFid);
+    void clearPinned();
+    std::size_t cachedPackCount() const;
+    std::size_t cachedBytes() const;
 signals:
     void frameChanged();
     void loadFailed(const QString& error);

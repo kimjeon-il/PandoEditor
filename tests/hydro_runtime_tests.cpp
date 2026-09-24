@@ -17,6 +17,10 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(accepted.count()>=1 && provider.frame()!=nullptr,5000);
         QCOMPARE(provider.frame()->features.size(),std::size_t(6));
         QCOMPARE(provider.frame()->packIds.size(),std::size_t(6));
+        QCOMPARE(provider.cachedPackCount(),std::size_t(6));
+        QVERIFY(provider.cachedBytes()>0);
+        QVERIFY(provider.pinLogical(5));
+        provider.clearPinned();
         QVERIFY(provider.coreMetadata()!=nullptr);
         QCOMPARE(provider.coreMetadata()->size(),6);
     }

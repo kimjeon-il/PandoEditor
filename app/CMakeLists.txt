@@ -15,6 +15,7 @@ add_library(pandoeditor_editor STATIC
     hydroshardreader.cpp hydroshardreader.h
     hydroloadscheduler.cpp hydroloadscheduler.h
     hydroruntimeprovider.cpp hydroruntimeprovider.h
+    hydroruntimecache.cpp hydroruntimecache.h
     geometrycalculator.cpp geometrycalculator.h
     territorialgeometry.cpp territorialgeometry.h
     editorpresentation.cpp
@@ -70,6 +71,9 @@ if(BUILD_TESTING)
     target_link_libraries(hydro_runtime_tests PRIVATE pandoeditor_editor Qt6::Test)
     target_compile_definitions(hydro_runtime_tests PRIVATE WEB_HYDRO_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-hydro")
     add_test(NAME hydro_runtime_tests COMMAND hydro_runtime_tests -o -,txt)
+    add_executable(hydro_cache_tests ../tests/hydro_cache_tests.cpp)
+    target_link_libraries(hydro_cache_tests PRIVATE pandoeditor_editor)
+    add_test(NAME hydro_cache_tests COMMAND hydro_cache_tests)
     add_executable(geometry_calculator_tests ../tests/geometry_calculator_tests.cpp)
     target_link_libraries(geometry_calculator_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME geometry_calculator_tests COMMAND geometry_calculator_tests -o -,txt)
