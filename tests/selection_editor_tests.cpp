@@ -65,8 +65,8 @@ private slots:
         QFile file(dir.filePath("chooser.json"));QVERIFY(file.open(QIODevice::WriteOnly));
         file.write(projectcodec::encode(project));file.close();
         EditorController editor;QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
-        const auto point=center(editor,"S");editor.beginMapSelection(point.x(),point.y(),false,0);
-        QCOMPARE(editor.pickObject(point.x(),point.y())["id"].toString(),QString("S"));
+        const auto point=center(editor,"S");editor.beginMapSelection(point.x(),point.y(),false,10);
+        QCOMPARE(editor.pickObject(point.x(),point.y(),10)["id"].toString(),QString("S"));
         const auto candidates=ids(editor.objectChooserCandidates());
         QVERIFY(candidates.contains("S"));QVERIFY(candidates.contains("T"));
         QVERIFY(candidates.indexOf("T")<candidates.indexOf("S"));
@@ -126,7 +126,7 @@ private slots:
         editor.setSearchQuery("H");QCOMPARE(ids(editor.searchResults()),QStringList{"H"});
         QVERIFY(editor.selectObject(ref("H","region")));QCOMPARE(editor.selectedId(),QString("H"));
         const auto hidden=center(editor,"H");QVERIFY(editor.pickObject(hidden.x(),hidden.y()).isEmpty());
-        const auto locked=center(editor,"S");QCOMPARE(editor.pickObject(locked.x(),locked.y())["id"].toString(),QString("S"));
+        const auto locked=center(editor,"S");QCOMPARE(editor.pickObject(locked.x(),locked.y(),10)["id"].toString(),QString("S"));
         QVERIFY(editor.selectObject(ref("S","subunit")));QVERIFY(!editor.selectedEditable());
         QVERIFY(!editor.selectObject({{"domain","label"},{"type","city"},{"id","A"}}));
         QCOMPARE(editor.documentBytes(),bytes);QCOMPARE(editor.revision(),qulonglong(0));QVERIFY(!editor.dirty());

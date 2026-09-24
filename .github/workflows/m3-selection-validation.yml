@@ -17,7 +17,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y ninja-build libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk gdb
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
@@ -31,6 +31,9 @@ jobs:
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
       - name: Test complete suite
         run: ctest --test-dir build --output-on-failure --output-junit results.xml
+      - name: Diagnose web import UI crash
+        if: failure()
+        run: timeout 40s gdb --batch -ex run -ex "bt 35" --args ./build/app/web_import_ui_tests reviewFlow:desktop -o -,txt
       - name: Archive tested source
         if: always()
         run: |
