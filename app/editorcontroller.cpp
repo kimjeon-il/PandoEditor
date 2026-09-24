@@ -283,13 +283,13 @@ void EditorController::undo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
     const auto before=project_.document();
-    cancelPreview();if(project_.undo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());if(before.physicalData.source!=project_.document().physicalData.source)syncHydroData();publish();if(changed) emit geometryChanged();}
+    cancelPreview();if(project_.undo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());const auto hydroChanged=before.physicalData.source!=project_.document().physicalData.source;publish();if(hydroChanged)syncHydroData();if(changed) emit geometryChanged();}
 }
 void EditorController::redo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
     const auto before=project_.document();
-    cancelPreview();if(project_.redo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());if(before.physicalData.source!=project_.document().physicalData.source)syncHydroData();publish();if(changed) emit geometryChanged();}
+    cancelPreview();if(project_.redo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());const auto hydroChanged=before.physicalData.source!=project_.document().physicalData.source;publish();if(hydroChanged)syncHydroData();if(changed) emit geometryChanged();}
 }
 bool EditorController::openFile(const QUrl& url)
 {
@@ -317,9 +317,8 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
     pandoeditor::Project candidate;candidate.replace(projectcodec::decode(bytes));
     MapProjection nextProjection;nextProjection.rebuild(candidate.document());
     cancelPreview();cancelStructureMutation();project_=std::move(candidate);projection_=std::move(nextProjection);
-    syncHydroData();
     filePath_=path;importedDirty_=imported;selected_.clear();selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
-    emit geometryChanged();publish(false);return true;
+    emit geometryChanged();publish(false);syncHydroData();return true;
 }
 bool EditorController::restorePrivateProject()
 {

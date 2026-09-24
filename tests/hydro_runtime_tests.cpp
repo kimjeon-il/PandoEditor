@@ -3,6 +3,7 @@
 #include <QtTest>
 #include <QSemaphore>
 #include <QSignalSpy>
+#include <new>
 
 class HydroRuntimeTests:public QObject {
     Q_OBJECT
@@ -39,6 +40,10 @@ private slots:
         provider.clearPinned();
         QVERIFY(provider.coreMetadata()!=nullptr);
         QCOMPARE(provider.coreMetadata()->size(),6);
+        QVERIFY(!provider.open(QStringLiteral(WEB_HYDRO_FIXTURE)+"/missing/manifest.json",
+            "project-B",false,error));
+        QVERIFY(provider.frame()!=nullptr);
+        QCOMPARE(provider.frame()->features.size(),std::size_t(6));
     }
     void staleViewportResultCannotReplaceNewFrame() {
         HydroLoadScheduler scheduler;
@@ -93,6 +98,11 @@ private slots:
             throw std::runtime_error("damaged pack");
         });
         QTRY_COMPARE_WITH_TIMEOUT(failed.count(),1,5000);
+        QCOMPARE(scheduler.frame()->packIds,(std::vector<std::uint32_t>{4}));
+        scheduler.requestViewport([]() -> std::shared_ptr<const HydroRuntimeFrame> {
+            throw std::bad_alloc();
+        });
+        QTRY_COMPARE_WITH_TIMEOUT(failed.count(),2,5000);
         QCOMPARE(scheduler.frame()->packIds,(std::vector<std::uint32_t>{4}));
     }
 };
