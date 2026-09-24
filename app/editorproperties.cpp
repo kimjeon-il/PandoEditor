@@ -27,6 +27,10 @@ bool EditorController::selectedEditable() const {
 }
 QVariantMap EditorController::objectProperties() const {
  QVariantMap result{{"count",int(selection_.items().size())},{"busy",propertyBusy()}};
+ if(std::any_of(selection_.items().begin(),selection_.items().end(),[this](const auto& ref){return !project_.index().objects.count(ref);})) {
+  result["count"]=0;result["lockEnabled"]=false;result["colorEnabled"]=false;result["editable"]=false;
+  return result;
+ }
  if(std::any_of(selection_.items().begin(),selection_.items().end(),[](const auto& ref){return ref.domain!="territorial";})) {
   result["lockEnabled"]=false;result["colorEnabled"]=false;result["editable"]=false;
   if(selection_.items().size()==1){const auto& ref=selection_.items().front();const auto view=project_.propertyView(ref);result["id"]=q(ref.id);result["type"]=q(ref.domain);if(view)result["displayName"]=q(view->displayName);}

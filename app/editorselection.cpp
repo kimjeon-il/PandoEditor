@@ -206,9 +206,10 @@ bool EditorController::focusObject(const QVariantMap& value) {
     return false;
 }
 void EditorController::reconcileSelection() {
-    closeObjectChooser();cancelColorEdit();fieldSessions_.clear();
-    if(selectionInstance_!=project_.instanceId()) {
-        cancelContentEdit();cancelGeometryEdit();
+    const bool replaced=selectionInstance_!=project_.instanceId();
+    // Cancellation emits synchronous QML notifications. Drop references to the
+    // old document before any of those notifications can read object properties.
+    if(replaced) {
         selectionInstance_=project_.instanceId();selection_.reset();hover_.reset();hoverSource_.clear();hoverRevision_=0;
         searchQuery_.clear();clearParkedDrafts();
     } else {
@@ -216,4 +217,6 @@ void EditorController::reconcileSelection() {
         if(hover_&&!project_.index().objects.count(*hover_)) {hover_.reset();hoverSource_.clear();++hoverRevision_;}
     }
     selected_=selection_.primary()?q(selection_.primary()->id):QString();
+    closeObjectChooser();cancelColorEdit();fieldSessions_.clear();
+    if(replaced) {cancelContentEdit();cancelGeometryEdit();}
 }
