@@ -53,6 +53,10 @@ qt_add_resources(pandoeditor default_flags PREFIX "/defaults/flags" BASE "${PROJ
 
 if(BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test)
+    add_executable(hydro_manifest_tests ../tests/hydro_manifest_tests.cpp)
+    target_link_libraries(hydro_manifest_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(hydro_manifest_tests PRIVATE WEB_HYDRO_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-hydro")
+    add_test(NAME hydro_manifest_tests COMMAND hydro_manifest_tests -o -,txt)
     add_executable(geometry_calculator_tests ../tests/geometry_calculator_tests.cpp)
     target_link_libraries(geometry_calculator_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME geometry_calculator_tests COMMAND geometry_calculator_tests -o -,txt)
@@ -82,6 +86,7 @@ if(BUILD_TESTING)
             FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
         add_test(NAME ${test_name} COMMAND ${test_name} -o -,txt)
     endforeach()
+    target_compile_definitions(presentation_editor_tests PRIVATE WEB_HYDRO_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-hydro")
     add_executable(migration_tests ../tests/migration_tests.cpp)
     target_link_libraries(migration_tests PRIVATE pandoeditor_editor Qt6::Test)
     qt_add_resources(migration_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
