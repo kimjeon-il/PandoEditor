@@ -1,7 +1,9 @@
 # Qt v6 migration and validation status
 
-Status: M5 connected-path WIP. No final M5 integration or real Windows UI validation
-has been claimed.
+Status: historical focused-validation record. The current M5 status and fresh
+full-suite result are in [m5-closure-audit.md](m5-closure-audit.md). The Windows
+checks recorded below were offscreen/focused; a visible Windows UI validation
+has not been claimed.
 
 The codec reads versions 1–6 and writes v6. Opening does not overwrite a source
 file. The existing document fields remain; the new required `content` object has
