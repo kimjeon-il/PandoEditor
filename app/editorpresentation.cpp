@@ -46,6 +46,20 @@ QVariantMap EditorController::hydroDataStatus() const {
         {"viewportLoaded",hydroViewportLoaded()},{"error",QString()}};
     const auto inspected=inspectHydroData(displayText(settings.source));return QVariantMap{{"ready",inspected.ready},{"root",inspected.root},{"version",inspected.version},{"dataset",inspected.dataset},{"error",inspected.error}};
 }
+QVariantMap EditorController::hydroProjection() const{return projection_.hydroParameters();}
+QVariantMap EditorController::hydroStyle() const {
+    const auto& presentation=project_.document().presentation.webPresentation;
+    const auto rivers=presentation.styles.find("rivers"),lakes=presentation.styles.find("lakes");
+    return {{"riversVisible",groupVisible(presentation,"rivers")},
+        {"lakesVisible",groupVisible(presentation,"lakes")},
+        {"riverOpacity",rivers==presentation.styles.end()?1.:rivers->second.opacity.value_or(1.)},
+        {"lakeOpacity",lakes==presentation.styles.end()?1.:lakes->second.opacity.value_or(1.)}};
+}
+QVariantList EditorController::hiddenHydroIds() const {
+    QVariantList result;for(const auto& id:project_.document().physicalData.hiddenHydroIds)
+        result.append(QString::fromStdString(id));
+    return result;
+}
 void EditorController::requestHydroViewport(double zoom,double mapScale,double originX,double originY,
                                             double width,double height) {
     if(!hydroRuntime_.isOpen()||!std::isfinite(mapScale)||mapScale<=0||

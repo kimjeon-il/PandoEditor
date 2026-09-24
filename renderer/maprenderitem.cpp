@@ -1,4 +1,5 @@
 #include "maprenderitem.h"
+#include "hydroruntimeprovider.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QRegularExpression>
@@ -27,6 +28,22 @@ void MapRenderItem::setPrimaryId(QString value){if(primary_==value)return;primar
 void MapRenderItem::setOriginX(double v){if(originX_==v)return;originX_=v;emit viewportChanged();}
 void MapRenderItem::setOriginY(double v){if(originY_==v)return;originY_=v;emit viewportChanged();}
 void MapRenderItem::setMapScale(double v){if(scale_==v||!std::isfinite(v)||v<=0)return;scale_=v;emit viewportChanged();}
+QObject* MapRenderItem::hydroSource() const{return hydroSource_;}
+void MapRenderItem::setHydroSource(QObject* value) {
+    auto* source=qobject_cast<HydroRuntimeProvider*>(value);
+    if(source==hydroSource_)return;
+    if(hydroSource_)disconnect(hydroSource_,nullptr,this,nullptr);
+    hydroSource_=source;hydroFrame_=source?source->frame():nullptr;
+    if(source){
+        connect(source,&HydroRuntimeProvider::frameChanged,this,[this]{hydroFrame_=hydroSource_->frame();update();});
+        connect(source,&QObject::destroyed,this,[this]{hydroSource_=nullptr;hydroFrame_.reset();update();});
+    }
+    emit hydroSourceChanged();update();
+}
+void MapRenderItem::setHydroProjection(QVariantMap value){if(hydroProjection_==value)return;hydroProjection_=std::move(value);emit hydroPresentationChanged();update();}
+void MapRenderItem::setHydroStyle(QVariantMap value){if(hydroStyle_==value)return;hydroStyle_=std::move(value);emit hydroPresentationChanged();update();}
+void MapRenderItem::setHiddenHydroIds(QVariantList value){if(hiddenHydroIds_==value)return;hiddenHydroIds_=std::move(value);emit hydroPresentationChanged();update();}
+void MapRenderItem::setHydroFrame(std::shared_ptr<const HydroRuntimeFrame> value){hydroFrame_=std::move(value);update();}
 void MapRenderItem::paint(QPainter* painter) {
     struct Row{QString id;QVariantMap visual;Parsed geometry;QString type;QVariantList points;};std::vector<Row> rows;rows.reserve(paths_.size());
     for(const auto& entry:paths_){const auto path=entry.toMap();const auto id=path.value("countryId").toString();const auto visual=visuals_.value(id).toMap();if(!visual.value("visible").toBool())continue;rows.push_back({id,visual,parsePath(path.value("path").toString(),originX_,originY_,scale_),path.value("geometryType").toString(),path.value("points").toList()});}
@@ -46,6 +63,47 @@ void MapRenderItem::paint(QPainter* painter) {
         }
         std::set<QString> boundarySegments;for(auto i=first;i<last;++i){const auto& row=rows[i];if(!row.visual.value("boundary",true).toBool())continue;const auto kind=row.visual.value("kind").toString();QPen pen(QColor("#61778a"),kind=="country"?1.2:kind=="subunit"?.9:.7,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin);if(kind=="subunit")pen.setDashPattern({4,2});else if(kind=="region")pen.setDashPattern({1.5,2});layerPainter.setPen(pen);for(const auto& segment:row.geometry.segments)if(boundarySegments.insert(segmentKey(segment)).second)layerPainter.drawLine(segment);}layerPainter.end();
         painter->save();painter->setOpacity(std::clamp(rows[first].visual.value("layerOpacity",1.).toDouble(),0.,1.));painter->drawImage(QPointF(0,0),buffer);painter->restore();first=last;
+    }
+    if(hydroFrame_){
+        const double cosLatitude=hydroProjection_.value("cosLatitude",1.).toDouble();
+        const double minX=hydroProjection_.value("minX",0.).toDouble();
+        const double maxLatitude=hydroProjection_.value("maxLatitude",0.).toDouble();
+        auto screen=[&](pandoeditor::HydroPoint point){return QPointF(
+            originX_+(point.longitude*1e-6*cosLatitude-minX)*scale_,
+            originY_+(maxLatitude-point.latitude*1e-6)*scale_);};
+        std::set<QString> hidden;for(const auto& id:hiddenHydroIds_)hidden.insert(id.toString());
+        auto visible=[&](std::uint32_t fid,std::uint32_t logical){
+            return !hidden.count(QString::number(fid))&&!hidden.count(QString::number(logical));};
+        if(hydroStyle_.value("lakesVisible",true).toBool()){
+            painter->save();painter->setOpacity(std::clamp(hydroStyle_.value("lakeOpacity",1.).toDouble(),0.,1.));
+            painter->setPen(Qt::NoPen);painter->setBrush(color(hydroStyle_.value("lakeColor"),QColor("#82bfd7")));
+            for(const auto& lake:hydroFrame_->packet.lakes)if(visible(lake.fid,lake.logicalFid)){
+                QPainterPath path;path.setFillRule(Qt::OddEvenFill);
+                for(const auto& polygon:lake.polygons)for(const auto& ring:polygon){
+                    if(ring.empty())continue;
+                    path.moveTo(screen(ring.front()));
+                    for(std::size_t i=1;i<ring.size();i++)path.lineTo(screen(ring[i]));
+                    path.closeSubpath();
+                }
+                painter->drawPath(path);
+            }
+            painter->restore();
+        }
+        if(hydroStyle_.value("riversVisible",true).toBool()){
+            painter->save();painter->setOpacity(std::clamp(hydroStyle_.value("riverOpacity",1.).toDouble(),0.,1.));
+            painter->setPen(Qt::NoPen);painter->setBrush(color(hydroStyle_.value("riverColor"),QColor("#4b9cc6")));
+            for(const auto& river:hydroFrame_->packet.rivers)if(visible(river.fid,river.logicalFid)){
+                const auto a=screen(river.start),b=screen(river.end);
+                const double dx=b.x()-a.x(),dy=b.y()-a.y(),length=std::hypot(dx,dy);
+                if(length<1e-9)continue;
+                const QPointF normal(-dy/length,dx/length);
+                const double wa=std::clamp(river.startWidth,0.,100.)/2;
+                const double wb=std::clamp(river.endWidth,0.,100.)/2;
+                painter->drawPolygon(QPolygonF{a+normal*wa,b+normal*wb,b-normal*wb,a-normal*wa});
+                painter->drawEllipse(a,wa,wa);painter->drawEllipse(b,wb,wb);
+            }
+            painter->restore();
+        }
     }
     std::set<QString> selectedSegments;
     for(const auto& entry:selected_)for(const auto& point:entry.toMap().value("points").toList()) {

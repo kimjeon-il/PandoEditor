@@ -168,6 +168,10 @@ Rectangle {
         anchors.fill: parent
         paths: editor.paths
         visuals: editor.countryVisuals
+        hydroSource: editor.hydroSource
+        hydroProjection: editor.hydroProjection
+        hydroStyle: editor.hydroStyle
+        hiddenHydroIds: editor.hiddenHydroIds
         selectedPaths: view.selectedPaths
         primaryId: editor.primaryObject.domain === "territorial" ? editor.primaryObject.id : editor.primaryObject.id ? "content/" + editor.primaryObject.domain + "/" + editor.primaryObject.id : ""
         originX: view.originX; originY: view.originY; mapScale: view.mapScale

@@ -10,6 +10,7 @@ public:
     void rebuild(const pandoeditor::ProjectDocument& document);
     pandoeditor::Point project(pandoeditor::Point point) const;
     pandoeditor::Point unproject(double x,double y) const;
+    QVariantMap hydroParameters() const{return {{"cosLatitude",cosLatitude},{"minX",minX},{"maxLatitude",maxLatitude}};}
     QVariantList paths;
     double width=1,height=1;
 private:
