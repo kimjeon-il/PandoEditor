@@ -58,12 +58,39 @@ private slots:
         auto frame=std::make_shared<HydroRuntimeFrame>();
         frame->packet.lakes.push_back({1,1,{{{{10000000,10000000},{30000000,10000000},
             {30000000,30000000},{10000000,30000000},{10000000,10000000}}}}});
-        item.setHydroFrame(frame);item.setHydroStyle({{"lakesVisible",true},{"riversVisible",false},{"lakeColor","#0000ff"}});
+        frame->packet.rivers.push_back({2,2,{10000000,15000000},{30000000,15000000},3,3,false});
+        item.setHydroFrame(frame);item.setHydroStyle({{"lakesVisible",true},{"riversVisible",true},
+            {"lakeColor","#0000ff"},{"riverColor","#ffff00"}});
         QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
         QPainter painter(&image);item.paint(&painter);painter.end();
         QCOMPARE(image.pixelColor(15,15),QColor("#0000ff"));
         QCOMPARE(image.pixelColor(15,20),QColor("#00ff00"));
+        QCOMPARE(image.pixelColor(20,25),QColor("#ffff00"));
         QCOMPARE(image.pixelColor(7,7),QColor("#ff0000"));
+    }
+    void hydroDrawsAboveDistributionFillAndPointsAboveGenericFill(){
+        MapRenderItem item;item.setWidth(40);item.setHeight(40);item.setMapScale(1);
+        item.setHydroProjection({{"cosLatitude",1.},{"minX",0.},{"maxLatitude",40.}});
+        item.setPaths({QVariantMap{{"countryId","religion"},{"path","M0 0 L39 0 L39 39 L0 39 Z"}},
+            QVariantMap{{"countryId","generic"},{"path","M0 0 L39 0 L39 39 L0 39 Z"}},
+            QVariantMap{{"countryId","place"},{"geometryType","Point"},
+                {"points",QVariantList{QVariantMap{{"x",20.},{"y",20.}}}}}});
+        item.setVisuals({{"religion",QVariantMap{{"visible",true},{"color","#00ff00"},
+                {"drawFillPass",20},{"drawGroup",0},{"boundary",false}}},
+            {"generic",QVariantMap{{"visible",true},{"color","#ff0000"},
+                {"drawFillPass",20},{"drawGroup",5},{"boundary",false}}},
+            {"place",QVariantMap{{"visible",true},{"color","#ffff00"},
+                {"drawLinePass",70},{"boundary",false}}}});
+        auto frame=std::make_shared<HydroRuntimeFrame>();
+        frame->packet.lakes.push_back({4,4,{{{{10000000,10000000},{30000000,10000000},
+            {30000000,30000000},{10000000,30000000},{10000000,10000000}}}}});
+        item.setHydroFrame(frame);item.setHydroStyle({{"lakesVisible",true},{"riversVisible",false},
+            {"lakeBoundaryVisible",false},{"lakeColor","#0000ff"}});
+        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
+        QPainter painter(&image);item.paint(&painter);painter.end();
+        QCOMPARE(image.pixelColor(15,15),QColor("#0000ff"));
+        QCOMPARE(image.pixelColor(20,20),QColor("#ffff00"));
+        QCOMPARE(image.pixelColor(5,5),QColor("#ff0000"));
     }
     void builtinHydroPaintsWidthAndLakeHoleWithoutDocumentGeometry(){
         MapRenderItem item;item.setWidth(64);item.setHeight(64);item.setMapScale(10);
