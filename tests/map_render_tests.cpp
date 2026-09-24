@@ -88,7 +88,9 @@ private slots:
             {"lakeBoundaryVisible",false}});
         image.fill(Qt::white);QPainter translucent(&image);item.paint(&translucent);translucent.end();
         QVERIFY(image.pixelColor(15,15).red()>120&&image.pixelColor(15,15).red()<140);
-        QVERIFY(image.pixelColor(38,50).green()>120&&image.pixelColor(38,50).green()<140);
+        const auto translucentRiver=image.pixelColor(30,50);
+        QVERIFY2(translucentRiver.green()>120&&translucentRiver.green()<140,
+                 qPrintable(translucentRiver.name()));
         item.setHiddenHydroIds({QStringLiteral("3")});
         image.fill(Qt::white);QPainter hiddenLake(&image);item.paint(&hiddenLake);hiddenLake.end();
         QCOMPARE(image.pixelColor(15,15),QColor(Qt::white));
