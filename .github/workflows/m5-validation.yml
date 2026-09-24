@@ -26,7 +26,21 @@ jobs:
           cache: true
       - name: Configure and build
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
+      - name: Fetch pinned full hydro dataset
+        id: real_hydro
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: kimjeon-il/world-map
+          ref: c0bd31d13dc8495593d78cf51f7cc195de7c9469
+          path: full-hydro-world-map
+          persist-credentials: false
+          sparse-checkout: |
+            assets/data/hydro/v0.13.0
+            assets/data/hydro/v0.13.1
       - name: Test complete suite
+        env:
+          PANDOEDITOR_HYDRO_FULL_MANIFEST: ${{ steps.real_hydro.outcome == 'success' && format('{0}/full-hydro-world-map/assets/data/hydro/v0.13.1/manifest.json', github.workspace) || '' }}
         run: ctest --test-dir build --output-on-failure --output-junit results.xml
       - uses: actions/upload-artifact@v4
         if: always()
