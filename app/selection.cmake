@@ -8,8 +8,10 @@ if(BUILD_TESTING)
     if(PANDOEDITOR_NODE_EXECUTABLE)
         add_test(NAME m4_geometry_web_parity COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m4-geometry-oracle.mjs" "$<TARGET_FILE:m4_geometry_probe>")
         add_test(NAME presentation_web_parity COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m34-presentation-oracle.mjs" "$<TARGET_FILE:presentation_parity_probe>")
-        add_test(NAME selection_web_parity
-            COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m3-selection-oracle.mjs" "$<TARGET_FILE:selection_probe>")
+    add_test(NAME selection_web_parity
+        COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m3-selection-oracle.mjs" "$<TARGET_FILE:selection_probe>")
+    add_test(NAME m5_hydro_web_fixture
+        COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m5-hydro-oracle.mjs" --fixture-only)
     else()
         message(WARNING "Node.js missing: pinned-web differential selection test is not registered")
     endif()

@@ -37,3 +37,15 @@ alpha formula and first-input winner for equal shares. Executable Oracle
 coverage is still limited to the previously recorded dominant-distribution
 fixture; label pixels, symbol pixels and hydro-provider behavior are covered by
 focused native tests rather than claimed as new web-Oracle passes.
+
+## M5 hydro format pin for the completion pass
+
+The hydro worker, shard store, tile-window module and their small runtime
+dependencies are pinned from world-map `c0bd31d` in
+`tests/fixtures/web-hydro/source`. Source blob IDs and fixture provenance are
+in that fixture's README. `tools/m5-hydro-oracle.mjs --fixture-only` executes
+the real web decoder on a six-record v4 pack/v5 metadata dataset. It checks
+index, metadata, geometry, widths, mesh, viewport tile enumeration and logical
+fragment merge against golden output produced by that same web decoder.
+Native parity is a subsequent parser task; this pin alone is not evidence of
+native hydro support.

@@ -1,0 +1,75 @@
+{
+  "version": "0.13.1",
+  "dataset": "fixture",
+  "schema": "pandolab-water-shards-v5",
+  "crs": "EPSG:4326",
+  "stages": [
+    {
+      "id": 0,
+      "minZoom": 6,
+      "columns": 8,
+      "rows": 4
+    },
+    {
+      "id": 1,
+      "minZoom": 6.7,
+      "columns": 16,
+      "rows": 8
+    },
+    {
+      "id": 2,
+      "minZoom": 7,
+      "columns": 32,
+      "rows": 16
+    },
+    {
+      "id": 3,
+      "minZoom": 7.5,
+      "columns": 64,
+      "rows": 32
+    }
+  ],
+  "index": {
+    "url": "../v0.13.0/index.bin.gz",
+    "bytes": 133,
+    "sha256": "797a25dad26bc04b8493504291d21beee852775c24fee32c520e3afabb8a75a2",
+    "tileCount": 5,
+    "logicalFeatureCount": 5
+  },
+  "metadata": {
+    "version": 5,
+    "featureCount": 6,
+    "core": {
+      "url": "metadata-core.json.gz",
+      "bytes": 342,
+      "sha256": "acb0fa66d21fdeab14b8c8769c5c3238375860abeb80e2bf44bbf60aeda53900"
+    },
+    "detail": {
+      "url": "../v0.13.0/metadata-detail.json.gz",
+      "bytes": 116,
+      "sha256": "bc9bfeb343396c5d58849a0b8ff20b2961dfc5b4818e6d13fd1388d43ae26eea",
+      "lazy": true
+    }
+  },
+  "shards": [
+    {
+      "id": 0,
+      "url": "../v0.13.0/shards/s0.bin",
+      "bytes": 507,
+      "sha256": "4848da882a4b65d94ecf5f562d62a90885d167d0b84d3c3a024fe94427441b1e",
+      "packs": 6
+    }
+  ],
+  "layers": [
+    {
+      "id": "rivers_hydro",
+      "category": "river",
+      "locked": true
+    },
+    {
+      "id": "lakes_natural_earth",
+      "category": "lake",
+      "locked": true
+    }
+  ]
+}

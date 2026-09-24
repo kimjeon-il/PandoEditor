@@ -1,0 +1,1253 @@
+{
+  "index": {
+    "tiles": [
+      [
+        "0/4-1",
+        [
+          0
+        ]
+      ],
+      [
+        "1/8-3",
+        [
+          1
+        ]
+      ],
+      [
+        "2/17-7",
+        [
+          2
+        ]
+      ],
+      [
+        "2/19-7",
+        [
+          4,
+          5
+        ]
+      ],
+      [
+        "3/37-15",
+        [
+          3
+        ]
+      ]
+    ],
+    "logical": [
+      [
+        1,
+        [
+          0
+        ]
+      ],
+      [
+        2,
+        [
+          1
+        ]
+      ],
+      [
+        3,
+        [
+          2
+        ]
+      ],
+      [
+        4,
+        [
+          3
+        ]
+      ],
+      [
+        5,
+        [
+          4,
+          5
+        ]
+      ]
+    ],
+    "packs": [
+      [
+        0,
+        {
+          "id": 0,
+          "shard": 0,
+          "offset": 0,
+          "length": 68,
+          "stage": 0
+        }
+      ],
+      [
+        1,
+        {
+          "id": 1,
+          "shard": 0,
+          "offset": 68,
+          "length": 90,
+          "stage": 1
+        }
+      ],
+      [
+        2,
+        {
+          "id": 2,
+          "shard": 0,
+          "offset": 158,
+          "length": 80,
+          "stage": 2
+        }
+      ],
+      [
+        3,
+        {
+          "id": 3,
+          "shard": 0,
+          "offset": 238,
+          "length": 104,
+          "stage": 3
+        }
+      ],
+      [
+        4,
+        {
+          "id": 4,
+          "shard": 0,
+          "offset": 342,
+          "length": 81,
+          "stage": 2
+        }
+      ],
+      [
+        5,
+        {
+          "id": 5,
+          "shard": 0,
+          "offset": 423,
+          "length": 84,
+          "stage": 2
+        }
+      ]
+    ]
+  },
+  "metadata": [
+    [
+      1,
+      {
+        "fid": 1,
+        "logicalFid": 1,
+        "awId": "fixture:1",
+        "name": "Normal",
+        "layerId": "rivers_hydro",
+        "category": "river",
+        "stage": 0,
+        "flags": 0,
+        "fragmentIndex": 0,
+        "fragmentCount": 1,
+        "bounds": [
+          0,
+          0,
+          2,
+          1
+        ],
+        "systemId": "system:1",
+        "role": "mainstem"
+      }
+    ],
+    [
+      2,
+      {
+        "fid": 2,
+        "logicalFid": 2,
+        "awId": "fixture:2",
+        "name": "Border",
+        "layerId": "rivers_hydro",
+        "category": "river",
+        "stage": 1,
+        "flags": 1,
+        "fragmentIndex": 0,
+        "fragmentCount": 1,
+        "bounds": [
+          10,
+          0,
+          12,
+          2
+        ],
+        "systemId": "system:2",
+        "role": "mainstem"
+      }
+    ],
+    [
+      3,
+      {
+        "fid": 3,
+        "logicalFid": 3,
+        "awId": "fixture:3",
+        "name": "Simple",
+        "layerId": "lakes_natural_earth",
+        "category": "lake",
+        "stage": 2,
+        "flags": 0,
+        "fragmentIndex": 0,
+        "fragmentCount": 1,
+        "bounds": [
+          20,
+          0,
+          22,
+          2
+        ],
+        "systemId": "system:3",
+        "role": ""
+      }
+    ],
+    [
+      4,
+      {
+        "fid": 4,
+        "logicalFid": 4,
+        "awId": "fixture:4",
+        "name": "Hole",
+        "layerId": "lakes_natural_earth",
+        "category": "lake",
+        "stage": 3,
+        "flags": 0,
+        "fragmentIndex": 0,
+        "fragmentCount": 1,
+        "bounds": [
+          30,
+          0,
+          34,
+          4
+        ],
+        "systemId": "system:4",
+        "role": ""
+      }
+    ],
+    [
+      5,
+      {
+        "fid": 5,
+        "logicalFid": 5,
+        "awId": "fixture:5",
+        "name": "Split",
+        "layerId": "rivers_hydro",
+        "category": "river",
+        "stage": 2,
+        "flags": 0,
+        "fragmentIndex": 0,
+        "fragmentCount": 2,
+        "bounds": [
+          40,
+          0,
+          41,
+          1
+        ],
+        "systemId": "system:5",
+        "role": "mainstem"
+      }
+    ],
+    [
+      6,
+      {
+        "fid": 6,
+        "logicalFid": 5,
+        "awId": "fixture:5",
+        "name": "Split",
+        "layerId": "rivers_hydro",
+        "category": "river",
+        "stage": 2,
+        "flags": 0,
+        "fragmentIndex": 1,
+        "fragmentCount": 2,
+        "bounds": [
+          41,
+          1,
+          42,
+          2
+        ],
+        "systemId": "system:5",
+        "role": "mainstem"
+      }
+    ]
+  ],
+  "packs": [
+    {
+      "id": 0,
+      "descriptors": [
+        {
+          "fid": 1,
+          "logicalFid": 1,
+          "flags": 0,
+          "fragmentIndex": 0,
+          "fragmentCount": 1,
+          "awId": "fixture:1",
+          "name": "Normal",
+          "source": "",
+          "systemId": "system:1",
+          "mainstemNameKo": "Normal",
+          "role": "mainstem",
+          "sourceId": "",
+          "layerId": "rivers_hydro",
+          "category": "river",
+          "minZoom": 6,
+          "stage": 0,
+          "width": 0.800000011920929,
+          "packId": 0,
+          "bounds": [
+            0,
+            0,
+            2,
+            1
+          ]
+        }
+      ],
+      "geometry": [
+        {
+          "type": "LineString",
+          "coordinates": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0.5
+            ],
+            [
+              2,
+              1
+            ]
+          ]
+        }
+      ],
+      "mesh": {
+        "riverStarts": [
+          0,
+          0,
+          1000000,
+          500000
+        ],
+        "riverEnds": [
+          1000000,
+          500000,
+          2000000,
+          1000000
+        ],
+        "riverFeatureIds": [
+          1,
+          1
+        ],
+        "riverStartWidths": [
+          0.800000011920929,
+          1.2000000476837158
+        ],
+        "riverEndWidths": [
+          1.2000000476837158,
+          1.600000023841858
+        ],
+        "borderRiverStarts": [],
+        "borderRiverEnds": [],
+        "borderRiverFeatureIds": [],
+        "borderRiverStartWidths": [],
+        "borderRiverEndWidths": [],
+        "lakePositions": [],
+        "lakeFeatureIds": [],
+        "lakeIndices": [],
+        "lakeBoundaryStarts": [],
+        "lakeBoundaryEnds": [],
+        "lakeBoundaryFeatureIds": [],
+        "lakeBoundaryWidths": []
+      }
+    },
+    {
+      "id": 1,
+      "descriptors": [
+        {
+          "fid": 2,
+          "logicalFid": 2,
+          "flags": 1,
+          "fragmentIndex": 0,
+          "fragmentCount": 1,
+          "awId": "fixture:2",
+          "name": "Border",
+          "source": "",
+          "systemId": "system:2",
+          "mainstemNameKo": "Border",
+          "role": "mainstem",
+          "sourceId": "",
+          "layerId": "rivers_hydro",
+          "category": "river",
+          "minZoom": 6.7,
+          "stage": 1,
+          "width": 0.5,
+          "packId": 1,
+          "bounds": [
+            10,
+            0,
+            12,
+            2
+          ]
+        }
+      ],
+      "geometry": [
+        {
+          "type": "MultiLineString",
+          "coordinates": [
+            [
+              [
+                10,
+                0
+              ],
+              [
+                11,
+                1
+              ]
+            ],
+            [
+              [
+                11,
+                1
+              ],
+              [
+                12,
+                2
+              ]
+            ]
+          ]
+        }
+      ],
+      "mesh": {
+        "riverStarts": [],
+        "riverEnds": [],
+        "riverFeatureIds": [],
+        "riverStartWidths": [],
+        "riverEndWidths": [],
+        "borderRiverStarts": [
+          10000000,
+          0,
+          11000000,
+          1000000
+        ],
+        "borderRiverEnds": [
+          11000000,
+          1000000,
+          12000000,
+          2000000
+        ],
+        "borderRiverFeatureIds": [
+          2,
+          2
+        ],
+        "borderRiverStartWidths": [
+          0.5,
+          0.8999999761581421
+        ],
+        "borderRiverEndWidths": [
+          0.8999999761581421,
+          1.2999999523162842
+        ],
+        "lakePositions": [],
+        "lakeFeatureIds": [],
+        "lakeIndices": [],
+        "lakeBoundaryStarts": [],
+        "lakeBoundaryEnds": [],
+        "lakeBoundaryFeatureIds": [],
+        "lakeBoundaryWidths": []
+      }
+    },
+    {
+      "id": 2,
+      "descriptors": [
+        {
+          "fid": 3,
+          "logicalFid": 3,
+          "flags": 0,
+          "fragmentIndex": 0,
+          "fragmentCount": 1,
+          "awId": "fixture:3",
+          "name": "Simple",
+          "source": "",
+          "systemId": "system:3",
+          "mainstemNameKo": "Simple",
+          "role": "",
+          "sourceId": "",
+          "layerId": "lakes_natural_earth",
+          "category": "lake",
+          "minZoom": 7,
+          "stage": 2,
+          "width": 1,
+          "packId": 2,
+          "bounds": [
+            20,
+            0,
+            22,
+            2
+          ]
+        }
+      ],
+      "geometry": [
+        {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                20,
+                0
+              ],
+              [
+                22,
+                0
+              ],
+              [
+                22,
+                2
+              ],
+              [
+                20,
+                2
+              ],
+              [
+                20,
+                0
+              ]
+            ]
+          ]
+        }
+      ],
+      "mesh": {
+        "riverStarts": [],
+        "riverEnds": [],
+        "riverFeatureIds": [],
+        "riverStartWidths": [],
+        "riverEndWidths": [],
+        "borderRiverStarts": [],
+        "borderRiverEnds": [],
+        "borderRiverFeatureIds": [],
+        "borderRiverStartWidths": [],
+        "borderRiverEndWidths": [],
+        "lakePositions": [
+          20000000,
+          0,
+          22000000,
+          0,
+          22000000,
+          2000000,
+          20000000,
+          2000000
+        ],
+        "lakeFeatureIds": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "lakeIndices": [
+          2,
+          3,
+          0,
+          0,
+          1,
+          2
+        ],
+        "lakeBoundaryStarts": [
+          20000000,
+          0,
+          22000000,
+          0,
+          22000000,
+          2000000,
+          20000000,
+          2000000
+        ],
+        "lakeBoundaryEnds": [
+          22000000,
+          0,
+          22000000,
+          2000000,
+          20000000,
+          2000000,
+          20000000,
+          0
+        ],
+        "lakeBoundaryFeatureIds": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "lakeBoundaryWidths": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "descriptors": [
+        {
+          "fid": 4,
+          "logicalFid": 4,
+          "flags": 0,
+          "fragmentIndex": 0,
+          "fragmentCount": 1,
+          "awId": "fixture:4",
+          "name": "Hole",
+          "source": "",
+          "systemId": "system:4",
+          "mainstemNameKo": "Hole",
+          "role": "",
+          "sourceId": "",
+          "layerId": "lakes_natural_earth",
+          "category": "lake",
+          "minZoom": 7.5,
+          "stage": 3,
+          "width": 1,
+          "packId": 3,
+          "bounds": [
+            30,
+            0,
+            34,
+            4
+          ]
+        }
+      ],
+      "geometry": [
+        {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                30,
+                0
+              ],
+              [
+                34,
+                0
+              ],
+              [
+                34,
+                4
+              ],
+              [
+                30,
+                4
+              ],
+              [
+                30,
+                0
+              ]
+            ],
+            [
+              [
+                31,
+                1
+              ],
+              [
+                31,
+                3
+              ],
+              [
+                33,
+                3
+              ],
+              [
+                33,
+                1
+              ],
+              [
+                31,
+                1
+              ]
+            ]
+          ]
+        }
+      ],
+      "mesh": {
+        "riverStarts": [],
+        "riverEnds": [],
+        "riverFeatureIds": [],
+        "riverStartWidths": [],
+        "riverEndWidths": [],
+        "borderRiverStarts": [],
+        "borderRiverEnds": [],
+        "borderRiverFeatureIds": [],
+        "borderRiverStartWidths": [],
+        "borderRiverEndWidths": [],
+        "lakePositions": [
+          30000000,
+          0,
+          34000000,
+          0,
+          34000000,
+          4000000,
+          30000000,
+          4000000,
+          31000000,
+          1000000,
+          31000000,
+          3000000,
+          33000000,
+          3000000,
+          33000000,
+          1000000
+        ],
+        "lakeFeatureIds": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        "lakeIndices": [
+          0,
+          4,
+          5,
+          7,
+          4,
+          0,
+          3,
+          0,
+          5,
+          7,
+          0,
+          1,
+          2,
+          3,
+          5,
+          6,
+          7,
+          1,
+          2,
+          5,
+          6,
+          6,
+          1,
+          2
+        ],
+        "lakeBoundaryStarts": [
+          30000000,
+          0,
+          34000000,
+          0,
+          34000000,
+          4000000,
+          30000000,
+          4000000,
+          31000000,
+          1000000,
+          31000000,
+          3000000,
+          33000000,
+          3000000,
+          33000000,
+          1000000
+        ],
+        "lakeBoundaryEnds": [
+          34000000,
+          0,
+          34000000,
+          4000000,
+          30000000,
+          4000000,
+          30000000,
+          0,
+          31000000,
+          3000000,
+          33000000,
+          3000000,
+          33000000,
+          1000000,
+          31000000,
+          1000000
+        ],
+        "lakeBoundaryFeatureIds": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        "lakeBoundaryWidths": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "descriptors": [
+        {
+          "fid": 5,
+          "logicalFid": 5,
+          "flags": 0,
+          "fragmentIndex": 0,
+          "fragmentCount": 2,
+          "awId": "fixture:5",
+          "name": "Split",
+          "source": "",
+          "systemId": "system:5",
+          "mainstemNameKo": "Split",
+          "role": "mainstem",
+          "sourceId": "",
+          "layerId": "rivers_hydro",
+          "category": "river",
+          "minZoom": 7,
+          "stage": 2,
+          "width": 0.6000000238418579,
+          "packId": 4,
+          "bounds": [
+            40,
+            0,
+            41,
+            1
+          ]
+        }
+      ],
+      "geometry": [
+        {
+          "type": "LineString",
+          "coordinates": [
+            [
+              40,
+              0
+            ],
+            [
+              41,
+              1
+            ]
+          ]
+        }
+      ],
+      "mesh": {
+        "riverStarts": [
+          40000000,
+          0
+        ],
+        "riverEnds": [
+          41000000,
+          1000000
+        ],
+        "riverFeatureIds": [
+          5
+        ],
+        "riverStartWidths": [
+          0.6000000238418579
+        ],
+        "riverEndWidths": [
+          0.800000011920929
+        ],
+        "borderRiverStarts": [],
+        "borderRiverEnds": [],
+        "borderRiverFeatureIds": [],
+        "borderRiverStartWidths": [],
+        "borderRiverEndWidths": [],
+        "lakePositions": [],
+        "lakeFeatureIds": [],
+        "lakeIndices": [],
+        "lakeBoundaryStarts": [],
+        "lakeBoundaryEnds": [],
+        "lakeBoundaryFeatureIds": [],
+        "lakeBoundaryWidths": []
+      }
+    },
+    {
+      "id": 5,
+      "descriptors": [
+        {
+          "fid": 6,
+          "logicalFid": 5,
+          "flags": 0,
+          "fragmentIndex": 1,
+          "fragmentCount": 2,
+          "awId": "fixture:5",
+          "name": "Split",
+          "source": "",
+          "systemId": "system:5",
+          "mainstemNameKo": "Split",
+          "role": "mainstem",
+          "sourceId": "",
+          "layerId": "rivers_hydro",
+          "category": "river",
+          "minZoom": 7,
+          "stage": 2,
+          "width": 0.800000011920929,
+          "packId": 5,
+          "bounds": [
+            41,
+            1,
+            42,
+            2
+          ]
+        }
+      ],
+      "geometry": [
+        {
+          "type": "LineString",
+          "coordinates": [
+            [
+              41,
+              1
+            ],
+            [
+              42,
+              2
+            ]
+          ]
+        }
+      ],
+      "mesh": {
+        "riverStarts": [
+          41000000,
+          1000000
+        ],
+        "riverEnds": [
+          42000000,
+          2000000
+        ],
+        "riverFeatureIds": [
+          6
+        ],
+        "riverStartWidths": [
+          0.800000011920929
+        ],
+        "riverEndWidths": [
+          1
+        ],
+        "borderRiverStarts": [],
+        "borderRiverEnds": [],
+        "borderRiverFeatureIds": [],
+        "borderRiverStartWidths": [],
+        "borderRiverEndWidths": [],
+        "lakePositions": [],
+        "lakeFeatureIds": [],
+        "lakeIndices": [],
+        "lakeBoundaryStarts": [],
+        "lakeBoundaryEnds": [],
+        "lakeBoundaryFeatureIds": [],
+        "lakeBoundaryWidths": []
+      }
+    }
+  ],
+  "viewport": {
+    "signature": "flat;0@6,1@6.7,2@7,3@7.5;4x2;0:8x4:x4:y1-2|1:16x8:x8,9:y3-4|2:32x16:x16,17,18,19:y6-8|3:64x32:x32,33,34,35,36,37,38:y13-17",
+    "tiles": [
+      {
+        "stage": 0,
+        "x": 4,
+        "y": 1
+      },
+      {
+        "stage": 0,
+        "x": 4,
+        "y": 2
+      },
+      {
+        "stage": 1,
+        "x": 8,
+        "y": 3
+      },
+      {
+        "stage": 1,
+        "x": 9,
+        "y": 3
+      },
+      {
+        "stage": 1,
+        "x": 8,
+        "y": 4
+      },
+      {
+        "stage": 1,
+        "x": 9,
+        "y": 4
+      },
+      {
+        "stage": 2,
+        "x": 16,
+        "y": 6
+      },
+      {
+        "stage": 2,
+        "x": 17,
+        "y": 6
+      },
+      {
+        "stage": 2,
+        "x": 18,
+        "y": 6
+      },
+      {
+        "stage": 2,
+        "x": 19,
+        "y": 6
+      },
+      {
+        "stage": 2,
+        "x": 16,
+        "y": 7
+      },
+      {
+        "stage": 2,
+        "x": 17,
+        "y": 7
+      },
+      {
+        "stage": 2,
+        "x": 18,
+        "y": 7
+      },
+      {
+        "stage": 2,
+        "x": 19,
+        "y": 7
+      },
+      {
+        "stage": 2,
+        "x": 16,
+        "y": 8
+      },
+      {
+        "stage": 2,
+        "x": 17,
+        "y": 8
+      },
+      {
+        "stage": 2,
+        "x": 18,
+        "y": 8
+      },
+      {
+        "stage": 2,
+        "x": 19,
+        "y": 8
+      },
+      {
+        "stage": 3,
+        "x": 32,
+        "y": 13
+      },
+      {
+        "stage": 3,
+        "x": 33,
+        "y": 13
+      },
+      {
+        "stage": 3,
+        "x": 34,
+        "y": 13
+      },
+      {
+        "stage": 3,
+        "x": 35,
+        "y": 13
+      },
+      {
+        "stage": 3,
+        "x": 36,
+        "y": 13
+      },
+      {
+        "stage": 3,
+        "x": 37,
+        "y": 13
+      },
+      {
+        "stage": 3,
+        "x": 38,
+        "y": 13
+      },
+      {
+        "stage": 3,
+        "x": 32,
+        "y": 14
+      },
+      {
+        "stage": 3,
+        "x": 33,
+        "y": 14
+      },
+      {
+        "stage": 3,
+        "x": 34,
+        "y": 14
+      },
+      {
+        "stage": 3,
+        "x": 35,
+        "y": 14
+      },
+      {
+        "stage": 3,
+        "x": 36,
+        "y": 14
+      },
+      {
+        "stage": 3,
+        "x": 37,
+        "y": 14
+      },
+      {
+        "stage": 3,
+        "x": 38,
+        "y": 14
+      },
+      {
+        "stage": 3,
+        "x": 32,
+        "y": 15
+      },
+      {
+        "stage": 3,
+        "x": 33,
+        "y": 15
+      },
+      {
+        "stage": 3,
+        "x": 34,
+        "y": 15
+      },
+      {
+        "stage": 3,
+        "x": 35,
+        "y": 15
+      },
+      {
+        "stage": 3,
+        "x": 36,
+        "y": 15
+      },
+      {
+        "stage": 3,
+        "x": 37,
+        "y": 15
+      },
+      {
+        "stage": 3,
+        "x": 38,
+        "y": 15
+      },
+      {
+        "stage": 3,
+        "x": 32,
+        "y": 16
+      },
+      {
+        "stage": 3,
+        "x": 33,
+        "y": 16
+      },
+      {
+        "stage": 3,
+        "x": 34,
+        "y": 16
+      },
+      {
+        "stage": 3,
+        "x": 35,
+        "y": 16
+      },
+      {
+        "stage": 3,
+        "x": 36,
+        "y": 16
+      },
+      {
+        "stage": 3,
+        "x": 37,
+        "y": 16
+      },
+      {
+        "stage": 3,
+        "x": 38,
+        "y": 16
+      },
+      {
+        "stage": 3,
+        "x": 32,
+        "y": 17
+      },
+      {
+        "stage": 3,
+        "x": 33,
+        "y": 17
+      },
+      {
+        "stage": 3,
+        "x": 34,
+        "y": 17
+      },
+      {
+        "stage": 3,
+        "x": 35,
+        "y": 17
+      },
+      {
+        "stage": 3,
+        "x": 36,
+        "y": 17
+      },
+      {
+        "stage": 3,
+        "x": 37,
+        "y": 17
+      },
+      {
+        "stage": 3,
+        "x": 38,
+        "y": 17
+      }
+    ]
+  },
+  "merged": {
+    "id": "fixture:5",
+    "geometry": {
+      "type": "MultiLineString",
+      "coordinates": [
+        [
+          [
+            40,
+            0
+          ],
+          [
+            41,
+            1
+          ]
+        ],
+        [
+          [
+            41,
+            1
+          ],
+          [
+            42,
+            2
+          ]
+        ]
+      ]
+    },
+    "widths": [
+      [
+        0.6,
+        0.8
+      ],
+      [
+        0.8,
+        1
+      ]
+    ],
+    "sourceId": ""
+  }
+}
