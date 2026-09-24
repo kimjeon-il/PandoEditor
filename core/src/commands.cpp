@@ -389,9 +389,13 @@ void applyContent(ProjectDocument& d,const DocumentIndex& before,const ContentEd
             else if constexpr(std::is_same_v<T,HydroFeature>) {
                 if(edit.create&&value.sourceFeatureId) {
                     const auto original=std::find_if(d.hydro.begin(),d.hydro.end(),[&](const auto& h){return h.id==*value.sourceFeatureId&&h.source.kind=="builtin";});
-                    require(original!=d.hydro.end(),CommandError::InvalidArguments,"source hydro dataset feature unavailable");
+                    require(original!=d.hydro.end()||(!d.physicalData.source.empty()&&value.source.dataset==d.physicalData.dataset&&
+                        value.source.version==d.physicalData.version&&value.source.kind=="user"),
+                        CommandError::InvalidArguments,"source hydro dataset feature unavailable");
                     auto& hidden=d.physicalData.hiddenHydroIds;
-                    if(std::find(hidden.begin(),hidden.end(),*value.sourceFeatureId)==hidden.end())hidden.push_back(*value.sourceFeatureId);
+                    require(std::find(hidden.begin(),hidden.end(),*value.sourceFeatureId)==hidden.end(),
+                        CommandError::InvalidArguments,"source hydro already hidden");
+                    hidden.push_back(*value.sourceFeatureId);
                 }
                 replaceContentRow(d.hydro,value);
             }

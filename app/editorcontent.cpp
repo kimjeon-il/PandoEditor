@@ -5,10 +5,61 @@
 #include <QBuffer>
 #include <QColor>
 #include <QUuid>
+#include <QFutureWatcher>
+#include <QtConcurrent>
 #include <type_traits>
 #include <cmath>
 using namespace pandoeditor;
 namespace { QString q(const std::string& s){return QString::fromStdString(s);} }
+bool EditorController::copyBuiltinHydro() {
+    if(hydroCopyBusy_||hasPendingEdits()||jobBusy()||hasWebImportPreview())return false;
+    const auto selected=selection_.primary();
+    if(!selected||selected->domain!="hydroBuiltin"||!objectVisible(*selected))return false;
+    const auto record=hydroRuntime_.recordById(q(selected->id));
+    if(!record||!hydroRuntime_.pinLogical(record->logicalFid))return false;
+    auto job=hydroRuntime_.logicalGeometryJob(record->logicalFid);
+    if(!job){hydroRuntime_.clearPinned();return false;}
+    const auto revision=project_.revision(),instance=project_.instanceId();
+    const auto source=project_.document().physicalData;
+    const auto original=*selected;
+    using Result=std::pair<std::optional<HydroLogicalCopy>,QString>;
+    auto* watcher=new QFutureWatcher<Result>(this);
+    hydroCopyBusy_=true;emit contentEditChanged();
+    connect(watcher,&QFutureWatcher<Result>::finished,this,[this,watcher,revision,instance,source,original,record]{
+        const auto result=watcher->result();watcher->deleteLater();
+        hydroRuntime_.clearPinned();hydroCopyBusy_=false;emit contentEditChanged();
+        if(project_.revision()!=revision||project_.instanceId()!=instance||
+           project_.document().physicalData.source!=source.source||
+           !selection_.primary()||!(*selection_.primary()==original))return;
+        if(!result.first){emit errorOccurred(result.second);return;}
+        try{
+            const auto id=QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
+            const GeometryRef geometryRef{"content:hydro:"+id,1};
+            HydroFeature copy;copy.id=id;copy.name=record->name.toStdString();
+            copy.kind=record->category=="lake"?"lake":"river";copy.geometry=geometryRef;
+            copy.source.kind="user";copy.source.dataset=source.dataset;copy.source.version=source.version;
+            copy.source.sourceId=result.first->sourceId.toStdString();
+            copy.sourceFeatureId=original.id;
+            ContentEdit edit;edit.target={"hydro",id};edit.value=copy;edit.create=true;
+            edit.geometry=std::make_pair(geometryRef,std::move(result.first->geometry));
+            CommandArguments args;args.action=std::move(edit);
+            const auto request=CommandProcessor::makeRequest(project_,"content.edit",args);
+            const auto prepared=CommandProcessor::prepare(project_,request);
+            if(!prepared.ok()||!prepared.preview){emit errorOccurred(QString::fromStdString(prepared.detail));return;}
+            MapProjection next;next.rebuild(prepared.preview->change().after());
+            const auto committed=CommandProcessor::confirm(project_,*prepared.preview);
+            if(!committed.ok()){emit errorOccurred(QString::fromStdString(commandErrorCode(committed.error)));return;}
+            projection_=std::move(next);publish(false);emit geometryChanged();
+            selectObject({{"domain","hydro"},{"id",q(id)}},"replace","map");
+        }catch(const std::exception& exception){emit errorOccurred(QString::fromUtf8(exception.what()));}
+    });
+    watcher->setFuture(QtConcurrent::run([job=std::move(job)]() -> Result {
+        try{return {job(),{}};}
+        catch(const std::exception& exception){return {{},QString::fromUtf8(exception.what())};}
+        catch(...){return {{},QStringLiteral("수계 편집용 복사에 실패했습니다.")};}
+    }));
+    return true;
+}
 QVariantMap EditorController::contentEditState() const {
     if(!contentSession_) return {{"active",false}};
     const auto& s=*contentSession_;

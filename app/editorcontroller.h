@@ -34,6 +34,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantMap hydroProjection READ hydroProjection NOTIFY geometryChanged)
     Q_PROPERTY(QVariantMap hydroStyle READ hydroStyle NOTIFY visualChanged)
     Q_PROPERTY(QVariantList hiddenHydroIds READ hiddenHydroIds NOTIFY stateChanged)
+    Q_PROPERTY(bool hydroCopyBusy READ hydroCopyBusy NOTIFY contentEditChanged)
     Q_PROPERTY(qulonglong presentationRevision READ presentationRevision NOTIFY presentationChanged)
     Q_PROPERTY(bool presentationRecoveryAvailable READ presentationRecoveryAvailable NOTIFY presentationRecoveryChanged)
     Q_PROPERTY(QObject* screenColorPicker READ screenColorPicker CONSTANT)
@@ -111,6 +112,8 @@ public:
     QVariantMap hydroProjection() const;
     QVariantMap hydroStyle() const;
     QVariantList hiddenHydroIds() const;
+    bool hydroCopyBusy() const{return hydroCopyBusy_;}
+    Q_INVOKABLE bool copyBuiltinHydro();
     Q_INVOKABLE void requestHydroViewport(double zoom,double mapScale,double originX,double originY,
                                           double width,double height);
     qulonglong presentationRevision() const { return project_.presentationRevision(); }
@@ -370,6 +373,7 @@ private:
     bool replaceFromBytes(const QByteArray& bytes,bool imported,const QString& path={});
     pandoeditor::Project project_;
     HydroRuntimeProvider hydroRuntime_;
+    bool hydroCopyBusy_=false;
     std::unique_ptr<CommandJobRunner> jobs_;
     std::optional<pandoeditor::JobTicket> background_;
     bool fieldCommitInProgress_=false;

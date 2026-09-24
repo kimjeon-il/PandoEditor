@@ -85,6 +85,38 @@ std::optional<HydroMetadataRecord> HydroRuntimeProvider::recordByFid(quint32 fid
     const auto found=dataset_->metadata.constFind(fid);
     return found==dataset_->metadata.cend()?std::nullopt:std::optional<HydroMetadataRecord>(*found);
 }
+std::function<HydroLogicalCopy()> HydroRuntimeProvider::logicalGeometryJob(quint32 logicalFid) const {
+    if(!dataset_||!dataset_->index.logicalPacks.count(logicalFid))return {};
+    const auto dataset=dataset_;
+    return [dataset,logicalFid]{
+        QString error;
+        const auto detail=readHydroAsset(dataset->manifest.metadataDetail,true,error);
+        if(!error.isEmpty())throw std::runtime_error(error.toStdString());
+        auto metadata=dataset->metadata;
+        if(!mergeHydroDetailMetadata(detail,metadata,error))throw std::runtime_error(error.toStdString());
+        std::vector<pandoeditor::HydroPhysicalFeature> fragments;
+        QString source,sourceId;
+        for(const auto id:dataset->index.logicalPacks.at(logicalFid)){
+            const auto& spec=dataset->index.packSpecs.at(id);
+            std::shared_ptr<const pandoeditor::HydroPack> pack;
+            {std::lock_guard lock(dataset->mutex);pack=dataset->cache.get(id);}
+            if(!pack){
+                const auto bytes=dataset->shards.at(spec.shard)->readPack(spec.offset,spec.length,error);
+                if(!error.isEmpty())throw std::runtime_error(error.toStdString());
+                pack=std::make_shared<pandoeditor::HydroPack>(pandoeditor::decodeHydroPack(
+                    {reinterpret_cast<const std::uint8_t*>(bytes.constData()),static_cast<std::size_t>(bytes.size())},
+                    id,dataset->logicalIds));
+                std::lock_guard lock(dataset->mutex);
+                dataset->cache.put(id,pack,decodedBytes(*pack));
+            }
+            for(const auto& feature:pack->features)if(feature.logicalFid==logicalFid){
+                source=metadata.value(feature.fid).source;sourceId=metadata.value(feature.fid).sourceId;
+                fragments.push_back(feature);
+            }
+        }
+        return HydroLogicalCopy{pandoeditor::mergeHydroLogicalFragments(std::move(fragments)),source,sourceId};
+    };
+}
 bool HydroRuntimeProvider::pinLogical(quint32 logicalFid) {
     if(!dataset_)return false;
     const auto found=dataset_->index.logicalPacks.find(logicalFid);

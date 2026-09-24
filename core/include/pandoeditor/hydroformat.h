@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <pandoeditor/document.h>
 
 namespace pandoeditor {
 struct HydroByteView { const std::uint8_t* data=nullptr; std::size_t size=0; };
@@ -66,4 +67,5 @@ HydroIndex decodeHydroIndex(HydroByteView bytes,
 HydroPack decodeHydroPack(HydroByteView bytes,std::uint32_t packId,
                           const std::map<std::uint32_t,std::uint32_t>& metadataLogicalIds);
 HydroRenderPacket buildHydroRenderPacket(const HydroPack& pack);
+Geometry mergeHydroLogicalFragments(std::vector<HydroPhysicalFeature> fragments);
 }

@@ -7,6 +7,9 @@
 #include <QObject>
 #include <memory>
 #include <optional>
+#include <functional>
+
+struct HydroLogicalCopy {pandoeditor::Geometry geometry; QString source,sourceId;};
 
 class HydroRuntimeProvider : public QObject {
     Q_OBJECT
@@ -20,6 +23,7 @@ public:
     const HydroMetadata* coreMetadata() const;
     std::optional<HydroMetadataRecord> recordById(const QString& id) const;
     std::optional<HydroMetadataRecord> recordByFid(quint32 fid) const;
+    std::function<HydroLogicalCopy()> logicalGeometryJob(quint32 logicalFid) const;
     bool pinLogical(quint32 logicalFid);
     void clearPinned();
     std::size_t cachedPackCount() const;

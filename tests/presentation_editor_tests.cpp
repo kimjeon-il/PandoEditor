@@ -58,6 +58,14 @@ private slots:
         QCOMPARE(controller.primaryObject().value("domain").toString(),QStringLiteral("hydroBuiltin"));
         QSignalSpy focus(&controller,&EditorController::focusRequested);
         QVERIFY(controller.focusObject());QCOMPARE(focus.count(),1);
+        const auto revision=controller.revision();
+        QVERIFY(controller.copyBuiltinHydro());
+        QTRY_COMPARE_WITH_TIMEOUT(controller.hiddenHydroIds().size(),1,5000);
+        QCOMPARE(controller.hiddenHydroIds().front().toString(),QStringLiteral("fixture:4"));
+        QCOMPARE(controller.revision(),revision+1);
+        QCOMPARE(controller.primaryObject().value("domain").toString(),QStringLiteral("hydro"));
+        controller.undo();QVERIFY(controller.hiddenHydroIds().isEmpty());
+        QCOMPARE(controller.revision(),revision+2);
     }
     void visibilityKeepsSelectionDraftAndRedo() {
         QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});

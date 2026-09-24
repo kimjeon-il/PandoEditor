@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <cstring>
 #include <cmath>
+#include <algorithm>
 
 namespace pandoeditor {
 namespace {
@@ -221,5 +222,34 @@ HydroRenderPacket buildHydroRenderPacket(const HydroPack& pack) {
         }
     }
     return result;
+}
+Geometry mergeHydroLogicalFragments(std::vector<HydroPhysicalFeature> fragments) {
+    if(fragments.empty())throw std::runtime_error("empty hydro logical feature");
+    std::sort(fragments.begin(),fragments.end(),[](const auto& a,const auto& b){return a.fragmentIndex<b.fragmentIndex;});
+    const auto logical=fragments.front().logicalFid,count=fragments.front().fragmentCount;
+    if(!logical||count!=fragments.size())throw std::runtime_error("incomplete hydro logical feature");
+    Geometry merged;
+    const auto kind=fragments.front().kind;
+    auto point=[](HydroPoint p){return Point{p.longitude*1e-6,p.latitude*1e-6};};
+    for(std::size_t i=0;i<fragments.size();i++){
+        const auto& fragment=fragments[i];
+        if(fragment.logicalFid!=logical||fragment.fragmentCount!=count||fragment.fragmentIndex!=i||fragment.kind!=kind)
+            throw std::runtime_error("inconsistent hydro logical fragments");
+        for(const auto& source:fragment.geometry.lines){
+            Ring line;line.reserve(source.size());for(const auto p:source)line.push_back(point(p));
+            if(!merged.lines.empty()&&!merged.lines.back().empty()&&!line.empty()&&
+               merged.lines.back().back().x==line.front().x&&merged.lines.back().back().y==line.front().y)
+                merged.lines.back().insert(merged.lines.back().end(),line.begin()+1,line.end());
+            else merged.lines.push_back(std::move(line));
+        }
+        for(const auto& source:fragment.geometry.polygons){
+            Polygon polygon;for(const auto& sourceRing:source){Ring ring;ring.reserve(sourceRing.size());
+                for(const auto p:sourceRing)ring.push_back(point(p));polygon.push_back(std::move(ring));}
+            merged.polygons.push_back(std::move(polygon));
+        }
+    }
+    merged.type=kind==1?(merged.lines.size()==1?"LineString":"MultiLineString"):
+        (merged.polygons.size()==1?"Polygon":"MultiPolygon");
+    return merged;
 }
 }

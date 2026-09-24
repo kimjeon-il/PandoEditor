@@ -39,7 +39,8 @@ ScrollView {
         }
         Flow {
             Layout.fillWidth: true; spacing: 4; visible: !root.editState.active
-            Button { text: "선택 객체 편집"; enabled: !!editor.primaryObject.id && editor.primaryObject.domain !== "territorial"; onClicked: root.start(editor.primaryObject.domain, "", false) }
+            Button { text: "선택 객체 편집"; enabled: !!editor.primaryObject.id && editor.primaryObject.domain !== "territorial" && editor.primaryObject.domain !== "hydroBuiltin"; onClicked: root.start(editor.primaryObject.domain, "", false) }
+            Button { text: editor.hydroCopyBusy ? "수계 복사 중…" : "편집용 복사"; enabled: editor.primaryObject.domain === "hydroBuiltin" && !editor.hydroCopyBusy; onClicked: editor.copyBuiltinHydro() }
             Button { text: "수도 문자열"; onClicked: root.start("territorial", "capital", false) }
             Button { text: "국기"; onClicked: root.start("territorial", "flag", false) }
         }
