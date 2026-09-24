@@ -1,5 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 find_package(Qt6 REQUIRED COMPONENTS Svg)
+find_package(ZLIB REQUIRED)
 qt_add_executable(pandoeditor main.cpp)
 
 add_library(pandoeditor_editor STATIC
@@ -8,6 +9,8 @@ add_library(pandoeditor_editor STATIC
     referenceimagelibrary.cpp referenceimagelibrary.h
     defaultflagresolver.cpp defaultflagresolver.h
     hydrodataprovider.cpp hydrodataprovider.h
+    hydromanifest.cpp hydromanifest.h
+    hydroassetreader.cpp hydroassetreader.h
     geometrycalculator.cpp geometrycalculator.h
     territorialgeometry.cpp territorialgeometry.h
     editorpresentation.cpp
@@ -21,7 +24,7 @@ add_library(pandoeditor_editor STATIC
     ../renderer/referenceimageitem.cpp ../renderer/referenceimageitem.h
 )
 target_include_directories(pandoeditor_editor PUBLIC . ../renderer)
-target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg)
+target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg ZLIB::ZLIB)
 qt_add_resources(pandoeditor_editor m4_geometry
     PREFIX "/geometry" BASE "${PROJECT_SOURCE_DIR}/assets/geometry"
     FILES "${PROJECT_SOURCE_DIR}/assets/geometry/polygon-clipping-0.15.7.js"
