@@ -415,7 +415,7 @@ Rectangle {
         Row {
             id: geometryTools; anchors.centerIn: parent; spacing: 6
             Label { visible: editor.geometryEditState.tool !== "draw" && editor.geometryEditState.tool !== "move"; text: "변을 두 번 탭해 점 추가"; verticalAlignment: Text.AlignVCenter }
-            Button { objectName: "geometryMoveObject"; visible: editor.geometryEditState.target.domain !== "territorial" && editor.geometryEditState.tool !== "draw"; text: editor.geometryEditState.tool === "move" ? "점 편집" : "전체 이동"; onClicked: editor.geometrySetMoveMode(editor.geometryEditState.tool !== "move") }
+            Button { objectName: "geometryMoveObject"; visible: editor.geometryEditState.active === true && editor.geometryEditState.target && editor.geometryEditState.target.domain !== "territorial" && editor.geometryEditState.tool !== "draw"; text: editor.geometryEditState.tool === "move" ? "점 편집" : "전체 이동"; onClicked: editor.geometrySetMoveMode(editor.geometryEditState.tool !== "move") }
             Button { objectName: "geometryDeleteVertex"; text: "점 삭제"; enabled: editor.geometryEditState.selectedVertex >= 0; onClicked: editor.geometryDeleteSelectedVertex() }
             Button { objectName: "geometryUndoDraft"; text: "초안 실행 취소"; enabled: editor.geometryEditState.canUndo === true; onClicked: editor.geometryUndoDraft() }
             Button { objectName: "geometryRedoDraft"; text: "다시 실행"; visible: editor.geometryEditState.canRedo === true; onClicked: editor.geometryRedoDraft() }
