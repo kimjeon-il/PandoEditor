@@ -3,6 +3,7 @@
 #include "hydroruntimecache.h"
 #include <pandoeditor/hydroformat.h>
 #include <mutex>
+#include <iterator>
 #include <set>
 #include <stdexcept>
 
@@ -129,6 +130,11 @@ void HydroRuntimeProvider::requestViewport(const pandoeditor::HydroFlatWindow& v
             }
             next->packIds.push_back(id);
             next->features.insert(next->features.end(),pack->features.begin(),pack->features.end());
+            auto packet=pandoeditor::buildHydroRenderPacket(*pack);
+            next->packet.rivers.insert(next->packet.rivers.end(),
+                std::make_move_iterator(packet.rivers.begin()),std::make_move_iterator(packet.rivers.end()));
+            next->packet.lakes.insert(next->packet.lakes.end(),
+                std::make_move_iterator(packet.lakes.begin()),std::make_move_iterator(packet.lakes.end()));
         }
         return std::shared_ptr<const HydroRuntimeFrame>(std::move(next));
     });

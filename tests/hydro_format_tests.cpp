@@ -71,15 +71,20 @@ int main() {
     assert(river.features.size()==1);
     assert(river.features[0].geometry.lines.size()==1);
     assert(river.features[0].widths[0]==(std::vector<double>{0.8,1.2,1.6}));
+    const auto riverPacket=pandoeditor::buildHydroRenderPacket(river);
+    assert(riverPacket.rivers.size()==2);
+    assert(riverPacket.rivers[0].startWidth==0.8 && riverPacket.rivers[0].endWidth==1.2);
     const auto hole=pack(index.packSpecs.at(3));
     const auto lake=pandoeditor::decodeHydroPack({hole.data(),hole.size()},3,metadata);
     assert(lake.features[0].geometry.polygons[0].size()==2);
+    assert(pandoeditor::buildHydroRenderPacket(lake).lakes[0].polygons[0].size()==2);
     const auto border=pack(index.packSpecs.at(1));
     const auto borderRiver=pandoeditor::decodeHydroPack({border.data(),border.size()},1,metadata);
     assert(borderRiver.features[0].flags&1);
     assert(borderRiver.features[0].geometry.kind==2);
     assert(borderRiver.features[0].widths.size()==2);
     assert(borderRiver.features[0].widths[1][1]==1.3);
+    assert(pandoeditor::buildHydroRenderPacket(borderRiver).rivers[0].borderAligned);
     for(std::size_t id=0;id<6;id++){
         const auto data=pack(index.packSpecs.at(id));
         const auto decoded=pandoeditor::decodeHydroPack({data.data(),data.size()},static_cast<std::uint32_t>(id),metadata);

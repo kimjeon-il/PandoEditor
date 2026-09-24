@@ -10,6 +10,9 @@ The files in `source/` are byte-for-byte copies; `git hash-object` must match:
 | `hydro-tile-window.js` | `assets/js/modules/hydro-tile-window.js` | `2c84b806777eae4229166903db6b9dda8e93811b` |
 | `earcut.min.js` | `assets/js/vendor/earcut.min.js` | `79cf67e1001350a4da6d9e51c6421da06cd7b556` |
 | `geographic-boundary-core.js` | `assets/js/workers/geographic-boundary-core.js` | `3c97ed6732be0c51308f33199a8c7138abe2c515` |
+| `gpu-base-scene-pass.js` | `assets/js/modules/gpu-base-scene-pass.js` | `ca9886ff71dad974c2f15755b0fe6e8c4a997568` |
+| `gpu-blend-utils.js` | `assets/js/modules/gpu-blend-utils.js` | `359b7c89977caff3fc3bfafb33413dfd0515e593` |
+| `app-object-picking.js` | `assets/js/modules/app-object-picking.js` | `56af01e20b8cb3c169028da795c90e5bab08ec7b` |
 
 The upstream manifest at `assets/data/hydro/v0.13.1/manifest.json` has blob
 `67c648a207f4b26d69f0a86243e88c54b9241a2e`. Its version, schema,

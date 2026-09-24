@@ -9,6 +9,7 @@
 struct HydroRuntimeFrame {
     std::vector<std::uint32_t> packIds;
     std::vector<pandoeditor::HydroPhysicalFeature> features;
+    pandoeditor::HydroRenderPacket packet;
     QString error;
 };
 

@@ -202,4 +202,24 @@ HydroPack decodeHydroPack(HydroByteView bytes,std::uint32_t packId,
     if(reader.remaining())throw std::runtime_error("trailing hydro pack bytes "+std::to_string(packId));
     return pack;
 }
+HydroRenderPacket buildHydroRenderPacket(const HydroPack& pack) {
+    HydroRenderPacket result;
+    for(const auto& feature:pack.features){
+        if(feature.kind==2){
+            result.lakes.push_back({feature.fid,feature.logicalFid,feature.geometry.polygons});
+            continue;
+        }
+        for(std::size_t part=0;part<feature.geometry.lines.size();part++){
+            const auto& line=feature.geometry.lines[part];
+            const auto* widths=part<feature.widths.size()?&feature.widths[part]:nullptr;
+            for(std::size_t vertex=0;vertex+1<line.size();vertex++){
+                const double start=widths&&vertex<widths->size()?(*widths)[vertex]:feature.strokeWidth;
+                const double end=widths&&vertex+1<widths->size()?(*widths)[vertex+1]:start;
+                result.rivers.push_back({feature.fid,feature.logicalFid,line[vertex],line[vertex+1],
+                    start,end,bool(feature.flags&1)});
+            }
+        }
+    }
+    return result;
+}
 }

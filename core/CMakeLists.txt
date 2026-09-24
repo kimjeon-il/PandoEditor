@@ -3,6 +3,7 @@ configure_file(src/version.cpp.in generated/version.cpp @ONLY)
 add_library(pandoeditor_core STATIC
     src/hydroformat.cpp
     src/hydroviewport.cpp
+    src/maprenderorder.cpp
     src/project.cpp
     src/presentation.cpp
     src/presentationcommands.cpp
@@ -32,6 +33,8 @@ if(BUILD_TESTING)
     add_test(NAME hydro_format_tests COMMAND hydro_format_tests)
     add_executable(hydro_viewport_probe ../tests/hydro_viewport_probe.cpp)
     target_link_libraries(hydro_viewport_probe PRIVATE Pandoeditor::Core)
+    add_executable(map_render_order_probe ../tests/map_render_order_probe.cpp)
+    target_link_libraries(map_render_order_probe PRIVATE Pandoeditor::Core)
     add_executable(presentation_tests ../tests/presentation_tests.cpp)
     target_link_libraries(presentation_tests PRIVATE Pandoeditor::Core)
     add_test(NAME presentation_tests COMMAND presentation_tests)

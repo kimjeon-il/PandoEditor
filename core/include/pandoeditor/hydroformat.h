@@ -47,8 +47,23 @@ struct HydroPack {
     std::uint8_t stage=0;
     std::vector<HydroPhysicalFeature> features;
 };
+struct HydroRiverSegment {
+    std::uint32_t fid=0,logicalFid=0;
+    HydroPoint start,end;
+    double startWidth=0,endWidth=0;
+    bool borderAligned=false;
+};
+struct HydroLakeShape {
+    std::uint32_t fid=0,logicalFid=0;
+    std::vector<HydroPolygon> polygons;
+};
+struct HydroRenderPacket {
+    std::vector<HydroRiverSegment> rivers;
+    std::vector<HydroLakeShape> lakes;
+};
 HydroIndex decodeHydroIndex(HydroByteView bytes,
                             const std::vector<std::uint64_t>& shardLengths);
 HydroPack decodeHydroPack(HydroByteView bytes,std::uint32_t packId,
                           const std::map<std::uint32_t,std::uint32_t>& metadataLogicalIds);
+HydroRenderPacket buildHydroRenderPacket(const HydroPack& pack);
 }
