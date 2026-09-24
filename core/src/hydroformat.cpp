@@ -228,7 +228,7 @@ Geometry mergeHydroLogicalFragments(std::vector<HydroPhysicalFeature> fragments)
     std::sort(fragments.begin(),fragments.end(),[](const auto& a,const auto& b){return a.fragmentIndex<b.fragmentIndex;});
     const auto logical=fragments.front().logicalFid;
     const auto count=fragments.front().fragmentCount;
-    if(!logical||count!=fragments.size())throw std::runtime_error("incomplete hydro logical feature");
+    if(count!=fragments.size())throw std::runtime_error("incomplete hydro logical feature");
     Geometry merged;
     const auto kind=fragments.front().kind;
     auto point=[](HydroPoint p){return Point{p.longitude*1e-6,p.latitude*1e-6};};

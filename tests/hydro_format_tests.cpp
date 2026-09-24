@@ -82,6 +82,8 @@ int main() {
         auto zeroBased=first;zeroBased[12]=0;zeroBased[16]=0;
         const auto decoded=pandoeditor::decodeHydroPack({zeroBased.data(),zeroBased.size()},0,{{0,0}});
         assert(decoded.features.front().fid==0&&decoded.features.front().logicalFid==0);
+        const auto merged=pandoeditor::mergeHydroLogicalFragments(decoded.features);
+        assert(merged.type=="LineString"&&merged.lines.size()==1);
     }
     assert(river.features.size()==1);
     assert(river.features[0].geometry.lines.size()==1);

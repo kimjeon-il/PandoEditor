@@ -24,6 +24,11 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(accepted.count()>=1&&provider.frame()!=nullptr,20000);
         QVERIFY(!provider.frame()->packIds.empty());
         QVERIFY(!provider.frame()->packet.rivers.empty()||!provider.frame()->packet.lakes.empty());
+        const auto copyJob=provider.logicalGeometryJob(0);
+        QVERIFY(copyJob);
+        const auto logical=copyJob(); // loads the real detail metadata only on edit
+        QVERIFY(logical.geometry.type=="LineString"||logical.geometry.type=="MultiLineString");
+        QVERIFY(!logical.geometry.lines.empty());
     }
 };
 QTEST_GUILESS_MAIN(HydroFullDatasetTests)
