@@ -3,7 +3,7 @@ on:
   push:
     branches: [codex/m5-completion, codex/m6-temporal-library-gis]
   pull_request:
-    branches: [main]
+    branches: [main, codex/m5-completion]
   workflow_dispatch:
 permissions:
   contents: read
