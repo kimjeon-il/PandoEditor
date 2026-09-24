@@ -1,5 +1,6 @@
 #pragma once
 #include <pandoeditor/commands.h>
+#include <pandoeditor/objectproperties.h>
 #include <string>
 #include <memory>
 #include <vector>
@@ -30,6 +31,7 @@ private:
 
 class Project {
 public:
+    std::uint64_t presentationRevision() const noexcept { return presentationRevision_; }
     Project();
     ProjectSnapshot snapshot() const { return {state_,instanceId_,revision_}; }
     const std::string& instanceId() const { return instanceId_; }
@@ -49,6 +51,7 @@ public:
     const DocumentIndex& index() const noexcept;
     const CountryView* country(const std::string& id) const;
     const Layer* layer(const std::string& id) const;
+    const ObjectPropertyView* propertyView(const ObjectRef&) const;
     bool editable(const std::string& id) const;
     std::string pick(Point point) const;
     bool setColor(const std::string& id, std::uint32_t color);
@@ -71,6 +74,7 @@ public:
     void markSaved() noexcept;
 private:
     friend class CommandProcessor;
+    friend class PresentationCommandProcessor;
     bool execute(std::string commandId, CommandArguments args);
     bool changeCountry(const std::string& id, CountryProperties next);
     bool changeLayer(Layer next);
@@ -81,6 +85,8 @@ private:
     std::vector<ChangeSet> commands_;
     std::string instanceId_;
     std::uint64_t revision_ = 0;
+    std::uint64_t presentationRevision_ = 0;
+    std::uint64_t checkpoint_=0, savedCheckpoint_=0, checkpointSequence_=0;
     std::size_t cursor_ = 0;
 };
 } // namespace pandoeditor

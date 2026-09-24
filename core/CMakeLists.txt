@@ -2,7 +2,13 @@ configure_file(src/version.cpp.in generated/version.cpp @ONLY)
 
 add_library(pandoeditor_core STATIC
     src/project.cpp
+    src/presentation.cpp
+    src/presentationcommands.cpp
     src/document.cpp
+    src/content.cpp
+    src/objectproperties.cpp
+    src/geometrypredicates.cpp
+    src/territorialmutation.cpp
     src/commands.cpp
     src/jobs.cpp
     src/snapshot.cpp
@@ -17,6 +23,14 @@ target_compile_features(pandoeditor_core PUBLIC cxx_std_17)
 set_target_properties(pandoeditor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_TESTING)
+    add_executable(presentation_tests ../tests/presentation_tests.cpp)
+    target_link_libraries(presentation_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME presentation_tests COMMAND presentation_tests)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
+    add_executable(content_probe ../tests/content_probe.cpp)
+    target_link_libraries(content_probe PRIVATE Pandoeditor::Core Qt6::Core)
+    add_executable(presentation_parity_probe ../tests/presentation_parity_probe.cpp)
+    target_link_libraries(presentation_parity_probe PRIVATE Pandoeditor::Core Qt6::Core)
     add_executable(command_allocation_tests ../tests/command_allocation_tests.cpp)
     target_link_libraries(command_allocation_tests PRIVATE Pandoeditor::Core)
     add_test(NAME command_allocation_tests COMMAND command_allocation_tests)
@@ -29,6 +43,14 @@ if(BUILD_TESTING)
     add_executable(model_tests ../tests/model_tests.cpp)
     target_link_libraries(model_tests PRIVATE Pandoeditor::Core)
     add_test(NAME model_tests COMMAND model_tests)
+    add_executable(structure_probe ../tests/structure_probe.cpp)
+    target_link_libraries(structure_probe PRIVATE Pandoeditor::Core Qt6::Core)
+    add_executable(geometry_predicate_tests ../tests/geometry_predicate_tests.cpp)
+    target_link_libraries(geometry_predicate_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME geometry_predicate_tests COMMAND geometry_predicate_tests)
+    add_executable(territorial_structure_tests ../tests/territorial_structure_tests.cpp)
+    target_link_libraries(territorial_structure_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME territorial_structure_tests COMMAND territorial_structure_tests)
 endif()
 
 if(BUILD_TESTING)

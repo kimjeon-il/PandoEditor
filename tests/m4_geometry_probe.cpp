@@ -1,0 +1,63 @@
+#include "territorialgeometry.h"
+#include <pandoeditor/project.h>
+#include <QCoreApplication>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <iostream>
+#include <iterator>
+using namespace pandoeditor;
+Geometry decode(const QJsonObject& value) {
+    Geometry g;g.type=value["type"].toString().toStdString();
+    auto polygons=value["coordinates"].toArray();if(g.type=="Polygon")polygons=QJsonArray{polygons};
+    for(auto p:polygons){Polygon poly;for(auto r:p.toArray()){Ring ring;for(auto v:r.toArray()){auto xy=v.toArray();ring.push_back({xy[0].toDouble(),xy[1].toDouble()});}poly.push_back(ring);}g.polygons.push_back(poly);}return g;
+}
+QJsonObject encode(const Geometry& g) {
+    QJsonArray polygons;for(const auto& poly:g.polygons){QJsonArray rings;for(const auto& ring:poly){QJsonArray points;for(auto p:ring)points.append(QJsonArray{p.x,p.y});rings.append(points);}polygons.append(rings);}
+    return {{"type","MultiPolygon"},{"coordinates",polygons}};
+}
+int main(int argc,char** argv) {
+    QCoreApplication app(argc,argv);
+    const std::string input{std::istreambuf_iterator<char>(std::cin),{}};
+    QJsonArray output;
+    for(auto v:QJsonDocument::fromJson(QByteArray::fromStdString(input)).array()) {
+        const auto row=v.toObject();QJsonObject result{{"case",row["case"]}};
+        try {
+            ProjectDocument d;d.documentId="m4-oracle";
+            const auto add=[&](const QJsonObject& feature,bool country){
+                const auto id=feature["id"].toString().toStdString();const auto props=feature["properties"].toObject();
+                GeometryRef gr{id,1};d.geometries.insert(gr,decode(feature["geometry"].toObject()));
+                d.units.push_back({id,id,"",country?UnitKind::Country:UnitKind::Subunit,gr,props["locked"].toBool()});
+                d.units.back().coverageMode=country?"explicit":"partition";d.presentation.objectStyles[territorialRef(id)]={};
+                if(!country)d.relations.push_back({"r-"+id,territorialRef(id),territorialRef(props["parentId"].toString().toStdString()),territorialRef(props["sovereignId"].toString().toStdString())});
+            };
+            for(auto f:row["countries"].toArray())add(f.toObject(),true);
+            for(auto f:row["units"].toArray())add(f.toObject(),false);
+            Project p;p.replace(d);const auto target=territorialRef(row["targetId"].toString().toStdString());
+            TerritorialMutationIntent intent=TransferSubunitIntent{target,territorialRef(row["countryId"].toString().toStdString())};
+            if(row["operation"]=="promote")intent=ConvertTerritorialTypeIntent{target,UnitKind::Country,{},{},{}};
+            if(row["operation"]=="convert")intent=ConvertTerritorialTypeIntent{target,UnitKind::Subunit,territorialRef("B"),territorialRef("B"),"new-A"};
+            if(row["operation"]=="merge") {std::vector<ObjectRef> donors;for(const auto& id:row["sourceIds"].toArray())donors.push_back(territorialRef(id.toString().toStdString()));intent=MergeTerritorialIntent{target,std::move(donors)};}
+            if(row["operation"]=="annex")intent=AnnexTerritoryIntent{target,{territorialRef(row["sourceId"].toString().toStdString())},decode(row["draft"].toObject())};
+            if(row["operation"]=="country-boundary") {SharedBoundaryIntent boundary;for(const auto& value:row["featurePatches"].toArray()){const auto feature=value.toObject();boundary.drafts.push_back({territorialRef(feature["id"].toString().toStdString()),decode(feature["geometry"].toObject())});}intent=std::move(boundary);}
+            if(row["operation"]=="coast")intent=CoastlineIntent{target,decode(row["draft"].toObject()),CoastlineAuthority::Country};
+            const auto plan=CommandProcessor::planTerritorial(p,intent);
+            if(!plan.ok())throw std::runtime_error(plan.detail);
+            JobScheduler jobs;auto job=jobs.enqueue(p.snapshot(),"oracle");jobs.takeNext();
+            auto prepared=prepareTerritorialGeometry(p.snapshot(),*plan.plan,job.token());
+            if(!prepared.ok()||!prepared.preview)throw std::runtime_error(prepared.detail);
+            const auto applied=CommandProcessor::confirm(p,*prepared.preview);if(!applied.ok())throw std::runtime_error(applied.detail);
+            QJsonArray features;
+            for(const auto& unit:p.document().units) {
+                const auto relation=effectiveRelation(p.document(),unit.id,19450101);
+                QJsonObject props{{"unitType",unit.kind==UnitKind::Country?"country":"subunit"},
+                    {"parentId",relation&&relation->parent?QString::fromStdString(relation->parent->id):QString()},
+                    {"sovereignId",relation&&relation->sovereign?QString::fromStdString(relation->sovereign->id):QString()}};
+                features.append(QJsonObject{{"id",QString::fromStdString(unit.id)},{"geometry",encode(*p.document().geometries.get(unit.geometry))},{"properties",props}});
+            }
+            result["ok"]=true;result["features"]=features;
+        }catch(const std::exception& error){result["ok"]=false;result["error"]=QString::fromUtf8(error.what());}
+        output.append(result);
+    }
+    std::cout<<QJsonDocument(output).toJson(QJsonDocument::Compact).toStdString();
+}

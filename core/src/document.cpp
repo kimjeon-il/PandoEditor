@@ -89,7 +89,9 @@ ProjectDocument::ProjectDocument(std::vector<Country> countries,std::vector<Laye
     for(auto& c:countries) {
         GeometryRef geometry{"legacy-geometry-"+c.id,1};
         geometries.insert(geometry,Geometry{"MultiPolygon",{},{},std::move(c.polygons)});
+        const auto baseName=c.name;
         units.push_back({c.id,std::move(c.name),std::move(c.memo),UnitKind::Country,geometry});
+        units.back().baseName=baseName;
         presentation.membership.emplace(territorialRef(c.id),std::move(c.layerId));
         presentation.objectStyles.emplace(territorialRef(c.id),ObjectStyle{c.color,c.opacity});
     }
@@ -103,8 +105,8 @@ const TerritorialRelation* effectiveRelation(const ProjectDocument& d,const std:
     return base;
 }
 DocumentIndex validateDocument(const ProjectDocument& d) {
+    validatePresentation(d);
     require(!d.documentId.empty(),"INVALID_DOCUMENT: documentId");
-    require(!d.presentation.userLayers.empty(),"INVALID_DOCUMENT: empty layers");
     DocumentIndex idx;
     for(std::size_t i=0;i<d.presentation.userLayers.size();++i) {
         const auto& l=d.presentation.userLayers[i];
@@ -115,7 +117,7 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
     std::map<ObjectRef,std::pair<std::int64_t,std::int64_t>> life;
     for(std::size_t i=0;i<d.units.size();++i) {
         const auto& u=d.units[i]; auto ref=territorialRef(u.id);
-        require(!u.id.empty()&&named(u.name),"INVALID_UNIT: id/name");
+        require(!u.id.empty(),"INVALID_UNIT: id");
         require(u.kind==UnitKind::Country || u.kind==UnitKind::Subunit || u.kind==UnitKind::Region,"INVALID_UNIT: kind");
         require(u.coverageMode=="partition"||u.coverageMode=="explicit","INVALID_UNIT: coverageMode");
         require(idx.objects.emplace(ref,i).second,"DUPLICATE_ID: territorial unit");
@@ -123,8 +125,9 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
         require(g && (g->type=="Polygon"||g->type=="MultiPolygon"),"INVALID_GEOMETRY: territorial reference");
         idx.geometryUsers[u.geometry].push_back(ref);
         auto b=temporalBounds(u.validity); life[ref]=b; boundaries.insert(b.first); if(b.second<infinity) boundaries.insert(nextCalendarDay(b.second));
-        require(d.presentation.membership.count(ref)&&d.presentation.objectStyles.count(ref),"DANGLING_REF: presentation missing");
+        require(d.presentation.objectStyles.count(ref),"DANGLING_REF: presentation missing");
     }
+    indexContent(d,idx);
     for(const auto& [ref,layer]:d.presentation.membership) {
         require(idx.objects.count(ref)&&idx.layers.count(layer),"DANGLING_REF: membership");
         idx.dependents[{"userLayer",layer}].push_back(ref);
@@ -134,14 +137,14 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
     std::map<ObjectRef,std::vector<const TerritorialRelation*>> dated;
     for(const auto& r:d.relations) {
         require(!r.id.empty()&&relationIds.insert(r.id).second,"DUPLICATE_ID: relation");
-        require(idx.objects.count(r.unit),"DANGLING_REF: relation unit");
+        require(r.unit.domain=="territorial" && idx.objects.count(r.unit),"DANGLING_REF: relation unit");
         idx.relationsByUnit[r.unit].push_back(static_cast<std::size_t>(&r-d.relations.data()));
         if(r.parent) {
-            require(idx.objects.count(*r.parent),"DANGLING_REF: parent");
+            require(r.parent->domain=="territorial" && idx.objects.count(*r.parent),"DANGLING_REF: parent");
             idx.children[*r.parent].push_back(r.unit); idx.dependents[*r.parent].push_back(r.unit);
         }
         if(r.sovereign) {
-            require(idx.objects.count(*r.sovereign)&&d.units[idx.objects.at(*r.sovereign)].kind==UnitKind::Country,"DANGLING_REF: sovereign country");
+            require(r.sovereign->domain=="territorial" && idx.objects.count(*r.sovereign)&&d.units[idx.objects.at(*r.sovereign)].kind==UnitKind::Country,"DANGLING_REF: sovereign country");
             idx.dependents[*r.sovereign].push_back(r.unit);
             idx.sovereignMembers[*r.sovereign].push_back(r.unit);
         }
@@ -203,21 +206,30 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
     return idx;
 }
 std::vector<CountryView> countryViews(const ProjectDocument& d) {
+    static const std::uint32_t countryDefault=0xcccccc;
     std::vector<CountryView> result;
     for(const auto& u:d.units) if(u.kind==UnitKind::Country) {
         auto ref=territorialRef(u.id); const auto& s=d.presentation.objectStyles.at(ref);
-        result.push_back({u.id,u.name,d.geometries.get(u.geometry)->polygons,s.color,u.notes,s.opacity,d.presentation.membership.at(ref),u.locked});
+        result.push_back({u.id,(u.nameExplicit&&!u.name.empty()?u.name:u.baseName),d.geometries.get(u.geometry)->polygons,(s.explicitColor?s.color:countryDefault),u.notes,s.opacity,nativeLayerId(d,ref),u.locked});
     }
     return result;
 }
-bool effectAllowed(const ProjectDocument& d,const ObjectRef& ref,const std::string& effect) {
+std::vector<std::string> blockingExtensions(const ProjectDocument& d,const ObjectRef& ref,const std::string& effect) {
+    std::vector<std::string> result;
     for(const auto& e:d.extensions) {
-        if(e.envelopeExtras!="{}" && effect!="name" && effect!="notes") return false;
+        if(e.envelopeExtras!="{}" && effect!="name" && effect!="notes") { result.push_back(e.id); continue; }
         if(e.status=="migrationArchive") continue;
         bool related=std::find(e.dependencies.begin(),e.dependencies.end(),ref)!=e.dependencies.end();
-        if(e.dependencyKnowledge=="unknown" && effect!="name" && effect!="notes") return false;
-        if(related && (e.forbiddenEffects.empty()||std::find(e.forbiddenEffects.begin(),e.forbiddenEffects.end(),effect)!=e.forbiddenEffects.end())) return false;
+        if(e.dependencyKnowledge=="unknown" && effect!="name" && effect!="notes") { result.push_back(e.id); continue; }
+        if(related && (e.forbiddenEffects.empty()||std::find(e.forbiddenEffects.begin(),e.forbiddenEffects.end(),effect)!=e.forbiddenEffects.end())) result.push_back(e.id);
     }
-    return true;
+    return result;
+}
+const std::string& nativeLayerId(const ProjectDocument& d,const ObjectRef& ref) {
+    static const std::string none;
+    const auto i=d.presentation.membership.find(ref);return i==d.presentation.membership.end()?none:i->second;
+}
+bool effectAllowed(const ProjectDocument& d,const ObjectRef& ref,const std::string& effect) {
+    return blockingExtensions(d,ref,effect).empty();
 }
 } // namespace pandoeditor

@@ -45,6 +45,7 @@ jobs:
             build/results.xml
             build/Testing/Temporary/LastTest.log
             build/app/*.png
+            build/*.png
             build/commit.txt
             build/tree.txt
             build/source.tar.gz

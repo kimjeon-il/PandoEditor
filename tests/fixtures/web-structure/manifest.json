@@ -1,0 +1,12 @@
+{
+  "commit": "58e4087f85aa51884bc4ab80959e05010d94d7d5",
+  "blobs": {
+    "territorial-interaction-policy.js": "3173c62cee83b3543b68037c24847205a55a7cf7",
+    "temporal.js": "31faf94894e302b3eadf61d79a32efd0490affe3",
+    "territorial-units.js": "4e49b7155f8548b6b347ab100e60f877fab4388f",
+    "territorial-edit-plan.js": "76b2bf38c9f6b9865ae53ef4664edec0b75e5ad8",
+    "app-object-deletion.js": "c7787296b66279db44cd7264489088ef3c7a133f",
+    "app-territorial-conversion.js": "23c45d8fa0c8ffca024639ceeae8b27511f48395",
+    "polygon-clipping.min.js": "66a4e7bb45fb37353ba86e1114f7e9166ef1efad"
+  }
+}

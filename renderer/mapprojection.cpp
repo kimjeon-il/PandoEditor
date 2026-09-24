@@ -12,11 +12,46 @@ void MapProjection::rebuild(const pandoeditor::ProjectDocument& document)
     for(const auto& unit:document.units) {
         const auto ref=pandoeditor::territorialRef(unit.id);
         const auto& style=document.presentation.objectStyles.at(ref);
-        const auto& layer=document.presentation.membership.at(ref);
+        const auto& layer=pandoeditor::nativeLayerId(document,ref);
         const auto geometry=document.geometries.get(unit.geometry);
         objects.push_back({unit.id,unit.name,geometry->polygons,style.color,unit.notes,style.opacity,layer,unit.locked});
     }
+    const auto index=pandoeditor::validateDocument(document);
+    pandoeditor::Ring contentBounds;
+    for(const auto& [ref,unused]:index.objects)if(ref.domain!="territorial") {
+        const auto gr=pandoeditor::objectGeometry(document,index,ref);if(!gr)continue;
+        const auto g=document.geometries.get(*gr);if(!g)continue;
+        contentBounds.insert(contentBounds.end(),g->points.begin(),g->points.end());
+        for(const auto& line:g->lines)contentBounds.insert(contentBounds.end(),line.begin(),line.end());
+        for(const auto& polygon:g->polygons)for(const auto& ring:polygon)contentBounds.insert(contentBounds.end(),ring.begin(),ring.end());
+    }
+    const pandoeditor::MultiPolygon boundsGeometry{{contentBounds}};
+    if(!contentBounds.empty())objects.push_back({"","",boundsGeometry,0,"",1,"",false});
     rebuild(objects);
+    if(!contentBounds.empty())paths.removeLast(); // bounds-only DTO is never rendered/picked
+    for(const auto& [ref,unused]:index.objects) {
+        if(ref.domain=="territorial") continue;
+        const auto geometryRef=pandoeditor::objectGeometry(document,index,ref); if(!geometryRef) continue;
+        const auto geometry=document.geometries.get(*geometryRef); if(!geometry) continue;
+        QString path; QVariantList points;
+        double left=std::numeric_limits<double>::infinity(),top=left,right=-left,bottom=-left;
+        auto append=[&](const pandoeditor::Ring& ring,bool closed) {
+            for(std::size_t i=0;i<ring.size();++i) {
+                const auto p=project(ring[i]); left=std::min(left,p.x); right=std::max(right,p.x); top=std::min(top,p.y); bottom=std::max(bottom,p.y);
+                path+=QString("%1%2 %3 ").arg(i?"L":"M").arg(p.x,0,'g',17).arg(p.y,0,'g',17);
+            }
+            if(closed) path+="Z ";
+        };
+        for(const auto& polygon:geometry->polygons) for(const auto& ring:polygon) append(ring,true);
+        for(const auto& line:geometry->lines) append(line,false);
+        for(const auto& point:geometry->points) {
+            append({point},false); const auto p=project(point); points.append(QVariantMap{{"x",p.x},{"y",p.y}});
+        }
+        paths.append(QVariantMap{{"countryId",QStringLiteral("content/")+QString::fromStdString(ref.domain)+"/"+QString::fromStdString(ref.id)},
+            {"domain",QString::fromStdString(ref.domain)},{"objectId",QString::fromStdString(ref.id)},
+            {"geometryType",QString::fromStdString(geometry->type)},{"points",points},{"path",path},
+            {"left",left},{"top",top},{"width",std::max(.001,right-left)},{"height",std::max(.001,bottom-top)}});
+    }
 }
 void MapProjection::rebuild(const std::vector<pandoeditor::CountryView>& countries)
 {
@@ -46,4 +81,5 @@ void MapProjection::rebuild(const std::vector<pandoeditor::CountryView>& countri
             {"left",left},{"top",top},{"width",right-left},{"height",bottom-top}});
     }
 }
+pandoeditor::Point MapProjection::project(pandoeditor::Point point) const{return {point.x*cosLatitude-minX,maxLatitude-point.y};}
 pandoeditor::Point MapProjection::unproject(double x,double y) const{return {(x+minX)/cosLatitude,maxLatitude-y};}

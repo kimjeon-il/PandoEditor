@@ -7,3 +7,15 @@ Ruling: container and Python each returned TransportTimeoutError; use authorized
 Ruling: reuse the pre-existing branch after verifying its only change was CI configuration. No rewrite of previous commits.
 Preflight: the current selectCountry/selectAt/selectLayer call commitPendingEdits. Selection switching must preserve drafts by their editing target, not move them to another object or discard them. Field commit remains a separate edit event.
 Task 1: failing controller regression staged; CI result pending. Tests must demonstrate revision/Undo/Redo/dirty preservation with an outstanding draft.
+
+## QML completion (2026-09-19, local verified result)
+
+The above entries are the historical start of the earlier core/controller session.
+Continuation base is remote commit 1aeb400e9738b518deef1c5c4806bfc76ad6a40a, restored from its CI source archive.
+A local isolated worktree now contains the completed search tab, actual modifier selection,
+overlap chooser, camera/hover wiring and selection-only draft guards.
+The final local Qt 6.8.3 CTest run passed 19/19 suites (0 failures/skips);
+12 UI data cases cover PC 1100px and mobile mode 360px, and 2066 transitions match the pinned web reducer.
+See qt-selection-ui-implementation.md for exact scope and platform limitations.
+A GitHub tree write was blocked by the tool's security determination. No remote update/merge/release was performed.
+Deliver the locally verified patch/source/evidence, without bypassing the blocked write.

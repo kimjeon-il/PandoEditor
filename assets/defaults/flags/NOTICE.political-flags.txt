@@ -1,0 +1,8 @@
+Flags acquired 2026-09-06, original SVGs from Wikimedia Commons, without modification.
+cyn.svg: https://commons.wikimedia.org/wiki/File:Flag_of_the_Turkish_Republic_of_Northern_Cyprus.svg
+https://upload.wikimedia.org/wikipedia/commons/1/1e/Flag_of_the_Turkish_Republic_of_Northern_Cyprus.svg
+Public domain: simple geometric national flag (Commons PD-shape tag).
+sol.svg: https://commons.wikimedia.org/wiki/File:Flag_of_Somaliland.svg
+https://upload.wikimedia.org/wikipedia/commons/4/4d/Flag_of_Somaliland.svg
+Public domain: national flag/common property without original authorship (Commons PD-ineligible tag).
+Bundling flags is a display choice and does not imply diplomatic recognition.

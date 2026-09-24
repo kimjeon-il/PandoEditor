@@ -1,8 +1,5 @@
 #include "editorcontroller.h"
 #include <QCollator>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QLocale>
 #include <QScopedValueRollback>
 #include <algorithm>
@@ -15,25 +12,15 @@ QString q(const std::string& value) { return QString::fromStdString(value); }
 QString rgb(std::uint32_t color) { return QString("#%1").arg(color,6,16,QChar('0')); }
 QString typeName(UnitKind kind) { return kind==UnitKind::Country?"country":kind==UnitKind::Subunit?"subunit":"region"; }
 QString typeLabel(UnitKind kind) { return kind==UnitKind::Country?QStringLiteral("국가"):kind==UnitKind::Subunit?QStringLiteral("하위단위"):QStringLiteral("지방"); }
-QString groupName(UnitKind kind) { return kind==UnitKind::Country?"countries":kind==UnitKind::Subunit?"subunits":"regions"; }
-QJsonValue retained(const ProjectDocument& document,const QString& pointer) {
-    for(const auto& e:document.extensions) {
-        if(e.status!="unsupported" || q(e.jsonPointer)!=pointer) continue;
-        QJsonParseError error;
-        const auto value=QJsonDocument::fromJson("["+QByteArray::fromStdString(e.payload)+"]",&error);
-        if(error.error==QJsonParseError::NoError && value.isArray() && value.array().size()==1) return value.array().at(0);
-    }
-    return {};
-}
 }
 std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& value) const {
     const auto domain=value.value("domain").toString().trimmed();
     const auto id=value.value("id").toString().trimmed();
-    if(domain!="territorial" || id.isEmpty()) return {};
-    const auto ref=territorialRef(id.toStdString());
+    if(id.isEmpty()) return {};
+    const ObjectRef ref{domain.toStdString(),id.toStdString()};
     const auto found=project_.index().objects.find(ref);
     if(found==project_.index().objects.end()) return {};
-    const auto expected=typeName(project_.document().units.at(found->second).kind);
+    const auto expected=ref.domain=="territorial"?typeName(project_.document().units.at(found->second).kind):q(ref.domain);
     const auto requested=value.value("type").toString().trimmed();
     if(!requested.isEmpty() && requested!=expected) return {};
     return ref;
@@ -41,7 +28,7 @@ std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& 
 QVariantMap EditorController::objectRefValue(const ObjectRef& ref) const {
     const auto it=project_.index().objects.find(ref);
     if(it==project_.index().objects.end()) return {{"domain",q(ref.domain)},{"id",q(ref.id)}};
-    const auto type=typeName(project_.document().units.at(it->second).kind);
+    const auto type=ref.domain=="territorial"?typeName(project_.document().units.at(it->second).kind):q(ref.domain);
     const auto id=q(ref.id);
     return {{"domain",q(ref.domain)},{"type",type},{"id",id},
         {"key",q(ref.domain)+":"+type+":"+QString::fromLatin1(QUrl::toPercentEncoding(id,"-_.!~*'()"))}};
@@ -54,34 +41,34 @@ QVariantMap EditorController::rangeAnchor(const QString& scope) const {
     const auto ref=selection_.rangeAnchor(scope.toStdString());return ref?objectRefValue(*ref):QVariantMap{};
 }
 bool EditorController::objectVisible(const ObjectRef& ref) const {
-    const auto& document=project_.document();
-    const auto found=project_.index().objects.find(ref);
-    if(found==project_.index().objects.end()) return false;
-    const auto member=document.presentation.membership.find(ref);
-    if(member==document.presentation.membership.end()) return false;
-    const auto layer=project_.layer(member->second);
-    if(!layer || !layer->visible) return false;
-    const auto group=groupName(document.units.at(found->second).kind);
-    // Read preserved web visibility without promoting or rewriting an extension.
-    const auto groups=retained(document,"/layerVisibility").toObject();
-    const auto items=retained(document,"/itemVisibility").toObject();
-    return groups[group]!=QJsonValue(false) && items[group].toObject()[q(ref.id)]!=QJsonValue(false);
+    // Presentation migration promotes the supported web fields into the common
+    // model.  Keeping a second extension-based check here made rendering and
+    // picking disagree whenever a retained payload was only partially known.
+    return effectiveMapVisibility(project_.document(),ref);
 }
 QVariantList EditorController::objectRows() const {
     QVariantList rows;
     for(const auto& unit:project_.document().units) {
         const auto ref=territorialRef(unit.id);
         auto row=objectRefValue(ref);
-        row["name"]=q(unit.name);row["typeLabel"]=typeLabel(unit.kind);
+        row["name"]=q(project_.propertyView(ref)->displayName);row["typeLabel"]=typeLabel(unit.kind);
         row["visible"]=objectVisible(ref);row["locked"]=unit.locked;
         const auto member=project_.document().presentation.membership.find(ref);
         if(member!=project_.document().presentation.membership.end()) {
             row["layerId"]=q(member->second);
             if(const auto layer=project_.layer(member->second)) row["locked"]=unit.locked||layer->locked;
         }
-        row["editable"]=unit.kind==UnitKind::Country && project_.editable(unit.id);
-        row["selectionOnly"]=unit.kind!=UnitKind::Country;
+        row["editable"]=!row["locked"].toBool();
+        row["selectionOnly"]=false;
         rows.append(row);
+    }
+    for(const auto& [ref,index]:project_.index().objects) if(ref.domain!="territorial") {
+        auto row=objectRefValue(ref); const auto properties=project_.propertyView(ref);
+        row["name"]=properties?q(properties->displayName):q(ref.id);
+        row["typeLabel"]=ref.domain=="label"?QStringLiteral("지명"):ref.domain=="hydro"?QStringLiteral("수계"):
+            ref.domain=="generic"?QStringLiteral("기타 객체"):ref.domain=="distributionLayer"?QStringLiteral("분포 레이어"):QStringLiteral("분포 항목");
+        row["visible"]=objectVisible(ref); row["locked"]=objectLocked(project_.document(),project_.index(),ref);
+        row["editable"]=!row["locked"].toBool(); row["selectionOnly"]=false; rows.append(row);
     }
     return rows;
 }
@@ -106,10 +93,16 @@ QVariantList EditorController::searchResults() const {
     return rows;
 }
 void EditorController::parkDrafts() {
-    if(const auto c=project_.country(selected_.toStdString())) {
-        if(nameDraft_!=q(c->name)||memoDraft_!=q(c->memo)||colorDraft_!=rgb(c->color)||(opacityPreview_&&*opacityPreview_!=c->opacity))
-            parkedCountryDrafts_[selected_]={nameDraft_,memoDraft_,colorDraft_,opacityPreview_};
-        else parkedCountryDrafts_.erase(selected_);
+    if(const auto u=selectedUnit()) {
+        const auto ref=territorialRef(u->id);const auto& style=project_.document().presentation.objectStyles.at(ref);
+        CountryDraft d{nameDraft_,memoDraft_,colorDraft_,opacityPreview_,validFromDraft_,validToDraft_};
+        if(nameDraft_!=q(u->kind==UnitKind::Country?objectDisplayName(*u):u->name))d.fields.insert("name");
+        if(memoDraft_!=q(u->notes))d.fields.insert("notes");
+        if(colorDraft_!=rgb(effectiveObjectColor(project_.document(),ref)))d.fields.insert("color");
+        if(opacityPreview_&&*opacityPreview_!=style.opacity)d.fields.insert("opacity");
+        if(validFromDraft_!=q(u->validity.from.value_or("")))d.fields.insert("validFrom");
+        if(validToDraft_!=q(u->validity.to.value_or("")))d.fields.insert("validTo");
+        if(d.fields.empty())parkedCountryDrafts_.erase(selected_);else parkedCountryDrafts_[selected_]=std::move(d);
     }
     if(const auto layer=project_.layer(selectedLayer_.toStdString())) {
         if(layerNameDraft_!=q(layer->name)||(layerOpacityPreview_&&*layerOpacityPreview_!=layer->opacity))
@@ -120,19 +113,24 @@ void EditorController::parkDrafts() {
 void EditorController::restoreParkedDrafts() {
     if(const auto it=parkedCountryDrafts_.find(selected_);it!=parkedCountryDrafts_.end()) {
         const auto draft=it->second;parkedCountryDrafts_.erase(it);
-        nameDraft_=draft.name;memoDraft_=draft.memo;colorDraft_=draft.color;opacityPreview_=draft.opacity;
+        if(draft.fields.count("name"))nameDraft_=draft.name;
+        if(draft.fields.count("notes"))memoDraft_=draft.memo;
+        if(draft.fields.count("color"))colorDraft_=draft.color;
+        if(draft.fields.count("opacity"))opacityPreview_=draft.opacity;
+        if(draft.fields.count("validFrom"))validFromDraft_=draft.from;
+        if(draft.fields.count("validTo"))validToDraft_=draft.to;
     }
     if(const auto it=parkedLayerDrafts_.find(selectedLayer_);it!=parkedLayerDrafts_.end()) {
         const auto draft=it->second;parkedLayerDrafts_.erase(it);
         layerNameDraft_=draft.name;layerOpacityPreview_=draft.opacity;
     }
 }
-void EditorController::clearParkedDrafts() { parkedCountryDrafts_.clear();parkedLayerDrafts_.clear(); }
+void EditorController::clearParkedDrafts() { parkedCountryDrafts_.clear();parkedLayerDrafts_.clear();fieldSessions_.clear(); }
 void EditorController::applySelection(SelectionState next) {
     const bool changed=selection_.revision()!=next.revision();
     if(!changed) {selection_=std::move(next);return;} // anchor-only changes are silent in the web reducer
     QScopedValueRollback<bool> guard(selectionTransition_,true);
-    parkDrafts();selection_=std::move(next);
+    cancelColorEdit();fieldSessions_.clear();parkDrafts();selection_=std::move(next);
     selected_=selection_.primary()?q(selection_.primary()->id):QString();
     reloadDrafts();
     emit selectionChanged();emit stateChanged();emit draftsChanged();emit visualChanged();
@@ -140,6 +138,7 @@ void EditorController::applySelection(SelectionState next) {
 }
 bool EditorController::selectObject(const QVariantMap& value,const QString& mode,const QString& scope,const QVariantList& ordered,bool additive) {
     const auto ref=existingObjectRef(value);if(!ref) return false;
+    closeObjectChooser();
     auto next=selection_;
     if(mode=="replace") next.replace(*ref,scope.toStdString());
     else if(mode=="toggle") next.toggle(*ref,scope.toStdString());
@@ -152,11 +151,12 @@ bool EditorController::selectObject(const QVariantMap& value,const QString& mode
     applySelection(std::move(next));return true;
 }
 bool EditorController::setSelection(const QVariantList& values,const QVariantMap& primary,const QString& scope) {
+    closeObjectChooser();
     std::vector<ObjectRef> refs;
     for(const auto& v:values) if(const auto ref=existingObjectRef(v.toMap())) refs.push_back(*ref);
     auto next=selection_;next.setMany(refs,existingObjectRef(primary),scope.toStdString());applySelection(std::move(next));return true;
 }
-void EditorController::clearSelection() { auto next=selection_;next.clear();applySelection(std::move(next)); }
+void EditorController::clearSelection() { closeObjectChooser();auto next=selection_;next.clear();applySelection(std::move(next)); }
 void EditorController::selectCountry(const QString& id) {
     selectObject({{"domain","territorial"},{"type","country"},{"id",id}},"replace","countries");
 }
@@ -166,28 +166,22 @@ void EditorController::selectLayer(const QString& id) {
     parkDrafts();selectedLayer_=id;reloadDrafts();
     emit stateChanged();emit draftsChanged();emit visualChanged();
 }
-QVariantMap EditorController::pickObject(double x,double y) const {
+QVariantMap EditorController::pickObject(double x,double y,double pixelsPerUnit,double zoom) const {
     if(!std::isfinite(x)||!std::isfinite(y)) return {};
-    const auto point=projection_.unproject(x,y);
-    // Match the existing renderer: layers bottom-to-top, paths in document order.
-    for(auto layer=project_.layers().rbegin();layer!=project_.layers().rend();++layer) {
-        if(!layer->visible) continue;
-        for(auto unit=project_.document().units.rbegin();unit!=project_.document().units.rend();++unit) {
-            const auto ref=territorialRef(unit->id);
-            const auto member=project_.document().presentation.membership.find(ref);
-            if(member==project_.document().presentation.membership.end()||member->second!=layer->id||!objectVisible(ref)) continue;
-            const auto geometry=project_.document().geometries.get(unit->geometry);
-            if(geometry && pointInCountry(point,geometry->polygons)) return objectRefValue(ref);
-        }
+    const auto hits=mapCandidates(x,y,pixelsPerUnit,zoom);const auto visuals=countryVisuals();
+    std::optional<ObjectRef> top;int topLayer=std::numeric_limits<int>::min();double topRank=-std::numeric_limits<double>::infinity();
+    for(const auto& path:projection_.paths) {
+        const auto row=path.toMap();const ObjectRef ref=row.contains("domain")?ObjectRef{row["domain"].toString().toStdString(),row["objectId"].toString().toStdString()}:territorialRef(row["countryId"].toString().toStdString());
+        if(std::find(hits.begin(),hits.end(),ref)==hits.end())continue;
+        const auto visual=visuals[row["countryId"].toString()].toMap();const auto layer=visual["layerOrder"].toInt();const auto rank=visual["rank"].toDouble();
+        if(!top||layer>topLayer||(layer==topLayer&&rank>=topRank)){top=ref;topLayer=layer;topRank=rank;}
     }
-    return {};
+    if(top&&top->domain=="distributionEntry")for(const auto& entry:project_.document().distributionEntries)if(entry.id==top->id){top=ObjectRef{"distributionLayer",entry.layerId};break;}
+    return top?objectRefValue(*top):QVariantMap{};
 }
 void EditorController::selectAt(double x,double y) { selectMapAt(x,y,false); }
 void EditorController::selectMapAt(double x,double y,bool additive) {
-    if(!std::isfinite(x)||!std::isfinite(y)) return;
-    const auto ref=pickObject(x,y);
-    if(!ref.isEmpty()) selectObject(ref,additive?"toggle":"replace","map");
-    else if(!additive) clearSelection();
+    beginMapSelection(x,y,additive);
 }
 QVariantMap EditorController::hoverObject() const { return hover_?objectRefValue(*hover_):QVariantMap{}; }
 bool EditorController::setHoverObject(const QVariantMap& value,const QString& source,const QString& expectedKey) {
@@ -203,14 +197,18 @@ bool EditorController::focusObject(const QVariantMap& value) {
     const auto ref=value.isEmpty()?selection_.primary():existingObjectRef(value);
     if(!ref) return false;
     for(const auto& path:projection_.paths) {
-        const auto p=path.toMap();if(p["countryId"].toString()!=q(ref->id)) continue;
+        const auto p=path.toMap();
+        if(ref->domain=="territorial" ? p["countryId"].toString()!=q(ref->id) :
+            (p["domain"].toString()!=q(ref->domain) || p["objectId"].toString()!=q(ref->id))) continue;
         emit focusRequested(p["left"].toDouble(),p["top"].toDouble(),p["width"].toDouble(),p["height"].toDouble(),mobileMode_?12:10);
         return true;
     }
     return false;
 }
 void EditorController::reconcileSelection() {
+    closeObjectChooser();cancelColorEdit();fieldSessions_.clear();
     if(selectionInstance_!=project_.instanceId()) {
+        cancelContentEdit();cancelGeometryEdit();
         selectionInstance_=project_.instanceId();selection_.reset();hover_.reset();hoverSource_.clear();hoverRevision_=0;
         searchQuery_.clear();clearParkedDrafts();
     } else {

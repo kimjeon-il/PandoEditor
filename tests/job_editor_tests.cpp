@@ -47,8 +47,9 @@ private slots:
         EditorController c; c.selectCountry(firstCountry(c)); const auto name=c.selectedName();
         c.setColor("#102030"); c.undo(); QSignalSpy errors(&c,&EditorController::errorOccurred);
         bool ok=false; QVERIFY(invoke(c,"applyPendingEditsAsync",ok)); QVERIFY(ok); QVERIFY(!c.property("jobBusy").toBool()); QVERIFY(c.canRedo());
-        c.setNameDraft("  "); QVERIFY(invoke(c,"applyPendingEditsAsync",ok)); QVERIFY(ok);
-        QTRY_VERIFY(!c.property("jobBusy").toBool()); QVERIFY(!errors.isEmpty()); QCOMPARE(c.nameDraft(),QString("  ")); QCOMPARE(c.selectedName(),name);
+        // Blank territorial names are now valid; empty legacy layer names remain invalid.
+        c.setLayerNameDraft("  "); QVERIFY(invoke(c,"applyPendingEditsAsync",ok)); QVERIFY(ok);
+        QTRY_VERIFY(!c.property("jobBusy").toBool()); QVERIFY(!errors.isEmpty()); QCOMPARE(c.layerNameDraft(),QString("  ")); QCOMPARE(c.selectedName(),name);
         QCOMPARE(c.revision(),qulonglong(2)); QVERIFY(c.canRedo());
     }
     void pcMobileSameAsyncSavedResult() {

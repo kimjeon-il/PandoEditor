@@ -1,5 +1,6 @@
 #pragma once
 #include "projectcodec.h"
+#include "../platform/screencolorpicker.h"
 #include "commandjobrunner.h"
 #include "platformstorage.h"
 #include "mapprojection.h"
@@ -7,7 +8,9 @@
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
+#include <QTimer>
 #include <map>
+#include <set>
 #include <optional>
 
 struct EditorControllerConfig {
@@ -22,6 +25,18 @@ struct WebImportSession;
 
 class EditorController : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QVariantList presentationGroups READ presentationGroups NOTIFY presentationChanged)
+    Q_PROPERTY(QVariantMap distributionDisplay READ distributionDisplay NOTIFY visualChanged)
+    Q_PROPERTY(QVariantMap hydroDataStatus READ hydroDataStatus NOTIFY stateChanged)
+    Q_PROPERTY(qulonglong presentationRevision READ presentationRevision NOTIFY presentationChanged)
+    Q_PROPERTY(bool presentationRecoveryAvailable READ presentationRecoveryAvailable NOTIFY presentationRecoveryChanged)
+    Q_PROPERTY(QObject* screenColorPicker READ screenColorPicker CONSTANT)
+    Q_PROPERTY(QVariantMap objectProperties READ objectProperties NOTIFY propertyChanged)
+    Q_PROPERTY(QString validFromDraft READ validFromDraft WRITE setValidFromDraft NOTIFY draftsChanged)
+    Q_PROPERTY(QString validToDraft READ validToDraft WRITE setValidToDraft NOTIFY draftsChanged)
+    Q_PROPERTY(bool colorEditOpen READ colorEditOpen NOTIFY colorEditChanged)
+    Q_PROPERTY(QVariantList objectChooserCandidates READ objectChooserCandidates NOTIFY objectChooserChanged)
+    Q_PROPERTY(bool objectChooserOpen READ objectChooserOpen NOTIFY objectChooserChanged)
     Q_PROPERTY(QVariantList selectionItems READ selectionItems NOTIFY selectionChanged)
     Q_PROPERTY(QVariantMap primaryObject READ primaryObject NOTIFY selectionChanged)
     Q_PROPERTY(qulonglong selectionRevision READ selectionRevision NOTIFY selectionChanged)
@@ -70,7 +85,49 @@ class EditorController : public QObject {
     Q_PROPERTY(QString documentNotice READ documentNotice NOTIFY stateChanged)
     Q_PROPERTY(bool mobileMode READ mobileMode CONSTANT)
     Q_PROPERTY(bool privateRecoveryRequired READ privateRecoveryRequired NOTIFY privateRecoveryRequiredChanged)
+    Q_PROPERTY(QVariantMap structureState READ structureState NOTIFY structureChanged)
+    Q_PROPERTY(QVariantList relationCountryOptions READ relationCountryOptions NOTIFY structureChanged)
+    Q_PROPERTY(QVariantList relationParentOptions READ relationParentOptions NOTIFY structureChanged)
+    Q_PROPERTY(bool structureDialogOpen READ structureDialogOpen NOTIFY structureChanged)
+    Q_PROPERTY(QVariantMap geometryEditState READ geometryEditState NOTIFY geometryEditChanged)
+    Q_PROPERTY(QVariantMap contentEditState READ contentEditState NOTIFY contentEditChanged)
+    Q_PROPERTY(QVariantList geometryDraftPaths READ geometryDraftPaths NOTIFY geometryEditChanged)
 public:
+    bool presentationRecoveryAvailable() const;
+    Q_INVOKABLE bool restorePresentationRecovery();
+    Q_INVOKABLE bool discardPresentationRecovery();
+    Q_INVOKABLE bool flushPresentationRecovery();
+    QVariantList presentationGroups() const;
+    QVariantMap distributionDisplay() const;
+    QVariantMap hydroDataStatus() const;
+    qulonglong presentationRevision() const { return project_.presentationRevision(); }
+    Q_INVOKABLE bool setPresentationVisibility(const QString& key,bool visible);
+    Q_INVOKABLE bool setPresentationOpacity(const QString& group,double opacity);
+    Q_INVOKABLE bool setPresentationBoundary(const QString& group,bool visible);
+    Q_INVOKABLE bool setDistributionDisplay(const QString& mode,bool boundaryVisible);
+    Q_INVOKABLE QVariantList labelLayout(double mapScale,double originX,double originY,double zoom,double viewportWidth,double viewportHeight) const;
+    Q_INVOKABLE bool setLabelPinned(const QVariantMap& ref,bool pinned,double longitude=0,double latitude=0,bool hasPosition=false);
+    Q_INVOKABLE bool setLabelMapPosition(const QVariantMap& ref,double mapX,double mapY);
+    Q_INVOKABLE bool resetLabelPosition(const QVariantMap& ref);
+    Q_INVOKABLE bool configureHydroData(const QUrl& path);
+    Q_INVOKABLE bool toggleSelectionVisibility();
+    Q_INVOKABLE bool setScopedObjectVisibility(const QVariantMap& ref,bool visible);
+    QObject* screenColorPicker() { return &screenColorPicker_; }
+    QVariantMap objectProperties() const;
+    QString validFromDraft() const { return validFromDraft_; }
+    QString validToDraft() const { return validToDraft_; }
+    void setValidFromDraft(const QString&);
+    void setValidToDraft(const QString&);
+    Q_INVOKABLE bool commitObjectField(const QString&);
+    Q_INVOKABLE QString beginPropertyEdit(const QString&);
+    Q_INVOKABLE bool updatePropertyEdit(const QString& token,const QString& value);
+    Q_INVOKABLE bool confirmPropertyEdit(const QString& token);
+    Q_INVOKABLE void endPropertyEdit(const QString& token);
+    Q_INVOKABLE bool beginColorEdit();
+    Q_INVOKABLE bool confirmColorEdit(const QString& color,bool reset=false);
+    Q_INVOKABLE void cancelColorEdit();
+    bool colorEditOpen() const { return colorSession_.has_value(); }
+    Q_INVOKABLE bool toggleObjectLock();
     explicit EditorController(QObject* parent=nullptr);
     explicit EditorController(EditorControllerConfig config,QObject* parent=nullptr);
     QVariantList selectionItems() const;
@@ -87,7 +144,12 @@ public:
     Q_INVOKABLE bool setSelection(const QVariantList& refs,const QVariantMap& primary={},const QString& scope="");
     Q_INVOKABLE void clearSelection();
     Q_INVOKABLE bool setHoverObject(const QVariantMap& ref,const QString& source="",const QString& expectedKey="");
-    Q_INVOKABLE QVariantMap pickObject(double x,double y) const;
+    QVariantList objectChooserCandidates() const;
+    bool objectChooserOpen() const { return chooserBase_.has_value() && chooserRefs_.size()>1; }
+    Q_INVOKABLE void beginMapSelection(double x,double y,bool additive=false,double pixelsPerUnit=0,double zoom=1);
+    Q_INVOKABLE bool chooseMapCandidate(int index,bool toggle=false);
+    Q_INVOKABLE void closeObjectChooser();
+    Q_INVOKABLE QVariantMap pickObject(double x,double y,double pixelsPerUnit=1,double zoom=1) const;
     Q_INVOKABLE void selectMapAt(double x,double y,bool additive=false);
     Q_INVOKABLE bool focusObject(const QVariantMap& ref={});
     // Read-only canonical serialization for non-mutating inspection/tests.
@@ -113,7 +175,7 @@ public:
     QVariantList countryRows() const;
     QString selectedId() const { return selected_; }
     QString selectedName() const;
-    bool selectedEditable() const { return selection_.items().size()==1 && project_.editable(selected_.toStdString()); }
+    bool selectedEditable() const;
     QString countryLayerId() const;
     QString selectedLayerId() const { return selectedLayer_; }
     bool canDeleteLayer() const;
@@ -139,6 +201,50 @@ public:
     bool canRedo() const { return project_.canRedo(); }
     bool mobileMode() const { return mobileMode_; }
     bool privateRecoveryRequired() const { return privateRecoveryRequired_; }
+    QVariantMap structureState() const;
+    QVariantList relationCountryOptions() const;
+    QVariantList relationParentOptions() const;
+    bool structureDialogOpen() const { return structureSession_.has_value() || conversionDraft_.has_value() || createDraft_.has_value(); }
+    Q_INVOKABLE bool changeSelectedParent(const QString& parentId);
+    Q_INVOKABLE bool transferSelectedSubunit(const QString& countryId);
+    Q_INVOKABLE bool changeSelectedRegionSovereign(const QString& countryId);
+    Q_INVOKABLE bool beginDeleteSelection();
+    Q_INVOKABLE bool beginMergeSelection();
+    Q_INVOKABLE bool beginAnnexGeometry();
+    Q_INVOKABLE bool beginSplitGeometry();
+    Q_INVOKABLE bool beginSharedBoundaryGeometry();
+    Q_INVOKABLE bool beginCoastlineGeometry(const QString& authority="country");
+    Q_INVOKABLE bool confirmStructureMutation();
+    Q_INVOKABLE void cancelStructureMutation();
+    Q_INVOKABLE bool beginTypeConversion();
+    Q_INVOKABLE bool updateTypeConversionTarget(const QString& sovereignId,const QString& parentId);
+    Q_INVOKABLE bool beginTerritorialCreate(const QString& type);
+    Q_INVOKABLE bool updateTerritorialCreateSetup(const QString& name,const QString& sovereignId,const QString& parentId,const QString& sourceId);
+    bool beginTerritorialCreatePrepared(const pandoeditor::CreateTerritorialIntent& intent);
+    QVariantMap geometryEditState() const;
+    QVariantList geometryDraftPaths() const;
+    Q_INVOKABLE bool beginGeometryEdit(const QString& tool="edit");
+    Q_INVOKABLE bool beginGeometryDraw();
+    QVariantMap contentEditState() const;
+    Q_INVOKABLE bool beginContentEdit(const QString& domain,const QString& type=QString(),bool create=false);
+    Q_INVOKABLE bool updateContentField(const QString& field,const QVariant& value);
+    Q_INVOKABLE bool loadContentFlag(const QUrl& url);
+    Q_INVOKABLE bool beginContentGeometry();
+    Q_INVOKABLE bool previewContentEdit(bool remove=false);
+    Q_INVOKABLE bool confirmContentEdit();
+    Q_INVOKABLE void cancelContentEdit();
+    Q_INVOKABLE bool geometryAddPoint(double x,double y,double tolerance=0);
+    Q_INVOKABLE bool geometrySelectNearest(double x,double y,double tolerance);
+    Q_INVOKABLE bool geometryMoveSelectedVertex(double x,double y,double tolerance=0);
+    Q_INVOKABLE bool geometryBeginVertexDrag();
+    Q_INVOKABLE void geometryEndVertexDrag(bool cancel=false);
+    Q_INVOKABLE bool geometryInsertNearest(double x,double y,double tolerance);
+    Q_INVOKABLE bool geometryDeleteSelectedVertex();
+    Q_INVOKABLE bool geometryUndoDraft();
+    Q_INVOKABLE bool geometryRedoDraft();
+    Q_INVOKABLE bool requestGeometryPreview();
+    Q_INVOKABLE bool confirmGeometryEdit();
+    Q_INVOKABLE void cancelGeometryEdit();
     Q_INVOKABLE void selectAt(double x,double y);
     Q_INVOKABLE void selectCountry(const QString& id);
     Q_INVOKABLE void selectLayer(const QString& id);
@@ -172,6 +278,11 @@ public:
     Q_INVOKABLE bool exportProject(const QUrl& url);
     Q_INVOKABLE bool confirmPrivateRecovery();
 signals:
+    void presentationRecoveryChanged();
+    void presentationChanged();
+    void propertyChanged();
+    void colorEditChanged();
+    void objectChooserChanged();
     void selectionChanged();
     void searchChanged();
     void hoverChanged();
@@ -186,8 +297,31 @@ signals:
     void previewChanged();
     void errorOccurred(const QString& message);
     void privateRecoveryRequiredChanged();
+    void structureChanged();
+    void geometryEditChanged();
+    void contentEditChanged();
 private:
-    struct CountryDraft { QString name,memo,color; std::optional<double> opacity; };
+    QTimer presentationSaveTimer_;
+    std::string presentationSaveInstance_;
+    QString presentationRecoveryPath() const;
+    QString availablePresentationRecoveryPath() const;
+    bool discardOwnPresentationRecovery();
+    void publishPresentation();
+    ScreenColorPicker screenColorPicker_;
+    std::vector<pandoeditor::ObjectRef> mapCandidates(double x,double y,double pixelsPerUnit,double zoom=1) const;
+    std::vector<pandoeditor::ObjectRef> chooserRefs_;
+    std::optional<pandoeditor::ProjectSnapshot> chooserBase_;
+    bool chooserToggle_=false;
+    struct CountryDraft { QString name,memo,color; std::optional<double> opacity; QString from,to; std::set<std::string> fields; };
+    struct FieldSession { pandoeditor::ProjectSnapshot base; pandoeditor::ObjectRef ref; QString field; };
+    std::map<QString,FieldSession> fieldSessions_;
+    std::optional<pandoeditor::ProjectSnapshot> colorSession_;
+    std::vector<pandoeditor::ObjectRef> colorTargets_;
+    QString validFromDraft_,validToDraft_;
+    bool runPropertyCommand(const std::string&,pandoeditor::CommandAction,const QString& changedField={});
+    bool propertyBusy() const;
+    const pandoeditor::TerritorialUnit* selectedUnit() const;
+    void refreshDraftField(const pandoeditor::ObjectRef&,const QString&);
     struct LayerDraft { QString name; std::optional<double> opacity; };
     std::map<QString,CountryDraft> parkedCountryDrafts_;
     std::map<QString,LayerDraft> parkedLayerDrafts_;
@@ -224,6 +358,55 @@ private:
     std::optional<pandoeditor::JobTicket> background_;
     bool fieldCommitInProgress_=false;
     std::optional<pandoeditor::CommandPreview> pendingPreview_;
+    struct StructureSession {
+        pandoeditor::ProjectSnapshot base;
+        pandoeditor::TerritorialMutationPlan plan;
+        std::optional<pandoeditor::JobTicket> job;
+        std::optional<pandoeditor::CommandPreview> preview;
+        MapProjection projection;
+        QString error;
+    };
+    // A country-to-subunit conversion needs a destination sovereign and parent
+    // before the core can create a valid immutable plan.  Keep those UI-only
+    // choices out of the document until the user has supplied both values.
+    struct ConversionDraft { pandoeditor::ProjectSnapshot base; pandoeditor::ConvertTerritorialTypeIntent intent; };
+    struct CreateDraft { pandoeditor::ProjectSnapshot base; pandoeditor::CreateTerritorialIntent intent; };
+    std::optional<StructureSession> structureSession_;
+    std::optional<ConversionDraft> conversionDraft_;
+    std::optional<CreateDraft> createDraft_;
+    struct ContentSession {
+        pandoeditor::ProjectSnapshot base;
+        pandoeditor::ContentEdit edit;
+        std::optional<pandoeditor::CommandPreview> preview;
+        QString error;
+    };
+    std::optional<ContentSession> contentSession_;
+    struct GeometryEditSession {
+        pandoeditor::ProjectSnapshot base;
+        pandoeditor::ObjectRef target;
+        pandoeditor::Geometry draft;
+        std::vector<pandoeditor::Geometry> undo;
+        std::vector<pandoeditor::Geometry> redo;
+        int polygon=0,ring=0,vertex=-1;
+        QString tool;
+        // A draw session may create a new territorial unit.  The incomplete
+        // setup stays outside ProjectDocument until a valid geometry has been
+        // previewed and confirmed.
+        std::optional<pandoeditor::CreateTerritorialIntent> createIntent;
+        std::optional<pandoeditor::CommandPreview> preview;
+        std::uint64_t request=0;
+        QString error;
+        pandoeditor::Ring lineDraft;
+        std::optional<pandoeditor::AnnexTerritoryIntent> annexIntent;
+        std::optional<pandoeditor::SplitTerritorialIntent> splitIntent;
+        std::vector<pandoeditor::ObjectRef> boundaryOwners;
+        std::optional<pandoeditor::CoastlineIntent> coastIntent;
+        std::optional<pandoeditor::Geometry> dragBefore;
+        std::optional<pandoeditor::Point> snapPoint;
+        bool content=false;
+    };
+    std::optional<GeometryEditSession> geometryEdit_;
+    bool setStructurePlan(const pandoeditor::TerritorialMutationIntent&);
     MapProjection projection_;
     QString selected_,selectedLayer_="countries",filePath_;
     QString nameDraft_,memoDraft_,colorDraft_,layerNameDraft_;

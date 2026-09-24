@@ -49,6 +49,27 @@ QPointF center(const EditorController& editor,const QString& id) {
 class SelectionEditorTests : public QObject {
     Q_OBJECT
 private slots:
+    void chooserNamesIgnoreObjectOrder() {
+        QTemporaryDir dir;
+        auto document=fixture();
+        auto other=document.units.at(2);other.id="T";other.name="가나다";
+        document.units.at(2).name="하하";
+        document.units.push_back(other);
+        document.relations.push_back({"base-t",territorialRef("T"),territorialRef("A"),territorialRef("A")});
+        document.presentation.membership[territorialRef("T")]="other";
+        document.presentation.objectStyles[territorialRef("T")]=ObjectStyle{};
+        // S is topmost by object order, but T must be first by display name.
+        document.presentation.webPresentation.objectOrder={"territorial:subunit:T","territorial:subunit:S"};
+        Project project;project.replace(std::move(document));
+        QFile file(dir.filePath("chooser.json"));QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(projectcodec::encode(project));file.close();
+        EditorController editor;QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
+        const auto point=center(editor,"S");editor.beginMapSelection(point.x(),point.y(),false,0);
+        QCOMPARE(editor.pickObject(point.x(),point.y())["id"].toString(),QString("S"));
+        const auto candidates=ids(editor.objectChooserCandidates());
+        QVERIFY(candidates.contains("S"));QVERIFY(candidates.contains("T"));
+        QVERIFY(candidates.indexOf("T")<candidates.indexOf("S"));
+    }
     void selectingDoesNotCommitOrDiscardDrafts() {
         EditorController editor;
         const auto rows=editor.countryRows();QVERIFY(rows.size()>=2);

@@ -78,7 +78,7 @@ private slots:
         click(window,item(window->contentItem(),"discardAndWebImport"));
         QTRY_COMPARE(editor.countryRows().size(),qsizetype(2));QCOMPARE(editor.revision(),qulonglong(0));QVERIFY(editor.dirty());
         QVERIFY(!editor.canUndo()&&!editor.canRedo());QVERIFY(!editor.hasWebImportPreview());
-        editor.selectCountry("A");auto limited=item(window->contentItem(),"preservedDataNotice");QVERIFY(limited);QVERIFY(limited->isVisible());
+        editor.selectCountry("A");click(window,item(window->contentItem(),"openObjectEditor"));auto limited=item(window->contentItem(),"preservedDataNotice");QVERIFY(limited);QVERIFY(limited->isVisible());
         QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
         window->setProperty("allowClose",true);window->close();
     }

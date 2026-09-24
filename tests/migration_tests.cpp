@@ -1,4 +1,5 @@
 #include "projectcodec.h"
+#include "presentationmigration.h"
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -14,6 +15,187 @@ private:
         return file.readAll();
     }
 private slots:
+    void labelAndDistributionSettingsPromoteAndRoundTrip() {
+        using namespace pandoeditor;auto d=projectcodec::decode(sample());Geometry point;point.type="Point";point.points={{1,2}};d.geometries.insert({"label-point",1},point);
+        PlaceLabel label;label.id="city";label.name="City";label.kind="city";label.geometry={"label-point",1};d.labels.push_back(label);
+        PreservedExtension labels;labels.id="label-settings";labels.sourceFormat="pandolab-project";labels.sourceSchema=5;labels.jsonPointer="/labelSettings";labels.payload=R"({"label:city":{"pinned":true,"manualPosition":[10,20],"future":1e+09},"unknown:x":{"pinned":true}})";
+        PreservedExtension distribution=labels;distribution.id="distribution-settings";distribution.jsonPointer="/distributionSettings";distribution.payload=R"({"renderMode":"intensity","boundaryVisible":false,"future":[3,1,2]})";
+        d.extensions.push_back(labels);d.extensions.push_back(distribution);presentationmigration::promote(d);
+        QCOMPARE(d.presentation.webPresentation.labelSettings.at({"label","city"}).manualPosition->x,10.);
+        QCOMPARE(d.presentation.webPresentation.distributionSettings.renderMode,DistributionRenderMode::Intensity);QVERIFY(!d.presentation.webPresentation.distributionSettings.boundaryVisible);
+        Project project;project.replace(d);const auto saved=projectcodec::encode(project);QVERIFY(saved.contains("1e+09"));QVERIFY(saved.contains("[3,1,2]"));
+        const auto reopened=projectcodec::decode(saved);QVERIFY(reopened.presentation.webPresentation.labelSettings.at({"label","city"}).pinned);QCOMPARE(reopened.presentation.webPresentation.distributionSettings.renderMode,DistributionRenderMode::Intensity);
+    }
+    void contentMetadataDependencyAndPresentationUndo() {
+        using namespace pandoeditor;auto d=projectcodec::decode(sample());
+        Geometry point;point.type="Point";point.points={{2,3}};d.geometries.insert({"point",1},point);
+        PlaceLabel label;label.id="point";label.name="old";label.geometry={"point",1};d.labels.push_back(label);
+        d.presentation.webPresentation.hiddenItems["labels"].insert(label.id);
+        PreservedExtension extension;extension.id="opaque";extension.payload="{}";extension.forbiddenEffects={"geometry"};extension.dependencies={{"label",label.id}};extension.dependencyKnowledge="known";d.extensions.push_back(extension);
+        Project p;p.replace(d);label.name="new";
+        CommandArguments args;args.action=ContentEdit{{"label",label.id},label,{}};
+        auto renamed=CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"content.edit",args));QVERIFY2(renamed.ok(),renamed.detail.c_str());QVERIFY(renamed.preview);QVERIFY(CommandProcessor::confirm(p,*renamed.preview).ok());
+        auto roundTrip=projectcodec::decode(projectcodec::encode(p));QVERIFY(!itemVisible(roundTrip.presentation.webPresentation,"labels",label.id));
+        args.action=ContentEdit{{"label",label.id},{},{}};
+        auto blocked=CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"content.edit",args));QVERIFY(!blocked.ok()); // cannot leave an extension dependency dangling
+        auto independent=p.document();independent.extensions.clear();p.replace(independent);
+        auto deleted=CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"content.edit",args));QVERIFY(deleted.preview);QVERIFY(CommandProcessor::confirm(p,*deleted.preview).ok());
+        QVERIFY(p.undo());QVERIFY(!itemVisible(p.document().presentation.webPresentation,"labels",label.id));QCOMPARE(p.document().labels.front().name,std::string("new"));
+    }
+    void contentPromotionAtomicRoundTrip() {
+        using namespace pandoeditor;
+        auto d=projectcodec::decode(sample());PreservedExtension labels;
+        labels.id="web-labels";labels.sourceFormat="pandolab-project";labels.sourceSchema=5;labels.jsonPointer="/labels";
+        labels.payload=R"([{"id":"place","name":"City","kind":"city","coordinates":[10,20],"future":{"number":1e+09,"order":[3,1,2]}}])";
+        d.extensions.push_back(labels);QVERIFY(projectcodec::promoteContent(d).empty());QCOMPARE(d.labels.size(),std::size_t(1));
+        QCOMPARE(d.extensions.front().status,std::string("migrationArchive"));
+        Project p;p.replace(d);auto encoded=projectcodec::encode(p);QVERIFY(encoded.contains("1e+09"));QVERIFY(encoded.contains("[3,1,2]"));
+        auto reopened=projectcodec::decode(encoded);QCOMPARE(reopened.labels.size(),std::size_t(1));
+        reopened.labels.front().name="Edited";QVERIFY(projectcodec::promoteContent(reopened).empty());QCOMPARE(reopened.labels.front().name,std::string("Edited"));
+        auto bad=projectcodec::decode(sample());labels.payload=R"([{"id":"ok","coordinates":[1,2]},{"id":"bad","coordinates":[]}])";bad.extensions.push_back(labels);
+        QVERIFY(!projectcodec::promoteContent(bad).empty());QVERIFY(bad.labels.empty());QCOMPARE(bad.extensions.back().payload,labels.payload);
+    }
+    void contentCommandsPreviewUndoCancelAndStale() {
+        using namespace pandoeditor;
+        Project p; p.replace(projectcodec::decode(sample()));
+        auto prepare=[&](ContentEdit edit) {
+            CommandArguments args; args.action=std::move(edit);
+            return CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"content.edit",args));
+        };
+        PlaceLabel label; label.id="new-label"; label.name="New"; label.geometry={"new-point",1};
+        Geometry point; point.type="Point"; point.points={{2,3}};
+        auto preview=prepare({{"label",label.id},label,std::make_pair(label.geometry,point),true});
+        QVERIFY2(preview.ok(),preview.detail.c_str()); QVERIFY(preview.preview); QVERIFY(p.document().labels.empty());
+        QVERIFY(CommandProcessor::confirm(p,*preview.preview).changed()); QCOMPARE(p.document().labels.size(),std::size_t(1));
+        QVERIFY(!prepare({{"label",label.id},label,{},true}).ok());
+        QVERIFY(p.undo()); QVERIFY(p.document().labels.empty()); QVERIFY(p.redo());
+        label.name="Changed"; auto cancelled=prepare({{"label",label.id},label,{}}); QVERIFY(cancelled.preview);
+        CommandProcessor::cancel(*cancelled.preview); QCOMPARE(p.document().labels.front().name,std::string("New"));
+        auto stale=prepare({{"label",label.id},label,{}}); QVERIFY(stale.preview);
+        QVERIFY(p.renameCountry(p.document().units.front().id,"Unrelated edit"));
+        QCOMPARE(CommandProcessor::confirm(p,*stale.preview).error,CommandError::StaleRevision);
+        auto deletion=prepare({{"label",label.id},{},{}}); QVERIFY(deletion.preview);
+        QVERIFY(CommandProcessor::confirm(p,*deletion.preview).changed()); QVERIFY(p.document().labels.empty());
+        QVERIFY(p.undo()); QCOMPARE(p.document().labels.front().name,std::string("New"));
+        Project reopened; reopened.replace(projectcodec::decode(projectcodec::encode(p)));
+        QVERIFY(sameContent(p.document(),reopened.document()));
+        DistributionLayer layer; layer.id="locked-layer"; layer.locked=true;
+        auto createLayer=prepare({{"distributionLayer",layer.id},layer,{},true}); QVERIFY(createLayer.preview);
+        QVERIFY(CommandProcessor::confirm(p,*createLayer.preview).changed());
+        auto bypass=layer; bypass.name="Should not change"; bypass.locked=false;
+        QCOMPARE(prepare({{"distributionLayer",layer.id},bypass,{}}).error,CommandError::Locked);
+        layer.locked=false; auto unlock=prepare({{"distributionLayer",layer.id},layer,{}}); QVERIFY(unlock.preview);
+        QVERIFY(CommandProcessor::confirm(p,*unlock.preview).changed());
+        auto child=layer; child.id="child-layer"; child.parentId=layer.id;
+        auto createChild=prepare({{"distributionLayer",child.id},child,{},true}); QVERIFY(createChild.preview);
+        QVERIFY(CommandProcessor::confirm(p,*createChild.preview).changed());
+        DistributionEntry entry; entry.id="attached-entry"; entry.layerId=layer.id; entry.territory=territorialRef(p.document().units.front().id);
+        auto createEntry=prepare({{"distributionEntry",entry.id},entry,{},true}); QVERIFY(createEntry.preview);
+        QVERIFY(CommandProcessor::confirm(p,*createEntry.preview).changed());
+        auto removeLayer=prepare({{"distributionLayer",layer.id},{},{}}); QVERIFY(removeLayer.preview);
+        QVERIFY(CommandProcessor::confirm(p,*removeLayer.preview).changed());
+        QVERIFY(p.document().distributionEntries.empty()); QVERIFY(!p.document().distributionLayers.front().parentId);
+        QVERIFY(p.undo()); QCOMPARE(p.document().distributionEntries.size(),std::size_t(1));
+        QCOMPARE(*p.document().distributionLayers.back().parentId,layer.id);
+    }
+    void v6ContentRoundTripAndReferenceValidation() {
+        using namespace pandoeditor;
+        auto d=projectcodec::decode(sample());
+        const auto country=territorialRef(d.units.front().id);
+        Geometry point; point.type="Point"; point.points={{1,2}};
+        Geometry line; line.type="LineString"; line.lines={{{1,2},{3,4}}};
+        d.geometries.insert({"label-geometry",1},point);
+        d.geometries.insert({"river-geometry",1},line);
+        d.countryDetails[country].capital="Capital text only";
+        d.symbols[country]={FlagPolicy::None,{}};
+        PlaceLabel label; label.id="place"; label.name="Place"; label.kind="capital";
+        label.geometry={"label-geometry",1}; label.territory=country;
+        label.source.details=R"({"big":900719925474099312345,"number":1.2300e+02,"ordered":[3,1,2]})";
+        d.labels.push_back(label);
+        HydroFeature river; river.id="river"; river.geometry={"river-geometry",1}; d.hydro.push_back(river);
+        HydroFeature lake; lake.id="lake"; lake.kind="lake"; lake.geometry=d.units.front().geometry; d.hydro.push_back(lake);
+        DistributionLayer layer; layer.id="language"; layer.name="Language"; d.distributionLayers.push_back(layer);
+        auto child=layer; child.id="child"; child.parentId="language"; d.distributionLayers.push_back(child);
+        DistributionEntry entry; entry.id="entry-60"; entry.layerId="language"; entry.territory=country; entry.share=60;
+        d.distributionEntries.push_back(entry); entry.id="entry-70"; entry.share=70; d.distributionEntries.push_back(entry);
+        GenericFeature generic; generic.id="place"; generic.geometry={"label-geometry",1}; generic.source=label.source;
+        d.genericFeatures.push_back(generic);
+        for(const auto& type:{"MultiPoint","LineString","MultiLineString","Polygon","MultiPolygon"}) {
+            Geometry g; g.type=type;
+            if(g.type=="MultiPoint") g.points={{1,2},{3,4}};
+            else if(g.type=="LineString" || g.type=="MultiLineString") g.lines={{{1,2},{3,4}}};
+            else g.polygons={{{{0,0},{2,0},{2,2},{0,0}}}};
+            GenericFeature f; f.id=type; f.geometry={std::string("generic-")+type,1}; f.source=label.source;
+            d.geometries.insert(f.geometry,g); d.genericFeatures.push_back(f);
+        }
+        const auto index=validateDocument(d);
+        QVERIFY(index.objects.count({"label","place"})); QVERIFY(index.objects.count({"generic","place"}));
+        Project p; p.replace(d);
+        const auto bytes=projectcodec::encode(p); QVERIFY(bytes.contains("1.2300e+02"));
+        auto reopened=projectcodec::decode(bytes); QVERIFY(sameContent(d,reopened));
+        auto futureBytes=bytes;
+        futureBytes.replace("\"labels\":[{","\"labels\":[{\"futureField\":{\"n\":9.9900e+03,\"items\":[2,0,1]},");
+        Project future; future.replace(projectcodec::decode(futureBytes));
+        QVERIFY(future.renameCountry(country.id,"Safe property edit"));
+        const auto futureSaved=projectcodec::encode(future);
+        QVERIFY(futureSaved.contains("9.9900e+03")); QVERIFY(futureSaved.contains("[2,0,1]"));
+        Project futureReopened; futureReopened.replace(projectcodec::decode(futureSaved));
+        QCOMPARE(projectcodec::encode(futureReopened),futureSaved);
+        QVERIFY(p.renameCountry(country.id,"Changed")); QVERIFY(p.undo()); QVERIFY(sameContent(d,p.document()));
+        QVERIFY(p.redo()); QVERIFY(sameContent(d,p.document()));
+        auto invalid=d; invalid.distributionLayers.front().parentId="child";
+        QVERIFY_EXCEPTION_THROWN(validateDocument(invalid),std::invalid_argument);
+        invalid=d; invalid.labels.front().territory=territorialRef("missing");
+        QVERIFY_EXCEPTION_THROWN(validateDocument(invalid),std::invalid_argument);
+        invalid=d; invalid.distributionEntries.front().share=101;
+        QVERIFY_EXCEPTION_THROWN(validateDocument(invalid),std::invalid_argument);
+        invalid=d; invalid.hydro.front().kind="lake";
+        QVERIFY_EXCEPTION_THROWN(validateDocument(invalid),std::invalid_argument);
+        invalid=d; invalid.distributionEntries.front().geometry=d.units.front().geometry;
+        QVERIFY_EXCEPTION_THROWN(validateDocument(invalid),std::invalid_argument);
+    }
+    void v5UnknownPresentationTokensRemainLossless() {
+        pandoeditor::Project p;p.replace(projectcodec::decode(sample()));
+        auto bytes=projectcodec::encode(p);
+        bytes.replace("\"webPresentation\":{","\"webPresentation\":{\"future\":{\"big\":900719925474099312345,\"ordered\":[3,1,2],\"decimal\":1.2300e+02},");
+        p.replace(projectcodec::decode(bytes));QVERIFY(p.renameCountry(p.document().units.front().id,"safe edit"));
+        auto saved=projectcodec::encode(p);QVERIFY(saved.contains("900719925474099312345"));QVERIFY(saved.contains("1.2300e+02"));QVERIFY(saved.contains("[3,1,2]"));
+        pandoeditor::Project reopened;reopened.replace(projectcodec::decode(saved));QCOMPARE(projectcodec::encode(reopened),saved);
+    }
+    void v5ForeignObjectOrderIsRetainedOutsideCanonicalOrder() {
+        try {
+            pandoeditor::Project p;p.replace(projectcodec::decode(sample()));
+            auto bytes=projectcodec::encode(p);
+            bytes.replace("\"objectOrder\":[]","\"objectOrder\":[\"foreign:overlay\"]");
+            p.replace(projectcodec::decode(bytes));
+            QVERIFY(p.renameCountry(p.document().units.front().id,"safe edit"));
+            const auto saved=projectcodec::encode(p);
+            QVERIFY(saved.contains("foreign:overlay"));
+            QVERIFY(p.document().presentation.webPresentation.objectOrder.empty());
+        } catch(const std::exception& error) { QFAIL(error.what()); }
+    }
+    void v5PresentationPresenceRoundTrip() {
+        auto d=projectcodec::decode(sample());
+        auto u=d.units.front();u.id="presentation-S";u.kind=pandoeditor::UnitKind::Subunit;
+        u.baseName.clear();u.nameExplicit=true;
+        const auto ref=pandoeditor::territorialRef(u.id),parent=pandoeditor::territorialRef(d.units.front().id);
+        d.units.push_back(u);d.relations.push_back({"presentation-rel",ref,parent,parent});
+        d.presentation.membership[ref]=d.presentation.userLayers.front().id;d.presentation.objectStyles[ref]={};
+        auto& p=d.presentation.webPresentation;
+        p.visibility["subunits"]=false;p.visibility["subunitFlags"]=false;
+        p.hiddenItems["subunits"].insert(u.id);p.styles["countries"].opacity=.6;
+        p.objectStyles["territorial:subunit:presentation-S"].blendMode="normal";
+        p.objectOrder={"territorial:subunit:presentation-S"};
+        pandoeditor::Project project;project.replace(d);
+        const auto bytes=projectcodec::encode(project);QCOMPARE(QJsonDocument::fromJson(bytes).object()["version"].toInt(),6);
+        auto legacy=QJsonDocument::fromJson(bytes).object(); legacy["version"]=5; legacy.remove("content");
+        auto reopened=projectcodec::decode(QJsonDocument(legacy).toJson(QJsonDocument::Compact));
+        QCOMPARE(reopened.nativeSourceVersion,5); QVERIFY(reopened.presentation.webPresentation==p);
+        QVERIFY(!reopened.presentation.webPresentation.objectStyles.at("territorial:subunit:presentation-S").opacity);
+        p.objectStyles["territorial:subunit:presentation-S"].opacity=1;
+        project.replace(d);reopened=projectcodec::decode(projectcodec::encode(project));
+        QCOMPARE(*reopened.presentation.webPresentation.objectStyles.at("territorial:subunit:presentation-S").opacity,1.);
+    }
     void v1MinimumDefaultsRemainExactAfterSaving() {
         const auto d=projectcodec::decode("{\"format\":\"pandoeditor-project\",\"version\":1,\"countries\":["
           "{\"id\":\"original-id\",\"name\":\" original name \",\"color\":\"#A1b2C3\","
@@ -227,11 +409,11 @@ private slots:
         QVERIFY_EXCEPTION_THROWN(projectcodec::decode(deep),std::invalid_argument);
         QVERIFY_EXCEPTION_THROWN(projectcodec::decode(R"({"format":"pandoeditor-project","version":3.00000000000000000000001})"),std::invalid_argument);
     }
-    void legacySavesV3() {
+    void legacySavesV5() {
         pandoeditor::Project project;
         project.replace(projectcodec::decode(sample()));
         const auto saved=projectcodec::encode(project);
-        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),3);
+        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),6);
         pandoeditor::Project reopened;
         reopened.replace(projectcodec::decode(saved));
         QCOMPARE(projectcodec::encode(reopened),saved);

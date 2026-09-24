@@ -39,13 +39,21 @@ bool EditorController::collectPendingEdits(pandoeditor::CommandArguments& args)
     // Selection parks drafts by identity. An explicit apply/save collects them;
     // selecting/searching/focusing never calls this function.
     auto country=[&](const QString& id,const CountryDraft& draft) {
-        const auto c=project_.country(id.toStdString());
-        if(!c) {commandError(pandoeditor::CommandError::InvalidTargets);return false;}
-        if(!validColor(draft.color)) {commandError(pandoeditor::CommandError::InvalidArguments);return false;}
-        pandoeditor::CountryProperties next{draft.name.trimmed().toStdString(),draft.memo.toStdString(),
-            draft.color.mid(1).toUInt(nullptr,16),draft.opacity.value_or(c->opacity),c->layerId};
-        const pandoeditor::CountryProperties before{c->name,c->memo,c->color,c->opacity,c->layerId};
-        if(!(before==next)) args.properties.countries.push_back({c->id,std::move(next)});
+        using namespace pandoeditor;
+        const auto ref=territorialRef(id.toStdString());auto pos=project_.index().objects.find(ref);
+        if(pos==project_.index().objects.end()){commandError(CommandError::InvalidTargets);return false;}
+        const auto& u=project_.document().units[pos->second];
+        auto active=[&](const char* field){return draft.fields.empty()||draft.fields.count(field);};
+        if(active("name") && draft.name.toStdString()!=(u.kind==UnitKind::Country?objectDisplayName(u):u.name))args.properties.fields.push_back({ref,TerritorialField::Name,draft.name.toStdString()});
+        if(active("notes") && draft.memo.toStdString()!=u.notes)args.properties.fields.push_back({ref,TerritorialField::Notes,draft.memo.toStdString()});
+        if(active("validFrom") && draft.from.toStdString()!=u.validity.from.value_or(""))args.properties.fields.push_back({ref,TerritorialField::ValidFrom,draft.from.toStdString()});
+        if(active("validTo") && draft.to.toStdString()!=u.validity.to.value_or(""))args.properties.fields.push_back({ref,TerritorialField::ValidTo,draft.to.toStdString()});
+        if(!validColor(draft.color)){commandError(CommandError::InvalidArguments);return false;}
+        const auto& style=project_.document().presentation.objectStyles.at(ref);
+        if((active("color") && draft.color.mid(1).toUInt(nullptr,16)!=effectiveObjectColor(project_.document(),ref)) || (active("opacity") && draft.opacity&&*draft.opacity!=style.opacity)) {
+            const auto c=project_.country(ref.id);if(!c){commandError(CommandError::InvalidArguments);return false;}
+            args.properties.countries.push_back({c->id,{c->name,c->memo,draft.color.mid(1).toUInt(nullptr,16),draft.opacity.value_or(c->opacity),c->layerId}});
+        }
         return true;
     };
     auto layer=[&](const QString& id,const LayerDraft& draft) {
@@ -57,7 +65,7 @@ bool EditorController::collectPendingEdits(pandoeditor::CommandArguments& args)
     };
     for(const auto& [id,draft]:parkedCountryDrafts_) if(!country(id,draft))return false;
     for(const auto& [id,draft]:parkedLayerDrafts_) if(!layer(id,draft))return false;
-    if(project_.country(selected_.toStdString())&&!country(selected_,{nameDraft_,memoDraft_,colorDraft_,opacityPreview_}))return false;
+    if(selectedUnit()&&!country(selected_,{nameDraft_,memoDraft_,colorDraft_,opacityPreview_,validFromDraft_,validToDraft_}))return false;
     if(project_.layer(selectedLayer_.toStdString())&&!layer(selectedLayer_,{layerNameDraft_,layerOpacityPreview_}))return false;
     return true;
 }
@@ -93,6 +101,7 @@ void EditorController::cancelPreview()
 }
 void EditorController::discardPendingEdits()
 {
+    cancelContentEdit();cancelGeometryEdit();
     cancelPreview();clearParkedDrafts();reloadDrafts();emit draftsChanged();emit visualChanged();emit dirtyChanged();
 }
 bool EditorController::executeCommand(const std::string& commandId,pandoeditor::CommandAction action)
@@ -102,7 +111,7 @@ bool EditorController::executeCommand(const std::string& commandId,pandoeditor::
     if(status==pandoeditor::CommandStatus::NoOp){clearParkedDrafts();return true;}
     return status==pandoeditor::CommandStatus::Prepared&&confirmCommand();
 }
-bool EditorController::commitPendingEdits(){if(!executeCommand("edit.properties",std::monostate{}))return false;publish(false);return true;}
+bool EditorController::commitPendingEdits(){if(contentSession_||geometryEdit_)return false;if(!executeCommand("edit.properties",std::monostate{}))return false;publish(false);return true;}
 void EditorController::setColor(const QString& color)
 {
     if(!validColor(color)){commandError(pandoeditor::CommandError::InvalidArguments);return;}

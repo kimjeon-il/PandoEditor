@@ -3,6 +3,7 @@
 using namespace pandoeditor;
 bool EditorController::beginPendingWork(bool apply)
 {
+    if(contentSession_||geometryEdit_)return false;
     if(!hasPendingEdits())return true;
     try {
         if(pendingPreview_){CommandProcessor::cancel(*pendingPreview_);pendingPreview_.reset();emit previewChanged();}

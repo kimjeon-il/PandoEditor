@@ -168,7 +168,7 @@ FileKind classifyValue(const V& p) {
     const auto f=text(at(p,"format"));
     if(f=="pandolab-autosave-delta")throw std::invalid_argument("BASE_DATA_REQUIRED: 웹에서 완전 저장본을 내보내 주세요.");
     if(f=="pandoeditor-project") {
-        double v=number(at(p,"version"));require(std::isfinite(v)&&std::floor(v)==v&&v>=1&&v<=3,"UNSUPPORTED_VERSION: Qt version");return FileKind::QtProject;
+        double v=number(at(p,"version"));require(std::isfinite(v)&&std::floor(v)==v&&v>=1&&v<=4,"UNSUPPORTED_VERSION: Qt version");return FileKind::QtProject;
     }
     require(f=="pandolab-project-state"||f=="pandolab-autosave-full","UNSUPPORTED_FORMAT: not a web full project");
     double v=number(at(p,"schemaVersion"));require(std::isfinite(v)&&std::floor(v)==v&&v>=3&&v<=5,"UNSUPPORTED_VERSION: web schema 3..5 required");

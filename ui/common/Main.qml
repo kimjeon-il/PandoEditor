@@ -75,6 +75,7 @@ ApplicationWindow {
     Component.onCompleted: {
         if (editor.mobileMode)
             Qt.callLater(function() { editor.restorePrivateProject() })
+        Qt.callLater(function() { if(editor.presentationRecoveryAvailable) presentationRecoveryDialog.open() })
     }
     function finishAction() {
         let action=pendingAction
@@ -83,13 +84,13 @@ ApplicationWindow {
         if (action === "close") { allowClose=true; window.close() }
     }
     function requestAction(action) {
-        if (action !== "open" && action !== "import" && !editor.commitPendingEdits()) return
+        if (action !== "open" && action !== "import" && !editor.contentEditState.active && !editor.geometryEditState.active && !editor.commitPendingEdits()) return
         pendingAction=action
         if (editor.dirty) unsaved.open()
         else finishAction()
     }
     function requestSave(asNew) {
-        if (!editor.commitPendingEdits()) return
+        if (!editor.contentEditState.active && !editor.geometryEditState.active && !editor.commitPendingEdits()) return
         if (editor.mobileMode) {
             if (editor.savePrivate()) finishAction()
             else {
@@ -117,10 +118,10 @@ ApplicationWindow {
     function handleBack() {
         if (Qt.inputMethod.visible) { Qt.inputMethod.hide(); return }
         if (webReport.visible) { cancelWebImportFlow(); return }
-        if (workspace.dismissPopup()) return
         if (errorDialog.visible) { errorDialog.close(); return }
         if (recoveryDialog.visible) { recoveryDialog.close(); return }
         if (unsaved.visible) { unsaved.close(); pendingAction=""; return }
+        if (workspace.dismissPopup()) return
         requestAction("close")
     }
     onClosing: function(close) {
@@ -197,10 +198,10 @@ ApplicationWindow {
         onSaveRequested: window.requestSave(false)
         onSaveAsRequested: editor.mobileMode ? window.requestExport() : window.requestSave(true)
     }
-    Shortcut { sequences: [StandardKey.Undo]; enabled: editor.canUndo && !window.webImportFlowActive; onActivated: editor.undo() }
-    Shortcut { sequences: [StandardKey.Redo]; enabled: editor.canRedo && !window.webImportFlowActive; onActivated: editor.redo() }
-    Shortcut { sequence: StandardKey.Save; enabled: !window.webImportFlowActive; onActivated: window.requestSave(false) }
-    Shortcut { sequence: StandardKey.Open; enabled: !window.webImportFlowActive; onActivated: window.requestAction(editor.mobileMode ? "import" : "open") }
+    Shortcut { sequences: [StandardKey.Undo]; enabled: editor.canUndo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.undo() }
+    Shortcut { sequences: [StandardKey.Redo]; enabled: editor.canRedo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.redo() }
+    Shortcut { sequence: StandardKey.Save; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestSave(false) }
+    Shortcut { sequence: StandardKey.Open; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestAction(editor.mobileMode ? "import" : "open") }
     Native.FileDialog {
         id: webOpenDialog
         objectName: "webOpenDialog"
@@ -267,19 +268,32 @@ ApplicationWindow {
         contentItem: Label { text: "저장하지 않은 편집 내용이 있습니다."; wrapMode: Text.WordWrap }
         footer: DialogButtonBox {
             Button { objectName: "saveUnsaved"; text: "저장"; DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole; onClicked: { unsaved.close(); window.requestSave(false) } }
-            Button { objectName: "discardUnsaved"; text: "버리기"; DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole; onClicked: { unsaved.close(); window.finishAction() } }
+            Button { objectName: "discardUnsaved"; text: "버리기"; DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole; onClicked: { if(editor.discardPresentationRecovery()){unsaved.close(); window.finishAction()} } }
             Button { objectName: "cancelUnsaved"; text: "취소"; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: { unsaved.close(); window.pendingAction="" } }
         }
     }
     Dialog {
         id: errorDialog
+        objectName: "errorDialog"
         anchors.centerIn: parent
         width: Math.min(460,window.width-24)
         title: "작업을 완료하지 못했습니다"
         modal: true
         standardButtons: Dialog.Ok
         property string message: ""
-        contentItem: Label { text: errorDialog.message; wrapMode: Text.WrapAnywhere }
+        contentItem: Label { textFormat:Text.PlainText; text: errorDialog.message; wrapMode: Text.WrapAnywhere }
+    }
+    Dialog {
+        id: presentationRecoveryDialog
+        objectName: "presentationRecoveryDialog"
+        anchors.centerIn: parent; width: Math.min(360,window.width-24)
+        modal: true; title: "자동저장 복구본"
+        contentItem: Label { text: "이전 작업의 복구본을 열까요?"; wrapMode: Text.Wrap }
+        footer: DialogButtonBox {
+            Button { text:"복구"; onClicked:if(editor.restorePresentationRecovery())presentationRecoveryDialog.close() }
+            Button { text:"복구본 버리기"; onClicked:if(editor.discardPresentationRecovery())presentationRecoveryDialog.close() }
+            Button { text:"나중에"; onClicked:presentationRecoveryDialog.close() }
+        }
     }
     Dialog {
         id: recoveryDialog

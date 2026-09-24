@@ -1,6 +1,8 @@
 #include "webimport.h"
 #include "webjson.h"
+#include "webpropertypreservation.h"
 #include "projectcodec.h"
+#include "presentationmigration.h"
 #include <pandoeditor/project.h>
 #include <QCryptographicHash>
 #include <algorithm>
@@ -107,8 +109,7 @@ struct Builder {
         const auto& overrides=at(at(root,"countryOverrides"),u.id);
         if(country) {
             require(!text(at(props,"name")).empty(),"INVALID_UNIT: "+path+"/properties/name is empty");
-            u.kind=UnitKind::Country;u.name=text(at(overrides,"name"));if(u.name.empty())u.name=text(at(props,"name"));
-            if(u.name.empty())u.name=u.id;
+            u.kind=UnitKind::Country;u.baseName=text(at(props,"name"));u.name=text(at(overrides,"name"));u.nameExplicit=has(overrides,"name");
             u.notes=text(at(overrides,"notes"));u.locked=isTrue(at(overrides,"locked"));++output.countries;
         } else {
             require(number(at(props,"schemaVersion"))==2,"UNSUPPORTED_VERSION: "+path+"/properties/schemaVersion");
@@ -129,12 +130,15 @@ struct Builder {
         catch(const std::exception& e){throw std::invalid_argument(std::string(e.what())+" at "+path);}
         output.document.units.push_back(u);
         const std::string group=country?"countries":u.kind==UnitKind::Subunit?"subunits":"regions";
-        output.document.presentation.membership[ref]=group;
         const auto& style=at(props,"style");
         // Source preference theme is not serialized. Qt's initial light map uses
         // the source light-theme #cccccc, while explicit colors remain explicit.
         output.document.presentation.objectStyles[ref]={color(country?at(overrides,"color"):at(style,"color"),country?"/countryOverrides/"+u.id+"/color":path+"/properties/style/color",country?0xcccccc:0x8c68d8),1};
-        report(path,country?"mapped":"retained",country?QStringLiteral("국가 도형·ID·이름·메모·명시 색상 매핑; 웹 표시 설정은 별도 보존"):QStringLiteral("영토 도형·관계·기간 매핑 · 현재 국가 외 객체는 화면 미표시"));
+        const auto rawColor=QString::fromStdString(text(country?at(overrides,"color"):at(style,"color")));
+        auto& mappedStyle=output.document.presentation.objectStyles.at(ref);
+        mappedStyle.explicitColor=QRegularExpression("^#[0-9a-fA-F]{6}$").match(rawColor).hasMatch();
+        if(!mappedStyle.explicitColor)mappedStyle.color=0;
+        report(path,country?"mapped":"retained",country?QStringLiteral("국가 도형·ID·이름·메모·명시 색상 매핑; 웹 표시 설정은 별도 보존"):QStringLiteral("영토 도형·관계·기간·속성 매핑 · 생성/소속 변경은 후속 단계"));
         extras(feature,path,{"type","id","properties","geometry"},{ref});
         extras(at(feature,"geometry"),path+"/geometry",{"type","coordinates"},{ref});
         if(country) {
@@ -142,8 +146,9 @@ struct Builder {
             extras(overrides,"/countryOverrides/"+u.id,{"name","notes","color","locked","capital","flagDataUrl"},{ref});
             symbol(overrides,"/countryOverrides/"+u.id,ref,true);
         } else {
-            extras(props,path+"/properties",{"schemaVersion","unitType","name","notes","locked","coverageMode","validFrom","validTo","parentId","sovereignId","style","metadata"},{ref});
-            if(has(props,"style"))preserve(path+"/properties/style",style,false,{ref});
+            extras(props,path+"/properties",{"schemaVersion","unitType","name","notes","locked","coverageMode","validFrom","validTo","parentId","sovereignId","style","metadata","sourceFolderId","sourceLibraryId","sourceGeometryVersion"},{ref});
+            for(auto key:{"sourceFolderId","sourceLibraryId","sourceGeometryVersion"})if(has(props,key))preserve(pointer(path+"/properties",key),at(props,key),at(props,key).kind==V::String||at(props,key).kind==V::Null,{ref});
+            if(has(props,"style"))extras(style,path+"/properties/style",{"color"},{ref});
             const auto& meta=at(props,"metadata");symbol(meta,path+"/properties/metadata",ref,false);
             extras(meta,path+"/properties/metadata",{"flagDataUrl"},{ref});
         }
@@ -222,13 +227,17 @@ struct Builder {
             if(mapped.count(k))report(p,"mapped",QStringLiteral("대응 필드 매핑 · 미지원 하위 필드는 별도 보존"));
             else if(provenance.count(k)) {preserve(p,v,true,{},true);report(p,"archived",QStringLiteral("원본 형식·버전·모델 계약 보존"));}
             else if(external.count(k)) {
-                preserve(p,v,false);report(p,"unavailable-reference",QStringLiteral("출처/외부 자료 참조 보존 · 자료 자체를 포함/다운로드/대체한 것이 아님"));
+                preserve(p,v,propertypreservation::sourceInfo(k,v));report(p,"unavailable-reference",QStringLiteral("출처/외부 자료 참조 보존 · 자료 자체를 포함/다운로드/대체한 것이 아님"));
             } else {
                 std::vector<ObjectRef> deps;
                 if(k=="distributionEntries")for(const auto& row:optionalArray(v,p)) {auto id=text(at(row,"territorialUnitId"));if(ids.count(id))deps.push_back(territorialRef(id));}
-                // Unknown substructure may contain additional dependencies, so
-                // conservatively retain the global barrier in addition to refs.
-                preserve(p,v,false,std::move(deps));
+                const bool recognized=propertypreservation::recognized(k,v);
+                if(recognized)for(const auto& id:ids)deps.push_back(territorialRef(id));
+                std::sort(deps.begin(),deps.end());deps.erase(std::unique(deps.begin(),deps.end()),deps.end());
+                // Recognized presentation can coexist with metadata edits. Its
+                // structural dependencies remain protected; unknown substructure
+                // still blocks non-text edits across the document.
+                preserve(p,v,recognized,std::move(deps));
                 report(p,"retained",QStringLiteral("원본 값·타입·순서 보존 · 웹의 해당 표시/편집 기능은 아직 미지원"),v.kind==V::Array?static_cast<int>(v.array.size()):0);
             }
         }
@@ -236,7 +245,7 @@ struct Builder {
         extras(at(root,"landObjectModel"),"/landObjectModel",{"schemaVersion","coastlineAuthority","purpose","directCreation","sourceProvenanceSchemaVersion","canonicalProperties"});
         extras(at(root,"territorialModel"),"/territorialModel",{"schemaVersion","coastlineAuthority","countryStorage","types","coverageModes"});
         extras(at(root,"distributionModel"),"/distributionModel",{"schemaVersion","types","sourceModes","shareRange","sharesAreIndependent"});
-        report("","notice",QStringLiteral("국가 중심의 부분 표시입니다. 하위단위·지방·지명·수계·분포·국기·혼합/객체별 가시성은 보존되지만 완전 표시/편집 이식은 아닙니다. 안전한 이름·메모 외 변경은 보존 장벽으로 제한될 수 있습니다."));
+        report("","notice",QStringLiteral("검증된 영토·지명·수계·분포·기타 객체는 앱 모델로 변환합니다. 해석할 수 없는 데이터와 외부 자료는 원본을 보존하며 관련 변경이 제한될 수 있습니다."));
     }
 };
 }
@@ -265,7 +274,6 @@ Candidate prepare(const QByteArray& bytes,const std::function<bool()>& cancelled
     // Semantic base groups are not fabricated user layer memberships from web
     // folders. They are isolated adapters; original presentation stays retained.
     const auto& visibility=at(root,"layerVisibility");const auto& styles=at(at(root,"layerPresentation"),"styles");
-    for(auto group:{"countries","subunits","regions"})b.output.document.presentation.userLayers.push_back({group,group==std::string("countries")?"국가":group==std::string("subunits")?"하위단위":"지방",!isFalse(at(visibility,group)),false,b.opacity(at(styles,group))});
     std::size_t i=0;for(const auto& f:array(at(collection,"features"),"/countriesData/features"))b.unit(f,"/countriesData/features/"+std::to_string(i++),true);
     for(const auto& [id,override]:at(root,"countryOverrides").object) {
         require(b.ids.count(id),"DANGLING_REF: /countryOverrides/"+id);
@@ -280,6 +288,16 @@ Candidate prepare(const QByteArray& bytes,const std::function<bool()>& cancelled
     }
     i=0;for(const auto& f:optionalArray(at(root,"territorialUnits"),"/territorialUnits"))b.unit(f,"/territorialUnits/"+std::to_string(i++),false);
     b.relations();b.retainedValidation();b.roots();
+    for(const auto& reason:projectcodec::promoteContent(b.output.document))
+        b.report("/content","retained",QString::fromStdString(reason));
+    presentationmigration::promote(b.output.document);
+    for(auto& value:b.output.report) {
+        auto row=value.toMap();
+        if(row["status"]!="retained")continue;
+        const auto path=row["path"].toString().toStdString();
+        const bool promoted=std::any_of(b.output.document.extensions.begin(),b.output.document.extensions.end(),[&](const auto& e){return e.jsonPointer==path&&e.status=="migrationArchive";});
+        if(promoted){row["status"]="mapped";row["message"]=QStringLiteral("검증 후 앱 모델로 승격 · 원본은 이관 기록에 보존");value=row;}
+    }
     b.preserve("",original,true,{},true);
     if(migration.sourceSchema<5)b.report("/schemaVersion","migrated",QStringLiteral("웹 schema %1 → 5 변환. 변환 전 원본은 migrationArchive로 보존.").arg(migration.sourceSchema));
     b.check();

@@ -1,3 +1,4 @@
+#include "ui_navigation.h"
 #include "editorcontroller.h"
 #include "windowsframe.h"
 #include <QGuiApplication>
@@ -53,8 +54,9 @@ static QByteArray readFile(const QString& path)
 }
 static bool clickControl(QQuickWindow* window,const QString& name)
 {
+    enterExistingControlRoute(window,name);
     auto item=visualItem(window->contentItem(),name);
-    if(!item) return false;
+    if(!item||!item->isVisible()||!item->isEnabled()) return false;
     for(auto parent=item->parentItem();parent;parent=parent->parentItem()) {
         if(parent->property("contentY").isValid()) {
             auto content=qvariant_cast<QQuickItem*>(parent->property("contentItem"));
@@ -135,7 +137,7 @@ private slots:
         QCOMPARE(editor.nameDraft(),QString("uncommitted")); QVERIFY(!editor.canUndo());
         QVERIFY(clickControl(window,"cancelUnsaved"));
         auto notice=visualItem(window->contentItem(),"documentFormatNotice"); QVERIFY(notice);
-        QVERIFY(notice->property("text").toString().contains("v3"));
+        QVERIFY(notice->property("text").toString().contains("v5"));
         QVERIFY(clickControl(window,"documentFormatNotice"));
         QVERIFY(notice->property("expanded").toBool());
         window->setProperty("allowClose",true); window->close();
@@ -389,8 +391,8 @@ private slots:
         window->resize(390,760); QTest::qWait(200);
         QCOMPARE(editor.nameDraft(),QString("Draft name"));
         QTest::keyClick(window,Qt::Key_Return);
-        QVERIFY(clickControl(window,"applyEdits"));
         QCOMPARE(editor.selectedName(),QString("Draft name"));
+        QVERIFY(!editor.hasPendingEdits()); // web name change commits independently, no whole-form Apply.
         QVERIFY(clickControl(window,"countryColor"));
         QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"#123456");
         QTest::keyClick(window,Qt::Key_Return);
@@ -424,11 +426,13 @@ private slots:
         editor.moveCountry(id); QCOMPARE(editor.countryLayerId(),id);
         QVERIFY(!editor.canDeleteLayer());
         QVERIFY(clickControl(window,"layerLocked"));
-        QVERIFY(editor.selectedId().isEmpty());
+        QCOMPARE(editor.selectedId(),QString("DEU"));
+        QVERIFY(!editor.selectedEditable());
         editor.selectCountry("DEU"); QVERIFY(!editor.selectedEditable());
         QVERIFY(clickControl(window,"layerLocked"));
         editor.selectCountry("DEU"); QVERIFY(editor.selectedEditable());
-        QVERIFY(clickControl(window,"layerVisible")); QVERIFY(editor.selectedId().isEmpty());
+        QVERIFY(clickControl(window,"layerVisible")); QCOMPARE(editor.selectedId(),QString("DEU"));
+        QVERIFY(!editor.countryVisuals()["DEU"].toMap()["visible"].toBool());
         QVERIFY(clickControl(window,"layerVisible"));
         editor.selectCountry("DEU");
         editor.previewCountryOpacity(0); QVERIFY(editor.commitPendingEdits());
@@ -490,6 +494,43 @@ private slots:
             QVERIFY(capture(window).save(mobile?"jobs-mobile-360.png":"jobs-desktop.png"));
             QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
             window->setProperty("allowClose",true); window->close();
+        }
+    }
+    void territorialStructureDeleteDialogAcrossPcAnd360px() {
+        for(bool mobile:{false,true}) {
+            EditorController editor(EditorControllerConfig{mobile,{}}); QQmlApplicationEngine engine; QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& e:errors) warnings<<e.toString();});
+            engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+            auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);window->resize(mobile?360:1100,mobile?640:760);exposeForTest(window);QVERIFY(clickControl(window,"countryTab"));editor.selectCountry("DEU");
+            auto panel=visualItem(window->contentItem(),"territorialStructurePanel");QVERIFY(panel&&panel->isVisible());
+            auto deleteButton=visualItem(window->contentItem(),"deleteTerritorial");QVERIFY(deleteButton&&deleteButton->isVisible()&&deleteButton->isEnabled());
+            QVERIFY(QMetaObject::invokeMethod(deleteButton,"clicked"));QTRY_VERIFY(editor.structureDialogOpen());
+            auto dialog=window->findChild<QObject*>("territorialStructureDialog");QVERIFY(dialog&&dialog->property("visible").toBool());
+            QVERIFY(capture(window).save(mobile?"structure-mobile-360.png":"structure-desktop-1100.png"));
+            QVERIFY(clickControl(window,"confirmTerritorialStructure"));QTRY_VERIFY(!editor.structureDialogOpen());editor.undo();editor.selectCountry("DEU");QCOMPARE(editor.selectedId(),QString("DEU"));
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));window->setProperty("allowClose",true);window->close();
+        }
+    }
+    void territorialConversionSetupDoesNotMutateDocumentAcrossPcAnd360px() {
+        for(bool mobile:{false,true}) {
+            EditorController editor(EditorControllerConfig{mobile,{}}); QQmlApplicationEngine engine; QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& e:errors) warnings<<e.toString();});
+            engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+            auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);window->resize(mobile?360:1100,mobile?640:760);exposeForTest(window);QVERIFY(clickControl(window,"countryTab"));editor.selectCountry("DEU");
+            const auto revision=editor.revision();auto button=visualItem(window->contentItem(),"convertTerritorial");QVERIFY(button&&button->isVisible());QVERIFY(QMetaObject::invokeMethod(button,"clicked"));QTRY_VERIFY(editor.structureDialogOpen());
+            QCOMPARE(editor.revision(),revision);QVERIFY(editor.structureState().value("conversionSetup").toBool());QVERIFY(!editor.structureState().value("generatedId").toString().isEmpty());
+            auto dialog=window->findChild<QObject*>("territorialStructureDialog");QVERIFY(dialog&&dialog->property("visible").toBool());auto confirm=visualItem(window->contentItem(),"confirmTerritorialStructure");QVERIFY(confirm&&!confirm->isEnabled());
+            editor.cancelStructureMutation();QTRY_VERIFY(!editor.structureDialogOpen());QCOMPARE(editor.revision(),revision);
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));window->setProperty("allowClose",true);window->close();
+        }
+    }
+    void territorialCreateSetupWaitsForPreparedGeometryAcrossPcAnd360px() {
+        using namespace pandoeditor;
+        for(bool mobile:{false,true}) {
+            EditorController editor(EditorControllerConfig{mobile,{}});QQmlApplicationEngine engine;QStringList warnings;connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& e:errors)warnings<<e.toString();});engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);window->resize(mobile?360:1100,mobile?640:760);exposeForTest(window);QVERIFY(clickControl(window,"countryTab"));editor.selectCountry("DEU");
+            const auto revision=editor.revision();auto add=visualItem(window->contentItem(),"createRegion");QVERIFY(add&&add->isVisible());QVERIFY(QMetaObject::invokeMethod(add,"clicked"));QTRY_VERIFY(editor.structureDialogOpen());QVERIFY(editor.structureState().value("createSetup").toBool());QVERIFY(editor.structureState().value("geometryRequired").toBool());QCOMPARE(editor.revision(),revision);auto confirm=visualItem(window->contentItem(),"confirmTerritorialStructure");QVERIFY(confirm&&!confirm->isEnabled());editor.cancelStructureMutation();
+            Geometry geometry;geometry.type="Polygon";geometry.polygons.push_back(pandoeditor::Polygon{Ring{{30,30},{31,30},{31,31},{30,31},{30,30}}});CreateTerritorialIntent intent;intent.kind=UnitKind::Region;intent.id=mobile?"prepared-mobile":"prepared-desktop";intent.name="Prepared";intent.geometry=geometry;QVERIFY(editor.beginTerritorialCreatePrepared(intent));QVERIFY(!editor.structureState().value("geometryRequired").toBool());QVERIFY(editor.confirmStructureMutation());QCOMPARE(editor.revision(),revision+1);editor.undo();QCOMPARE(editor.revision(),revision+2);
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));window->setProperty("allowClose",true);window->close();
         }
     }
     void compositing() {
@@ -558,6 +599,7 @@ private slots:
         auto panel=window->findChild<QQuickItem*>("editorPanel"); QVERIFY(panel);
         QVERIFY(!panel->property("compact").toBool());
         auto clickItem=[&](const char* name) {
+            enterExistingControlRoute(window,QString::fromLatin1(name));
             QTest::qWait(80); // settle layout before reading delegate coordinates
             window->grabWindow();
             std::function<QQuickItem*(QQuickItem*)> find=[&](QQuickItem* node)->QQuickItem* {

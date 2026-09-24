@@ -1,0 +1,8 @@
+Native flag SVG assets in this directory are vendored from:
+https://github.com/hampusborgos/country-flags/tree/c09927e63705529bbf59ca6684cd9b23225dddad/svg
+
+The upstream project states that its flag renders are sourced from Wikimedia
+Commons and are generally in the public domain, while noting that individual
+national flags may have restrictions on use. See the upstream README and the
+applicable Wikimedia Commons source pages before redistributing or repurposing
+these assets.

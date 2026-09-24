@@ -12,7 +12,29 @@ Item {
     signal openRequested()
     signal saveRequested()
     signal saveAsRequested()
-    function dismissPopup() { return panel.dismissPopup() }
+    property bool editorOpen:false
+    property bool searchOpen:false
+    property bool legacyOpen:false
+    Common.MapDisplayControls { id: displayControls; parent: workspace }
+    readonly property bool sideOpen:editorOpen||searchOpen||legacyOpen
+    property bool pointerNavigation:false
+    function navigationStarted(){
+        if(pointerNavigation)return
+        toolbar.navigationStarted();properties.navigationStarted();panel.beginSelectionNavigation()
+    }
+    function navigationPointer(down){
+        if(down){pointerNavigation=true;toolbar.navigating=true;properties.navigating=true;panel.selectionNavigation=true}
+        else Qt.callLater(function(){workspace.pointerNavigation=false;toolbar.navigating=false;properties.navigating=false;panel.selectionNavigation=false})
+    }
+    function dismissPopup() {
+        if(displayControls.visible){displayControls.close();return true}
+        if(toolbar.dismissPopup()||mapView.dismissPopup()||properties.dismissPopup()||panel.dismissPopup())return true
+        if(editorOpen||searchOpen){navigationStarted();editorOpen=false;searchOpen=false;return true}
+        return false
+    }
+    function toggleEditor(){navigationStarted();searchOpen=false;legacyOpen=false;editorOpen=!editorOpen}
+    Connections {target:editor;function onGeometryChanged(){workspace.editorOpen=false;workspace.searchOpen=false;workspace.legacyOpen=false}}
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
@@ -84,25 +106,60 @@ Item {
                 onClicked: workspace.webImportRequested()
             }
         }
+        RowLayout {
+            Layout.fillWidth:true;spacing:4
+            ToolButton { objectName:"searchTab";text:"검색";focusPolicy:Qt.NoFocus;onPressed:workspace.navigationPointer(true);onReleased:workspace.navigationPointer(false);onCanceled:workspace.navigationPointer(false);onClicked:{workspace.navigationStarted();workspace.searchOpen=true;workspace.editorOpen=false;workspace.legacyOpen=false} }
+            ToolButton { objectName:"mapDisplayButton";text:"지도 표시";focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();displayControls.open()} }
+            ToolButton { objectName:"openObjectEditor";text:"편집";enabled:editor.selectionItems.length>0;focusPolicy:Qt.NoFocus;onClicked:workspace.toggleEditor() }
+            ToolButton { objectName:"legacyPanelButton";text:workspace.compact?"레이어":"Qt 레이어·기존 속성";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.legacyOpen=!workspace.legacyOpen;workspace.editorOpen=false;workspace.searchOpen=false;panel.showCountryControls()} }
+            ToolButton { objectName:"contentPanelButton";text:"지명·수계";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.legacyOpen=true;workspace.editorOpen=false;workspace.searchOpen=false;panel.showContent()} }
+            Item { Layout.fillWidth:true }
+            ToolButton { objectName:"closeSidePanel";text:"닫기";visible:workspace.sideOpen;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.searchOpen=false;workspace.editorOpen=false;workspace.legacyOpen=false} }
+        }
         Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            id:body
+            Layout.fillWidth:true;Layout.fillHeight:true
             Common.MapView {
-                objectName: "mapView"
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.right: workspace.compact ? parent.right : panel.left
-                anchors.bottom: workspace.compact ? panel.top : parent.bottom
+                id:mapView
+                objectName:"mapView"
+                anchors.left:parent.left;anchors.top:parent.top
+                anchors.right:workspace.sideOpen&&!workspace.compact?side.left:parent.right
+                anchors.bottom:workspace.sideOpen&&workspace.compact?side.top:parent.bottom
+                onSelectionNavigationStarted:workspace.navigationStarted()
+                onSelectionPointerChanged:function(down){workspace.navigationPointer(down)}
+                controlsTopMargin:toolbar.visible?64:12
             }
-            Common.EditorPanel {
-                id: panel
-                objectName: "editorPanel"
-                compact: workspace.compact
-                holdFieldCommits: workspace.holdFieldCommits
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                width: workspace.compact ? parent.width : 320
-                height: workspace.compact ? Math.min(320,parent.height*0.52) : parent.height
+            Common.TerritorialSelectionToolbar {
+                id:toolbar
+                anchors.horizontalCenter:mapView.horizontalCenter;anchors.top:mapView.top;anchors.topMargin:8
+                width:Math.min(540,Math.max(0,mapView.width-16));height:implicitHeight
+                editorOpen:workspace.editorOpen
+                holdFieldCommits:workspace.holdFieldCommits||workspace.searchOpen||editor.objectChooserOpen
+                onToggleEditor:workspace.toggleEditor()
+                z:20
+            }
+            Item {
+                id:side
+                anchors.right:parent.right;anchors.bottom:parent.bottom
+                width:workspace.compact?parent.width:320
+                height:workspace.compact?Math.min(340,parent.height*.52):parent.height
+                visible:workspace.sideOpen
+                Common.EditorPanel {
+                    id:panel;objectName:"editorPanel";anchors.fill:parent;compact:workspace.compact
+                    visible:workspace.legacyOpen;holdFieldCommits:workspace.holdFieldCommits
+                }
+                Common.ObjectPropertyPanel {
+                    id:properties;anchors.fill:parent;visible:workspace.editorOpen;holdFieldCommits:workspace.holdFieldCommits
+                    onCloseRequested:workspace.editorOpen=false
+                }
+                Rectangle {
+                    anchors.fill:parent;color:"white";visible:workspace.searchOpen
+                    Common.ObjectSearch {
+                        anchors.fill:parent
+                        onNavigationStarted:workspace.navigationStarted()
+                        onSingleSelected:workspace.searchOpen=false
+                    }
+                }
             }
         }
     }
