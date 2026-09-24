@@ -50,7 +50,6 @@ private slots:
     }
     void reviewFlow_data() {QTest::addColumn<bool>("mobile");QTest::newRow("desktop")<<false;QTest::newRow("mobile-360")<<true;}
     void reviewFlow() {
-        qInfo() << "reviewFlow start";
         QFETCH(bool,mobile);QTemporaryDir dir;
         EditorController editor(EditorControllerConfig{mobile,dir.filePath("private.json")});
         QQmlApplicationEngine engine;QStringList warnings;
@@ -65,21 +64,21 @@ private slots:
         // The file dialog callback and tests share the same QML entry. Opening
         // it must not turn a pending field into a committed edit.
         QVERIFY(QMetaObject::invokeMethod(window,"beginWebImport",Q_ARG(QVariant,QUrl::fromLocalFile(QStringLiteral(WEB_IMPORT_FIXTURES)+"/v5.input.json"))));
-        QTRY_VERIFY(editor.hasWebImportPreview());qInfo() << "reviewFlow preview ready";
+        QTRY_VERIFY(editor.hasWebImportPreview());
         auto report=window->findChild<QObject*>("webImportDialog");QVERIFY(report);QTRY_VERIFY(report->property("visible").toBool());
         QCOMPARE(editor.revision(),revision);QCOMPARE(editor.nameDraft(),QString("uncommitted name"));QVERIFY(editor.canRedo());
         auto list=item(window->contentItem(),"webImportReportList");QVERIFY(list);QVERIFY(list->height()>50);
         QTest::qWait(150);auto image=window->grabWindow();QVERIFY(!image.isNull());
         QVERIFY(image.save(mobile?"web-import-mobile-360.png":"web-import-desktop.png"));
-        qInfo() << "reviewFlow cancelling";click(window,item(window->contentItem(),"cancelWebImport"));
+        click(window,item(window->contentItem(),"cancelWebImport"));
         QVERIFY(!editor.hasWebImportPreview());QCOMPARE(editor.revision(),revision);QCOMPARE(editor.selectedName(),name);
         QCOMPARE(editor.nameDraft(),QString("uncommitted name"));QVERIFY(editor.canRedo());
         QVERIFY(QMetaObject::invokeMethod(window,"beginWebImport",Q_ARG(QVariant,QUrl::fromLocalFile(QStringLiteral(WEB_IMPORT_FIXTURES)+"/v5.input.json"))));
         QTRY_VERIFY(editor.hasWebImportPreview());QTest::qWait(150);
-        qInfo() << "reviewFlow confirming";click(window,item(window->contentItem(),"discardAndWebImport"));qInfo() << "reviewFlow confirmed";
-        QTRY_COMPARE(editor.countryRows().size(),qsizetype(2));QCOMPARE(editor.revision(),qulonglong(0));QVERIFY(editor.dirty());
+        click(window,item(window->contentItem(),"discardAndWebImport"));
+        QTRY_COMPARE(editor.countryRows().size(),qsizetype(2));QVERIFY(editor.selectionItems().isEmpty());QCOMPARE(editor.objectProperties().value("count").toInt(),0);QCOMPARE(editor.revision(),qulonglong(0));QVERIFY(editor.dirty());
         QVERIFY(!editor.canUndo()&&!editor.canRedo());QVERIFY(!editor.hasWebImportPreview());
-        qInfo() << "reviewFlow selecting A";editor.selectCountry("A");click(window,item(window->contentItem(),"openObjectEditor"));auto limited=item(window->contentItem(),"preservedDataNotice");QVERIFY(limited);QVERIFY(limited->isVisible());
+        editor.selectCountry("A");click(window,item(window->contentItem(),"openObjectEditor"));auto limited=item(window->contentItem(),"preservedDataNotice");QVERIFY(limited);QVERIFY(limited->isVisible());
         QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
         window->setProperty("allowClose",true);window->close();
     }

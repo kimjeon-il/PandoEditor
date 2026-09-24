@@ -141,11 +141,14 @@ bool EditorController::confirmWebImport(const QString& hash,const QString& dispo
         webImportFailure(message);return false;
     }
     auto ready=session->ready;
+    // Finish old-session work before replacing the document. QML can read
+    // properties synchronously whenever these cancellation signals fire.
+    cancelPreview();
     // All data/indices/views/projection are already validated and allocated.
     project_=std::move(ready->project);projection_=std::move(ready->projection);
     protectedWebSource_.swap(nextProtection);filePath_.clear();selected_.clear();selectedLayer_.swap(nextLayer);
     importedDirty_=true;webImport_.reset();webImportError_.clear();
-    cancelPreview();
-    emit geometryChanged();publish(false);emit webImportChanged();return true;
+    // Reconcile selection before notifying the view of new geometry.
+    publish(false);emit geometryChanged();emit webImportChanged();return true;
 
 }
