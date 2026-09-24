@@ -158,8 +158,10 @@ void MapRenderItem::paint(QPainter* painter) {
                 const QPointF normal(-dy/length,dx/length);
                 const double wa=std::clamp(river.startWidth,0.,100.)/2;
                 const double wb=std::clamp(river.endWidth,0.,100.)/2;
-                painter->drawPolygon(QPolygonF{a+normal*wa,b+normal*wb,b-normal*wb,a-normal*wa});
-                painter->drawEllipse(a,wa,wa);painter->drawEllipse(b,wb,wb);
+                QPainterPath stroke;stroke.setFillRule(Qt::WindingFill);
+                stroke.addPolygon(QPolygonF{a+normal*wa,b+normal*wb,b-normal*wb,a-normal*wa});
+                stroke.addEllipse(a,wa,wa);stroke.addEllipse(b,wb,wb);
+                painter->drawPath(stroke);
                 if(selected(river.fid)){painter->save();painter->setOpacity(1);
                     painter->setPen(QPen(QColor("#163e64"),std::max(2.,std::max(wa,wb)*2+2)));
                     painter->setBrush(Qt::NoBrush);painter->drawLine(a,b);painter->restore();}

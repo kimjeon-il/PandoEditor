@@ -3,10 +3,50 @@
 #include <QImage>
 #include <QPainter>
 #include <hydroloadscheduler.h>
+#include <pandoeditor/maprenderorder.h>
 
 class MapRenderTests:public QObject {
     Q_OBJECT
 private slots:
+    void overlayPairsFollowWebDrawGroups_data(){
+        QTest::addColumn<QString>("left");QTest::addColumn<QString>("right");
+        QTest::newRow("religion-ethnicity")<<"religion"<<"ethnicity";
+        QTest::newRow("ethnicity-language")<<"ethnicity"<<"language";
+        QTest::newRow("language-subunit")<<"language"<<"subunit";
+        QTest::newRow("subunit-region")<<"subunit"<<"region";
+        QTest::newRow("region-generic")<<"region"<<"generic";
+    }
+    void overlayPairsFollowWebDrawGroups(){
+        QFETCH(QString,left);QFETCH(QString,right);
+        using namespace pandoeditor;
+        ProjectDocument document;
+        for(const auto& [id,kind]:std::vector<std::pair<std::string,UnitKind>>{
+            {"subunit",UnitKind::Subunit},{"region",UnitKind::Region}}){
+            TerritorialUnit unit;unit.id=id;unit.kind=kind;document.units.push_back(unit);
+        }
+        for(const auto& type:{"religion","ethnicity","language"}){
+            DistributionLayer layer;layer.id=type;layer.type=type;document.distributionLayers.push_back(layer);
+            DistributionEntry entry;entry.id=type;entry.layerId=type;document.distributionEntries.push_back(entry);
+        }
+        auto ref=[](const QString& name)->ObjectRef{
+            const auto id=name.toStdString();
+            return {name=="subunit"||name=="region"?"territorial":
+                name=="generic"?"generic":"distributionEntry",id};
+        };
+        auto visual=[&](const QString& name,const QString& color){
+            const auto order=mapRenderOrder(document,ref(name),RenderPrimitiveRole::Fill);
+            return QVariantMap{{"visible",true},{"color",color},{"boundary",false},
+                {"drawFillPass",order.pass},{"drawGroup",order.group},{"drawObject",order.object}};
+        };
+        MapRenderItem item;item.setWidth(40);item.setHeight(40);
+        const auto shape=QStringLiteral("M5 5 L35 5 L35 35 L5 35 Z");
+        item.setPaths({QVariantMap{{"countryId",left},{"path",shape}},
+            QVariantMap{{"countryId",right},{"path",shape}}});
+        item.setVisuals({{left,visual(left,"#ff0000")},{right,visual(right,"#0000ff")}});
+        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
+        QPainter painter(&image);item.paint(&painter);painter.end();
+        QCOMPARE(image.pixelColor(20,20),QColor("#0000ff"));
+    }
     void webPassesPlaceLakeAboveCountryAndStrokeAboveLake(){
         MapRenderItem item;item.setWidth(40);item.setHeight(40);item.setMapScale(1);
         item.setHydroProjection({{"cosLatitude",1.},{"minX",0.},{"maxLatitude",40.}});
