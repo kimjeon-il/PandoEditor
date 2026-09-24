@@ -119,17 +119,19 @@ void MapRenderItem::paint(QPainter* painter) {
             painter->save();painter->setOpacity(std::clamp(hydroStyle_.value("lakeOpacity",1.).toDouble(),0.,1.));
             painter->setPen(Qt::NoPen);painter->setBrush(color(hydroStyle_.value("lakeColor"),QColor("#82bfd7")));
             for(const auto& lake:hydroFrame_->packet.lakes)if(visible(lake.fid,lake.logicalFid)){
-                QPainterPath path;path.setFillRule(Qt::OddEvenFill);
-                for(const auto& polygon:lake.polygons)for(const auto& ring:polygon){
-                    if(ring.empty())continue;
-                    path.moveTo(screen(ring.front()));
-                    for(std::size_t i=1;i<ring.size();i++)path.lineTo(screen(ring[i]));
-                    path.closeSubpath();
+                for(const auto& polygon:lake.polygons){
+                    QPainterPath path;path.setFillRule(Qt::OddEvenFill);
+                    for(const auto& ring:polygon){
+                        if(ring.empty())continue;
+                        path.moveTo(screen(ring.front()));
+                        for(std::size_t i=1;i<ring.size();i++)path.lineTo(screen(ring[i]));
+                        path.closeSubpath();
+                    }
+                    painter->drawPath(path);
+                    if(selected(lake.fid)){painter->save();painter->setOpacity(1);
+                        painter->setPen(QPen(QColor("#163e64"),2));painter->setBrush(Qt::NoBrush);
+                        painter->drawPath(path);painter->restore();}
                 }
-                painter->drawPath(path);
-                if(selected(lake.fid)){painter->save();painter->setOpacity(1);
-                    painter->setPen(QPen(QColor("#163e64"),2));painter->setBrush(Qt::NoBrush);
-                    painter->drawPath(path);painter->restore();}
             }
             painter->restore();
             if(hydroStyle_.value("lakeBoundaryVisible",true).toBool()){

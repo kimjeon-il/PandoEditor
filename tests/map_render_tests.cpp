@@ -100,6 +100,21 @@ private slots:
         QCOMPARE(image.pixelColor(15,15),QColor(Qt::white));
         QCOMPARE(image.pixelColor(25,50),QColor(Qt::white));
     }
+    void overlappingMultiPolygonPartsRemainFilled(){
+        MapRenderItem item;item.setWidth(40);item.setHeight(40);item.setMapScale(10);
+        item.setHydroProjection({{"cosLatitude",1.},{"minX",0.},{"maxLatitude",4.}});
+        item.setHydroStyle({{"lakesVisible",true},{"riversVisible",false},
+            {"lakeColor","#0000ff"},{"lakeBoundaryVisible",false}});
+        auto frame=std::make_shared<HydroRuntimeFrame>();
+        pandoeditor::HydroLakeShape lake;lake.fid=9;lake.logicalFid=9;
+        lake.polygons={{{{0,0},{2000000,0},{2000000,2000000},{0,2000000},{0,0}}},
+                       {{{1000000,1000000},{3000000,1000000},{3000000,3000000},
+                         {1000000,3000000},{1000000,1000000}}}};
+        frame->packet.lakes.push_back(lake);item.setHydroFrame(frame);
+        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
+        QPainter painter(&image);item.paint(&painter);painter.end();
+        QCOMPARE(image.pixelColor(15,25),QColor("#0000ff"));
+    }
     void pointAndOpenLineDoNotBecomePolygonFills(){
         MapRenderItem item;item.setWidth(40);item.setHeight(40);item.setMapScale(1);
         item.setPaths({QVariantMap{{"countryId","river"},{"geometryType","LineString"},{"path","M5 5 L30 5 L30 30"}},
