@@ -77,14 +77,15 @@ if (!process.argv.includes('--fixture-only')) {
   // Native JSON comparison is enabled with the parser probe in Tasks 3–5.
   const { execFileSync } = await import('node:child_process');
   const packMode=process.argv.includes('--pack-only');
+  const mergeMode=process.argv.includes('--merge-only');
   const native = JSON.parse(execFileSync(probe, [
-    ...(packMode?['--pack']:[]),resolve(root, 'v0.13.1/manifest.json')], { encoding: 'utf8' }));
+    ...(mergeMode?['--merge']:packMode?['--pack']:[]),resolve(root, 'v0.13.1/manifest.json')], { encoding: 'utf8' }));
   const packExpected=packs.map(({id,value})=>({id,features:value.features.map(feature=>({
     fid:Number(feature.properties.__fid),logicalFid:Number(feature.properties.__logicalFid),
     kind:feature.properties.category,flags:Number(feature.properties.__flags),
     geometry:feature.geometry,widths:feature.properties.stroke_widths,
   }))}));
   assert.deepEqual(native,process.argv.includes('--index-only')
-    ? {index:actual.index,metadata:actual.metadata} : packMode?plain(packExpected):actual);
+    ? {index:actual.index,metadata:actual.metadata} : mergeMode?actual.merged.geometry:packMode?plain(packExpected):actual);
 }
 console.log('web hydro fixture oracle passed');

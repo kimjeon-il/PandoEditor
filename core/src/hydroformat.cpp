@@ -238,10 +238,9 @@ Geometry mergeHydroLogicalFragments(std::vector<HydroPhysicalFeature> fragments)
             throw std::runtime_error("inconsistent hydro logical fragments");
         for(const auto& source:fragment.geometry.lines){
             Ring line;line.reserve(source.size());for(const auto p:source)line.push_back(point(p));
-            if(!merged.lines.empty()&&!merged.lines.back().empty()&&!line.empty()&&
-               merged.lines.back().back().x==line.front().x&&merged.lines.back().back().y==line.front().y)
-                merged.lines.back().insert(merged.lines.back().end(),line.begin()+1,line.end());
-            else merged.lines.push_back(std::move(line));
+            // The web merge keeps each physical fragment as a separate part,
+            // even when adjacent endpoints coincide.
+            merged.lines.push_back(std::move(line));
         }
         for(const auto& source:fragment.geometry.polygons){
             Polygon polygon;for(const auto& sourceRing:source){Ring ring;ring.reserve(sourceRing.size());

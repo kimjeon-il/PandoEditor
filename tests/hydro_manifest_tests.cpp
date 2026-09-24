@@ -3,12 +3,14 @@
 #include "hydromanifest.h"
 #include "hydroassetreader.h"
 #include "hydroshardreader.h"
+#include <pandoeditor/hydroformat.h>
 #include <QtTest>
 #include <QDir>
 #include <QFileInfo>
 #include <QFile>
 #include <QTemporaryDir>
 #include <QCryptographicHash>
+#include <stdexcept>
 
 #ifndef WEB_HYDRO_FIXTURE
 #error WEB_HYDRO_FIXTURE must identify the pinned miniature dataset
@@ -146,6 +148,45 @@ private slots:
         QVERIFY(shard.open(QIODevice::Append));QCOMPARE(shard.write("X"),qint64(1));shard.close();
         QVERIFY(reader.readPack(68,90,error).isEmpty());
         QVERIFY(!error.isEmpty());
+    }
+    void rejectsCorruptIndexPackGeometryAndMetadataWithoutCrash(){
+        const auto manifest=readHydroManifest(QStringLiteral(WEB_HYDRO_FIXTURE)+"/v0.13.1/manifest.json");
+        QString error;
+        const auto originalIndex=readHydroAsset(manifest.index,true,error);
+        QVERIFY2(error.isEmpty(),qPrintable(error));
+        const auto decodeIndex=[&](const QByteArray& bytes){return pandoeditor::decodeHydroIndex(
+            {reinterpret_cast<const std::uint8_t*>(bytes.constData()),static_cast<std::size_t>(bytes.size())},
+            {static_cast<std::uint64_t>(manifest.shards.front().asset.bytes)});};
+        auto changed=originalIndex;changed[0]=char(changed[0]^1);
+        QVERIFY_EXCEPTION_THROWN(decodeIndex(changed),std::runtime_error);
+        changed=originalIndex;changed[4]=char(changed[4]^1);
+        QVERIFY_EXCEPTION_THROWN(decodeIndex(changed),std::runtime_error);
+        changed=originalIndex;changed.append('X');
+        QVERIFY_EXCEPTION_THROWN(decodeIndex(changed),std::runtime_error);
+        const auto index=decodeIndex(originalIndex);
+        HydroShardReader reader(manifest.shards.front().asset);
+        const auto spec=index.packSpecs.at(0);
+        const auto originalPack=reader.readPack(spec.offset,spec.length,error);
+        QVERIFY2(error.isEmpty(),qPrintable(error));
+        const auto coreBytes=readHydroAsset(manifest.metadataCore,true,error);
+        HydroMetadata metadata;QVERIFY(parseHydroCoreMetadata(coreBytes,6,metadata,error));
+        std::map<std::uint32_t,std::uint32_t> logical;
+        for(auto it=metadata.cbegin();it!=metadata.cend();++it)logical.emplace(it.key(),it.value().logicalFid);
+        const auto decodePack=[&](const QByteArray& bytes){return pandoeditor::decodeHydroPack(
+            {reinterpret_cast<const std::uint8_t*>(bytes.constData()),static_cast<std::size_t>(bytes.size())},0,logical);};
+        QVERIFY(!decodePack(originalPack).features.empty());
+        changed=originalPack;changed[0]=char(changed[0]^1);
+        QVERIFY_EXCEPTION_THROWN(decodePack(changed),std::runtime_error);
+        changed=originalPack;changed[4]=char(changed[4]^1);
+        QVERIFY_EXCEPTION_THROWN(decodePack(changed),std::runtime_error);
+        changed=originalPack;for(int i=48;i<52;i++)changed[i]=char(0xff);
+        QVERIFY_EXCEPTION_THROWN(decodePack(changed),std::runtime_error);
+        changed=originalPack;changed.resize(57);changed[48]=1;
+        for(int i=49;i<56;i++)changed[i]=0;
+        changed[56]=char(0x80);
+        QVERIFY_EXCEPTION_THROWN(decodePack(changed),std::runtime_error);
+        logical[1]=99;
+        QVERIFY_EXCEPTION_THROWN(decodePack(originalPack),std::runtime_error);
     }
 };
 

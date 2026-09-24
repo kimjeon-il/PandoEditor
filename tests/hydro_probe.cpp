@@ -39,8 +39,9 @@ QJsonObject geometryJson(const pandoeditor::HydroDecodedGeometry& geometry) {
 }
 int main(int argc,char** argv) {
     const bool packMode=argc==3 && QByteArray(argv[1])=="--pack";
-    if(!packMode&&argc!=2)return 2;
-    const auto manifest=readHydroManifest(QString::fromLocal8Bit(argv[packMode?2:1]));
+    const bool mergeMode=argc==3 && QByteArray(argv[1])=="--merge";
+    if(!packMode&&!mergeMode&&argc!=2)return 2;
+    const auto manifest=readHydroManifest(QString::fromLocal8Bit(argv[packMode||mergeMode?2:1]));
     QString error=manifest.error;
     if(!error.isEmpty()){std::cerr<<error.toStdString()<<'\n';return 3;}
     const auto indexBytes=readHydroAsset(manifest.index,true,error);
@@ -57,12 +58,13 @@ int main(int argc,char** argv) {
         const auto index=pandoeditor::decodeHydroIndex(
             {reinterpret_cast<const std::uint8_t*>(indexBytes.constData()),
              static_cast<std::size_t>(indexBytes.size())},lengths);
-        if(packMode){
+        if(packMode||mergeMode){
             std::map<std::uint32_t,std::uint32_t> logicalIds;
             for(auto it=core.cbegin();it!=core.cend();++it)logicalIds.emplace(it.key(),it.value().logicalFid);
             std::vector<std::unique_ptr<HydroShardReader>> readers;
             for(const auto& shard:manifest.shards)readers.push_back(std::make_unique<HydroShardReader>(shard.asset));
             QJsonArray packsJson;
+            std::vector<pandoeditor::HydroPhysicalFeature> fragments;
             for(const auto& [id,spec]:index.packSpecs){
                 QString packError;
                 const auto bytes=readers.at(spec.shard)->readPack(spec.offset,spec.length,packError);
@@ -71,6 +73,7 @@ int main(int argc,char** argv) {
                     {reinterpret_cast<const std::uint8_t*>(bytes.constData()),static_cast<std::size_t>(bytes.size())},id,logicalIds);
                 QJsonArray features;
                 for(const auto& feature:pack.features){
+                    if(feature.logicalFid==5)fragments.push_back(feature);
                     QJsonArray widths;
                     for(const auto& profile:feature.widths){QJsonArray part;
                         for(const auto width:profile)part.append(width);widths.append(part);}
@@ -81,7 +84,16 @@ int main(int argc,char** argv) {
                 }
                 packsJson.append(QJsonObject{{"id",static_cast<qint64>(id)},{"features",features}});
             }
-            std::cout<<QJsonDocument(packsJson).toJson(QJsonDocument::Compact).toStdString()<<'\n';
+            if(mergeMode){
+                const auto merged=pandoeditor::mergeHydroLogicalFragments(std::move(fragments));
+                QJsonArray lines;
+                for(const auto& line:merged.lines){QJsonArray points;
+                    for(const auto& point:line)points.append(QJsonArray{point.x,point.y});
+                    lines.append(points);
+                }
+                std::cout<<QJsonDocument(QJsonObject{{"type",QString::fromStdString(merged.type)},
+                    {"coordinates",lines}}).toJson(QJsonDocument::Compact).toStdString()<<'\n';
+            }else std::cout<<QJsonDocument(packsJson).toJson(QJsonDocument::Compact).toStdString()<<'\n';
             return 0;
         }
         QMap<QString,QJsonArray> sortedTiles;

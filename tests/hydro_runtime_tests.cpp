@@ -19,9 +19,9 @@ private slots:
         std::vector<pandoeditor::HydroPhysicalFeature> fragments;
         for(const auto& feature:provider.frame()->features)if(feature.logicalFid==5)fragments.push_back(feature);
         const auto merged=pandoeditor::mergeHydroLogicalFragments(std::move(fragments));
-        QCOMPARE(merged.type,std::string("LineString"));
-        QCOMPARE(merged.lines.size(),std::size_t(1));
-        QCOMPARE(merged.lines.front().size(),std::size_t(3));
+        QCOMPARE(merged.type,std::string("MultiLineString"));
+        QCOMPARE(merged.lines.size(),std::size_t(2));
+        QCOMPARE(merged.lines.front().size(),std::size_t(2));
         QCOMPARE(provider.frame()->packIds.size(),std::size_t(6));
         QCOMPARE(provider.cachedPackCount(),std::size_t(6));
         QVERIFY(provider.cachedBytes()>0);
