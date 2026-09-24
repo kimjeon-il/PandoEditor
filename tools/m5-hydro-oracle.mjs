@@ -77,6 +77,7 @@ if (!process.argv.includes('--fixture-only')) {
   // Native JSON comparison is enabled with the parser probe in Tasks 3–5.
   const { execFileSync } = await import('node:child_process');
   const native = JSON.parse(execFileSync(probe, [resolve(root, 'v0.13.1/manifest.json')], { encoding: 'utf8' }));
-  assert.deepEqual(native, actual);
+  assert.deepEqual(native,process.argv.includes('--index-only')
+    ? {index:actual.index,metadata:actual.metadata} : actual);
 }
 console.log('web hydro fixture oracle passed');

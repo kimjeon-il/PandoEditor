@@ -12,6 +12,10 @@ if(BUILD_TESTING)
         COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m3-selection-oracle.mjs" "$<TARGET_FILE:selection_probe>")
     add_test(NAME m5_hydro_web_fixture
         COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m5-hydro-oracle.mjs" --fixture-only)
+    add_test(NAME m5_hydro_viewport_parity
+        COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m5-hydro-viewport-oracle.mjs" "$<TARGET_FILE:hydro_viewport_probe>")
+    add_test(NAME m5_hydro_index_parity
+        COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m5-hydro-oracle.mjs" --index-only "$<TARGET_FILE:hydro_probe>")
     else()
         message(WARNING "Node.js missing: pinned-web differential selection test is not registered")
     endif()
