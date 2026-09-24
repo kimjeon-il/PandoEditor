@@ -92,6 +92,22 @@ private slots:
         QCOMPARE(reopened.hiddenHydroIds().front().toString(),QStringLiteral("fixture:5"));
         QVERIFY(reopened.selectObject({{"domain","hydro"},{"id",copiedId}}));
         QCOMPARE(reopened.primaryObject().value("id").toString(),copiedId);
+        QVERIFY(reopened.beginContentEdit("hydro"));
+        QVERIFY(reopened.beginContentGeometry());
+        const auto firstVertex=[&]{return reopened.geometryDraftPaths().front().toMap()
+            .value("vertices").toList().front().toMap();};
+        const auto before=firstVertex();
+        QVERIFY(reopened.geometrySetMoveMode(true));
+        QVERIFY(reopened.geometryBeginObjectDrag());
+        QVERIFY(reopened.geometryTranslateObject(1,2));
+        QVERIFY(qAbs(firstVertex().value("x").toDouble()-before.value("x").toDouble()-1)<1e-7);
+        QVERIFY(qAbs(firstVertex().value("y").toDouble()-before.value("y").toDouble()-2)<1e-7);
+        reopened.geometryEndObjectDrag();
+        QVERIFY(reopened.geometryUndoDraft());
+        QVERIFY(qAbs(firstVertex().value("x").toDouble()-before.value("x").toDouble())<1e-7);
+        QVERIFY(reopened.geometryRedoDraft());
+        QVERIFY(qAbs(firstVertex().value("x").toDouble()-before.value("x").toDouble()-1)<1e-7);
+        reopened.cancelGeometryEdit();reopened.cancelContentEdit();
         controller.undo();QVERIFY(controller.hiddenHydroIds().isEmpty());
         controller.redo();QCOMPARE(controller.hiddenHydroIds().size(),1);
     }

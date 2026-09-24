@@ -254,6 +254,10 @@ public:
     Q_INVOKABLE bool geometryMoveSelectedVertex(double x,double y,double tolerance=0);
     Q_INVOKABLE bool geometryBeginVertexDrag();
     Q_INVOKABLE void geometryEndVertexDrag(bool cancel=false);
+    Q_INVOKABLE bool geometrySetMoveMode(bool enabled);
+    Q_INVOKABLE bool geometryBeginObjectDrag();
+    Q_INVOKABLE bool geometryTranslateObject(double dx,double dy);
+    Q_INVOKABLE void geometryEndObjectDrag(bool cancel=false);
     Q_INVOKABLE bool geometryInsertNearest(double x,double y,double tolerance);
     Q_INVOKABLE bool geometryDeleteSelectedVertex();
     Q_INVOKABLE bool geometryUndoDraft();
@@ -422,6 +426,7 @@ private:
         std::vector<pandoeditor::ObjectRef> boundaryOwners;
         std::optional<pandoeditor::CoastlineIntent> coastIntent;
         std::optional<pandoeditor::Geometry> dragBefore;
+        bool objectDragMoved=false;
         std::optional<pandoeditor::Point> snapPoint;
         bool content=false;
     };

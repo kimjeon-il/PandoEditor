@@ -273,10 +273,10 @@ Rectangle {
             const x=(eventPoint.position.x-view.originX)/view.mapScale
             const y=(eventPoint.position.y-view.originY)/view.mapScale
             if (editor.geometryEditState.tool === "draw" || editor.geometryEditState.tool === "annex" || editor.geometryEditState.tool === "split") editor.geometryAddPoint(x,y,(editor.mobileMode?18:10)/view.mapScale)
-            else editor.geometrySelectNearest(x,y,(editor.mobileMode?18:10)/view.mapScale)
+            else if (editor.geometryEditState.tool !== "move") editor.geometrySelectNearest(x,y,(editor.mobileMode?18:10)/view.mapScale)
         }
         onDoubleTapped: function(eventPoint) {
-            if (editor.geometryEditState.tool !== "draw")
+            if (editor.geometryEditState.tool !== "draw" && editor.geometryEditState.tool !== "move")
                 editor.geometryInsertNearest((eventPoint.position.x-view.originX)/view.mapScale,
                                              (eventPoint.position.y-view.originY)/view.mapScale,
                                              (editor.mobileMode?18:10)/view.mapScale)
@@ -309,7 +309,7 @@ Rectangle {
     }
     DragHandler {
         id: geometryDrag
-        enabled: view.geometryEditing && editor.geometryEditState.selectedVertex >= 0 && !objectChooser.visible
+        enabled: view.geometryEditing && editor.geometryEditState.tool !== "move" && editor.geometryEditState.selectedVertex >= 0 && !objectChooser.visible
         target: null
         maximumPointCount: 1
         onActiveChanged: { if (active) editor.geometryBeginVertexDrag(); else editor.geometryEndVertexDrag(false) }
@@ -320,11 +320,20 @@ Rectangle {
         }
     }
     DragHandler {
+        id: geometryObjectDrag
+        enabled: view.geometryEditing && editor.geometryEditState.tool === "move" && !objectChooser.visible
+        acceptedButtons: Qt.LeftButton
+        target: null; maximumPointCount: 1
+        onActiveChanged: { if (active) editor.geometryBeginObjectDrag(); else editor.geometryEndObjectDrag(false) }
+        onActiveTranslationChanged: if (active)
+            editor.geometryTranslateObject(activeTranslation.x/view.mapScale,activeTranslation.y/view.mapScale)
+    }
+    DragHandler {
         id: geometryTwoFingerPan
         enabled: view.geometryEditing && !objectChooser.visible
         target: null; minimumPointCount: 2; maximumPointCount: 2
         property real startX: 0; property real startY: 0
-        onActiveChanged: if (active) { editor.geometryEndVertexDrag(true); startX=view.panX; startY=view.panY }
+        onActiveChanged: if (active) { editor.geometryEndVertexDrag(true); editor.geometryEndObjectDrag(true); startX=view.panX; startY=view.panY }
         onActiveTranslationChanged: if (active) { view.panX=startX+activeTranslation.x; view.panY=startY+activeTranslation.y }
     }
     DragHandler {
@@ -405,7 +414,8 @@ Rectangle {
         visible: view.geometryEditing; color: "#ffffffee"; border.color: "#d7b77f"; radius: 6; height: geometryTools.implicitHeight + 16
         Row {
             id: geometryTools; anchors.centerIn: parent; spacing: 6
-            Label { visible: editor.geometryEditState.tool !== "draw"; text: "변을 두 번 탭해 점 추가"; verticalAlignment: Text.AlignVCenter }
+            Label { visible: editor.geometryEditState.tool !== "draw" && editor.geometryEditState.tool !== "move"; text: "변을 두 번 탭해 점 추가"; verticalAlignment: Text.AlignVCenter }
+            Button { objectName: "geometryMoveObject"; visible: editor.geometryEditState.target.domain !== "territorial" && editor.geometryEditState.tool !== "draw"; text: editor.geometryEditState.tool === "move" ? "점 편집" : "전체 이동"; onClicked: editor.geometrySetMoveMode(editor.geometryEditState.tool !== "move") }
             Button { objectName: "geometryDeleteVertex"; text: "점 삭제"; enabled: editor.geometryEditState.selectedVertex >= 0; onClicked: editor.geometryDeleteSelectedVertex() }
             Button { objectName: "geometryUndoDraft"; text: "초안 실행 취소"; enabled: editor.geometryEditState.canUndo === true; onClicked: editor.geometryUndoDraft() }
             Button { objectName: "geometryRedoDraft"; text: "다시 실행"; visible: editor.geometryEditState.canRedo === true; onClicked: editor.geometryRedoDraft() }

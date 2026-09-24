@@ -166,8 +166,43 @@ bool EditorController::geometryMoveSelectedVertex(double x,double y,double toler
     const bool wasClosed=ring.size()>1&&samePoint(ring.front(),ring.back());
     if(!edit.dragBefore)edit.undo.push_back(edit.draft);edit.redo.clear();ring[edit.vertex]=snappedPoint(project_.document(),projection_,projection_.unproject(x,y),tolerance,edit.snapPoint);if(wasClosed&&edit.vertex==0)ring.back()=ring.front();++edit.request;emit geometryEditChanged();return true;
 }
-bool EditorController::geometryBeginVertexDrag(){if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->vertex<0||geometryEdit_->dragBefore)return false;geometryEdit_->dragBefore=geometryEdit_->draft;return true;}
-void EditorController::geometryEndVertexDrag(bool cancel){if(!geometryEdit_||!geometryEdit_->dragBefore)return;if(cancel)geometryEdit_->draft=*geometryEdit_->dragBefore;else geometryEdit_->undo.push_back(*geometryEdit_->dragBefore);geometryEdit_->dragBefore.reset();geometryEdit_->snapPoint.reset();++geometryEdit_->request;emit geometryEditChanged();}
+bool EditorController::geometryBeginVertexDrag(){if(!geometryEdit_||geometryEdit_->tool=="move"||geometryEdit_->preview||geometryEdit_->vertex<0||geometryEdit_->dragBefore)return false;geometryEdit_->dragBefore=geometryEdit_->draft;return true;}
+void EditorController::geometryEndVertexDrag(bool cancel){if(!geometryEdit_||geometryEdit_->tool=="move"||!geometryEdit_->dragBefore)return;if(cancel)geometryEdit_->draft=*geometryEdit_->dragBefore;else geometryEdit_->undo.push_back(*geometryEdit_->dragBefore);geometryEdit_->dragBefore.reset();geometryEdit_->snapPoint.reset();++geometryEdit_->request;emit geometryEditChanged();}
+bool EditorController::geometrySetMoveMode(bool enabled){
+    if(!geometryEdit_||!geometryEdit_->content||geometryEdit_->preview||geometryEdit_->dragBefore||
+       (geometryEdit_->tool!="edit"&&geometryEdit_->tool!="move"))return false;
+    geometryEdit_->tool=enabled?QStringLiteral("move"):QStringLiteral("edit");
+    geometryEdit_->vertex=-1;emit geometryEditChanged();return true;
+}
+bool EditorController::geometryBeginObjectDrag(){
+    if(!geometryEdit_||!geometryEdit_->content||geometryEdit_->tool!="move"||
+       geometryEdit_->preview||geometryEdit_->dragBefore)return false;
+    geometryEdit_->dragBefore=geometryEdit_->draft;
+    geometryEdit_->objectDragMoved=false;return true;
+}
+bool EditorController::geometryTranslateObject(double dx,double dy){
+    if(!geometryEdit_||geometryEdit_->tool!="move"||!geometryEdit_->dragBefore||
+       !std::isfinite(dx)||!std::isfinite(dy))return false;
+    const auto origin=projection_.unproject(0,0),destination=projection_.unproject(dx,dy);
+    const double longitude=destination.x-origin.x,latitude=destination.y-origin.y;
+    if(!std::isfinite(longitude)||!std::isfinite(latitude))return false;
+    auto translated=*geometryEdit_->dragBefore;
+    auto move=[&](Point& point){point.x+=longitude;point.y+=latitude;
+        return std::isfinite(point.x)&&std::isfinite(point.y)&&point.x>=-180&&point.x<=180&&point.y>=-90&&point.y<=90;};
+    for(auto& point:translated.points)if(!move(point))return false;
+    for(auto& line:translated.lines)for(auto& point:line)if(!move(point))return false;
+    for(auto& polygon:translated.polygons)for(auto& ring:polygon)for(auto& point:ring)if(!move(point))return false;
+    geometryEdit_->draft=std::move(translated);
+    geometryEdit_->objectDragMoved=longitude!=0||latitude!=0;
+    ++geometryEdit_->request;emit geometryEditChanged();return true;
+}
+void EditorController::geometryEndObjectDrag(bool cancel){
+    if(!geometryEdit_||geometryEdit_->tool!="move"||!geometryEdit_->dragBefore)return;
+    if(cancel)geometryEdit_->draft=*geometryEdit_->dragBefore;
+    else if(geometryEdit_->objectDragMoved){geometryEdit_->undo.push_back(*geometryEdit_->dragBefore);geometryEdit_->redo.clear();}
+    geometryEdit_->dragBefore.reset();geometryEdit_->objectDragMoved=false;
+    ++geometryEdit_->request;emit geometryEditChanged();
+}
 
 bool EditorController::geometryInsertNearest(double x,double y,double tolerance)
 {
