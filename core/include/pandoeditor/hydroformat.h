@@ -41,7 +41,7 @@ struct HydroPhysicalFeature {
     float strokeWidth=0;
     std::int32_t bounds[4]{};
     HydroDecodedGeometry geometry;
-    std::vector<std::vector<float>> widths;
+    std::vector<std::vector<double>> widths;
 };
 struct HydroPack {
     std::uint8_t stage=0;

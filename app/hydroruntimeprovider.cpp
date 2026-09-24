@@ -27,7 +27,7 @@ std::size_t decodedBytes(const pandoeditor::HydroPack& pack) {
             bytes+=sizeof(polygon)+polygon.capacity()*sizeof(pandoeditor::HydroLine);
             for(const auto& ring:polygon)bytes+=ring.capacity()*sizeof(pandoeditor::HydroPoint);
         }
-        for(const auto& widths:feature.widths)bytes+=sizeof(widths)+widths.capacity()*sizeof(float);
+        for(const auto& widths:feature.widths)bytes+=sizeof(widths)+widths.capacity()*sizeof(double);
     }
     return bytes;
 }

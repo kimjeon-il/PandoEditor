@@ -1,6 +1,7 @@
 #include "hydromanifest.h"
 #include "hydroassetreader.h"
 #include "hydrometadata.h"
+#include "hydroshardreader.h"
 #include <pandoeditor/hydroformat.h>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -15,10 +16,31 @@ QJsonArray numbers(const std::vector<std::uint32_t>& values) {
     for(const auto value:values)result.append(static_cast<qint64>(value));
     return result;
 }
+QJsonArray lineJson(const pandoeditor::HydroLine& line) {
+    QJsonArray result;
+    for(const auto& point:line)result.append(QJsonArray{point.longitude/1e6,point.latitude/1e6});
+    return result;
+}
+QJsonObject geometryJson(const pandoeditor::HydroDecodedGeometry& geometry) {
+    QJsonArray outer;
+    if(geometry.kind<=2){
+        for(const auto& line:geometry.lines)outer.append(lineJson(line));
+        return {{"type",geometry.kind==1?"LineString":"MultiLineString"},
+                {"coordinates",geometry.kind==1?outer.first():QJsonValue(outer)}};
+    }
+    for(const auto& polygon:geometry.polygons){
+        QJsonArray rings;
+        for(const auto& ring:polygon)rings.append(lineJson(ring));
+        outer.append(rings);
+    }
+    return {{"type",geometry.kind==3?"Polygon":"MultiPolygon"},
+            {"coordinates",geometry.kind==3?outer.first():QJsonValue(outer)}};
+}
 }
 int main(int argc,char** argv) {
-    if(argc!=2)return 2;
-    const auto manifest=readHydroManifest(QString::fromLocal8Bit(argv[1]));
+    const bool packMode=argc==3 && QByteArray(argv[1])=="--pack";
+    if(!packMode&&argc!=2)return 2;
+    const auto manifest=readHydroManifest(QString::fromLocal8Bit(argv[packMode?2:1]));
     QString error=manifest.error;
     if(!error.isEmpty()){std::cerr<<error.toStdString()<<'\n';return 3;}
     const auto indexBytes=readHydroAsset(manifest.index,true,error);
@@ -35,6 +57,33 @@ int main(int argc,char** argv) {
         const auto index=pandoeditor::decodeHydroIndex(
             {reinterpret_cast<const std::uint8_t*>(indexBytes.constData()),
              static_cast<std::size_t>(indexBytes.size())},lengths);
+        if(packMode){
+            std::map<std::uint32_t,std::uint32_t> logicalIds;
+            for(auto it=core.cbegin();it!=core.cend();++it)logicalIds.emplace(it.key(),it.value().logicalFid);
+            std::vector<std::unique_ptr<HydroShardReader>> readers;
+            for(const auto& shard:manifest.shards)readers.push_back(std::make_unique<HydroShardReader>(shard.asset));
+            QJsonArray packsJson;
+            for(const auto& [id,spec]:index.packSpecs){
+                QString packError;
+                const auto bytes=readers.at(spec.shard)->readPack(spec.offset,spec.length,packError);
+                if(!packError.isEmpty())throw std::runtime_error(packError.toStdString());
+                const auto pack=pandoeditor::decodeHydroPack(
+                    {reinterpret_cast<const std::uint8_t*>(bytes.constData()),static_cast<std::size_t>(bytes.size())},id,logicalIds);
+                QJsonArray features;
+                for(const auto& feature:pack.features){
+                    QJsonArray widths;
+                    for(const auto& profile:feature.widths){QJsonArray part;
+                        for(const auto width:profile)part.append(width);widths.append(part);}
+                    features.append(QJsonObject{{"fid",static_cast<qint64>(feature.fid)},
+                        {"logicalFid",static_cast<qint64>(feature.logicalFid)},
+                        {"kind",feature.kind==1?"river":"lake"},{"flags",feature.flags},
+                        {"geometry",geometryJson(feature.geometry)},{"widths",widths}});
+                }
+                packsJson.append(QJsonObject{{"id",static_cast<qint64>(id)},{"features",features}});
+            }
+            std::cout<<QJsonDocument(packsJson).toJson(QJsonDocument::Compact).toStdString()<<'\n';
+            return 0;
+        }
         QMap<QString,QJsonArray> sortedTiles;
         for(const auto& [tile,ids]:index.tilePacks){
             const auto key=QString("%1/%2-%3").arg(tile.stage).arg(tile.x).arg(tile.y);

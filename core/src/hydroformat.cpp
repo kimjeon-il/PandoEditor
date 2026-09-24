@@ -91,21 +91,21 @@ HydroDecodedGeometry readGeometry(HydroByteView bytes,std::uint8_t kind) {
     if(reader.remaining())throw std::runtime_error("trailing hydro geometry bytes");
     return geometry;
 }
-std::vector<std::vector<float>> readWidths(HydroByteView bytes,const HydroDecodedGeometry& geometry) {
+std::vector<std::vector<double>> readWidths(HydroByteView bytes,const HydroDecodedGeometry& geometry) {
     if(!bytes.size)return {};
-    Reader reader(bytes);std::vector<std::vector<float>> profiles;
+    Reader reader(bytes);std::vector<std::vector<double>> profiles;
     const auto count=unsignedVarint(reader);
     if(count!=geometry.lines.size())throw std::runtime_error("hydro width part mismatch");
     for(const auto& line:geometry.lines){
         const auto vertices=unsignedVarint(reader);
         if(vertices!=line.size())throw std::runtime_error("hydro width vertex mismatch");
-        std::vector<float> widths; widths.reserve(vertices);
+        std::vector<double> widths; widths.reserve(vertices);
         std::int64_t width=vertices?unsignedVarint(reader):0;
         for(std::uint32_t i=0;i<vertices;i++){
             if(i)width+=signedVarint(reader);
             if(width<0||width>std::numeric_limits<std::int32_t>::max())
                 throw std::runtime_error("invalid hydro width");
-            widths.push_back(static_cast<float>(width)/1000.0f);
+            widths.push_back(static_cast<double>(width)/1000.0);
         }
         profiles.push_back(std::move(widths));
     }
