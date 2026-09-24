@@ -17,7 +17,12 @@
     "gis-import-transaction.js": "78a80e50d52c9d1d510c71f4f1ff48ca3c942104",
     "gis-file-controller.js": "5222a552fbb800a8a42bcaeeb119d128a73cc9b6",
     "gis-export-controller.js": "871293159a55d13f88f14813f8b706765d6368f9",
-    "exchange-adapter-registry.js": "634fab3cfa6e19d5dd4488eb330c9add02df7237"
+    "exchange-adapter-registry.js": "634fab3cfa6e19d5dd4488eb330c9add02df7237",
+    "gis-adapters.js": "be606ee43b39b1b1ddc15dc166908f966217f960"
   },
-  "missingNamedPath": "assets/js/modules/gis-adapters.js"
+  "adapterPath": "assets/js/gis-adapters.js",
+  "gisEvidence": {
+    "browserTest": "c5deb098a9b2be56266a12fc7289cda53c418a9a",
+    "eastPrussiaGeoJSON": "e263faa8aad38c18de4263ca8655bc3c20003b4b"
+  }
 }

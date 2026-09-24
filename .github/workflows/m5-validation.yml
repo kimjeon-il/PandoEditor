@@ -36,11 +36,13 @@ jobs:
           path: full-hydro-world-map
           persist-credentials: false
           sparse-checkout: |
+            assets/data/historical-library-pilot.json
             assets/data/hydro/v0.13.0
             assets/data/hydro/v0.13.1
       - name: Test complete suite
         env:
           PANDOEDITOR_HYDRO_FULL_MANIFEST: ${{ steps.real_hydro.outcome == 'success' && format('{0}/full-hydro-world-map/assets/data/hydro/v0.13.1/manifest.json', github.workspace) || '' }}
+          PANDOEDITOR_HISTORICAL_FULL_PILOT: ${{ github.workspace }}/full-hydro-world-map/assets/data/historical-library-pilot.json
         run: ctest --test-dir build --output-on-failure --output-junit results.xml
       - uses: actions/upload-artifact@v4
         if: always()

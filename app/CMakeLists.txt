@@ -9,6 +9,7 @@ add_library(pandoeditor_editor STATIC
     referenceimagelibrary.cpp referenceimagelibrary.h
     defaultflagresolver.cpp defaultflagresolver.h
     hydrodataprovider.cpp hydrodataprovider.h
+    historicallibraryloader.cpp historicallibraryloader.h
     hydromanifest.cpp hydromanifest.h
     hydroassetreader.cpp hydroassetreader.h
     hydrometadata.cpp hydrometadata.h
@@ -60,6 +61,11 @@ file(GLOB_RECURSE DEFAULT_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/as
 qt_add_resources(pandoeditor default_flags PREFIX "/defaults/flags" BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags" FILES ${DEFAULT_FLAG_FILES})
 
 if(BUILD_TESTING)
+    add_executable(historical_library_loader_tests ../tests/historical_library_loader_tests.cpp)
+    target_link_libraries(historical_library_loader_tests PRIVATE pandoeditor_editor)
+    target_compile_definitions(historical_library_loader_tests PRIVATE
+        M6_HISTORICAL_PILOT_SAMPLE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6/pilot-sample.json")
+    add_test(NAME historical_library_loader_tests COMMAND historical_library_loader_tests)
     find_package(Qt6 REQUIRED COMPONENTS Test)
     add_executable(hydro_manifest_tests ../tests/hydro_manifest_tests.cpp)
     target_link_libraries(hydro_manifest_tests PRIVATE pandoeditor_editor Qt6::Test)

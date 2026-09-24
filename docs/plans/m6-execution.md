@@ -25,9 +25,8 @@ territorial changes.
   transaction `78a80e50d52c9d1d510c71f4f1ff48ca3c942104`,
   file controller `5222a552fbb800a8a42bcaeeb119d128a73cc9b6`,
   export controller `871293159a55d13f88f14813f8b706765d6368f9`,
-  registry `634fab3cfa6e19d5dd4488eb330c9add02df7237`.
-  The proposed `assets/js/modules/gis-adapters.js` path returns 404 at the
-  pinned revision; resolve actual adapter files in the GIS format gate.
+  registry `634fab3cfa6e19d5dd4488eb330c9add02df7237`, adapter
+  `assets/js/gis-adapters.js` blob `be606ee43b39b1b1ddc15dc166908f966217f960`.
 - Native codec currently reads v1–v6 and writes v6. Bump only when typed
   canonical provenance is added; keep old readers and migrations.
 
