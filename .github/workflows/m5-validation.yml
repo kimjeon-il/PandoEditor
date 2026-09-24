@@ -2,6 +2,8 @@ name: M5 validation
 on:
   push:
     branches: [codex/m5-completion]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
