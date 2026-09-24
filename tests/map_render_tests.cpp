@@ -7,6 +7,23 @@
 class MapRenderTests:public QObject {
     Q_OBJECT
 private slots:
+    void webPassesPlaceLakeAboveCountryAndStrokeAboveLake(){
+        MapRenderItem item;item.setWidth(40);item.setHeight(40);item.setMapScale(1);
+        item.setHydroProjection({{"cosLatitude",1.},{"minX",0.},{"maxLatitude",40.}});
+        item.setPaths({QVariantMap{{"countryId","country"},{"path","M5 5 L35 5 L35 35 L5 35 Z"}},
+            QVariantMap{{"countryId","overlay"},{"geometryType","LineString"},{"path","M10 20 L30 20"}}});
+        item.setVisuals({{"country",QVariantMap{{"visible",true},{"color","#ff0000"},{"boundary",false},{"drawFillPass",10}}},
+            {"overlay",QVariantMap{{"visible",true},{"color","#00ff00"},{"boundary",false},{"drawLinePass",60}}}});
+        auto frame=std::make_shared<HydroRuntimeFrame>();
+        frame->packet.lakes.push_back({1,1,{{{{10000000,10000000},{30000000,10000000},
+            {30000000,30000000},{10000000,30000000},{10000000,10000000}}}}});
+        item.setHydroFrame(frame);item.setHydroStyle({{"lakesVisible",true},{"riversVisible",false},{"lakeColor","#0000ff"}});
+        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
+        QPainter painter(&image);item.paint(&painter);painter.end();
+        QCOMPARE(image.pixelColor(15,15),QColor("#0000ff"));
+        QCOMPARE(image.pixelColor(15,20),QColor("#00ff00"));
+        QCOMPARE(image.pixelColor(7,7),QColor("#ff0000"));
+    }
     void builtinHydroPaintsWidthAndLakeHoleWithoutDocumentGeometry(){
         MapRenderItem item;item.setWidth(64);item.setHeight(64);item.setMapScale(10);
         item.setHydroProjection({{"cosLatitude",1.},{"minX",-1.},{"maxLatitude",4.}});

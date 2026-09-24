@@ -1,4 +1,5 @@
 #include "editorcontroller.h"
+#include <pandoeditor/maprenderorder.h>
 #include <QCollator>
 #include <QLocale>
 #include <QScopedValueRollback>
@@ -214,8 +215,19 @@ void EditorController::selectLayer(const QString& id) {
 }
 QVariantMap EditorController::pickObject(double x,double y,double pixelsPerUnit,double zoom) const {
     if(!std::isfinite(x)||!std::isfinite(y)) return {};
-    const auto hits=mapCandidates(x,y,pixelsPerUnit,zoom);
-    auto top=hits.empty()?std::optional<ObjectRef>{}:std::optional<ObjectRef>(hits.front());
+    const auto hits=mapCandidates(x,y,pixelsPerUnit,zoom);const auto visuals=countryVisuals();
+    std::optional<ObjectRef> top;int topLayer=std::numeric_limits<int>::min();double topRank=-std::numeric_limits<double>::infinity();
+    for(const auto& path:projection_.paths) {
+        const auto row=path.toMap();const ObjectRef ref=row.contains("domain")?ObjectRef{row["domain"].toString().toStdString(),row["objectId"].toString().toStdString()}:territorialRef(row["countryId"].toString().toStdString());
+        if(std::find(hits.begin(),hits.end(),ref)==hits.end())continue;
+        const auto visual=visuals[row["countryId"].toString()].toMap();const auto layer=visual["layerOrder"].toInt();
+        const auto rank=visual["drawFillPass"].toDouble()+visual["drawObject"].toDouble();
+        if(!top||layer>topLayer||(layer==topLayer&&rank>=topRank)){top=ref;topLayer=layer;topRank=rank;}
+    }
+    for(const auto& ref:hits)if(ref.domain=="hydroBuiltin" &&
+        (!top||pandoeditor::mapBuiltinHydroPickOrder()>pandoeditor::mapPickOrder(project_.document(),*top))) {
+        top=ref;break;
+    }
     if(top&&top->domain=="distributionEntry")for(const auto& entry:project_.document().distributionEntries)if(entry.id==top->id){top=ObjectRef{"distributionLayer",entry.layerId};break;}
     return top?objectRefValue(*top):QVariantMap{};
 }

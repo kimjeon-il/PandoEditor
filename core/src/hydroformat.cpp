@@ -226,7 +226,8 @@ HydroRenderPacket buildHydroRenderPacket(const HydroPack& pack) {
 Geometry mergeHydroLogicalFragments(std::vector<HydroPhysicalFeature> fragments) {
     if(fragments.empty())throw std::runtime_error("empty hydro logical feature");
     std::sort(fragments.begin(),fragments.end(),[](const auto& a,const auto& b){return a.fragmentIndex<b.fragmentIndex;});
-    const auto logical=fragments.front().logicalFid,count=fragments.front().fragmentCount;
+    const auto logical=fragments.front().logicalFid;
+    const auto count=fragments.front().fragmentCount;
     if(!logical||count!=fragments.size())throw std::runtime_error("incomplete hydro logical feature");
     Geometry merged;
     const auto kind=fragments.front().kind;

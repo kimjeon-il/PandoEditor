@@ -48,23 +48,39 @@ void MapRenderItem::setHydroFrame(std::shared_ptr<const HydroRuntimeFrame> value
 void MapRenderItem::paint(QPainter* painter) {
     struct Row{QString id;QVariantMap visual;Parsed geometry;QString type;QVariantList points;};std::vector<Row> rows;rows.reserve(paths_.size());
     for(const auto& entry:paths_){const auto path=entry.toMap();const auto id=path.value("countryId").toString();const auto visual=visuals_.value(id).toMap();if(!visual.value("visible").toBool())continue;rows.push_back({id,visual,parsePath(path.value("path").toString(),originX_,originY_,scale_),path.value("geometryType").toString(),path.value("points").toList()});}
-    std::stable_sort(rows.begin(),rows.end(),[](const auto& a,const auto& b){const auto al=a.visual.value("layerOrder",-1).toInt(),bl=b.visual.value("layerOrder",-1).toInt();return al==bl?a.visual.value("rank").toDouble()<b.visual.value("rank").toDouble():al<bl;});
     painter->setRenderHint(QPainter::Antialiasing,true);
-    for(std::size_t first=0;first<rows.size();) {std::size_t last=first+1;const auto layer=rows[first].visual.value("layerId").toString();while(last<rows.size()&&rows[last].visual.value("layerId").toString()==layer)++last;
-        QImage buffer(std::max(1,int(std::ceil(width()))),std::max(1,int(std::ceil(height()))),QImage::Format_ARGB32_Premultiplied);buffer.fill(Qt::transparent);QPainter layerPainter(&buffer);layerPainter.setRenderHint(QPainter::Antialiasing,true);
-        for(auto i=first;i<last;++i){const auto& row=rows[i];if(row.type=="LineString"||row.type=="MultiLineString"||row.type=="Point"||row.type=="MultiPoint")continue;layerPainter.save();layerPainter.setOpacity(std::clamp(row.visual.value("opacity",1.).toDouble(),0.,1.));layerPainter.setCompositionMode(row.visual.value("blendMode").toString()=="multiply"?QPainter::CompositionMode_Multiply:QPainter::CompositionMode_SourceOver);layerPainter.setPen(Qt::NoPen);layerPainter.setBrush(color(row.visual.value("color"),Qt::lightGray));layerPainter.drawPath(row.geometry.path);layerPainter.restore();}
-        for(auto i=first;i<last;++i) {
-            const auto& row=rows[i]; layerPainter.save(); layerPainter.setOpacity(row.visual.value("opacity",1.).toDouble());
-            layerPainter.setPen(QPen(color(row.visual.value("color"),Qt::darkBlue),2,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
-            layerPainter.setBrush(Qt::NoBrush);
-            if(row.type=="LineString" || row.type=="MultiLineString") layerPainter.drawPath(row.geometry.path);
-            layerPainter.setBrush(color(row.visual.value("color"),Qt::darkBlue));
-            for(const auto& value:row.points) {const auto point=value.toMap();layerPainter.drawEllipse(QPointF(originX_+point["x"].toDouble()*scale_,originY_+point["y"].toDouble()*scale_),3.,3.);}
-            layerPainter.restore();
+    auto order=[&](const Row& row,const char* key){return row.visual.value(key,20+row.visual.value("rank",0.).toInt()).toInt();};
+    auto sorted=[&](const char* key){std::vector<const Row*> ordered;ordered.reserve(rows.size());
+        for(const auto& row:rows)ordered.push_back(&row);
+        std::stable_sort(ordered.begin(),ordered.end(),[&](const Row* a,const Row* b){
+            const auto pa=order(*a,key),pb=order(*b,key);if(pa!=pb)return pa<pb;
+            const auto ga=a->visual.value("drawGroup",0).toInt(),gb=b->visual.value("drawGroup",0).toInt();
+            if(ga!=gb)return ga<gb;
+            const auto oa=a->visual.value("drawObject",0.).toDouble(),ob=b->visual.value("drawObject",0.).toDouble();
+            if(oa!=ob)return oa<ob;
+            return a->visual.value("layerOrder",-1).toInt()<b->visual.value("layerOrder",-1).toInt();
+        });return ordered;};
+    auto paintRow=[&](const Row& row,int role){
+        painter->save();painter->setOpacity(std::clamp(row.visual.value("opacity",1.).toDouble()*
+            row.visual.value("layerOpacity",1.).toDouble(),0.,1.));
+        painter->setCompositionMode(row.visual.value("blendMode").toString()=="multiply"?
+            QPainter::CompositionMode_Multiply:QPainter::CompositionMode_SourceOver);
+        if(role==0){
+            if(row.type!="LineString"&&row.type!="MultiLineString"&&row.type!="Point"&&row.type!="MultiPoint"){
+                painter->setPen(Qt::NoPen);painter->setBrush(color(row.visual.value("color"),Qt::lightGray));
+                painter->drawPath(row.geometry.path);
+            }
+        }else if(role==1){
+            painter->setPen(QPen(color(row.visual.value("color"),Qt::darkBlue),2,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+            painter->setBrush(Qt::NoBrush);
+            if(row.type=="LineString"||row.type=="MultiLineString")painter->drawPath(row.geometry.path);
+            painter->setBrush(color(row.visual.value("color"),Qt::darkBlue));
+            for(const auto& value:row.points){const auto point=value.toMap();painter->drawEllipse(
+                QPointF(originX_+point["x"].toDouble()*scale_,originY_+point["y"].toDouble()*scale_),3.,3.);}
         }
-        std::set<QString> boundarySegments;for(auto i=first;i<last;++i){const auto& row=rows[i];if(!row.visual.value("boundary",true).toBool())continue;const auto kind=row.visual.value("kind").toString();QPen pen(QColor("#61778a"),kind=="country"?1.2:kind=="subunit"?.9:.7,Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin);if(kind=="subunit")pen.setDashPattern({4,2});else if(kind=="region")pen.setDashPattern({1.5,2});layerPainter.setPen(pen);for(const auto& segment:row.geometry.segments)if(boundarySegments.insert(segmentKey(segment)).second)layerPainter.drawLine(segment);}layerPainter.end();
-        painter->save();painter->setOpacity(std::clamp(rows[first].visual.value("layerOpacity",1.).toDouble(),0.,1.));painter->drawImage(QPointF(0,0),buffer);painter->restore();first=last;
-    }
+        painter->restore();
+    };
+    for(const auto* row:sorted("drawFillPass"))paintRow(*row,0);
     if(hydroFrame_){
         const double cosLatitude=hydroProjection_.value("cosLatitude",1.).toDouble();
         const double minX=hydroProjection_.value("minX",0.).toDouble();
@@ -118,6 +134,24 @@ void MapRenderItem::paint(QPainter* painter) {
             painter->restore();
         }
     }
+    for(const auto* row:sorted("drawLinePass"))if(order(*row,"drawLinePass")<50)paintRow(*row,1);
+    std::set<QString> boundarySegments;
+    auto paintBoundary=[&](const Row& row){
+        if(!row.visual.value("boundary",true).toBool())return;
+        painter->save();painter->setOpacity(std::clamp(row.visual.value("opacity",1.).toDouble()*
+            row.visual.value("layerOpacity",1.).toDouble(),0.,1.));
+        const auto kind=row.visual.value("kind").toString();
+        QPen pen(QColor("#61778a"),kind=="country"?1.2:kind=="subunit"?.9:.7,
+            Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin);
+        if(kind=="subunit")pen.setDashPattern({4,2});else if(kind=="region")pen.setDashPattern({1.5,2});
+        painter->setPen(pen);painter->setBrush(Qt::NoBrush);
+        for(const auto& segment:row.geometry.segments)
+            if(boundarySegments.insert(segmentKey(segment)).second)painter->drawLine(segment);
+        painter->restore();
+    };
+    for(const auto* row:sorted("drawBoundaryPass"))if(order(*row,"drawBoundaryPass")<=50)paintBoundary(*row);
+    for(const auto* row:sorted("drawLinePass"))if(order(*row,"drawLinePass")>=50)paintRow(*row,1);
+    for(const auto* row:sorted("drawBoundaryPass"))if(order(*row,"drawBoundaryPass")>50)paintBoundary(*row);
     std::set<QString> selectedSegments;
     for(const auto& entry:selected_)for(const auto& point:entry.toMap().value("points").toList()) {
         const auto p=point.toMap();painter->setPen(QPen(QColor("#163e64"),2));painter->setBrush(Qt::NoBrush);

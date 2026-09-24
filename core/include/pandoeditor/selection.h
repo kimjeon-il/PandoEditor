@@ -92,7 +92,7 @@ public:
     void reset() { items_.clear(); primary_.reset(); anchors_.clear(); revision_=0; }
 private:
     static bool valid(const ObjectRef& ref) {
-        static const std::set<std::string> domains={"territorial","distributionLayer","distributionEntry","generic","hydro","label","userLayer"};
+        static const std::set<std::string> domains={"territorial","distributionLayer","distributionEntry","generic","hydro","hydroBuiltin","label","userLayer"};
         return !ref.id.empty() && domains.count(ref.domain)!=0;
     }
     static bool contains(const std::vector<ObjectRef>& refs,const ObjectRef& ref) {

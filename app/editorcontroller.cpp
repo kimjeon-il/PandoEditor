@@ -1,5 +1,6 @@
 #include "editorcontroller.h"
 #include "defaultflagresolver.h"
+#include <pandoeditor/maprenderorder.h>
 #include <QFile>
 #include <QFileInfo>
 #include <QScopedValueRollback>
@@ -98,7 +99,11 @@ QVariantMap EditorController::countryVisuals() const
             {"blendMode",text(resolved.blendMode)},
             {"kind",unit.kind==pandoeditor::UnitKind::Country?QStringLiteral("country"):unit.kind==pandoeditor::UnitKind::Subunit?QStringLiteral("subunit"):QStringLiteral("region")},
             {"layerId",text(nativeLayer)},{"layerOpacity",nativeOpacity},{"layerOrder",nativeOrder},
-            {"rank",pandoeditor::territorialRenderOrder(project_.document(),ref)},
+            {"drawFillPass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).pass},
+            {"drawLinePass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Line).pass},
+            {"drawBoundaryPass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Boundary).pass},
+            {"drawGroup",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).group},
+            {"drawObject",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).object},
             {"visible",objectVisible(ref)},
             {"opacity",(text(unit.id)==selected_&&opacityPreview_?*opacityPreview_:style->second.opacity)*resolved.opacity}};
     }
@@ -116,7 +121,12 @@ QVariantMap EditorController::countryVisuals() const
         result[QStringLiteral("content/")+text(ref.domain)+"/"+text(ref.id)]=QVariantMap{
             {"color",rgb(properties->effectiveColor)},{"name",text(properties->displayName)},
             {"nameVisible",ref.domain=="label"},{"visible",objectVisible(ref)},{"opacity",opacity},
-            {"kind",text(ref.domain)},{"rank",ref.domain=="label"?100:ref.domain=="hydro"?60:ref.domain=="generic"?70:50},
+            {"kind",text(ref.domain)},
+            {"drawFillPass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).pass},
+            {"drawLinePass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Line).pass},
+            {"drawBoundaryPass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Boundary).pass},
+            {"drawGroup",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).group},
+            {"drawObject",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).object},
             {"layerId",text(layerId)},{"layerOrder",layerOrder},{"layerOpacity",layerOpacity},{"boundary",ref.domain=="distributionEntry"&&project_.document().presentation.webPresentation.distributionSettings.boundaryVisible},{"blendMode","normal"}};
     }
     return result;
