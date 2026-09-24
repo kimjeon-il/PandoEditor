@@ -19,7 +19,8 @@ bool EditorController::copyBuiltinHydro() {
     if(!record||!hydroRuntime_.pinLogical(record->logicalFid))return false;
     auto job=hydroRuntime_.logicalGeometryJob(record->logicalFid);
     if(!job){hydroRuntime_.clearPinned();return false;}
-    const auto revision=project_.revision(),instance=project_.instanceId();
+    const auto revision=project_.revision();
+    const auto instance=project_.instanceId();
     const auto source=project_.document().physicalData;
     const auto original=*selected;
     using Result=std::pair<std::optional<HydroLogicalCopy>,QString>;
@@ -44,7 +45,7 @@ bool EditorController::copyBuiltinHydro() {
             edit.geometry=std::make_pair(geometryRef,std::move(result.first->geometry));
             CommandArguments args;args.action=std::move(edit);
             const auto request=CommandProcessor::makeRequest(project_,"content.edit",args);
-            const auto prepared=CommandProcessor::prepare(project_,request);
+            auto prepared=CommandProcessor::prepare(project_,request);
             if(!prepared.ok()||!prepared.preview){emit errorOccurred(QString::fromStdString(prepared.detail));return;}
             MapProjection next;next.rebuild(prepared.preview->change().after());
             const auto committed=CommandProcessor::confirm(project_,*prepared.preview);
