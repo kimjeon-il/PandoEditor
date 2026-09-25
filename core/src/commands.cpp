@@ -37,12 +37,15 @@ std::vector<ObjectRef> targetsFor(const CommandArguments& args)
         } else if constexpr(std::is_same_v<T,TerritorialFieldEdit>) refs.insert(action.target);
         else if constexpr(std::is_same_v<T,TerritorialColorEdit> || std::is_same_v<T,TerritorialLockEdit>) refs.insert(action.targets.begin(),action.targets.end());
         else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>) refs.insert(action.plan.affectedObjects.begin(),action.plan.affectedObjects.end());
-        else if constexpr(std::is_same_v<T,HistoricalInstantiationPlan>)
+        else if constexpr(std::is_same_v<T,HistoricalInstantiationPlan>) {
             for(const auto& addition:action.additions) {
                 refs.insert(territorialRef(addition.selection.libraryId));
                 if(addition.parent)refs.insert(*addition.parent);
                 if(addition.sovereign)refs.insert(*addition.sovereign);
             }
+            for(const auto& patch:action.territoryReplacements)refs.insert(patch.owner);
+            for(const auto& [id,name]:action.countryNameUpdates)refs.insert(territorialRef(id));
+        }
         else if constexpr(std::is_same_v<T,GisGenericImportPlan>)
             for(const auto& feature:action.features)refs.insert({"generic",feature.id});
         else if constexpr(std::is_same_v<T,ContentEdit>) refs.insert(action.target);
@@ -92,16 +95,36 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                 require(action.baseRevision==project.revision(),CommandError::StaleRevision,"historical plan stale");
                 require(!action.additions.empty(),CommandError::InvalidTargets,"empty historical plan");
                 std::set<std::string> unique;
+                bool replacementMode=false;
+                std::map<std::string,std::string> expectedNames;
                 for(const auto& addition:action.additions) {
                     const auto& selection=addition.selection;
                     require(!selection.libraryId.empty()&&unique.insert(selection.libraryId).second,
                             CommandError::InvalidTargets,"duplicate historical selection");
-                    require(selection.instantiation.mode=="independent",CommandError::InvalidArguments,"M4 replacement plan required");
+                    require(selection.instantiation.mode=="independent"||selection.instantiation.mode=="territory-replacement",CommandError::InvalidArguments,"invalid historical mode");
+                    replacementMode|=selection.instantiation.mode=="territory-replacement";
+                    for(const auto& [id,name]:selection.instantiation.countryNameUpdates) {
+                        const auto found=expectedNames.find(id);
+                        require(found==expectedNames.end()||found->second==name,CommandError::InvalidArguments,"conflicting country updates");
+                        expectedNames[id]=name;
+                    }
                     require(!selection.partial||addition.partialApproved,CommandError::InvalidArguments,
                             "partial historical source not approved");
-                    require(selection.type!=UnitKind::Subunit||(addition.parent&&addition.sovereign),
+                    require(selection.type!=UnitKind::Subunit||addition.asIndependentCountry||(addition.parent&&addition.sovereign),
                             CommandError::InvalidArguments,"explicit historical ownership required");
+                    require(!addition.asIndependentCountry||(selection.type==UnitKind::Subunit&&!addition.parent&&!addition.sovereign&&!addition.countryName.empty()),
+                            CommandError::InvalidArguments,"invalid independent country choice");
                 }
+                require(action.countryNameUpdates==expectedNames,CommandError::InvalidArguments,"country updates differ from library");
+                require(replacementMode||action.territoryReplacements.empty(),CommandError::InvalidArguments,"unexpected historical geometry patch");
+                for(const auto& patch:action.territoryReplacements)
+                    require(patch.owner.domain=="territorial" && project.index().objects.count(patch.owner) &&
+                            (patch.geometry.type=="Polygon"||patch.geometry.type=="MultiPolygon"),
+                            CommandError::InvalidArguments,"invalid historical geometry patch");
+                for(const auto& [id,name]:action.countryNameUpdates)
+                    require(!name.empty()&&project.index().objects.count(territorialRef(id))&&
+                            project.document().units.at(project.index().objects.at(territorialRef(id))).kind==UnitKind::Country,
+                            CommandError::InvalidArguments,"invalid country name update");
             } else if constexpr(std::is_same_v<T,GisGenericImportPlan>) {
                 require(action.info.projectInstanceId==project.instanceId(),CommandError::ProjectMismatch,"GIS plan project changed");
                 require(action.info.documentId==project.document().documentId,CommandError::DocumentMismatch,"GIS plan document changed");
@@ -625,6 +648,17 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
                 const auto layer=project.layer(nativeLayerId(before,*ref));
                 require(!layer||!layer->locked,CommandError::Locked,"historical owner layer locked");
             }
+        }
+        for(const auto& patch:historical->territoryReplacements) {
+            const auto& owner=before.units.at(project.index().objects.at(patch.owner));
+            require(!owner.locked&&effectAllowed(before,patch.owner,"geometry"),CommandError::Locked,"historical geometry owner locked");
+            const auto layer=project.layer(nativeLayerId(before,patch.owner));
+            require(!layer||!layer->locked,CommandError::Locked,"historical geometry layer locked");
+        }
+        for(const auto& [id,name]:historical->countryNameUpdates) {
+            const auto ref=territorialRef(id);
+            const auto& owner=before.units.at(project.index().objects.at(ref));
+            require(!owner.locked&&effectAllowed(before,ref,"name"),CommandError::Locked,"historical country name locked");
         }
         return;
     }

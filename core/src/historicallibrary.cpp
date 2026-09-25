@@ -90,6 +90,11 @@ std::vector<const HistoricalEntity*> HistoricalLibrary::list() const {
     for(const auto& entity:entities_)result.push_back(&entity);
     return result;
 }
+std::vector<const WorldSnapshot*> HistoricalLibrary::listSnapshots() const {
+    std::vector<const WorldSnapshot*> result;
+    for(const auto& snapshot:snapshots_)result.push_back(&snapshot);
+    return result;
+}
 std::vector<const HistoricalEntity*> HistoricalLibrary::search(const HistoricalSearch& options) const {
     std::vector<const HistoricalEntity*> result;
     const auto needle=lower(trim(options.query));

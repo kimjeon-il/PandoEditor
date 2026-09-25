@@ -117,6 +117,7 @@ ApplicationWindow {
     }
     function handleBack() {
         if (Qt.inputMethod.visible) { Qt.inputMethod.hide(); return }
+        if (historicalPanel.visible) { historicalPanel.close(); return }
         if (webReport.visible) { cancelWebImportFlow(); return }
         if (errorDialog.visible) { errorDialog.close(); return }
         if (recoveryDialog.visible) { recoveryDialog.close(); return }
@@ -194,6 +195,7 @@ ApplicationWindow {
         mobileMode: editor.mobileMode
         holdFieldCommits: window.webImportFlowActive
         onWebImportRequested: window.requestWebImport()
+        onHistoricalLibraryRequested: historicalPanel.open()
         onOpenRequested: window.requestAction(editor.mobileMode ? "import" : "open")
         onSaveRequested: window.requestSave(false)
         onSaveAsRequested: editor.mobileMode ? window.requestExport() : window.requestSave(true)
@@ -202,6 +204,16 @@ ApplicationWindow {
     Shortcut { sequences: [StandardKey.Redo]; enabled: editor.canRedo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.redo() }
     Shortcut { sequence: StandardKey.Save; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestSave(false) }
     Shortcut { sequence: StandardKey.Open; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestAction(editor.mobileMode ? "import" : "open") }
+    HistoricalLibraryPanel {
+        id: historicalPanel
+        onLibraryFileRequested: historicalFileDialog.open()
+    }
+    Native.FileDialog {
+        id: historicalFileDialog
+        title: "역사 라이브러리 선택"
+        nameFilters: ["역사 라이브러리 JSON (*.json)"]
+        onAccepted: editor.loadHistoricalLibrary(selectedFile)
+    }
     Native.FileDialog {
         id: webOpenDialog
         objectName: "webOpenDialog"

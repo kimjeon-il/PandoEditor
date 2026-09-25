@@ -110,4 +110,38 @@ int main() {
     assert(CommandProcessor::confirm(fresh,*stale.preview).error==CommandError::StaleRevision);
     auto other=project();args.action=plan;
     assert(CommandProcessor::prepare(other,CommandProcessor::makeRequest(other,"historical.instantiate",args)).error==CommandError::ProjectMismatch);
+
+    auto replacement=entity("historical-country:R",UnitKind::Country,square(0,4));
+    replacement.instantiation.mode="territory-replacement";
+    replacement.instantiation.countryNameUpdates={{"A","Renamed Alpha"}};
+    const HistoricalLibrary replacementCatalog(2,{replacement},{});
+    auto replacing=project();
+    auto replacementPlan=planHistorical(replacing.snapshot(),replacementCatalog,
+        {{"historical-country:R","1945"}},
+        {{territorialRef("A"),square(4,6)}});
+    assert(replacing.document().units.size()==1);
+    args.action=replacementPlan;
+    auto replacementPreview=CommandProcessor::prepare(replacing,
+        CommandProcessor::makeRequest(replacing,"historical.instantiate",args));
+    assert(replacementPreview.ok()&&replacementPreview.preview);
+    assert(CommandProcessor::confirm(replacing,*replacementPreview.preview).changed());
+    assert(replacing.document().units.size()==2);
+    assert(replacing.document().units.front().name=="Renamed Alpha");
+    assert(replacing.document().geometries.get(replacing.document().units.front().geometry)->polygons.front().front().front().x==4);
+    assert(replacing.undo()&&replacing.document().units.size()==1);
+    assert(replacing.document().units.front().name=="Alpha");
+    assert(replacing.document().geometries.get(replacing.document().units.front().geometry)->polygons.front().front().front().x==0);
+
+    auto countryChoice=project();
+    auto newCountry=planHistorical(countryChoice.snapshot(),catalog,
+        {{"historical-subunit:S","1945","",{},{},false,true,"Former State"}});
+    assert(newCountry.additions.front().asIndependentCountry);
+    args.action=newCountry;
+    auto choicePreview=CommandProcessor::prepare(countryChoice,
+        CommandProcessor::makeRequest(countryChoice,"historical.instantiate",args));
+    assert(choicePreview.ok()&&choicePreview.preview);
+    assert(CommandProcessor::confirm(countryChoice,*choicePreview.preview).changed());
+    assert(countryChoice.document().units.back().kind==UnitKind::Country);
+    assert(countryChoice.document().units.back().libraryOrigin->libraryId=="historical-subunit:S");
+    assert(countryChoice.undo()&&countryChoice.document().units.size()==1);
 }

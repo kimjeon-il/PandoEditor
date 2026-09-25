@@ -10,6 +10,7 @@ add_library(pandoeditor_editor STATIC
     defaultflagresolver.cpp defaultflagresolver.h
     hydrodataprovider.cpp hydrodataprovider.h
     historicallibraryloader.cpp historicallibraryloader.h
+    historicaltransaction.cpp historicaltransaction.h
     gisgeojson.cpp gisgeojson.h
     gisdocumentexport.cpp gisdocumentexport.h
     hydromanifest.cpp hydromanifest.h
@@ -24,6 +25,7 @@ add_library(pandoeditor_editor STATIC
     editorpresentation.cpp
     webimport.cpp webmigration.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
     editorgeometry.cpp
+    editorhistorical.cpp
     editorcontent.cpp
     editorcontroller.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
@@ -48,6 +50,9 @@ qt_add_resources(pandoeditor ui
     FILES
         "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
         "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
         "${PROJECT_SOURCE_DIR}/ui/desktop/DesktopWorkspace.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml"
@@ -74,6 +79,10 @@ if(BUILD_TESTING)
     target_compile_definitions(historical_library_loader_tests PRIVATE
         M6_HISTORICAL_PILOT_SAMPLE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6/pilot-sample.json")
     add_test(NAME historical_library_loader_tests COMMAND historical_library_loader_tests)
+    add_executable(historical_transaction_tests ../tests/historical_transaction_tests.cpp)
+    target_link_libraries(historical_transaction_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME historical_transaction_tests COMMAND historical_transaction_tests -o -,txt)
+    set_tests_properties(historical_transaction_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     find_package(Qt6 REQUIRED COMPONENTS Test)
     add_executable(hydro_manifest_tests ../tests/hydro_manifest_tests.cpp)
     target_link_libraries(hydro_manifest_tests PRIVATE pandoeditor_editor Qt6::Test)
@@ -142,6 +151,9 @@ if(BUILD_TESTING)
     qt_add_resources(ui_tests ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui"
         FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
               "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml"
               "${PROJECT_SOURCE_DIR}/ui/common/EditorPanel.qml"
@@ -194,6 +206,9 @@ if(BUILD_TESTING)
     qt_add_resources(web_import_ui_tests ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui"
         FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
               "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml"
               "${PROJECT_SOURCE_DIR}/ui/common/EditorPanel.qml"

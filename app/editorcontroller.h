@@ -5,6 +5,7 @@
 #include "platformstorage.h"
 #include "mapprojection.h"
 #include "hydroruntimeprovider.h"
+#include <pandoeditor/historicalinstantiation.h>
 #include <pandoeditor/selection.h>
 #include <QObject>
 #include <QUrl>
@@ -50,6 +51,15 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantList objectRows READ objectRows NOTIFY stateChanged)
     Q_PROPERTY(QString searchQuery READ searchQuery WRITE setSearchQuery NOTIFY searchChanged)
     Q_PROPERTY(QVariantList searchResults READ searchResults NOTIFY searchChanged)
+    Q_PROPERTY(QVariantList historicalResults READ historicalResults NOTIFY historicalChanged)
+    Q_PROPERTY(QVariantList historicalSnapshots READ historicalSnapshots NOTIFY historicalChanged)
+    Q_PROPERTY(QVariantMap historicalPreview READ historicalPreview NOTIFY historicalChanged)
+    Q_PROPERTY(QVariantMap historicalImpact READ historicalImpact NOTIFY historicalChanged)
+    Q_PROPERTY(QVariantList historicalCountries READ historicalCountries NOTIFY historicalChanged)
+    Q_PROPERTY(QVariantList historicalOwnershipNeeded READ historicalOwnershipNeeded NOTIFY historicalChanged)
+    Q_PROPERTY(QString historicalStage READ historicalStage NOTIFY historicalChanged)
+    Q_PROPERTY(QString historicalError READ historicalError NOTIFY historicalChanged)
+    Q_PROPERTY(qulonglong historicalSession READ historicalSession NOTIFY historicalChanged)
     Q_PROPERTY(QVariantMap hoverObject READ hoverObject NOTIFY hoverChanged)
     Q_PROPERTY(qulonglong hoverRevision READ hoverRevision NOTIFY hoverChanged)
     Q_PROPERTY(bool webImportBusy READ webImportBusy NOTIFY webImportChanged)
@@ -100,6 +110,23 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantMap contentEditState READ contentEditState NOTIFY contentEditChanged)
     Q_PROPERTY(QVariantList geometryDraftPaths READ geometryDraftPaths NOTIFY geometryEditChanged)
 public:
+    QVariantList historicalResults() const;
+    QVariantList historicalSnapshots() const;
+    QVariantMap historicalPreview() const;
+    QVariantMap historicalImpact() const {return historicalImpact_;}
+    QVariantList historicalCountries() const;
+    QVariantList historicalOwnershipNeeded() const {return historicalOwnershipNeeded_;}
+    QString historicalStage() const {return historicalStage_;}
+    QString historicalError() const {return historicalError_;}
+    qulonglong historicalSession() const {return historicalSession_;}
+    Q_INVOKABLE bool loadHistoricalLibrary(const QUrl& url);
+    Q_INVOKABLE void searchHistorical(const QString& query,const QString& type,
+                                     const QString& status,const QString& referenceDate,const QString& region);
+    Q_INVOKABLE void selectHistorical(const QString& id,const QString& versionId="",
+                                     const QString& referenceDate="");
+    Q_INVOKABLE bool prepareHistoricalAdd(const QVariantMap& options);
+    Q_INVOKABLE bool confirmHistoricalAdd(qulonglong session);
+    Q_INVOKABLE void cancelHistoricalAdd();
     bool presentationRecoveryAvailable() const;
     Q_INVOKABLE bool restorePresentationRecovery();
     Q_INVOKABLE bool discardPresentationRecovery();
@@ -298,6 +325,7 @@ public:
     Q_INVOKABLE bool exportProject(const QUrl& url);
     Q_INVOKABLE bool confirmPrivateRecovery();
 signals:
+    void historicalChanged();
     void presentationRecoveryChanged();
     void presentationChanged();
     void propertyChanged();
@@ -322,6 +350,14 @@ signals:
     void contentEditChanged();
     void hydroFrameChanged();
 private:
+    std::shared_ptr<const pandoeditor::HistoricalLibrary> historicalLibrary_;
+    pandoeditor::HistoricalSearch historicalFilter_;
+    QString historicalSelectedId_,historicalVersionId_,historicalReferenceDate_;
+    QVariantMap historicalImpact_;
+    QVariantList historicalOwnershipNeeded_;
+    QString historicalStage_=QStringLiteral("unloaded"),historicalError_;
+    qulonglong historicalSession_=0;
+    std::optional<pandoeditor::CommandPreview> historicalCommandPreview_;
     QTimer presentationSaveTimer_;
     std::string presentationSaveInstance_;
     QString presentationRecoveryPath() const;

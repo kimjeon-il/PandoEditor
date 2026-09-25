@@ -62,6 +62,7 @@ public:
     const HistoricalEntity* get(const std::string& id) const;
     const WorldSnapshot* getSnapshot(const std::string& id) const;
     std::vector<const HistoricalEntity*> list() const;
+    std::vector<const WorldSnapshot*> listSnapshots() const;
     std::vector<const HistoricalEntity*> search(const HistoricalSearch& options) const;
     std::vector<std::string> entityRefsWithChildren(const std::vector<std::string>& rootIds,
                                                     const std::string& depth="none") const;
