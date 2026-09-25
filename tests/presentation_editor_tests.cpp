@@ -7,6 +7,22 @@
 class PresentationEditorTests:public QObject {
     Q_OBJECT
 private slots:
+    void countryFlagRemainsWhenNameChannelIsHidden() {
+        QTemporaryDir dir;
+        EditorController editor({false,dir.filePath("private.json")});
+        editor.selectCountry("DEU");
+        QVERIFY(editor.countryVisuals().value("DEU").toMap().value("flagAvailable").toBool());
+        QVERIFY(editor.setPresentationVisibility("basemapLabels",false));
+        const auto placed=editor.labelLayout(1,0,0,2,100000,100000);
+        const auto it=std::find_if(placed.begin(),placed.end(),[](const QVariant& row){
+            return row.toMap().value("ref").toMap().value("id").toString()=="DEU";
+        });
+        QVERIFY(it!=placed.end());
+        const auto flag=it->toMap();
+        QVERIFY(flag.value("flagVisible").toBool());
+        QVERIFY(!flag.value("flagSource").toString().isEmpty());
+        QVERIFY(!flag.value("nameVisible").toBool());
+    }
     void labelLayoutRespectsWebBottomSafeArea() {
         using namespace pandoeditor;
         for(const bool mobile:{false,true}) {
