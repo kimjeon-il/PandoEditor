@@ -203,6 +203,7 @@ ApplicationWindow {
         onHistoricalLibraryRequested: historicalPanel.open()
         onGisImportRequested: gisPanel.open()
         onGisExportRequested: gisExportPanel.open()
+        onProjectGpkgExportRequested: projectGpkgSaveDialog.open()
         onOpenRequested: window.requestAction(editor.mobileMode ? "import" : "open")
         onSaveRequested: window.requestSave(false)
         onSaveAsRequested: editor.mobileMode ? window.requestExport() : window.requestSave(true)
@@ -244,6 +245,15 @@ ApplicationWindow {
         defaultSuffix: "gpkg"
         nameFilters: ["GIS GeoPackage (*.gpkg)"]
         onAccepted: editor.exportGisData(selectedFile,"geopackage",window.gisExportSelection)
+    }
+    Native.FileDialog {
+        id: projectGpkgSaveDialog
+        objectName: "projectGpkgSaveDialog"
+        title: "복원 가능한 프로젝트 GeoPackage 저장"
+        fileMode: Native.FileDialog.SaveFile
+        defaultSuffix: "gpkg"
+        nameFilters: ["Pandoeditor 프로젝트 GeoPackage (*.gpkg)"]
+        onAccepted: editor.exportProjectGeoPackage(selectedFile)
     }
     Native.FileDialog {
         id: gisFileDialog
@@ -288,8 +298,12 @@ ApplicationWindow {
         id: openDialog
         objectName: "openDialog"
         title: editor.mobileMode ? "프로젝트 가져오기" : "프로젝트 열기"
-        nameFilters: ["Pandoeditor 프로젝트 (*.pando.json)", "JSON (*.json)"]
-        onAccepted: editor.mobileMode ? editor.importProject(selectedFile) : editor.openFile(selectedFile)
+        nameFilters: ["Pandoeditor 프로젝트 (*.pando.json *.gpkg)", "JSON (*.json)", "프로젝트 GeoPackage (*.gpkg)"]
+        onAccepted: {
+            if (selectedFile.toString().toLowerCase().endsWith(".gpkg")) editor.openProjectGeoPackage(selectedFile)
+            else if (editor.mobileMode) editor.importProject(selectedFile)
+            else editor.openFile(selectedFile)
+        }
     }
     Native.FileDialog {
         id: exportDialog
@@ -387,6 +401,12 @@ ApplicationWindow {
     }
     Connections {
         target: editor
+        function onProjectGpkgChanged() {
+            if (editor.projectGpkgState.stage === "error") {
+                errorDialog.message=editor.projectGpkgState.error
+                errorDialog.open()
+            }
+        }
         function onErrorOccurred(message) {
             if (window.webImportFlowActive) webReport.extraError=message
             else { errorDialog.message=message; errorDialog.open() }

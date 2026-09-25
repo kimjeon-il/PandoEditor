@@ -101,6 +101,9 @@ private slots:
             QVERIFY(confirm&&confirm->isEnabled());
             QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
             QMetaObject::invokeMethod(panel,"close");
+            QVERIFY(visualItem(window->contentItem(),"projectGpkgExportButton"));
+            QVERIFY(window->findChild<QObject*>("projectGpkgSaveDialog"));
+            QVERIFY(window->findChild<QObject*>("openDialog"));
             window->close();
         }
     }

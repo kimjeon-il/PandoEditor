@@ -64,6 +64,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantMap gisImportState READ gisImportState NOTIFY gisImportChanged)
     Q_PROPERTY(QVariantList gisExportLayers READ gisExportLayers NOTIFY stateChanged)
     Q_PROPERTY(QVariantMap gisExportState READ gisExportState NOTIFY gisExportChanged)
+    Q_PROPERTY(QVariantMap projectGpkgState READ projectGpkgState NOTIFY projectGpkgChanged)
     Q_PROPERTY(QVariantMap hoverObject READ hoverObject NOTIFY hoverChanged)
     Q_PROPERTY(qulonglong hoverRevision READ hoverRevision NOTIFY hoverChanged)
     Q_PROPERTY(bool webImportBusy READ webImportBusy NOTIFY webImportChanged)
@@ -331,6 +332,9 @@ public:
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
     Q_INVOKABLE bool openFile(const QUrl& url);
+    Q_INVOKABLE bool openProjectGeoPackage(const QUrl& url);
+    Q_INVOKABLE bool exportProjectGeoPackage(const QUrl& url);
+    QVariantMap projectGpkgState() const;
     Q_INVOKABLE bool saveFile(const QUrl& url);
     Q_INVOKABLE bool save();
     Q_INVOKABLE bool hasFile() const { return mobileMode_ ? storage_.privateProjectExists() : !filePath_.isEmpty(); }
@@ -343,6 +347,7 @@ signals:
     void historicalChanged();
     void gisImportChanged();
     void gisExportChanged();
+    void projectGpkgChanged();
     void presentationRecoveryChanged();
     void presentationChanged();
     void propertyChanged();
@@ -391,6 +396,8 @@ private:
     qulonglong gisImportToken_=0;
     QString gisExportStage_=QStringLiteral("idle"),gisExportError_,gisExportFileName_;
     qulonglong gisExportToken_=0;
+    QString projectGpkgStage_=QStringLiteral("idle"),projectGpkgError_,projectGpkgFileName_;
+    qulonglong projectGpkgToken_=0;
     QTimer presentationSaveTimer_;
     std::string presentationSaveInstance_;
     QString presentationRecoveryPath() const;

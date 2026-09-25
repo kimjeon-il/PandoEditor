@@ -33,6 +33,7 @@ add_library(pandoeditor_editor STATIC
     webimport.cpp webmigration.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
     editorgeometry.cpp
     editorhistorical.cpp
+    editorprojectgeopackage.cpp
     editorgis.cpp
     editorgisexport.cpp
     editorcontent.cpp
@@ -122,6 +123,17 @@ if(BUILD_TESTING)
     add_executable(project_geopackage_tests ../tests/project_geopackage_tests.cpp)
     target_link_libraries(project_geopackage_tests PRIVATE pandoeditor_editor Qt6::Sql)
     add_test(NAME project_geopackage_tests COMMAND project_geopackage_tests)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME m6_project_gpkg_sqlite_oracle
+            COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m6-project-gpkg-oracle.py"
+                "$<TARGET_FILE:project_geopackage_tests>")
+    endif()
+    add_executable(project_geopackage_controller_tests ../tests/project_geopackage_controller_tests.cpp)
+    target_link_libraries(project_geopackage_controller_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(project_geopackage_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME project_geopackage_controller_tests COMMAND project_geopackage_controller_tests -o -,txt)
+    set_tests_properties(project_geopackage_controller_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(gis_export_controller_tests ../tests/gis_export_controller_tests.cpp)
     target_link_libraries(gis_export_controller_tests PRIVATE pandoeditor_editor Qt6::Test)
     qt_add_resources(gis_export_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"

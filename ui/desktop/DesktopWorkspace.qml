@@ -12,6 +12,7 @@ Item {
     signal historicalLibraryRequested()
     signal gisImportRequested()
     signal gisExportRequested()
+    signal projectGpkgExportRequested()
     signal openRequested()
     signal saveRequested()
     signal saveAsRequested()
@@ -121,6 +122,8 @@ Item {
             ToolButton { objectName:"historicalLibraryButton";text:workspace.compact?"역사":"역사 라이브러리";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:workspace.historicalLibraryRequested() }
             ToolButton { objectName:"gisImportButton";text:"GIS";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:workspace.gisImportRequested() }
             ToolButton { objectName:"gisExportButton";text:"GIS 내보내기";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:workspace.gisExportRequested() }
+            ToolButton { objectName:"projectGpkgExportButton";text:"프로젝트 GPKG";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:workspace.projectGpkgExportRequested() }
+            Label { visible:editor.projectGpkgState.stage==="working" || editor.projectGpkgState.stage==="done";text:editor.projectGpkgState.stage==="working"?"GPKG 저장 중…":"GPKG 저장 완료";verticalAlignment:Text.AlignVCenter;font.pixelSize:11 }
             ToolButton { objectName:"closeSidePanel";text:"닫기";visible:workspace.sideOpen;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.searchOpen=false;workspace.editorOpen=false;workspace.legacyOpen=false} }
         }
         Item {
