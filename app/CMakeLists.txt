@@ -137,6 +137,14 @@ if(BUILD_TESTING)
               "${PROJECT_SOURCE_DIR}/ui/desktop/DesktopWorkspace.qml")
     qt_add_resources(ui_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    # The production app packages the complete flag set; these two tests need
+    # the pinned DEU default mapping and SVG to exercise a real flag-only label.
+    foreach(test_name presentation_editor_tests ui_tests)
+        qt_add_resources(${test_name} test_default_flag PREFIX "/defaults/flags"
+            BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags"
+            FILES "${PROJECT_SOURCE_DIR}/assets/defaults/flags/country-flags.js"
+                  "${PROJECT_SOURCE_DIR}/assets/defaults/flags/native/de.svg")
+    endforeach()
     add_test(NAME ui_tests COMMAND ui_tests -o -,txt)
     set_tests_properties(ui_tests PROPERTIES TIMEOUT 120 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()
