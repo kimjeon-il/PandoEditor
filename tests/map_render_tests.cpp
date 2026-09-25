@@ -4,10 +4,37 @@
 #include <QPainter>
 #include <hydroloadscheduler.h>
 #include <pandoeditor/maprenderorder.h>
+#include <tuple>
+#include <vector>
 
 class MapRenderTests:public QObject {
     Q_OBJECT
 private slots:
+    void territorialChildrenOwnTheirPixelsAboveCountry(){
+        using namespace pandoeditor;
+        ProjectDocument document;
+        for(const auto& [id,kind]:std::vector<std::pair<std::string,UnitKind>>{
+            {"country",UnitKind::Country},{"subunit",UnitKind::Subunit},{"region",UnitKind::Region}}){
+            TerritorialUnit unit;unit.id=id;unit.kind=kind;document.units.push_back(unit);
+        }
+        MapRenderItem item;item.setWidth(40);item.setHeight(40);
+        QVariantList paths;QVariantMap visuals;
+        for(const auto& [id,color,shape]:std::vector<std::tuple<QString,QString,QString>>{
+            {"region","#0000ff","M15 15 L25 15 L25 25 L15 25 Z"},
+            {"country","#ff0000","M5 5 L35 5 L35 35 L5 35 Z"},
+            {"subunit","#00ff00","M10 10 L30 10 L30 30 L10 30 Z"}}){
+            const auto order=mapRenderOrder(document,territorialRef(id.toStdString()),RenderPrimitiveRole::Fill);
+            paths.append(QVariantMap{{"countryId",id},{"path",shape}});
+            visuals[id]=QVariantMap{{"visible",true},{"color",color},{"boundary",false},
+                {"drawFillPass",order.pass},{"drawGroup",order.group},{"drawObject",order.object}};
+        }
+        item.setPaths(paths);item.setVisuals(visuals);
+        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
+        QPainter painter(&image);item.paint(&painter);painter.end();
+        QCOMPARE(image.pixelColor(7,7),QColor("#ff0000"));
+        QCOMPARE(image.pixelColor(12,12),QColor("#00ff00"));
+        QCOMPARE(image.pixelColor(20,20),QColor("#0000ff"));
+    }
     void overlayPairsFollowWebDrawGroups_data(){
         QTest::addColumn<QString>("left");QTest::addColumn<QString>("right");
         QTest::addColumn<QString>("top");

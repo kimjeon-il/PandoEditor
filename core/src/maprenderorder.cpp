@@ -34,9 +34,11 @@ MapRenderOrder mapBuiltinHydroRenderOrder(const std::string& kind,
 MapRenderOrder mapRenderOrder(const ProjectDocument& document,const ObjectRef& ref,
                              RenderPrimitiveRole role) {
     const auto group=groupFor(document,ref);
-    if(group=="countries")return {role==RenderPrimitiveRole::Boundary?50:10,0,0};
+    // Web submits child fills first but reserves their pixels with stencil.
+    // QPainter uses ordinary overpainting, so country must be behind children.
+    if(group=="countries")return {role==RenderPrimitiveRole::Boundary?50:0,0,0};
     if(group=="subunits"||group=="regions")
-        return {role==RenderPrimitiveRole::Fill?0:60,overlayIndex(group),territorialObjectOrder(document,ref)};
+        return {role==RenderPrimitiveRole::Fill?10:60,overlayIndex(group),territorialObjectOrder(document,ref)};
     if(group=="rivers"||group=="lakes")
         return mapBuiltinHydroRenderOrder(group=="lakes"?"lake":"river",role);
     if(group=="labels")return {role==RenderPrimitiveRole::Label?80:70,0,0};
