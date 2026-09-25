@@ -10,6 +10,7 @@ add_library(pandoeditor_core STATIC
     src/document.cpp
     src/temporal.cpp
     src/historicallibrary.cpp
+    src/historicalinstantiation.cpp
     src/content.cpp
     src/objectproperties.cpp
     src/geometrypredicates.cpp
@@ -34,6 +35,9 @@ if(BUILD_TESTING)
     add_executable(historical_library_tests ../tests/historical_library_tests.cpp)
     target_link_libraries(historical_library_tests PRIVATE Pandoeditor::Core)
     add_test(NAME historical_library_tests COMMAND historical_library_tests)
+    add_executable(historical_instantiation_tests ../tests/historical_instantiation_tests.cpp)
+    target_link_libraries(historical_instantiation_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME historical_instantiation_tests COMMAND historical_instantiation_tests)
     add_executable(historical_library_probe ../tests/historical_library_probe.cpp)
     target_link_libraries(historical_library_probe PRIVATE Pandoeditor::Core)
     add_executable(temporal_probe ../tests/temporal_probe.cpp)

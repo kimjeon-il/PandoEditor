@@ -1,6 +1,7 @@
 #pragma once
 #include <pandoeditor/document.h>
 #include <pandoeditor/territorialmutation.h>
+#include <pandoeditor/historicalinstantiation.h>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -49,7 +50,8 @@ struct ContentEdit {
 struct SetPhysicalData { PhysicalDataSettings settings; };
 using CommandAction = std::variant<std::monostate, SetCountryColor, AddLayer,
     RemoveLayer, MoveLayer, SetLayerVisible, SetLayerLocked, MoveCountry,
-    TerritorialFieldEdit, TerritorialColorEdit, TerritorialLockEdit, ApplyTerritorialMutation, ContentEdit, SetPhysicalData>;
+    TerritorialFieldEdit, TerritorialColorEdit, TerritorialLockEdit, ApplyTerritorialMutation, ContentEdit, SetPhysicalData,
+    HistoricalInstantiationPlan>;
 struct CommandArguments { PropertyEdits properties; CommandAction action; };
 struct CommandRequest {
     std::string commandId, projectInstanceId, documentId;

@@ -37,6 +37,12 @@ std::vector<ObjectRef> targetsFor(const CommandArguments& args)
         } else if constexpr(std::is_same_v<T,TerritorialFieldEdit>) refs.insert(action.target);
         else if constexpr(std::is_same_v<T,TerritorialColorEdit> || std::is_same_v<T,TerritorialLockEdit>) refs.insert(action.targets.begin(),action.targets.end());
         else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>) refs.insert(action.plan.affectedObjects.begin(),action.plan.affectedObjects.end());
+        else if constexpr(std::is_same_v<T,HistoricalInstantiationPlan>)
+            for(const auto& addition:action.additions) {
+                refs.insert(territorialRef(addition.selection.libraryId));
+                if(addition.parent)refs.insert(*addition.parent);
+                if(addition.sovereign)refs.insert(*addition.sovereign);
+            }
         else if constexpr(std::is_same_v<T,ContentEdit>) refs.insert(action.target);
         else if constexpr(std::is_same_v<T,SetPhysicalData>) {}
         else if constexpr(!std::is_same_v<T,std::monostate>) refs.insert({"userLayer",action.id});
@@ -55,7 +61,7 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
         {"territorial.batch-color",9},{"territorial.lock",10},{"territorial.create",11},
         {"territorial.relation.parent",11},{"territorial.relation.sovereign",11},
         {"territorial.delete",11},{"territorial.geometry.commit",11},{"territorial.geometry.replace",11},
-        {"content.edit",12},{"physical-data.configure",13}};
+        {"content.edit",12},{"physical-data.configure",13},{"historical.instantiate",14}};
     auto found=std::find_if(std::begin(commands),std::end(commands),[&](const auto& c){return request.commandId==c.first;});
     require(found!=std::end(commands),CommandError::InvalidCommand,"unknown commandId");
     require(request.args.action.index()==found->second,CommandError::InvalidArguments,"commandId/action mismatch");
@@ -77,6 +83,20 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
             else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>) {
                 require(action.plan.projectInstanceId==project.instanceId()&&action.plan.documentId==project.document().documentId&&action.plan.baseRevision==project.revision(),CommandError::StaleRevision,"territorial plan stale");
                 require(!action.plan.affectedObjects.empty(),CommandError::InvalidTargets,"empty territorial plan");
+            } else if constexpr(std::is_same_v<T,HistoricalInstantiationPlan>) {
+                require(action.projectInstanceId==project.instanceId(),CommandError::ProjectMismatch,"historical plan project changed");
+                require(action.documentId==project.document().documentId,CommandError::DocumentMismatch,"historical plan document changed");
+                require(action.baseRevision==project.revision(),CommandError::StaleRevision,"historical plan stale");
+                require(!action.additions.empty(),CommandError::InvalidTargets,"empty historical plan");
+                std::set<std::string> unique;
+                for(const auto& addition:action.additions) {
+                    const auto& selection=addition.selection;
+                    require(!selection.libraryId.empty()&&unique.insert(selection.libraryId).second,
+                            CommandError::InvalidTargets,"duplicate historical selection");
+                    require(selection.instantiation.mode=="independent",CommandError::InvalidArguments,"M4 replacement plan required");
+                    require(selection.type!=UnitKind::Subunit||(addition.parent&&addition.sovereign),
+                            CommandError::InvalidArguments,"explicit historical ownership required");
+                }
             }
         },request.args.action);
     }
@@ -116,6 +136,13 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
         if(std::holds_alternative<ContentEdit>(request.args.action)) {
             require(!ref.id.empty(),CommandError::InvalidTargets,"empty content target");
             continue; // The typed payload and target are checked together below.
+        }
+        if(const auto historical=std::get_if<HistoricalInstantiationPlan>(&request.args.action)) {
+            const auto created=std::any_of(historical->additions.begin(),historical->additions.end(),
+                [&](const auto& item){return territorialRef(item.selection.libraryId)==ref;});
+            require(ref.domain=="territorial" && (created? !project.index().objects.count(ref)
+                :project.index().objects.count(ref)!=0),CommandError::InvalidTargets,"historical target invalid");
+            continue;
         }
         if(ref.domain=="territorial") {
             const auto create=std::get_if<ApplyTerritorialMutation>(&request.args.action);
@@ -465,6 +492,8 @@ void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const 
             applyTerritorial(candidate,action);
         } else if constexpr(std::is_same_v<T,ContentEdit>) {
             applyContent(candidate,index,action);
+        } else if constexpr(std::is_same_v<T,HistoricalInstantiationPlan>) {
+            applyHistoricalInstantiation(candidate,action);
         }
     },args.action);
     for(const auto& field:args.properties.fields)applyField(candidate,index,field);
@@ -556,6 +585,19 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
                 require(!u.locked,CommandError::Locked,"object locked");
                 const auto layer=project.layer(nativeLayerId(before,ref));
                 require(!layer||!layer->locked,CommandError::Locked,"source layer locked");
+            }
+        }
+        return;
+    }
+    if(const auto historical=std::get_if<HistoricalInstantiationPlan>(&request.args.action)) {
+        for(const auto& addition:historical->additions) {
+            require(effectAllowed(before,territorialRef(addition.selection.libraryId),"add"),
+                    CommandError::UnsupportedDependency,"historical creation dependency");
+            for(const auto& ref:{addition.parent,addition.sovereign})if(ref&&project.index().objects.count(*ref)) {
+                const auto& owner=before.units.at(project.index().objects.at(*ref));
+                require(!owner.locked,CommandError::Locked,"historical owner locked");
+                const auto layer=project.layer(nativeLayerId(before,*ref));
+                require(!layer||!layer->locked,CommandError::Locked,"historical owner layer locked");
             }
         }
         return;

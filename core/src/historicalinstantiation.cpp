@@ -1,0 +1,59 @@
+#include <pandoeditor/historicalinstantiation.h>
+#include <pandoeditor/project.h>
+#include <algorithm>
+#include <set>
+#include <stdexcept>
+
+namespace pandoeditor {
+HistoricalInstantiationPlan planIndependentHistorical(const ProjectSnapshot& project,
+    const HistoricalLibrary& catalog,const std::vector<HistoricalAddRequest>& requests) {
+    if(requests.empty())throw std::invalid_argument("INVALID_LIBRARY: empty selection");
+    HistoricalInstantiationPlan plan{project.instanceId(),project.document().documentId,project.revision(),{}};
+    std::set<std::string> ids;
+    for(const auto& request:requests) {
+        auto selection=catalog.instantiate(request.libraryId,request.referenceDate,request.geometryVersionId);
+        if(selection.instantiation.mode!="independent")
+            throw std::invalid_argument("INVALID_LIBRARY: territory replacement requires M4 plan");
+        if(!ids.insert(selection.libraryId).second || project.index().objects.count(territorialRef(selection.libraryId)))
+            throw std::invalid_argument("DUPLICATE_ID: historical unit");
+        if(selection.type==UnitKind::Subunit && (!request.parent||!request.sovereign))
+            throw std::invalid_argument("SOVEREIGN_MISMATCH: explicit ownership required");
+        if(selection.type==UnitKind::Country && (request.parent||request.sovereign))
+            throw std::invalid_argument("INVALID_LIBRARY: country ownership");
+        plan.additions.push_back({std::move(selection),normalizeTemporal(request.referenceDate),
+                                  request.parent,request.sovereign});
+    }
+    // Verify every relation, geometry and sibling constraint before exposing a
+    // plan; CommandProcessor repeats this against a candidate at prepare time.
+    auto candidate=project.document();
+    applyHistoricalInstantiation(candidate,plan);
+    validateDocument(candidate);
+    return plan;
+}
+void applyHistoricalInstantiation(ProjectDocument& document,const HistoricalInstantiationPlan& plan) {
+    for(const auto& addition:plan.additions) {
+        const auto& selection=addition.selection;
+        GeometryRef ref{"historical-geometry:"+selection.libraryId,1};
+        if(document.geometries.get(ref))throw std::invalid_argument("DUPLICATE_ID: historical geometry");
+        document.geometries.insert(ref,selection.geometry);
+        TerritorialUnit unit;
+        unit.id=selection.libraryId;unit.kind=selection.type;unit.name=selection.name;
+        unit.baseName=selection.type==UnitKind::Country?selection.name:"";
+        unit.nameExplicit=true;unit.geometry=ref;unit.validity=selection.validity;
+        unit.coverageMode=selection.type==UnitKind::Subunit?"partition":"explicit";
+        unit.libraryOrigin=LibraryOrigin{selection.libraryId,selection.geometryVersionId,
+            addition.referenceDate,selection.sourceId,"2",selection.certainty,selection.datePrecision,false,{}};
+        document.units.push_back(std::move(unit));
+        const auto owner=territorialRef(selection.libraryId);
+        document.presentation.objectStyles.emplace(owner,ObjectStyle{});
+        if(!document.presentation.userLayers.empty())
+            document.presentation.membership.emplace(owner,document.presentation.userLayers.front().id);
+        if(selection.type!=UnitKind::Country) {
+            auto relationId="historical-relation:"+selection.libraryId;
+            if(std::any_of(document.relations.begin(),document.relations.end(),[&](const auto& r){return r.id==relationId;}))
+                throw std::invalid_argument("DUPLICATE_ID: historical relation");
+            document.relations.push_back({relationId,owner,addition.parent,addition.sovereign,false,{}});
+        }
+    }
+}
+}

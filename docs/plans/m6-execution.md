@@ -27,8 +27,8 @@ territorial changes.
   export controller `871293159a55d13f88f14813f8b706765d6368f9`,
   registry `634fab3cfa6e19d5dd4488eb330c9add02df7237`, adapter
   `assets/js/gis-adapters.js` blob `be606ee43b39b1b1ddc15dc166908f966217f960`.
-- Native codec currently reads v1–v6 and writes v6. Bump only when typed
-  canonical provenance is added; keep old readers and migrations.
+- Native codec now reads v1–v7 and writes v7 for typed historical origins;
+  prior readers and migrations remain covered by roundtrip tests.
 
 ## Architecture and file boundaries
 
