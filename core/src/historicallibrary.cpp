@@ -177,6 +177,7 @@ HistoricalSelection HistoricalLibrary::instantiate(const std::string& libraryId,
              entity->validity.to?entity->validity.to:version->validity.to},
             entity->parentLibraryId,entity->sovereignLibraryId,
             entity->instantiation,entity->metadata,entity->sourceInfo,
-            version->certainty,version->datePrecision,version->sourceId};
+            version->certainty,version->datePrecision,version->sourceId,
+            version->partial,version->missingSourceIds};
 }
 }

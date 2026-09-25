@@ -41,6 +41,12 @@ int main(int argc,char** argv) {
     assert(built.missingEntityIds.size()==2);
     const auto copy=built.library.instantiate("historical-country:czechoslovakia","1991");
     assert(copy.geometry.polygons.size()==1);
+    const auto partlyMaterialized=materializeHistoricalSource(source,
+        [](const std::string& id)->std::optional<Geometry>{return id=="CZE"?std::optional<Geometry>{box(0)}:std::nullopt;},kernel);
+    const auto partialCopy=partlyMaterialized.library.instantiate("historical-country:czechoslovakia","1991");
+    assert(partialCopy.partial);
+    assert(!partialCopy.missingSourceIds.empty());
+    assert(partialCopy.missingSourceIds.front()=="current-country:SVK");
     assert(rejected([&]{auto invalid=bytes;invalid.replace(0,invalid.indexOf('2')+1,
         QByteArray("{\"schemaVersion\":3"));parseHistoricalLibrarySource(invalid);}));
     assert(rejected([]{parseHistoricalLibrarySource("{not JSON");}));

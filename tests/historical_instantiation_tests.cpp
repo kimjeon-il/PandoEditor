@@ -66,6 +66,27 @@ int main() {
     try { (void)planIndependentHistoricalSnapshot(snapshotProject.snapshot(),partial,"snapshot:1945"); }
     catch(const std::invalid_argument&){missingEntity=true;}
     assert(missingEntity&&snapshotProject.document().units.size()==1);
+    auto partialEntity=entity("historical-country:partial",UnitKind::Country,square(40));
+    partialEntity.geometryVersions.front().partial=true;
+    partialEntity.geometryVersions.front().missingSourceIds={"current-country:missing"};
+    HistoricalLibrary partialCatalog(2,{partialEntity},{});
+    bool unapproved=false;
+    try { (void)planIndependentHistorical(snapshotProject.snapshot(),partialCatalog,
+        {{"historical-country:partial","1945"}}); }
+    catch(const std::invalid_argument&){unapproved=true;}
+    assert(unapproved);
+    auto approved=planIndependentHistorical(snapshotProject.snapshot(),partialCatalog,
+        {{"historical-country:partial","1945","",{},{},true}});
+    assert(approved.additions.front().selection.partial);
+    assert(approved.additions.front().selection.missingSourceIds.front()=="current-country:missing");
+    args.action=approved;
+    auto partialPreview=CommandProcessor::prepare(snapshotProject,
+        CommandProcessor::makeRequest(snapshotProject,"historical.instantiate",args));
+    assert(partialPreview.ok()&&partialPreview.preview);
+    assert(CommandProcessor::confirm(snapshotProject,*partialPreview.preview).changed());
+    const auto& partialOrigin=*snapshotProject.document().units.back().libraryOrigin;
+    assert(partialOrigin.partial&&partialOrigin.missingLibraryRefs.front()=="current-country:missing");
+    assert(snapshotProject.undo());
     auto missingOwnership=false;
     try { (void)planIndependentHistorical(p.snapshot(),catalog,{{"historical-subunit:S","1945"}}); }
     catch(const std::invalid_argument&){missingOwnership=true;}

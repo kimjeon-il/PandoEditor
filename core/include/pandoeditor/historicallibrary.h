@@ -12,6 +12,8 @@ struct HistoricalGeometryVersion {
     Validity validity;
     Geometry geometry; // Materialized Polygon/MultiPolygon owned by the catalog.
     std::string datePrecision="unknown", certainty="unknown", sourceId, notes;
+    bool partial=false;
+    std::vector<std::string> missingSourceIds;
 };
 struct HistoricalInstantiationPolicy {
     std::string mode="independent";
@@ -43,6 +45,8 @@ struct HistoricalSelection {
     std::string parentLibraryId,sovereignLibraryId;
     HistoricalInstantiationPolicy instantiation;
     std::string metadata,sourceInfo,certainty,datePrecision,sourceId;
+    bool partial=false;
+    std::vector<std::string> missingSourceIds;
 };
 enum class HistoricalStatus { All, Current, Past };
 struct HistoricalSearch {

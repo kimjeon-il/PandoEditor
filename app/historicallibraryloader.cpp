@@ -150,7 +150,11 @@ HistoricalMaterialization materializeHistoricalSource(
                 for(const auto& id:raw.memberCountryIds) {
                     const auto item=countryGeometry(id);
                     if(item)members.push_back(*item);
-                    else missingCountries.push_back(id);
+                    else {
+                        missingCountries.push_back(id);
+                        version.partial=true;
+                        version.missingSourceIds.push_back("current-country:"+id);
+                    }
                 }
                 if(members.size()==1)geometry=std::move(members.front());
                 else if(members.size()>1)

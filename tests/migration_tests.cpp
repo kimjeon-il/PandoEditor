@@ -27,6 +27,7 @@ private slots:
         origin.certainty="low";
         origin.datePrecision="approximate";
         origin.partial=true;
+        origin.missingLibraryRefs={"current-country:missing"};
         document.units.front().libraryOrigin=origin;
         Project project;project.replace(document);
         const auto saved=projectcodec::encode(project);
@@ -40,6 +41,7 @@ private slots:
         QCOMPARE(actual.certainty,origin.certainty);
         QCOMPARE(actual.datePrecision,origin.datePrecision);
         QVERIFY(actual.partial);
+        QCOMPARE(actual.missingLibraryRefs,origin.missingLibraryRefs);
         QCOMPARE(projectcodec::encode(project),saved);
     }
     void labelAndDistributionSettingsPromoteAndRoundTrip() {

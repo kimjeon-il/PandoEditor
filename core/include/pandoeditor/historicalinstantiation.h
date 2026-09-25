@@ -10,11 +10,13 @@ class ProjectSnapshot;
 struct HistoricalAddRequest {
     std::string libraryId,referenceDate,geometryVersionId;
     std::optional<ObjectRef> parent,sovereign;
+    bool approvePartial=false;
 };
 struct HistoricalAddition {
     HistoricalSelection selection;
     std::optional<std::string> referenceDate;
     std::optional<ObjectRef> parent,sovereign;
+    bool partialApproved=false;
 };
 struct HistoricalInstantiationPlan {
     std::string projectInstanceId,documentId;

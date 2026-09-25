@@ -14,6 +14,8 @@ HistoricalInstantiationPlan planIndependentHistorical(const ProjectSnapshot& pro
         auto selection=catalog.instantiate(request.libraryId,request.referenceDate,request.geometryVersionId);
         if(selection.instantiation.mode!="independent")
             throw std::invalid_argument("INVALID_LIBRARY: territory replacement requires M4 plan");
+        if(selection.partial&&!request.approvePartial)
+            throw std::invalid_argument("INVALID_LIBRARY: partial source requires approval");
         if(!ids.insert(selection.libraryId).second || project.index().objects.count(territorialRef(selection.libraryId)))
             throw std::invalid_argument("DUPLICATE_ID: historical unit");
         if(selection.type==UnitKind::Subunit && (!request.parent||!request.sovereign))
@@ -21,7 +23,7 @@ HistoricalInstantiationPlan planIndependentHistorical(const ProjectSnapshot& pro
         if(selection.type==UnitKind::Country && (request.parent||request.sovereign))
             throw std::invalid_argument("INVALID_LIBRARY: country ownership");
         plan.additions.push_back({std::move(selection),normalizeTemporal(request.referenceDate),
-                                  request.parent,request.sovereign});
+                                  request.parent,request.sovereign,request.approvePartial});
     }
     // Verify every relation, geometry and sibling constraint before exposing a
     // plan; CommandProcessor repeats this against a candidate at prepare time.
@@ -65,7 +67,8 @@ void applyHistoricalInstantiation(ProjectDocument& document,const HistoricalInst
         unit.nameExplicit=true;unit.geometry=ref;unit.validity=selection.validity;
         unit.coverageMode=selection.type==UnitKind::Subunit?"partition":"explicit";
         unit.libraryOrigin=LibraryOrigin{selection.libraryId,selection.geometryVersionId,
-            addition.referenceDate,selection.sourceId,"2",selection.certainty,selection.datePrecision,false,{}};
+            addition.referenceDate,selection.sourceId,"2",selection.certainty,selection.datePrecision,
+            selection.partial,selection.missingSourceIds};
         document.units.push_back(std::move(unit));
         const auto owner=territorialRef(selection.libraryId);
         document.presentation.objectStyles.emplace(owner,ObjectStyle{});

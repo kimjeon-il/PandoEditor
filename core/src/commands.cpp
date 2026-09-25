@@ -94,6 +94,8 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                     require(!selection.libraryId.empty()&&unique.insert(selection.libraryId).second,
                             CommandError::InvalidTargets,"duplicate historical selection");
                     require(selection.instantiation.mode=="independent",CommandError::InvalidArguments,"M4 replacement plan required");
+                    require(!selection.partial||addition.partialApproved,CommandError::InvalidArguments,
+                            "partial historical source not approved");
                     require(selection.type!=UnitKind::Subunit||(addition.parent&&addition.sovereign),
                             CommandError::InvalidArguments,"explicit historical ownership required");
                 }
