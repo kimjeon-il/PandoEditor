@@ -34,6 +34,12 @@ private slots:
         QCOMPARE(restored.revision(),restoredRevision);
         QVERIFY(!restored.hasFile());
 
+        const auto web=QString::fromUtf8(WEB_GPKG_FIXTURE)+"/web-project.gpkg";
+        QVERIFY(!restored.openProjectGeoPackage(QUrl::fromLocalFile(web)));
+        QCOMPARE(restored.documentBytes(),original);
+        QCOMPARE(restored.revision(),restoredRevision);
+        QVERIFY(!restored.hasFile());
+
         QVERIFY(!editor.exportProjectGeoPackage(QUrl::fromLocalFile(directory.filePath("incorrect.json"))));
         QVERIFY(!QFile::exists(directory.filePath("incorrect.json")));
     }

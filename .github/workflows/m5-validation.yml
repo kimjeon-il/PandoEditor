@@ -44,6 +44,8 @@ jobs:
           PANDOEDITOR_HYDRO_FULL_MANIFEST: ${{ steps.real_hydro.outcome == 'success' && format('{0}/full-hydro-world-map/assets/data/hydro/v0.13.1/manifest.json', github.workspace) || '' }}
           PANDOEDITOR_HISTORICAL_FULL_PILOT: ${{ github.workspace }}/full-hydro-world-map/assets/data/historical-library-pilot.json
         run: ctest --test-dir build --output-on-failure --output-junit results.xml
+      - name: Audit complete regression
+        run: python tools/m6-regression-audit.py build/results.xml build/Testing/Temporary/LastTest.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:

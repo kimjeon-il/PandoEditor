@@ -109,6 +109,14 @@ if(BUILD_TESTING)
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME gis_import_controller_tests COMMAND gis_import_controller_tests -o -,txt)
     set_tests_properties(gis_import_controller_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(gis_failure_matrix_tests ../tests/gis_failure_matrix_tests.cpp)
+    target_link_libraries(gis_failure_matrix_tests PRIVATE pandoeditor_editor Qt6::Test Qt6::Sql)
+    target_compile_definitions(gis_failure_matrix_tests PRIVATE
+        WEB_GIS_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
+    qt_add_resources(gis_failure_matrix_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME gis_failure_matrix_tests COMMAND gis_failure_matrix_tests -o -,txt)
+    set_tests_properties(gis_failure_matrix_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     find_package(Python3 COMPONENTS Interpreter QUIET)
     if(Python3_Interpreter_FOUND)
         add_test(NAME m6_gpkg_web_fixture
@@ -130,6 +138,8 @@ if(BUILD_TESTING)
     endif()
     add_executable(project_geopackage_controller_tests ../tests/project_geopackage_controller_tests.cpp)
     target_link_libraries(project_geopackage_controller_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(project_geopackage_controller_tests PRIVATE
+        WEB_GPKG_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
     qt_add_resources(project_geopackage_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME project_geopackage_controller_tests COMMAND project_geopackage_controller_tests -o -,txt)
