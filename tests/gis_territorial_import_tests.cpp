@@ -56,7 +56,7 @@ int main(int argc,char** argv) {
     const auto plan=prepareGisTerritorialImport(p.snapshot(),crossing,"transfer",
         {"import.geojson","geojson"},mapping,calculateGeometry);
     assert(plan.countryReplacements.size()==2);
-    assert(p.document().units.size()==2 && p.revision()>0);
+    assert(p.document().units.size()==2 && p.revision()==0);
     confirm(p,plan);
     assert(unit(p,"sub:transfer").kind==UnitKind::Subunit);
     assert(geometryContains(*p.document().geometries.get(unit(p,"A").geometry),
