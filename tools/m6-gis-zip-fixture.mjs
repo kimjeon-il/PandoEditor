@@ -7,7 +7,15 @@ const pin = JSON.parse(readFileSync(new URL('../tests/fixtures/web-m6/manifest.j
 function storeFixture(name, bytes) {
   const path = new URL('../tests/fixtures/web-m6/' + name, import.meta.url);
   if (process.argv.includes('--verify')) {
-    if (!readFileSync(path).equals(bytes)) throw new Error('Web GIS ZIP fixture changed: ' + name);
+    // ZIP timestamps and deflate streams can differ across Node runtimes.
+    // The web contract is the archive members and their exact decoded bytes.
+    const expected = context.fflate.unzipSync(readFileSync(path));
+    const actual = context.fflate.unzipSync(bytes);
+    const paths = Object.keys(expected).sort();
+    if (JSON.stringify(paths) !== JSON.stringify(Object.keys(actual).sort()) ||
+        paths.some(key => !Buffer.from(expected[key]).equals(Buffer.from(actual[key])))) {
+      throw new Error('Web GIS ZIP fixture contents changed: ' + name);
+    }
   } else writeFileSync(path, bytes);
 }
 for (const name of ['gis-io.js', 'fflate.min.js', 'gis-adapters.js']) {
