@@ -68,13 +68,18 @@ int main() {
         {"generic","place",{"generic","generic"},{"label","label"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Point},
         {"place","label",{"label","label"},{"label","label"},RenderPrimitiveRole::Point,RenderPrimitiveRole::Label},
         {"country","subunit",{"territorial","country"},{"territorial","subunit"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Fill},
+        {"lake","lake-boundary",{"hydro","lake"},{"hydro","lake"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Boundary},
+        {"lake-boundary","river",{"hydro","lake"},{"hydro","river"},RenderPrimitiveRole::Boundary,RenderPrimitiveRole::Line},
+        {"river","country-boundary",{"hydro","river"},{"territorial","country"},RenderPrimitiveRole::Line,RenderPrimitiveRole::Boundary},
+        {"country-boundary","generic-line",{"territorial","country"},{"generic","generic"},RenderPrimitiveRole::Boundary,RenderPrimitiveRole::Line},
+        {"generic-line","place",{"generic","generic"},{"label","label"},RenderPrimitiveRole::Line,RenderPrimitiveRole::Point},
     };
     for(std::size_t i=0;i<pairs.size();++i){
         const auto& p=pairs[i];
         auto order=[&](const ObjectRef& ref,RenderPrimitiveRole role){return ref.domain=="hydro"?
             mapBuiltinHydroRenderOrder(ref.id,role):mapRenderOrder(document,ref,role);};
         const auto top=order(p.a,p.ar)<order(p.b,p.br)?p.right:p.left;
-        const auto chooser=p.left==std::string("place")?"same-ref":
+        const auto chooser=p.a.domain==p.b.domain&&p.a.id==p.b.id?"same-ref":
             (p.a.domain=="hydro"?mapBuiltinHydroPickOrder():mapPickOrder(document,p.a))>=
             (p.b.domain=="hydro"?mapBuiltinHydroPickOrder():mapPickOrder(document,p.b))?p.left:p.right;
         std::cout<<(i?",":"")<<"{\"pair\":\""<<p.left<<"/"<<p.right
