@@ -1,5 +1,6 @@
 #pragma once
 #include <pandoeditor/document.h>
+#include <pandoeditor/territorialmutation.h>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -48,6 +49,27 @@ struct GisGenericImportPlan {
     GisImportPlan info;
     std::vector<GisGenericInput> features;
 };
+// The worker owns all geometry, including donor patches. The core repeats the
+// candidate validation at command preparation; the live project is never a
+// workspace for geometry operations.
+struct GisTerritorialInput {
+    std::string id,name,notes;
+    UnitKind kind=UnitKind::Region;
+    Geometry geometry;
+    std::optional<ObjectRef> parent,sovereign;
+    Validity validity;
+    std::optional<std::uint32_t> color;
+    bool replaceExisting=false;
+};
+struct GisTerritorialImportPlan {
+    GisImportPlan info;
+    std::vector<GisTerritorialInput> units;
+    std::vector<GeometryReplacement> countryReplacements;
+};
+GisTerritorialImportPlan planTerritorialGisImport(const ProjectSnapshot&,std::string planId,
+    GisSource,GisExchangeTarget,std::vector<GisTerritorialInput>,
+    std::vector<GeometryReplacement> countryReplacements={});
+void applyTerritorialGisImport(ProjectDocument&,const GisTerritorialImportPlan&);
 GisGenericImportPlan planGenericGisImport(const ProjectSnapshot&,std::string planId,
     GisSource,std::vector<GisGenericInput>);
 void applyGenericGisImport(ProjectDocument&,const GisGenericImportPlan&);

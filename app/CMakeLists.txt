@@ -15,6 +15,7 @@ add_library(pandoeditor_editor STATIC
     gisgeojson.cpp gisgeojson.h
     giszip.cpp giszip.h
     gisgeopackage.cpp gisgeopackage.h
+    gisterritorial.cpp gisterritorial.h
     gisdocumentexport.cpp gisdocumentexport.h
     hydromanifest.cpp hydromanifest.h
     hydroassetreader.cpp hydroassetreader.h
@@ -84,6 +85,11 @@ if(BUILD_TESTING)
     target_compile_definitions(gis_geopackage_tests PRIVATE
         WEB_GPKG_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
     add_test(NAME gis_geopackage_tests COMMAND gis_geopackage_tests)
+    add_executable(gis_territorial_import_tests ../tests/gis_territorial_import_tests.cpp)
+    target_link_libraries(gis_territorial_import_tests PRIVATE pandoeditor_editor)
+    target_compile_definitions(gis_territorial_import_tests PRIVATE
+        WEB_GIS_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
+    add_test(NAME gis_territorial_import_tests COMMAND gis_territorial_import_tests)
     find_package(Python3 COMPONENTS Interpreter QUIET)
     if(Python3_Interpreter_FOUND)
         add_test(NAME m6_gpkg_web_fixture
