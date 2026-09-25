@@ -797,7 +797,7 @@ bool semanticallyEqual(const ProjectDocument& a,const ProjectDocument& b)
     return a.documentId==b.documentId && sameContent(a,b) &&
         same(a.units,b.units,[](const auto& x,const auto& y) {
             return x.id==y.id && x.name==y.name && x.baseName==y.baseName && x.nameExplicit==y.nameExplicit && x.notes==y.notes && x.kind==y.kind &&
-                x.geometry==y.geometry && x.locked==y.locked && sameValidity(x.validity,y.validity) && x.coverageMode==y.coverageMode;
+                x.geometry==y.geometry && x.locked==y.locked && sameValidity(x.validity,y.validity) && x.coverageMode==y.coverageMode && x.libraryOrigin==y.libraryOrigin;
         }) && same(a.relations,b.relations,[](const auto& x,const auto& y) {
             return x.id==y.id && x.unit==y.unit && x.parent==y.parent && x.sovereign==y.sovereign &&
                 x.dated==y.dated && sameValidity(x.validity,y.validity);

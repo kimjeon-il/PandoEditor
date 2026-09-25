@@ -41,6 +41,20 @@ struct SourceProvenance {
     // Lossless JSON object; parsing is owned by the codec boundary.
     std::string details="{}";
 };
+struct LibraryOrigin {
+    std::string libraryId,geometryVersionId;
+    std::optional<std::string> referenceDate;
+    std::string sourceId,sourceVersion,certainty,datePrecision;
+    bool partial=false;
+    std::vector<std::string> missingLibraryRefs;
+    bool operator==(const LibraryOrigin& other) const {
+        return std::tie(libraryId,geometryVersionId,referenceDate,sourceId,sourceVersion,
+                        certainty,datePrecision,partial,missingLibraryRefs)==
+               std::tie(other.libraryId,other.geometryVersionId,other.referenceDate,other.sourceId,
+                        other.sourceVersion,other.certainty,other.datePrecision,other.partial,
+                        other.missingLibraryRefs);
+    }
+};
 enum class FlagPolicy { Default, None, Embedded };
 struct TerritorialSymbolStyle {
     FlagPolicy policy=FlagPolicy::Default;
@@ -100,6 +114,7 @@ struct TerritorialUnit {
     // Country base name is immutable source data; name is the current override.
     std::string baseName;
     bool nameExplicit=true;
+    std::optional<LibraryOrigin> libraryOrigin;
 };
 struct TerritorialRelation {
     std::string id;
@@ -141,7 +156,7 @@ struct Country {
 };
 struct ProjectDocument {
     // Read-time provenance for a migration notice, not document content or wire data.
-    int nativeSourceVersion=6;
+    int nativeSourceVersion=7;
     std::string documentId;
     std::vector<TerritorialUnit> units;
     std::vector<TerritorialRelation> relations;

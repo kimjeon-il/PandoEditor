@@ -79,6 +79,15 @@ int main() {
     if(!regressionsPassed) return 1;
     try {
         auto d=fixture(); auto index=validateDocument(d);
+        LibraryOrigin origin; origin.libraryId="historical-country:example";
+        origin.geometryVersionId="1918";origin.referenceDate="1918";
+        origin.sourceId="archive";origin.sourceVersion="pilot-2";
+        origin.certainty="medium";origin.datePrecision="year";
+        d.units.front().libraryOrigin=origin;
+        validateDocument(d);
+        check(d.units.front().libraryOrigin->libraryId==origin.libraryId,"typed historical provenance");
+        auto invalidOrigin=d;invalidOrigin.units.front().libraryOrigin->libraryId.clear();
+        rejects([&]{validateDocument(invalidOrigin);},"empty historical library ID");
         check(index.objects.size()==4,"all units indexed");
         check(index.geometryUsers.at(d.units[0].geometry).size()==4,"shared geometry reverse index");
         check(index.relationsByUnit.at(territorialRef("N")).size()==2,"unit relationship index");

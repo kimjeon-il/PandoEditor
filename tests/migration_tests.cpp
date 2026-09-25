@@ -15,6 +15,33 @@ private:
         return file.readAll();
     }
 private slots:
+    void historicalOriginV7RoundTrip() {
+        using namespace pandoeditor;
+        auto document=projectcodec::decode(sample());
+        LibraryOrigin origin;
+        origin.libraryId="historical-country:example";
+        origin.geometryVersionId="example:1945";
+        origin.referenceDate="1945-08-15";
+        origin.sourceId="historical-pilot";
+        origin.sourceVersion="2";
+        origin.certainty="low";
+        origin.datePrecision="approximate";
+        origin.partial=true;
+        document.units.front().libraryOrigin=origin;
+        Project project;project.replace(document);
+        const auto saved=projectcodec::encode(project);
+        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),7);
+        const auto reopened=projectcodec::decode(saved);
+        QVERIFY(reopened.units.front().libraryOrigin.has_value());
+        const auto& actual=*reopened.units.front().libraryOrigin;
+        QCOMPARE(actual.libraryId,origin.libraryId);
+        QCOMPARE(actual.geometryVersionId,origin.geometryVersionId);
+        QVERIFY(actual.referenceDate==origin.referenceDate);
+        QCOMPARE(actual.certainty,origin.certainty);
+        QCOMPARE(actual.datePrecision,origin.datePrecision);
+        QVERIFY(actual.partial);
+        QCOMPARE(projectcodec::encode(project),saved);
+    }
     void labelAndDistributionSettingsPromoteAndRoundTrip() {
         using namespace pandoeditor;auto d=projectcodec::decode(sample());Geometry point;point.type="Point";point.points={{1,2}};d.geometries.insert({"label-point",1},point);
         PlaceLabel label;label.id="city";label.name="City";label.kind="city";label.geometry={"label-point",1};d.labels.push_back(label);
@@ -187,7 +214,7 @@ private slots:
         p.objectStyles["territorial:subunit:presentation-S"].blendMode="normal";
         p.objectOrder={"territorial:subunit:presentation-S"};
         pandoeditor::Project project;project.replace(d);
-        const auto bytes=projectcodec::encode(project);QCOMPARE(QJsonDocument::fromJson(bytes).object()["version"].toInt(),6);
+        const auto bytes=projectcodec::encode(project);QCOMPARE(QJsonDocument::fromJson(bytes).object()["version"].toInt(),7);
         auto legacy=QJsonDocument::fromJson(bytes).object(); legacy["version"]=5; legacy.remove("content");
         auto reopened=projectcodec::decode(QJsonDocument(legacy).toJson(QJsonDocument::Compact));
         QCOMPARE(reopened.nativeSourceVersion,5); QVERIFY(reopened.presentation.webPresentation==p);
@@ -413,7 +440,7 @@ private slots:
         pandoeditor::Project project;
         project.replace(projectcodec::decode(sample()));
         const auto saved=projectcodec::encode(project);
-        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),6);
+        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),7);
         pandoeditor::Project reopened;
         reopened.replace(projectcodec::decode(saved));
         QCOMPARE(projectcodec::encode(reopened),saved);

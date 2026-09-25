@@ -114,6 +114,13 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
         require(!u.id.empty(),"INVALID_UNIT: id");
         require(u.kind==UnitKind::Country || u.kind==UnitKind::Subunit || u.kind==UnitKind::Region,"INVALID_UNIT: kind");
         require(u.coverageMode=="partition"||u.coverageMode=="explicit","INVALID_UNIT: coverageMode");
+        if(u.libraryOrigin) {
+            require(!u.libraryOrigin->libraryId.empty()&&!u.libraryOrigin->geometryVersionId.empty(),
+                    "INVALID_LIBRARY_ORIGIN: identity");
+            if(u.libraryOrigin->referenceDate)parseTemporal(*u.libraryOrigin->referenceDate);
+            for(const auto& missing:u.libraryOrigin->missingLibraryRefs)
+                require(!missing.empty(),"INVALID_LIBRARY_ORIGIN: missing ref");
+        }
         require(idx.objects.emplace(ref,i).second,"DUPLICATE_ID: territorial unit");
         auto g=d.geometries.get(u.geometry);
         require(g && (g->type=="Polygon"||g->type=="MultiPolygon"),"INVALID_GEOMETRY: territorial reference");

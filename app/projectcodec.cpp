@@ -84,6 +84,34 @@ V endpointValue(const std::optional<std::string>& s) {
     return object({{"text",V::str(*s)},{"precision",V::str(parseTemporal(*s).precision)}});
 }
 V validityValue(const Validity& v) { return object({{"from",endpointValue(v.from)},{"to",endpointValue(v.to)}}); }
+LibraryOrigin libraryOrigin(const V& v,ProjectDocument& d,const std::string& path) {
+    LibraryOrigin origin;
+    origin.libraryId=str(field(v,"libraryId"));
+    origin.geometryVersionId=str(field(v,"geometryVersionId"));
+    const auto& date=field(v,"referenceDate");
+    if(date.kind!=V::Null)origin.referenceDate=str(date);
+    origin.sourceId=str(field(v,"sourceId"));
+    origin.sourceVersion=str(field(v,"sourceVersion"));
+    origin.certainty=str(field(v,"certainty"));
+    origin.datePrecision=str(field(v,"datePrecision"));
+    origin.partial=boolean(field(v,"partial"));
+    for(const auto& ref:array(field(v,"missingLibraryRefs")))
+        origin.missingLibraryRefs.push_back(str(ref));
+    unknown(d,d.nativeSourceVersion,v,path,
+            {"libraryId","geometryVersionId","referenceDate","sourceId","sourceVersion",
+             "certainty","datePrecision","partial","missingLibraryRefs"});
+    return origin;
+}
+V libraryOriginValue(const LibraryOrigin& origin) {
+    V missing=V::arr();
+    for(const auto& ref:origin.missingLibraryRefs)missing.array.push_back(V::str(ref));
+    return object({{"libraryId",V::str(origin.libraryId)},
+                   {"geometryVersionId",V::str(origin.geometryVersionId)},
+                   {"referenceDate",origin.referenceDate?V::str(*origin.referenceDate):V{}},
+                   {"sourceId",V::str(origin.sourceId)},{"sourceVersion",V::str(origin.sourceVersion)},
+                   {"certainty",V::str(origin.certainty)},{"datePrecision",V::str(origin.datePrecision)},
+                   {"partial",V::boolean(origin.partial)},{"missingLibraryRefs",missing}});
+}
 Point point(const V& v) {
     const auto& a=array(v); require(a.size()==2,"INVALID_GEOMETRY: expected two coordinates");
     return {number(a[0]),number(a[1])};
@@ -398,7 +426,7 @@ std::vector<std::string> promoteContent(ProjectDocument& document) {
 pandoeditor::ProjectDocument decode(const QByteArray& data) {
     const auto root=losslessjson::parse(data);
     require(str(field(root,"format"))=="pandoeditor-project","UNSUPPORTED_FORMAT: expected Qt project");
-    const auto schema=integer(field(root,"version")); require(schema>=1 && schema<=6,"UNSUPPORTED_VERSION: expected Qt v1 through v6");
+    const auto schema=integer(field(root,"version")); require(schema>=1 && schema<=7,"UNSUPPORTED_VERSION: expected Qt v1 through v7");
     ProjectDocument d;d.nativeSourceVersion=int(schema);
     bool canonicalLabelSettings=false,canonicalDistributionSettings=false;
     if (schema<3) {
@@ -441,11 +469,14 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
             u.geometry=geometryRef(field(v,"geometryRef"),d,path+"/geometryRef");
             u.locked=boolean(field(v,"locked")); u.coverageMode=str(field(v,"coverageMode"));
             u.validity=validity(field(v,"validity"),d,path+"/validity");
+            if(schema>=7&&v.object.count("libraryOrigin")&&field(v,"libraryOrigin").kind!=V::Null)
+                u.libraryOrigin=libraryOrigin(field(v,"libraryOrigin"),d,path+"/libraryOrigin");
             if(schema>=4) {
                 u.baseName=str(field(v,"baseName"));u.nameExplicit=boolean(field(v,"nameExplicit"));
                 require(u.kind==UnitKind::Country || (u.baseName.empty() && u.nameExplicit),"INVALID_JSON: country-only name state");
                 require(u.nameExplicit || u.name.empty(),"INVALID_JSON: automatic country name must be empty");
-                unknown(d,4,v,path,{"id","kind","name","notes","geometryRef","locked","coverageMode","validity","baseName","nameExplicit"});
+                if(schema>=7)unknown(d,7,v,path,{"id","kind","name","notes","geometryRef","locked","coverageMode","validity","baseName","nameExplicit","libraryOrigin"});
+                else unknown(d,4,v,path,{"id","kind","name","notes","geometryRef","locked","coverageMode","validity","baseName","nameExplicit"});
             } else {
                 if(u.kind!=UnitKind::Country)u.baseName.clear();
                 unknown(d,d.nativeSourceVersion,v,path,{"id","kind","name","notes","geometryRef","locked","coverageMode","validity"});
@@ -573,7 +604,11 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
 QByteArray encode(const pandoeditor::Project& project) {
     const auto& d=project.document(); validateDocument(d);
     V units=V::arr(),relations=V::arr(),geometries=V::arr(),layers=V::arr(),membership=V::arr(),styles=V::obj(),extensions=V::arr();
-    for (const auto& u:d.units) units.array.push_back(object({{"id",V::str(u.id)},{"kind",V::str(u.kind==UnitKind::Country?"country":u.kind==UnitKind::Subunit?"subunit":"region")},{"name",V::str(u.name)},{"baseName",V::str(u.baseName)},{"nameExplicit",V::boolean(u.kind==UnitKind::Country?u.nameExplicit&&!u.name.empty():u.nameExplicit)},{"notes",V::str(u.kind==UnitKind::Country?trimWebText(u.notes):u.notes)},{"geometryRef",geometryRefValue(u.geometry)},{"locked",V::boolean(u.locked)},{"coverageMode",V::str(u.coverageMode)},{"validity",validityValue(u.validity)}}));
+    for (const auto& u:d.units) {
+        auto value=object({{"id",V::str(u.id)},{"kind",V::str(u.kind==UnitKind::Country?"country":u.kind==UnitKind::Subunit?"subunit":"region")},{"name",V::str(u.name)},{"baseName",V::str(u.baseName)},{"nameExplicit",V::boolean(u.kind==UnitKind::Country?u.nameExplicit&&!u.name.empty():u.nameExplicit)},{"notes",V::str(u.kind==UnitKind::Country?trimWebText(u.notes):u.notes)},{"geometryRef",geometryRefValue(u.geometry)},{"locked",V::boolean(u.locked)},{"coverageMode",V::str(u.coverageMode)},{"validity",validityValue(u.validity)}});
+        if(u.libraryOrigin)value.object["libraryOrigin"]=libraryOriginValue(*u.libraryOrigin);
+        units.array.push_back(std::move(value));
+    }
     for (const auto& r:d.relations) relations.array.push_back(object({{"id",V::str(r.id)},{"unitRef",refValue(r.unit)},{"parentRef",r.parent?refValue(*r.parent):V{}},{"sovereignRef",r.sovereign?refValue(*r.sovereign):V{}},{"mode",V::str(r.dated?"dated":"base")},{"validity",validityValue(r.validity)}}));
     // Opaque domains may reference otherwise unreferenced stored geometries.
     for (const auto& [r,g]:d.geometries.versions()) geometries.array.push_back(object({{"id",V::str(r.id)},{"version",V::num(r.version)},{"geojson",geometryValue(*g)}}));
@@ -594,7 +629,7 @@ QByteArray encode(const pandoeditor::Project& project) {
     auto distributionSettings=object({{"renderMode",V::str(web.distributionSettings.renderMode==DistributionRenderMode::Intensity?"intensity":"dominant")},{"boundaryVisible",V::boolean(web.distributionSettings.boundaryVisible)}});
     auto webValue=object({{"visibility",visibility},{"hiddenItems",hidden},{"styles",groups},{"objectStyles",overrides},{"objectOrder",order},{"labelSettings",labelSettings},{"distributionSettings",distributionSettings}});
     auto root=object({{"format",V::str("pandoeditor-project")},{"version",V::num(5)},{"documentId",V::str(d.documentId)},{"units",units},{"relations",relations},{"geometries",geometries},{"presentation",object({{"userLayers",layers},{"membership",membership},{"objectStyles",styles},{"webPresentation",webValue}})},{"extensions",extensions}});
-    root.object["version"]=V::num(6);
+    root.object["version"]=V::num(7);
     root.object["content"]=contentValue(d);
     auto bytes=root.encode()+"\n";
     require(bytes.size()<=256ll*1024*1024,"LIMIT_EXCEEDED: encoded JSON exceeds 256 MiB");
