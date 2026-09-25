@@ -11,6 +11,7 @@ add_library(pandoeditor_editor STATIC
     hydrodataprovider.cpp hydrodataprovider.h
     historicallibraryloader.cpp historicallibraryloader.h
     gisgeojson.cpp gisgeojson.h
+    gisdocumentexport.cpp gisdocumentexport.h
     hydromanifest.cpp hydromanifest.h
     hydroassetreader.cpp hydroassetreader.h
     hydrometadata.cpp hydrometadata.h
@@ -65,6 +66,9 @@ if(BUILD_TESTING)
     add_executable(gis_geojson_tests ../tests/gis_geojson_tests.cpp)
     target_link_libraries(gis_geojson_tests PRIVATE pandoeditor_editor)
     add_test(NAME gis_geojson_tests COMMAND gis_geojson_tests)
+    add_executable(gis_document_export_tests ../tests/gis_document_export_tests.cpp)
+    target_link_libraries(gis_document_export_tests PRIVATE pandoeditor_editor)
+    add_test(NAME gis_document_export_tests COMMAND gis_document_export_tests)
     add_executable(historical_library_loader_tests ../tests/historical_library_loader_tests.cpp)
     target_link_libraries(historical_library_loader_tests PRIVATE pandoeditor_editor)
     target_compile_definitions(historical_library_loader_tests PRIVATE
