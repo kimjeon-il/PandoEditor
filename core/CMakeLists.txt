@@ -1,4 +1,5 @@
 configure_file(src/version.cpp.in generated/version.cpp @ONLY)
+find_package(ZLIB REQUIRED)
 
 add_library(pandoeditor_core STATIC
     src/hydroformat.cpp
@@ -13,6 +14,7 @@ add_library(pandoeditor_core STATIC
     src/historicalinstantiation.cpp
     src/gisexchange.cpp
     src/geopackagegeometry.cpp
+    src/giszip.cpp
     src/content.cpp
     src/objectproperties.cpp
     src/geometrypredicates.cpp
@@ -28,6 +30,7 @@ target_include_directories(pandoeditor_core PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 target_compile_features(pandoeditor_core PUBLIC cxx_std_17)
+target_link_libraries(pandoeditor_core PUBLIC ZLIB::ZLIB)
 set_target_properties(pandoeditor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_TESTING)
@@ -49,6 +52,11 @@ if(BUILD_TESTING)
     add_executable(geopackage_geometry_tests ../tests/geopackage_geometry_tests.cpp)
     target_link_libraries(geopackage_geometry_tests PRIVATE Pandoeditor::Core)
     add_test(NAME geopackage_geometry_tests COMMAND geopackage_geometry_tests)
+    add_executable(gis_zip_format_tests ../tests/gis_zip_format_tests.cpp)
+    target_link_libraries(gis_zip_format_tests PRIVATE Pandoeditor::Core)
+    target_compile_definitions(gis_zip_format_tests PRIVATE
+        WEB_GIS_ZIP_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6/web-gis-geojson.zip")
+    add_test(NAME gis_zip_format_tests COMMAND gis_zip_format_tests)
     add_executable(gis_exchange_probe ../tests/gis_exchange_probe.cpp)
     target_link_libraries(gis_exchange_probe PRIVATE Pandoeditor::Core)
     add_executable(historical_library_probe ../tests/historical_library_probe.cpp)
@@ -57,6 +65,9 @@ if(BUILD_TESTING)
     target_link_libraries(temporal_probe PRIVATE Pandoeditor::Core)
     find_program(PANDOEDITOR_M6_NODE_EXECUTABLE NAMES node)
     if(PANDOEDITOR_M6_NODE_EXECUTABLE)
+        add_test(NAME m6_web_gis_zip_fixture
+            COMMAND "${PANDOEDITOR_M6_NODE_EXECUTABLE}"
+                "${PROJECT_SOURCE_DIR}/tools/m6-gis-zip-fixture.mjs" --verify)
         add_test(NAME m6_gis_exchange_web_parity
             COMMAND "${PANDOEDITOR_M6_NODE_EXECUTABLE}"
                 "${PROJECT_SOURCE_DIR}/tools/m6-gis-oracle.mjs" "$<TARGET_FILE:gis_exchange_probe>")

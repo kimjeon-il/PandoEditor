@@ -12,6 +12,7 @@ add_library(pandoeditor_editor STATIC
     historicallibraryloader.cpp historicallibraryloader.h
     historicaltransaction.cpp historicaltransaction.h
     gisgeojson.cpp gisgeojson.h
+    giszip.cpp giszip.h
     gisdocumentexport.cpp gisdocumentexport.h
     hydromanifest.cpp hydromanifest.h
     hydroassetreader.cpp hydroassetreader.h
@@ -71,6 +72,11 @@ if(BUILD_TESTING)
     add_executable(gis_geojson_tests ../tests/gis_geojson_tests.cpp)
     target_link_libraries(gis_geojson_tests PRIVATE pandoeditor_editor)
     add_test(NAME gis_geojson_tests COMMAND gis_geojson_tests)
+    add_executable(gis_zip_tests ../tests/gis_zip_tests.cpp)
+    target_link_libraries(gis_zip_tests PRIVATE pandoeditor_editor)
+    target_compile_definitions(gis_zip_tests PRIVATE
+        WEB_GIS_ZIP_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
+    add_test(NAME gis_zip_tests COMMAND gis_zip_tests)
     add_executable(gis_document_export_tests ../tests/gis_document_export_tests.cpp)
     target_link_libraries(gis_document_export_tests PRIVATE pandoeditor_editor)
     add_test(NAME gis_document_export_tests COMMAND gis_document_export_tests)
