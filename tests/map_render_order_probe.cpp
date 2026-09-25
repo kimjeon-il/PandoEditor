@@ -1,5 +1,6 @@
 #include <pandoeditor/maprenderorder.h>
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <iostream>
 #include <string>
@@ -56,32 +57,41 @@ int main() {
     for(std::size_t i=0;i<pick.size();i++)std::cout<<(i?",\"":"\"")<<pick[i].name<<'"';
     std::cout<<"],\"pairs\":[";
     struct Pair{const char* left;const char* right;ObjectRef a,b;RenderPrimitiveRole ar,br;};
-    const std::vector<Pair> pairs{
-        {"country","lake",{"territorial","country"},{"hydro","lake"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Fill},
-        {"country","river",{"territorial","country"},{"hydro","river"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Line},
-        {"lake","religion",{"hydro","lake"},{"distributionEntry","religion"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Fill},
-        {"religion","ethnicity",{"distributionEntry","religion"},{"distributionEntry","ethnicity"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Fill},
-        {"ethnicity","language",{"distributionEntry","ethnicity"},{"distributionEntry","language"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Fill},
-        {"language","subunit",{"distributionEntry","language"},{"territorial","subunit"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Fill},
-        {"subunit","region",{"territorial","subunit"},{"territorial","region"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Fill},
-        {"region","generic",{"territorial","region"},{"generic","generic"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Fill},
-        {"generic","place",{"generic","generic"},{"label","label"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Point},
-        {"place","label",{"label","label"},{"label","label"},RenderPrimitiveRole::Point,RenderPrimitiveRole::Label},
-        {"country","subunit",{"territorial","country"},{"territorial","subunit"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Fill},
+    struct Object{const char* name;ObjectRef ref;RenderPrimitiveRole role;};
+    const std::array<Object,11> objects{{
+        {"country",{"territorial","country"},RenderPrimitiveRole::Fill},
+        {"river",{"hydro","river"},RenderPrimitiveRole::Line},
+        {"lake",{"hydro","lake"},RenderPrimitiveRole::Fill},
+        {"religion",{"distributionEntry","religion"},RenderPrimitiveRole::Fill},
+        {"ethnicity",{"distributionEntry","ethnicity"},RenderPrimitiveRole::Fill},
+        {"language",{"distributionEntry","language"},RenderPrimitiveRole::Fill},
+        {"subunit",{"territorial","subunit"},RenderPrimitiveRole::Fill},
+        {"region",{"territorial","region"},RenderPrimitiveRole::Fill},
+        {"generic",{"generic","generic"},RenderPrimitiveRole::Fill},
+        {"place",{"label","label"},RenderPrimitiveRole::Point},
+        {"label",{"label","label"},RenderPrimitiveRole::Label},
+    }};
+    std::vector<Pair> pairs;
+    for(std::size_t a=0;a<objects.size();++a)for(std::size_t b=a+1;b<objects.size();++b)
+        pairs.push_back({objects[a].name,objects[b].name,objects[a].ref,objects[b].ref,
+            objects[a].role,objects[b].role});
+    pairs.insert(pairs.end(),{
         {"lake","lake-boundary",{"hydro","lake"},{"hydro","lake"},RenderPrimitiveRole::Fill,RenderPrimitiveRole::Boundary},
         {"lake-boundary","river",{"hydro","lake"},{"hydro","river"},RenderPrimitiveRole::Boundary,RenderPrimitiveRole::Line},
         {"river","country-boundary",{"hydro","river"},{"territorial","country"},RenderPrimitiveRole::Line,RenderPrimitiveRole::Boundary},
         {"country-boundary","generic-line",{"territorial","country"},{"generic","generic"},RenderPrimitiveRole::Boundary,RenderPrimitiveRole::Line},
         {"generic-line","place",{"generic","generic"},{"label","label"},RenderPrimitiveRole::Line,RenderPrimitiveRole::Point},
-    };
+    });
     for(std::size_t i=0;i<pairs.size();++i){
         const auto& p=pairs[i];
         auto order=[&](const ObjectRef& ref,RenderPrimitiveRole role){return ref.domain=="hydro"?
             mapBuiltinHydroRenderOrder(ref.id,role):mapRenderOrder(document,ref,role);};
         const auto top=order(p.a,p.ar)<order(p.b,p.br)?p.right:p.left;
+        const int leftRank=p.a.domain=="hydro"?mapBuiltinHydroPickOrder():mapPickOrder(document,p.a);
+        const int rightRank=p.b.domain=="hydro"?mapBuiltinHydroPickOrder():mapPickOrder(document,p.b);
         const auto chooser=p.a.domain==p.b.domain&&p.a.id==p.b.id?"same-ref":
-            (p.a.domain=="hydro"?mapBuiltinHydroPickOrder():mapPickOrder(document,p.a))>=
-            (p.b.domain=="hydro"?mapBuiltinHydroPickOrder():mapPickOrder(document,p.b))?p.left:p.right;
+            leftRank==rightRank?(std::string(p.left)<p.right?p.left:p.right):
+            leftRank>rightRank?p.left:p.right;
         std::cout<<(i?",":"")<<"{\"pair\":\""<<p.left<<"/"<<p.right
                  <<"\",\"top\":\""<<top<<"\",\"chooserFirst\":\""<<chooser<<"\"}";
     }

@@ -90,16 +90,18 @@ refsByKey.place=refsByKey.label;
 refsByKey['lake-boundary']=refsByKey.lake;
 refsByKey['country-boundary']=refsByKey.country;
 refsByKey['generic-line']=refsByKey.generic;
-const pairNames=[['country','lake'],['country','river'],['lake','religion'],
-  ['religion','ethnicity'],['ethnicity','language'],['language','subunit'],
-  ['subunit','region'],['region','generic'],['generic','place'],
-  ['place','label'],['country','subunit'],['lake','lake-boundary'],
-  ['lake-boundary','river'],['river','country-boundary'],
-  ['country-boundary','generic-line'],['generic-line','place']];
+const objects=['country','river','lake','religion','ethnicity','language',
+  'subunit','region','generic','place','label'];
+const pairNames=objects.flatMap((left,i)=>objects.slice(i+1).map(right=>[left,right]));
+pairNames.push(['lake','lake-boundary'],['lake-boundary','river'],
+  ['river','country-boundary'],['country-boundary','generic-line'],
+  ['generic-line','place']);
 const pairs=pairNames.map(([left,right])=>({pair:`${left}/${right}`,
   top:visibleRank[left]>visibleRank[right]?left:right,
   chooserFirst:refsByKey[left]===refsByKey[right]?'same-ref':
-    rank(refsByKey[left])>=rank(refsByKey[right])?left:right}));
+    rank(refsByKey[left])===rank(refsByKey[right])?
+      (left.localeCompare(right,'ko')<0?left:right):
+      rank(refsByKey[left])>rank(refsByKey[right])?left:right}));
 const flags=layoutCountryFlags([{sourceType:'country',source:{id:'country'},nameVisible:true,
   box:{left:10,right:30,top:10,bottom:20}}],
 {enabled:true,zoom:2,flagUrl:()=>'/flag.svg',isVisible:()=>true});
