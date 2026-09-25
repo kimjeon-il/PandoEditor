@@ -6,6 +6,37 @@
 class PresentationEditorTests:public QObject {
     Q_OBJECT
 private slots:
+    void labelLayoutRespectsWebBottomSafeArea() {
+        using namespace pandoeditor;
+        for(const bool mobile:{false,true}) {
+            QTemporaryDir dir;
+            ProjectDocument document({{"A","Alpha",{{{{0,0},{10,0},{10,10},{0,10},{0,0}}}},0x112233}},
+                                     {{"countries","Countries"}});
+            document.documentId=mobile?"safe-area-mobile":"safe-area-desktop";
+            Project project;project.replace(document);
+            const auto path=dir.filePath("safe-area.json");QFile file(path);
+            QVERIFY(file.open(QIODevice::WriteOnly));QVERIFY(file.write(projectcodec::encode(project))>0);file.close();
+            EditorController editor({mobile,dir.filePath("private.json")});
+            QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
+            const auto paths=editor.paths();QVERIFY(!paths.isEmpty());
+            const auto geometry=paths.front().toMap();
+            const double mapX=geometry.value("left").toDouble()+geometry.value("width").toDouble()/2;
+            const double mapY=geometry.value("top").toDouble()+geometry.value("height").toDouble()/2;
+            auto placedAt=[&](double screenY) {
+                const auto rows=editor.labelLayout(1,300-mapX,screenY-mapY,2,600,400);
+                return std::any_of(rows.begin(),rows.end(),[](const QVariant& row){
+                    return row.toMap().value("ref").toMap().value("id").toString()=="A";
+                });
+            };
+            QVERIFY(placedAt(285)); // Within the 96 px mobile inset and the 26 px desktop inset.
+            QCOMPARE(placedAt(359),!mobile); // Only the desktop safe area includes this box.
+            QVERIFY(!placedAt(390)); // The last 26 px is unsafe on both layouts.
+            editor.selectCountry("A");QVERIFY(placedAt(390));
+            editor.clearSelection();
+            QVERIFY(editor.setLabelPinned({{"domain","territorial"},{"id","A"}},true));
+            QVERIFY(placedAt(390)); // Pinned and selected labels bypass web bounds.
+        }
+    }
     void labelLayoutAndDistributionMatchWebRules() {
         using namespace pandoeditor;
         LabelLayoutCandidate ordinary{{"label","a"},"label:a","place",10,10,20,10,70,0,10,false,false};
