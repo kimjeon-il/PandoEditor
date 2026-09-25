@@ -22,7 +22,7 @@ bool rejected(const std::function<void()>& f) {
 }
 int main() {
     auto p=project();
-    GisGenericInput one{"gis:one","One",square(3),"{\"foreign\":123}"};
+    GisGenericInput one{"gis:one","One",square(3),"{\"foreign\":123}","Memo",0xabcdef};
     GisGenericInput two{"gis:two","Two",square(5),"{\"foreign\":456}"};
     auto plan=planGenericGisImport(p.snapshot(),"import:1",{"generic.geojson","geojson"},{one,two});
     assert(plan.info.affectedIds.size()==2 && p.document().genericFeatures.empty());
@@ -34,6 +34,8 @@ int main() {
     assert(CommandProcessor::confirm(p,*prepared.preview).changed());
     assert(p.index().objects.count({"generic","gis:one"}));
     assert(p.document().genericFeatures.front().source.details=="{\"foreign\":123}");
+    assert(p.document().genericFeatures.front().notes=="Memo");
+    assert(p.document().genericFeatures.front().color==0xabcdef);
     assert(p.undo() && p.document().genericFeatures.empty());
     assert(p.redo() && p.document().genericFeatures.size()==2);
     assert(CommandProcessor::prepare(p,request).error==CommandError::StaleRevision);

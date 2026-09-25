@@ -93,7 +93,8 @@ void applyGenericGisImport(ProjectDocument& document,const GisGenericImportPlan&
             throw std::invalid_argument("DUPLICATE_ID: generic feature");
         GeometryRef geometry{"gis-generic:"+feature.id,1};
         document.geometries.insert(geometry,feature.geometry);
-        GenericFeature row;row.id=feature.id;row.name=feature.name;row.geometry=geometry;
+        GenericFeature row;row.id=feature.id;row.name=feature.name;row.notes=feature.notes;
+        row.color=feature.color;row.geometry=geometry;
         row.source.kind="gis";row.source.dataset=plan.info.source.fileName;
         row.source.sourceFormat=plan.info.source.sourceKind;
         row.source.sourceId=feature.id;row.source.details=feature.propertiesJson;

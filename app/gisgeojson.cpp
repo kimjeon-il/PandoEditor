@@ -1,5 +1,8 @@
 #include "gisgeojson.h"
 #include "webjson.h"
+#include <QString>
+#include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <set>
 #include <stdexcept>
@@ -122,8 +125,22 @@ GisGenericImportPlan planGenericGeoJsonImport(const ProjectSnapshot& project,con
         const auto properties=losslessjson::parse(QByteArray::fromStdString(feature.propertiesJson));
         auto id=feature.id.empty()?webjson::text(webjson::at(properties,"id")):feature.id;
         require(!id.empty(),"INVALID_GIS_PLAN: generic ID required");
+        std::uint32_t color=0x888888;
+        const auto& rawColor=webjson::at(properties,"color");
+        if(rawColor.kind!=V::Null) {
+            const auto value=webjson::text(rawColor);
+            bool ok=false;
+            require(value.size()==7&&value[0]=='#'&&
+                    std::all_of(value.begin()+1,value.end(),[](unsigned char c){return std::isxdigit(c)!=0;}),
+                    "INVALID_GIS_COLOR");
+            color=QString::fromStdString(value.substr(1)).toUInt(&ok,16);
+            require(ok&&color<=0xffffff,"INVALID_GIS_COLOR");
+        }
+        const auto& rawNotes=webjson::at(properties,"notes");
+        require(rawNotes.kind==V::Null||rawNotes.kind==V::String,"INVALID_GIS_NOTES");
         rows.push_back({std::move(id),webjson::text(webjson::at(properties,"name")),
-                        std::move(feature.geometry),std::move(feature.propertiesJson)});
+                        std::move(feature.geometry),std::move(feature.propertiesJson),
+                        rawNotes.kind==V::String?rawNotes.string:std::string{},color});
     }
     return planGenericGisImport(project,std::move(planId),{std::move(fileName),"geojson"},
                                 std::move(rows));

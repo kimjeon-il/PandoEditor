@@ -41,6 +41,8 @@ struct GisGenericInput {
     std::string id,name;
     Geometry geometry;
     std::string propertiesJson="{}";
+    std::string notes;
+    std::uint32_t color=0x888888;
 };
 struct GisGenericImportPlan {
     GisImportPlan info;

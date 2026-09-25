@@ -39,6 +39,13 @@ int main(int argc,char** argv) {
     const auto import=planGenericGeoJsonImport(project.snapshot(),valid,"plan:geojson","input.geojson");
     assert(import.features.size()==2 && import.features.front().id=="lake");
     assert(import.features.front().propertiesJson.find("900719925474099312345")!=std::string::npos);
+    const auto styled=planGenericGeoJsonImport(project.snapshot(),
+        R"({"type":"FeatureCollection","features":[{"type":"Feature","id":"styled","properties":{"name":"Styled","notes":"memo","color":"#12ab34"},"geometry":{"type":"Point","coordinates":[1,1]}}]})",
+        "plan:styled","input.geojson");
+    assert(styled.features.front().notes=="memo" && styled.features.front().color==0x12ab34);
+    assert(rejected([&]{planGenericGeoJsonImport(project.snapshot(),
+        R"({"type":"FeatureCollection","features":[{"type":"Feature","id":"bad-color","properties":{"color":"#0x1234"},"geometry":{"type":"Point","coordinates":[1,1]}}]})",
+        "plan:bad-color","input.geojson");}));
     assert(project.document().genericFeatures.empty());
     CommandArguments args;args.action=import;
     auto preview=CommandProcessor::prepare(project,CommandProcessor::makeRequest(project,"gis.import.generic",args));
