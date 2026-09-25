@@ -50,7 +50,7 @@ for filename, is_project in (("web-gis.gpkg", False), ("web-project.gpkg", True)
             settings = connection.execute(
                 "SELECT json_value FROM pandolab_project_settings "
                 "WHERE setting_key='project_state'").fetchone()[0]
-            assert json.loads(settings)["countryOverrides"]["AAA"]["flagDataUrl"] is None
+            assert "flagDataUrl" not in json.loads(settings)["countryOverrides"]["AAA"]
             asset = connection.execute(
                 "SELECT mime_type,image_data FROM pandolab_country_assets "
                 "WHERE country_id='AAA'").fetchone()

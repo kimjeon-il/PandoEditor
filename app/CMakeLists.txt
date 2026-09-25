@@ -17,6 +17,7 @@ add_library(pandoeditor_editor STATIC
     gisgeopackage.cpp gisgeopackage.h
     gisgeopackagewriter.cpp
     projectgeopackage.cpp projectgeopackage.h
+    webprojectgeopackage.cpp webprojectgeopackage.h
     giscontentimport.cpp giscontentimport.h
     gisterritorial.cpp gisterritorial.h
     gisdocumentexport.cpp gisdocumentexport.h
@@ -130,6 +131,8 @@ if(BUILD_TESTING)
     add_test(NAME gis_export_tests COMMAND gis_export_tests)
     add_executable(project_geopackage_tests ../tests/project_geopackage_tests.cpp)
     target_link_libraries(project_geopackage_tests PRIVATE pandoeditor_editor Qt6::Sql)
+    target_compile_definitions(project_geopackage_tests PRIVATE
+        WEB_GPKG_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
     add_test(NAME project_geopackage_tests COMMAND project_geopackage_tests)
     if(Python3_Interpreter_FOUND)
         add_test(NAME m6_project_gpkg_sqlite_oracle

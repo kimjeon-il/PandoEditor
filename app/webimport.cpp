@@ -21,6 +21,7 @@ struct Builder {
     const V& root;
     const std::function<bool()>& cancelled;
     std::set<std::string> ids;
+    bool allowLegacyIds=false;
     void check() const {if(cancelled&&cancelled())throw std::invalid_argument("CANCELLED: 가져오기를 취소했습니다.");}
     void report(const std::string& path,const char* state,const QString& message,int count=0) {
         output.report.push_back(QVariantMap{{"path",QString::fromStdString(path)},{"status",state},{"message",message},{"count",count}});
@@ -72,7 +73,7 @@ struct Builder {
     }
     std::string id(const V& row,const std::string& path,bool requireUuid) {
         auto value=text(at(row,"id"));require(!value.empty(),"INVALID_ID: "+path+"/id is empty");
-        if(requireUuid)require(uuid(value),"INVALID_ID: "+path+"/id must be a UUID");return value;
+        if(requireUuid&&!allowLegacyIds)require(uuid(value),"INVALID_ID: "+path+"/id must be a UUID");return value;
     }
     std::uint32_t color(const V& raw,const std::string& path,std::uint32_t fallback) {
         const auto s=QString::fromStdString(text(raw));
@@ -249,11 +250,11 @@ struct Builder {
     }
 };
 }
-Candidate prepare(const QByteArray& bytes,const std::function<bool()>& cancelled) {
+Candidate prepare(const QByteArray& bytes,const std::function<bool()>& cancelled,bool allowLegacyIds) {
     if(cancelled&&cancelled())throw std::invalid_argument("CANCELLED: 가져오기를 취소했습니다.");
     require(bytes.size()<=storageLimit,"LIMIT_EXCEEDED: web input exceeds current 64 MiB storage boundary");
     auto migration=migrate(bytes);auto original=losslessjson::parse(bytes),root=losslessjson::parse(migration.normalized);
-    Builder b{{},root,cancelled,{}};b.output.sourceFormat=migration.sourceFormat;b.output.sourceSchema=migration.sourceSchema;
+    Builder b{{},root,cancelled,{},allowLegacyIds};b.output.sourceFormat=migration.sourceFormat;b.output.sourceSchema=migration.sourceSchema;
     b.output.sourceHash=digest(original.encode());b.output.document.documentId="web-"+b.output.sourceHash.toStdString();
     b.check();
     for(auto field:{"countryOverrides","sourceInfo","labelSettings","distributionSettings","physicalSettings","layerVisibility","itemVisibility","layerPresentation"}) {

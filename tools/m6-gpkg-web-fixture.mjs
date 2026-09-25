@@ -92,7 +92,8 @@ const square = x => ({ type: 'Polygon',
 const state = {
   countriesData: { features: [{ type: 'Feature', id: 'AAA',
     properties: { name: 'Alpha' }, geometry: square(0) }] },
-  countryOverrides: { AAA: { flagDataUrl: null } },
+  // The web exporter omits flagDataUrl for embedded assets in project_state.
+  countryOverrides: { AAA: {} },
   territorialUnits: [{ id: 'sub:1', geometry: square(0), properties: {
     unitType: 'subunit', name: 'Subdivision', sovereignId: 'AAA', parentId: 'AAA',
     sourceLibraryId: 'history:1', style: { color: '#123456' },

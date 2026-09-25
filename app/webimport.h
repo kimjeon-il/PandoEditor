@@ -21,5 +21,8 @@ struct Candidate {
 };
 FileKind classify(const QByteArray& bytes);
 Migration migrate(const QByteArray& bytes);
-Candidate prepare(const QByteArray& bytes, const std::function<bool()>& cancelled={});
+// GeoPackage project IDs may predate the UUID rule used by complete JSON saves.
+// Only the independently validated package path opts into legacy IDs.
+Candidate prepare(const QByteArray& bytes, const std::function<bool()>& cancelled={},
+                  bool allowLegacyIds=false);
 }

@@ -1,6 +1,7 @@
 #include "projectgeopackage.h"
 #include "gisgeopackage.h"
 #include "projectcodec.h"
+#include "webprojectgeopackage.h"
 #include "losslessjson.h"
 #include <pandoeditor/document.h>
 #include <QFile>
@@ -58,7 +59,7 @@ std::string string(const V& value) {
     require(value.kind==V::String,"INVALID_PROJECT_GPKG_STATE");
     return value.string;
 }
-struct Asset {QString mime;QByteArray bytes;};
+using Asset=WebProjectAsset;
 std::map<std::string,Asset> stripAssets(V& root) {
     auto& symbols=member(member(root,"content"),"symbols");
     require(symbols.kind==V::Array,"INVALID_PROJECT_GPKG_STATE");
@@ -167,9 +168,11 @@ QByteArray readProjectGeoPackage(const QString& filePath) {
     require(state.exec("SELECT json_value FROM pandolab_project_settings WHERE setting_key='project_state' LIMIT 1")&&
             state.next()&&!state.value(0).isNull(),"MISSING_PROJECT_GPKG_STATE");
     auto root=losslessjson::parse(state.value(0).toString().toUtf8());
-    require(string(member(root,"format"))=="pandoeditor-project"&&
-            member(root,"version").kind==V::Number&&member(root,"version").raw=="7",
-            "UNSUPPORTED_PROJECT_GPKG_STATE");
+    require(root.kind==V::Object,"UNSUPPORTED_PROJECT_GPKG_STATE");
+    const auto native=root.object.count("format")&&
+        root.object.at("format").kind==V::String&&root.object.at("format").string=="pandoeditor-project";
+    if(native)require(member(root,"version").kind==V::Number&&member(root,"version").raw=="7",
+                      "UNSUPPORTED_PROJECT_GPKG_STATE");
     std::map<std::string,Asset> assets;
     QSqlQuery rows(db);
     require(rows.exec("SELECT country_id,mime_type,image_data FROM pandolab_country_assets"),
@@ -182,6 +185,16 @@ QByteArray readProjectGeoPackage(const QString& filePath) {
                 assets.emplace(id,Asset{mime,bytes}).second,"INVALID_PROJECT_GPKG_ASSETS");
     }
     require(!rows.lastError().isValid(),"INVALID_PROJECT_GPKG_ASSETS");
+    if(!native) {
+        QSqlQuery source(db);
+        require(source.exec("SELECT json_value FROM pandolab_source_info WHERE info_key='source' LIMIT 1")&&
+                source.next()&&!source.value(0).isNull(),"MISSING_WEB_GPKG_SOURCE");
+        const auto recorded=losslessjson::parse(source.value(0).toString().toUtf8());
+        const auto found=root.object.find("sourceInfo");
+        require(found!=root.object.end()&&recorded.encode()==found->second.encode(),
+                "WEB_GPKG_SOURCE_MISMATCH");
+        return convertWebProjectGeoPackage(vectors,std::move(root),assets);
+    }
     restoreAssets(root,assets);
     Project candidate;candidate.replace(projectcodec::decode(root.encode()));
     std::set<std::string> countries;
