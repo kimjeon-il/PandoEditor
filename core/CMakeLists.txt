@@ -11,6 +11,7 @@ add_library(pandoeditor_core STATIC
     src/temporal.cpp
     src/historicallibrary.cpp
     src/historicalinstantiation.cpp
+    src/gisexchange.cpp
     src/content.cpp
     src/objectproperties.cpp
     src/geometrypredicates.cpp
@@ -38,12 +39,20 @@ if(BUILD_TESTING)
     add_executable(historical_instantiation_tests ../tests/historical_instantiation_tests.cpp)
     target_link_libraries(historical_instantiation_tests PRIVATE Pandoeditor::Core)
     add_test(NAME historical_instantiation_tests COMMAND historical_instantiation_tests)
+    add_executable(gis_exchange_tests ../tests/gis_exchange_tests.cpp)
+    target_link_libraries(gis_exchange_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME gis_exchange_tests COMMAND gis_exchange_tests)
+    add_executable(gis_exchange_probe ../tests/gis_exchange_probe.cpp)
+    target_link_libraries(gis_exchange_probe PRIVATE Pandoeditor::Core)
     add_executable(historical_library_probe ../tests/historical_library_probe.cpp)
     target_link_libraries(historical_library_probe PRIVATE Pandoeditor::Core)
     add_executable(temporal_probe ../tests/temporal_probe.cpp)
     target_link_libraries(temporal_probe PRIVATE Pandoeditor::Core)
     find_program(PANDOEDITOR_M6_NODE_EXECUTABLE NAMES node)
     if(PANDOEDITOR_M6_NODE_EXECUTABLE)
+        add_test(NAME m6_gis_exchange_web_parity
+            COMMAND "${PANDOEDITOR_M6_NODE_EXECUTABLE}"
+                "${PROJECT_SOURCE_DIR}/tools/m6-gis-oracle.mjs" "$<TARGET_FILE:gis_exchange_probe>")
         add_test(NAME m6_temporal_web_parity
             COMMAND "${PANDOEDITOR_M6_NODE_EXECUTABLE}"
                 "${PROJECT_SOURCE_DIR}/tools/m6-temporal-oracle.mjs" "$<TARGET_FILE:temporal_probe>")
