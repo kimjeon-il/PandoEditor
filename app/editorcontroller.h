@@ -62,6 +62,8 @@ class EditorController : public QObject {
     Q_PROPERTY(QString historicalError READ historicalError NOTIFY historicalChanged)
     Q_PROPERTY(qulonglong historicalSession READ historicalSession NOTIFY historicalChanged)
     Q_PROPERTY(QVariantMap gisImportState READ gisImportState NOTIFY gisImportChanged)
+    Q_PROPERTY(QVariantList gisExportLayers READ gisExportLayers NOTIFY stateChanged)
+    Q_PROPERTY(QVariantMap gisExportState READ gisExportState NOTIFY gisExportChanged)
     Q_PROPERTY(QVariantMap hoverObject READ hoverObject NOTIFY hoverChanged)
     Q_PROPERTY(qulonglong hoverRevision READ hoverRevision NOTIFY hoverChanged)
     Q_PROPERTY(bool webImportBusy READ webImportBusy NOTIFY webImportChanged)
@@ -134,6 +136,11 @@ public:
     Q_INVOKABLE bool loadGisSource(const QUrl& url);
     Q_INVOKABLE bool prepareGisImport(int layerIndex,const QVariantMap& mapping);
     Q_INVOKABLE bool confirmGisImport(qulonglong session);
+    QVariantList gisExportLayers() const;
+    QVariantMap gisExportState() const;
+    Q_INVOKABLE bool exportGisData(const QUrl& destination,const QString& format,
+                                  const QStringList& selected);
+    Q_INVOKABLE void cancelGisExport();
     Q_INVOKABLE void cancelGisImport();
     bool presentationRecoveryAvailable() const;
     Q_INVOKABLE bool restorePresentationRecovery();
@@ -335,6 +342,7 @@ public:
 signals:
     void historicalChanged();
     void gisImportChanged();
+    void gisExportChanged();
     void presentationRecoveryChanged();
     void presentationChanged();
     void propertyChanged();
@@ -381,6 +389,8 @@ private:
     };
     std::optional<GisImportSession> gisImport_;
     qulonglong gisImportToken_=0;
+    QString gisExportStage_=QStringLiteral("idle"),gisExportError_,gisExportFileName_;
+    qulonglong gisExportToken_=0;
     QTimer presentationSaveTimer_;
     std::string presentationSaveInstance_;
     QString presentationRecoveryPath() const;

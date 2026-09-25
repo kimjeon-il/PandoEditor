@@ -15,6 +15,7 @@ add_library(pandoeditor_editor STATIC
     gisgeojson.cpp gisgeojson.h
     giszip.cpp giszip.h
     gisgeopackage.cpp gisgeopackage.h
+    gisgeopackagewriter.cpp
     giscontentimport.cpp giscontentimport.h
     gisterritorial.cpp gisterritorial.h
     gisdocumentexport.cpp gisdocumentexport.h
@@ -32,6 +33,7 @@ add_library(pandoeditor_editor STATIC
     editorgeometry.cpp
     editorhistorical.cpp
     editorgis.cpp
+    editorgisexport.cpp
     editorcontent.cpp
     editorcontroller.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
@@ -58,6 +60,7 @@ qt_add_resources(pandoeditor ui
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/GisImportPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/GisExportPanel.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
         "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
@@ -112,6 +115,20 @@ if(BUILD_TESTING)
     add_executable(gis_document_export_tests ../tests/gis_document_export_tests.cpp)
     target_link_libraries(gis_document_export_tests PRIVATE pandoeditor_editor)
     add_test(NAME gis_document_export_tests COMMAND gis_document_export_tests)
+    add_executable(gis_export_tests ../tests/gis_export_tests.cpp)
+    target_link_libraries(gis_export_tests PRIVATE pandoeditor_editor Qt6::Sql)
+    add_test(NAME gis_export_tests COMMAND gis_export_tests)
+    add_executable(gis_export_controller_tests ../tests/gis_export_controller_tests.cpp)
+    target_link_libraries(gis_export_controller_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(gis_export_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME gis_export_controller_tests COMMAND gis_export_controller_tests -o -,txt)
+    set_tests_properties(gis_export_controller_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME m6_gis_export_sqlite_oracle
+            COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m6-gis-export-oracle.py"
+                "$<TARGET_FILE:gis_export_tests>")
+    endif()
     add_executable(historical_library_loader_tests ../tests/historical_library_loader_tests.cpp)
     target_link_libraries(historical_library_loader_tests PRIVATE pandoeditor_editor)
     target_compile_definitions(historical_library_loader_tests PRIVATE
@@ -197,6 +214,7 @@ if(BUILD_TESTING)
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/GisImportPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/GisExportPanel.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
@@ -253,6 +271,7 @@ if(BUILD_TESTING)
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/GisImportPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/GisExportPanel.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"

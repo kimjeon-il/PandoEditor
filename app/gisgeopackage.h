@@ -1,5 +1,6 @@
 #pragma once
 #include "gisgeojson.h"
+#include <QByteArray>
 #include <QString>
 #include <string>
 #include <vector>
@@ -19,4 +20,7 @@ struct GisGeoPackage {
 // Local, read-only exchange boundary. Neither this function nor its caller
 // mutates a ProjectDocument; mapping and confirmation are separate steps.
 GisGeoPackage readGisGeoPackage(const QString& filePath);
+// GIS-only vector file; project settings and country assets belong to the
+// separate project GeoPackage flow.
+QByteArray exportGisGeoPackage(const ProjectDocument&,const std::vector<std::string>& selected);
 }

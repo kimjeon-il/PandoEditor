@@ -63,6 +63,29 @@ std::string inflateDeflate(std::string_view compressed,std::uint32_t expected) {
     output.resize(expected);
     return output;
 }
+void put16(std::string& out,std::uint16_t value) {
+    out.push_back(char(value));out.push_back(char(value>>8));
+}
+void put32(std::string& out,std::uint32_t value) {
+    put16(out,std::uint16_t(value));put16(out,std::uint16_t(value>>16));
+}
+std::string deflateRaw(std::string_view input) {
+    require(input.size()<=std::numeric_limits<uInt>::max());
+    z_stream stream{};
+    require(deflateInit2(&stream,6,Z_DEFLATED,-MAX_WBITS,8,Z_DEFAULT_STRATEGY)==Z_OK);
+    const auto capacity=deflateBound(&stream,static_cast<uLong>(input.size()));
+    if(capacity>std::numeric_limits<uInt>::max()) {deflateEnd(&stream);require(false);}
+    std::string output(capacity,'\0');
+    stream.next_in=reinterpret_cast<Bytef*>(const_cast<char*>(input.data()));
+    stream.avail_in=static_cast<uInt>(input.size());
+    stream.next_out=reinterpret_cast<Bytef*>(output.data());
+    stream.avail_out=static_cast<uInt>(output.size());
+    const auto result=deflate(&stream,Z_FINISH);
+    const auto size=stream.total_out;
+    deflateEnd(&stream);
+    require(result==Z_STREAM_END);
+    output.resize(size);return output;
+}
 }
 
 GisZipArchive readGisZipArchive(std::string_view bytes) {
@@ -126,5 +149,55 @@ GisZipArchive readGisZipArchive(std::string_view bytes) {
     }
     require(cursor==std::uint64_t(centralStart)+centralSize);
     return result;
+}
+std::string writeGisZipArchive(const GisZipArchive& archive) {
+    require(!archive.entries.empty()&&archive.entries.size()<=maxEntries);
+    std::string output,central;
+    std::set<std::string> paths;
+    std::uint64_t expanded=0;
+    for(const auto& entry:archive.entries) {
+        const auto path=safePath(entry.path);
+        require(path.size()<=std::numeric_limits<std::uint16_t>::max()&&path.back()!='/'&&
+                entry.bytes.size()<=std::numeric_limits<std::uint32_t>::max());
+        std::string key=path;
+        std::transform(key.begin(),key.end(),key.begin(),[](unsigned char c){return char(std::tolower(c));});
+        require(paths.insert(key).second);
+        expanded+=entry.bytes.size();require(expanded<=maxOutput);
+        auto compressed=deflateRaw(entry.bytes);
+        const bool useDeflate=compressed.size()<entry.bytes.size()&&
+            (entry.bytes.size()<=6000||compressed.size()*100>=entry.bytes.size());
+        const auto& payload=useDeflate?compressed:entry.bytes;
+        const std::uint16_t method=useDeflate?8:0;
+        require(payload.size()<=std::numeric_limits<std::uint32_t>::max()&&
+                output.size()+30+path.size()+payload.size()<=maxInput);
+        const auto offset=static_cast<std::uint32_t>(output.size());
+        const auto crc=static_cast<std::uint32_t>(crc32(0,
+            reinterpret_cast<const Bytef*>(entry.bytes.data()),static_cast<uInt>(entry.bytes.size())));
+        put32(output,0x04034b50);put16(output,20);put16(output,0x0800);
+        put16(output,method);put16(output,0);put16(output,0);
+        put32(output,crc);put32(output,static_cast<std::uint32_t>(payload.size()));
+        put32(output,static_cast<std::uint32_t>(entry.bytes.size()));
+        put16(output,static_cast<std::uint16_t>(path.size()));put16(output,0);
+        output+=path;output+=payload;
+
+        put32(central,0x02014b50);put16(central,20);put16(central,20);
+        put16(central,0x0800);put16(central,method);put16(central,0);put16(central,0);
+        put32(central,crc);put32(central,static_cast<std::uint32_t>(payload.size()));
+        put32(central,static_cast<std::uint32_t>(entry.bytes.size()));
+        put16(central,static_cast<std::uint16_t>(path.size()));put16(central,0);
+        put16(central,0);put16(central,0);put16(central,0);put32(central,0);
+        put32(central,offset);central+=path;
+    }
+    require(central.size()<=std::numeric_limits<std::uint32_t>::max()&&
+            output.size()+central.size()+22<=maxInput);
+    const auto start=static_cast<std::uint32_t>(output.size());
+    output+=central;
+    put32(output,0x06054b50);put16(output,0);put16(output,0);
+    put16(output,static_cast<std::uint16_t>(archive.entries.size()));
+    put16(output,static_cast<std::uint16_t>(archive.entries.size()));
+    put32(output,static_cast<std::uint32_t>(central.size()));put32(output,start);
+    put16(output,0);
+    require(expanded<=std::uint64_t(output.size())*100);
+    return output;
 }
 }

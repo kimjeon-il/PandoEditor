@@ -37,7 +37,7 @@ ApplicationWindow {
         objectName: "windowsFrame"
         window: window
         enabled: !editor.mobileMode && Qt.platform.os === "windows"
-        blocked: unsaved.visible || errorDialog.visible || recoveryDialog.visible || webReport.visible || gisPanel.visible
+        blocked: unsaved.visible || errorDialog.visible || recoveryDialog.visible || webReport.visible || gisPanel.visible || gisExportPanel.visible
         caption: desktopTitleBar
         minimizeButton: minimizeWindowButton
         maximizeButton: maximizeWindowButton
@@ -45,6 +45,7 @@ ApplicationWindow {
     }
 
     property bool webImportFlowActive: false
+    property var gisExportSelection: []
     function requestWebImport() {
         webImportFlowActive=true
         webOpenDialog.open()
@@ -119,6 +120,7 @@ ApplicationWindow {
         if (Qt.inputMethod.visible) { Qt.inputMethod.hide(); return }
         if (historicalPanel.visible) { historicalPanel.close(); return }
         if (gisPanel.visible) { gisPanel.close(); return }
+        if (gisExportPanel.visible) { gisExportPanel.close(); return }
         if (webReport.visible) { cancelWebImportFlow(); return }
         if (errorDialog.visible) { errorDialog.close(); return }
         if (recoveryDialog.visible) { recoveryDialog.close(); return }
@@ -130,6 +132,7 @@ ApplicationWindow {
         if (allowClose) return
         if (webReport.visible) { close.accepted=false; cancelWebImportFlow(); return }
         if (gisPanel.visible) { close.accepted=false; gisPanel.close(); return }
+        if (gisExportPanel.visible) { close.accepted=false; gisExportPanel.close(); return }
         if (editor.mobileMode) { close.accepted=false; handleBack(); return }
         if (editor.dirty) { close.accepted=false; requestAction("close") }
     }
@@ -195,10 +198,11 @@ ApplicationWindow {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         mobileMode: editor.mobileMode
-        holdFieldCommits: window.webImportFlowActive || gisPanel.visible
+        holdFieldCommits: window.webImportFlowActive || gisPanel.visible || gisExportPanel.visible
         onWebImportRequested: window.requestWebImport()
         onHistoricalLibraryRequested: historicalPanel.open()
         onGisImportRequested: gisPanel.open()
+        onGisExportRequested: gisExportPanel.open()
         onOpenRequested: window.requestAction(editor.mobileMode ? "import" : "open")
         onSaveRequested: window.requestSave(false)
         onSaveAsRequested: editor.mobileMode ? window.requestExport() : window.requestSave(true)
@@ -214,6 +218,32 @@ ApplicationWindow {
     GisImportPanel {
         id: gisPanel
         onFileRequested: gisFileDialog.open()
+    }
+    GisExportPanel {
+        id: gisExportPanel
+        onDestinationRequested: function(format,selected) {
+            window.gisExportSelection=selected
+            if(format==="geojson-zip")gisZipSaveDialog.open()
+            else gisPackageSaveDialog.open()
+        }
+    }
+    Native.FileDialog {
+        id: gisZipSaveDialog
+        objectName: "gisZipSaveDialog"
+        title: "GIS GeoJSON ZIP 저장"
+        fileMode: Native.FileDialog.SaveFile
+        defaultSuffix: "zip"
+        nameFilters: ["GeoJSON ZIP (*.zip)"]
+        onAccepted: editor.exportGisData(selectedFile,"geojson-zip",window.gisExportSelection)
+    }
+    Native.FileDialog {
+        id: gisPackageSaveDialog
+        objectName: "gisPackageSaveDialog"
+        title: "GIS GeoPackage 저장"
+        fileMode: Native.FileDialog.SaveFile
+        defaultSuffix: "gpkg"
+        nameFilters: ["GIS GeoPackage (*.gpkg)"]
+        onAccepted: editor.exportGisData(selectedFile,"geopackage",window.gisExportSelection)
     }
     Native.FileDialog {
         id: gisFileDialog
