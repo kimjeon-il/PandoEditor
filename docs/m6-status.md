@@ -11,10 +11,10 @@ neither branch is merged to `main`.
 | M6.2 catalog | Implemented and Linux verified | Schema 2, historical pilot loader, M4 materialization, version/search/snapshot and child expansion. Incomplete source geometry is recorded. |
 | M6.3 instantiation | Implemented and Linux verified for reviewed transactions | Typed origin/native v7, independent and territory-replacement batch/snapshot addition, country name updates, M4 difference and dependent geometry reconciliation, full country transfer with typed label/distribution/relationship redirection. One Confirm/Undo. Explicit ownership, partial approval and stale/cancel guards. Ambiguous full absorption and country assets that cannot be safely inherited are rejected before mutation. |
 | M6.4 UI | Implemented and Linux offscreen verified; visible platform verification pending | Common desktop/360 px library panel with local file selection, filters, snapshots, boundary version and shape preview, source/approximation details, ownership choice with parent reset, impact preview and single-use confirmation. Read-only preparation runs off the GUI thread. |
-| M6.5 GIS format gate | Partial | Stage 3 web GeoJSON ZIP/zlib reader; stage 4 pinned web worker GIS/project GPKG with independent SQLite oracle and read-only Qt SQLite/geometry loader. Full browser GDAL seed interchange, Windows/Android driver deployment and cancellation/allocation verification remain. |
-| M6.6 GIS import | Partial | Stage 5 maps country/subunit/region GeoJSON, web ZIP and GeoPackage rows with explicit IDs and ownership through M4 geometry preparation. Stage 6 adds generic and language/ethnicity/religion distribution plans, preserving territorial references or free geometry, IDs and source properties. A shared desktop/360 px GIS panel separates file read, layer/field/ownership/coast mapping, impact preview and single-use confirmation; parse and plan run in background with session/revision guards. Candidate validation and one Confirm/Undo prevent partial live mutation. Project replacement, deeper GIS cancellation/allocation cases and visible platform validation remain. |
-| M6.7 GIS and project export | Native stage 8 Linux verified | Selected-layer GeoJSON ZIP and GIS-only GeoPackage remain separate. A project GeoPackage adds full native v7 settings, territorial provenance and binary embedded-flag assets alongside EPSG:4326 vector layers. The project open path checks the package and restores a candidate before replacing the live document; imported packages require a new JSON Save path. Background export rejects stale snapshots and keeps local writes atomic. Qt roundtrip/controller/UI cases and an independent Python SQLite oracle passed. The web-produced project GeoPackage has a different `project_state` JSON shape; direct web project replacement and cross-application roundtrip are not claimed. |
-| M6.8 integration | Linux complete regression verified; platform acceptance open | Stage 9 code head `d60a288` passed a fresh Linux configure/build and full CTest 78/78 with zero failures and zero skips. The CI audit requires the M3–M6 Oracle/UI gates and fails on omissions or skips. Corrupt GeoJSON/ZIP/GPKG, invalid CRS and stale GIS confirmation retain the live document/selection/revision; the web project GPKG is explicitly rejected by the native project reader. Web project replacement, targeted GIS allocation failure and visible Windows/physical Android still require verification. |
+| M6.5 GIS format gate | Partial | Stage 3 web GeoJSON ZIP/zlib reader; stage 4 pinned web worker GIS/project GPKG with independent SQLite oracle and read-only Qt SQLite/geometry loader. Full browser GDAL seed interchange and Windows/Android driver deployment remain unverified. |
+| M6.6 GIS import | Linux integration verified for tested cases | Stage 5 maps country/subunit/region GeoJSON, web ZIP and GeoPackage rows with explicit IDs and ownership through M4 geometry preparation. Stage 6 adds generic and language/ethnicity/religion distribution plans, preserving territorial references or free geometry, IDs and source properties. A shared desktop/360 px GIS panel separates file read, layer/field/ownership/coast mapping, impact preview and single-use confirmation; parse and plan run in background with session/revision guards. Candidate validation and one Confirm/Undo prevent partial live mutation. A dedicated allocation sweep covers generic, distribution and territorial GIS plan creation plus preview and commit; the core executable passed locally and in CI. Windows/Android operation is unverified. |
+| M6.7 GIS and project export | Stage 10 Linux integration verified for tested cases | Selected-layer GeoJSON ZIP and GIS-only GeoPackage remain separate. A project GeoPackage adds native v7 settings, territorial provenance and binary embedded-flag assets alongside EPSG:4326 vector layers. The project open path recognizes the distinct web `project_state`, reconstructs countries from the vector table, aligns the other layers by ID, restores flags from the asset table and validates the candidate before replacement. Native and web packages open through the same controller without making the GPKG an ordinary JSON Save target. The pinned worker fixture and a full-schema web state, three flag policies, corrupt assets and web-to-native roundtrip passed Linux regression. |
+| M6.8 integration | Stage 10 Linux regression verified | Code head `4f5ae4f` passed a fresh Linux configure/build, full CTest **79/79** and the M3–M6 regression audit with zero failures and zero skips. The audit requires GIS allocation failure and Oracle/UI gates. Corrupt GeoJSON/ZIP/GPKG, invalid CRS and stale GIS confirmation retain the live document/selection/revision. Visible Windows/physical Android verification remains unavailable in this environment. |
 
 The 1·2회차 implementation passed the full Linux workflow at `0de7588` (run
 `36099458471`, 60/60 tests, zero skips), including historical transaction,
@@ -35,9 +35,17 @@ complete Qt native v7 JSON in `pandolab_project_settings.project_state`.
 `pandolab_country_assets` holds binary embedded flags and the settings row
 retains default/none/embedded policy. The native reader validates country IDs
 against the vector table and requires every embedded asset to match a symbol.
-The pinned web fixture stores a web state projection instead. Opening it as a
-whole project still needs an explicit web-to-native mapping and is left to
-the remaining GIS project-replacement work.
+The pinned web fixture stores a web state projection instead. The stage 10
+reader reconstructs its missing `countriesData` from the 4326 vector table,
+cross-checks every other supported vector ID against its saved state and
+restores embedded flags from `pandolab_country_assets`. The existing web
+importer validates and maps the resulting candidate. Unrecognized vector
+layers, mismatched IDs/source information, malformed assets and any incomplete
+promotion reject the package before the controller replaces the live project.
+The web writer omits `countriesData` from project settings and places only
+country ID, effective name, validity and geometry in the vector table. Other
+original country feature properties are absent from the file and cannot be
+recovered by the native reader; this is a limitation of the source package.
 
 Stage 8 code commit `a9477b1` passed [Linux workflow 36133556179](https://github.com/kimjeon-il/PandoEditor/actions/runs/36133556179):
 fresh configure/build, full CTest **77/77**, zero failures. This includes
@@ -51,9 +59,14 @@ result and Qt test log for missing, failed or skipped M3–M6 gates. The new GIS
 failure matrix verifies that bad JSON/ZIP/SQLite/CRS inputs and stale Confirm
 do not mutate the document, selection or revision.
 
+Stage 10 code commit `4f5ae4f` passed [Linux workflow 36143642019](https://github.com/kimjeon-il/PandoEditor/actions/runs/36143642019):
+fresh configure/build, pinned hydro dataset, full CTest **79/79**, zero
+failures and **zero skips**. The web-produced project GPKG fixture, full-schema
+web state, flag policy and corruption checks, web-to-native GPKG roundtrip,
+controller no-mutation check and GIS allocation failure sweep are included.
+
 This execution environment is Linux and has no Windows GUI, Android SDK or
 physical Android device. Windows visible operation, Android Storage Access
-Framework and QSQLITE packaging are unverified. The pinned web project GPKG
-still uses a distinct state shape, so its full replacement path remains open;
-it is rejected without mutating the native project. Keep the PR in draft and
-do not merge into `main` while those acceptance items are open.
+Framework and QSQLITE packaging are unverified. Full browser GDAL seed
+interchange also remains unverified. Keep the PR in draft and do not merge
+into `main` while those acceptance items are open.
