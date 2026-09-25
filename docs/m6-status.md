@@ -14,7 +14,7 @@ neither branch is merged to `main`.
 | M6.5 GIS format gate | Partial | Stage 3 web GeoJSON ZIP/zlib reader; stage 4 pinned web worker GIS/project GPKG with independent SQLite oracle and read-only Qt SQLite/geometry loader. Full browser GDAL seed interchange, Windows/Android driver deployment and cancellation/allocation verification remain. |
 | M6.6 GIS import | Partial | Stage 5 maps country/subunit/region GeoJSON, web ZIP and GeoPackage rows with explicit IDs and ownership through M4 geometry preparation. Stage 6 adds generic and language/ethnicity/religion distribution plans, preserving territorial references or free geometry, IDs and source properties. A shared desktop/360 px GIS panel separates file read, layer/field/ownership/coast mapping, impact preview and single-use confirmation; parse and plan run in background with session/revision guards. Candidate validation and one Confirm/Undo prevent partial live mutation. Project replacement, deeper GIS cancellation/allocation cases and visible platform validation remain. |
 | M6.7 GIS and project export | Native stage 8 Linux verified | Selected-layer GeoJSON ZIP and GIS-only GeoPackage remain separate. A project GeoPackage adds full native v7 settings, territorial provenance and binary embedded-flag assets alongside EPSG:4326 vector layers. The project open path checks the package and restores a candidate before replacing the live document; imported packages require a new JSON Save path. Background export rejects stale snapshots and keeps local writes atomic. Qt roundtrip/controller/UI cases and an independent Python SQLite oracle passed. The web-produced project GeoPackage has a different `project_state` JSON shape; direct web project replacement and cross-application roundtrip are not claimed. |
-| M6.8 integration | Partial | Stage 8 code head `a9477b1` passed a fresh Linux configure/build and full CTest 77/77 with zero failures. Project GeoPackage roundtrip, corrupted package cases, independent SQLite oracle, controller and QML checks are included. The remaining web project replacement, allocation cases, visible Windows and physical Android still require verification. |
+| M6.8 integration | Linux complete regression verified; platform acceptance open | Stage 9 code head `d60a288` passed a fresh Linux configure/build and full CTest 78/78 with zero failures and zero skips. The CI audit requires the M3–M6 Oracle/UI gates and fails on omissions or skips. Corrupt GeoJSON/ZIP/GPKG, invalid CRS and stale GIS confirmation retain the live document/selection/revision; the web project GPKG is explicitly rejected by the native project reader. Web project replacement, targeted GIS allocation failure and visible Windows/physical Android still require verification. |
 
 The 1·2회차 implementation passed the full Linux workflow at `0de7588` (run
 `36099458471`, 60/60 tests, zero skips), including historical transaction,
@@ -43,3 +43,17 @@ Stage 8 code commit `a9477b1` passed [Linux workflow 36133556179](https://github
 fresh configure/build, full CTest **77/77**, zero failures. This includes
 the independent Python SQLite oracle, missing-asset and mismatched-country
 rejection, controller no-mutation checks, and offscreen 1100/360 px UI.
+
+Stage 9 code commit `d60a288` passed [Linux workflow 36136750879](https://github.com/kimjeon-il/PandoEditor/actions/runs/36136750879):
+fresh configure/build, pinned hydro dataset, full CTest **78/78**, zero
+failures and **zero skips**. The separate regression audit checks the JUnit
+result and Qt test log for missing, failed or skipped M3–M6 gates. The new GIS
+failure matrix verifies that bad JSON/ZIP/SQLite/CRS inputs and stale Confirm
+do not mutate the document, selection or revision.
+
+This execution environment is Linux and has no Windows GUI, Android SDK or
+physical Android device. Windows visible operation, Android Storage Access
+Framework and QSQLITE packaging are unverified. The pinned web project GPKG
+still uses a distinct state shape, so its full replacement path remains open;
+it is rejected without mutating the native project. Keep the PR in draft and
+do not merge into `main` while those acceptance items are open.
