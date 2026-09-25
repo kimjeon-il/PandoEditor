@@ -22,7 +22,7 @@ are recorded below; the open acceptance gates remain explicit.
 | Rivers and lakes, opacity, width, holes, selection and visibility pixels | Verified | `renderer/maprenderitem.cpp`, `map_render_tests` in run `36024805936`; real visible Windows rendering remains a separate gate. |
 | Built-in pick, logical identity, metadata search and focus | Verified | `app/editorpicking.cpp`, `app/editorselection.cpp`, `presentation_editor_tests` in run `36024805936`; hidden search returns `visible=false`. |
 | Multi-pack copy-on-edit, hide, one Undo/Redo and save/reopen | Verified | `app/editorcontent.cpp`, `presentation_editor_tests`; fragmented-copy roundtrip and actual logical ID zero copy passed in run `36024805936`. |
-| Central draw order and separate chooser order from current web | Implemented | `m5_render_pick_order_parity`, overlay pair/country/hydro/point pixels in `map_render_tests` pass in run `36024805936`; full primitive pair matrix, label/flag/selection z order, and visible web pixel comparison remain open. |
+| Central draw order and separate chooser order from current web | Implemented | `m5_render_pick_order_parity` now compares all 55 pairs of 11 object/primitive roles plus five boundary/line pairs against pinned web functions, keeping visible top and chooser first separate. Qt pixels cover country/subunit/region ownership; 1100/360 px QML checks label/flag placement above selected geometry. See `m5-order-verification.md`. A live browser confirmed flag/name labels above the canvas; pinned browser pixel captures for every synthetic pair, translucent ownership and selected-emphasis visual comparison remain open. |
 | Corruption and allocation failure containment | Verified | `hydro_manifest_tests`, `hydro_format_tests`, `hydro_allocation_tests`, `hydro_runtime_tests` passed in run `36024805936`. |
 | Labels, flags, distribution, generic current range, typed refs | Implemented | `presentation_editor_tests`, `migration_tests`, `retained_reference_tests`, M5 content Oracle passed in run `36024805936`; exhaustive feature matrix/UI regression remains open. |
 | M3.1–M4 and M5 executable Oracle regression, fresh complete CTest | Verified | Run `36024805936` built afresh and passed all 46 registered tests, including the named web Oracles; 0 failed, 0 skipped. M3.5 has native interaction tests but no separately named web Oracle. |
@@ -48,9 +48,19 @@ viewport, index, pack, logical merge and render/pick Oracles, passed in this
 single run. Its offscreen UI tests do not substitute for visible Windows or
 Android device verification.
 
+Order verification code revision `b903e5d` passed [Linux workflow
+36154575971](https://github.com/kimjeon-il/PandoEditor/actions/runs/36154575971):
+fresh Qt build and complete CTest **46/46**, zero failures. The updated
+`m5_render_pick_order_parity` compares 55 object/role pairs and five further
+primitive-role pairs. `map_render_tests` includes the country/subunit/region
+overlap pixel case, and `ui_tests` checks selected geometry behind the
+label/flag delegate at 1100/360 px. Browser pixels for the complete pinned
+scene and visible Windows/Android operation have not been verified.
+
 ## Merge gate
 
 M5 is still open while any M5 acceptance row above lacks evidence. Keep the
-draft PR out of `main` until fresh CI is green, the real dataset gate runs, draw
-and pick pair evidence is complete, and visible Windows interaction is recorded.
+draft PR out of `main` until the remaining pinned visual comparisons and
+visible Windows interaction are recorded. The real dataset and source-driven
+pair gates have Linux CI evidence; they do not replace visible platform checks.
 Android physical validation must be reported separately if a device is unavailable.
