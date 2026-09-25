@@ -20,7 +20,7 @@ given below. No device evidence is inferred from offscreen rendering.
 | Distribution layer/entry edit, references, validation, Undo and v6 | `app/editorcontent.cpp`; `migration_tests::contentCommandsPreviewUndoCancelAndStale`, `v6ContentRoundTripAndReferenceValidation`; `property_ui_tests::contentPanelSharedCommands` 1100/360px | Layer form path tested; complete entry-form click and geometry journey remains open. |
 | Dominant ties, intensity selected layer, share alpha, boundary and visibility | `core/src/presentation.cpp`, `app/editorcontroller.cpp`; `m5_content_web_parity`, `presentation_editor_tests::distributionModeUsesSelectedVisibleLayer`, `map_render_tests` overlays | Source-driven winner and native display rules; all type/style UI combinations not visually captured. |
 | Distribution map hover and pick remap to layer | `app/editorpicking.cpp`, `app/editorselection.cpp`; `presentation_editor_tests::visibleContentDomainsHoverAndHiddenHoverExpires` | Typed hit, hidden group and hover expiry tested; actual hover stroke/pixel parity open. |
-| Generic object read/edit, geometry variants and typed v6 refs | `app/editorcontent.cpp`, `core/src/document.cpp`; `migration_tests::v6ContentRoundTripAndReferenceValidation`, `map_render_tests::pointAndOpenLineDoNotBecomePolygonFills` | Existing object edit works. M5 ContentPanel has no generic create action and `beginContentEdit("generic",…,true)` rejects creation. This UI path is **open**. |
+| Generic object read/edit, geometry variants and typed v6 refs | `app/editorcontent.cpp`, `core/src/document.cpp`; `migration_tests::v6ContentRoundTripAndReferenceValidation`, `map_render_tests::pointAndOpenLineDoNotBecomePolygonFills` | Existing object edit works. M5 ContentPanel has no generic create action and `beginContentEdit("generic",…,true)` rejects creation; pinned web also sets generic `directCreation:false`. The direct-create journey is outside both UIs. |
 | Generic visibility, pick, hover and painter style | `app/editorcontroller.cpp`, `app/editorpicking.cpp`, `renderer/maprenderitem.cpp`; `presentation_editor_tests::visibleContentDomainsHoverAndHiddenHoverExpires`, `map_render_tests` generic/point and viewport capture | Typed map hit, group hide and shared canvas repaint tested; complete edit/opacity/line/point UI journey open. |
 | Desktop 1100px and compact 360px display menu | `ui/common/MapDisplayControls.qml`; `selection_ui_tests::presentationMenu`, `property_ui_tests::contentPanelSharedCommands`, `ui_tests` label layout and layering | Menu entry and common command paths tested; each domain's every button is not yet end-to-end asserted. |
 
@@ -57,9 +57,12 @@ uploaded as CI artifacts, not committed into the repository.
 
 The 1100/360px Qt offscreen captures show the ordinary label above the bottom
 controls and the selected label bypassing the inset. The earlier capture also
-showed weak text contrast over a dark fill; native text now uses an outline
-inspired by the pinned web rule (`.country-label` uses `paint-order: stroke` and
-a 2.3px halo). The replacement capture still needs a fresh CI visual check.
+showed weak text contrast over a dark fill. The replacement Qt capture from
+run `36171630652` shows a readable light outline around the native label at
+both widths, following the pinned web rule (`.country-label` uses
+`paint-order: stroke` and a 2.3px halo). This run failed the separate flag
+fixture setup because the test executable did not package default flags;
+the complete run with that fixture is pending.
 
 On the separately deployed browser page, the wide layout exposed a map
 rectangle at `(0,48)` sized `1363×888` and computed bottom safe inset `2rem`.

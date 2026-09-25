@@ -9,6 +9,10 @@ from pathlib import Path
 REQUIRED = {
     "m4_geometry_web_parity",
     "m5_hydro_web_fixture",
+    "m5_content_web_parity",
+    "m5_label_safe_area_web",
+    "presentation_editor_tests",
+    "map_render_tests",
     "hydro_full_dataset_tests",
     "m6_temporal_web_parity",
     "m6_historical_catalog_web_parity",
