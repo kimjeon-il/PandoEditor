@@ -105,6 +105,7 @@ int main(int argc,char** argv) {
     fixtureProject.replace(ProjectDocument({{"Z","Remote",rectangle(30,34).polygons,0x333333}},
         {{"countries","Countries"}}));
     GisTerritorialMapping webCountry;webCountry.target=GisExchangeTarget::Country;
+    webCountry.idField="pandolab_id";
     webCountry.nameField="pandolab_name";
     webCountry.coast=GisTerritorialMapping::CoastDecision::ImportedGeometry;
     auto zip=prepareGisTerritorialZipImport(fixtureProject.snapshot(),
