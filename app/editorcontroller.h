@@ -115,6 +115,7 @@ public:
     QVariantMap historicalPreview() const;
     QVariantMap historicalImpact() const {return historicalImpact_;}
     QVariantList historicalCountries() const;
+    Q_INVOKABLE QVariantList historicalParents(const QString& countryId) const;
     QVariantList historicalOwnershipNeeded() const {return historicalOwnershipNeeded_;}
     QString historicalStage() const {return historicalStage_;}
     QString historicalError() const {return historicalError_;}

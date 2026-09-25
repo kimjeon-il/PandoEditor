@@ -47,6 +47,22 @@ QVariantList EditorController::historicalCountries() const {
         result.push_back(QVariantMap{{"id",qs(unit.id)},{"name",qs(unit.name)}});
     return result;
 }
+QVariantList EditorController::historicalParents(const QString& countryId) const {
+    QVariantList result;
+    if(countryId.isEmpty())return result;
+    for(const auto& unit:project_.document().units) {
+        if(unit.id==countryId.toStdString()&&unit.kind==pandoeditor::UnitKind::Country)
+            result.push_back(QVariantMap{{"id",qs(unit.id)},{"name",qs(unit.name)}});
+        else if(unit.kind==pandoeditor::UnitKind::Subunit) {
+            for(const auto& relation:project_.document().relations)
+                if(!relation.dated&&relation.unit==pandoeditor::territorialRef(unit.id)&&relation.sovereign&&
+                   relation.sovereign->id==countryId.toStdString()) {
+                    result.push_back(QVariantMap{{"id",qs(unit.id)},{"name",qs(unit.name)}});break;
+                }
+        }
+    }
+    return result;
+}
 QVariantMap EditorController::historicalPreview() const {
     if(!historicalLibrary_||historicalSelectedId_.isEmpty())return {};
     const auto* entity=historicalLibrary_->get(historicalSelectedId_.toStdString());
@@ -211,6 +227,8 @@ bool EditorController::prepareHistoricalAdd(const QVariantMap& options) {
                     QVariantList added,adjusted,updated;
                     for(const auto& item:plan.additions)added.push_back(qs(item.selection.name));
                     for(const auto& patch:plan.territoryReplacements)adjusted.push_back(qs(patch.owner.id));
+                    for(const auto& [donor,target]:plan.territoryTransfers)
+                        adjusted.push_back(qs(donor.id)+QStringLiteral(" → ")+qs(target.id));
                     for(const auto& [id,name]:plan.countryNameUpdates)updated.push_back(qs(id)+QStringLiteral(" → ")+qs(name));
                     historicalImpact_={{"added",added},{"adjusted",adjusted},{"updated",updated},
                         {"summary",QStringLiteral("%1개 추가 · 영토 %2개 조정 · 국가 이름 %3개 변경")

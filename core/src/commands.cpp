@@ -44,6 +44,7 @@ std::vector<ObjectRef> targetsFor(const CommandArguments& args)
                 if(addition.sovereign)refs.insert(*addition.sovereign);
             }
             for(const auto& patch:action.territoryReplacements)refs.insert(patch.owner);
+            for(const auto& [donor,target]:action.territoryTransfers)refs.insert(donor);
             for(const auto& [id,name]:action.countryNameUpdates)refs.insert(territorialRef(id));
         }
         else if constexpr(std::is_same_v<T,GisGenericImportPlan>)
@@ -116,11 +117,20 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                             CommandError::InvalidArguments,"invalid independent country choice");
                 }
                 require(action.countryNameUpdates==expectedNames,CommandError::InvalidArguments,"country updates differ from library");
-                require(replacementMode||action.territoryReplacements.empty(),CommandError::InvalidArguments,"unexpected historical geometry patch");
+                require(replacementMode||(action.territoryReplacements.empty()&&action.territoryTransfers.empty()),CommandError::InvalidArguments,"unexpected historical geometry patch");
                 for(const auto& patch:action.territoryReplacements)
                     require(patch.owner.domain=="territorial" && project.index().objects.count(patch.owner) &&
                             (patch.geometry.type=="Polygon"||patch.geometry.type=="MultiPolygon"),
                             CommandError::InvalidArguments,"invalid historical geometry patch");
+                for(const auto& [donor,target]:action.territoryTransfers) {
+                    const auto found=project.index().objects.find(donor);
+                    require(found!=project.index().objects.end()&&donor.domain=="territorial"&&
+                            project.document().units.at(found->second).kind==UnitKind::Country&&
+                            std::any_of(action.additions.begin(),action.additions.end(),[&](const auto& item){
+                                return territorialRef(item.selection.libraryId)==target&&
+                                    item.selection.instantiation.mode=="territory-replacement";
+                            }),CommandError::InvalidArguments,"invalid historical country transfer");
+                }
                 for(const auto& [id,name]:action.countryNameUpdates)
                     require(!name.empty()&&project.index().objects.count(territorialRef(id))&&
                             project.document().units.at(project.index().objects.at(territorialRef(id))).kind==UnitKind::Country,
@@ -654,6 +664,21 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
             require(!owner.locked&&effectAllowed(before,patch.owner,"geometry"),CommandError::Locked,"historical geometry owner locked");
             const auto layer=project.layer(nativeLayerId(before,patch.owner));
             require(!layer||!layer->locked,CommandError::Locked,"historical geometry layer locked");
+        }
+        for(const auto& [donor,target]:historical->territoryTransfers) {
+            const auto& owner=before.units.at(project.index().objects.at(donor));
+            require(!owner.locked&&effectAllowed(before,donor,"delete"),CommandError::Locked,"historical donor locked");
+            const auto layer=project.layer(nativeLayerId(before,donor));
+            require(!layer||!layer->locked,CommandError::Locked,"historical donor layer locked");
+            for(const auto& label:before.labels)if(label.territory==donor)
+                require(effectAllowed(before,{"label",label.id},"relation"),CommandError::UnsupportedDependency,"historical label dependency");
+            for(const auto& entry:before.distributionEntries)if(entry.territory==donor) {
+                const auto layer=std::find_if(before.distributionLayers.begin(),before.distributionLayers.end(),
+                    [&](const auto& row){return row.id==entry.layerId;});
+                require(layer!=before.distributionLayers.end()&&!layer->locked&&
+                        effectAllowed(before,{"distributionEntry",entry.id},"relation"),
+                        CommandError::UnsupportedDependency,"historical distribution dependency");
+            }
         }
         for(const auto& [id,name]:historical->countryNameUpdates) {
             const auto ref=territorialRef(id);

@@ -63,7 +63,8 @@ Dialog {
         GridLayout {
             Layout.fillWidth: true; Layout.fillHeight: true
             columns: root.width < 600 ? 1 : 2
-            spacing: 8
+            columnSpacing: 8
+            rowSpacing: 8
             ListView {
                 id: results
                 objectName: "historicalResults"

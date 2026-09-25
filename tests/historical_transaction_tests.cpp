@@ -44,17 +44,28 @@ private slots:
         QCOMPARE(p.document().units.front().name,std::string("Before"));
         QCOMPARE(planarArea(*p.document().geometries.get(p.document().units.front().geometry)),100.);
     }
-    void cancelAndErasurePreserveProject() {
+    void cancelAndFullTransfer() {
         auto p=project();auto source=catalog(box(0,0,4,10));
         bool cancelled=false;
         try { (void)prepareHistoricalTransaction(p.snapshot(),source,{{"historical-country:test","1945"}},calculateGeometry,
             []{return true;}); }
         catch(const std::runtime_error&){cancelled=true;}
         QVERIFY(cancelled);QCOMPARE(p.document().units.size(),std::size_t(1));
-        auto erasure=catalog(box(0,0,10,10));bool blocked=false;
-        try { (void)prepareHistoricalTransaction(p.snapshot(),erasure,{{"historical-country:test","1945"}},calculateGeometry); }
-        catch(const std::invalid_argument&){blocked=true;}
-        QVERIFY(blocked);QCOMPARE(p.document().units.front().name,std::string("Before"));
+        // Names of removed countries cannot be updated. Use a source that only transfers territory.
+        HistoricalEntity e;e.libraryId="historical-country:absorber";e.canonicalName="Absorber";
+        e.instantiation.mode="territory-replacement";
+        HistoricalGeometryVersion v;v.id="v1";v.geometry=box(0,0,10,10);e.geometryVersions.push_back(v);
+        HistoricalLibrary transferCatalog(2,{e},{});
+        auto transfer=prepareHistoricalTransaction(p.snapshot(),transferCatalog,
+            {{"historical-country:absorber","1945"}},calculateGeometry);
+        QCOMPARE(transfer.territoryTransfers.size(),std::size_t(1));
+        CommandArguments args;args.action=transfer;
+        auto prepared=CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"historical.instantiate",args));
+        QVERIFY2(prepared.ok(),prepared.detail.c_str());
+        QVERIFY(CommandProcessor::confirm(p,*prepared.preview).changed());
+        QVERIFY(!p.index().objects.count(territorialRef("A")));
+        QVERIFY(p.index().objects.count(territorialRef("historical-country:absorber")));
+        QVERIFY(p.undo()&&p.index().objects.count(territorialRef("A")));
     }
 };
 QTEST_MAIN(HistoricalTransactionTests)

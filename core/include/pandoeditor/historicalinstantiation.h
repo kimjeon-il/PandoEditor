@@ -30,11 +30,15 @@ struct HistoricalInstantiationPlan {
     std::vector<HistoricalAddition> additions;
     // Computed by the M4 geometry worker against this exact revision.
     std::vector<GeometryReplacement> territoryReplacements;
+    // Existing countries entirely absorbed by exactly one selected historical
+    // country. Dependent typed references are redirected in the same ChangeSet.
+    std::map<ObjectRef,ObjectRef> territoryTransfers;
     std::map<std::string,std::string> countryNameUpdates;
 };
 HistoricalInstantiationPlan planHistorical(const ProjectSnapshot&,
     const HistoricalLibrary&,const std::vector<HistoricalAddRequest>&,
-    const std::vector<GeometryReplacement>& territoryReplacements={});
+    const std::vector<GeometryReplacement>& territoryReplacements={},
+    const std::map<ObjectRef,ObjectRef>& territoryTransfers={});
 HistoricalInstantiationPlan planIndependentHistorical(const ProjectSnapshot&,
     const HistoricalLibrary&,const std::vector<HistoricalAddRequest>&);
 // A snapshot is a template. Missing refs and unresolved ownership stop the

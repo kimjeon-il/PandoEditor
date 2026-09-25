@@ -144,4 +144,21 @@ int main() {
     assert(countryChoice.document().units.back().kind==UnitKind::Country);
     assert(countryChoice.document().units.back().libraryOrigin->libraryId=="historical-subunit:S");
     assert(countryChoice.undo()&&countryChoice.document().units.size()==1);
+
+    auto absorber=entity("historical-country:absorber",UnitKind::Country,square(0,10));
+    absorber.instantiation.mode="territory-replacement";
+    HistoricalLibrary absorption(2,{absorber},{});
+    auto transferProject=project();
+    auto transferPlan=planHistorical(transferProject.snapshot(),absorption,
+        {{"historical-country:absorber","1945"}}, {},
+        {{territorialRef("A"),territorialRef("historical-country:absorber")}});
+    assert(transferPlan.territoryTransfers.size()==1);
+    args.action=transferPlan;
+    auto transferPreview=CommandProcessor::prepare(transferProject,
+        CommandProcessor::makeRequest(transferProject,"historical.instantiate",args));
+    assert(transferPreview.ok()&&transferPreview.preview);
+    assert(CommandProcessor::confirm(transferProject,*transferPreview.preview).changed());
+    assert(transferProject.document().units.size()==1&&
+        transferProject.document().units.front().id=="historical-country:absorber");
+    assert(transferProject.undo()&&transferProject.document().units.front().id=="A");
 }

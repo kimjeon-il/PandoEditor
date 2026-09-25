@@ -43,8 +43,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     visible: mode.currentIndex===0
                     textRole: "name"; valueRole: "id"
-                    model: [{id:"",name:"상위 단위 선택"}].concat(country.currentValue
-                        ? [{id:country.currentValue,name:country.currentText}] : [])
+                    model: [{id:"",name:"상위 단위 선택"}].concat(editor.historicalParents(country.currentValue))
                     onActivated: root.choiceChanged(group.modelData.id,
                         {mode:"subunit",countryId:country.currentValue,parentId:currentValue,name:countryName.text})
                 }

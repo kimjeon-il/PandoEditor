@@ -11,15 +11,18 @@ HistoricalInstantiationPlan prepareHistoricalTransaction(const ProjectSnapshot& 
     if(!calculator)throw std::invalid_argument("INVALID_LIBRARY: M4 calculator required");
     if(cancelled&&cancelled())throw std::runtime_error("CANCELLED");
     std::vector<Geometry> replacements;
+    std::map<ObjectRef,Geometry> replacementTargets;
     for(const auto& request:requests) {
         const auto selected=catalog.instantiate(request.libraryId,request.referenceDate,request.geometryVersionId);
         if(selected.instantiation.mode=="territory-replacement") {
             if(selected.type!=UnitKind::Country && !request.asIndependentCountry)
                 throw std::invalid_argument("INVALID_LIBRARY: territory replacement requires country");
             replacements.push_back(selected.geometry);
+            replacementTargets.emplace(territorialRef(selected.libraryId),selected.geometry);
         }
     }
     std::vector<GeometryReplacement> patches;
+    std::map<ObjectRef,ObjectRef> transfers;
     if(!replacements.empty()) {
         auto combined=replacements.front();
         if(replacements.size()>1) {
@@ -36,9 +39,20 @@ HistoricalInstantiationPlan prepareHistoricalTransaction(const ProjectSnapshot& 
             if(intersection.status==GeometryOperationStatus::Empty ||
                !significantArea(planarArea(intersection.geometry),planarArea(original)))continue;
             auto remaining=calculator({GeometryOperation::Difference,original,combined,{}},cancelled);
-            if(remaining.status!=GeometryOperationStatus::Completed ||
-               !significantArea(planarArea(remaining.geometry),planarArea(original)))
-                throw std::invalid_argument("INVALID_LIBRARY: territory would erase existing country");
+            if(remaining.status==GeometryOperationStatus::Empty ||
+               (remaining.status==GeometryOperationStatus::Completed &&
+                !significantArea(planarArea(remaining.geometry),planarArea(original)))) {
+                std::optional<ObjectRef> destination;
+                for(const auto& [target,shape]:replacementTargets)if(geometryContains(shape,original)) {
+                    if(destination)throw std::invalid_argument("INVALID_LIBRARY: ambiguous absorbed country");
+                    destination=target;
+                }
+                if(!destination)throw std::invalid_argument("INVALID_LIBRARY: split absorbed country");
+                transfers.emplace(territorialRef(unit.id),*destination);
+                continue;
+            }
+            if(remaining.status!=GeometryOperationStatus::Completed)
+                throw std::runtime_error("INVALID_LIBRARY: M4 difference failed");
             donorRemainders.emplace(territorialRef(unit.id),remaining.geometry);
             patches.push_back({territorialRef(unit.id),std::move(remaining.geometry)});
         }
@@ -59,6 +73,6 @@ HistoricalInstantiationPlan prepareHistoricalTransaction(const ProjectSnapshot& 
         }
     }
     if(cancelled&&cancelled())throw std::runtime_error("CANCELLED");
-    return planHistorical(project,catalog,requests,patches);
+    return planHistorical(project,catalog,requests,patches,transfers);
 }
 }
