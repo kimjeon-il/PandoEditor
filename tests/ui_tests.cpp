@@ -78,6 +78,33 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void historicalLibraryPanelAtDesktopAnd360px() {
+        QTemporaryDir dir;QVERIFY(dir.isValid());
+        QFile file(dir.filePath("historical.json"));QVERIFY(file.open(QIODevice::WriteOnly));
+        const QByteArray json=R"({"schemaVersion":2,"entities":[{"libraryId":"historical-country:fixture","type":"country","canonicalName":"Fixture","geometryVersions":[{"id":"v1","geometry":{"type":"Polygon","coordinates":[[[70,0],[72,0],[72,2],[70,2],[70,0]]]}}]}],"snapshots":[]})";
+        QCOMPARE(file.write(json),json.size());file.close();
+        for(bool mobile:{false,true}) {
+            EditorController editor(EditorControllerConfig{mobile,{}});
+            QVERIFY(editor.loadHistoricalLibrary(QUrl::fromLocalFile(file.fileName())));
+            QQmlApplicationEngine engine;QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){
+                for(const auto& e:errors)warnings<<e.toString();
+            });
+            engine.rootContext()->setContextProperty("editor",&editor);
+            engine.load(QUrl("qrc:/common/Main.qml"));
+            QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+            auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);
+            window->resize(mobile?360:1100,mobile?640:760);exposeForTest(window);
+            QVERIFY(clickControl(window,"historicalLibraryButton"));
+            auto* panel=window->findChild<QObject*>("historicalLibraryPanel");QVERIFY(panel);
+            QTRY_VERIFY(panel->property("visible").toBool());
+            QVERIFY(panel->property("width").toDouble()<=window->width());
+            QVERIFY(editor.historicalResults().size()==1);
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+            QMetaObject::invokeMethod(panel,"close");
+            window->close();
+        }
+    }
     void frameHitTargetsAtFractionalScale() {
         // Losing local DPI conversion would route a scaled maximize click to
         // the map; treating maximized corners as resize would break snapping.

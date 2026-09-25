@@ -36,6 +36,7 @@ ColumnLayout {
     Label { Layout.fillWidth: true; text: "경계: " + (root.preview.geometryVersionId || "-") + " · 정밀도: " + (root.preview.datePrecision || "-"); wrapMode: Text.Wrap }
     Label { Layout.fillWidth: true; text: "확실성: " + (root.preview.certainty || "-") + " · 출처: " + (root.preview.sourceId || "-"); wrapMode: Text.Wrap }
     Label { Layout.fillWidth: true; visible: !!root.preview.partial; text: "일부 원본 자료가 누락되었습니다. 추가 시 명시적 승인이 필요합니다."; color: "#a24b18"; wrapMode: Text.Wrap }
-    Label { Layout.fillWidth: true; visible: (root.preview.metadata || "").indexOf('"approximateGeometry":true')>=0; text: "근사 경계 자료"; color: "#a24b18" }
+    Label { Layout.fillWidth: true; visible: !!root.preview.approximateGeometry; text: "근사 경계 자료"; color: "#a24b18" }
+    Label { Layout.fillWidth: true; visible: !!root.preview.sourceTitle; text: "자료: " + root.preview.sourceTitle + (root.preview.sourceLicense ? " · " + root.preview.sourceLicense : ""); wrapMode: Text.Wrap }
     Label { Layout.fillWidth: true; text: root.preview.error || ""; color: "#a73535"; visible: !!text; wrapMode: Text.Wrap }
 }

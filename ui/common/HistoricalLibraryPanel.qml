@@ -116,7 +116,7 @@ Dialog {
                     }
                     CheckBox {
                         id: partial
-                        visible: !!editor.historicalPreview.partial
+                        visible: !!editor.historicalPreview.partial || !!root.snapshotId
                         text: "누락 자료를 확인하고 부분 추가에 동의"
                     }
                     GroupBox {

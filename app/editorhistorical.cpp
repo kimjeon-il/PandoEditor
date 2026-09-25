@@ -6,6 +6,7 @@
 #include <pandoeditor/temporal.h>
 #include <QtConcurrent>
 #include <QFutureWatcher>
+#include <QJsonDocument>
 #include <algorithm>
 #include <limits>
 
@@ -81,6 +82,11 @@ QVariantMap EditorController::historicalPreview() const {
         {"parentLibraryId",qs(entity->parentLibraryId)},
         {"sovereignLibraryId",qs(entity->sovereignLibraryId)},
         {"metadata",qs(entity->metadata)},{"sourceInfo",qs(entity->sourceInfo)}};
+    const auto metadata=QJsonDocument::fromJson(qs(entity->metadata).toUtf8()).object();
+    const auto source=QJsonDocument::fromJson(qs(entity->sourceInfo).toUtf8()).object();
+    result["approximateGeometry"]=metadata.value("approximateGeometry").toBool();
+    result["sourceTitle"]=source.value("title").toString();
+    result["sourceLicense"]=source.value("license").toString();
     try {
         auto selected=historicalLibrary_->instantiate(entity->libraryId,
             historicalReferenceDate_.toStdString(),historicalVersionId_.toStdString());
