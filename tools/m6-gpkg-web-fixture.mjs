@@ -105,7 +105,7 @@ const state = {
     territorialUnitId: 'AAA', share: 60, certainty: 'known' }],
   labels: [{ id: 'label:1', name: 'Capital', coordinates: [1,1] }],
   countryAssets: [{ countryId: 'AAA', mimeType: 'image/svg+xml',
-    base64: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>').toString('base64') }],
+    base64: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><rect width="2" height="2" fill="red"/></svg>').toString('base64') }],
   sourceInfo: { fixture: 'web-worker' },
 };
 let response;

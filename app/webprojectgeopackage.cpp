@@ -69,7 +69,7 @@ void align(V& state,const char* key,const FeatureMap& vectors,bool pointCoordina
     }
     require(seen.size()==vectors.size(),"WEB_GPKG_VECTOR_STATE_MISMATCH");
 }
-void alignDistribution(V& state,const FeatureMap& vectors) {
+void alignDistribution(V& state,const FeatureMap& vectors,bool fixtureProjection) {
     auto& rows=state.object["distributionEntries"];
     if(rows.kind==V::Null)rows=V::arr();
     require(rows.kind==V::Array,"INVALID_WEB_GPKG_STATE");
@@ -82,7 +82,7 @@ void alignDistribution(V& state,const FeatureMap& vectors) {
         const auto mode=string(field(row,"mode"));
         require(mode=="geometry"||mode=="territorial","INVALID_WEB_GPKG_STATE");
         if(mode=="geometry")row.object["geometry"]=geometry(it->second->geometry);
-        row.object["schemaVersion"]=V::num(2);
+        if(fixtureProjection)row.object["schemaVersion"]=V::num(2);
     }
     require(seen.size()==vectors.size(),"WEB_GPKG_VECTOR_STATE_MISMATCH");
 }
@@ -90,8 +90,12 @@ void alignDistribution(V& state,const FeatureMap& vectors) {
 
 QByteArray convertWebProjectGeoPackage(const GisGeoPackage& vectors,V state,
     const std::map<std::string,WebProjectAsset>& assets) {
-    require(vectors.projectPackage&&state.kind==V::Object&&
-            field(state,"format").kind==V::Null&&field(state,"countriesData").kind==V::Null,
+    require(vectors.projectPackage&&state.kind==V::Object&&field(state,"countriesData").kind==V::Null,
+            "UNSUPPORTED_PROJECT_GPKG_STATE");
+    const auto& format=field(state,"format");
+    const bool fixtureProjection=format.kind==V::Null;
+    require(fixtureProjection||(format.kind==V::String&&
+            (format.string=="pandolab-project-state"||format.string=="pandolab-autosave-full")),
             "UNSUPPORTED_PROJECT_GPKG_STATE");
     const auto countries=features(vectors,{"countries"});
     require(!countries.empty(),"WEB_GPKG_COUNTRIES_MISSING");
@@ -135,30 +139,37 @@ QByteArray convertWebProjectGeoPackage(const GisGeoPackage& vectors,V state,
 
     align(state,"territorialUnits",features(vectors,{"subunits","regions"}));
     for(auto& row:state.object["territorialUnits"].array) {
+        require(field(row,"type").kind==V::Null||string(field(row,"type"))=="Feature",
+                "INVALID_WEB_GPKG_STATE");
         row.object["type"]=V::str("Feature");
         auto& props=row.object["properties"];
         require(props.kind==V::Object,"INVALID_WEB_GPKG_STATE");
-        if(!props.object.count("coverageMode"))props.object["coverageMode"]=V::str("explicit");
+        if(fixtureProjection&&!props.object.count("coverageMode"))
+            props.object["coverageMode"]=V::str("explicit");
     }
     align(state,"genericFeatures",features(vectors,{
         "generic_features_point","generic_features_line","generic_features_polygon"}));
     align(state,"labels",features(vectors,{"places"}),true);
     alignDistribution(state,features(vectors,{"language_distribution",
-        "ethnicity_distribution","religion_distribution"}));
+        "ethnicity_distribution","religion_distribution"}),fixtureProjection);
     auto& layers=state.object["distributionLayers"];
     if(layers.kind==V::Null)layers=V::arr();
     require(layers.kind==V::Array,"INVALID_WEB_GPKG_STATE");
     for(auto& layer:layers.array) {
         require(layer.kind==V::Object,"INVALID_WEB_GPKG_STATE");
-        layer.object["schemaVersion"]=V::num(2);
+        if(fixtureProjection)layer.object["schemaVersion"]=V::num(2);
     }
-    state.object["format"]=V::str("pandolab-project-state");
-    state.object["schemaVersion"]=V::num(3); // Existing v3→v5 migrator normalizes legacy content.
-    if(field(state,"version").kind==V::Null)state.object["version"]=V::str("0.33.0");
-    if(field(state,"distributionModel").kind==V::Null)
+    if(fixtureProjection) {
+        // The small worker fixture has no full-project envelope. Run its old
+        // content through the existing v3→v5 migrator after restoring vectors.
+        state.object["format"]=V::str("pandolab-project-state");
+        state.object["schemaVersion"]=V::num(3);
+        state.object["version"]=V::str("0.33.0");
+    }
+    if(fixtureProjection&&field(state,"distributionModel").kind==V::Null)
         state.object["distributionModel"]=webjson::obj({{"schemaVersion",V::num(2)}});
     const auto input=state.encode();
-    auto imported=webimport::prepare(input,{},true);
+    auto imported=webimport::prepare(input,{},fixtureProjection);
     Project candidate;candidate.replace(std::move(imported.document));
     return projectcodec::encode(candidate);
 }

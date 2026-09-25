@@ -54,7 +54,7 @@ for filename, is_project in (("web-gis.gpkg", False), ("web-project.gpkg", True)
             asset = connection.execute(
                 "SELECT mime_type,image_data FROM pandolab_country_assets "
                 "WHERE country_id='AAA'").fetchone()
-            assert asset == ("image/svg+xml", b'<svg xmlns="http://www.w3.org/2000/svg"/>')
+            assert asset == ("image/svg+xml", b'<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><rect width="2" height="2" fill="red"/></svg>')
         print(f"{filename}: SQLite integrity, 10 vector tables, EPSG:4326, "
               f"{'project' if is_project else 'GIS-only'} tables verified")
     finally:

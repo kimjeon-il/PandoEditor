@@ -19,6 +19,7 @@ REQUIRED = {
     "project_geopackage_controller_tests",
     "gis_import_controller_tests",
     "gis_failure_matrix_tests",
+    "gis_allocation_tests",
     "ui_tests",
 }
 
