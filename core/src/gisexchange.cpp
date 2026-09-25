@@ -60,4 +60,44 @@ void assertCurrentGisImportPlan(const ProjectSnapshot& project,const GisImportPl
        plan.revision!=project.revision())
         throw std::invalid_argument("STALE_GIS_PLAN");
 }
+GisGenericImportPlan planGenericGisImport(const ProjectSnapshot& project,std::string planId,
+    GisSource source,std::vector<GisGenericInput> features) {
+    if(features.empty())throw std::invalid_argument("INVALID_GIS_PLAN: empty generic import");
+    std::set<std::string> seen;
+    std::vector<std::string> ids;
+    for(const auto& feature:features) {
+        if(feature.id.empty()||!seen.insert(feature.id).second||
+           project.index().objects.count({"generic",feature.id}))
+            throw std::invalid_argument("DUPLICATE_ID: generic feature");
+        ids.push_back(feature.id);
+    }
+    GisGenericImportPlan plan{createGisImportPlan(project,std::move(planId),
+        GisImportKind::Generic,std::move(source),GisExchangeTarget::Generic,std::move(ids)),
+        std::move(features)};
+    auto candidate=project.document();
+    applyGenericGisImport(candidate,plan);
+    validateDocument(candidate);
+    return plan;
+}
+void applyGenericGisImport(ProjectDocument& document,const GisGenericImportPlan& plan) {
+    if(plan.info.kind!=GisImportKind::Generic||plan.info.target!=GisExchangeTarget::Generic||
+       plan.features.empty()||plan.info.affectedIds.size()!=plan.features.size())
+        throw std::invalid_argument("INVALID_GIS_PLAN: generic payload");
+    std::set<std::string> seen;
+    for(std::size_t i=0;i<plan.features.size();++i) {
+        const auto& feature=plan.features[i];
+        if(feature.id.empty()||plan.info.affectedIds[i]!=feature.id||!seen.insert(feature.id).second)
+            throw std::invalid_argument("INVALID_GIS_PLAN: generic IDs");
+        if(std::any_of(document.genericFeatures.begin(),document.genericFeatures.end(),
+             [&](const auto& existing){return existing.id==feature.id;}))
+            throw std::invalid_argument("DUPLICATE_ID: generic feature");
+        GeometryRef geometry{"gis-generic:"+feature.id,1};
+        document.geometries.insert(geometry,feature.geometry);
+        GenericFeature row;row.id=feature.id;row.name=feature.name;row.geometry=geometry;
+        row.source.kind="gis";row.source.dataset=plan.info.source.fileName;
+        row.source.sourceFormat=plan.info.source.sourceKind;
+        row.source.sourceId=feature.id;row.source.details=feature.propertiesJson;
+        document.genericFeatures.push_back(std::move(row));
+    }
+}
 }

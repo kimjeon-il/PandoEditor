@@ -43,6 +43,8 @@ std::vector<ObjectRef> targetsFor(const CommandArguments& args)
                 if(addition.parent)refs.insert(*addition.parent);
                 if(addition.sovereign)refs.insert(*addition.sovereign);
             }
+        else if constexpr(std::is_same_v<T,GisGenericImportPlan>)
+            for(const auto& feature:action.features)refs.insert({"generic",feature.id});
         else if constexpr(std::is_same_v<T,ContentEdit>) refs.insert(action.target);
         else if constexpr(std::is_same_v<T,SetPhysicalData>) {}
         else if constexpr(!std::is_same_v<T,std::monostate>) refs.insert({"userLayer",action.id});
@@ -61,7 +63,8 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
         {"territorial.batch-color",9},{"territorial.lock",10},{"territorial.create",11},
         {"territorial.relation.parent",11},{"territorial.relation.sovereign",11},
         {"territorial.delete",11},{"territorial.geometry.commit",11},{"territorial.geometry.replace",11},
-        {"content.edit",12},{"physical-data.configure",13},{"historical.instantiate",14}};
+        {"content.edit",12},{"physical-data.configure",13},{"historical.instantiate",14},
+        {"gis.import.generic",15}};
     auto found=std::find_if(std::begin(commands),std::end(commands),[&](const auto& c){return request.commandId==c.first;});
     require(found!=std::end(commands),CommandError::InvalidCommand,"unknown commandId");
     require(request.args.action.index()==found->second,CommandError::InvalidArguments,"commandId/action mismatch");
@@ -99,6 +102,20 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                     require(selection.type!=UnitKind::Subunit||(addition.parent&&addition.sovereign),
                             CommandError::InvalidArguments,"explicit historical ownership required");
                 }
+            } else if constexpr(std::is_same_v<T,GisGenericImportPlan>) {
+                require(action.info.projectInstanceId==project.instanceId(),CommandError::ProjectMismatch,"GIS plan project changed");
+                require(action.info.documentId==project.document().documentId,CommandError::DocumentMismatch,"GIS plan document changed");
+                require(action.info.revision==project.revision(),CommandError::StaleRevision,"GIS plan stale");
+                require(action.info.version==1 && !action.info.id.empty() &&
+                        action.info.kind==GisImportKind::Generic && action.info.target==GisExchangeTarget::Generic &&
+                        !action.features.empty() && action.features.size()==action.info.affectedIds.size(),
+                        CommandError::InvalidArguments,"invalid generic GIS plan");
+                std::set<std::string> unique;
+                for(std::size_t i=0;i<action.features.size();++i)
+                    require(!action.features[i].id.empty() &&
+                            action.features[i].id==action.info.affectedIds[i] &&
+                            unique.insert(action.features[i].id).second,
+                            CommandError::InvalidTargets,"duplicate generic GIS target");
             }
         },request.args.action);
     }
@@ -144,6 +161,11 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                 [&](const auto& item){return territorialRef(item.selection.libraryId)==ref;});
             require(ref.domain=="territorial" && (created? !project.index().objects.count(ref)
                 :project.index().objects.count(ref)!=0),CommandError::InvalidTargets,"historical target invalid");
+            continue;
+        }
+        if(std::holds_alternative<GisGenericImportPlan>(request.args.action)) {
+            require(ref.domain=="generic" && !project.index().objects.count(ref),
+                    CommandError::InvalidTargets,"generic GIS target exists");
             continue;
         }
         if(ref.domain=="territorial") {
@@ -496,6 +518,8 @@ void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const 
             applyContent(candidate,index,action);
         } else if constexpr(std::is_same_v<T,HistoricalInstantiationPlan>) {
             applyHistoricalInstantiation(candidate,action);
+        } else if constexpr(std::is_same_v<T,GisGenericImportPlan>) {
+            applyGenericGisImport(candidate,action);
         }
     },args.action);
     for(const auto& field:args.properties.fields)applyField(candidate,index,field);
@@ -602,6 +626,12 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
                 require(!layer||!layer->locked,CommandError::Locked,"historical owner layer locked");
             }
         }
+        return;
+    }
+    if(const auto generic=std::get_if<GisGenericImportPlan>(&request.args.action)) {
+        for(const auto& feature:generic->features)
+            require(effectAllowed(before,{"generic",feature.id},"add"),
+                    CommandError::UnsupportedDependency,"generic GIS creation dependency");
         return;
     }
     auto allow=[&](bool changed,const ObjectRef& ref,const char* effect) {

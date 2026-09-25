@@ -113,4 +113,19 @@ QByteArray exportGisGeoJson(const GisGeoJsonCollection& collection) {
     }
     return webjson::obj({{"type",V::str("FeatureCollection")},{"features",std::move(rows)}}).encode()+"\n";
 }
+GisGenericImportPlan planGenericGeoJsonImport(const ProjectSnapshot& project,const QByteArray& bytes,
+    std::string planId,std::string fileName) {
+    auto collection=parseGisGeoJson(bytes);
+    std::vector<GisGenericInput> rows;
+    rows.reserve(collection.features.size());
+    for(auto& feature:collection.features) {
+        const auto properties=losslessjson::parse(QByteArray::fromStdString(feature.propertiesJson));
+        auto id=feature.id.empty()?webjson::text(webjson::at(properties,"id")):feature.id;
+        require(!id.empty(),"INVALID_GIS_PLAN: generic ID required");
+        rows.push_back({std::move(id),webjson::text(webjson::at(properties,"name")),
+                        std::move(feature.geometry),std::move(feature.propertiesJson)});
+    }
+    return planGenericGisImport(project,std::move(planId),{std::move(fileName),"geojson"},
+                                std::move(rows));
+}
 }

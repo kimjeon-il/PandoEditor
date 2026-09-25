@@ -1,4 +1,5 @@
 #pragma once
+#include <pandoeditor/document.h>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -33,4 +34,19 @@ struct GisImportPlan {
 GisImportPlan createGisImportPlan(const ProjectSnapshot&,std::string id,GisImportKind kind,
                                  GisSource,GisExchangeTarget,std::vector<std::string> affectedIds);
 void assertCurrentGisImportPlan(const ProjectSnapshot&,const GisImportPlan&);
+
+// The adapter supplies validated local geometry and source attributes. This
+// typed plan owns the payload and is applied only to a candidate document.
+struct GisGenericInput {
+    std::string id,name;
+    Geometry geometry;
+    std::string propertiesJson="{}";
+};
+struct GisGenericImportPlan {
+    GisImportPlan info;
+    std::vector<GisGenericInput> features;
+};
+GisGenericImportPlan planGenericGisImport(const ProjectSnapshot&,std::string planId,
+    GisSource,std::vector<GisGenericInput>);
+void applyGenericGisImport(ProjectDocument&,const GisGenericImportPlan&);
 }
