@@ -39,6 +39,9 @@ if(BUILD_TESTING)
         "${PROJECT_SOURCE_DIR}/ui/common/ObjectChooser.qml"
               "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml"
               "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
+              "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
+              "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
+              "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/DesktopWorkspace.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml")
     qt_add_resources(selection_ui_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"

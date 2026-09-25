@@ -41,7 +41,7 @@ Dialog {
         }
         RowLayout {
             Layout.fillWidth: true
-            TextField { id: date; Layout.fillWidth: true; placeholderText: "기준 날짜 (예: 1945)"; onTextChanged: {root.updateSearch();if(root.selectedId)editor.selectHistorical(root.selectedId,"",text)} }
+            TextField { id: date; Layout.fillWidth: true; placeholderText: "기준 날짜 (예: 1945)"; onTextChanged: {root.updateSearch();if(root.selectedId)editor.selectHistorical(root.selectedId,"",text);else editor.cancelHistoricalAdd()} }
             TextField { id: region; Layout.fillWidth: true; placeholderText: "지역"; onTextChanged: root.updateSearch() }
         }
         RowLayout {
@@ -58,7 +58,7 @@ Dialog {
                 }
             }
             Label { text: "하위" }
-            ComboBox { id: depth; model: [{text:"없음",value:"none"},{text:"1단계",value:"level1"},{text:"전체",value:"all"}]; textRole:"text"; valueRole:"value" }
+            ComboBox { id: depth; model: [{text:"없음",value:"none"},{text:"1단계",value:"level1"},{text:"전체",value:"all"}]; textRole:"text"; valueRole:"value"; onActivated: editor.cancelHistoricalAdd() }
         }
         GridLayout {
             Layout.fillWidth: true; Layout.fillHeight: true
@@ -102,6 +102,12 @@ Dialog {
                         visible: (editor.historicalPreview.versions || []).length>1
                         model: editor.historicalPreview.versions || []
                         textRole: "id"; valueRole: "id"
+                        currentIndex: {
+                            const versions=editor.historicalPreview.versions || []
+                            const wanted=editor.historicalPreview.geometryVersionId || ""
+                            for (let i=0;i<versions.length;i++) if(versions[i].id===wanted)return i
+                            return 0
+                        }
                         onActivated: editor.selectHistorical(root.selectedId,currentValue,date.text)
                     }
                     HistoricalOwnershipSetup {
@@ -118,6 +124,7 @@ Dialog {
                         id: partial
                         visible: !!editor.historicalPreview.partial || !!root.snapshotId
                         text: "누락 자료를 확인하고 부분 추가에 동의"
+                        onToggled: editor.cancelHistoricalAdd()
                     }
                     GroupBox {
                         Layout.fillWidth: true

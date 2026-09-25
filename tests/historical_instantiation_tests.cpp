@@ -161,4 +161,35 @@ int main() {
     assert(transferProject.document().units.size()==1&&
         transferProject.document().units.front().id=="historical-country:absorber");
     assert(transferProject.undo()&&transferProject.document().units.front().id=="A");
+
+    ProjectDocument referenced({{"A","Alpha",square(0,10).polygons,0x123456}},{{"countries","Countries"}});
+    Geometry point;point.type="Point";point.points={{1,1}};
+    referenced.geometries.insert({"label-point",1},point);
+    PlaceLabel place;place.id="place";place.name="Place";place.geometry={"label-point",1};
+    place.territory=territorialRef("A");referenced.labels.push_back(place);
+    DistributionLayer language;language.id="language";language.name="Language";
+    referenced.distributionLayers.push_back(language);
+    DistributionEntry entry;entry.id="entry";entry.layerId="language";
+    entry.territory=territorialRef("A");referenced.distributionEntries.push_back(entry);
+    Project referencedProject;referencedProject.replace(std::move(referenced));
+    auto referencedPlan=planHistorical(referencedProject.snapshot(),absorption,
+        {{"historical-country:absorber","1945"}}, {},
+        {{territorialRef("A"),territorialRef("historical-country:absorber")}});
+    args.action=referencedPlan;
+    auto referencedPreview=CommandProcessor::prepare(referencedProject,
+        CommandProcessor::makeRequest(referencedProject,"historical.instantiate",args));
+    assert(referencedPreview.ok()&&referencedPreview.preview);
+    assert(CommandProcessor::confirm(referencedProject,*referencedPreview.preview).changed());
+    assert(referencedProject.document().labels.front().territory==territorialRef("historical-country:absorber"));
+    assert(referencedProject.document().distributionEntries.front().territory==territorialRef("historical-country:absorber"));
+    assert(referencedProject.undo()&&referencedProject.document().labels.front().territory==territorialRef("A"));
+    ProjectDocument flagged({{"A","Alpha",square(0,10).polygons,0x123456}},{{"countries","Countries"}});
+    flagged.symbols[territorialRef("A")]={FlagPolicy::None,{}};
+    Project flaggedProject;flaggedProject.replace(std::move(flagged));
+    bool flagBlocked=false;
+    try { (void)planHistorical(flaggedProject.snapshot(),absorption,
+        {{"historical-country:absorber","1945"}}, {},
+        {{territorialRef("A"),territorialRef("historical-country:absorber")}}); }
+    catch(const std::invalid_argument&){flagBlocked=true;}
+    assert(flagBlocked&&flaggedProject.document().units.front().id=="A");
 }

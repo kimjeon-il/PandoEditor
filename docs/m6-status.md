@@ -14,7 +14,7 @@ neither branch is merged to `main`.
 | M6.5 GIS format gate | Partial | GIS target/plan Oracle, 2D 4326 GeoPackageBinary/WKB codec. Actual web-generated GPKG, ZIP, SQLite dependency and Windows/Android packaging gate remain. |
 | M6.6 GIS import | Partial | Strict local GeoJSON FeatureCollection parser and corruption cases. Generic-only typed import plan, candidate validation and one-Undo command are implemented locally; latest CI is pending. Territorial/distribution mapping, wizard, ZIP and GPKG reader remain. |
 | M6.7 GIS export | Partial | Read-only selected-layer GeoJSON materialization with territorial provenance, distribution references, labels. No ZIP, SQLite GeoPackage or project save/open yet. |
-| M6.8 integration | Partial | Earlier M6 baseline passed 58/58 fresh Linux CTest. The first 1·2회차 CI build succeeded but four UI test executables failed because of a QML layout property; the property is fixed and the full CI rerun is pending. Corrupted file matrix, allocation cases, visible Windows and physical Android remain. |
+| M6.8 integration | Partial | Earlier M6 baseline passed 58/58 fresh Linux CTest. The first 1·2회차 CI exposed a QML layout property error; the next run passed 59/60 and found a missing test-target QML resource in `selection_ui_tests`. Both are corrected; fresh full CI is pending. Corrupted file matrix, allocation cases, visible Windows and physical Android remain. |
 
 The M6 baseline passed the full Linux workflow at `61220ae` (run
 `36095566600`, 58/58 tests, zero skips). New 1·2회차 acceptance evidence is
