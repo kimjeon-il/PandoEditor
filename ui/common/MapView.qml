@@ -231,12 +231,13 @@ Rectangle {
     Repeater {
         model: view.placedLabels
         delegate: Column {
+            objectName: "mapPlacedLabel"
             required property var modelData
             x: modelData.x-width/2
             y: modelData.y-height/2
             z: editor.layers.length+2
-            Image { anchors.horizontalCenter: parent.horizontalCenter; width:24; height:16; fillMode:Image.PreserveAspectFit; source:parent.modelData.flagSource||""; visible:!!parent.modelData.flagVisible&&source.toString()!=="" }
-            Label { textFormat:Text.PlainText; anchors.horizontalCenter:parent.horizontalCenter; text:parent.modelData.name||""; color:"#243746"; font.pixelSize:12 }
+            Image { objectName: "mapPlacedFlag"; anchors.horizontalCenter: parent.horizontalCenter; width:24; height:16; fillMode:Image.PreserveAspectFit; source:parent.modelData.flagSource||""; visible:!!parent.modelData.flagVisible&&source.toString()!=="" }
+            Label { objectName: "mapPlacedText"; textFormat:Text.PlainText; anchors.horizontalCenter:parent.horizontalCenter; text:parent.modelData.name||""; color:"#243746"; font.pixelSize:12 }
             DragHandler {
                 enabled: !view.geometryEditing
                 target: null

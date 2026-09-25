@@ -13,6 +13,8 @@ The files in `source/` are byte-for-byte copies; `git hash-object` must match:
 | `gpu-base-scene-pass.js` | `assets/js/modules/gpu-base-scene-pass.js` | `ca9886ff71dad974c2f15755b0fe6e8c4a997568` |
 | `gpu-blend-utils.js` | `assets/js/modules/gpu-blend-utils.js` | `359b7c89977caff3fc3bfafb33413dfd0515e593` |
 | `app-object-picking.js` | `assets/js/modules/app-object-picking.js` | `56af01e20b8cb3c169028da795c90e5bab08ec7b` |
+| `layer-presentation.js` | `assets/js/modules/layer-presentation.js` | `531c81f888ace0e11c535efaa6f0bf37922a193f` |
+| `country-label-flags.js` | `assets/js/modules/country-label-flags.js` | `f95de74a7d51b80a83dd94d9cfb00f9a3bf7be86` |
 
 The upstream manifest at `assets/data/hydro/v0.13.1/manifest.json` has blob
 `67c648a207f4b26d69f0a86243e88c54b9241a2e`. Its version, schema,

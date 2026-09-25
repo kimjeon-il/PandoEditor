@@ -78,6 +78,34 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void mapLabelsAndFlagsRemainAboveSelectionEmphasis_data() {
+        QTest::addColumn<int>("width");
+        QTest::newRow("desktop")<<1100;
+        QTest::newRow("compact")<<360;
+    }
+    void mapLabelsAndFlagsRemainAboveSelectionEmphasis() {
+        QFETCH(int,width);
+        EditorController editor(EditorControllerConfig{width==360,{}});
+        QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);
+        window->resize(width,width==360?640:760);exposeForTest(window);
+        editor.selectCountry("DEU");
+        auto map=visualItem(window->contentItem(),"mapView");QVERIFY(map);
+        auto painter=visualItem(map,"canonicalMapRenderer");QVERIFY(painter);
+        QTRY_VERIFY(!painter->property("selectedPaths").toList().isEmpty());
+        QTRY_VERIFY(visualItem(map,"mapPlacedLabel")!=nullptr);
+        auto label=visualItem(map,"mapPlacedLabel");
+        auto flag=visualItem(label,"mapPlacedFlag");
+        auto text=visualItem(label,"mapPlacedText");
+        QVERIFY(flag&&text);
+        QVERIFY(label->z()>painter->z());
+        QCOMPARE(flag->parentItem(),label);
+        QCOMPARE(text->parentItem(),label);
+        QVERIFY(label->childItems().indexOf(flag)<label->childItems().indexOf(text));
+        window->close();
+    }
     void frameHitTargetsAtFractionalScale() {
         // Losing local DPI conversion would route a scaled maximize click to
         // the map; treating maximized corners as resize would break snapping.
