@@ -106,17 +106,30 @@ QVariantList EditorController::labelLayout(double scale,double originX,double or
         else ref=territorialRef(path["countryId"].toString().toStdString());
         if(!objectVisible(ref))continue;const auto properties=project_.propertyView(ref);if(!properties)continue;
         const auto visualKey=ref.domain=="territorial"?displayText(ref.id):QStringLiteral("content/label/")+displayText(ref.id);const auto visual=visuals.value(visualKey).toMap();
-        if(!visual.value("nameVisible").toBool())continue;
+        const bool nameVisible=visual.value("nameVisible").toBool();
+        const bool flagVisible=ref.domain=="territorial"&&visual.value("flagVisible").toBool()&&
+            !visual.value("flagSource").toString().isEmpty();
+        if(!nameVisible&&!flagVisible)continue;
         LabelSettings stored;if(const auto found=project_.document().presentation.webPresentation.labelSettings.find(ref);found!=project_.document().presentation.webPresentation.labelSettings.end())stored=found->second;
         std::string kind="country";if(ref.domain=="label")kind=project_.document().labels.at(project_.index().objects.at(ref)).kind;else {const auto unitKind=project_.document().units.at(project_.index().objects.at(ref)).kind;if(unitKind!=UnitKind::Country)kind="region";}
         const auto settings=automaticLabelSettings(kind,stored);double mapX=path["left"].toDouble()+path["width"].toDouble()/2,mapY=path["top"].toDouble()+path["height"].toDouble()/2;
         if(settings.pinned&&settings.manualPosition){const auto point=projection_.project(*settings.manualPosition);mapX=point.x;mapY=point.y;}
         const auto name=QString::fromStdString(properties->displayName);const double x=originX+mapX*scale,y=originY+mapY*scale;
-        LabelLayoutCandidate candidate{ref,ref.domain+":"+ref.id,settings.collisionGroup,x,y,std::max(22.,metrics.horizontalAdvance(name)+16),std::max(19.,metrics.height()),settings.priority.value_or(0),settings.minZoom.value_or(0),settings.maxZoom.value_or(std::numeric_limits<double>::infinity()),selection_.has(ref),settings.pinned};candidates.push_back(candidate);
-        rows[ref]=QVariantMap{{"ref",objectRefValue(ref)},{"x",x},{"y",y},{"name",name},{"pinned",settings.pinned},{"flagSource",visual.value("flagSource")},{"flagVisible",visual.value("flagVisible")}};
+        LabelLayoutCandidate candidate{ref,ref.domain+":"+ref.id,settings.collisionGroup,x,y,
+            nameVisible?std::max(22.,metrics.horizontalAdvance(name)+16):24.,
+            nameVisible?std::max(19.,metrics.height()):16.,settings.priority.value_or(0),
+            settings.minZoom.value_or(0),settings.maxZoom.value_or(std::numeric_limits<double>::infinity()),
+            selection_.has(ref),settings.pinned};candidates.push_back(candidate);
+        rows[ref]=QVariantMap{{"ref",objectRefValue(ref)},{"x",x},{"y",y},{"name",name},
+            {"nameVisible",nameVisible},{"pinned",settings.pinned},
+            {"flagSource",visual.value("flagSource")},{"flagVisible",flagVisible}};
     }
+    // Pinned web workspace CSS reserves the 2rem desktop status bar and the
+    // 96px mobile bottom controls before ordinary label collision placement.
+    // Selected and pinned labels bypass this bound in layoutLabels.
+    const double bottomInset=mobileMode_?96.:32.;
     QVariantList result;for(const auto& ref:layoutLabels(candidates,zoom,mobileMode_?5:3,
-            LabelLayoutBounds{0,0,viewportWidth,viewportHeight})){
+            LabelLayoutBounds{0,0,viewportWidth,std::max(0.,viewportHeight-bottomInset)})){
         const auto row=rows.find(ref);if(row!=rows.end())result.append(row->second);
     }return result;
 }
@@ -135,6 +148,9 @@ bool EditorController::setLabelMapPosition(const QVariantMap& value,double mapX,
 }
 void EditorController::publishPresentation() {
     closeObjectChooser();
+    if(hover_&&!objectVisible(*hover_)) {
+        hover_.reset();hoverSource_.clear();++hoverRevision_;emit hoverChanged();
+    }
     emit presentationChanged();emit visualChanged();emit stateChanged();emit searchChanged();emit dirtyChanged();
     presentationSaveInstance_=project_.instanceId();presentationSaveTimer_.start();
 }

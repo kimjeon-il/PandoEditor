@@ -30,6 +30,13 @@ static QQuickItem* visualItem(QQuickItem* root,const QString& name)
     for(auto child:root->childItems()) if(auto item=visualItem(child,name)) return item;
     return nullptr;
 }
+static QQuickItem* placedLabel(QQuickItem* root,const QString& id)
+{
+    if(root->objectName()=="mapPlacedLabel" &&
+       root->property("modelData").toMap().value("ref").toMap().value("id").toString()==id) return root;
+    for(auto child:root->childItems()) if(auto item=placedLabel(child,id)) return item;
+    return nullptr;
+}
 static void exposeForTest(QQuickWindow* window)
 {
     if(qEnvironmentVariable("QT_QPA_PLATFORM")=="windows") {
@@ -78,6 +85,74 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void flagOnlyIsIndependentFromNameChannel_data() {
+        QTest::addColumn<int>("width");
+        QTest::newRow("desktop")<<1100;
+        QTest::newRow("compact")<<360;
+    }
+    void flagOnlyIsIndependentFromNameChannel() {
+        QFETCH(int,width);
+        EditorController editor(EditorControllerConfig{width==360,{}});
+        editor.selectCountry("DEU");
+        QVERIFY(editor.countryVisuals().value("DEU").toMap().value("flagAvailable").toBool());
+        QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);
+        window->resize(width,width==360?640:760);exposeForTest(window);
+        auto map=visualItem(window->contentItem(),"mapView");QVERIFY(map);
+        QVERIFY(editor.setPresentationVisibility("basemapLabels",false));
+        QTRY_VERIFY(placedLabel(map,"DEU")!=nullptr);
+        auto label=placedLabel(map,"DEU");
+        auto flag=visualItem(label,"mapPlacedFlag");auto name=visualItem(label,"mapPlacedText");
+        QVERIFY(flag&&name);QVERIFY(flag->isVisible());QVERIFY(!name->isVisible());
+        QVERIFY(editor.setPresentationVisibility("countryFlags",false));
+        QTRY_VERIFY(placedLabel(map,"DEU")==nullptr);
+        QVERIFY(editor.setPresentationVisibility("basemapLabels",true));
+        QTRY_VERIFY(placedLabel(map,"DEU")!=nullptr);
+        label=placedLabel(map,"DEU");flag=visualItem(label,"mapPlacedFlag");name=visualItem(label,"mapPlacedText");
+        QVERIFY(flag&&name);QVERIFY(!flag->isVisible());QVERIFY(name->isVisible());
+        window->close();
+    }
+    void labelSafeAreaVisuallyExcludesBottomControls_data() {
+        QTest::addColumn<int>("width");
+        QTest::newRow("desktop")<<1100;
+        QTest::newRow("compact")<<360;
+    }
+    void labelSafeAreaVisuallyExcludesBottomControls() {
+        QFETCH(int,width);
+        using namespace pandoeditor;
+        QTemporaryDir dir;
+        ProjectDocument document({{"A","Alpha",{{{{0,0},{10,0},{10,10},{0,10},{0,0}}}},0x112233}},
+                                 {{"countries","Countries"}});
+        document.documentId="safe-area-ui";
+        Project project;project.replace(document);
+        const auto path=dir.filePath("safe-area.json");QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));QVERIFY(file.write(projectcodec::encode(project))>0);file.close();
+        EditorController editor(EditorControllerConfig{width==360,dir.filePath("private.json")});
+        QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
+        QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+        auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);
+        window->resize(width,width==360?640:760);exposeForTest(window);
+        auto map=visualItem(window->contentItem(),"mapView");QVERIFY(map);
+        const auto geometry=editor.paths().front().toMap();
+        const double centerY=geometry.value("top").toDouble()+geometry.value("height").toDouble()/2;
+        auto moveLabel=[&](double screenY) {
+            const auto current=map->property("originY").toDouble()+centerY*map->property("mapScale").toDouble();
+            QVERIFY(map->setProperty("panY",map->property("panY").toDouble()+screenY-current));
+        };
+        moveLabel(map->height()-(width==360?115:50));
+        QTRY_VERIFY(visualItem(map,"mapPlacedLabel")!=nullptr);
+        QVERIFY(capture(window).save(width==360?"m5-label-safe-area-compact.png":"m5-label-safe-area-desktop.png"));
+        moveLabel(map->height()-10);
+        QTRY_VERIFY(visualItem(map,"mapPlacedLabel")==nullptr);
+        editor.selectCountry("A");
+        QTRY_VERIFY(visualItem(map,"mapPlacedLabel")!=nullptr);
+        QVERIFY(capture(window).save(width==360?"m5-label-selected-compact.png":"m5-label-selected-desktop.png"));
+        window->close();
+    }
     void mapLabelsAndFlagsRemainAboveSelectionEmphasis_data() {
         QTest::addColumn<int>("width");
         QTest::newRow("desktop")<<1100;
