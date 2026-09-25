@@ -1,6 +1,8 @@
 # Out-of-source builds and generated files
 /build*/
 /out/
+/dist/
+/*.png
 CMakeUserPresets.json
 
 # Local IDE configuration
