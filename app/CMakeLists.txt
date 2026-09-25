@@ -10,6 +10,7 @@ add_library(pandoeditor_editor STATIC
     defaultflagresolver.cpp defaultflagresolver.h
     hydrodataprovider.cpp hydrodataprovider.h
     historicallibraryloader.cpp historicallibraryloader.h
+    gisgeojson.cpp gisgeojson.h
     hydromanifest.cpp hydromanifest.h
     hydroassetreader.cpp hydroassetreader.h
     hydrometadata.cpp hydrometadata.h
@@ -61,6 +62,9 @@ file(GLOB_RECURSE DEFAULT_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/as
 qt_add_resources(pandoeditor default_flags PREFIX "/defaults/flags" BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags" FILES ${DEFAULT_FLAG_FILES})
 
 if(BUILD_TESTING)
+    add_executable(gis_geojson_tests ../tests/gis_geojson_tests.cpp)
+    target_link_libraries(gis_geojson_tests PRIVATE pandoeditor_editor)
+    add_test(NAME gis_geojson_tests COMMAND gis_geojson_tests)
     add_executable(historical_library_loader_tests ../tests/historical_library_loader_tests.cpp)
     target_link_libraries(historical_library_loader_tests PRIVATE pandoeditor_editor)
     target_compile_definitions(historical_library_loader_tests PRIVATE
