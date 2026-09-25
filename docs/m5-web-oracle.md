@@ -53,6 +53,15 @@ fragment merge against golden output produced by that same web decoder.
 tile-window module. `m5_render_pick_order_parity` calls the current web scene
 pass and picker rank function. The actual full dataset is a separate gate.
 
+The M5 order follow-up verifies the pinned blob IDs for the scene pass,
+picker, overlay-group and flag modules. Its Oracle compares 55 pairwise
+object/primitive overlaps and five additional boundary/line pairs, with
+visible top and chooser-first reported separately. The web territorial
+stencil makes child pixels cover country pixels despite the earlier child
+draw call; the native painter now paints country first. Qt offscreen pixels
+and QML hierarchy tests supplement the source-driven Oracle. The full matrix,
+live browser observation and its limits are in `m5-order-verification.md`.
+
 From `bc46720..c0bd31d`, label layout gained viewport bounds: ordinary labels
 whose boxes cross the safe area are dropped before collision placement;
 selected and pinned labels bypass the bounds filter. Qt now applies viewport
