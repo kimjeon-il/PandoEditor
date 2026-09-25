@@ -15,6 +15,8 @@ The files in `source/` are byte-for-byte copies; `git hash-object` must match:
 | `app-object-picking.js` | `assets/js/modules/app-object-picking.js` | `56af01e20b8cb3c169028da795c90e5bab08ec7b` |
 | `layer-presentation.js` | `assets/js/modules/layer-presentation.js` | `531c81f888ace0e11c535efaa6f0bf37922a193f` |
 | `country-label-flags.js` | `assets/js/modules/country-label-flags.js` | `f95de74a7d51b80a83dd94d9cfb00f9a3bf7be86` |
+| `label-layout.js` | `assets/js/modules/label-layout.js` | `60eecd3854a6eed925ab23b893d8c88e63636a3a` |
+| `map-layout-metrics.js` | `assets/js/modules/map-layout-metrics.js` | `a0d3450720524bddd569e2052c27e13dda6ccff6` |
 
 The upstream manifest at `assets/data/hydro/v0.13.1/manifest.json` has blob
 `67c648a207f4b26d69f0a86243e88c54b9241a2e`. Its version, schema,

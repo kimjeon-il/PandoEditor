@@ -2,6 +2,7 @@
 #include <QtTest>
 #include <QImage>
 #include <QPainter>
+#include <QQuickWindow>
 #include <hydroloadscheduler.h>
 #include <pandoeditor/maprenderorder.h>
 #include <tuple>
@@ -10,6 +11,25 @@
 class MapRenderTests:public QObject {
     Q_OBJECT
 private slots:
+    void viewportChangesRepaintCachedMapTexture() {
+        QQuickWindow window;window.resize(48,48);window.setColor(Qt::white);
+        MapRenderItem item(window.contentItem());item.setWidth(48);item.setHeight(48);
+        item.setPaths({QVariantMap{{"countryId","generic"},{"path","M5 5 L15 5 L15 15 L5 15 Z"}}});
+        item.setVisuals({{"generic",QVariantMap{{"visible",true},{"color","#ff0000"},{"boundary",false}}}});
+        window.show();
+        auto colorAt=[&](int x,int y){return window.grabWindow().pixelColor(x,y);};
+        QTRY_COMPARE_WITH_TIMEOUT(colorAt(10,10),QColor("#ff0000"),2000);
+        item.setOriginX(20);
+        QTRY_COMPARE_WITH_TIMEOUT(colorAt(30,10),QColor("#ff0000"),2000);
+        QCOMPARE(colorAt(10,10),QColor(Qt::white));
+        item.setOriginY(20);
+        QTRY_COMPARE_WITH_TIMEOUT(colorAt(30,30),QColor("#ff0000"),2000);
+        QCOMPARE(colorAt(30,10),QColor(Qt::white));
+        item.setOriginX(0);item.setOriginY(0);item.setMapScale(2);
+        QTRY_COMPARE_WITH_TIMEOUT(colorAt(25,25),QColor("#ff0000"),2000);
+        QCOMPARE(colorAt(10,10),QColor("#ff0000"));
+        window.close();
+    }
     void territorialChildrenOwnTheirPixelsAboveCountry(){
         using namespace pandoeditor;
         ProjectDocument document;

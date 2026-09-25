@@ -49,4 +49,5 @@ jobs:
           path: |
             build/results.xml
             build/Testing/Temporary/LastTest.log
+            build/app/m5-label-*.png
           retention-days: 7

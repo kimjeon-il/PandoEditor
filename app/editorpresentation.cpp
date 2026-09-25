@@ -115,8 +115,12 @@ QVariantList EditorController::labelLayout(double scale,double originX,double or
         LabelLayoutCandidate candidate{ref,ref.domain+":"+ref.id,settings.collisionGroup,x,y,std::max(22.,metrics.horizontalAdvance(name)+16),std::max(19.,metrics.height()),settings.priority.value_or(0),settings.minZoom.value_or(0),settings.maxZoom.value_or(std::numeric_limits<double>::infinity()),selection_.has(ref),settings.pinned};candidates.push_back(candidate);
         rows[ref]=QVariantMap{{"ref",objectRefValue(ref)},{"x",x},{"y",y},{"name",name},{"pinned",settings.pinned},{"flagSource",visual.value("flagSource")},{"flagVisible",visual.value("flagVisible")}};
     }
+    // Pinned web workspace CSS reserves the 2rem desktop status bar and the
+    // 96px mobile bottom controls before ordinary label collision placement.
+    // Selected and pinned labels bypass this bound in layoutLabels.
+    const double bottomInset=mobileMode_?96.:32.;
     QVariantList result;for(const auto& ref:layoutLabels(candidates,zoom,mobileMode_?5:3,
-            LabelLayoutBounds{0,0,viewportWidth,viewportHeight})){
+            LabelLayoutBounds{0,0,viewportWidth,std::max(0.,viewportHeight-bottomInset)})){
         const auto row=rows.find(ref);if(row!=rows.end())result.append(row->second);
     }return result;
 }

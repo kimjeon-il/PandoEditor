@@ -22,6 +22,8 @@ if(BUILD_TESTING)
         COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m5-hydro-oracle.mjs" --merge-only "$<TARGET_FILE:hydro_probe>")
     add_test(NAME m5_render_pick_order_parity
         COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m5-render-order-oracle.mjs" "$<TARGET_FILE:map_render_order_probe>")
+    add_test(NAME m5_label_safe_area_web
+        COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m5-label-safe-area-oracle.mjs")
     else()
         message(WARNING "Node.js missing: pinned-web differential selection test is not registered")
     endif()

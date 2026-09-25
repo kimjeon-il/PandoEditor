@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QtTest>
 #include <algorithm>
+#include <tuple>
 class PresentationEditorTests:public QObject {
     Q_OBJECT
 private slots:
@@ -28,14 +29,66 @@ private slots:
                     return row.toMap().value("ref").toMap().value("id").toString()=="A";
                 });
             };
-            QVERIFY(placedAt(285)); // Within the 96 px mobile inset and the 26 px desktop inset.
-            QCOMPARE(placedAt(359),!mobile); // Only the desktop safe area includes this box.
-            QVERIFY(!placedAt(390)); // The last 26 px is unsafe on both layouts.
+            QVERIFY(placedAt(285)); // Within the 96 px mobile inset and the 32 px desktop inset.
+            QCOMPARE(placedAt(355),!mobile); // Only the desktop safe area includes this box.
+            QVERIFY(!placedAt(390)); // The bottom UI occupies both layouts.
             editor.selectCountry("A");QVERIFY(placedAt(390));
             editor.clearSelection();
             QVERIFY(editor.setLabelPinned({{"domain","territorial"},{"id","A"}},true));
             QVERIFY(placedAt(390)); // Pinned and selected labels bypass web bounds.
         }
+    }
+    void visibleContentDomainsHoverAndHiddenHoverExpires() {
+        using namespace pandoeditor;
+        QTemporaryDir dir;
+        ProjectDocument document({{"A","Alpha",{{{{0,0},{10,0},{10,10},{0,10},{0,0}}}},0x112233}},
+                                 {{"countries","Countries"}});
+        document.documentId="content-hover-domains";
+        Geometry point;point.type="Point";point.points={{30,5}};
+        document.geometries.insert({"place-point",1},point);
+        PlaceLabel place;place.id="L";place.name="Place";place.kind="custom";place.geometry={"place-point",1};document.labels.push_back(place);
+        auto addPolygon=[&](const std::string& id,double x) {
+            Geometry shape;shape.type="Polygon";
+            shape.polygons={{{{x,0},{x+10,0},{x+10,10},{x,10},{x,0}}}};
+            document.geometries.insert({id,1},std::move(shape));
+        };
+        addPolygon("distribution",40);addPolygon("generic",60);
+        DistributionLayer layer;layer.id="D";layer.name="Distribution";layer.type="language";
+        document.distributionLayers.push_back(layer);
+        DistributionEntry entry;entry.id="E";entry.layerId="D";entry.geometry=GeometryRef{"distribution",1};
+        document.distributionEntries.push_back(entry);
+        GenericFeature generic;generic.id="G";generic.name="Generic";generic.geometry={"generic",1};
+        document.genericFeatures.push_back(generic);
+        Project project;project.replace(document);
+        const auto path=dir.filePath("content.json");QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));QVERIFY(file.write(projectcodec::encode(project))>0);file.close();
+        EditorController editor({false,dir.filePath("private.json")});
+        QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
+        auto picked=[&](const QString& key) {
+            for(const auto& value:editor.paths()){
+                const auto row=value.toMap();if(row.value("countryId").toString()!=key)continue;
+                return editor.pickObject(row.value("left").toDouble()+row.value("width").toDouble()/2,
+                                         row.value("top").toDouble()+row.value("height").toDouble()/2,100,2);
+            }
+            return QVariantMap{};
+        };
+        for(const auto& [key,domain,id,group]:std::vector<std::tuple<QString,QString,QString,QString>>{
+            {"content/label/L","label","L","labels"},
+            {"content/distributionEntry/E","distributionLayer","D","languages"},
+            {"content/generic/G","generic","G","genericFeatures"}}){
+            const auto hit=picked(key);
+            QCOMPARE(hit.value("domain").toString(),domain);QCOMPARE(hit.value("id").toString(),id);
+            QVERIFY(editor.setHoverObject(hit,"map"));
+            QCOMPARE(editor.hoverObject().value("id").toString(),id);
+            QVERIFY(editor.setPresentationVisibility(group,false));
+            QVERIFY2(editor.hoverObject().isEmpty(),qPrintable(group+" hover must expire when hidden"));
+            QVERIFY(picked(key).isEmpty());
+            QVERIFY(editor.setPresentationVisibility(group,true));
+        }
+        QVERIFY(editor.setHoverObject({{"domain","label"},{"id","L"}},"map"));
+        QVERIFY(editor.setHoverObject({{"domain","generic"},{"id","G"}},"search"));
+        QVERIFY(!editor.setHoverObject({},"map","label:L"));
+        QCOMPARE(editor.hoverObject().value("id").toString(),QStringLiteral("G"));
     }
     void labelLayoutAndDistributionMatchWebRules() {
         using namespace pandoeditor;
