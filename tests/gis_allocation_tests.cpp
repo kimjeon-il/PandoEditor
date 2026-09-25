@@ -37,11 +37,13 @@ GisGenericInput input() {
 }
 void unchanged(const Project& p,const ProjectDocument* before,std::uint64_t revision) {
     check(&p.document()==before&&p.revision()==revision&&p.canRedo()&&!p.dirty());
-    check(p.document().genericFeatures.empty());
+    check(p.document().units.size()==1&&p.document().genericFeatures.empty()&&
+          p.document().distributionEntries.empty());
 }
 }
 int main() {
-    int planFailures=0,previewFailures=0,commitFailures=0;
+    int planFailures=0,distributionFailures=0,territorialFailures=0;
+    int previewFailures=0,commitFailures=0;
     for(long index=0;index<5000;++index) {
         auto p=project();auto snapshot=p.snapshot();auto feature=input();
         const auto* before=&p.document();const auto revision=p.revision();
@@ -53,6 +55,37 @@ int main() {
         failAfter=-1;unchanged(p,before,revision);
         if(!failed)break;
         ++planFailures;check(index<4999);
+    }
+    for(long index=0;index<5000;++index) {
+        auto p=project();auto snapshot=p.snapshot();
+        DistributionLayer layer;layer.id="lang:allocation";layer.name="Language";layer.type="language";
+        GisDistributionInput entry;entry.entry.id="entry:allocation";
+        entry.entry.layerId=layer.id;entry.entry.territory=territorialRef("A");
+        const auto* before=&p.document();const auto revision=p.revision();
+        bool failed=false;
+        failAfter=index;
+        try {auto plan=planDistributionGisImport(snapshot,"gis:distribution",
+            {"sample.gpkg","geopackage"},{layer},{entry});(void)plan;}
+        catch(const std::bad_alloc&) {failed=true;}
+        failAfter=-1;unchanged(p,before,revision);
+        if(!failed)break;
+        ++distributionFailures;check(index<4999);
+    }
+    for(long index=0;index<5000;++index) {
+        auto p=project();auto snapshot=p.snapshot();
+        GisTerritorialInput region;region.id="region:allocation";
+        region.name="Region";region.kind=UnitKind::Region;
+        region.geometry.type="Polygon";
+        region.geometry.polygons={Polygon{Ring{{3,0},{4,0},{4,1},{3,1},{3,0}}}};
+        const auto* before=&p.document();const auto revision=p.revision();
+        bool failed=false;
+        failAfter=index;
+        try {auto plan=planTerritorialGisImport(snapshot,"gis:territorial",
+            {"sample.gpkg","geopackage"},GisExchangeTarget::Region,{region});(void)plan;}
+        catch(const std::bad_alloc&) {failed=true;}
+        failAfter=-1;unchanged(p,before,revision);
+        if(!failed)break;
+        ++territorialFailures;check(index<4999);
     }
     for(long index=0;index<5000;++index) {
         auto p=project();auto plan=planGenericGisImport(p.snapshot(),"gis:allocation",
@@ -86,7 +119,9 @@ int main() {
         unchanged(p,before,revision);
         ++commitFailures;check(index<4999);
     }
-    check(planFailures>0&&previewFailures>0&&commitFailures>0);
+    check(planFailures>0&&distributionFailures>0&&territorialFailures>0&&
+          previewFailures>0&&commitFailures>0);
     std::cout<<"GIS allocation failures: plan "<<planFailures<<", preview "
-             <<previewFailures<<", commit "<<commitFailures<<"\n";
+             <<previewFailures<<", commit "<<commitFailures<<", distribution "
+             <<distributionFailures<<", territorial "<<territorialFailures<<"\n";
 }
