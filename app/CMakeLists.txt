@@ -16,6 +16,7 @@ add_library(pandoeditor_editor STATIC
     giszip.cpp giszip.h
     gisgeopackage.cpp gisgeopackage.h
     gisgeopackagewriter.cpp
+    projectgeopackage.cpp projectgeopackage.h
     giscontentimport.cpp giscontentimport.h
     gisterritorial.cpp gisterritorial.h
     gisdocumentexport.cpp gisdocumentexport.h
