@@ -3,6 +3,7 @@
 #include "webimport.h"
 #include "webjson.h"
 #include <pandoeditor/project.h>
+#include <QImage>
 #include <initializer_list>
 #include <map>
 #include <set>
@@ -97,6 +98,8 @@ QByteArray convertWebProjectGeoPackage(const GisGeoPackage& vectors,V state,
     require(fixtureProjection||(format.kind==V::String&&
             (format.string=="pandolab-project-state"||format.string=="pandolab-autosave-full")),
             "UNSUPPORTED_PROJECT_GPKG_STATE");
+    for(const auto& layer:vectors.layers)
+        require(!layer.targetType.empty(),"UNSUPPORTED_WEB_GPKG_LAYER");
     const auto countries=features(vectors,{"countries"});
     require(!countries.empty(),"WEB_GPKG_COUNTRIES_MISSING");
     V countryFeatures=V::arr();
@@ -122,8 +125,9 @@ QByteArray convertWebProjectGeoPackage(const GisGeoPackage& vectors,V state,
     if(overrides.kind==V::Null)overrides=V::obj();
     require(overrides.kind==V::Object,"INVALID_WEB_GPKG_STATE");
     for(const auto& [id,asset]:assets) {
-        require(countries.count(id)&&asset.mime.startsWith("image/")&&!asset.bytes.isEmpty(),
-                "ORPHAN_PROJECT_GPKG_ASSET");
+        require(countries.count(id),"ORPHAN_PROJECT_GPKG_ASSET");
+        require(asset.mime.startsWith("image/")&&!asset.bytes.isEmpty()&&
+                !QImage::fromData(asset.bytes).isNull(),"INVALID_WEB_GPKG_ASSET_IMAGE");
         auto& override=overrides.object[id];
         if(override.kind==V::Null)override=V::obj();
         require(override.kind==V::Object&&!override.object.count("flagDataUrl"),
@@ -173,6 +177,20 @@ QByteArray convertWebProjectGeoPackage(const GisGeoPackage& vectors,V state,
     // GeoPackage rows can contain stable IDs from older web revisions that
     // predate the standalone JSON importer's UUID-only check.
     auto imported=webimport::prepare(input,{},true);
+    const auto& document=imported.document;
+    require(document.units.size()==countries.size()+state.object.at("territorialUnits").array.size()&&
+            document.genericFeatures.size()==state.object.at("genericFeatures").array.size()&&
+            document.labels.size()==state.object.at("labels").array.size()&&
+            document.distributionLayers.size()==state.object.at("distributionLayers").array.size()&&
+            document.distributionEntries.size()==state.object.at("distributionEntries").array.size(),
+            "INCOMPLETE_WEB_GPKG_RESTORE");
+    for(const auto& [id,asset]:assets) {
+        const auto found=document.symbols.find(territorialRef(id));
+        require(found!=document.symbols.end()&&found->second.policy==FlagPolicy::Embedded&&
+                found->second.embeddedDataUrl=="data:"+asset.mime.toStdString()+
+                    ";base64,"+asset.bytes.toBase64().toStdString(),
+                "INCOMPLETE_WEB_GPKG_RESTORE");
+    }
     Project candidate;candidate.replace(std::move(imported.document));
     return projectcodec::encode(candidate);
 }
