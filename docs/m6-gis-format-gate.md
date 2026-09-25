@@ -23,8 +23,9 @@ The pinned east-Prussia GeoJSON input (blob
 byte-for-byte. The browser test creates GeoPackage output at runtime;
 there is no static `.gpkg` file at the guessed fixture path.
 
-Proposed dependency is SQLite3 plus a portable ZIP reader/writer. This is a
-**candidate**, not an approved codec yet. Before linking it into the product:
+The native boundary uses Qt Sql's SQLite driver for GPKG reads and the
+existing zlib dependency for ZIP reads. Driver deployment on Windows and
+Android remains a verification gate.
 
 The core now has a dependency-free, 2D EPSG:4326 GeoPackageBinary/WKB codec
 with roundtrip and malformed-byte tests. This is an incremental format check,
@@ -50,21 +51,42 @@ schema/CRS, missing declared layers and count mismatches. Plain GeoJSON
 ZIPs can be inspected with an unspecified target. The existing zlib
 dependency handles ZIP decoding without adding a new library.
 
-1. Generate small GIS-only and project GPKG examples with the pinned web
-   implementation; preserve original SQLite bytes and inspect required tables.
+### Stage 4 GeoPackage evidence
+
+The pinned `gis-gpkg-worker.js` blob
+`5595e22c978df683b7b819c71a15a5d83d299a2b` runs through
+`tools/m6-gpkg-web-fixture.mjs`. A Node SQLite shim supplies SQL calls;
+the web worker writes the 4326 feature tables and geometry blobs. The seed
+is a small independently built, valid SQLite GeoPackage shell. GIS output
+is reused as the seed for project output. These fixtures exercise the
+pinned worker writer; they do **not** run the browser's GDAL `ogr2ogr` step.
+
+`tools/m6-gpkg-fixture-oracle.py` independently checks SQLite integrity,
+GPKG metadata, ten 4326 geometry registrations, GIS-only omission of
+project tables, and project settings/embedded asset presence. The Qt
+read-only `readGisGeoPackage` boundary checks header, application ID,
+integrity, metadata, CRS, geometry type and IDs. Corrupt SQLite, metadata,
+CRS, WKB and project table pairs are rejected without document mutation.
+Qt Sql's QSQLITE driver is the SQLite runtime dependency.
+
+1. GIS-only and project GPKG examples generated through the pinned web
+   worker are stored and inspected. The full browser GDAL seed step
+   remains for final interchange verification.
 2. Decode and encode the `GP` binary header, flags, 4326 SRS and WKB
-   Polygon/MultiPolygon with an independent SQLite reader and the
+   Polygon/MultiPolygon with the native codec and independent SQLite reader;
+   compare against the
    [OGC GeoPackage specification](https://www.geopackage.org/spec/).
 3. ZIP central directory, paths, CRC and size are checked with the web
    fixture and corrupt variants. The native reader rejects unsupported CRS;
    the web GDAL transformation path belongs to the later import slice.
-4. Confirm SQLite3 availability and packaging on Windows and Android before
-   linking a GeoPackage reader. ZIP uses existing zlib. Cross-build,
-   cancellation and allocation failure verification remain open.
+4. Confirm Qt QSQLITE driver deployment on Windows and Android. ZIP uses
+   existing zlib. Cross-build, cancellation and allocation failure
+   verification remain open.
 
 The GIS exchange plan/target Oracle and a strict local GeoJSON feature
 collection adapter are implemented separately. Neither is connected to the
 GIS import wizard or the document transaction. The ZIP reader is read-only
-and is not yet wired to the wizard. SQLite handling, actual web-generated
-GPKG inspection and Windows/Android packaging remain open. No end-to-end
+and is not yet wired to the wizard. The GPKG reader is also read-only and
+not wired to import transactions. Full GDAL seed interchange and
+Windows/Android packaging remain open. No end-to-end
 GIS import/export or project GeoPackage capability is claimed at this gate.

@@ -20,6 +20,7 @@
     "exchange-adapter-registry.js": "634fab3cfa6e19d5dd4488eb330c9add02df7237",
     "gis-adapters.js": "be606ee43b39b1b1ddc15dc166908f966217f960",
     "gis-io.js": "4d62291181721ba15f94f35c202f6acf6d58f01a",
+    "gis-gpkg-worker.js": "5595e22c978df683b7b819c71a15a5d83d299a2b",
     "fflate.min.js": "df762372e3ff721a72a8e9b5cf1e58f2f3ee4ea8"
   },
   "adapterPath": "assets/js/gis-adapters.js",

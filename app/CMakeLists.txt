@@ -1,5 +1,6 @@
 find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 find_package(Qt6 REQUIRED COMPONENTS Svg)
+find_package(Qt6 REQUIRED COMPONENTS Sql)
 find_package(ZLIB REQUIRED)
 qt_add_executable(pandoeditor main.cpp)
 
@@ -13,6 +14,7 @@ add_library(pandoeditor_editor STATIC
     historicaltransaction.cpp historicaltransaction.h
     gisgeojson.cpp gisgeojson.h
     giszip.cpp giszip.h
+    gisgeopackage.cpp gisgeopackage.h
     gisdocumentexport.cpp gisdocumentexport.h
     hydromanifest.cpp hydromanifest.h
     hydroassetreader.cpp hydroassetreader.h
@@ -35,7 +37,7 @@ add_library(pandoeditor_editor STATIC
     ../renderer/referenceimageitem.cpp ../renderer/referenceimageitem.h
 )
 target_include_directories(pandoeditor_editor PUBLIC . ../renderer)
-target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg ZLIB::ZLIB)
+target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg Qt6::Sql ZLIB::ZLIB)
 qt_add_resources(pandoeditor_editor m4_geometry
     PREFIX "/geometry" BASE "${PROJECT_SOURCE_DIR}/assets/geometry"
     FILES "${PROJECT_SOURCE_DIR}/assets/geometry/polygon-clipping-0.15.7.js"
@@ -77,6 +79,16 @@ if(BUILD_TESTING)
     target_compile_definitions(gis_zip_tests PRIVATE
         WEB_GIS_ZIP_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
     add_test(NAME gis_zip_tests COMMAND gis_zip_tests)
+    add_executable(gis_geopackage_tests ../tests/gis_geopackage_tests.cpp)
+    target_link_libraries(gis_geopackage_tests PRIVATE pandoeditor_editor Qt6::Sql)
+    target_compile_definitions(gis_geopackage_tests PRIVATE
+        WEB_GPKG_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
+    add_test(NAME gis_geopackage_tests COMMAND gis_geopackage_tests)
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME m6_gpkg_web_fixture
+            COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m6-gpkg-fixture-oracle.py")
+    endif()
     add_executable(gis_document_export_tests ../tests/gis_document_export_tests.cpp)
     target_link_libraries(gis_document_export_tests PRIVATE pandoeditor_editor)
     add_test(NAME gis_document_export_tests COMMAND gis_document_export_tests)
