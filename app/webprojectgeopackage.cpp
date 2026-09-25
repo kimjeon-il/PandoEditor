@@ -169,7 +169,9 @@ QByteArray convertWebProjectGeoPackage(const GisGeoPackage& vectors,V state,
     if(fixtureProjection&&field(state,"distributionModel").kind==V::Null)
         state.object["distributionModel"]=webjson::obj({{"schemaVersion",V::num(2)}});
     const auto input=state.encode();
-    auto imported=webimport::prepare(input,{},fixtureProjection);
+    // GeoPackage rows can contain stable IDs from older web revisions that
+    // predate the standalone JSON importer's UUID-only check.
+    auto imported=webimport::prepare(input,{},true);
     Project candidate;candidate.replace(std::move(imported.document));
     return projectcodec::encode(candidate);
 }

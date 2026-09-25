@@ -1,6 +1,7 @@
 #include <projectgeopackage.h>
 #include <gisgeopackage.h>
 #include <projectcodec.h>
+#include <losslessjson.h>
 #include <pandoeditor/project.h>
 #include <QCoreApplication>
 #include <QDir>
@@ -49,6 +50,53 @@ int main(int argc,char** argv) {
         if(extension.jsonPointer=="/sourceInfo"&&extension.payload.find("web-worker")!=std::string::npos)
             retainedSource=true;
     assert(retainedSource);
+    QTemporaryDir webRoundtrip;assert(webRoundtrip.isValid());
+    const auto nativeCopy=webRoundtrip.filePath("restored-native.gpkg");
+    QFile nativeFile(nativeCopy);assert(nativeFile.open(QIODevice::WriteOnly));
+    const auto nativeBytes=exportProjectGeoPackage(webProject);
+    assert(nativeFile.write(nativeBytes)==nativeBytes.size());nativeFile.close();
+    Project reopened;reopened.replace(projectcodec::decode(readProjectGeoPackage(nativeCopy)));
+    assert(semanticallyEqual(webDocument,reopened.document()));
+    QTemporaryDir fullDirectory;assert(fullDirectory.isValid());
+    const auto fullWeb=fullDirectory.filePath("web-full-schema.gpkg");
+    assert(QFile::copy(web,fullWeb));
+    {
+        auto db=QSqlDatabase::addDatabase("QSQLITE","web-full-schema-test");
+        db.setDatabaseName(fullWeb);assert(db.open());
+        {
+            QSqlQuery query(db);
+            assert(query.exec("SELECT json_value FROM pandolab_project_settings WHERE setting_key='project_state'"));
+            assert(query.next());
+            auto root=losslessjson::parse(query.value(0).toString().toUtf8());
+            using V=losslessjson::Value;
+            root.object["format"]=V::str("pandolab-project-state");
+            root.object["schemaVersion"]=V::num(5);
+            root.object["version"]=V::str("0.33.0");
+            root.object["landObjectModel"]=losslessjson::parse(
+                R"({"schemaVersion":2,"purpose":"lossless-fallback","directCreation":false,"sourceProvenanceSchemaVersion":1})");
+            root.object["territorialModel"]=losslessjson::parse(R"({"schemaVersion":2})");
+            root.object["distributionModel"]=losslessjson::parse(R"({"schemaVersion":2})");
+            root.object["layerPresentation"]=losslessjson::parse(R"({"schemaVersion":3})");
+            auto& unit=root.object["territorialUnits"].array.front();
+            unit.object["type"]=V::str("Feature");
+            unit.object["properties"].object["schemaVersion"]=V::num(2);
+            unit.object["properties"].object["coverageMode"]=V::str("explicit");
+            auto& props=root.object["genericFeatures"].array.front().object["properties"].object;
+            props["schemaVersion"]=V::num(2);
+            props["source"]=losslessjson::parse(R"({"schemaVersion":1,"kind":"legacy","details":{}})");
+            root.object["distributionLayers"].array.front().object["schemaVersion"]=V::num(2);
+            root.object["distributionEntries"].array.front().object["schemaVersion"]=V::num(2);
+            query.finish();
+            assert(query.prepare("UPDATE pandolab_project_settings SET json_value=? WHERE setting_key='project_state'"));
+            query.addBindValue(QString::fromUtf8(root.encode()));assert(query.exec());
+        }
+        db.close();db={};
+    }
+    QSqlDatabase::removeDatabase("web-full-schema-test");
+    Project fullWebProject;fullWebProject.replace(projectcodec::decode(readProjectGeoPackage(fullWeb)));
+    assert(fullWebProject.document().units.size()==2);
+    assert(fullWebProject.document().genericFeatures.size()==1);
+    assert(fullWebProject.document().symbols.at(territorialRef("AAA")).policy==FlagPolicy::Embedded);
     Project source;
     source.replace(ProjectDocument({{"A","Alpha",{{{{0,0},{2,0},{2,2},{0,2},{0,0}}}},0x123456},
                                     {"B","Beta",{{{{3,0},{5,0},{5,2},{3,2},{3,0}}}},0x654321},
