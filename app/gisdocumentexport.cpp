@@ -14,10 +14,6 @@ V nullable(const std::optional<std::string>& value) {
 std::string color(std::uint32_t rgb) {
     return QString("#%1").arg(rgb,6,16,QChar('0')).toStdString();
 }
-const TerritorialRelation* baseRelation(const ProjectDocument& document,const ObjectRef& ref) {
-    for(const auto& relation:document.relations)if(relation.unit==ref&&!relation.dated)return &relation;
-    return nullptr;
-}
 Geometry geometry(const ProjectDocument& document,const GeometryRef& ref) {
     const auto stored=document.geometries.get(ref);
     if(!stored)throw std::invalid_argument("DANGLING_GIS_GEOMETRY");
