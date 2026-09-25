@@ -12,6 +12,7 @@ add_library(pandoeditor_core STATIC
     src/historicallibrary.cpp
     src/historicalinstantiation.cpp
     src/gisexchange.cpp
+    src/geopackagegeometry.cpp
     src/content.cpp
     src/objectproperties.cpp
     src/geometrypredicates.cpp
@@ -42,6 +43,9 @@ if(BUILD_TESTING)
     add_executable(gis_exchange_tests ../tests/gis_exchange_tests.cpp)
     target_link_libraries(gis_exchange_tests PRIVATE Pandoeditor::Core)
     add_test(NAME gis_exchange_tests COMMAND gis_exchange_tests)
+    add_executable(geopackage_geometry_tests ../tests/geopackage_geometry_tests.cpp)
+    target_link_libraries(geopackage_geometry_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME geopackage_geometry_tests COMMAND geopackage_geometry_tests)
     add_executable(gis_exchange_probe ../tests/gis_exchange_probe.cpp)
     target_link_libraries(gis_exchange_probe PRIVATE Pandoeditor::Core)
     add_executable(historical_library_probe ../tests/historical_library_probe.cpp)

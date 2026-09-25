@@ -26,6 +26,10 @@ there is no static `.gpkg` file at the guessed fixture path.
 Proposed dependency is SQLite3 plus a portable ZIP reader/writer. This is a
 **candidate**, not an approved codec yet. Before linking it into the product:
 
+The core now has a dependency-free, 2D EPSG:4326 GeoPackageBinary/WKB codec
+with roundtrip and malformed-byte tests. This is an incremental format check,
+not evidence that a whole GeoPackage produced by the web opens in Qt.
+
 1. Generate small GIS-only and project GPKG examples with the pinned web
    implementation; preserve original SQLite bytes and inspect required tables.
 2. Decode and encode the `GP` binary header, flags, 4326 SRS and WKB
@@ -37,4 +41,9 @@ Proposed dependency is SQLite3 plus a portable ZIP reader/writer. This is a
 4. Confirm SQLite3 and ZIP dependency availability and packaging on both
    Windows and Android. Test malformed headers and allocation/cancel behavior.
 
-No GIS import/export or native GeoPackage capability is claimed at this gate.
+The GIS exchange plan/target Oracle and a strict local GeoJSON feature
+collection adapter are implemented separately. Neither is connected to the
+GIS import wizard or the document transaction. ZIP and SQLite file handling,
+actual web-generated GPKG inspection and Windows/Android packaging remain
+open. No end-to-end GIS import/export or project GeoPackage capability is
+claimed at this gate.
