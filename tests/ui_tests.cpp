@@ -528,7 +528,14 @@ private slots:
             QVERIFY(clickControl(window,"undoButton")); QCOMPARE(editor.memoDraft(),QString());
             QVERIFY(clickControl(window,"undoButton")); QCOMPARE(editor.selectedName(),name);
             QCOMPARE(editor.revision(),qulonglong(6)); QVERIFY(!editor.canUndo()); QVERIFY(!editor.dirty());
-            for(int i=0;i<3;++i) QVERIFY(clickControl(window,"redoButton"));
+            for(int i=0;i<3;++i) {
+                auto* redo=visualItem(window->contentItem(),"redoButton");QVERIFY(redo);
+                const auto center=redo->mapToScene(QPointF(redo->width()/2,redo->height()/2));
+                QVERIFY2(clickControl(window,"redoButton"),qPrintable(QStringLiteral(
+                    "redo click failed: mobile=%1 step=%2 canRedo=%3 enabled=%4 center=(%5,%6) window=%7x%8")
+                    .arg(mobile).arg(i).arg(editor.canRedo()).arg(redo->isEnabled())
+                    .arg(center.x()).arg(center.y()).arg(window->width()).arg(window->height())));
+            }
             QCOMPARE(editor.revision(),qulonglong(9));
             QVERIFY(clickControl(window,"layerName"));
             QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Discard me");

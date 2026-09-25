@@ -108,8 +108,10 @@ Item {
                 onClicked: workspace.webImportRequested()
             }
         }
-        RowLayout {
-            Layout.fillWidth:true;spacing:4
+        Flow {
+            Layout.fillWidth:true
+            Layout.preferredHeight:childrenRect.height
+            spacing:4
             ToolButton { objectName:"searchTab";text:"검색";focusPolicy:Qt.NoFocus;onPressed:workspace.navigationPointer(true);onReleased:workspace.navigationPointer(false);onCanceled:workspace.navigationPointer(false);onClicked:{workspace.navigationStarted();workspace.searchOpen=true;workspace.editorOpen=false;workspace.legacyOpen=false} }
             ToolButton { objectName:"mapDisplayButton";text:"지도 표시";focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();displayControls.open()} }
             ToolButton { objectName:"openObjectEditor";text:"편집";enabled:editor.selectionItems.length>0;focusPolicy:Qt.NoFocus;onClicked:workspace.toggleEditor() }
@@ -117,7 +119,6 @@ Item {
             ToolButton { objectName:"contentPanelButton";text:"지명·수계";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.legacyOpen=true;workspace.editorOpen=false;workspace.searchOpen=false;panel.showContent()} }
             ToolButton { objectName:"historicalLibraryButton";text:workspace.compact?"역사":"역사 라이브러리";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:workspace.historicalLibraryRequested() }
             ToolButton { objectName:"gisImportButton";text:"GIS";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:workspace.gisImportRequested() }
-            Item { Layout.fillWidth:true }
             ToolButton { objectName:"closeSidePanel";text:"닫기";visible:workspace.sideOpen;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.searchOpen=false;workspace.editorOpen=false;workspace.legacyOpen=false} }
         }
         Item {
