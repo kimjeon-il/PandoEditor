@@ -106,6 +106,8 @@ private slots:
         auto label=placedLabel(map,"DEU");
         auto flag=visualItem(label,"mapPlacedFlag");auto name=visualItem(label,"mapPlacedText");
         QVERIFY(flag&&name);QVERIFY(flag->isVisible());QVERIFY(!name->isVisible());
+        QTRY_COMPARE(flag->property("status").toInt(),1); // Image.Ready: the SVG decoded, not just the delegate.
+        QVERIFY(capture(window).save(width==360?"m5-label-flag-only-compact.png":"m5-label-flag-only-desktop.png"));
         QVERIFY(editor.setPresentationVisibility("countryFlags",false));
         QTRY_VERIFY(placedLabel(map,"DEU")==nullptr);
         QVERIFY(editor.setPresentationVisibility("basemapLabels",true));
