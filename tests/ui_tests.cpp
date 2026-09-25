@@ -78,6 +78,29 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void gisImportPanelAtDesktopAnd360px() {
+        for(bool mobile:{false,true}) {
+            EditorController editor(EditorControllerConfig{mobile,{}});
+            QQmlApplicationEngine engine;QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){
+                for(const auto& error:errors)warnings<<error.toString();
+            });
+            engine.rootContext()->setContextProperty("editor",&editor);
+            engine.load(QUrl("qrc:/common/Main.qml"));
+            QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+            auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);
+            window->resize(mobile?360:1100,mobile?640:760);exposeForTest(window);
+            QVERIFY(clickControl(window,"gisImportButton"));
+            auto* panel=window->findChild<QObject*>("gisImportPanel");QVERIFY(panel);
+            QTRY_VERIFY(panel->property("visible").toBool());
+            QVERIFY(panel->property("width").toDouble()<=window->width());
+            QVERIFY(visualItem(window->contentItem(),"gisLayerChoice"));
+            QVERIFY(visualItem(window->contentItem(),"gisConfirm"));
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+            QMetaObject::invokeMethod(panel,"close");
+            window->close();
+        }
+    }
     void historicalLibraryPanelAtDesktopAnd360px() {
         QTemporaryDir dir;QVERIFY(dir.isValid());
         QFile file(dir.filePath("historical.json"));QVERIFY(file.open(QIODevice::WriteOnly));

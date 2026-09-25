@@ -15,6 +15,7 @@ add_library(pandoeditor_editor STATIC
     gisgeojson.cpp gisgeojson.h
     giszip.cpp giszip.h
     gisgeopackage.cpp gisgeopackage.h
+    giscontentimport.cpp giscontentimport.h
     gisterritorial.cpp gisterritorial.h
     gisdocumentexport.cpp gisdocumentexport.h
     hydromanifest.cpp hydromanifest.h
@@ -30,6 +31,7 @@ add_library(pandoeditor_editor STATIC
     webimport.cpp webmigration.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
     editorgeometry.cpp
     editorhistorical.cpp
+    editorgis.cpp
     editorcontent.cpp
     editorcontroller.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
@@ -55,6 +57,7 @@ qt_add_resources(pandoeditor ui
         "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/GisImportPanel.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
         "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
@@ -90,6 +93,17 @@ if(BUILD_TESTING)
     target_compile_definitions(gis_territorial_import_tests PRIVATE
         WEB_GIS_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
     add_test(NAME gis_territorial_import_tests COMMAND gis_territorial_import_tests)
+    add_executable(gis_content_import_tests ../tests/gis_content_import_tests.cpp)
+    target_link_libraries(gis_content_import_tests PRIVATE pandoeditor_editor)
+    target_compile_definitions(gis_content_import_tests PRIVATE
+        WEB_GIS_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
+    add_test(NAME gis_content_import_tests COMMAND gis_content_import_tests)
+    add_executable(gis_import_controller_tests ../tests/gis_import_controller_tests.cpp)
+    target_link_libraries(gis_import_controller_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(gis_import_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME gis_import_controller_tests COMMAND gis_import_controller_tests -o -,txt)
+    set_tests_properties(gis_import_controller_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     find_package(Python3 COMPONENTS Interpreter QUIET)
     if(Python3_Interpreter_FOUND)
         add_test(NAME m6_gpkg_web_fixture
@@ -182,6 +196,7 @@ if(BUILD_TESTING)
         FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/GisImportPanel.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
@@ -237,6 +252,7 @@ if(BUILD_TESTING)
         FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/GisImportPanel.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"

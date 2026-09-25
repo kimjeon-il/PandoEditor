@@ -52,7 +52,8 @@ struct SetPhysicalData { PhysicalDataSettings settings; };
 using CommandAction = std::variant<std::monostate, SetCountryColor, AddLayer,
     RemoveLayer, MoveLayer, SetLayerVisible, SetLayerLocked, MoveCountry,
     TerritorialFieldEdit, TerritorialColorEdit, TerritorialLockEdit, ApplyTerritorialMutation, ContentEdit, SetPhysicalData,
-    HistoricalInstantiationPlan, GisGenericImportPlan, GisTerritorialImportPlan>;
+    HistoricalInstantiationPlan, GisGenericImportPlan, GisTerritorialImportPlan,
+    GisDistributionImportPlan>;
 struct CommandArguments { PropertyEdits properties; CommandAction action; };
 struct CommandRequest {
     std::string commandId, projectInstanceId, documentId;

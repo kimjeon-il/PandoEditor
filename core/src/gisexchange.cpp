@@ -179,6 +179,66 @@ void applyTerritorialGisImport(ProjectDocument& document,const GisTerritorialImp
         }
     }
 }
+GisDistributionImportPlan planDistributionGisImport(const ProjectSnapshot& project,
+    std::string planId,GisSource source,std::vector<DistributionLayer> layers,
+    std::vector<GisDistributionInput> entries) {
+    if(entries.empty())throw std::invalid_argument("INVALID_GIS_PLAN: empty distribution import");
+    std::set<std::string> layerIds,entryIds;
+    for(const auto& layer:layers) {
+        if(layer.id.empty()||!layerIds.insert(layer.id).second||
+           project.index().objects.count({"distributionLayer",layer.id}))
+            throw std::invalid_argument("DUPLICATE_ID: distribution layer");
+    }
+    std::vector<std::string> ids;
+    for(const auto& row:entries) {
+        const auto& entry=row.entry;
+        if(entry.id.empty()||!entryIds.insert(entry.id).second||
+           project.index().objects.count({"distributionEntry",entry.id})||
+           (bool(entry.territory)==bool(row.geometry))||entry.geometry)
+            throw std::invalid_argument("INVALID_GIS_PLAN: distribution entry");
+        const auto existing=project.index().objects.find({"distributionLayer",entry.layerId});
+        if(existing==project.index().objects.end()&&!layerIds.count(entry.layerId))
+            throw std::invalid_argument("DANGLING_REF: distribution layer");
+        if(existing!=project.index().objects.end()&&
+           project.document().distributionLayers.at(existing->second).locked)
+            throw std::invalid_argument("LOCKED: distribution layer");
+        ids.push_back(entry.id);
+    }
+    GisDistributionImportPlan plan{createGisImportPlan(project,std::move(planId),
+        GisImportKind::Distribution,std::move(source),GisExchangeTarget::Distribution,
+        std::move(ids)),std::move(layers),std::move(entries)};
+    auto candidate=project.document();applyDistributionGisImport(candidate,plan);
+    validateDocument(candidate);
+    return plan;
+}
+void applyDistributionGisImport(ProjectDocument& document,const GisDistributionImportPlan& plan) {
+    if(plan.info.kind!=GisImportKind::Distribution||
+       plan.info.target!=GisExchangeTarget::Distribution||plan.entries.empty()||
+       plan.entries.size()!=plan.info.affectedIds.size())
+        throw std::invalid_argument("INVALID_GIS_PLAN: distribution payload");
+    std::set<std::string> layerIds,entryIds;
+    for(const auto& layer:plan.layers) {
+        if(layer.id.empty()||!layerIds.insert(layer.id).second||
+           std::any_of(document.distributionLayers.begin(),document.distributionLayers.end(),
+               [&](const auto& existing){return existing.id==layer.id;}))
+            throw std::invalid_argument("DUPLICATE_ID: distribution layer");
+        document.distributionLayers.push_back(layer);
+    }
+    for(std::size_t i=0;i<plan.entries.size();++i) {
+        const auto& input=plan.entries[i];auto entry=input.entry;
+        if(entry.id.empty()||plan.info.affectedIds[i]!=entry.id||
+           !entryIds.insert(entry.id).second||bool(entry.territory)==bool(input.geometry)||
+           entry.geometry||std::any_of(document.distributionEntries.begin(),
+               document.distributionEntries.end(),[&](const auto& existing){return existing.id==entry.id;}))
+            throw std::invalid_argument("INVALID_GIS_PLAN: distribution IDs/source");
+        if(input.geometry) {
+            GeometryRef ref{"gis-distribution:"+entry.id,1};
+            if(document.geometries.get(ref))throw std::invalid_argument("DUPLICATE_ID: distribution geometry");
+            document.geometries.insert(ref,*input.geometry);entry.geometry=ref;
+        }
+        document.distributionEntries.push_back(std::move(entry));
+    }
+}
 GisGenericImportPlan planGenericGisImport(const ProjectSnapshot& project,std::string planId,
     GisSource source,std::vector<GisGenericInput> features) {
     if(features.empty())throw std::invalid_argument("INVALID_GIS_PLAN: empty generic import");

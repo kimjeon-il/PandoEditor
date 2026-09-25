@@ -37,7 +37,7 @@ ApplicationWindow {
         objectName: "windowsFrame"
         window: window
         enabled: !editor.mobileMode && Qt.platform.os === "windows"
-        blocked: unsaved.visible || errorDialog.visible || recoveryDialog.visible || webReport.visible
+        blocked: unsaved.visible || errorDialog.visible || recoveryDialog.visible || webReport.visible || gisPanel.visible
         caption: desktopTitleBar
         minimizeButton: minimizeWindowButton
         maximizeButton: maximizeWindowButton
@@ -118,6 +118,7 @@ ApplicationWindow {
     function handleBack() {
         if (Qt.inputMethod.visible) { Qt.inputMethod.hide(); return }
         if (historicalPanel.visible) { historicalPanel.close(); return }
+        if (gisPanel.visible) { gisPanel.close(); return }
         if (webReport.visible) { cancelWebImportFlow(); return }
         if (errorDialog.visible) { errorDialog.close(); return }
         if (recoveryDialog.visible) { recoveryDialog.close(); return }
@@ -128,6 +129,7 @@ ApplicationWindow {
     onClosing: function(close) {
         if (allowClose) return
         if (webReport.visible) { close.accepted=false; cancelWebImportFlow(); return }
+        if (gisPanel.visible) { close.accepted=false; gisPanel.close(); return }
         if (editor.mobileMode) { close.accepted=false; handleBack(); return }
         if (editor.dirty) { close.accepted=false; requestAction("close") }
     }
@@ -193,9 +195,10 @@ ApplicationWindow {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         mobileMode: editor.mobileMode
-        holdFieldCommits: window.webImportFlowActive
+        holdFieldCommits: window.webImportFlowActive || gisPanel.visible
         onWebImportRequested: window.requestWebImport()
         onHistoricalLibraryRequested: historicalPanel.open()
+        onGisImportRequested: gisPanel.open()
         onOpenRequested: window.requestAction(editor.mobileMode ? "import" : "open")
         onSaveRequested: window.requestSave(false)
         onSaveAsRequested: editor.mobileMode ? window.requestExport() : window.requestSave(true)
@@ -207,6 +210,17 @@ ApplicationWindow {
     HistoricalLibraryPanel {
         id: historicalPanel
         onLibraryFileRequested: historicalFileDialog.open()
+    }
+    GisImportPanel {
+        id: gisPanel
+        onFileRequested: gisFileDialog.open()
+    }
+    Native.FileDialog {
+        id: gisFileDialog
+        objectName: "gisFileDialog"
+        title: "GIS 데이터 선택"
+        nameFilters: ["GIS 데이터 (*.geojson *.json *.zip *.gpkg)"]
+        onAccepted: editor.loadGisSource(selectedFile)
     }
     Native.FileDialog {
         id: historicalFileDialog

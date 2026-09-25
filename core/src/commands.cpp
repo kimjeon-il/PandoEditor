@@ -57,6 +57,14 @@ std::vector<ObjectRef> targetsFor(const CommandArguments& args)
             }
             for(const auto& patch:action.countryReplacements)refs.insert(patch.owner);
         }
+        else if constexpr(std::is_same_v<T,GisDistributionImportPlan>) {
+            for(const auto& layer:action.layers)refs.insert({"distributionLayer",layer.id});
+            for(const auto& row:action.entries) {
+                refs.insert({"distributionEntry",row.entry.id});
+                refs.insert({"distributionLayer",row.entry.layerId});
+                if(row.entry.territory)refs.insert(*row.entry.territory);
+            }
+        }
         else if constexpr(std::is_same_v<T,ContentEdit>) refs.insert(action.target);
         else if constexpr(std::is_same_v<T,SetPhysicalData>) {}
         else if constexpr(!std::is_same_v<T,std::monostate>) refs.insert({"userLayer",action.id});
@@ -76,7 +84,8 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
         {"territorial.relation.parent",11},{"territorial.relation.sovereign",11},
         {"territorial.delete",11},{"territorial.geometry.commit",11},{"territorial.geometry.replace",11},
         {"content.edit",12},{"physical-data.configure",13},{"historical.instantiate",14},
-        {"gis.import.generic",15},{"gis.import.territorial",16}};
+        {"gis.import.generic",15},{"gis.import.territorial",16},
+        {"gis.import.distribution",17}};
     auto found=std::find_if(std::begin(commands),std::end(commands),[&](const auto& c){return request.commandId==c.first;});
     require(found!=std::end(commands),CommandError::InvalidCommand,"unknown commandId");
     require(request.args.action.index()==found->second,CommandError::InvalidArguments,"commandId/action mismatch");
@@ -169,6 +178,15 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                     require(action.info.affectedIds[i]==action.units[i].id&&
                         unique.insert(action.units[i].id).second,CommandError::InvalidTargets,
                         "territorial GIS IDs changed");
+            } else if constexpr(std::is_same_v<T,GisDistributionImportPlan>) {
+                require(action.info.projectInstanceId==project.instanceId(),CommandError::ProjectMismatch,"GIS plan project changed");
+                require(action.info.documentId==project.document().documentId,CommandError::DocumentMismatch,"GIS plan document changed");
+                require(action.info.revision==project.revision(),CommandError::StaleRevision,"GIS plan stale");
+                require(action.info.version==1&&!action.info.id.empty()&&
+                    action.info.kind==GisImportKind::Distribution&&
+                    action.info.target==GisExchangeTarget::Distribution&&
+                    !action.entries.empty()&&action.entries.size()==action.info.affectedIds.size(),
+                    CommandError::InvalidArguments,"invalid distribution GIS plan");
             }
         },request.args.action);
     }
@@ -228,6 +246,16 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                 (imported==gis->units.end()||imported->replaceExisting||!project.index().objects.count(ref))&&
                 (imported!=gis->units.end()||project.index().objects.count(ref)),
                 CommandError::InvalidTargets,"territorial GIS target invalid");
+            continue;
+        }
+        if(const auto gis=std::get_if<GisDistributionImportPlan>(&request.args.action)) {
+            const bool newLayer=std::any_of(gis->layers.begin(),gis->layers.end(),
+                [&](const auto& row){return ref.domain=="distributionLayer"&&row.id==ref.id;});
+            const bool newEntry=std::any_of(gis->entries.begin(),gis->entries.end(),
+                [&](const auto& row){return ref.domain=="distributionEntry"&&row.entry.id==ref.id;});
+            require((newLayer||newEntry)?!project.index().objects.count(ref):
+                project.index().objects.count(ref)!=0,CommandError::InvalidTargets,
+                "distribution GIS target invalid");
             continue;
         }
         if(ref.domain=="territorial") {
@@ -584,6 +612,8 @@ void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const 
             applyGenericGisImport(candidate,action);
         } else if constexpr(std::is_same_v<T,GisTerritorialImportPlan>) {
             applyTerritorialGisImport(candidate,action);
+        } else if constexpr(std::is_same_v<T,GisDistributionImportPlan>) {
+            applyDistributionGisImport(candidate,action);
         }
     },args.action);
     for(const auto& field:args.properties.fields)applyField(candidate,index,field);
@@ -755,6 +785,23 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
         }
         return;
     }
+    if(const auto gis=std::get_if<GisDistributionImportPlan>(&request.args.action)) {
+        for(const auto& layer:gis->layers)
+            require(effectAllowed(before,{"distributionLayer",layer.id},"add"),
+                CommandError::UnsupportedDependency,"GIS distribution layer dependency");
+        for(const auto& row:gis->entries) {
+            require(effectAllowed(before,{"distributionEntry",row.entry.id},"add"),
+                CommandError::UnsupportedDependency,"GIS distribution entry dependency");
+            if(row.entry.territory)
+                require(effectAllowed(before,*row.entry.territory,"relation"),
+                    CommandError::UnsupportedDependency,"GIS distribution territory dependency");
+            auto found=project.index().objects.find({"distributionLayer",row.entry.layerId});
+            if(found!=project.index().objects.end())
+                require(!before.distributionLayers.at(found->second).locked,CommandError::Locked,
+                    "GIS distribution layer locked");
+        }
+        return;
+    }
     auto allow=[&](bool changed,const ObjectRef& ref,const char* effect) {
         require(!changed || effectAllowed(before,ref,effect),CommandError::UnsupportedDependency,effect);
     };
@@ -893,6 +940,14 @@ PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const Com
             try {
                 (void)planTerritorialGisImport(project,gis->info.id,gis->info.source,
                     gis->info.target,gis->units,gis->countryReplacements);
+            } catch(const std::invalid_argument& error) {
+                result.error=CommandError::ValidationFailed;result.detail=error.what();return result;
+            }
+        }
+        if(const auto gis=std::get_if<GisDistributionImportPlan>(&request.args.action)) {
+            try {
+                (void)planDistributionGisImport(project,gis->info.id,gis->info.source,
+                    gis->layers,gis->entries);
             } catch(const std::invalid_argument& error) {
                 result.error=CommandError::ValidationFailed;result.detail=error.what();return result;
             }

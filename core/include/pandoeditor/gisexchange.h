@@ -66,6 +66,20 @@ struct GisTerritorialImportPlan {
     std::vector<GisTerritorialInput> units;
     std::vector<GeometryReplacement> countryReplacements;
 };
+struct GisDistributionInput {
+    DistributionEntry entry;
+    // GIS exports may materialize a territorial reference as a polygon. The
+    // canonical entry keeps only the typed reference in that case.
+    std::optional<Geometry> geometry;
+};
+struct GisDistributionImportPlan {
+    GisImportPlan info;
+    std::vector<DistributionLayer> layers;
+    std::vector<GisDistributionInput> entries;
+};
+GisDistributionImportPlan planDistributionGisImport(const ProjectSnapshot&,std::string planId,
+    GisSource,std::vector<DistributionLayer>,std::vector<GisDistributionInput>);
+void applyDistributionGisImport(ProjectDocument&,const GisDistributionImportPlan&);
 GisTerritorialImportPlan planTerritorialGisImport(const ProjectSnapshot&,std::string planId,
     GisSource,GisExchangeTarget,std::vector<GisTerritorialInput>,
     std::vector<GeometryReplacement> countryReplacements={});

@@ -5,6 +5,7 @@
 #include "platformstorage.h"
 #include "mapprojection.h"
 #include "hydroruntimeprovider.h"
+#include "giscontentimport.h"
 #include <pandoeditor/historicalinstantiation.h>
 #include <pandoeditor/selection.h>
 #include <QObject>
@@ -60,6 +61,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QString historicalStage READ historicalStage NOTIFY historicalChanged)
     Q_PROPERTY(QString historicalError READ historicalError NOTIFY historicalChanged)
     Q_PROPERTY(qulonglong historicalSession READ historicalSession NOTIFY historicalChanged)
+    Q_PROPERTY(QVariantMap gisImportState READ gisImportState NOTIFY gisImportChanged)
     Q_PROPERTY(QVariantMap hoverObject READ hoverObject NOTIFY hoverChanged)
     Q_PROPERTY(qulonglong hoverRevision READ hoverRevision NOTIFY hoverChanged)
     Q_PROPERTY(bool webImportBusy READ webImportBusy NOTIFY webImportChanged)
@@ -128,6 +130,11 @@ public:
     Q_INVOKABLE bool prepareHistoricalAdd(const QVariantMap& options);
     Q_INVOKABLE bool confirmHistoricalAdd(qulonglong session);
     Q_INVOKABLE void cancelHistoricalAdd();
+    QVariantMap gisImportState() const;
+    Q_INVOKABLE bool loadGisSource(const QUrl& url);
+    Q_INVOKABLE bool prepareGisImport(int layerIndex,const QVariantMap& mapping);
+    Q_INVOKABLE bool confirmGisImport(qulonglong session);
+    Q_INVOKABLE void cancelGisImport();
     bool presentationRecoveryAvailable() const;
     Q_INVOKABLE bool restorePresentationRecovery();
     Q_INVOKABLE bool discardPresentationRecovery();
@@ -327,6 +334,7 @@ public:
     Q_INVOKABLE bool confirmPrivateRecovery();
 signals:
     void historicalChanged();
+    void gisImportChanged();
     void presentationRecoveryChanged();
     void presentationChanged();
     void propertyChanged();
@@ -359,6 +367,20 @@ private:
     QString historicalStage_=QStringLiteral("unloaded"),historicalError_;
     qulonglong historicalSession_=0;
     std::optional<pandoeditor::CommandPreview> historicalCommandPreview_;
+    struct GisLoadedLayer {
+        QString name,target,distributionType;
+        pandoeditor::GisGeoJsonCollection collection;
+    };
+    struct GisImportSession {
+        pandoeditor::ProjectSnapshot base;
+        QString fileName,sourceKind;
+        std::vector<GisLoadedLayer> layers;
+        std::optional<pandoeditor::CommandPreview> preview;
+        QString stage=QStringLiteral("reading"),error,summary;
+        int selectedLayer=-1;
+    };
+    std::optional<GisImportSession> gisImport_;
+    qulonglong gisImportToken_=0;
     QTimer presentationSaveTimer_;
     std::string presentationSaveInstance_;
     QString presentationRecoveryPath() const;
