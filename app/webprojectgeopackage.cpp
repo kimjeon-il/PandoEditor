@@ -134,7 +134,8 @@ QByteArray convertWebProjectGeoPackage(const GisGeoPackage& vectors,V state,
     for(const auto& [id,override]:overrides.object) {
         require(countries.count(id)&&override.kind==V::Object,"INVALID_WEB_GPKG_OVERRIDE");
         const auto& flag=field(override,"flagDataUrl");
-        require(flag.kind==V::Null,"MISSING_PROJECT_GPKG_ASSET");
+        if(assets.count(id))require(flag.kind==V::String,"INVALID_WEB_GPKG_FLAG_POLICY");
+        else require(flag.kind==V::Null,"MISSING_PROJECT_GPKG_ASSET");
     }
 
     align(state,"territorialUnits",features(vectors,{"subunits","regions"}));

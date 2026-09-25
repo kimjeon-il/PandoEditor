@@ -135,6 +135,11 @@ int main(int argc,char** argv) {
     const auto orphan=directory.filePath("orphan-web-asset.gpkg");
     corruptCopy(web,orphan,"UPDATE pandolab_country_assets SET country_id='ghost'");
     assert(rejected([&]{readProjectGeoPackage(orphan);}));
+    const auto conflictingFlag=directory.filePath("conflicting-web-flag.gpkg");
+    corruptCopy(web,conflictingFlag,"UPDATE pandolab_project_settings "
+        "SET json_value=replace(json_value,'\"AAA\":{}','\"AAA\":{\"flagDataUrl\":null}') "
+        "WHERE setting_key='project_state'");
+    assert(rejected([&]{readProjectGeoPackage(conflictingFlag);}));
     const auto wrongWebCountry=directory.filePath("wrong-web-country.gpkg");
     corruptCopy(web,wrongWebCountry,"UPDATE countries SET pandolab_id='other' WHERE pandolab_id='AAA'");
     assert(rejected([&]{readProjectGeoPackage(wrongWebCountry);}));
