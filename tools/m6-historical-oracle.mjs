@@ -6,6 +6,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const web=await import(pathToFileURL(resolve(root,'tests/fixtures/web-m6/source/historical-library.js')));
+const serviceModule=await import(pathToFileURL(resolve(root,'tests/fixtures/web-m6/source/historical-library-service.js')));
 const geometry={type:'Polygon',coordinates:[[[0,0],[1,0],[1,1],[0,1],[0,0]]]};
 const version=(id,validFrom,validTo)=>({id,validFrom,validTo,geometry});
 const entity={libraryId:'historical-subunit:example',type:'territory',
@@ -29,6 +30,15 @@ instantiated.geometry.coordinates[0][0][0]=42;
 assert.equal(actual.geometryVersions[0].geometry.coordinates[0][0][0],0);
 lines.push('instantiate|'+instantiated.geometryVersionId+'|'+instantiated.name+'|'+
   instantiated.instantiation.mode+'|'+catalog.getSnapshot('pilot').entityRefs.length);
+const child={...entity,libraryId:'child',parentLibraryId:entity.libraryId,instantiation:{mode:'independent'}};
+const grandchild={...entity,libraryId:'grandchild',parentLibraryId:'child',instantiation:{mode:'independent'}};
+const service=serviceModule.createHistoricalLibraryService({dataUrl:'pilot',
+  fetchJson:async()=>({schemaVersion:2,entities:[entity,child,grandchild],snapshots:[snapshot]}),
+  getCountriesData:()=>({features:[]}),displayName:()=>'',
+  combineGeometries:()=>geometry,currentYear:()=>2026});
+await service.load();
+for(const depth of ['none','level1','all'])
+  lines.push('children|'+depth+'|'+service.entityRefsWithChildren([entity.libraryId],depth).join(','));
 const expected=lines.join('\n')+'\n';
 if(process.argv.includes('--web-only'))process.stdout.write(expected);
 else {

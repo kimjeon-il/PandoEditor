@@ -110,6 +110,28 @@ std::vector<const HistoricalEntity*> HistoricalLibrary::search(const HistoricalS
     }
     return result;
 }
+std::vector<std::string> HistoricalLibrary::entityRefsWithChildren(
+    const std::vector<std::string>& rootIds,const std::string& depth) const {
+    if(depth!="none"&&depth!="level1"&&depth!="all")
+        throw std::invalid_argument("INVALID_LIBRARY: child depth");
+    std::set<std::string> selected;
+    std::vector<std::string> result,frontier;
+    for(const auto& id:rootIds)if(selected.insert(id).second) {
+        result.push_back(id);frontier.push_back(id);
+    }
+    if(depth=="none")return result;
+    while(!frontier.empty()) {
+        const std::set<std::string> parents(frontier.begin(),frontier.end());
+        std::vector<std::string> next;
+        for(const auto& entity:entities_)
+            if(parents.count(entity.parentLibraryId)&&selected.insert(entity.libraryId).second) {
+                result.push_back(entity.libraryId);next.push_back(entity.libraryId);
+            }
+        if(depth=="level1")break;
+        frontier=std::move(next);
+    }
+    return result;
+}
 const HistoricalGeometryVersion* HistoricalLibrary::selectGeometryVersion(
                                     const std::string& libraryId,
                                     const std::string& referenceDate) const {

@@ -55,6 +55,15 @@ int main() {
     assert(catalog.search({"","country",HistoricalStatus::Past,"1991","Europe"}).size()==1);
     assert(catalog.search({"","country",HistoricalStatus::Current,"",""}).empty());
     assert(catalog.search({"","country",HistoricalStatus::Past,"2010",""}).empty());
+    HistoricalEntity child=entity;child.libraryId="child";child.parentLibraryId=entity.libraryId;
+    HistoricalEntity grandchild=entity;grandchild.libraryId="grandchild";grandchild.parentLibraryId="child";
+    HistoricalLibrary family(2,{entity,child,grandchild},{snapshot});
+    assert((family.entityRefsWithChildren({entity.libraryId},"none")==std::vector<std::string>{entity.libraryId}));
+    assert((family.entityRefsWithChildren({entity.libraryId},"level1")==std::vector<std::string>{entity.libraryId,"child"}));
+    assert((family.entityRefsWithChildren({entity.libraryId},"all")==std::vector<std::string>{entity.libraryId,"child","grandchild"}));
+    assert((family.entityRefsWithChildren({entity.libraryId,"child"},"all")==std::vector<std::string>{entity.libraryId,"child","grandchild"}));
+    assert((family.entityRefsWithChildren({"missing"},"all")==std::vector<std::string>{"missing"}));
+    assert(invalid([&]{family.entityRefsWithChildren({entity.libraryId},"unrecognized");}));
     assert(invalid([&]{HistoricalLibrary future(3,{entity},{});}));
     assert(invalid([&]{HistoricalLibrary duplicate(2,{entity,entity},{});}));
 }

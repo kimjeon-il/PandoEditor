@@ -21,9 +21,11 @@ Project project() {
 }
 }
 int main() {
+    WorldSnapshot snapshot;snapshot.id="snapshot:1945";snapshot.referenceDate="1945";
+    snapshot.entityRefs={"historical-country:H","historical-country:I"};
     const HistoricalLibrary catalog(2,{entity("historical-country:H",UnitKind::Country,square(20)),
                                        entity("historical-country:I",UnitKind::Country,square(30)),
-                                       entity("historical-subunit:S",UnitKind::Subunit,square(2))},{});
+                                       entity("historical-subunit:S",UnitKind::Subunit,square(2))},{snapshot});
     auto p=project();
     auto plan=planIndependentHistorical(p.snapshot(),catalog,{{"historical-country:H","1945"},
                                                              {"historical-country:I","1945"}});
@@ -42,6 +44,28 @@ int main() {
     assert(p.undo()&&p.document().units.size()==1&&!p.index().objects.count(territorialRef("historical-country:H")));
     assert(p.redo()&&p.document().units.size()==3);
     assert(!CommandProcessor::prepare(p,request).ok());
+    auto snapshotProject=project();
+    auto fromSnapshot=planIndependentHistoricalSnapshot(snapshotProject.snapshot(),catalog,"snapshot:1945");
+    assert(fromSnapshot.additions.size()==2);
+    assert(fromSnapshot.additions.front().referenceDate==std::optional<std::string>{"1945"});
+    args.action=fromSnapshot;
+    auto snapshotPreview=CommandProcessor::prepare(snapshotProject,
+        CommandProcessor::makeRequest(snapshotProject,"historical.instantiate",args));
+    assert(snapshotPreview.ok()&&snapshotPreview.preview);
+    assert(CommandProcessor::confirm(snapshotProject,*snapshotPreview.preview).changed());
+    assert(snapshotProject.document().units.size()==3);
+    assert(snapshotProject.undo()&&snapshotProject.document().units.size()==1);
+    bool absentSnapshot=false;
+    try { (void)planIndependentHistoricalSnapshot(snapshotProject.snapshot(),catalog,"missing"); }
+    catch(const std::invalid_argument&){absentSnapshot=true;}
+    assert(absentSnapshot);
+    snapshot.entityRefs.push_back("historical-country:missing");
+    HistoricalLibrary partial(2,{entity("historical-country:H",UnitKind::Country,square(20)),
+                                 entity("historical-country:I",UnitKind::Country,square(30))},{snapshot});
+    bool missingEntity=false;
+    try { (void)planIndependentHistoricalSnapshot(snapshotProject.snapshot(),partial,"snapshot:1945"); }
+    catch(const std::invalid_argument&){missingEntity=true;}
+    assert(missingEntity&&snapshotProject.document().units.size()==1);
     auto missingOwnership=false;
     try { (void)planIndependentHistorical(p.snapshot(),catalog,{{"historical-subunit:S","1945"}}); }
     catch(const std::invalid_argument&){missingOwnership=true;}

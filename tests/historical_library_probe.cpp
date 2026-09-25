@@ -33,4 +33,15 @@ int main() {
     std::cout<<"instantiate|"<<materialized.geometryVersionId<<"|"<<materialized.name
              <<"|"<<materialized.instantiation.mode<<"|"
              <<catalog.getSnapshot("pilot")->entityRefs.size()<<'\n';
+    HistoricalEntity child=entity;child.libraryId="child";child.parentLibraryId=entity.libraryId;
+    child.instantiation.mode="independent";
+    HistoricalEntity grandchild=child;grandchild.libraryId="grandchild";
+    grandchild.parentLibraryId="child";
+    HistoricalLibrary family(2,{entity,child,grandchild},{snapshot});
+    for(const auto& depth:{"none","level1","all"}) {
+        std::cout<<"children|"<<depth<<"|";
+        const auto refs=family.entityRefsWithChildren({entity.libraryId},depth);
+        for(std::size_t i=0;i<refs.size();++i)std::cout<<(i?",":"")<<refs[i];
+        std::cout<<'\n';
+    }
 }

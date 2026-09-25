@@ -23,5 +23,10 @@ struct HistoricalInstantiationPlan {
 };
 HistoricalInstantiationPlan planIndependentHistorical(const ProjectSnapshot&,
     const HistoricalLibrary&,const std::vector<HistoricalAddRequest>&);
+// A snapshot is a template. Missing refs and unresolved ownership stop the
+// entire plan; no modern-boundary substitute is synthesized.
+HistoricalInstantiationPlan planIndependentHistoricalSnapshot(const ProjectSnapshot&,
+    const HistoricalLibrary&,const std::string& snapshotId,
+    const std::vector<HistoricalAddRequest>& overrides={});
 void applyHistoricalInstantiation(ProjectDocument&,const HistoricalInstantiationPlan&);
 }

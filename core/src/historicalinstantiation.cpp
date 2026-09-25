@@ -30,6 +30,29 @@ HistoricalInstantiationPlan planIndependentHistorical(const ProjectSnapshot& pro
     validateDocument(candidate);
     return plan;
 }
+HistoricalInstantiationPlan planIndependentHistoricalSnapshot(const ProjectSnapshot& project,
+    const HistoricalLibrary& catalog,const std::string& snapshotId,
+    const std::vector<HistoricalAddRequest>& overrides) {
+    const auto* snapshot=catalog.getSnapshot(snapshotId);
+    if(!snapshot)throw std::invalid_argument("INVALID_LIBRARY: missing snapshot");
+    const auto refs=catalog.entityRefsWithChildren(snapshot->entityRefs,"all");
+    std::map<std::string,HistoricalAddRequest> choices;
+    for(const auto& choice:overrides)
+        if(!choices.emplace(choice.libraryId,choice).second)
+            throw std::invalid_argument("INVALID_LIBRARY: duplicate override");
+    std::vector<HistoricalAddRequest> requests;
+    for(const auto& id:refs) {
+        if(!catalog.get(id))throw std::invalid_argument("INVALID_LIBRARY: missing snapshot entity");
+        HistoricalAddRequest request;
+        const auto it=choices.find(id);
+        if(it!=choices.end()){request=it->second;choices.erase(it);}
+        request.libraryId=id;
+        request.referenceDate=snapshot->referenceDate.value_or("");
+        requests.push_back(std::move(request));
+    }
+    if(!choices.empty())throw std::invalid_argument("INVALID_LIBRARY: override outside snapshot");
+    return planIndependentHistorical(project,catalog,requests);
+}
 void applyHistoricalInstantiation(ProjectDocument& document,const HistoricalInstantiationPlan& plan) {
     for(const auto& addition:plan.additions) {
         const auto& selection=addition.selection;

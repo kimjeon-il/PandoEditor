@@ -59,6 +59,8 @@ public:
     const WorldSnapshot* getSnapshot(const std::string& id) const;
     std::vector<const HistoricalEntity*> list() const;
     std::vector<const HistoricalEntity*> search(const HistoricalSearch& options) const;
+    std::vector<std::string> entityRefsWithChildren(const std::vector<std::string>& rootIds,
+                                                    const std::string& depth="none") const;
     const HistoricalGeometryVersion* selectGeometryVersion(const std::string& libraryId,
                                             const std::string& referenceDate) const;
     HistoricalSelection instantiate(const std::string& libraryId,
