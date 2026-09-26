@@ -1,7 +1,7 @@
 name: M5/M6 validation
 on:
   push:
-    branches: [codex/m5-completion, codex/m6-temporal-library-gis]
+    branches: [codex/m5-completion, codex/m6-temporal-library-gis, codex/integration]
   pull_request:
     branches: [main, codex/m5-completion]
   workflow_dispatch:
