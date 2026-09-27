@@ -1,0 +1,14 @@
+{
+  "schema": "pandoeditor-m75-web-quality",
+  "version": 1,
+  "worldMapCommit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+  "sources": {
+    "render-lod.js": "13f91ce3bda90201966a866be304bdbca49102d4",
+    "adaptive-render-quality.js": "31342d09640152a8ee27c3228cc24ec438c6fbad",
+    "gpu-country-ranges.js": "966ad20a27b1a6597fdc30c387ffdd8a62a854e0",
+    "mesh-spatial-blocks.js": "05ec53595f0855bc0057f3a3658a91d6a9b1da95",
+    "render-scene.js": "d780aa573bd2576cbc3b182ccf55cb92ebe68967",
+    "selection-stroke-geometry.js": "a0a9a2282537c64e7cff06fb07b237748f58bbdd",
+    "gpu-map-renderer.js": "eb5f9542caa2c20e20ffe74771caf3909838cd2d"
+  }
+}

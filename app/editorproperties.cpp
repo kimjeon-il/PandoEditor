@@ -83,6 +83,7 @@ bool EditorController::runPropertyCommand(const std::string& id,CommandAction ac
   if(result.preview){
    auto confirmed=CommandProcessor::confirm(project_,*result.preview);
    if(!confirmed.ok()){emit errorOccurred(QString::fromLatin1(commandErrorCode(confirmed.error)));return false;}
+   noteAppliedImpact(confirmed.impact);
    cancelPreview();
   }
   for(const auto& ref:request.targets)if(!changedField.isEmpty())refreshDraftField(ref,changedField);

@@ -1,0 +1,90 @@
+{
+  "version": "0.12.6",
+  "dataset": "Natural Earth raster 3.2.0 1:10m",
+  "crs": "EPSG:4326",
+  "extent": [
+    -180,
+    -90,
+    180,
+    90
+  ],
+  "tileFormat": "lossless WebP RGBA",
+  "channels": {
+    "rgb": "drainage-free cross-blended land combined with ocean-bottom colour",
+    "alpha": "Gray Earth relief, hypsography and ocean-bottom luminance"
+  },
+  "displayColors": {
+    "oceanRepresentative": "#6aa8d2"
+  },
+  "gutter": 1,
+  "levels": [
+    {
+      "id": 0,
+      "width": 1350,
+      "height": 675,
+      "columns": 2,
+      "rows": 1,
+      "tileSize": 1024
+    },
+    {
+      "id": 1,
+      "width": 2700,
+      "height": 1350,
+      "columns": 3,
+      "rows": 2,
+      "tileSize": 1024
+    },
+    {
+      "id": 2,
+      "width": 5400,
+      "height": 2700,
+      "columns": 6,
+      "rows": 3,
+      "tileSize": 1024
+    },
+    {
+      "id": 3,
+      "width": 10800,
+      "height": 5400,
+      "columns": 11,
+      "rows": 6,
+      "tileSize": 1024
+    },
+    {
+      "id": 4,
+      "width": 21600,
+      "height": 10800,
+      "columns": 22,
+      "rows": 11,
+      "tileSize": 1024
+    }
+  ],
+  "urlTemplate": "terrain/v0.12.6/{level}/{column}-{row}.webp",
+  "sources": [
+    {
+      "file": "countries-ne-5.1.1.geojson",
+      "version": "Natural Earth 5.1.1",
+      "sha256": "ce95d2f5e0cfb93e313290d626cfb6a8f8ce2df0cf89fa0645e9961dab7915c1"
+    },
+    {
+      "file": "lakes_base.geojson",
+      "version": "Natural Earth 5.0.0",
+      "sha256": "a0511c91d7c11e7460640d522e9cc0ea39104497784f73af09e39b9bfa6d790c"
+    },
+    {
+      "file": "GRAY_HR_SR_OB.tif",
+      "version": "3.2.0",
+      "sha256": "020b935ef3aabadf661a08f344b1bb6b56fdc8d36953a2f27b88f32380b5a847"
+    },
+    {
+      "file": "HYP_HR_SR.tif",
+      "version": "3.2.0",
+      "sha256": "7239fbf10d4b7abc3bb8233551e5e2fcf3f6ab40e8309716cb0560179256e0b2"
+    },
+    {
+      "file": "HYP_HR_SR_OB_DR.tif",
+      "version": "3.2.0",
+      "sha256": "7bb9316a8c52bfb2859125a6c4539e192786b48d3217c4735133e70f5b88194a"
+    }
+  ]
+}

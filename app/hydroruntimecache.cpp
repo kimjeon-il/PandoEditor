@@ -2,6 +2,8 @@
 #include <limits>
 #include <stdexcept>
 
+void HydroRuntimeCache::setBudget(std::size_t bytes) {budget_=bytes;trim();}
+
 void HydroRuntimeCache::protect(std::set<std::uint32_t> active,std::set<std::uint32_t> pinned) {
     active_.swap(active);pinned_.swap(pinned);trim();
 }

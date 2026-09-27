@@ -1,0 +1,27 @@
+{
+  "schema": "pandoeditor-final-release-gate",
+  "version": 1,
+  "generatedAt": "2026-09-26T11:13:28.726Z",
+  "worldMapHead": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+  "pandoEditorFeatureHead": "7841cffc53c2044387075300df567327cecac752",
+  "status": "BLOCKED",
+  "blockers": [
+    "selection: review",
+    "properties: review",
+    "structure: review",
+    "presentation: review",
+    "interaction: review",
+    "geometry: review",
+    "storage: review",
+    "crossCutting: review",
+    "PandoEditor main identity not observed",
+    "fresh full CTest report NOT RUN",
+    "Release build/smoke NOT RUN/failed",
+    "ASan/UBSan NOT RUN/failed",
+    "Oracle report NOT RUN",
+    "asset report NOT RUN",
+    "windows physical validation NOT RUN/failed/incomplete",
+    "android physical validation NOT RUN/failed/incomplete",
+    "measured performance budget not accepted"
+  ]
+}

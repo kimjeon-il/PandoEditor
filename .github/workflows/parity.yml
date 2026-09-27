@@ -1,0 +1,49 @@
+name: Final parity evidence
+on:
+  pull_request:
+    branches: [integration, codex/integration]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  desktop-evidence:
+    runs-on: ubuntu-24.04
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtsvg'
+          cache: true
+      - name: Verify source asset identity
+        run: node tools/verify-release-assets.mjs --root . --out release-assets.json
+      - name: Fresh Debug build and shaders
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
+      - name: Full CTest
+        run: ctest --test-dir build --output-on-failure --output-junit build/ctest-results.xml
+      - name: Collect registered web/native Oracle evidence
+        if: always()
+        continue-on-error: true
+        run: node tools/run-final-oracles.mjs --build-dir build --out final-oracles.json
+      - name: Evaluate release gate
+        if: always()
+        run: node tools/evaluate-release-gate.mjs --ctest-report build/ctest-results.xml --oracle-report final-oracles.json --asset-report release-assets.json --out release-gate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-parity-${{ github.sha }}
+          path: |
+            final-oracles.json
+            release-assets.json
+            release-gate.json
+            build/ctest-results.xml
+            build/Testing/Temporary/LastTest.log
+          retention-days: 14

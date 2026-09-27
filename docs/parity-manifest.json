@@ -1,0 +1,325 @@
+{
+  "schema": "pandoeditor-final-parity",
+  "version": 1,
+  "observedAt": "2026-09-26T11:04:40.488Z",
+  "worldMapBaseline": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+  "worldMapHead": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+  "worldMapRemote": "https://github.com/kimjeon-il/world-map.git",
+  "pandoEditorFeatureHead": "7841cffc53c2044387075300df567327cecac752",
+  "pandoEditorMainHead": null,
+  "pandoEditorMainNote": "No local main ref; private GitHub main cannot be read without credentials.",
+  "domains": {
+    "selection": {
+      "syncedSha": "58e4087f85aa51884bc4ab80959e05010d94d7d5",
+      "status": "review",
+      "changedPaths": [
+        "assets/js/modules/app-property-selection.js",
+        "assets/js/modules/selection-pass.js",
+        "assets/js/modules/selection-style.js",
+        "assets/js/modules/selection-toolbar-presentation.js",
+        "tests/browser/selection-interaction-style.spec.mjs",
+        "tests/browser/territorial-selection.spec.mjs",
+        "tests/unit/selection-architecture.test.mjs"
+      ],
+      "sourceBlobs": {
+        "assets/js/modules/object-selection-controller.js": {
+          "baseline": "3af8a3c9f7b85bf268aa8c9d4766547c3f8b373c",
+          "head": "3af8a3c9f7b85bf268aa8c9d4766547c3f8b373c"
+        },
+        "assets/js/modules/selection-pass.js": {
+          "baseline": "402cafd586c61713fdb58566ff993b980b5ebd74",
+          "head": "a32d5a985c8fd4c9e2b390623fd48fa13f88d38e"
+        }
+      }
+    },
+    "properties": {
+      "syncedSha": "58e4087f85aa51884bc4ab80959e05010d94d7d5",
+      "status": "review",
+      "changedPaths": [
+        "assets/js/modules/object-property-controller.js",
+        "assets/js/modules/property-editor-bindings.js"
+      ],
+      "sourceBlobs": {
+        "assets/js/modules/object-property-controller.js": {
+          "baseline": "a81d3a3f26dd7837ce60d6a41fbb319d51bd228e",
+          "head": "0cb0bec147a36bf3c678b75b4b85e8d2956275e5"
+        },
+        "assets/js/modules/property-editor-bindings.js": {
+          "baseline": "e7d0aa5aedfe02fd817c2cb7b25748ad6528bb10",
+          "head": "1e1830866fd09909550da5021d71fd7779b180d8"
+        }
+      }
+    },
+    "structure": {
+      "syncedSha": "58e4087f85aa51884bc4ab80959e05010d94d7d5",
+      "status": "review",
+      "changedPaths": [
+        "assets/js/modules/app-object-commands.js",
+        "assets/js/modules/map-edit-country-commands.js",
+        "assets/js/modules/territorial-fill-style.js",
+        "tests/browser/subunit-fill-comparison.spec.mjs",
+        "tests/unit/river-territory-partition-serbia.test.mjs",
+        "tests/unit/territorial-fill-style.test.mjs"
+      ],
+      "sourceBlobs": {
+        "assets/js/modules/territorial-edit-plan.js": {
+          "baseline": "76b2bf38c9f6b9865ae53ef4664edec0b75e5ad8",
+          "head": "76b2bf38c9f6b9865ae53ef4664edec0b75e5ad8"
+        },
+        "assets/js/modules/territorial-units.js": {
+          "baseline": "4e49b7155f8548b6b347ab100e60f877fab4388f",
+          "head": "4e49b7155f8548b6b347ab100e60f877fab4388f"
+        }
+      }
+    },
+    "presentation": {
+      "syncedSha": "58e4087f85aa51884bc4ab80959e05010d94d7d5",
+      "status": "review",
+      "changedPaths": [
+        "assets/css/components/dialogs.css",
+        "assets/css/components/feedback.css",
+        "assets/css/components/modals.css",
+        "assets/css/components/panels.css",
+        "assets/css/components/selection-toolbar.css",
+        "assets/css/components/surface.css",
+        "assets/css/components/topbar.css",
+        "assets/css/components/workflows.css",
+        "assets/css/features/map-rendering.css",
+        "assets/css/layout/surfaces.css",
+        "assets/css/primitives/color-picker.css",
+        "assets/css/primitives/controls.css",
+        "assets/css/tokens/application-tokens.css",
+        "assets/css/tokens/component-tokens.css",
+        "assets/css/tokens/design-tokens.css",
+        "assets/css/ui-modal.bundle.css",
+        "assets/css/ui.bundle.css",
+        "assets/css/utilities/accessibility.css",
+        "assets/js/modules/accent-presets.js",
+        "assets/js/modules/app-accent.js",
+        "assets/js/modules/app-country-labels.js",
+        "assets/js/modules/app-task-presentation.js",
+        "assets/js/modules/label-layout.js",
+        "assets/js/modules/layer-presentation.js",
+        "scripts/check-ui-layering.mjs",
+        "tests/browser/editor-flag-menu.spec.mjs",
+        "tests/browser/topbar-accent-controls.spec.mjs",
+        "tests/unit/app-accent.test.mjs",
+        "tests/unit/layer-footer-contract.test.mjs",
+        "tests/unit/retired-layer-panel-contract.test.mjs"
+      ],
+      "sourceBlobs": {
+        "assets/js/modules/layer-presentation.js": {
+          "baseline": "9a820bf235ec8bd1995ae5a70499c5f6aef149e1",
+          "head": "531c81f888ace0e11c535efaa6f0bf37922a193f"
+        },
+        "assets/js/modules/label-layout.js": {
+          "baseline": "7c77d80b2ef119ad675084a9f7e11142e1f2a69c",
+          "head": "60eecd3854a6eed925ab23b893d8c88e63636a3a"
+        }
+      }
+    },
+    "interaction": {
+      "syncedSha": "58e4087f85aa51884bc4ab80959e05010d94d7d5",
+      "status": "review",
+      "changedPaths": [
+        "assets/js/modules/app-global-input-bindings.js",
+        "assets/js/modules/app-interaction-packets.js",
+        "assets/js/modules/app-navigation-bindings.js",
+        "assets/js/modules/gpu-interaction-pass.js",
+        "assets/js/modules/interaction-roles.js",
+        "assets/js/modules/interaction-svg-mask.js",
+        "assets/js/modules/map-input-presentation.js",
+        "assets/js/modules/map-interaction-style.js",
+        "tests/browser/interaction-unification.spec.mjs",
+        "tests/unit/interaction-roles.test.mjs",
+        "tests/unit/map-interaction-style.test.mjs"
+      ],
+      "sourceBlobs": {
+        "assets/js/modules/map-interaction-style.js": {
+          "baseline": "0aea075c5feb41428bc2b12a0a378f41d38e106e",
+          "head": "e89fbe552efd32a6194da4406282a5ea877fc2b1"
+        },
+        "assets/js/modules/territorial-interaction-policy.js": {
+          "baseline": "3173c62cee83b3543b68037c24847205a55a7cf7",
+          "head": "3173c62cee83b3543b68037c24847205a55a7cf7"
+        }
+      }
+    },
+    "geometry": {
+      "syncedSha": "58e4087f85aa51884bc4ab80959e05010d94d7d5",
+      "status": "review",
+      "changedPaths": [
+        "assets/css/components/reference-images.css",
+        "assets/css/features/reference-images.css",
+        "assets/css/layout/reference-images.css",
+        "assets/js/modules/country-geometry.js",
+        "assets/js/modules/reference-image-controller.js",
+        "assets/js/modules/reference-image-editing-bridge.js",
+        "assets/js/modules/reference-image-line-refine-controller.js",
+        "assets/js/modules/reference-image-live-wire-controller.js",
+        "assets/js/modules/reference-image-renderer.js",
+        "assets/js/modules/reference-image-surface.js",
+        "assets/js/modules/reference-image-ui.js",
+        "tests/browser/reference-image-overlay.spec.mjs",
+        "tests/unit/country-geometry.test.mjs",
+        "tests/unit/reference-image-editing-bridge.test.mjs",
+        "tools/validate-country-geometry.py"
+      ],
+      "sourceBlobs": {
+        "assets/js/modules/country-geometry.js": {
+          "baseline": "e49360a9d3c7dd3be5596c74d7de0b88ef3f9bdb",
+          "head": "e3064eaf05e22c60432933d6f305d23a7eba01c6"
+        },
+        "assets/js/workers/map-edit-worker.js": {
+          "baseline": "cf9b09c1a62ba6978bb837065754c4e786798765",
+          "head": "cf9b09c1a62ba6978bb837065754c4e786798765"
+        }
+      }
+    },
+    "content": {
+      "syncedSha": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "status": "synced",
+      "changedPaths": [],
+      "sourceBlobs": {
+        "assets/js/modules/distribution-model.js": {
+          "baseline": "7fa381ac8ddf67daeb66df027017d83a98fcf845",
+          "head": "7fa381ac8ddf67daeb66df027017d83a98fcf845"
+        },
+        "assets/js/modules/label-layout.js": {
+          "baseline": "60eecd3854a6eed925ab23b893d8c88e63636a3a",
+          "head": "60eecd3854a6eed925ab23b893d8c88e63636a3a"
+        }
+      }
+    },
+    "historyGis": {
+      "syncedSha": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "status": "synced",
+      "changedPaths": [],
+      "sourceBlobs": {
+        "assets/js/modules/temporal.js": {
+          "baseline": "31faf94894e302b3eadf61d79a32efd0490affe3",
+          "head": "31faf94894e302b3eadf61d79a32efd0490affe3"
+        },
+        "assets/js/modules/historical-library.js": {
+          "baseline": "dce9ebb1e0326e1156dffe5282b01208b6b9dd01",
+          "head": "dce9ebb1e0326e1156dffe5282b01208b6b9dd01"
+        }
+      }
+    },
+    "renderer": {
+      "syncedSha": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "status": "synced",
+      "changedPaths": [],
+      "sourceBlobs": {
+        "assets/js/modules/render-scene.js": {
+          "baseline": "d780aa573bd2576cbc3b182ccf55cb92ebe68967",
+          "head": "d780aa573bd2576cbc3b182ccf55cb92ebe68967"
+        },
+        "assets/js/modules/gpu-map-renderer.js": {
+          "baseline": "eb5f9542caa2c20e20ffe74771caf3909838cd2d",
+          "head": "eb5f9542caa2c20e20ffe74771caf3909838cd2d"
+        }
+      }
+    },
+    "mobileUi": {
+      "syncedSha": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "status": "synced",
+      "changedPaths": [],
+      "sourceBlobs": {
+        "assets/js/modules/mobile-sheet-controller.js": {
+          "baseline": "bbf7f06582f9e60945367a9f8fce99f3aa570cc3",
+          "head": "bbf7f06582f9e60945367a9f8fce99f3aa570cc3"
+        }
+      }
+    },
+    "storage": {
+      "syncedSha": "58e4087f85aa51884bc4ab80959e05010d94d7d5",
+      "status": "review",
+      "changedPaths": [
+        "assets/js/modules/app-file-bindings.js",
+        "assets/js/modules/app-project-session.js",
+        "assets/js/modules/persistence-service.js",
+        "assets/js/modules/project-domain.js",
+        "assets/js/modules/project-serializer.js",
+        "assets/js/modules/project-state.js"
+      ],
+      "sourceBlobs": {
+        "assets/js/modules/project-serializer.js": {
+          "baseline": "e6563b98c1e3d1c5ce99ea09bee5931fd65d86df",
+          "head": "5d3cc28ac100ef5d0ab0b06e610789c3d77a113e"
+        },
+        "assets/js/modules/project-state.js": {
+          "baseline": "f66965f6c650df2dbe74f00a103c59d559302c81",
+          "head": "14793b33e9ecb53273c97a558694d0e2a8d9131b"
+        }
+      }
+    },
+    "crossCutting": {
+      "syncedSha": "58e4087f85aa51884bc4ab80959e05010d94d7d5",
+      "status": "review",
+      "changedPaths": [
+        ".github/workflows/application-architecture.yml",
+        "assets/css/components/content.css",
+        "assets/css/components/map-search.css",
+        "assets/css/components/map-viewport.css",
+        "assets/css/components/view-menu.css",
+        "assets/js/bootstrap.js",
+        "assets/js/build-meta.js",
+        "assets/js/modules/app-capability-ports-foundation.js",
+        "assets/js/modules/app-capability-ports-lifecycle-ui.js",
+        "assets/js/modules/app-capability-ports.js",
+        "assets/js/modules/app-domain-assembly.js",
+        "assets/js/modules/app-environment.js",
+        "assets/js/modules/app-lifecycle-assembly.js",
+        "assets/js/modules/app-map-projection.js",
+        "assets/js/modules/app-map-settings.js",
+        "assets/js/modules/app-readiness-notifications.js",
+        "assets/js/modules/app-runtime-dependencies.js",
+        "assets/js/modules/app-service-assembly.js",
+        "assets/js/modules/icon-utils.js",
+        "assets/js/modules/notification-copy.js",
+        "assets/js/modules/project-ui-bridge.js",
+        "assets/js/modules/reference-image-bootstrap.js",
+        "assets/js/modules/runtime-performance-metrics.js",
+        "assets/js/modules/user-preferences.js",
+        "assets/js/vendor/topojson-client.min.js",
+        "assets/js/vendor/topojson-server.min.js",
+        "assets/js/vendor/topojson-simplify.min.js",
+        "assets/js/workers/data-loader-worker.js",
+        "docs/architecture/ui-architecture.md",
+        "docs/architecture/ui-components.md",
+        "docs/terrain-dem.md",
+        "eslint.config.js",
+        "index.html",
+        "scripts/build-ui-bundle.mjs",
+        "scripts/check-ui-architecture.mjs",
+        "scripts/check-ui-components.mjs",
+        "scripts/check-ui-information-architecture.mjs",
+        "scripts/check-ui-spacing.mjs",
+        "tests/browser/feature-pruning-ui.spec.mjs",
+        "tests/browser/runtime.spec.mjs",
+        "tests/browser/russia-edit-preparation.spec.mjs",
+        "tests/browser/ui-entrypoint-cleanup.spec.mjs",
+        "tests/browser/view-focus-actions.spec.mjs",
+        "tests/test_v0130_runtime.py",
+        "tests/test_v0151_control_styles.py",
+        "tests/test_v0190_editor_system.py",
+        "tests/test_v0303_object_editor.py",
+        "tests/test_v0304_map_editing_tools.py",
+        "tests/test_v0307_current_schema.py",
+        "tests/unit/annex-slivers.test.mjs",
+        "tests/unit/file-menu-routes.test.mjs",
+        "tests/unit/map-editing-foundation.test.mjs",
+        "tests/unit/notification-copy.test.mjs",
+        "tests/unit/project-lifecycle.test.mjs",
+        "tests/unit/runtime-performance-metrics.test.mjs",
+        "tests/unit/ui-entrypoint-cleanup.test.mjs",
+        "tests/unit/ui-source-catalog.test.mjs",
+        "tests/unit/user-preferences.test.mjs",
+        "tests/unit/view-focus-contract.test.mjs"
+      ],
+      "sourceBlobs": {}
+    }
+  },
+  "unclassifiedPaths": []
+}

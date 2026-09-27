@@ -68,10 +68,22 @@ enum class CommandError {
     ValidationFailed, PrepareFailed, CommitFailed, PreviewConsumed, RevisionOverflow
 };
 const char* commandErrorCode(CommandError error) noexcept;
+// Calculated against validated immutable states during prepare. Candidate consumers
+// may narrow their work; exact hit testing and document validation stay authoritative.
+struct ChangeImpact {
+    std::vector<ObjectRef> changedObjects;
+    std::vector<GeometryRef> changedGeometries;
+    std::vector<ObjectRef> presentationInvalidations;
+    std::size_t retainedGeometryCount=0;
+    std::size_t estimatedNewGeometryBytes=0;
+    bool requiresFullSpatialRebuild=false;
+    bool requiresFullSceneRebuild=true;
+};
 struct CommandResult {
     CommandStatus status=CommandStatus::Rejected;
     CommandError error=CommandError::None;
     std::string detail;
+    ChangeImpact impact;
     bool ok() const noexcept { return status!=CommandStatus::Rejected; }
     bool changed() const noexcept { return status==CommandStatus::Applied; }
 };
@@ -80,6 +92,7 @@ public:
     const ProjectDocument& before() const;
     const ProjectDocument& after() const;
     const CommandRequest& request() const noexcept { return request_; }
+    const ChangeImpact& impact() const noexcept { return impact_; }
 private:
     friend class Project;
     friend class CommandProcessor;
@@ -87,6 +100,7 @@ private:
               std::shared_ptr<const detail::DocumentState> after, CommandRequest request);
     std::shared_ptr<const detail::DocumentState> before_, after_;
     CommandRequest request_;
+    ChangeImpact impact_;
     std::uint64_t checkpointBefore_=0, checkpointAfter_=0;
     bool historyCheckpoint_=false; // command-owned source compatibility, never a request flag
 };

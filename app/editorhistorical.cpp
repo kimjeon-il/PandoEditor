@@ -255,6 +255,7 @@ bool EditorController::confirmHistoricalAdd(qulonglong token) {
     historicalCommandPreview_.reset();++historicalSession_;
     historicalImpact_.clear();historicalStage_=QStringLiteral("ready");
     if(!result.changed()) {historicalError_=QString::fromStdString(result.detail);emit historicalChanged();return false;}
+    noteAppliedImpact(result.impact);
     historicalError_.clear();publish(false);emit historicalChanged();return true;
 }
 void EditorController::cancelHistoricalAdd() {

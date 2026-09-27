@@ -145,6 +145,7 @@ bool EditorController::confirmWebImport(const QString& hash,const QString& dispo
     // properties synchronously whenever these cancellation signals fire.
     cancelPreview();
     // All data/indices/views/projection are already validated and allocated.
+    cancelWorldBootstrap();
     project_=std::move(ready->project);projection_=std::move(ready->projection);
     protectedWebSource_.swap(nextProtection);filePath_.clear();selected_.clear();selectedLayer_.swap(nextLayer);
     importedDirty_=true;webImport_.reset();webImportError_.clear();

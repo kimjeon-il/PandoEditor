@@ -9,6 +9,7 @@
 #include <QUuid>
 #include <cmath>
 #include <map>
+#include <limits>
 #include <stdexcept>
 
 namespace {
@@ -42,12 +43,21 @@ bool geometryBindingsChanged(const pandoeditor::ProjectDocument& before,
 }
 EditorController::EditorController(QObject* parent):EditorController(EditorControllerConfig{},parent) {}
 EditorController::EditorController(EditorControllerConfig config,QObject* parent)
-    :QObject(parent),storage_(std::move(config.privateProjectPath)),mobileMode_(config.mobileMode)
+    :QObject(parent),quality_(config.mobileMode),storage_(std::move(config.privateProjectPath)),mobileMode_(config.mobileMode)
 {
-    QFile sample(":/assets/sample.pando.json");
-    if(!sample.open(QIODevice::ReadOnly)) throw std::runtime_error("Cannot read bundled sample");
-    project_.replace(projectcodec::decode(sample.readAll()));
-    projection_.rebuild(project_.document());selectionInstance_=project_.instanceId();reloadDrafts();
+    qualityClock_.start();
+    packetCache_.setBudget(quality_.profile().renderPacketCacheBudgetBytes);
+    if(config.bootstrapWorld) {
+        project_.replace(pandoeditor::ProjectDocument(
+            std::vector<pandoeditor::Country>{},std::vector<pandoeditor::Layer>{{"countries","국가"}}));
+        projection_.setWorldExtent();
+    } else {
+        QFile sample(":/assets/sample.pando.json");
+        if(!sample.open(QIODevice::ReadOnly)) throw std::runtime_error("Cannot read bundled sample");
+        project_.replace(projectcodec::decode(sample.readAll()));
+        projection_.rebuild(project_.document());
+    }
+    selectionInstance_=project_.instanceId();reloadDrafts();
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::hydroFrameChanged);
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::searchChanged);
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::stateChanged);
@@ -61,6 +71,133 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(jobs_.get(),&CommandJobRunner::changed,this,&EditorController::jobChanged,Qt::QueuedConnection);
     presentationSaveTimer_.setSingleShot(true);presentationSaveTimer_.setInterval(500);
     connect(&presentationSaveTimer_,&QTimer::timeout,this,&EditorController::flushPresentationRecovery);
+    const auto refresh=[this] {refreshTypedScene();};
+    connect(this,&EditorController::selectionChanged,this,refresh);
+    connect(this,&EditorController::selectionChanged,this,[this] {
+        std::optional<quint32> logical;
+        if(const auto selected=selection_.primary();selected&&selected->domain=="hydroBuiltin")
+            if(const auto record=hydroRuntime_.recordById(text(selected->id)))
+                logical=record->logicalFid;
+        hydroRuntime_.setSelectedLogical(logical);
+    });
+    connect(this,&EditorController::hoverChanged,this,refresh);
+    connect(this,&EditorController::objectChooserChanged,this,refresh);
+    connect(this,&EditorController::geometryEditChanged,this,refresh);
+    connect(this,&EditorController::presentationChanged,this,refresh);
+    connect(this,&EditorController::geometryChanged,this,refresh);
+    connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,refresh);
+    connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
+        if(sceneBridge_.viewState().mode==ProjectionMode::Globe&&!terrainTiles_.isEmpty()) {
+            terrainTiles_.clear();emit terrainChanged();
+        }
+    });
+    refreshTypedScene();
+    if(config.bootstrapWorld)QTimer::singleShot(0,this,&EditorController::startWorldBootstrap);
+}
+void EditorController::refreshTypedScene() {
+    try {
+        std::shared_ptr<const RenderScene> previous=sceneBridge_.sceneSnapshot();
+        if(sceneInstance_!=project_.instanceId()) {
+            packetCache_.clear();sceneInstance_=project_.instanceId();previous.reset();pendingSceneImpact_.reset();
+        }
+        sceneBuilder_.setWorldBase(worldBase_);
+        sceneBuilder_.setQuality(quality_.profile());
+        InteractionRenderPacket interaction;
+        if(objectChooserOpen())interaction.candidates=chooserRefs_;
+        interaction.selected=selection_.items();
+        interaction.primary=selection_.primary();interaction.hover=hover_;
+        if(geometryEdit_)interaction.editTarget=geometryEdit_->target;
+        const bool patch=previous&&pendingSceneImpact_&&
+            pendingSceneImpactRevision_==project_.revision()&&
+            previous->revisions.document+1==project_.revision()&&
+            previous->revisions.view==sceneBridge_.viewState().revision&&
+            sceneQualityRevision_==quality_.profile().revision&&
+            (previous->interaction.candidates==interaction.candidates||interaction.candidates.empty())&&
+            previous->interaction.selected==interaction.selected&&
+            previous->interaction.primary==interaction.primary&&
+            (previous->interaction.hover==interaction.hover||!interaction.hover)&&
+            (previous->interaction.editTarget==interaction.editTarget||!interaction.editTarget)&&
+            !pendingSceneImpact_->requiresFullSceneRebuild;
+        const std::set<pandoeditor::ObjectRef> changed=patch?
+            std::set<pandoeditor::ObjectRef>(pendingSceneImpact_->changedObjects.begin(),pendingSceneImpact_->changedObjects.end()):
+            std::set<pandoeditor::ObjectRef>{};
+        auto scene=patch?sceneBuilder_.buildPatch(project_.snapshot(),sceneBridge_.viewState(),
+            interaction,previous,changed):
+            sceneBuilder_.build(project_.snapshot(),sceneBridge_.viewState(),interaction,previous);
+        if(scene!=sceneBridge_.sceneSnapshot()) {
+            sceneBridge_.publishScene(std::move(scene));
+            if(patch)++scenePatchCount_;else ++sceneFullBuildCount_;
+            emit renderQualityChanged();
+        }
+        sceneQualityRevision_=quality_.profile().revision;
+        pendingSceneImpact_.reset();
+    }catch(const std::exception& error) {
+        emit errorOccurred(QStringLiteral("Typed map scene preparation failed: ")+
+            QString::fromUtf8(error.what()));
+    }
+}
+void EditorController::noteAppliedImpact(const pandoeditor::ChangeImpact& impact) {
+    lastEditAffectedObjects_=impact.changedObjects.size();
+    lastEditRetainedGeometries_=impact.retainedGeometryCount;
+    lastEditNewGeometryBytes_=impact.estimatedNewGeometryBytes;
+    if(spatialInstance_==project_.instanceId()&&spatialIndex_.geometryRevision()!=0&&
+       spatialIndexedRevision_!=std::numeric_limits<std::uint64_t>::max()&&
+       spatialIndexedRevision_+1==project_.revision()) {
+        try {
+            spatialIndex_.update(project_.document(),project_.index(),
+                impact.changedObjects,impact.changedObjects);
+            spatialIndexedRevision_=project_.revision();
+            if(!impact.changedObjects.empty())++spatialIncrementalUpdateCount_;
+        }catch(...) {spatialIndex_=pandoeditor::GeoSpatialIndex{};spatialInstance_.clear();}
+    }
+    try {
+        pendingSceneImpact_=impact;
+        pendingSceneImpactRevision_=project_.revision();
+    }catch(...) {pendingSceneImpact_.reset();}
+}
+QVariantMap EditorController::renderQuality() const {
+    const auto profile=quality_.profile();
+    const auto stats=packetCache_.stats();
+    const auto tier=profile.tier==RenderQualityTier::Coarse?"coarse":
+        profile.tier==RenderQualityTier::Medium?"medium":"high";
+    return {{"tier",tier},{"revision",qulonglong(profile.revision)},
+        {"interaction",profile.interaction},{"dprCap",profile.dprCap},
+        {"labelDensity",profile.labelDensity},
+        {"uploadBudgetBytes",qulonglong(profile.uploadBudgetBytes)},
+        {"overlayGpuBudgetBytes",qulonglong(profile.overlayGpuBudgetBytes)},
+        {"packetCacheBytes",qulonglong(stats.residentBytes)},
+        {"packetCacheHits",qulonglong(stats.hits)},
+        {"packetCacheBuilds",qulonglong(stats.builds)},
+        {"packetCacheEvictions",qulonglong(stats.evictions)},
+        {"packetCacheBudgetBytes",qulonglong(packetCache_.budget())},
+        {"scenePatchCount",qulonglong(scenePatchCount_)},
+        {"sceneFullBuildCount",qulonglong(sceneFullBuildCount_)},
+        {"spatialIncrementalUpdateCount",qulonglong(spatialIncrementalUpdateCount_)},
+        {"lastEditAffectedObjects",qulonglong(lastEditAffectedObjects_)},
+        {"lastEditRetainedGeometries",qulonglong(lastEditRetainedGeometries_)},
+        {"lastEditEstimatedNewGeometryBytes",qulonglong(lastEditNewGeometryBytes_)},
+        {"terrainCacheBudgetBytes",qulonglong(profile.terrainCacheBudgetBytes)},
+        {"terrainCacheBytes",qulonglong(terrainProvider_?terrainProvider_->cachedBytes():0)},
+        {"hydroCacheBytes",qulonglong(hydroRuntime_.cachedBytes())},
+        {"p95FrameMs",profile.p95FrameMs},{"p99FrameMs",profile.p99FrameMs},
+        {"qualityChangeCount",qulonglong(quality_.changeCount())},
+        {"longFrameCount",qulonglong(profile.longFrameCount)}};
+}
+void EditorController::recordMapFrame(double milliseconds) {
+    if(quality_.recordFrame(milliseconds,qualityClock_.elapsed())) {
+        const auto profile=quality_.profile();
+        packetCache_.setBudget(profile.renderPacketCacheBudgetBytes);
+        hydroRuntime_.setCacheBudget(profile.hydroCacheBudgetBytes);
+        if(terrainProvider_)terrainProvider_->setCacheBudget(profile.terrainCacheBudgetBytes);
+        emit renderQualityChanged();refreshTypedScene();
+    }
+}
+void EditorController::beginMapInteraction() {
+    if(++activeMapInteractions_==1&&quality_.beginInteraction())emit renderQualityChanged();
+}
+void EditorController::endMapInteraction() {
+    if(activeMapInteractions_>0&&--activeMapInteractions_==0&&quality_.endInteraction())
+        emit renderQualityChanged();
 }
 QVariantMap EditorController::colors() const
 {
@@ -301,6 +438,9 @@ bool EditorController::openFile(const QUrl& url)
 }
 bool EditorController::saveFile(const QUrl& url)
 {
+    if(worldStatus_=="loading-preview"||worldStatus_=="preview"||worldStatus_=="unavailable") {
+        emit errorOccurred(QStringLiteral("세계지도 문서가 준비되기 전에는 저장할 수 없습니다."));return false;
+    }
     if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 미확정 도형은 저장되지 않습니다. 먼저 확인하거나 취소하세요."));return false;}
     if(isProtectedWebSource(url)){webImportFailure(QStringLiteral("SOURCE_OVERWRITE_BLOCKED: 웹 원본은 덮어쓰지 않습니다. 다른 이름으로 저장하세요."));return false;}
     if(!commitPendingEdits())return false;
@@ -316,6 +456,7 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
     if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 도형 편집을 확인하거나 취소한 뒤 프로젝트를 바꾸세요."));return false;}
     pandoeditor::Project candidate;candidate.replace(projectcodec::decode(bytes));
     MapProjection nextProjection;nextProjection.rebuild(candidate.document());
+    cancelWorldBootstrap();
     cancelPreview();cancelStructureMutation();project_=std::move(candidate);projection_=std::move(nextProjection);
     filePath_=path;importedDirty_=imported;selected_.clear();selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
     emit geometryChanged();publish(false);syncHydroData();return true;
@@ -341,6 +482,9 @@ bool EditorController::importProject(const QUrl& url)
 }
 bool EditorController::savePrivate()
 {
+    if(worldStatus_=="loading-preview"||worldStatus_=="preview"||worldStatus_=="unavailable") {
+        emit errorOccurred(QStringLiteral("세계지도 문서가 준비되기 전에는 저장할 수 없습니다."));return false;
+    }
     if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 미확정 도형은 저장되지 않습니다. 먼저 확인하거나 취소하세요."));return false;}
     if(isProtectedWebSource(QUrl::fromLocalFile(storage_.privateProjectPath()))){webImportFailure(QStringLiteral("SOURCE_OVERWRITE_BLOCKED: 웹 원본은 덮어쓰지 않습니다."));return false;}
     if(privateRecoveryRequired_){emit errorOccurred(QStringLiteral("손상된 저장 파일이 보존되어 있습니다. 덮어쓰기를 허용한 뒤 다시 저장해 주세요."));return false;}

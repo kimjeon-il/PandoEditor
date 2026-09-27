@@ -3,6 +3,8 @@
 #include <QVariantList>
 #include <QVariantMap>
 #include <memory>
+#include "renderscene.h"
+#include "mapviewstate.h"
 
 struct HydroRuntimeFrame;
 class HydroRuntimeProvider;
@@ -39,6 +41,7 @@ public:
     QVariantList hiddenHydroIds() const{return hiddenHydroIds_;} void setHiddenHydroIds(QVariantList);
     QString selectedHydroId() const{return selectedHydroId_;} void setSelectedHydroId(QString);
     void setHydroFrame(std::shared_ptr<const HydroRuntimeFrame>);
+    void setSceneSnapshot(std::shared_ptr<const RenderScene>,const MapViewState&);
 signals:
     void pathsChanged();void visualsChanged();void selectedPathsChanged();void primaryIdChanged();void viewportChanged();
     void hydroSourceChanged();void hydroPresentationChanged();
@@ -50,4 +53,6 @@ private:
     QVariantMap hydroProjection_,hydroStyle_;
     QVariantList hiddenHydroIds_;
     QString selectedHydroId_;
+    std::shared_ptr<const RenderScene> typedScene_;
+    MapViewState typedView_;
 };

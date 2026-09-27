@@ -26,8 +26,10 @@ public:
     std::function<HydroLogicalCopy()> logicalGeometryJob(quint32 logicalFid) const;
     bool pinLogical(quint32 logicalFid);
     void clearPinned();
+    void setSelectedLogical(std::optional<quint32> logicalFid);
     std::size_t cachedPackCount() const;
     std::size_t cachedBytes() const;
+    void setCacheBudget(std::size_t bytes);
 signals:
     void frameChanged();
     void loadFailed(const QString& error);

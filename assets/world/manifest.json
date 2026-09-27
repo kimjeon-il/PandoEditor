@@ -1,0 +1,49 @@
+{
+  "schema": "pandoeditor-world-dataset",
+  "version": 1,
+  "worldMapCommit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+  "countryCount": 258,
+  "canonicalPositionCount": 548454,
+  "countryPreview": {
+    "path": "countries-preview-v0.33.0.geojson.gz",
+    "version": "0.33.0",
+    "gitBlobSha": "ce5eecd8f4e1a611131f2117780c34ca3cf555b2",
+    "sha256": "1a5ecb6f6d952a89ae28c57483abd03c03ba1f15865d886377575997a1187e8e",
+    "required": false
+  },
+  "previewMesh": {
+    "path": "world-mesh-preview-v0.33.0.bin.gz",
+    "version": "0.33.0",
+    "gitBlobSha": "caff1ab319706f6bf90635ed5a992ffbf4f2a84a",
+    "sha256": "a90951c3171706bab9af4ff9e94fbc50d1ebc66f0cd53f67a4481ccd6d9e9f48",
+    "required": true
+  },
+  "countryCanonical": {
+    "path": "countries-canonical-v0.33.0.pcg.gz",
+    "version": "0.33.0",
+    "gitBlobSha": "54146d9eeb28e4af08e094f5061bf64689e6bdf3",
+    "sha256": "916e5e505e94ede8a245103cad0c88d5cdca232232f28a0618ad91067be3294d",
+    "required": true
+  },
+  "canonicalMesh": {
+    "path": "world-mesh-v0.12.6.bin.gz",
+    "version": "0.12.6",
+    "gitBlobSha": "8c73420b92e89ab64cbe75dcc5016efe2c0a22b6",
+    "sha256": "9fe1f686728e83d4615998a7b023db680b3b561b0a26e7f2f4357b7fe8bcfb86",
+    "required": true
+  },
+  "terrain": {
+    "path": "terrain/v0.12.6/manifest.json",
+    "version": "0.12.6",
+    "gitBlobSha": "6821c49315ffd381758f81dfe4d83b6b574f0ad4",
+    "sha256": "093ae0f088622e2867cad5f318749c47e28776a870e6467d00c31ef810d8690f",
+    "required": false
+  },
+  "hydro": {
+    "path": "hydro/v0.13.1/manifest.json",
+    "version": "0.13.1",
+    "gitBlobSha": "67c648a207f4b26d69f0a86243e88c54b9241a2e",
+    "sha256": "427f7ec841b977034acc3e6509e9202397549aa4bcbf536e03a9808f702be203",
+    "required": false
+  }
+}

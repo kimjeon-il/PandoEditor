@@ -4,6 +4,7 @@
 #include "hydrodataprovider.h"
 #include <QFile>
 #include <QFileInfo>
+#include <QUrl>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFontMetricsF>
@@ -40,11 +41,54 @@ QVariantMap EditorController::distributionDisplay() const {
     return {{"mode",settings.renderMode==DistributionRenderMode::Intensity?"intensity":"dominant"},{"boundaryVisible",settings.boundaryVisible},{"selectedLayerId",selected},{"intensityAvailable",!selected.isEmpty()}};
 }
 QVariantMap EditorController::hydroDataStatus() const {
-    const auto& settings=project_.document().physicalData;if(settings.source.empty())return QVariantMap{{"ready",false},{"version",displayText(settings.version)},{"dataset",displayText(settings.dataset)},{"error",QStringLiteral("로컬 수계 자료가 선택되지 않았습니다.")}};
+    const auto& settings=project_.document().physicalData;if(settings.source.empty())return QVariantMap{{"ready",false},{"version",displayText(settings.version)},{"dataset",displayText(settings.dataset)},{"error",worldHydroNotice_.isEmpty()?QStringLiteral("로컬 수계 자료가 선택되지 않았습니다."):worldHydroNotice_}};
     if(hydroRuntime_.isOpen())return QVariantMap{{"ready",true},{"root",displayText(settings.source)},
         {"version",displayText(settings.version)},{"dataset",displayText(settings.dataset)},
         {"viewportLoaded",hydroViewportLoaded()},{"error",QString()}};
     const auto inspected=inspectHydroData(displayText(settings.source));return QVariantMap{{"ready",inspected.ready},{"root",inspected.root},{"version",inspected.version},{"dataset",inspected.dataset},{"error",inspected.error}};
+}
+QVariantMap EditorController::terrainDataStatus() const {
+    return {{"available",terrainProvider_&&terrainProvider_->available()},
+            {"version",QStringLiteral("0.12.6")},
+            {"missingTiles",terrainMissingTiles_},
+            {"error",terrainProvider_?terrainProvider_->error():
+                QStringLiteral("Terrain package not installed")}};
+}
+void EditorController::requestTerrainViewport(double mapScale,double originX,double originY,
+                                              double width,double height) {
+    if(!terrainProvider_||!terrainProvider_->available()||
+       !std::isfinite(mapScale)||mapScale<=0||
+       !std::isfinite(originX)||!std::isfinite(originY)||width<=0||height<=0)return;
+    auto state=sceneBridge_.viewState();
+    if(state.mode==ProjectionMode::Globe) {
+        terrainProvider_->protectVisible({});
+        if(!terrainTiles_.isEmpty()) {terrainTiles_.clear();emit terrainChanged();}
+        return; // Flat textured rectangles cannot represent a globe surface.
+    }
+    state.viewportWidth=width;state.viewportHeight=height;
+    if(state.mode==ProjectionMode::Flat) {
+        const auto parameters=projection_.hydroParameters();
+        const auto cosine=parameters.value("cosLatitude").toDouble();
+        state.scale=mapScale*cosine*180/3.14159265358979323846;
+        state.centerLongitude=0;state.centerLatitude=0;
+        state.translateX=originX-parameters.value("minX").toDouble()*mapScale;
+        state.translateY=originY+parameters.value("maxLatitude").toDouble()*mapScale;
+    }
+    QVariantList visible;
+    int missing=0;
+    const auto tileSpecs=terrainProvider_->tilesForView(state);
+    terrainProvider_->protectVisible(tileSpecs);
+    for(const auto& tile:tileSpecs) {
+        if(!QFileInfo::exists(tile.path)){++missing;continue;}
+        const auto source=QUrl(QStringLiteral("image://terrain/%1/%2/%3")
+                                   .arg(tile.level).arg(tile.column).arg(tile.row));
+        visible.push_back(QVariantMap{{"source",source},
+            {"west",tile.west+tile.worldOffsetDegrees},{"east",tile.east+tile.worldOffsetDegrees},
+            {"south",tile.south},{"north",tile.north}});
+    }
+    if(visible!=terrainTiles_||missing!=terrainMissingTiles_) {
+        terrainTiles_=std::move(visible);terrainMissingTiles_=missing;emit terrainChanged();
+    }
 }
 QVariantMap EditorController::hydroProjection() const{return projection_.hydroParameters();}
 QVariantMap EditorController::hydroStyle() const {
@@ -81,6 +125,7 @@ bool EditorController::configureHydroData(const QUrl& value) {
     }
     auto settings=project_.document().physicalData;settings.dataset=inspected.dataset.toStdString();settings.version=inspected.version.toStdString();settings.source=inspected.root.toStdString();
     CommandArguments args;args.action=SetPhysicalData{settings};auto request=CommandProcessor::makeRequest(project_,"physical-data.configure",args);auto prepared=CommandProcessor::prepare(project_,request);if(!prepared.ok()||!prepared.preview)return false;const auto result=CommandProcessor::confirm(project_,*prepared.preview);if(!result.ok())return false;
+    noteAppliedImpact(result.impact);
     syncHydroData();
     publish(false);return true;
 }
@@ -91,6 +136,12 @@ void EditorController::syncHydroData() {
     QString error;
     if(!hydroRuntime_.open(QString::fromStdString(source),projectInstanceId(),mobileMode_,error))
         emit errorOccurred(error);
+    else {
+        hydroRuntime_.setCacheBudget(quality_.profile().hydroCacheBudgetBytes);
+        if(const auto selected=selection_.primary();selected&&selected->domain=="hydroBuiltin")
+            if(const auto record=hydroRuntime_.recordById(displayText(selected->id)))
+                hydroRuntime_.setSelectedLogical(record->logicalFid);
+    }
 }
 bool EditorController::setDistributionDisplay(const QString& mode,bool boundaryVisible) {
     if(mode!="dominant"&&mode!="intensity")return false;
@@ -128,7 +179,8 @@ QVariantList EditorController::labelLayout(double scale,double originX,double or
     // 96px mobile bottom controls before ordinary label collision placement.
     // Selected and pinned labels bypass this bound in layoutLabels.
     const double bottomInset=mobileMode_?96.:32.;
-    QVariantList result;for(const auto& ref:layoutLabels(candidates,zoom,mobileMode_?5:3,
+    const auto labelSlots=std::max(1,int(std::ceil((mobileMode_?5:3)*quality_.profile().labelDensity)));
+    QVariantList result;for(const auto& ref:layoutLabels(candidates,zoom,labelSlots,
             LabelLayoutBounds{0,0,viewportWidth,std::max(0.,viewportHeight-bottomInset)})){
         const auto row=rows.find(ref);if(row!=rows.end())result.append(row->second);
     }return result;

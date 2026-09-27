@@ -1,6 +1,7 @@
 find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 find_package(Qt6 REQUIRED COMPONENTS Svg)
 find_package(Qt6 REQUIRED COMPONENTS Sql)
+find_package(Qt6 6.5 REQUIRED COMPONENTS ShaderTools)
 find_package(ZLIB REQUIRED)
 qt_add_executable(pandoeditor main.cpp)
 
@@ -17,6 +18,12 @@ add_library(pandoeditor_editor STATIC
     gisgeopackage.cpp gisgeopackage.h
     gisgeopackagewriter.cpp
     projectgeopackage.cpp projectgeopackage.h
+    mapscenebuilder.cpp mapscenebuilder.h
+    mapscenebridge.cpp mapscenebridge.h
+    worlddataset.cpp worlddataset.h
+    worlddatasetloader.cpp worlddatasetloader.h
+    terrainimageprovider.cpp terrainimageprovider.h
+    worldbootstrap.cpp
     webprojectgeopackage.cpp webprojectgeopackage.h
     giscontentimport.cpp giscontentimport.h
     gisterritorial.cpp gisterritorial.h
@@ -41,11 +48,36 @@ add_library(pandoeditor_editor STATIC
     editorcontroller.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
+    ../renderer/mapviewstate.cpp
+    ../renderer/projectionengine.cpp
+    ../renderer/renderpacket.cpp
+    ../renderer/canonicalpacket.cpp ../renderer/canonicalpacket.h
+    ../renderer/countrymesh.cpp ../renderer/countrymesh.h
+    ../renderer/terrainprovider.cpp ../renderer/terrainprovider.h
+    ../renderer/renderlod.cpp ../renderer/renderlod.h
+    ../renderer/renderquality.cpp ../renderer/renderquality.h
+    ../renderer/countryculling.cpp ../renderer/countryculling.h
+    ../renderer/uploadscheduler.cpp ../renderer/uploadscheduler.h
+    ../renderer/renderscene.cpp
+    ../renderer/scenepatch.cpp ../renderer/scenepatch.h
+    ../renderer/geometrypacketcache.cpp
     ../renderer/maprenderitem.cpp ../renderer/maprenderitem.h
+    ../renderer/gpumapitem.cpp ../renderer/gpumapitem.h
+    ../renderer/scenegraph/mapmaterial.cpp ../renderer/scenegraph/mapmaterial.h
+    ../renderer/scenegraph/mapscenenode.cpp ../renderer/scenegraph/mapscenenode.h
     ../renderer/referenceimageitem.cpp ../renderer/referenceimageitem.h
 )
-target_include_directories(pandoeditor_editor PUBLIC . ../renderer)
+target_include_directories(pandoeditor_editor PUBLIC . ../renderer PRIVATE ../third_party/earcut)
 target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg Qt6::Sql ZLIB::ZLIB)
+qt_add_shaders(pandoeditor_editor m73_map_shaders
+    PREFIX "/m73" BASE "${PROJECT_SOURCE_DIR}/renderer"
+    FILES
+        "${PROJECT_SOURCE_DIR}/renderer/shaders/fill.vert"
+        "${PROJECT_SOURCE_DIR}/renderer/shaders/fill.frag"
+        "${PROJECT_SOURCE_DIR}/renderer/shaders/stroke.vert"
+        "${PROJECT_SOURCE_DIR}/renderer/shaders/stroke.frag"
+        "${PROJECT_SOURCE_DIR}/renderer/shaders/point.vert"
+        "${PROJECT_SOURCE_DIR}/renderer/shaders/point.frag")
 qt_add_resources(pandoeditor_editor m4_geometry
     PREFIX "/geometry" BASE "${PROJECT_SOURCE_DIR}/assets/geometry"
     FILES "${PROJECT_SOURCE_DIR}/assets/geometry/polygon-clipping-0.15.7.js"
@@ -77,6 +109,15 @@ qt_add_resources(pandoeditor ui
 
 qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+qt_add_resources(pandoeditor world_data PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
+    FILES
+        "${PROJECT_SOURCE_DIR}/assets/world/manifest.json"
+        "${PROJECT_SOURCE_DIR}/assets/world/countries-preview-v0.33.0.geojson.gz"
+        "${PROJECT_SOURCE_DIR}/assets/world/world-mesh-preview-v0.33.0.bin.gz"
+        "${PROJECT_SOURCE_DIR}/assets/world/countries-canonical-v0.33.0.pcg.gz"
+        "${PROJECT_SOURCE_DIR}/assets/world/world-mesh-v0.12.6.bin.gz"
+        "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.12.6/manifest.json"
+        "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.1/manifest.json")
 file(GLOB_RECURSE DEFAULT_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/assets/defaults/flags/*")
 qt_add_resources(pandoeditor default_flags PREFIX "/defaults/flags" BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags" FILES ${DEFAULT_FLAG_FILES})
 
@@ -197,6 +238,71 @@ if(BUILD_TESTING)
     target_link_libraries(map_render_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME map_render_tests COMMAND map_render_tests -o -,txt)
     set_tests_properties(map_render_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(world_corpus_tests ../tests/world_corpus_tests.cpp)
+    add_executable(m72_view_state_tests ../tests/m72_view_state_tests.cpp)
+    target_link_libraries(m72_view_state_tests PRIVATE pandoeditor_editor)
+    add_test(NAME m72_view_state_tests COMMAND m72_view_state_tests)
+    add_executable(m72_projection_tests ../tests/m72_projection_tests.cpp)
+    target_link_libraries(m72_projection_tests PRIVATE pandoeditor_editor)
+    add_test(NAME m72_projection_tests COMMAND m72_projection_tests)
+    add_executable(m72_view_pick_tests ../tests/m72_view_pick_tests.cpp)
+    target_link_libraries(m72_view_pick_tests PRIVATE pandoeditor_editor)
+    add_test(NAME m72_view_pick_tests COMMAND m72_view_pick_tests)
+    add_executable(m72_render_packet_tests ../tests/m72_render_packet_tests.cpp)
+    target_link_libraries(m72_render_packet_tests PRIVATE pandoeditor_editor)
+    add_test(NAME m72_render_packet_tests COMMAND m72_render_packet_tests)
+    add_executable(m72_packet_corpus_probe ../tests/m72_packet_corpus_probe.cpp)
+    target_link_libraries(m72_packet_corpus_probe PRIVATE pandoeditor_editor)
+    add_executable(m72_render_scene_tests ../tests/m72_render_scene_tests.cpp)
+    target_link_libraries(m72_render_scene_tests PRIVATE pandoeditor_editor)
+    add_test(NAME m72_render_scene_tests COMMAND m72_render_scene_tests)
+    add_executable(m72_packet_cache_tests ../tests/m72_packet_cache_tests.cpp)
+    target_link_libraries(m72_packet_cache_tests PRIVATE pandoeditor_editor)
+    add_test(NAME m72_packet_cache_tests COMMAND m72_packet_cache_tests)
+    add_executable(m72_scene_builder_tests ../tests/m72_scene_builder_tests.cpp)
+    target_link_libraries(m72_scene_builder_tests PRIVATE pandoeditor_editor)
+    add_test(NAME m72_scene_builder_tests COMMAND m72_scene_builder_tests)
+    add_executable(m72_scene_editor_tests ../tests/m72_scene_editor_tests.cpp)
+    target_link_libraries(m72_scene_editor_tests PRIVATE pandoeditor_editor)
+    target_include_directories(m72_scene_editor_tests PRIVATE ../tests)
+    target_compile_definitions(m72_scene_editor_tests PRIVATE
+        M71_WORLD_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/world-rendering")
+    add_test(NAME m72_scene_editor_tests COMMAND m72_scene_editor_tests)
+    add_executable(m72_scene_bridge_tests ../tests/m72_scene_bridge_tests.cpp)
+    target_link_libraries(m72_scene_bridge_tests PRIVATE pandoeditor_editor Qt6::Core)
+    add_test(NAME m72_scene_bridge_tests COMMAND m72_scene_bridge_tests)
+    add_executable(m72_cpu_scene_adapter_tests ../tests/m72_cpu_scene_adapter_tests.cpp)
+    target_link_libraries(m72_cpu_scene_adapter_tests PRIVATE pandoeditor_editor Qt6::Gui)
+    add_test(NAME m72_cpu_scene_adapter_tests COMMAND m72_cpu_scene_adapter_tests)
+    set_tests_properties(m72_cpu_scene_adapter_tests PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(m72_mapprojection_lifetime_tests ../tests/m72_mapprojection_lifetime_tests.cpp)
+    target_link_libraries(m72_mapprojection_lifetime_tests PRIVATE pandoeditor_editor)
+    add_test(NAME m72_mapprojection_lifetime_tests COMMAND m72_mapprojection_lifetime_tests)
+    find_program(PANDOEDITOR_M72_NODE_EXECUTABLE NAMES node)
+    if(PANDOEDITOR_M72_NODE_EXECUTABLE)
+        add_test(NAME m72_packet_corpus
+            COMMAND "${CMAKE_COMMAND}" -E env
+                "M72_PACKET_PROBE=$<TARGET_FILE:m72_packet_corpus_probe>"
+                "${PANDOEDITOR_M72_NODE_EXECUTABLE}" --test
+                "${PROJECT_SOURCE_DIR}/tools/m72-packet-corpus.test.mjs")
+        add_test(NAME m72_projection_web_oracle
+            COMMAND "${CMAKE_COMMAND}" -E env
+                "M72_PROJECTION_PROBE=$<TARGET_FILE:m72_projection_tests>"
+                "${PANDOEDITOR_M72_NODE_EXECUTABLE}" --test
+                "${PROJECT_SOURCE_DIR}/tools/m72-projection-oracle.test.mjs")
+    endif()
+    target_link_libraries(world_corpus_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(world_corpus_tests PRIVATE M71_WORLD_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/world-rendering")
+    add_test(NAME world_corpus_tests COMMAND world_corpus_tests -o -,txt)
+    set_tests_properties(world_corpus_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(world_projection_diagnostics ../tests/world_projection_diagnostics.cpp)
+    target_link_libraries(world_projection_diagnostics PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(world_projection_diagnostics PRIVATE M71_WORLD_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/world-rendering")
+    add_test(NAME world_projection_diagnostics COMMAND world_projection_diagnostics -o -,txt)
+    set_tests_properties(world_projection_diagnostics PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(world_render_baseline ../tests/world_render_baseline.cpp)
+    target_link_libraries(world_render_baseline PRIVATE pandoeditor_editor)
     add_executable(reference_image_tests ../tests/reference_image_tests.cpp)
     target_link_libraries(reference_image_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME reference_image_tests COMMAND reference_image_tests -o -,txt)

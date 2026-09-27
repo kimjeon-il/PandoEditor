@@ -1,0 +1,31 @@
+{
+  "schema": "pandoeditor-m71-composition",
+  "version": 1,
+  "controlCountryId": "DEU",
+  "subunit": {
+    "id": "DEU-M71-SUBUNIT", "name": "M7.1 subunit", "parent": "DEU", "sovereign": "DEU",
+    "geometry": {"type": "Polygon", "coordinates": [[[10,50],[11,50],[11,51],[10,51],[10,50]]]}
+  },
+  "region": {
+    "id": "DEU-M71-REGION", "name": "M7.1 nested region", "parent": "DEU-M71-SUBUNIT", "sovereign": "DEU",
+    "geometry": {"type": "Polygon", "coordinates": [[[10.2,50.2],[10.8,50.2],[10.8,50.8],[10.2,50.8],[10.2,50.2]]]}
+  },
+  "distributions": [
+    {"id": "M71-LANGUAGE", "layerId": "M71-LANGUAGE-LAYER", "type": "language", "name": "Language overlap", "territory": "DEU-M71-SUBUNIT", "share": 70,
+      "geometry": {"type": "Polygon", "coordinates": [[[10.15,50.15],[10.75,50.15],[10.75,50.75],[10.15,50.75],[10.15,50.15]]]}},
+    {"id": "M71-ETHNICITY", "layerId": "M71-ETHNICITY-LAYER", "type": "ethnicity", "name": "Ethnicity overlap", "territory": "DEU-M71-SUBUNIT", "share": 60,
+      "geometry": {"type": "Polygon", "coordinates": [[[10.25,50.25],[10.85,50.25],[10.85,50.85],[10.25,50.85],[10.25,50.25]]]}},
+    {"id": "M71-RELIGION", "layerId": "M71-RELIGION-LAYER", "type": "religion", "name": "Religion overlap", "territory": "DEU-M71-SUBUNIT", "share": 50,
+      "geometry": {"type": "Polygon", "coordinates": [[[10.3,50.3],[10.9,50.3],[10.9,50.9],[10.3,50.9],[10.3,50.3]]]}}
+  ],
+  "generic": [
+    {"id": "M71-GENERIC-POLYGON", "name": "Generic polygon", "geometry": {"type": "Polygon", "coordinates": [[[10.1,50.1],[10.9,50.1],[10.9,50.9],[10.1,50.9],[10.1,50.1]]]}},
+    {"id": "M71-GENERIC-LINE", "name": "Generic line", "geometry": {"type": "LineString", "coordinates": [[10.1,50.1],[10.9,50.9]]}},
+    {"id": "M71-GENERIC-POINT", "name": "Generic point", "geometry": {"type": "Point", "coordinates": [10.5,50.5]}}
+  ],
+  "labels": [
+    {"id": "M71-LABEL-MANUAL", "name": "Pinned label", "placement": "manual", "territory": "DEU-M71-SUBUNIT", "geometry": {"type": "Point", "coordinates": [10.4,50.4]}},
+    {"id": "M71-LABEL-AUTO", "name": "Automatic label", "placement": "automatic", "territory": "DEU-M71-REGION", "geometry": {"type": "Point", "coordinates": [10.6,50.6]}}
+  ],
+  "hydroRefs": ["hydro-river.geojson", "hydro-lake.geojson"]
+}

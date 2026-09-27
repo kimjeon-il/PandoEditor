@@ -60,7 +60,10 @@ Rectangle {
     Timer {
         id: hydroRequest
         interval: 40; repeat: false
-        onTriggered: editor.requestHydroViewport(view.zoom,view.mapScale,view.originX,view.originY,view.width,view.height)
+        onTriggered: {
+            editor.requestHydroViewport(view.zoom,view.mapScale,view.originX,view.originY,view.width,view.height)
+            editor.requestTerrainViewport(view.mapScale,view.originX,view.originY,view.width,view.height)
+        }
     }
     onZoomChanged: { invalidatePick(); hydroRequest.restart() }
     onPanXChanged: { invalidatePick(); hydroRequest.restart() }
@@ -88,6 +91,24 @@ Rectangle {
         }
     }
     ObjectChooser { id: objectChooser; mapView: view }
+
+    // Optional pinned terrain tiles use Qt Quick's textured Image nodes. The
+    // geographic rect is display-only and never participates in picking.
+    Repeater {
+        model: editor.terrainTiles
+        delegate: Image {
+            required property var modelData
+            source: modelData.source
+            asynchronous: true
+            cache: false
+            smooth: true
+            x: view.originX + (modelData.west * editor.hydroProjection.cosLatitude - editor.hydroProjection.minX) * view.mapScale
+            y: view.originY + (editor.hydroProjection.maxLatitude - modelData.north) * view.mapScale
+            width: (modelData.east - modelData.west) * editor.hydroProjection.cosLatitude * view.mapScale
+            height: (modelData.north - modelData.south) * view.mapScale
+            z: -0.5
+        }
+    }
 
     ReferenceImageLibrary { id: referenceImages }
 
@@ -162,10 +183,25 @@ Rectangle {
         }
     }
 
+    GpuMapItem {
+        id: gpuMapRenderer
+        objectName: "gpuMapRenderer"
+        anchors.fill: parent
+        sceneBridge: editor.mapSceneBridge
+        contentReady: !editor.hydroViewportLoaded
+        uploadBudgetBytes: editor.renderQuality.uploadBudgetBytes
+        onFrameSampled: function(milliseconds) { editor.recordMapFrame(milliseconds) }
+        originX: view.originX; originY: view.originY; mapScale: view.mapScale
+        mapCosLatitude: editor.hydroProjection.cosLatitude
+        mapMinX: editor.hydroProjection.minX
+        mapMaxLatitude: editor.hydroProjection.maxLatitude
+        z: 0
+    }
     MapRenderItem {
         id: canonicalMapRenderer
         objectName: "canonicalMapRenderer"
         anchors.fill: parent
+        visible: !gpuMapRenderer.rendererReady && !gpuMapRenderer.forcedGpu
         paths: editor.paths
         visuals: editor.countryVisuals
         hydroSource: editor.hydroSource
@@ -177,6 +213,31 @@ Rectangle {
         primaryId: editor.primaryObject.domain === "territorial" ? editor.primaryObject.id : editor.primaryObject.id ? "content/" + editor.primaryObject.domain + "/" + editor.primaryObject.id : ""
         originX: view.originX; originY: view.originY; mapScale: view.mapScale
         z: 0
+    }
+    Label {
+        objectName: "gpuRendererDiagnostic"
+        visible: gpuMapRenderer.forcedGpu && !gpuMapRenderer.rendererReady
+        text: gpuMapRenderer.diagnostic
+        color: "#8b1e1e"
+        anchors.centerIn: parent
+        z: 10
+    }
+    Label {
+        objectName: "worldDatasetStatus"
+        visible: editor.worldStatus === "loading-preview" ||
+                 editor.worldStatus === "preview" ||
+                 editor.worldStatus === "canonical-pending-mesh" ||
+                 editor.worldStatus === "unavailable" ||
+                 editor.worldStatus === "canonical-mesh-unavailable"
+        text: editor.worldStatus === "unavailable" ||
+              editor.worldStatus === "canonical-mesh-unavailable"
+              ? "고정 세계지도 자료를 사용할 수 없습니다"
+              : "세계지도 자료 준비 중"
+        color: "#243f53"
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: 10
+        z: 9
     }
     Button {
         id: referenceImageButton
@@ -226,6 +287,7 @@ Rectangle {
     readonly property var placedLabels: {
         const revision = editor.presentationRevision
         const selection = editor.selectionRevision
+        const quality = editor.renderQuality.revision
         return editor.labelLayout(mapScale,originX,originY,zoom,width,height)
     }
     Repeater {
@@ -305,7 +367,8 @@ Rectangle {
         maximumPointCount: 1
         property real startX: 0
         property real startY: 0
-        onActiveChanged: if (active) { startX=view.panX; startY=view.panY }
+        onActiveChanged: { if (active) { startX=view.panX; startY=view.panY; editor.beginMapInteraction() }
+                           else editor.endMapInteraction() }
         onActiveTranslationChanged: if (active) { view.panX=startX+activeTranslation.x; view.panY=startY+activeTranslation.y }
     }
     DragHandler {
@@ -313,7 +376,10 @@ Rectangle {
         enabled: view.geometryEditing && editor.geometryEditState.tool !== "move" && editor.geometryEditState.selectedVertex >= 0 && !objectChooser.visible
         target: null
         maximumPointCount: 1
-        onActiveChanged: { if (active) editor.geometryBeginVertexDrag(); else editor.geometryEndVertexDrag(false) }
+        onActiveChanged: {
+            if (active) { editor.beginMapInteraction(); editor.geometryBeginVertexDrag() }
+            else { editor.geometryEndVertexDrag(false); editor.endMapInteraction() }
+        }
         onActiveTranslationChanged: if (active) {
             editor.geometryMoveSelectedVertex((centroid.position.x-view.originX)/view.mapScale,
                                               (centroid.position.y-view.originY)/view.mapScale,
@@ -325,7 +391,10 @@ Rectangle {
         enabled: view.geometryEditing && editor.geometryEditState.tool === "move" && !objectChooser.visible
         acceptedButtons: Qt.LeftButton
         target: null; maximumPointCount: 1
-        onActiveChanged: { if (active) editor.geometryBeginObjectDrag(); else editor.geometryEndObjectDrag(false) }
+        onActiveChanged: {
+            if (active) { editor.beginMapInteraction(); editor.geometryBeginObjectDrag() }
+            else { editor.geometryEndObjectDrag(false); editor.endMapInteraction() }
+        }
         onActiveTranslationChanged: if (active)
             editor.geometryTranslateObject(activeTranslation.x/view.mapScale,activeTranslation.y/view.mapScale)
     }
@@ -334,7 +403,11 @@ Rectangle {
         enabled: view.geometryEditing && !objectChooser.visible
         target: null; minimumPointCount: 2; maximumPointCount: 2
         property real startX: 0; property real startY: 0
-        onActiveChanged: if (active) { editor.geometryEndVertexDrag(true); editor.geometryEndObjectDrag(true); startX=view.panX; startY=view.panY }
+        onActiveChanged: {
+            if (active) { editor.beginMapInteraction(); editor.geometryEndVertexDrag(true);
+                          editor.geometryEndObjectDrag(true); startX=view.panX; startY=view.panY }
+            else editor.endMapInteraction()
+        }
         onActiveTranslationChanged: if (active) { view.panX=startX+activeTranslation.x; view.panY=startY+activeTranslation.y }
     }
     DragHandler {
@@ -342,20 +415,32 @@ Rectangle {
         acceptedButtons: Qt.MiddleButton
         target: null; maximumPointCount: 1
         property real startX: 0; property real startY: 0
-        onActiveChanged: if(active){startX=view.panX;startY=view.panY}
+        onActiveChanged: {
+            if(active){editor.beginMapInteraction();startX=view.panX;startY=view.panY}
+            else editor.endMapInteraction()
+        }
         onActiveTranslationChanged: if(active){view.panX=startX+activeTranslation.x;view.panY=startY+activeTranslation.y}
     }
     PinchHandler {
         enabled: !objectChooser.visible
         target: null
         property real previousScale: 1
-        onActiveChanged: previousScale=1
+        onActiveChanged: { previousScale=1; if(active) editor.beginMapInteraction(); else editor.endMapInteraction() }
         onActiveScaleChanged: if (active) { view.zoomAt(activeScale/previousScale,centroid.position.x,centroid.position.y); previousScale=activeScale }
+    }
+    Timer {
+        id: wheelSettle
+        interval: 180; repeat: false
+        onTriggered: editor.endMapInteraction()
     }
     WheelHandler {
         enabled: !objectChooser.visible
         target: null
-        onWheel: function(event) { view.zoomAt(Math.pow(1.0015,event.angleDelta.y),event.x,event.y) }
+        onWheel: function(event) {
+            if(!wheelSettle.running) editor.beginMapInteraction()
+            wheelSettle.restart()
+            view.zoomAt(Math.pow(1.0015,event.angleDelta.y),event.x,event.y)
+        }
     }
     Repeater {
         model: editor.geometryDraftPaths
@@ -420,7 +505,7 @@ Rectangle {
             Button { objectName: "geometryDeleteVertex"; text: "점 삭제"; enabled: editor.geometryEditState.selectedVertex >= 0; onClicked: editor.geometryDeleteSelectedVertex() }
             Button { objectName: "geometryUndoDraft"; text: "초안 실행 취소"; enabled: editor.geometryEditState.canUndo === true; onClicked: editor.geometryUndoDraft() }
             Button { objectName: "geometryRedoDraft"; text: "다시 실행"; visible: editor.geometryEditState.canRedo === true; onClicked: editor.geometryRedoDraft() }
-            Button { objectName: "geometryPreview"; text: "미리보기"; enabled: editor.geometryEditState.previewReady !== true; onClicked: editor.requestGeometryPreview() }
+            Button { objectName: "geometryPreview"; text: editor.geometryEditState.calculating ? "계산 중" : "미리보기"; enabled: editor.geometryEditState.previewReady !== true && editor.geometryEditState.calculating !== true; onClicked: editor.requestGeometryPreview() }
             Button { objectName: "geometryConfirm"; text: "확인"; enabled: editor.geometryEditState.previewReady === true; onClicked: editor.confirmGeometryEdit() }
             Button { objectName: "geometryCancel"; text: "취소"; onClicked: editor.cancelGeometryEdit() }
         }

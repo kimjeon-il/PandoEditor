@@ -7,6 +7,7 @@
 #include <QQmlContext>
 #include "editorcontroller.h"
 #include "windowsframe.h"
+#include "terrainimageprovider.h"
 #include <QQuickStyle>
 
 #include <cstdlib>
@@ -22,8 +23,16 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion(
         QString::fromUtf8(version.data(), static_cast<qsizetype>(version.size())));
 
-    EditorController editor;
+    EditorControllerConfig editorConfig;
+    editorConfig.bootstrapWorld=true;
+    EditorController editor(editorConfig);
     QQmlApplicationEngine engine;
+    auto* terrainImages=new TerrainImageProvider;
+    terrainImages->setSource(editor.terrainProviderSnapshot());
+    engine.addImageProvider(QStringLiteral("terrain"),terrainImages);
+    QObject::connect(&editor,&EditorController::terrainChanged,&engine,[&editor,terrainImages] {
+        terrainImages->setSource(editor.terrainProviderSnapshot());
+    });
     engine.rootContext()->setContextProperty("editor", &editor);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
                      &application, [] { QCoreApplication::exit(EXIT_FAILURE); },

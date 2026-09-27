@@ -1,0 +1,20 @@
+{
+  "schema": "pandoeditor-platform-validation",
+  "version": 1,
+  "windows": {
+    "status": "NOT RUN",
+    "device": null,
+    "graphicsApis": [],
+    "scenarios": [],
+    "screenshots": [],
+    "logs": []
+  },
+  "android": {
+    "status": "NOT RUN",
+    "device": null,
+    "graphicsApis": [],
+    "scenarios": [],
+    "screenshots": [],
+    "logs": []
+  }
+}

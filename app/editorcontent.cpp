@@ -50,6 +50,7 @@ bool EditorController::copyBuiltinHydro() {
             MapProjection next;next.rebuild(prepared.preview->change().after());
             const auto committed=CommandProcessor::confirm(project_,*prepared.preview);
             if(!committed.ok()){emit errorOccurred(QString::fromStdString(commandErrorCode(committed.error)));return;}
+            noteAppliedImpact(committed.impact);
             projection_=std::move(next);publish(false);emit geometryChanged();
             selectObject({{"domain","hydro"},{"id",q(id)}},"replace","map");
         }catch(const std::exception& exception){emit errorOccurred(QString::fromUtf8(exception.what()));}
@@ -174,6 +175,7 @@ bool EditorController::confirmContentEdit() {
     MapProjection next;try{next.rebuild(contentSession_->preview->change().after());}catch(...){return false;}
     auto result=CommandProcessor::confirm(project_,*contentSession_->preview);
     if(!result.ok()){contentSession_->preview.reset();contentSession_->error=q(commandErrorCode(result.error));emit contentEditChanged();return false;}
+    noteAppliedImpact(result.impact);
     projection_=std::move(next);contentSession_.reset();hover_.reset();++hoverRevision_;publish(false);emit geometryChanged();emit contentEditChanged();return true;
 }
 void EditorController::cancelContentEdit(){if(geometryEdit_&&geometryEdit_->content)cancelGeometryEdit();contentSession_.reset();emit contentEditChanged();emit draftsChanged();emit dirtyChanged();}

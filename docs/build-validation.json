@@ -1,0 +1,14 @@
+{
+  "schema": "pandoeditor-build-validation",
+  "version": 1,
+  "release": {
+    "status": "NOT RUN",
+    "build": null,
+    "smoke": null
+  },
+  "asanUbsan": {
+    "status": "NOT RUN",
+    "build": null,
+    "tests": null
+  }
+}

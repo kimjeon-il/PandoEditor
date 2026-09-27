@@ -24,12 +24,27 @@ std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double 
     const auto point=projection_.unproject(x,y);
     const auto origin=projection_.unproject(0,0),unitX=projection_.unproject(1,0);
     const double xScale=1./(unitX.x-origin.x);
+    if(spatialInstance_!=project_.instanceId()) {
+        spatialIndex_=GeoSpatialIndex{};spatialInstance_=project_.instanceId();
+    }
+    if(spatialIndex_.geometryRevision()==0||spatialIndexedRevision_!=project_.revision()) {
+        spatialIndex_.rebuild(project_.document(),project_.index());
+        spatialIndexedRevision_=project_.revision();
+    }
+    const double tolerance=(mobileMode_?18.:10.)/(pixelsPerUnit>0?pixelsPerUnit:1.);
+    const double boundaryTolerance=pixelsPerUnit>0?(mobileMode_?12.:7.)/pixelsPerUnit:0.;
+    const double latitudeMargin=std::max(tolerance,boundaryTolerance);
+    const double longitudeMargin=latitudeMargin/std::abs(xScale);
+    const auto spatial=spatialIndex_.queryLegacyFlat({{point.x-longitudeMargin,point.y-latitudeMargin,
+        point.x+longitudeMargin,point.y+latitudeMargin}});
+    const std::set<ObjectRef> spatialCandidates(spatial.begin(),spatial.end());
     bool countryFound=false;
     auto renderLayers=project_.layers();renderLayers.insert(renderLayers.begin(),Layer{"",""});
     for(auto layer=renderLayers.rbegin();layer!=renderLayers.rend();++layer){
         if(!layer->visible)continue;
         for(auto unit=project_.document().units.rbegin();unit!=project_.document().units.rend();++unit){
             const auto ref=territorialRef(unit->id);
+            if(!spatialCandidates.count(ref))continue;
             if(nativeLayerId(project_.document(),ref)!=layer->id||!objectVisible(ref))continue;
             if(unit->kind==UnitKind::Country&&countryFound)continue;
             const auto geometry=project_.document().geometries.get(unit->geometry);
@@ -47,7 +62,6 @@ std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double 
             if(hit){found.push_back(ref);if(unit->kind==UnitKind::Country)countryFound=true;}
         }
     }
-    const double tolerance=(mobileMode_?18.:10.)/(pixelsPerUnit>0?pixelsPerUnit:1.);
     const Point cursor{point.x*xScale,point.y};
     std::set<ObjectRef> placedLabels;
     for(const auto& row:labelLayout(pixelsPerUnit>0?pixelsPerUnit:1,0,0,zoom,1e9,1e9))if(const auto ref=existingObjectRef(row.toMap().value("ref").toMap()))placedLabels.insert(*ref);
@@ -57,6 +71,7 @@ std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double 
     }
     const auto distributionRows=visibleDistributionEntries(project_.document(),selectedDistribution);const std::set<ObjectRef> displayedDistribution(distributionRows.begin(),distributionRows.end());
     for(const auto& [ref,index]:project_.index().objects) {
+        if(!spatialCandidates.count(ref))continue;
         if(ref.domain=="territorial" || !objectVisible(ref)) continue;
         if(ref.domain=="label"&&!placedLabels.count(ref))continue;
         if(ref.domain=="distributionEntry"&&!displayedDistribution.count(ref))continue;

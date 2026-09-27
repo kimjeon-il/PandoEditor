@@ -4,7 +4,12 @@
 #include "commandjobrunner.h"
 #include "platformstorage.h"
 #include "mapprojection.h"
+#include "mapscenebridge.h"
+#include "mapscenebuilder.h"
+#include "renderquality.h"
+#include <pandoeditor/spatialindex.h>
 #include "hydroruntimeprovider.h"
+#include "../renderer/terrainprovider.h"
 #include "giscontentimport.h"
 #include <pandoeditor/historicalinstantiation.h>
 #include <pandoeditor/selection.h>
@@ -12,6 +17,7 @@
 #include <QUrl>
 #include <QVariantMap>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <map>
 #include <set>
 #include <optional>
@@ -23,6 +29,7 @@ struct EditorControllerConfig {
     bool mobileMode = false;
 #endif
     QString privateProjectPath;
+    bool bootstrapWorld=false;
 };
 struct WebImportSession;
 
@@ -31,6 +38,8 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantList presentationGroups READ presentationGroups NOTIFY presentationChanged)
     Q_PROPERTY(QVariantMap distributionDisplay READ distributionDisplay NOTIFY visualChanged)
     Q_PROPERTY(QVariantMap hydroDataStatus READ hydroDataStatus NOTIFY stateChanged)
+    Q_PROPERTY(QVariantMap terrainDataStatus READ terrainDataStatus NOTIFY terrainChanged)
+    Q_PROPERTY(QVariantList terrainTiles READ terrainTiles NOTIFY terrainChanged)
     Q_PROPERTY(bool hydroViewportLoaded READ hydroViewportLoaded NOTIFY hydroFrameChanged)
     Q_PROPERTY(QObject* hydroSource READ hydroSource CONSTANT)
     Q_PROPERTY(QVariantMap hydroProjection READ hydroProjection NOTIFY geometryChanged)
@@ -76,6 +85,9 @@ class EditorController : public QObject {
     Q_PROPERTY(QString projectInstanceId READ projectInstanceId NOTIFY stateChanged)
     Q_PROPERTY(QString documentId READ documentId NOTIFY stateChanged)
     Q_PROPERTY(QVariantList paths READ paths NOTIFY geometryChanged)
+    Q_PROPERTY(QObject* mapSceneBridge READ mapSceneBridge CONSTANT)
+    Q_PROPERTY(QVariantMap renderQuality READ renderQuality NOTIFY renderQualityChanged)
+    Q_PROPERTY(QString worldStatus READ worldStatus NOTIFY worldStatusChanged)
     Q_PROPERTY(double mapWidth READ mapWidth NOTIFY geometryChanged)
     Q_PROPERTY(double mapHeight READ mapHeight NOTIFY geometryChanged)
     Q_PROPERTY(QVariantMap colors READ colors NOTIFY visualChanged)
@@ -150,6 +162,10 @@ public:
     QVariantList presentationGroups() const;
     QVariantMap distributionDisplay() const;
     QVariantMap hydroDataStatus() const;
+    QVariantMap terrainDataStatus() const;
+    QVariantList terrainTiles() const {return terrainTiles_;}
+    Q_INVOKABLE void requestTerrainViewport(double mapScale,double originX,double originY,
+                                            double width,double height);
     bool hydroViewportLoaded() const {return bool(hydroRuntime_.frame());}
     QObject* hydroSource() {return &hydroRuntime_;}
     QVariantMap hydroProjection() const;
@@ -225,6 +241,13 @@ public:
     Q_INVOKABLE bool confirmWebImport(const QString& candidateHash,const QString& disposition={},const QUrl& saveUrl={});
     Q_INVOKABLE void cancelWebImport();
     QVariantList paths() const { return projection_.paths; }
+    QObject* mapSceneBridge() {return &sceneBridge_;}
+    QVariantMap renderQuality() const;
+    std::shared_ptr<TerrainTileProvider> terrainProviderSnapshot() const {return terrainProvider_;}
+    Q_INVOKABLE void recordMapFrame(double milliseconds);
+    Q_INVOKABLE void beginMapInteraction();
+    Q_INVOKABLE void endMapInteraction();
+    QString worldStatus() const {return worldStatus_;}
     double mapWidth() const { return projection_.width; }
     double mapHeight() const { return projection_.height; }
     QVariantMap colors() const;
@@ -344,6 +367,7 @@ public:
     Q_INVOKABLE bool exportProject(const QUrl& url);
     Q_INVOKABLE bool confirmPrivateRecovery();
 signals:
+    void renderQualityChanged();
     void historicalChanged();
     void gisImportChanged();
     void gisExportChanged();
@@ -371,7 +395,13 @@ signals:
     void geometryEditChanged();
     void contentEditChanged();
     void hydroFrameChanged();
+    void worldStatusChanged();
+    void terrainChanged();
 private:
+    void startWorldBootstrap();
+    void startCanonicalWorld(std::uint64_t generation);
+    void startCanonicalWorldMesh(std::uint64_t generation);
+    void cancelWorldBootstrap();
     std::shared_ptr<const pandoeditor::HistoricalLibrary> historicalLibrary_;
     pandoeditor::HistoricalSearch historicalFilter_;
     QString historicalSelectedId_,historicalVersionId_,historicalReferenceDate_;
@@ -449,6 +479,8 @@ private:
     bool executeCommand(const std::string& commandId,pandoeditor::CommandAction action);
     void commandError(pandoeditor::CommandError error,const QString& detail={});
     void publish(bool pruneSelection=true);
+    void refreshTypedScene();
+    void noteAppliedImpact(const pandoeditor::ChangeImpact&);
     void reloadDrafts();
     bool replaceFromBytes(const QByteArray& bytes,bool imported,const QString& path={});
     pandoeditor::Project project_;
@@ -494,6 +526,7 @@ private:
         // previewed and confirmed.
         std::optional<pandoeditor::CreateTerritorialIntent> createIntent;
         std::optional<pandoeditor::CommandPreview> preview;
+        std::optional<pandoeditor::JobTicket> job;
         std::uint64_t request=0;
         QString error;
         pandoeditor::Ring lineDraft;
@@ -509,6 +542,29 @@ private:
     std::optional<GeometryEditSession> geometryEdit_;
     bool setStructurePlan(const pandoeditor::TerritorialMutationIntent&);
     MapProjection projection_;
+    GeometryPacketCache packetCache_;
+    AdaptiveRenderQuality quality_;
+    QElapsedTimer qualityClock_;
+    int activeMapInteractions_=0;
+    MapSceneBuilder sceneBuilder_{packetCache_};
+    MapSceneBridge sceneBridge_;
+    std::shared_ptr<const WorldBaseFrame> worldBase_;
+    std::shared_ptr<TerrainTileProvider> terrainProvider_;
+    QVariantList terrainTiles_;
+    int terrainMissingTiles_=0;
+    QString worldHydroNotice_;
+    std::vector<std::string> worldIds_;
+    std::uint64_t worldGeneration_=0;
+    QString worldStatus_=QStringLiteral("disabled");
+    mutable pandoeditor::GeoSpatialIndex spatialIndex_;
+    mutable std::uint64_t spatialIndexedRevision_=0;
+    std::optional<pandoeditor::ChangeImpact> pendingSceneImpact_;
+    std::uint64_t pendingSceneImpactRevision_=0;
+    std::uint64_t sceneQualityRevision_=0;
+    std::uint64_t scenePatchCount_=0,sceneFullBuildCount_=0,spatialIncrementalUpdateCount_=0;
+    std::size_t lastEditAffectedObjects_=0,lastEditRetainedGeometries_=0,lastEditNewGeometryBytes_=0;
+    std::string sceneInstance_;
+    mutable std::string spatialInstance_;
     QString selected_,selectedLayer_="countries",filePath_;
     QString nameDraft_,memoDraft_,colorDraft_,layerNameDraft_;
     std::optional<double> opacityPreview_,layerOpacityPreview_;

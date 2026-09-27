@@ -18,7 +18,7 @@ struct HydroRuntimeProvider::Dataset {
     std::vector<pandoeditor::HydroStageGrid> stages;
     mutable std::mutex mutex;
     HydroRuntimeCache cache;
-    std::set<std::uint32_t> active,pinned;
+    std::set<std::uint32_t> active,pinned,selected;
 };
 namespace {
 std::size_t decodedBytes(const pandoeditor::HydroPack& pack) {
@@ -124,14 +124,28 @@ bool HydroRuntimeProvider::pinLogical(quint32 logicalFid) {
     std::lock_guard lock(dataset_->mutex);
     auto pinned=dataset_->pinned;
     pinned.insert(found->second.begin(),found->second.end());
-    dataset_->cache.protect(dataset_->active,pinned);
+    auto protectedPacks=pinned;
+    protectedPacks.insert(dataset_->selected.begin(),dataset_->selected.end());
+    dataset_->cache.protect(dataset_->active,protectedPacks);
     dataset_->pinned.swap(pinned);
     return true;
 }
 void HydroRuntimeProvider::clearPinned() {
     if(!dataset_)return;
     std::lock_guard lock(dataset_->mutex);
-    dataset_->cache.protect(dataset_->active,{});dataset_->pinned.clear();
+    dataset_->cache.protect(dataset_->active,dataset_->selected);dataset_->pinned.clear();
+}
+void HydroRuntimeProvider::setSelectedLogical(std::optional<quint32> logicalFid) {
+    if(!dataset_)return;
+    std::set<std::uint32_t> selected;
+    if(logicalFid)if(const auto found=dataset_->index.logicalPacks.find(*logicalFid);
+       found!=dataset_->index.logicalPacks.end())
+        selected.insert(found->second.begin(),found->second.end());
+    std::lock_guard lock(dataset_->mutex);
+    dataset_->selected.swap(selected);
+    selected=dataset_->pinned;
+    selected.insert(dataset_->selected.begin(),dataset_->selected.end());
+    dataset_->cache.protect(dataset_->active,selected);
 }
 std::size_t HydroRuntimeProvider::cachedPackCount() const {
     if(!dataset_)return 0;
@@ -140,6 +154,11 @@ std::size_t HydroRuntimeProvider::cachedPackCount() const {
 std::size_t HydroRuntimeProvider::cachedBytes() const {
     if(!dataset_)return 0;
     std::lock_guard lock(dataset_->mutex);return dataset_->cache.residentBytes();
+}
+void HydroRuntimeProvider::setCacheBudget(std::size_t bytes) {
+    if(!dataset_)return;
+    std::lock_guard lock(dataset_->mutex);
+    dataset_->cache.setBudget(bytes);
 }
 void HydroRuntimeProvider::requestViewport(const pandoeditor::HydroFlatWindow& view) {
     if(!dataset_)return;
@@ -153,7 +172,9 @@ void HydroRuntimeProvider::requestViewport(const pandoeditor::HydroFlatWindow& v
         }
         auto pending=ids;
         std::lock_guard lock(dataset->mutex);
-        dataset->cache.protect(pending,dataset->pinned);
+        auto protectedPacks=dataset->pinned;
+        protectedPacks.insert(dataset->selected.begin(),dataset->selected.end());
+        dataset->cache.protect(pending,protectedPacks);
         dataset->active.swap(pending);
     }catch(const std::exception& exception){emit loadFailed(QString::fromUtf8(exception.what()));return;}
     scheduler_.requestViewport([dataset,ids=std::move(ids)]{

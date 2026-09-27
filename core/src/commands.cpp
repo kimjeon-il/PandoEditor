@@ -991,6 +991,44 @@ PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const Com
             result.status=CommandStatus::NoOp; return result;
         }
         auto change=std::unique_ptr<ChangeSet>(new ChangeSet(project.state_,std::move(after),request));
+        auto& impact=change->impact_;
+        const auto& beforeIndex=change->before_->index;
+        const auto& afterIndex=change->after_->index;
+        std::set<ObjectRef> objects;
+        for(const auto& entry:beforeIndex.objects)objects.insert(entry.first);
+        for(const auto& entry:afterIndex.objects)objects.insert(entry.first);
+        std::set<GeometryRef> geometries;
+        std::set<ObjectRef> affected(request.targets.begin(),request.targets.end());
+        for(const auto& object:objects) {
+            const auto oldRef=objectGeometry(change->before(),beforeIndex,object);
+            const auto newRef=objectGeometry(change->after(),afterIndex,object);
+            if(oldRef==newRef&&beforeIndex.objects.count(object)==afterIndex.objects.count(object))continue;
+            affected.insert(object);
+            if(newRef)geometries.insert(*newRef);
+        }
+        impact.changedObjects.assign(affected.begin(),affected.end());
+        impact.changedGeometries.assign(geometries.begin(),geometries.end());
+        const auto& beforeVersions=change->before().geometries.versions();
+        for(const auto& [ref,shape]:change->after().geometries.versions()) {
+            const auto old=beforeVersions.find(ref);
+            if(old!=beforeVersions.end()&&old->second==shape) {
+                ++impact.retainedGeometryCount;continue;
+            }
+            impact.estimatedNewGeometryBytes+=sizeof(Geometry)+shape->points.size()*sizeof(Point);
+            for(const auto& line:shape->lines)
+                impact.estimatedNewGeometryBytes+=line.size()*sizeof(Point);
+            for(const auto& polygon:shape->polygons)for(const auto& ring:polygon)
+                impact.estimatedNewGeometryBytes+=ring.size()*sizeof(Point);
+        }
+        impact.presentationInvalidations=request.targets;
+        const auto& oldPhysical=change->before().physicalData;
+        const auto& newPhysical=change->after().physicalData;
+        impact.requiresFullSpatialRebuild=oldPhysical.dataset!=newPhysical.dataset||
+            oldPhysical.version!=newPhysical.version||oldPhysical.source!=newPhysical.source;
+        // A pure replacement keeps layer order, object identity and presentation.
+        // Other commands may change dependencies that the patcher cannot infer.
+        impact.requiresFullSceneRebuild=request.commandId!="territorial.geometry.replace"||
+            impact.changedObjects.empty()||impact.requiresFullSpatialRebuild;
         change->historyCheckpoint_=checkpoint;
         result.preview=CommandPreview(std::move(change)); result.status=CommandStatus::Prepared;
     } catch(const Rejection& e) {
@@ -1045,9 +1083,13 @@ CommandResult CommandProcessor::confirm(Project& project,CommandPreview& preview
         return {CommandStatus::Rejected,CommandError::StaleRevision,{}};
     if(project.revision()==std::numeric_limits<std::uint64_t>::max())
         return {CommandStatus::Rejected,CommandError::RevisionOverflow,{}};
+    const bool presentationRebased=!(project.document().presentation.webPresentation==
+                                     change->before().presentation.webPresentation);
     try { project.apply(*change); }
     catch(const std::exception&) { return {CommandStatus::Rejected,CommandError::CommitFailed,{}}; }
-    return {CommandStatus::Applied,CommandError::None,{}};
+    auto impact=std::move(change->impact_);
+    if(presentationRebased)impact.requiresFullSceneRebuild=true;
+    return {CommandStatus::Applied,CommandError::None,{},std::move(impact)};
 }
 bool semanticallyEqual(const ProjectDocument& a,const ProjectDocument& b)
 {

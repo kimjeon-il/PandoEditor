@@ -1,0 +1,10 @@
+{
+  "schema": "pandoeditor-performance-budget",
+  "version": 1,
+  "status": "UNSET",
+  "acceptedBy": null,
+  "devices": [],
+  "thresholds": null,
+  "measurementReports": [],
+  "note": "Freeze budgets only after real Windows and Android measurements and user acceptance."
+}

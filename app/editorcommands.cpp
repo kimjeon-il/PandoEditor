@@ -91,6 +91,7 @@ bool EditorController::confirmCommand()
     if(result.ok())clearParkedDrafts();
     emit previewChanged();
     if(!result.ok()) {commandError(result.error,QString::fromStdString(result.detail));return false;}
+    noteAppliedImpact(result.impact);
     return true;
 }
 bool EditorController::confirmPreview(){if(!confirmCommand())return false;publish(false);return true;}

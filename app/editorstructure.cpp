@@ -114,6 +114,7 @@ bool EditorController::confirmStructureMutation() {
         structureSession_->preview.reset();structureSession_->error=QStringLiteral("확정하지 못했습니다. 취소 후 다시 준비하세요.");
         commandError(applied.error,text(applied.detail));emit structureChanged();return false;
     }
+    noteAppliedImpact(applied.impact);
     structureSession_.reset();projection_=std::move(next);
     hover_.reset();hoverSource_.clear();++hoverRevision_;
     closeObjectChooser();

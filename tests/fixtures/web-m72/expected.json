@@ -1,0 +1,108 @@
+{
+  "schema": "pandoeditor-m72-web-render-oracle",
+  "version": 1,
+  "worldMapCommit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+  "sources": {
+    "render-scene.js": {
+      "path": "assets/js/modules/render-scene.js",
+      "gitBlobSha": "d780aa573bd2576cbc3b182ccf55cb92ebe68967"
+    },
+    "render-lod.js": {
+      "path": "assets/js/modules/render-lod.js",
+      "gitBlobSha": "13f91ce3bda90201966a866be304bdbca49102d4"
+    },
+    "gpu-map-renderer.js": {
+      "path": "assets/js/modules/gpu-map-renderer.js",
+      "gitBlobSha": "eb5f9542caa2c20e20ffe74771caf3909838cd2d"
+    },
+    "selection-stroke-geometry.js": {
+      "path": "assets/js/modules/selection-stroke-geometry.js",
+      "gitBlobSha": "a0a9a2282537c64e7cff06fb07b237748f58bbdd"
+    },
+    "layer-presentation.js": {
+      "path": "assets/js/modules/layer-presentation.js",
+      "gitBlobSha": "531c81f888ace0e11c535efaa6f0bf37922a193f"
+    },
+    "geographic-boundary.js": {
+      "path": "assets/js/modules/geographic-boundary.js",
+      "gitBlobSha": "37cac30e70fd905b8fecaac2cb26532ef390ff79"
+    }
+  },
+  "flatWorldOffsets": {
+    "center": [
+      0
+    ],
+    "rightVisible": [
+      0,
+      6.283185307179586
+    ],
+    "noOverlapFallback": [
+      -6.283185307179586
+    ]
+  },
+  "packet": {
+    "rectangle": {
+      "vertexCount": 4,
+      "triangleCount": 2,
+      "indices": [
+        0,
+        1,
+        2,
+        0,
+        2,
+        3
+      ],
+      "ringOffsets": [
+        0,
+        5
+      ]
+    },
+    "datelineLongitudes": [
+      179,
+      181,
+      181,
+      179
+    ],
+    "hole": {
+      "ringOffsets": [
+        0,
+        5,
+        10
+      ],
+      "polygonOffsets": [
+        0,
+        2
+      ]
+    },
+    "strokeSegmentCount": 3
+  },
+  "cache": {
+    "styleReusesGeometry": true,
+    "selectionReusesGeometry": true,
+    "viewReusesGeometry": true,
+    "hits": 6,
+    "misses": 2
+  },
+  "patch": {
+    "orderedKeys": [
+      "a",
+      "b"
+    ],
+    "afterRemoval": [
+      "b"
+    ],
+    "revision": 5
+  },
+  "drawOrder": {
+    "overlayGroups": [
+      "religions",
+      "ethnicities",
+      "languages",
+      "subunits",
+      "regions",
+      "genericFeatures"
+    ],
+    "firstRank": 0,
+    "secondRank": 0.3333333333333333
+  }
+}

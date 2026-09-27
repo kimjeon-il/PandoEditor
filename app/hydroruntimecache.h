@@ -12,6 +12,8 @@ public:
     void protect(std::set<std::uint32_t> active,std::set<std::uint32_t> pinned);
     std::shared_ptr<const pandoeditor::HydroPack> get(std::uint32_t id);
     void put(std::uint32_t id,std::shared_ptr<const pandoeditor::HydroPack> pack,std::size_t bytes);
+    void setBudget(std::size_t bytes);
+    std::size_t budget() const {return budget_;}
     std::size_t residentBytes() const {return resident_;}
     std::size_t packCount() const {return packs_.size();}
 private:

@@ -206,6 +206,7 @@ bool EditorController::confirmGisImport(qulonglong token) {
         gisImport_->error=QString::fromLatin1(pandoeditor::commandErrorCode(result.error));
         emit gisImportChanged();return false;
     }
+    noteAppliedImpact(result.impact);
     // The command owns one ChangeSet; no draft or file write occurs here.
     const bool geographyChanged=oldCount!=project_.document().units.size()||
         std::any_of(project_.document().units.begin(),project_.document().units.end(),

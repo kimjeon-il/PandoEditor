@@ -4,17 +4,24 @@
 #include <cmath>
 #include <limits>
 
+void MapProjection::setWorldExtent() {
+    paths.clear();width=360;height=180;cosLatitude=1;minX=-180;maxLatitude=90;
+}
+
 void MapProjection::rebuild(const pandoeditor::ProjectDocument& document)
 {
     // Read-only render DTOs share geometry; they are not a second editable model.
     std::vector<pandoeditor::CountryView> objects;
     objects.reserve(document.units.size());
+    std::vector<std::string> layerIds;
+    layerIds.reserve(document.units.size());
     for(const auto& unit:document.units) {
         const auto ref=pandoeditor::territorialRef(unit.id);
         const auto& style=document.presentation.objectStyles.at(ref);
-        const auto& layer=pandoeditor::nativeLayerId(document,ref);
+        layerIds.push_back(pandoeditor::nativeLayerId(document,ref));
         const auto geometry=document.geometries.get(unit.geometry);
-        objects.push_back({unit.id,unit.name,geometry->polygons,style.color,unit.notes,style.opacity,layer,unit.locked});
+        objects.push_back({unit.id,unit.name,geometry->polygons,style.color,unit.notes,
+            style.opacity,layerIds.back(),unit.locked});
     }
     const auto index=pandoeditor::validateDocument(document);
     pandoeditor::Ring contentBounds;
@@ -26,7 +33,12 @@ void MapProjection::rebuild(const pandoeditor::ProjectDocument& document)
         for(const auto& polygon:g->polygons)for(const auto& ring:polygon)contentBounds.insert(contentBounds.end(),ring.begin(),ring.end());
     }
     const pandoeditor::MultiPolygon boundsGeometry{{contentBounds}};
-    if(!contentBounds.empty())objects.push_back({"","",boundsGeometry,0,"",1,"",false});
+    const std::string empty;
+    const std::uint32_t dummyColor=0;
+    const double dummyOpacity=1;
+    const bool dummyLocked=false;
+    if(!contentBounds.empty())objects.push_back({empty,empty,boundsGeometry,dummyColor,empty,
+        dummyOpacity,empty,dummyLocked});
     rebuild(objects);
     if(!contentBounds.empty())paths.removeLast(); // bounds-only DTO is never rendered/picked
     for(const auto& [ref,unused]:index.objects) {

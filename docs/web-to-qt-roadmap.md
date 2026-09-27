@@ -118,6 +118,35 @@ PC·모바일 동일 dataset manifest와 문서 로딩 명령을 사용하되 �
 
 성능 gate는 타깃 PC/Android 기기·dataset 버전·측정 시나리오·허용 프레임/메모리/로딩 시간을 먼저 고정한 뒤 측정한다. 현재 측정값이나 보편적 FPS 목표를 꾸며 넣지 않는다. 그 전 단계에서 정상인 작은 지도의 도메인 결과가 대규모에서도 동일한지 회귀한다.
 
+M7은 한 전용 브랜치에서 다음 순서로 구현하고, M7 전체 검증 후에만 `codex/integration`에 병합한다.
+
+| 단계 | 경계 |
+|---|---|
+| M7.1 | 고정된 1:10m 실세계 좌표 corpus, 합성 위험 사례, 오프라인 검증과 현재 CPU 기준선. 프로덕션 렌더 동작은 바꾸지 않는다. |
+| M7.2 | 날짜변경선·극점·holes·enclaves·대형 multipolygon의 투영/scene/spatial 계약. 원본 좌표를 수정하지 않고 typed render transport, 공간 후보 필터링, projection/view revisioning을 설계한다. |
+| M7.3 | GPU 렌더러 구현. |
+| M7.4 | 258개 국가의 전체 세계지도 런타임 로딩. |
+| M7.5 | culling, LOD, 캐시와 adaptive quality 최적화. |
+| M7.6 | 전체 데이터 규모 편집, worker, 메모리 및 incremental scene/spatial update. |
+| M7.7 | 최신 웹 동등성, 실제 플랫폼과 성능의 최종 release gate. |
+
+M7.1의 상세 provenance·실행 증거·M7.2 입력 계약은 `docs/m71-world-rendering-fixture.md`에 기록한다. M7.1 완료만으로 앱의 전 세계 렌더링 완료를 뜻하지 않는다.
+
+M7.2 구현 현황은 `docs/m72-projection-scene-spatial.md`에 기록한다. M7 전체 구현 뒤 검증은 별도 Codex 작업에서 수행하고, 그 결과를 확인한 다음 `codex/integration` 병합을 결정한다.
+
+M7.4 데이터 패키지와 시작 단계 구현 현황은 `docs/m74-full-world-dataset.md`에 기록한다. 이 환경에서 수행할 수 없는 빌드·화면·기기 검증은 통과로 간주하지 않는다.
+
+M7.5 LOD·국가 culling·packet/물리 자료 캐시·업로드 분할·adaptive quality 구현 범위와
+미실행 gate는 `docs/m75-world-optimization.md`에 기록한다. M7 전체 구현 이후 검사하고
+`integration`으로 병합한다.
+
+M7.6 대규모 편집의 영향 객체 계약, worker 준비, 부분 scene 및 spatial 갱신 범위와
+남은 gate는 `docs/m76-large-world-edit.md`에 기록한다. 미실행 검증은 완료로 간주하지 않는다.
+
+M7.7 최신 웹 drift 동결, 통합 Oracle 실행기, 자산·성능 증거 형식 및 남은 release gate는
+`docs/parity-manifest.json`과 `docs/final-parity-report.md`에 기록한다. 실제 검증 전에는
+최종 이식 완료를 선언하지 않는다.
+
 ## 고정 검증 사례와 판정
 
 | 사례 | fixture / 기대 결과 | gate |

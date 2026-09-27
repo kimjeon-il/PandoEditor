@@ -2,6 +2,8 @@ configure_file(src/version.cpp.in generated/version.cpp @ONLY)
 find_package(ZLIB REQUIRED)
 
 add_library(pandoeditor_core STATIC
+    src/geobounds.cpp
+    src/spatialindex.cpp
     src/hydroformat.cpp
     src/hydroviewport.cpp
     src/maprenderorder.cpp
@@ -34,6 +36,14 @@ target_link_libraries(pandoeditor_core PUBLIC ZLIB::ZLIB)
 set_target_properties(pandoeditor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_TESTING)
+    add_executable(m72_geobounds_tests ../tests/m72_geobounds_tests.cpp)
+    target_link_libraries(m72_geobounds_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME m72_geobounds_tests COMMAND m72_geobounds_tests)
+    add_executable(m72_spatial_index_tests ../tests/m72_spatial_index_tests.cpp)
+    target_link_libraries(m72_spatial_index_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME m72_spatial_index_tests COMMAND m72_spatial_index_tests)
+    add_executable(m72_geobounds_probe ../tests/m72_geobounds_probe.cpp)
+    target_link_libraries(m72_geobounds_probe PRIVATE Pandoeditor::Core)
     add_executable(temporal_tests ../tests/temporal_tests.cpp)
     target_link_libraries(temporal_tests PRIVATE Pandoeditor::Core)
     add_test(NAME temporal_tests COMMAND temporal_tests)
@@ -77,6 +87,11 @@ if(BUILD_TESTING)
     target_link_libraries(temporal_probe PRIVATE Pandoeditor::Core)
     find_program(PANDOEDITOR_M6_NODE_EXECUTABLE NAMES node)
     if(PANDOEDITOR_M6_NODE_EXECUTABLE)
+        add_test(NAME m72_geobounds_corpus
+            COMMAND "${CMAKE_COMMAND}" -E env
+                "M72_BOUNDS_PROBE=$<TARGET_FILE:m72_geobounds_probe>"
+                "${PANDOEDITOR_M6_NODE_EXECUTABLE}" --test
+                "${PROJECT_SOURCE_DIR}/tools/m72-geobounds-corpus.test.mjs")
         add_test(NAME m6_web_gis_zip_fixture
             COMMAND "${PANDOEDITOR_M6_NODE_EXECUTABLE}"
                 "${PROJECT_SOURCE_DIR}/tools/m6-gis-zip-fixture.mjs" --verify)
@@ -125,6 +140,11 @@ if(BUILD_TESTING)
     add_test(NAME model_tests COMMAND model_tests)
     add_executable(structure_probe ../tests/structure_probe.cpp)
     target_link_libraries(structure_probe PRIVATE Pandoeditor::Core Qt6::Core)
+    if(PANDOEDITOR_M6_NODE_EXECUTABLE)
+        add_test(NAME m33_structure_web_parity
+            COMMAND "${PANDOEDITOR_M6_NODE_EXECUTABLE}"
+                "${PROJECT_SOURCE_DIR}/tools/m33-structure-oracle.mjs" "$<TARGET_FILE:structure_probe>")
+    endif()
     add_executable(geometry_predicate_tests ../tests/geometry_predicate_tests.cpp)
     target_link_libraries(geometry_predicate_tests PRIVATE Pandoeditor::Core)
     add_test(NAME geometry_predicate_tests COMMAND geometry_predicate_tests)

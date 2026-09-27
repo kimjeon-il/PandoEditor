@@ -1,0 +1,355 @@
+{
+  "schema": "pandoeditor-m71-world-corpus",
+  "version": 1,
+  "pandoEditorBaseline": "168fb7cf7ecde29544e9f65e10fca6a2530d1de0",
+  "worldMapCommit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+  "countryIds": [
+    "DEU",
+    "RUS",
+    "FJI",
+    "KIR",
+    "USA",
+    "FRA",
+    "IDN",
+    "PHL",
+    "ATA",
+    "ZAF",
+    "LSO",
+    "CHL",
+    "NOR"
+  ],
+  "sources": {
+    "countries": {
+      "path": "assets/data/countries-ne-5.1.1.geojson",
+      "gitBlobSha": "d79abcb4a47d49f188e0601c3721d9e10e6c7f52"
+    },
+    "canonicalPacket": {
+      "path": "assets/data/countries-canonical-v0.33.0.pcg.gz",
+      "gitBlobSha": "54146d9eeb28e4af08e094f5061bf64689e6bdf3"
+    },
+    "worldMesh": {
+      "path": "assets/data/world-mesh-v0.12.6.bin.gz",
+      "gitBlobSha": "8c73420b92e89ab64cbe75dcc5016efe2c0a22b6"
+    },
+    "hydroRiver": {
+      "path": "assets/data/hydro/rivers_base.geojson",
+      "gitBlobSha": "6ec119337f9c38b33bb498edbe351573b9e6aa60"
+    },
+    "hydroLake": {
+      "path": "assets/data/hydro/lakes_base.geojson",
+      "gitBlobSha": "bf088f97a5362842635369656c57314f4521f398"
+    }
+  },
+  "upstreamReference": {
+    "featureCount": 258,
+    "positionCount": 548454
+  },
+  "fixtureHashes": {
+    "countries.geojson": "e2664e114d5ae7190abf3004f8936983c8e0704bf0ad2bd45ff9250ef30d07a0",
+    "hydro-river.geojson": "aaa26b1ebe7c76bb11a7dc1984e09978e23e15c85765f8a48b441281c5e1dac2",
+    "hydro-lake.geojson": "7a5eb30d72467333fa784f2b7d10f3a16b07d11ce1ef7d3c50ea7282e3020ac9",
+    "sentinels.geojson": "ecc50b6d435440dbc69da13b19568602a36c89ec6c6e5eb99cd8a7e9ddc958eb",
+    "composition.json": "40e13e2c37e0fff3ec10ffeab5d2f30339e636c81404900b167cae60b84f9859"
+  },
+  "countries": [
+    {
+      "id": "DEU",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 22,
+      "ringCount": 22,
+      "holeCount": 0,
+      "coordinateCount": 3027,
+      "bounds": [
+        5.85249,
+        47.271121,
+        15.022059,
+        55.065334
+      ],
+      "maxLongitudeJump": 0.30004899999999957,
+      "geometrySha256": "e1f16cc117fa3230bf347e105891da52acdeaafb105b160e99ee69e395b65443",
+      "riskTags": [
+        "control"
+      ]
+    },
+    {
+      "id": "RUS",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 214,
+      "ringCount": 214,
+      "holeCount": 0,
+      "coordinateCount": 36756,
+      "bounds": [
+        -180,
+        41.192681,
+        180,
+        81.85871
+      ],
+      "maxLongitudeJump": 0.4939779999999985,
+      "geometrySha256": "ec4a51711dd7b654e21e4529fd60fbfae9ded094e95edcdbb7f69128472cad13",
+      "riskTags": [
+        "very-large",
+        "multi-part",
+        "dateline"
+      ]
+    },
+    {
+      "id": "FJI",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 44,
+      "ringCount": 44,
+      "holeCount": 0,
+      "coordinateCount": 1476,
+      "bounds": [
+        -180,
+        -21.711114,
+        180,
+        -12.475274
+      ],
+      "maxLongitudeJump": 0.09594699999999534,
+      "geometrySha256": "e78db9dd880ee430e40751f3ed02af3bf78bd9a9d84f0946336a725fc116b75d",
+      "riskTags": [
+        "multi-part",
+        "dateline"
+      ]
+    },
+    {
+      "id": "KIR",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 35,
+      "ringCount": 35,
+      "holeCount": 0,
+      "coordinateCount": 709,
+      "bounds": [
+        -174.543406,
+        -11.461114,
+        176.850922,
+        4.72309
+      ],
+      "maxLongitudeJump": 0.10131799999999203,
+      "geometrySha256": "e320e978fb907a0941ded85329112edd5326fb2efe583d2db7385e9986d8808a",
+      "riskTags": [
+        "many-islands",
+        "dateline"
+      ]
+    },
+    {
+      "id": "USA",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 344,
+      "ringCount": 344,
+      "holeCount": 0,
+      "coordinateCount": 35981,
+      "bounds": [
+        -179.143503,
+        18.906117,
+        179.780935,
+        71.412502
+      ],
+      "maxLongitudeJump": 0.4870599999999854,
+      "geometrySha256": "1682495e0cdb7930feb299983228132a07aaa292fe44c718b09c4da0f291ecaa",
+      "riskTags": [
+        "very-large",
+        "multi-part",
+        "aleutian"
+      ]
+    },
+    {
+      "id": "FRA",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 21,
+      "ringCount": 22,
+      "holeCount": 1,
+      "coordinateCount": 4641,
+      "bounds": [
+        -61.797841,
+        -21.370782,
+        55.854503,
+        51.087541
+      ],
+      "maxLongitudeJump": 0.4117019999999999,
+      "geometrySha256": "6c2a22d4eb411b91583a95f57477fbc8ea20065af1dc3906be318f56eca717f5",
+      "riskTags": [
+        "overseas",
+        "multi-part"
+      ]
+    },
+    {
+      "id": "IDN",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 264,
+      "ringCount": 264,
+      "holeCount": 0,
+      "coordinateCount": 19564,
+      "bounds": [
+        95.012706,
+        -10.922621,
+        140.977627,
+        5.910102
+      ],
+      "maxLongitudeJump": 0.35172500000000184,
+      "geometrySha256": "003396bbc0865e9414592eece15f68fef1453d26426766f37bb575bf8257b4bd",
+      "riskTags": [
+        "many-islands",
+        "multi-part"
+      ]
+    },
+    {
+      "id": "PHL",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 97,
+      "ringCount": 97,
+      "holeCount": 0,
+      "coordinateCount": 7406,
+      "bounds": [
+        116.954926,
+        4.655707,
+        126.617686,
+        21.122382
+      ],
+      "maxLongitudeJump": 0.18872100000000103,
+      "geometrySha256": "d8bbad5ba7538732b21a73abfad791f11851302f012fd94dabd60944577db201",
+      "riskTags": [
+        "many-islands",
+        "multi-part"
+      ]
+    },
+    {
+      "id": "ATA",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 179,
+      "ringCount": 179,
+      "holeCount": 0,
+      "coordinateCount": 23815,
+      "bounds": [
+        -180,
+        -90,
+        180,
+        -60.516209
+      ],
+      "maxLongitudeJump": 0.49930700000001593,
+      "geometrySha256": "a7cd0509f1321cf578bcb3f520f9bffa444eecd83f95ef43f449d7294d4e4232",
+      "riskTags": [
+        "polar",
+        "very-large"
+      ]
+    },
+    {
+      "id": "ZAF",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 3,
+      "ringCount": 4,
+      "holeCount": 1,
+      "coordinateCount": 2207,
+      "bounds": [
+        16.469981,
+        -46.965753,
+        37.977794,
+        -22.126452
+      ],
+      "maxLongitudeJump": 0.34553999999999974,
+      "geometrySha256": "e1dfb8f6935fa8ff0dc8bab4c2d2353ab6d4f04ed67a6474e3a82e4a507b4d4e",
+      "riskTags": [
+        "enclave-container",
+        "hole"
+      ]
+    },
+    {
+      "id": "LSO",
+      "geometryType": "Polygon",
+      "polygonCount": 1,
+      "ringCount": 1,
+      "holeCount": 0,
+      "coordinateCount": 324,
+      "bounds": [
+        27.002155,
+        -30.658799,
+        29.435908,
+        -28.570761
+      ],
+      "maxLongitudeJump": 0.13921600000000112,
+      "geometrySha256": "0a23be722ab3c747fd9c3c950ace80612e85225df75493ab7617a53adc0cf8b7",
+      "riskTags": [
+        "enclave"
+      ]
+    },
+    {
+      "id": "CHL",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 163,
+      "ringCount": 163,
+      "holeCount": 0,
+      "coordinateCount": 17197,
+      "bounds": [
+        -109.453725,
+        -55.918504,
+        -66.420806,
+        -17.506588
+      ],
+      "maxLongitudeJump": 0.39225299999999663,
+      "geometrySha256": "292bc476b5bb54ac543869e0f9f403aea059e29a09986e3e8cea53eb6624ede5",
+      "riskTags": [
+        "long-narrow"
+      ]
+    },
+    {
+      "id": "NOR",
+      "geometryType": "MultiPolygon",
+      "polygonCount": 120,
+      "ringCount": 120,
+      "holeCount": 0,
+      "coordinateCount": 15817,
+      "bounds": [
+        -9.117421,
+        -54.462498,
+        33.640391,
+        80.770087
+      ],
+      "maxLongitudeJump": 0.4810930000000013,
+      "geometrySha256": "783a4c9122c30adf4dbd035827361bbac5710a73e78e151fe961d7209f81d57d",
+      "riskTags": [
+        "high-latitude",
+        "multi-part"
+      ]
+    }
+  ],
+  "hydro": {
+    "river": {
+      "id": "rivers_base:1159113097",
+      "geometryType": "LineString",
+      "polygonCount": 0,
+      "ringCount": 0,
+      "holeCount": 0,
+      "coordinateCount": 791,
+      "bounds": [
+        61.68798828125,
+        41.249627996869116,
+        68.28818359375,
+        46.021112371869116
+      ],
+      "maxLongitudeJump": 0.10302734375,
+      "geometrySha256": "5a618bffcd9da5a7b33ef6a67b1f66fafd964c0ad2f6fbe11df1f75160f434ce"
+    },
+    "lake": {
+      "id": "lakes_base:1159113191",
+      "geometryType": "Polygon",
+      "polygonCount": 1,
+      "ringCount": 22,
+      "holeCount": 21,
+      "coordinateCount": 2225,
+      "bounds": [
+        31.611031714228943,
+        -3.012114334866311,
+        34.854630031092825,
+        0.49700042467031835
+      ],
+      "maxLongitudeJump": 0.10243871624183498,
+      "geometrySha256": "ecaf046dcc946a4aac63fe0095c7aa9b2ff8c8653e01730ba35ce959f414dca1"
+    }
+  },
+  "aggregate": {
+    "polygonCount": 1507,
+    "ringCount": 1509,
+    "holeCount": 2,
+    "coordinateCount": 168920
+  }
+}
