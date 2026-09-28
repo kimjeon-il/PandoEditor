@@ -18,11 +18,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Verify CI workflow contract
+        run: node --test tools/ci-workflow-contract.test.mjs
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
+          modules: 'qtshadertools'
           cache: true
       - name: Configure and build
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
