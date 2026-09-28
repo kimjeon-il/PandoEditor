@@ -21,7 +21,7 @@ jobs:
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
-          modules: 'qtshadertools qtsvg'
+          modules: 'qtshadertools'
           cache: true
       - name: Verify source asset identity
         run: node tools/verify-release-assets.mjs --root . --out release-assets.json
