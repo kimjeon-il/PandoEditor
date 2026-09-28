@@ -1,6 +1,7 @@
 find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 find_package(Qt6 REQUIRED COMPONENTS Svg)
 find_package(Qt6 REQUIRED COMPONENTS Sql)
+find_package(Qt6 REQUIRED COMPONENTS Network)
 find_package(Qt6 6.5 REQUIRED COMPONENTS ShaderTools)
 find_package(ZLIB REQUIRED)
 qt_add_executable(pandoeditor main.cpp)
@@ -21,6 +22,7 @@ add_library(pandoeditor_editor STATIC
     autosavecoordinator.cpp autosavecoordinator.h
     projectpreviewcache.cpp projectpreviewcache.h
     countrylabelanchors.cpp countrylabelanchors.h
+    physicaldatastore.cpp physicaldatastore.h
     mapscenebuilder.cpp mapscenebuilder.h
     mapscenebridge.cpp mapscenebridge.h
     builtinworldpolicy.cpp builtinworldpolicy.h
@@ -72,7 +74,7 @@ add_library(pandoeditor_editor STATIC
     ../renderer/referenceimageitem.cpp ../renderer/referenceimageitem.h
 )
 target_include_directories(pandoeditor_editor PUBLIC . ../renderer PRIVATE ../third_party/earcut)
-target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg Qt6::Sql ZLIB::ZLIB)
+target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg Qt6::Sql Qt6::Network ZLIB::ZLIB)
 qt_add_shaders(pandoeditor_editor m73_map_shaders
     PREFIX "/m73" BASE "${PROJECT_SOURCE_DIR}/renderer"
     FILES
@@ -127,7 +129,9 @@ qt_add_resources(pandoeditor world_data PREFIX "/world" BASE "${PROJECT_SOURCE_D
         "${PROJECT_SOURCE_DIR}/assets/world/countries-canonical-v0.33.0.pcg.gz"
         "${PROJECT_SOURCE_DIR}/assets/world/world-mesh-v0.12.6.bin.gz"
         "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.12.6/manifest.json"
-        "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.1/manifest.json")
+        "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.1/manifest.json"
+        "${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-c0bd31d1.json")
+
 file(GLOB_RECURSE DEFAULT_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/assets/defaults/flags/*")
 qt_add_resources(pandoeditor default_flags PREFIX "/defaults/flags" BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags" FILES ${DEFAULT_FLAG_FILES})
 
@@ -273,6 +277,11 @@ if(BUILD_TESTING)
         PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
         FILES "${PROJECT_SOURCE_DIR}/assets/world/country-label-anchors-v0.10.1.json")
     add_test(NAME country_label_anchor_tests COMMAND country_label_anchor_tests -o -,txt)
+    add_executable(physical_data_store_tests ../tests/physical_data_store_tests.cpp)
+    target_link_libraries(physical_data_store_tests PRIVATE pandoeditor_editor Qt6::Test Qt6::Network)
+    target_compile_definitions(physical_data_store_tests PRIVATE
+        PHYSICAL_INVENTORY="${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-c0bd31d1.json")
+    add_test(NAME physical_data_store_tests COMMAND physical_data_store_tests -o -,txt)
     add_executable(m72_view_state_tests ../tests/m72_view_state_tests.cpp)
     target_link_libraries(m72_view_state_tests PRIVATE pandoeditor_editor)
     add_test(NAME m72_view_state_tests COMMAND m72_view_state_tests)

@@ -10,13 +10,12 @@
 #include <algorithm>
 #include <cmath>
 
-TerrainTileProvider::TerrainTileProvider(const QByteArray& pinned,const QString& root):root_(root) {
-    if(root_.isEmpty()){error_=QStringLiteral("Terrain tile package not installed");return;}
+TerrainTileProvider::TerrainTileProvider(const QByteArray& pinned,const QString& root,
+                                         std::function<QString(const QString&)> resolver)
+    :root_(root),assetResolver_(std::move(resolver)) {
     QFile installed(QDir(root_).filePath("terrain/v0.12.6/manifest.json"));
-    if(!installed.open(QIODevice::ReadOnly)){
-        error_=QStringLiteral("Terrain manifest unavailable");return;
-    }
-    if(installed.readAll()!=pinned){error_=QStringLiteral("Terrain manifest identity mismatch");return;}
+    if(installed.exists()&&(!installed.open(QIODevice::ReadOnly)||installed.readAll()!=pinned))
+        {error_=QStringLiteral("Terrain manifest identity mismatch");return;}
     const auto object=QJsonDocument::fromJson(pinned).object();
     if(object.value("version").toString()!=QStringLiteral("0.12.6")||
        object.value("crs").toString()!=QStringLiteral("EPSG:4326")||
@@ -36,15 +35,13 @@ TerrainTileProvider::TerrainTileProvider(const QByteArray& pinned,const QString&
         levels_.push_back(result);
     }
     if(levels_.size()!=5){error_=QStringLiteral("Incomplete terrain pyramid");return;}
-    if(!QImageReader::supportedImageFormats().contains("webp")) {
-        error_=QStringLiteral("Qt WebP image decoder unavailable");return;
-    }
-    for(int column=0;column<levels_.front().columns;++column)
-        if(!QFileInfo::exists(QDir(root_).filePath(
-                QString("terrain/v0.12.6/0/%1-0.webp").arg(column)))) {
-            error_=QStringLiteral("Terrain level 0 tiles unavailable");return;
-        }
     available_=true;
+}
+
+QString TerrainTileProvider::tilePath(int level,int column,int row) const {
+    const auto relative=QString("terrain/v0.12.6/%1/%2-%3.webp").arg(level).arg(column).arg(row);
+    if(assetResolver_)if(const auto resolved=assetResolver_(relative);!resolved.isEmpty())return resolved;
+    return QDir(root_).filePath(relative);
 }
 
 std::vector<TerrainTileSpec> TerrainTileProvider::tilesForView(const MapViewState& view) const {
@@ -84,8 +81,7 @@ std::vector<TerrainTileSpec> TerrainTileProvider::tilesForView(const MapViewStat
         for(int copy=-1;copy<=1;++copy) {
             if(east+360*copy<lonMin||west+360*copy>lonMax)continue;
             TerrainTileSpec spec{level,column,row,copy*360,west,south,east,north,
-                QDir(root_).filePath(QString("terrain/v0.12.6/%1/%2-%3.webp")
-                                     .arg(level).arg(column).arg(row))};
+                tilePath(level,column,row)};
             result.push_back(std::move(spec));
         }
     }
@@ -95,8 +91,7 @@ QImage TerrainTileProvider::loadTile(const TerrainTileSpec& spec) const {
     if(!available_||spec.level<0||spec.level>=int(levels_.size())||
        spec.column<0||spec.column>=levels_[spec.level].columns||
        spec.row<0||spec.row>=levels_[spec.level].rows)return {};
-    const auto expected=QDir(root_).filePath(QString("terrain/v0.12.6/%1/%2-%3.webp")
-                                             .arg(spec.level).arg(spec.column).arg(spec.row));
+    const auto expected=tilePath(spec.level,spec.column,spec.row);
     if(spec.path!=expected)return {};
     std::lock_guard lock(mutex_);
     if(auto found=images_.find(expected);found!=images_.end()) {
@@ -112,8 +107,7 @@ QImage TerrainTileProvider::loadTile(const TerrainTileSpec& spec) const {
 QImage TerrainTileProvider::loadTile(int level,int column,int row) const {
     TerrainTileSpec spec;
     spec.level=level;spec.column=column;spec.row=row;
-    spec.path=QDir(root_).filePath(QString("terrain/v0.12.6/%1/%2-%3.webp")
-                                   .arg(level).arg(column).arg(row));
+    spec.path=tilePath(level,column,row);
     return loadTile(spec);
 }
 void TerrainTileProvider::setCacheBudget(std::size_t bytes) {

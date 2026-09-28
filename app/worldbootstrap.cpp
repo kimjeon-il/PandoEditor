@@ -26,8 +26,11 @@ void EditorController::startWorldBootstrap() {
             projection_=*prepared.projection;
             try {
                 WorldDataset source;
+                const auto terrainRoot=!physicalRoot_.isEmpty()?physicalRoot_:source.optionalDataRoot();
                 terrainProvider_=std::make_shared<TerrainTileProvider>(
-                    source.read("terrain"),source.optionalDataRoot());
+                    source.read("terrain"),terrainRoot,[this](const QString& relative) {
+                        return physicalAssetPath(relative);
+                    });
                 terrainProvider_->setCacheBudget(quality_.profile().terrainCacheBudgetBytes);
             } catch(const std::exception&) {
                 terrainProvider_.reset(); // The optional terrain channel is unavailable.
@@ -66,7 +69,7 @@ void EditorController::startCanonicalWorld(std::uint64_t generation) {
             worldStatus_=QStringLiteral("canonical-pending-mesh");emit worldStatusChanged();
             // While preview is displayed, no canonical country override is
             // shown on top of it. Edits made now stay in ProjectDocument.
-            emit geometryChanged();publish(false);syncHydroData();
+            emit geometryChanged();publish(false);ensureHydroBootstrap();syncHydroData();
             startCanonicalWorldMesh(generation);
         } catch(const std::exception& error) {
             worldStatus_=QStringLiteral("unavailable");emit worldStatusChanged();

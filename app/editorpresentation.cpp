@@ -41,7 +41,7 @@ QVariantMap EditorController::distributionDisplay() const {
     return {{"mode",settings.renderMode==DistributionRenderMode::Intensity?"intensity":"dominant"},{"boundaryVisible",settings.boundaryVisible},{"selectedLayerId",selected},{"intensityAvailable",!selected.isEmpty()}};
 }
 QVariantMap EditorController::hydroDataStatus() const {
-    const auto& settings=project_.document().physicalData;if(settings.source.empty())return QVariantMap{{"ready",false},{"version",displayText(settings.version)},{"dataset",displayText(settings.dataset)},{"error",worldHydroNotice_.isEmpty()?QStringLiteral("로컬 수계 자료가 선택되지 않았습니다."):worldHydroNotice_}};
+    const auto& settings=project_.document().physicalData;if(settings.source.empty()&&!hydroRuntime_.isOpen())return QVariantMap{{"ready",false},{"version",displayText(settings.version)},{"dataset",displayText(settings.dataset)},{"error",physicalActive_+physicalQueued_>0?QStringLiteral("필요한 수계 자료를 받는 중입니다."):(physicalError_.isEmpty()?(worldHydroNotice_.isEmpty()?QStringLiteral("수계 자료가 아직 준비되지 않았습니다."):worldHydroNotice_):physicalError_)}};
     if(hydroRuntime_.isOpen())return QVariantMap{{"ready",true},{"root",displayText(settings.source)},
         {"version",displayText(settings.version)},{"dataset",displayText(settings.dataset)},
         {"viewportLoaded",hydroViewportLoaded()},{"error",QString()}};
@@ -51,11 +51,14 @@ QVariantMap EditorController::terrainDataStatus() const {
     return {{"available",terrainProvider_&&terrainProvider_->available()},
             {"version",QStringLiteral("0.12.6")},
             {"missingTiles",terrainMissingTiles_},
-            {"error",terrainProvider_?terrainProvider_->error():
-                QStringLiteral("Terrain package not installed")}};
+            {"activeDownloads",physicalActive_},{"queuedDownloads",physicalQueued_},
+            {"error",!physicalError_.isEmpty()?physicalError_:(terrainProvider_?terrainProvider_->error():
+                QStringLiteral("Terrain package not installed"))}};
 }
 void EditorController::requestTerrainViewport(double mapScale,double originX,double originY,
                                               double width,double height) {
+    terrainLastScale_=mapScale;terrainLastOriginX_=originX;terrainLastOriginY_=originY;
+    terrainLastWidth_=width;terrainLastHeight_=height;
     if(!terrainProvider_||!terrainProvider_->available()||
        !std::isfinite(mapScale)||mapScale<=0||
        !std::isfinite(originX)||!std::isfinite(originY)||width<=0||height<=0)return;
@@ -79,7 +82,12 @@ void EditorController::requestTerrainViewport(double mapScale,double originX,dou
     const auto tileSpecs=terrainProvider_->tilesForView(state);
     terrainProvider_->protectVisible(tileSpecs);
     for(const auto& tile:tileSpecs) {
-        if(!QFileInfo::exists(tile.path)){++missing;continue;}
+        const auto relative=QString("terrain/v0.12.6/%1/%2-%3.webp")
+            .arg(tile.level).arg(tile.column).arg(tile.row);
+        if(!physicalAssetReady(relative)){
+            ++missing;requestPhysicalAsset(QString("terrain/v0.12.6/%1/%2-%3.webp")
+                .arg(tile.level).arg(tile.column).arg(tile.row));continue;
+        }
         const auto source=QUrl(QStringLiteral("image://terrain/%1/%2/%3")
                                    .arg(tile.level).arg(tile.column).arg(tile.row));
         visible.push_back(QVariantMap{{"source",source},
@@ -107,14 +115,21 @@ QVariantList EditorController::hiddenHydroIds() const {
 }
 void EditorController::requestHydroViewport(double zoom,double mapScale,double originX,double originY,
                                             double width,double height) {
-    if(!hydroRuntime_.isOpen()||!std::isfinite(mapScale)||mapScale<=0||
+    if(!hydroRuntime_.isOpen()){ensureHydroBootstrap();return;}
+    if(!std::isfinite(mapScale)||mapScale<=0||
        !std::isfinite(originX)||!std::isfinite(originY)||width<=0||height<=0)return;
     try {
         const auto center=projection_.unproject((width/2-originX)/mapScale,(height/2-originY)/mapScale);
         const auto unitX=projection_.project({1,0}).x-projection_.project({0,0}).x;
         const auto webScale=mapScale*std::min(1.,unitX)*180./3.14159265358979323846;
-        hydroRuntime_.requestViewport({pandoeditor::webHydroThreshold(zoom),width,height,webScale,center.x,center.y});
+        requestHydroWindow({pandoeditor::webHydroThreshold(zoom),width,height,webScale,center.x,center.y});
     }catch(const std::exception& error){emit errorOccurred(QString::fromUtf8(error.what()));}
+}
+void EditorController::requestHydroWindow(const pandoeditor::HydroFlatWindow& window) {
+    pendingHydroWindow_=window;bool missing=false;
+    for(const auto& path:hydroRuntime_.requiredAssetPaths(window))if(!physicalAssetReady(path))
+        {missing=true;requestPhysicalAsset(path);}
+    if(missing)return;pendingHydroWindow_.reset();hydroRuntime_.requestViewport(window);
 }
 bool EditorController::configureHydroData(const QUrl& value) {
     if(hasPendingEdits()||jobBusy()||hasWebImportPreview())return false;
@@ -131,10 +146,15 @@ bool EditorController::configureHydroData(const QUrl& value) {
 }
 void EditorController::syncHydroData() {
     hydroRuntime_.close(projectInstanceId());
-    const auto& source=project_.document().physicalData.source;
-    if(source.empty())return;
+    auto source=displayText(project_.document().physicalData.source);
+    if(source.isEmpty()&&!physicalRoot_.isEmpty()) {
+        ensureHydroBootstrap();
+        const auto candidate=QDir(physicalRoot_).filePath("hydro/v0.13.1/manifest.json");
+        if(inspectHydroData(candidate).ready)source=QFileInfo(candidate).absolutePath();
+    }
+    if(source.isEmpty())return;
     QString error;
-    if(!hydroRuntime_.open(QString::fromStdString(source),projectInstanceId(),mobileMode_,error))
+    if(!hydroRuntime_.open(source,projectInstanceId(),mobileMode_,error))
         emit errorOccurred(error);
     else {
         hydroRuntime_.setCacheBudget(quality_.profile().hydroCacheBudgetBytes);

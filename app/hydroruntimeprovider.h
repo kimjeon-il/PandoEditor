@@ -18,6 +18,7 @@ public:
     bool open(const QString& path,const QString& projectInstance,bool mobile,QString& error);
     void close(const QString& projectInstance);
     void requestViewport(const pandoeditor::HydroFlatWindow& view);
+    QStringList requiredAssetPaths(const pandoeditor::HydroFlatWindow& view) const;
     std::shared_ptr<const HydroRuntimeFrame> frame() const {return scheduler_.frame();}
     bool isOpen() const {return bool(dataset_);}
     const HydroMetadata* coreMetadata() const;

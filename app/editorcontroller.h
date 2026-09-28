@@ -6,6 +6,7 @@
 #include "autosavecoordinator.h"
 #include "projectpreviewcache.h"
 #include "countrylabelanchors.h"
+#include "physicaldatastore.h"
 #include "mapprojection.h"
 #include "mapscenebridge.h"
 #include "mapscenebuilder.h"
@@ -21,6 +22,7 @@
 #include <QVariantMap>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QHash>
 #include <map>
 #include <limits>
 #include <set>
@@ -453,6 +455,12 @@ private:
     bool discardOwnPresentationRecovery();
     void publishPresentation();
     void syncHydroData();
+    void initializePhysicalData();
+    void ensureHydroBootstrap();
+    void requestPhysicalAsset(const QString& relativePath);
+    QString physicalAssetPath(const QString& relativePath) const;
+    bool physicalAssetReady(const QString& relativePath) const;
+    void requestHydroWindow(const pandoeditor::HydroFlatWindow& window);
     ScreenColorPicker screenColorPicker_;
     std::vector<pandoeditor::ObjectRef> mapCandidates(double x,double y,double pixelsPerUnit,double zoom=1) const;
     std::vector<pandoeditor::ObjectRef> chooserRefs_;
@@ -572,9 +580,16 @@ private:
     MapSceneBuilder sceneBuilder_{packetCache_};
     MapSceneBridge sceneBridge_;
     std::shared_ptr<const WorldBaseFrame> worldBase_;
+    std::unique_ptr<PhysicalDataStore> physicalStore_;
+    QHash<QString,PhysicalAssetSpec> physicalAssets_;
+    QString physicalRoot_,physicalError_;
+    int physicalActive_=0,physicalQueued_=0;
     std::shared_ptr<TerrainTileProvider> terrainProvider_;
     QVariantList terrainTiles_;
     int terrainMissingTiles_=0;
+    double terrainLastScale_=0,terrainLastOriginX_=0,terrainLastOriginY_=0,
+           terrainLastWidth_=0,terrainLastHeight_=0;
+    std::optional<pandoeditor::HydroFlatWindow> pendingHydroWindow_;
     QString worldHydroNotice_;
     std::vector<WorldBaseRange> worldRanges_;
     std::uint64_t worldGeneration_=0;
