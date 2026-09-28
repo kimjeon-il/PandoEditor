@@ -24,9 +24,18 @@ struct SceneDrawRef {
     int layerOrder=-1;
 };
 
+struct WorldBaseRange {
+    std::string sourceId,ownerId,geometryId;
+    bool operator==(const WorldBaseRange& other) const noexcept {
+        return sourceId==other.sourceId&&ownerId==other.ownerId&&geometryId==other.geometryId;
+    }
+};
+
 struct WorldBaseFrame {
     std::shared_ptr<const CountryBaseMesh> mesh;
-    std::vector<std::string> countryIds;
+    // One entry per immutable GPU mesh slot. Several slots may belong to the
+    // same logical document object after built-in territory classification.
+    std::vector<WorldBaseRange> ranges;
 };
 
 struct WorldCountryDraw {
@@ -52,3 +61,5 @@ struct RenderScene {
 
 bool operator==(const SceneRevisions& left,const SceneRevisions& right) noexcept;
 std::uint64_t nextSceneRevision(const std::shared_ptr<const RenderScene>& previous);
+std::vector<std::size_t> worldRangeIndicesForOwner(const WorldBaseFrame& frame,
+                                                    const std::string& ownerId);

@@ -14,7 +14,7 @@ struct WorldPreviewResult {
 struct WorldCanonicalResult {
     std::shared_ptr<const pandoeditor::ProjectDocument> document;
     std::shared_ptr<const MapProjection> projection;
-    std::vector<std::string> countryIds;
+    std::vector<WorldBaseRange> ranges;
     QString hydroAvailability;
 };
 

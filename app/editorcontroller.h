@@ -553,7 +553,7 @@ private:
     QVariantList terrainTiles_;
     int terrainMissingTiles_=0;
     QString worldHydroNotice_;
-    std::vector<std::string> worldIds_;
+    std::vector<WorldBaseRange> worldRanges_;
     std::uint64_t worldGeneration_=0;
     QString worldStatus_=QStringLiteral("disabled");
     mutable pandoeditor::GeoSpatialIndex spatialIndex_;

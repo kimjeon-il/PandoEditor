@@ -22,7 +22,7 @@ void EditorController::startWorldBootstrap() {
             auto prepared=watcher->result();
             if(project_.revision()!=0) {cancelWorldBootstrap();return;}
             worldBase_=std::move(prepared.frame);
-            worldIds_=worldBase_->countryIds;
+            worldRanges_=worldBase_->ranges;
             projection_=*prepared.projection;
             try {
                 WorldDataset source;
@@ -53,7 +53,7 @@ void EditorController::startCanonicalWorld(std::uint64_t generation) {
         if(generation!=worldGeneration_)return;
         try {
             const auto prepared=watcher->result();
-            if(!worldBase_||prepared.countryIds!=worldIds_||project_.revision()!=0)
+            if(!worldBase_||prepared.ranges!=worldRanges_||project_.revision()!=0)
                 throw std::runtime_error("World bootstrap country order or project changed");
             pandoeditor::Project candidate;
             candidate.replace(*prepared.document);
@@ -84,8 +84,8 @@ void EditorController::startCanonicalWorldMesh(std::uint64_t generation) {
         if(generation!=worldGeneration_)return;
         try {
             auto frame=std::make_shared<WorldBaseFrame>();
-            frame->mesh=watcher->result();frame->countryIds=worldIds_;
-            if(!frame->mesh||frame->mesh->preview||frame->countryIds.size()!=258)
+            frame->mesh=watcher->result();frame->ranges=worldRanges_;
+            if(!frame->mesh||frame->mesh->preview||frame->ranges.size()!=258)
                 throw std::runtime_error("Wrong canonical world mesh");
             // One immutable scene publication replaces preview base and adds
             // every country edit already committed to the canonical document.
@@ -103,7 +103,7 @@ void EditorController::startCanonicalWorldMesh(std::uint64_t generation) {
 
 void EditorController::cancelWorldBootstrap() {
     ++worldGeneration_;
-    worldBase_.reset();worldIds_.clear();
+    worldBase_.reset();worldRanges_.clear();
     terrainTiles_.clear();terrainProvider_.reset();worldHydroNotice_.clear();
     emit terrainChanged();
     worldStatus_=QStringLiteral("disabled");emit worldStatusChanged();

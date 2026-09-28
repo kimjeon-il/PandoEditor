@@ -27,6 +27,7 @@ jobs:
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
+          modules: 'qtshadertools qtsvg'
           cache: true
       - name: Fresh configure and build
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2

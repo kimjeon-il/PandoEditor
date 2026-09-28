@@ -32,5 +32,36 @@ void builderPreservesM5DrawOrderAndCache() {
     require(panned->polygons.front().geometryPacket.positions==firstPositions,"view does not retriangulate");
     require(panned->revisions.view==1,"view revision carried");
 }
+void worldRangesKeepSourceSlotsAndLogicalOwnersSeparate() {
+    pandoeditor::ProjectDocument doc({},{{"countries","Countries"}});
+    doc.units.push_back({"OWNER","Owner",{},pandoeditor::UnitKind::Country,
+                         {"world-country-OWNER",1}});
+    doc.geometries.insert({"world-country-OWNER",1},square(0));
+    doc.presentation.membership.emplace(pandoeditor::territorialRef("OWNER"),"countries");
+    doc.presentation.objectStyles.emplace(pandoeditor::territorialRef("OWNER"),
+                                           pandoeditor::ObjectStyle{});
+    auto mesh=std::make_shared<CountryBaseMesh>();
+    mesh->preview=false;
+    auto frame=std::make_shared<WorldBaseFrame>();
+    frame->mesh=mesh;
+    frame->ranges.reserve(258);
+    frame->ranges.push_back({"SOURCE-A","OWNER","world-country-OWNER"});
+    frame->ranges.push_back({"SOURCE-B","OWNER","world-country-OWNER"});
+    for(int i=2;i<258;++i)
+        frame->ranges.push_back({"MISSING-"+std::to_string(i),
+                                 "MISSING-"+std::to_string(i),
+                                 "world-country-MISSING-"+std::to_string(i)});
+    MapViewState view;GeometryPacketCache cache;MapSceneBuilder builder(cache);
+    builder.setWorldBase(frame);
+    auto scene=builder.buildDocument(doc,1,view,{},{});
+    require(scene->worldCountries.size()==258,"world keeps every GPU source range");
+    require(scene->worldCountries[0].visible&&scene->worldCountries[1].visible,
+            "all ranges owned by the logical unit remain visible");
+    require(scene->worldCountries[0].id=="OWNER"&&scene->worldCountries[1].id=="OWNER",
+            "source ranges resolve to the same logical owner");
+    const auto owned=worldRangeIndicesForOwner(*frame,"OWNER");
+    require(owned==std::vector<std::size_t>({0,1}),
+            "selection highlight covers all ranges of a merged owner");
 }
-int main(){builderPreservesM5DrawOrderAndCache();}
+}
+int main(){builderPreservesM5DrawOrderAndCache();worldRangesKeepSourceSlotsAndLogicalOwnersSeparate();}

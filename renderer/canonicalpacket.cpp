@@ -60,7 +60,8 @@ CanonicalCountryStore::CanonicalCountryStore(QByteArray decompressed):bytes_(std
     require(array.size()==int(summary_.featureCount),"Wrong PCG1 metadata count");
     std::set<QString> unique;
     for(const auto& value:array) {
-        const auto object=value.toObject(),id=object.value("id").toString();
+        const auto object=value.toObject();
+        const auto id=object.value("id").toString();
         require(!id.isEmpty()&&unique.insert(id).second,"Invalid PCG1 country ID");
         metadata_.push_back(object);
     }

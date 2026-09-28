@@ -20,6 +20,7 @@ add_library(pandoeditor_editor STATIC
     projectgeopackage.cpp projectgeopackage.h
     mapscenebuilder.cpp mapscenebuilder.h
     mapscenebridge.cpp mapscenebridge.h
+    builtinworldpolicy.cpp builtinworldpolicy.h
     worlddataset.cpp worlddataset.h
     worlddatasetloader.cpp worlddatasetloader.h
     terrainimageprovider.cpp terrainimageprovider.h
@@ -239,6 +240,11 @@ if(BUILD_TESTING)
     add_test(NAME map_render_tests COMMAND map_render_tests -o -,txt)
     set_tests_properties(map_render_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(world_corpus_tests ../tests/world_corpus_tests.cpp)
+    add_executable(builtin_world_policy_tests ../tests/builtin_world_policy_tests.cpp)
+    target_link_libraries(builtin_world_policy_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(builtin_world_policy_tests PRIVATE
+        PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world")
+    add_test(NAME builtin_world_policy_tests COMMAND builtin_world_policy_tests -o -,txt)
     add_executable(m72_view_state_tests ../tests/m72_view_state_tests.cpp)
     target_link_libraries(m72_view_state_tests PRIVATE pandoeditor_editor)
     add_test(NAME m72_view_state_tests COMMAND m72_view_state_tests)
