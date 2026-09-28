@@ -5,6 +5,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+from contextlib import closing
 
 
 with tempfile.TemporaryDirectory() as temporary:
@@ -12,7 +13,10 @@ with tempfile.TemporaryDirectory() as temporary:
     package = pathlib.Path(temporary) / "project.gpkg"
     with package.open("rb") as stream:
         assert stream.read(16) == b"SQLite format 3\x00"
-    with sqlite3.connect(package) as database:
+    # sqlite3.Connection's context manager commits/rolls back but does not
+    # close the handle. Windows therefore cannot remove the temporary GPKG
+    # until the connection is closed explicitly.
+    with closing(sqlite3.connect(package)) as database:
         assert database.execute("pragma integrity_check").fetchone() == ("ok",)
         assert database.execute("pragma application_id").fetchone() == (1196444487,)
         contents = dict(database.execute("select table_name,data_type from gpkg_contents"))

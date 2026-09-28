@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+from contextlib import closing
 from pathlib import Path
 
 
@@ -40,7 +41,7 @@ def main(executable):
             distribution = json.loads(bundle.read("language_distribution.geojson"))["features"][0]
             assert distribution["properties"]["source_mode"] == "territorial"
             assert distribution["properties"]["territorial_unit_id"] == "A"
-        with sqlite3.connect(root / "countries.gpkg") as db:
+        with closing(sqlite3.connect(root / "countries.gpkg")) as db:
             all_tables = tables(db)
             assert "countries" in all_tables
             assert "language_distribution" not in all_tables
@@ -57,7 +58,7 @@ def main(executable):
             assert struct.unpack_from("<I", blob, 13)[0] == 1
             assert blob[17] == 1 and struct.unpack_from("<I", blob, 18)[0] == 3
             assert struct.unpack_from("<I", blob, 22)[0] == 2  # Outer ring and hole.
-        with sqlite3.connect(root / "selected.gpkg") as db:
+        with closing(sqlite3.connect(root / "selected.gpkg")) as db:
             all_tables = tables(db)
             assert {"countries", "places", "generic_features_point", "generic_features_line",
                     "generic_features_polygon", "language_distribution", "ethnicity_distribution",
