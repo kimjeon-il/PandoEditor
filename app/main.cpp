@@ -9,6 +9,8 @@
 #include "windowsframe.h"
 #include "terrainimageprovider.h"
 #include <QQuickStyle>
+#include <QStandardPaths>
+#include <QDir>
 
 #include <cstdlib>
 
@@ -27,6 +29,8 @@ int main(int argc, char *argv[])
     editorConfig.bootstrapWorld=true;
     editorConfig.autosaveEnabled=true;
     editorConfig.projectPreviewEnabled=true;
+    editorConfig.appearancePath=QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
+        .filePath(QStringLiteral("appearance-v2.json"));
     EditorController editor(editorConfig);
     QQmlApplicationEngine engine;
     auto* terrainImages=new TerrainImageProvider;

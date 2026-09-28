@@ -16,7 +16,7 @@ for(const [file,sha] of Object.entries({
   'layer-presentation.js':'531c81f888ace0e11c535efaa6f0bf37922a193f',
   'country-label-flags.js':'f95de74a7d51b80a83dd94d9cfb00f9a3bf7be86',
 })){
-  const bytes=await readFile(resolve(source,file));
+  const bytes=Buffer.from((await readFile(resolve(source,file),'utf8')).replace(/\r\n/g,'\n'));
   assert.equal(createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex'),sha,file);
 }
 const { drawGpuBaseScene }=await import(pathToFileURL(resolve(source,'gpu-base-scene-pass.js')));

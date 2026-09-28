@@ -43,6 +43,7 @@ struct EditorControllerConfig {
     bool projectPreviewEnabled=false;
     QString projectPreviewCachePath;
     QByteArray projectPreviewSourceSha="c0bd31d13dc8495593d78cf51f7cc195de7c9469";
+    QString appearancePath;
 };
 struct WebImportSession;
 
@@ -100,6 +101,11 @@ class EditorController : public QObject {
     Q_PROPERTY(QString documentId READ documentId NOTIFY stateChanged)
     Q_PROPERTY(QVariantList paths READ paths NOTIFY geometryChanged)
     Q_PROPERTY(QObject* mapSceneBridge READ mapSceneBridge CONSTANT)
+    Q_PROPERTY(QString projectionMode READ projectionMode NOTIFY viewStateChanged)
+    Q_PROPERTY(QVariantMap mapViewState READ mapViewState NOTIFY viewStateChanged)
+    Q_PROPERTY(QString terrainMode READ terrainMode NOTIFY terrainChanged)
+    Q_PROPERTY(QVariantMap appearancePreferences READ appearancePreferences NOTIFY appearanceChanged)
+    Q_PROPERTY(bool appearancePreviewOpen READ appearancePreviewOpen NOTIFY appearanceChanged)
     Q_PROPERTY(QVariantMap renderQuality READ renderQuality NOTIFY renderQualityChanged)
     Q_PROPERTY(QString worldStatus READ worldStatus NOTIFY worldStatusChanged)
     Q_PROPERTY(double mapWidth READ mapWidth NOTIFY geometryChanged)
@@ -237,9 +243,11 @@ public:
     QVariantList objectChooserCandidates() const;
     bool objectChooserOpen() const { return chooserBase_.has_value() && chooserRefs_.size()>1; }
     Q_INVOKABLE void beginMapSelection(double x,double y,bool additive=false,double pixelsPerUnit=0,double zoom=1);
+    Q_INVOKABLE void beginMapSelectionScreen(double x,double y,bool additive=false,double zoom=1);
     Q_INVOKABLE bool chooseMapCandidate(int index,bool toggle=false);
     Q_INVOKABLE void closeObjectChooser();
     Q_INVOKABLE QVariantMap pickObject(double x,double y,double pixelsPerUnit=1,double zoom=1) const;
+    Q_INVOKABLE QVariantMap pickObjectScreen(double x,double y,double zoom=1) const;
     Q_INVOKABLE void selectMapAt(double x,double y,bool additive=false);
     Q_INVOKABLE bool focusObject(const QVariantMap& ref={});
     // Read-only canonical serialization for non-mutating inspection/tests.
@@ -257,6 +265,19 @@ public:
     Q_INVOKABLE void cancelWebImport();
     QVariantList paths() const { return projection_.paths; }
     QObject* mapSceneBridge() {return &sceneBridge_;}
+    QString projectionMode() const;
+    QVariantMap mapViewState() const;
+    Q_INVOKABLE bool publishMapView(const QVariantMap& view);
+    Q_INVOKABLE bool setProjectionMode(const QString& mode);
+    QString terrainMode() const;
+    Q_INVOKABLE bool setTerrainMode(const QString& mode);
+    QVariantMap appearancePreferences() const;
+    bool appearancePreviewOpen() const {return appearancePreviewOpen_;}
+    Q_INVOKABLE void beginAppearancePreview();
+    Q_INVOKABLE bool previewAppearance(const QVariantMap& changes);
+    Q_INVOKABLE void resetAppearancePreview();
+    Q_INVOKABLE void cancelAppearancePreview();
+    Q_INVOKABLE bool applyAppearancePreview();
     QVariantMap renderQuality() const;
     std::shared_ptr<TerrainTileProvider> terrainProviderSnapshot() const {return terrainProvider_;}
     Q_INVOKABLE void recordMapFrame(double milliseconds);
@@ -412,6 +433,8 @@ signals:
     void hydroFrameChanged();
     void worldStatusChanged();
     void terrainChanged();
+    void viewStateChanged();
+    void appearanceChanged();
 private:
     void startWorldBootstrap();
     void startCanonicalWorld(std::uint64_t generation);
@@ -461,8 +484,13 @@ private:
     QString physicalAssetPath(const QString& relativePath) const;
     bool physicalAssetReady(const QString& relativePath) const;
     void requestHydroWindow(const pandoeditor::HydroFlatWindow& window);
+    void loadAppearancePreferences();
+    bool saveAppearancePreferences() const;
     ScreenColorPicker screenColorPicker_;
     std::vector<pandoeditor::ObjectRef> mapCandidates(double x,double y,double pixelsPerUnit,double zoom=1) const;
+    std::vector<pandoeditor::ObjectRef> mapCandidatesScreen(double x,double y,double zoom=1) const;
+    QVariantMap pickObjectFromCandidates(const std::vector<pandoeditor::ObjectRef>& hits) const;
+    void beginMapSelectionCandidates(std::vector<pandoeditor::ObjectRef> refs,bool additive);
     std::vector<pandoeditor::ObjectRef> chooserRefs_;
     std::optional<pandoeditor::ProjectSnapshot> chooserBase_;
     bool chooserToggle_=false;
@@ -579,6 +607,12 @@ private:
     int activeMapInteractions_=0;
     MapSceneBuilder sceneBuilder_{packetCache_};
     MapSceneBridge sceneBridge_;
+    MapViewState flatView_,globeView_;
+    QString appearancePath_;
+    QVariantMap appearance_;
+    QVariantMap appearanceOrigin_;
+    bool appearancePreviewOpen_=false;
+    QString terrainMode_=QStringLiteral("gray");
     std::shared_ptr<const WorldBaseFrame> worldBase_;
     std::unique_ptr<PhysicalDataStore> physicalStore_;
     QHash<QString,PhysicalAssetSpec> physicalAssets_;

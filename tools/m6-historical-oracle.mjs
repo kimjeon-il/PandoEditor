@@ -44,6 +44,6 @@ if(process.argv.includes('--web-only'))process.stdout.write(expected);
 else {
   const probe=process.argv.at(-1);
   assert.ok(probe&&!probe.startsWith('--'));
-  assert.equal(execFileSync(probe,{encoding:'utf8'}),expected);
+  assert.equal(execFileSync(probe,{encoding:'utf8'}).replace(/\r\n/g,'\n'),expected);
   console.log('pinned web historical catalog parity passed');
 }

@@ -85,6 +85,63 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void viewAndAppearanceControlsMatchDesktopAndCompact() {
+        for(bool mobile:{false,true}) {
+            EditorController editor(EditorControllerConfig{mobile,{}});QQmlApplicationEngine engine;QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& error:errors)warnings<<error.toString();});
+            engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));
+            QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+            auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+            window->resize(mobile?390:1100,mobile?760:720);exposeForTest(window);
+            QVERIFY(clickControl(window,"mapDisplayButton"));
+            auto* display=window->findChild<QObject*>("mapDisplayPopup");QVERIFY(display);
+            QVERIFY(capture(window).save(mobile?"m7-view-controls-compact.png":"m7-view-controls-desktop.png"));
+            QVERIFY(QMetaObject::invokeMethod(display,"close"));
+            QVERIFY(capture(window).save(mobile?"m7-globe-compact.png":"m7-globe-desktop.png"));
+            QVERIFY(clickControl(window,"mapDisplayButton"));
+            QVERIFY(clickControl(window,"projectionFlatButton"));QCOMPARE(editor.projectionMode(),QString("flat"));
+            QVERIFY(QMetaObject::invokeMethod(display,"close"));
+            QVERIFY(capture(window).save(mobile?"m7-flat-compact.png":"m7-flat-desktop.png"));
+            QVERIFY(clickControl(window,"mapDisplayButton"));
+            QVERIFY(clickControl(window,"projectionGlobeButton"));QCOMPARE(editor.projectionMode(),QString("globe"));
+            QVERIFY(clickControl(window,"terrainNoneButton"));QCOMPARE(editor.terrainMode(),QString("none"));
+            QVERIFY(clickControl(window,"terrainGrayButton"));QCOMPARE(editor.terrainMode(),QString("gray"));
+            QVERIFY(clickControl(window,"terrainColorButton"));QCOMPARE(editor.terrainMode(),QString("color"));
+            QVERIFY(QMetaObject::invokeMethod(display,"close"));
+
+            QVERIFY(clickControl(window,"preferencesButton"));
+            auto* dialog=window->findChild<QObject*>("appearancePreferencesDialog");QVERIFY(dialog&&dialog->property("visible").toBool());
+            QVERIFY(clickControl(window,"themeLightButton"));QCOMPARE(editor.appearancePreferences().value("theme").toString(),QString("light"));
+            QVERIFY(clickControl(window,"themeSystemButton"));QCOMPARE(editor.appearancePreferences().value("theme").toString(),QString("system"));
+            QVERIFY(clickControl(window,"themeDarkButton"));QCOMPARE(editor.appearancePreferences().value("theme").toString(),QString("dark"));
+            const QStringList accents={"Red","Orange","Green","Teal","Blue","Purple","Pink"};
+            for(const auto& accent:accents) {
+                QVERIFY(clickControl(window,"accent"+accent+"Button"));
+                QCOMPARE(editor.appearancePreferences().value("accentPreset").toString(),accent.toLower());
+            }
+            QVERIFY(clickControl(window,"preferencesResetButton"));
+            QCOMPARE(editor.appearancePreferences().value("theme").toString(),QString("system"));
+            QCOMPARE(editor.appearancePreferences().value("accentPreset").toString(),QString("blue"));
+            QVERIFY(clickControl(window,"themeDarkButton"));
+            QVERIFY(clickControl(window,"accentRedButton"));
+            QVERIFY(capture(window).save(mobile?"m7-preferences-compact.png":"m7-preferences-desktop.png"));
+            QVERIFY(clickControl(window,"preferencesCancelButton"));
+            QCOMPARE(editor.appearancePreferences().value("theme").toString(),QString("system"));
+            QCOMPARE(editor.appearancePreferences().value("accentPreset").toString(),QString("blue"));
+
+            QVERIFY(clickControl(window,"preferencesButton"));
+            QVERIFY(clickControl(window,"themeDarkButton"));QVERIFY(clickControl(window,"accentRedButton"));
+            QVERIFY(clickControl(window,"statusBarToggle"));QVERIFY(clickControl(window,"smoothLinesToggle"));
+            QVERIFY(clickControl(window,"preferencesApplyButton"));
+            const auto applied=editor.appearancePreferences();
+            QCOMPARE(applied.value("theme").toString(),QString("dark"));
+            QCOMPARE(applied.value("accentPreset").toString(),QString("red"));
+            QCOMPARE(applied.value("statusBarVisible").toBool(),false);
+            QCOMPARE(applied.value("smoothLines").toBool(),false);
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+            window->setProperty("allowClose",true);window->close();
+        }
+    }
     void flagOnlyIsIndependentFromNameChannel_data() {
         QTest::addColumn<int>("width");
         QTest::newRow("desktop")<<1100;
@@ -133,6 +190,7 @@ private slots:
         QVERIFY(file.open(QIODevice::WriteOnly));QVERIFY(file.write(projectcodec::encode(project))>0);file.close();
         EditorController editor(EditorControllerConfig{width==360,dir.filePath("private.json")});
         QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
+        QVERIFY(editor.setProjectionMode("flat"));
         QQmlApplicationEngine engine;
         engine.rootContext()->setContextProperty("editor",&editor);
         engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
@@ -735,7 +793,7 @@ private slots:
         auto path=QUrl::fromLocalFile(dir.path()+"/overlap.pando.json");
         QFile file(path.toLocalFile()); QVERIFY(file.open(QIODevice::WriteOnly));
         file.write(projectcodec::encode(project)); file.close();
-        EditorController editor; QVERIFY(editor.openFile(path));
+        EditorController editor; QVERIFY(editor.openFile(path)); QVERIFY(editor.setProjectionMode("flat"));
         QQmlApplicationEngine engine; engine.rootContext()->setContextProperty("editor",&editor);
         engine.load(QUrl("qrc:/common/Main.qml")); QVERIFY(!engine.rootObjects().isEmpty());
         auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); exposeForTest(window);
@@ -772,6 +830,7 @@ private slots:
     }
     void editingFlow() {
         EditorController editor;
+        QVERIFY(editor.setProjectionMode("flat"));
         QQmlApplicationEngine engine;
         QStringList warnings;
         connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){ for(const auto& e:errors) warnings<<e.toString(); });

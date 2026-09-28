@@ -8,7 +8,7 @@ for (const [name, sha] of Object.entries({
   'label-layout.js': '60eecd3854a6eed925ab23b893d8c88e63636a3a',
   'map-layout-metrics.js': 'a0d3450720524bddd569e2052c27e13dda6ccff6',
 })) {
-  const bytes = fs.readFileSync(new URL(`../tests/fixtures/web-hydro/source/${name}`, import.meta.url));
+  const bytes = Buffer.from(fs.readFileSync(new URL(`../tests/fixtures/web-hydro/source/${name}`, import.meta.url),'utf8').replace(/\r\n/g,'\n'));
   const blob = crypto.createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes])).digest('hex');
   assert.equal(blob, sha, `upstream blob changed: ${name}`);
 }

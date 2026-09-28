@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
 
 const executable=process.env.M72_BOUNDS_PROBE ?? '/tmp/m72-geobounds-probe';
-const root=resolve('tests/fixtures/world-rendering');
+const root=resolve(fileURLToPath(new URL('..',import.meta.url)),'tests/fixtures/world-rendering');
 const features=[
   ...JSON.parse(readFileSync(`${root}/countries.geojson`)).features,
   ...JSON.parse(readFileSync(`${root}/sentinels.geojson`)).features,

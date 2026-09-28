@@ -8,6 +8,8 @@
 #include <QJsonArray>
 #include <QDir>
 #include <QUuid>
+#include <QGuiApplication>
+#include <QStyleHints>
 #include <cmath>
 #include <map>
 #include <limits>
@@ -41,12 +43,31 @@ bool geometryBindingsChanged(const pandoeditor::ProjectDocument& before,
     }
     return false;
 }
+
+MapViewState defaultFlatView()
+{
+    MapViewState view;
+    view.mode=ProjectionMode::Flat;
+    view.translateX=.5;view.translateY=.5;
+    return view;
+}
+
+MapViewState defaultGlobeView()
+{
+    MapViewState view;
+    view.mode=ProjectionMode::Globe;
+    view.scale=.45;view.translateX=.5;view.translateY=.5;
+    return view;
+}
 }
 EditorController::EditorController(QObject* parent):EditorController(EditorControllerConfig{},parent) {}
 EditorController::EditorController(EditorControllerConfig config,QObject* parent)
-    :QObject(parent),quality_(config.mobileMode),storage_(std::move(config.privateProjectPath)),mobileMode_(config.mobileMode)
+    :QObject(parent),quality_(config.mobileMode),flatView_(defaultFlatView()),globeView_(defaultGlobeView()),
+     appearancePath_(std::move(config.appearancePath)),storage_(std::move(config.privateProjectPath)),mobileMode_(config.mobileMode)
 {
     qualityClock_.start();
+    loadAppearancePreferences();
+    connect(QGuiApplication::styleHints(),&QStyleHints::colorSchemeChanged,this,[this]{emit appearanceChanged();});
     packetCache_.setBudget(quality_.profile().renderPacketCacheBudgetBytes);
     bool restoredAutosave=false;
     if(config.autosaveEnabled) {
@@ -73,8 +94,13 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         emit presentationChanged();emit visualChanged();
     });
     initializePhysicalData();
+    bool restoredView=false;
     if(restoredAutosave) {
-        if(const auto view=autosave_->restoreView())sceneBridge_.publishView(*view);
+        if(const auto view=autosave_->restoreView()) {
+            sceneBridge_.publishView(*view);restoredView=true;
+            if(view->mode==ProjectionMode::Globe)globeView_=sceneBridge_.viewState();
+            else flatView_=sceneBridge_.viewState();
+        }
     } else if(config.bootstrapWorld) {
         project_.replace(pandoeditor::ProjectDocument(
             std::vector<pandoeditor::Country>{},std::vector<pandoeditor::Layer>{{"countries","국가"}}));
@@ -84,6 +110,10 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         if(!sample.open(QIODevice::ReadOnly)) throw std::runtime_error("Cannot read bundled sample");
         project_.replace(projectcodec::decode(sample.readAll()));
         projection_.rebuild(project_.document());
+    }
+    if(!restoredView) {
+        sceneBridge_.publishView(globeView_);
+        globeView_=sceneBridge_.viewState();
     }
     selectionInstance_=project_.instanceId();reloadDrafts();
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::hydroFrameChanged);
@@ -114,17 +144,17 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::presentationChanged,this,refresh);
     connect(this,&EditorController::geometryChanged,this,refresh);
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,refresh);
+    connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
+        const auto view=sceneBridge_.viewState();
+        if(view.mode==ProjectionMode::Globe)globeView_=view;else flatView_=view;
+        emit viewStateChanged();
+    });
     if(autosave_) {
         connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
             autosave_->scheduleView(sceneBridge_.viewState());
         });
         connect(autosave_.get(),&ProjectAutosave::saveFailed,this,&EditorController::errorOccurred);
     }
-    connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
-        if(sceneBridge_.viewState().mode==ProjectionMode::Globe&&!terrainTiles_.isEmpty()) {
-            terrainTiles_.clear();emit terrainChanged();
-        }
-    });
     QFile historicalFile(QStringLiteral(":/historical/historical-library-pilot.json"));
     if(historicalFile.open(QIODevice::ReadOnly))
         installHistoricalSource(historicalFile.readAll(),QStringLiteral("내장 pilot"),true);

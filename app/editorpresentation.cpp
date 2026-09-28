@@ -2,6 +2,7 @@
 #include <pandoeditor/presentationcommands.h>
 #include "losslessjson.h"
 #include "hydrodataprovider.h"
+#include "../renderer/projectionengine.h"
 #include <QFile>
 #include <QFileInfo>
 #include <QUrl>
@@ -59,15 +60,15 @@ void EditorController::requestTerrainViewport(double mapScale,double originX,dou
                                               double width,double height) {
     terrainLastScale_=mapScale;terrainLastOriginX_=originX;terrainLastOriginY_=originY;
     terrainLastWidth_=width;terrainLastHeight_=height;
+    if(terrainMode_=="none") {
+        if(terrainProvider_)terrainProvider_->protectVisible({});
+        if(!terrainTiles_.isEmpty()){terrainTiles_.clear();emit terrainChanged();}
+        return;
+    }
     if(!terrainProvider_||!terrainProvider_->available()||
        !std::isfinite(mapScale)||mapScale<=0||
        !std::isfinite(originX)||!std::isfinite(originY)||width<=0||height<=0)return;
     auto state=sceneBridge_.viewState();
-    if(state.mode==ProjectionMode::Globe) {
-        terrainProvider_->protectVisible({});
-        if(!terrainTiles_.isEmpty()) {terrainTiles_.clear();emit terrainChanged();}
-        return; // Flat textured rectangles cannot represent a globe surface.
-    }
     state.viewportWidth=width;state.viewportHeight=height;
     if(state.mode==ProjectionMode::Flat) {
         const auto parameters=projection_.hydroParameters();
@@ -88,8 +89,7 @@ void EditorController::requestTerrainViewport(double mapScale,double originX,dou
             ++missing;requestPhysicalAsset(QString("terrain/v0.12.6/%1/%2-%3.webp")
                 .arg(tile.level).arg(tile.column).arg(tile.row));continue;
         }
-        const auto source=QUrl(QStringLiteral("image://terrain/%1/%2/%3")
-                                   .arg(tile.level).arg(tile.column).arg(tile.row));
+        const auto source=QUrl::fromLocalFile(physicalAssetPath(relative));
         visible.push_back(QVariantMap{{"source",source},
             {"west",tile.west+tile.worldOffsetDegrees},{"east",tile.east+tile.worldOffsetDegrees},
             {"south",tile.south},{"north",tile.north}});
@@ -119,6 +119,15 @@ void EditorController::requestHydroViewport(double zoom,double mapScale,double o
     if(!std::isfinite(mapScale)||mapScale<=0||
        !std::isfinite(originX)||!std::isfinite(originY)||width<=0||height<=0)return;
     try {
+        const auto view=sceneBridge_.viewState();
+        const bool publishedGlobe=view.mode==ProjectionMode::Globe&&
+            std::abs(view.viewportWidth-width)<.5&&std::abs(view.viewportHeight-height)<.5;
+        if(publishedGlobe) {
+            requestHydroWindow({pandoeditor::webHydroThreshold(zoom),width,height,view.scale,
+                view.centerLongitude+view.rotationLongitude,
+                std::clamp(view.centerLatitude+view.rotationLatitude,-90.,90.)});
+            return;
+        }
         const auto center=projection_.unproject((width/2-originX)/mapScale,(height/2-originY)/mapScale);
         const auto unitX=projection_.project({1,0}).x-projection_.project({0,0}).x;
         const auto webScale=mapScale*std::min(1.,unitX)*180./3.14159265358979323846;
@@ -184,11 +193,21 @@ QVariantList EditorController::labelLayout(double scale,double originX,double or
         LabelSettings stored;if(const auto found=project_.document().presentation.webPresentation.labelSettings.find(ref);found!=project_.document().presentation.webPresentation.labelSettings.end())stored=found->second;
         std::string kind="country";if(ref.domain=="label")kind=project_.document().labels.at(project_.index().objects.at(ref)).kind;else {const auto unitKind=project_.document().units.at(project_.index().objects.at(ref)).kind;if(unitKind!=UnitKind::Country)kind="region";}
         const auto settings=automaticLabelSettings(kind,stored);double mapX=path["left"].toDouble()+path["width"].toDouble()/2,mapY=path["top"].toDouble()+path["height"].toDouble()/2;
+        auto geographic=projection_.unproject(mapX,mapY);
         if(ref.domain=="territorial"&&labelAnchors_)if(const auto anchor=labelAnchors_->anchor(displayText(ref.id),labelSourceId(ref.id))) {
-            const auto point=projection_.project(*anchor);mapX=point.x;mapY=point.y;
+            geographic=*anchor;const auto point=projection_.project(*anchor);mapX=point.x;mapY=point.y;
         }
-        if(settings.pinned&&settings.manualPosition){const auto point=projection_.project(*settings.manualPosition);mapX=point.x;mapY=point.y;}
-        const auto name=QString::fromStdString(properties->displayName);const double x=originX+mapX*scale,y=originY+mapY*scale;
+        if(settings.pinned&&settings.manualPosition){geographic=*settings.manualPosition;const auto point=projection_.project(*settings.manualPosition);mapX=point.x;mapY=point.y;}
+        const auto view=sceneBridge_.viewState();double x=originX+mapX*scale,y=originY+mapY*scale;
+        const bool publishedGlobe=view.mode==ProjectionMode::Globe&&
+            std::abs(view.viewportWidth-viewportWidth)<.5&&
+            std::abs(view.viewportHeight-viewportHeight)<.5;
+        if(publishedGlobe) {
+            const auto projected=projectPoint(geographic,view);
+            if(!projected.finite||!projected.visibleHemisphere)continue;
+            x=projected.x;y=projected.y;
+        }
+        const auto name=QString::fromStdString(properties->displayName);
         LabelLayoutCandidate candidate{ref,ref.domain+":"+ref.id,settings.collisionGroup,x,y,
             nameVisible?std::max(22.,metrics.horizontalAdvance(name)+16):24.,
             nameVisible?std::max(19.,metrics.height()):16.,settings.priority.value_or(0),

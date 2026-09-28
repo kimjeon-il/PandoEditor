@@ -4,6 +4,7 @@ import QtQuick.Layouts
 Rectangle {
     id:panel
     objectName:"objectPropertyPanel"
+    property bool compact:false
     property bool holdFieldCommits:false
     property bool navigating:false
     signal closeRequested()
@@ -28,7 +29,17 @@ Rectangle {
                 RowLayout {
                     Layout.fillWidth:true
                     Button { objectName:"objectLockButton";text:editor.objectProperties.lockLabel||"잠금";enabled:!!editor.objectProperties.lockEnabled;focusPolicy:Qt.NoFocus;onClicked:editor.toggleObjectLock() }
-                    Button { objectName:"focusSelection";text:"선택 객체로 이동";visible:editor.selectionItems.length===1;focusPolicy:Qt.NoFocus;onClicked:{panel.navigationStarted();editor.focusObject()} }
+                    Button {
+                        objectName:"focusSelection";text:"선택 객체로 이동"
+                        visible:editor.selectionItems.length===1;focusPolicy:Qt.NoFocus
+                        onClicked:{
+                            panel.navigationStarted()
+                            if(panel.compact){
+                                panel.closeRequested()
+                                Qt.callLater(function(){editor.focusObject()})
+                            }else editor.focusObject()
+                        }
+                    }
                 }
                 MultiObjectProperties { id:multi }
                 RegionValidityFields { holdCommits:panel.holdFieldCommits||panel.navigating }

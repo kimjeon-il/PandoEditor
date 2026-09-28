@@ -13,9 +13,26 @@ ApplicationWindow {
     minimumHeight: editor.mobileMode ? 0 : 560
     visible: true
     title: (editor.dirty ? "* " : "") + editor.fileName + " — Pandoeditor " + Qt.application.version
-    color: "#f3f5f7"
+    readonly property var appearance: editor.appearancePreferences
+    readonly property bool darkAppearance: appearance.effectiveTheme === "dark"
+    function accentColor(preset) {
+        const light={"red":"#d43d45","orange":"#dc781d","green":"#2c9857","teal":"#168f8b","blue":"#316fd3","purple":"#7856d6","pink":"#cc4b83"}
+        const dark={"red":"#ff7078","orange":"#f4a24c","green":"#58c97f","teal":"#3ac5bb","blue":"#70a6ff","purple":"#ad8cff","pink":"#ef78ab"}
+        return (darkAppearance?dark:light)[preset] || (darkAppearance?dark.blue:light.blue)
+    }
+    readonly property color resolvedAccent: accentColor(appearance.accentPreset)
+    color: darkAppearance ? "#111820" : "#f3f5f7"
+    palette.highlight: resolvedAccent
+    palette.link: resolvedAccent
+    palette.window: darkAppearance ? "#111820" : "#f3f5f7"
+    palette.windowText: darkAppearance ? "#edf4f8" : "#182531"
+    palette.base: darkAppearance ? "#19242e" : "#ffffff"
+    palette.text: darkAppearance ? "#edf4f8" : "#182531"
+    palette.button: darkAppearance ? "#24313c" : "#f5f7f9"
+    palette.buttonText: darkAppearance ? "#edf4f8" : "#182531"
     footer: Label {
         objectName: "documentFormatNotice"
+        visible: editor.appearancePreferences.statusBarVisible !== false
         property bool expanded: false
         width: window.width
         height: expanded ? contentHeight+12 : 26
@@ -204,6 +221,7 @@ ApplicationWindow {
         onGisImportRequested: gisPanel.open()
         onGisExportRequested: gisExportPanel.open()
         onProjectGpkgExportRequested: projectGpkgSaveDialog.open()
+        onPreferencesRequested: appearancePreferencesDialog.open()
         onOpenRequested: window.requestAction(editor.mobileMode ? "import" : "open")
         onSaveRequested: window.requestSave(false)
         onSaveAsRequested: editor.mobileMode ? window.requestExport() : window.requestSave(true)
@@ -212,6 +230,59 @@ ApplicationWindow {
     Shortcut { sequences: [StandardKey.Redo]; enabled: editor.canRedo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.redo() }
     Shortcut { sequence: StandardKey.Save; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestSave(false) }
     Shortcut { sequence: StandardKey.Open; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestAction(editor.mobileMode ? "import" : "open") }
+    Popup {
+        id: appearancePreferencesDialog
+        objectName: "appearancePreferencesDialog"
+        modal: true
+        focus: true
+        closePolicy: Popup.NoAutoClose
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(520,window.width-24)
+        height: Math.min(implicitHeight,window.height-24)
+        onOpened: editor.beginAppearancePreview()
+        onClosed: if(editor.appearancePreviewOpen) editor.cancelAppearancePreview()
+        background: Rectangle { color:window.darkAppearance?"#19242e":"#ffffff";border.color:window.darkAppearance?"#465869":"#cbd5df";radius:8 }
+        contentItem: Column {
+            spacing: 12
+            Label { text:"환경설정";font.pixelSize:20;font.bold:true }
+            Label { text:"화면";font.pixelSize:15;font.bold:true }
+            Label { text:"테마";font.bold:true }
+            Row {
+                spacing: 6
+                Button { objectName:"themeLightButton";text:"밝게";checkable:true;checked:editor.appearancePreferences.theme==="light";onClicked:editor.previewAppearance({"theme":"light"}) }
+                Button { objectName:"themeDarkButton";text:"어둡게";checkable:true;checked:editor.appearancePreferences.theme==="dark";onClicked:editor.previewAppearance({"theme":"dark"}) }
+                Button { objectName:"themeSystemButton";text:"시스템";checkable:true;checked:editor.appearancePreferences.theme==="system";onClicked:editor.previewAppearance({"theme":"system"}) }
+            }
+            Label { text:"강조색";font.bold:true }
+            Flow {
+                width: parent.width
+                spacing: 6
+                Repeater {
+                    model: [
+                        {id:"red",name:"빨강"},{id:"orange",name:"주황"},{id:"green",name:"초록"},
+                        {id:"teal",name:"청록"},{id:"blue",name:"파랑"},{id:"purple",name:"보라"},{id:"pink",name:"분홍"}
+                    ]
+                    delegate: Button {
+                        required property var modelData
+                        objectName: "accent"+modelData.id.charAt(0).toUpperCase()+modelData.id.slice(1)+"Button"
+                        text: modelData.name
+                        checkable: true
+                        checked: editor.appearancePreferences.accentPreset===modelData.id
+                        background: Rectangle { radius:4;color:window.accentColor(parent.modelData.id);border.width:parent.checked?3:1;border.color:window.darkAppearance?"#ffffff":"#263746" }
+                        onClicked: editor.previewAppearance({"accentPreset":modelData.id})
+                    }
+                }
+            }
+            CheckBox { objectName:"statusBarToggle";text:"하단 상태표시줄 표시";checked:editor.appearancePreferences.statusBarVisible!==false;onClicked:editor.previewAppearance({"statusBarVisible":checked}) }
+            CheckBox { objectName:"smoothLinesToggle";text:"경계선 부드럽게";checked:editor.appearancePreferences.smoothLines!==false;onClicked:editor.previewAppearance({"smoothLines":checked}) }
+            Row {
+                spacing: 8
+                Button { objectName:"preferencesResetButton";text:"기본값 복원";onClicked:editor.resetAppearancePreview() }
+                Button { objectName:"preferencesCancelButton";text:"취소";onClicked:{editor.cancelAppearancePreview();appearancePreferencesDialog.close()} }
+                Button { objectName:"preferencesApplyButton";text:"적용";highlighted:true;onClicked:if(editor.applyAppearancePreview())appearancePreferencesDialog.close() }
+            }
+        }
+    }
     HistoricalLibraryPanel {
         id: historicalPanel
         onLibraryFileRequested: historicalFileDialog.open()

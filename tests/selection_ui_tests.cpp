@@ -54,6 +54,7 @@ struct Harness {
         QFile f(path.toLocalFile());if(!f.open(QIODevice::WriteOnly))throw std::runtime_error("fixture write");
         f.write(projectcodec::encode(p));f.close();
         if(!editor.openFile(path))throw std::runtime_error("fixture open");
+        if(!editor.setProjectionMode("flat"))throw std::runtime_error("flat fixture view");
         QObject::connect(&engine,&QQmlEngine::warnings,&engine,[this](const QList<QQmlError>& errors){
             for(const auto& e:errors)warnings<<e.toString();
         });
@@ -112,6 +113,9 @@ struct Harness {
                                map->property("originY").toDouble()+p.y()*map->property("mapScale").toDouble()}).toPoint();
     }
     void mapClick(const QString& id,Qt::KeyboardModifiers mods=Qt::NoModifier,bool touch=false){
+        // Let focus/fit requests publish their new viewport before translating
+        // project coordinates back into the window's scene coordinates.
+        QTest::qWait(100);
         auto pos=mapPoint(id);
         if(id=="A"){
             // At 360px the web's 12px subunit tolerance reaches the rectangle

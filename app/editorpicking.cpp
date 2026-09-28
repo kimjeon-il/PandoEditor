@@ -1,4 +1,5 @@
 #include "editorcontroller.h"
+#include "../renderer/projectionengine.h"
 #include <pandoeditor/picking.h>
 #include <pandoeditor/maprenderorder.h>
 #include <QCollator>
@@ -126,6 +127,35 @@ std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double 
     });
     return found;
 }
+std::vector<ObjectRef> EditorController::mapCandidatesScreen(double x,double y,double zoom) const {
+    const auto view=sceneBridge_.viewState();
+    if(view.mode==ProjectionMode::Flat) {
+        const auto parameters=projection_.hydroParameters();
+        const double cosine=parameters.value("cosLatitude",1.).toDouble();
+        const double mapScale=view.scale/(std::max(.01,cosine)*180/3.14159265358979323846);
+        if(!(mapScale>0)||!std::isfinite(mapScale))return {};
+        const double originX=view.translateX+parameters.value("minX").toDouble()*mapScale;
+        const double originY=view.translateY-parameters.value("maxLatitude").toDouble()*mapScale;
+        return mapCandidates((x-originX)/mapScale,(y-originY)/mapScale,mapScale,zoom);
+    }
+    const auto geographic=unprojectView(x,y,view);
+    if(!geographic)return {};
+    const auto mapPoint=projection_.project(*geographic);
+    const auto screenPoint=projectPoint(*geographic,view);
+    double pixelsPerMapUnit=0;
+    const pandoeditor::Point probes[]={{geographic->x+.01,geographic->y},
+                                      {geographic->x,std::clamp(geographic->y+.01,-90.,90.)}};
+    for(const auto& probe:probes) {
+        const auto screenProbe=projectPoint(probe,view);
+        const auto mapProbe=projection_.project(probe);
+        const double mapDistance=std::hypot(mapProbe.x-mapPoint.x,mapProbe.y-mapPoint.y);
+        const double screenDistance=std::hypot(screenProbe.x-screenPoint.x,screenProbe.y-screenPoint.y);
+        if(screenProbe.finite&&mapDistance>0&&std::isfinite(screenDistance))
+            pixelsPerMapUnit=std::max(pixelsPerMapUnit,screenDistance/mapDistance);
+    }
+    if(!(pixelsPerMapUnit>0)||!std::isfinite(pixelsPerMapUnit))pixelsPerMapUnit=1;
+    return mapCandidates(mapPoint.x,mapPoint.y,pixelsPerMapUnit,zoom);
+}
 QVariantList EditorController::objectChooserCandidates() const {
     QVariantList rows;
     if(!objectChooserOpen())return rows;
@@ -143,7 +173,13 @@ void EditorController::closeObjectChooser(){
 }
 void EditorController::beginMapSelection(double x,double y,bool additive,double pixelsPerUnit,double zoom){
     if(!std::isfinite(x)||!std::isfinite(y)||!std::isfinite(pixelsPerUnit)||pixelsPerUnit<0)return;
-    auto refs=mapCandidates(x,y,pixelsPerUnit,zoom);
+    beginMapSelectionCandidates(mapCandidates(x,y,pixelsPerUnit,zoom),additive);
+}
+void EditorController::beginMapSelectionScreen(double x,double y,bool additive,double zoom){
+    if(!std::isfinite(x)||!std::isfinite(y))return;
+    beginMapSelectionCandidates(mapCandidatesScreen(x,y,zoom),additive);
+}
+void EditorController::beginMapSelectionCandidates(std::vector<ObjectRef> refs,bool additive){
     for(auto& ref:refs)if(ref.domain=="distributionEntry")for(const auto& entry:project_.document().distributionEntries)if(entry.id==ref.id){ref={"distributionLayer",entry.layerId};break;}
     std::set<ObjectRef> uniqueRefs;refs.erase(std::remove_if(refs.begin(),refs.end(),[&](const auto& ref){return !uniqueRefs.insert(ref).second;}),refs.end());
     closeObjectChooser();

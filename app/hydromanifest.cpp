@@ -12,7 +12,13 @@
 
 namespace {
 bool contained(const QString& root,const QString& path) {
-    return path.startsWith(root+QDir::separator(),Qt::CaseSensitive);
+    const auto normalizedRoot=QDir::cleanPath(QDir::fromNativeSeparators(root));
+    const auto normalizedPath=QDir::cleanPath(QDir::fromNativeSeparators(path));
+#ifdef Q_OS_WIN
+    return normalizedPath.startsWith(normalizedRoot+'/',Qt::CaseInsensitive);
+#else
+    return normalizedPath.startsWith(normalizedRoot+'/',Qt::CaseSensitive);
+#endif
 }
 bool integer(const QJsonValue& value,int& result) {
     if(!value.isDouble())return false;
@@ -35,7 +41,8 @@ bool asset(const QJsonValue& value,const HydroManifest& manifest,HydroAssetSpec&
     }
     result.bytes=static_cast<qint64>(count);
     result.assetRoot=manifest.assetRoot;
-    result.path=QDir::cleanPath(QDir(manifest.root).absoluteFilePath(result.url));
+    result.path=QDir::cleanPath(QDir::fromNativeSeparators(
+        QDir(manifest.root).absoluteFilePath(result.url)));
     if(!contained(manifest.assetRoot,result.path)){
         error=label+QStringLiteral(" 경로가 수계 자료 폴더를 벗어났습니다.");return false;
     }
@@ -53,8 +60,10 @@ HydroManifest readHydroManifest(const QString& path) {
     const auto selected=input.isDir()?QDir(path).filePath("manifest.json"):path;
     result.manifestPath=QFileInfo(selected).canonicalFilePath();
     if(result.manifestPath.isEmpty()){result.error=QStringLiteral("manifest.json을 열 수 없습니다.");return result;}
-    result.root=QFileInfo(result.manifestPath).absolutePath();
-    result.assetRoot=QDir(QDir(result.root).absoluteFilePath("..")).canonicalPath();
+    result.root=QDir::cleanPath(QDir::fromNativeSeparators(
+        QFileInfo(result.manifestPath).absolutePath()));
+    result.assetRoot=QDir::cleanPath(QDir::fromNativeSeparators(
+        QDir(QDir(result.root).absoluteFilePath("..")).canonicalPath()));
     QFile file(result.manifestPath);
     if(!file.open(QIODevice::ReadOnly)){result.error=QStringLiteral("manifest.json을 열 수 없습니다.");return result;}
     QJsonParseError parseError;

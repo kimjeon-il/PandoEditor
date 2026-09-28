@@ -51,7 +51,7 @@ add_library(pandoeditor_editor STATIC
     editorgis.cpp
     editorgisexport.cpp
     editorcontent.cpp
-    editorcontroller.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
+    editorcontroller.cpp editorview.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
     ../renderer/mapviewstate.cpp
@@ -68,6 +68,8 @@ add_library(pandoeditor_editor STATIC
     ../renderer/scenepatch.cpp ../renderer/scenepatch.h
     ../renderer/geometrypacketcache.cpp
     ../renderer/maprenderitem.cpp ../renderer/maprenderitem.h
+    ../renderer/geographicimagemesh.cpp ../renderer/geographicimagemesh.h
+    ../renderer/geographicimageitem.cpp ../renderer/geographicimageitem.h
     ../renderer/gpumapitem.cpp ../renderer/gpumapitem.h
     ../renderer/scenegraph/mapmaterial.cpp ../renderer/scenegraph/mapmaterial.h
     ../renderer/scenegraph/mapscenenode.cpp ../renderer/scenegraph/mapscenenode.h
@@ -282,6 +284,12 @@ if(BUILD_TESTING)
     target_compile_definitions(physical_data_store_tests PRIVATE
         PHYSICAL_INVENTORY="${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-c0bd31d1.json")
     add_test(NAME physical_data_store_tests COMMAND physical_data_store_tests -o -,txt)
+    add_executable(view_navigation_tests ../tests/view_navigation_tests.cpp)
+    target_link_libraries(view_navigation_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(view_navigation_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME view_navigation_tests COMMAND view_navigation_tests -o -,txt)
+    set_tests_properties(view_navigation_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(m72_view_state_tests ../tests/m72_view_state_tests.cpp)
     target_link_libraries(m72_view_state_tests PRIVATE pandoeditor_editor)
     add_test(NAME m72_view_state_tests COMMAND m72_view_state_tests)

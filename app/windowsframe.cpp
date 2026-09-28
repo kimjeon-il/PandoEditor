@@ -2,6 +2,7 @@
 #include "maprenderitem.h"
 #include "gpumapitem.h"
 #include "referenceimageitem.h"
+#include "geographicimageitem.h"
 #include "referenceimagelibrary.h"
 #include <QFontDatabase>
 #include <QGuiApplication>
@@ -26,6 +27,7 @@ void registerWindowsFrameType()
     qmlRegisterType<MapRenderItem>("Pandoeditor.Windowing", 1, 0, "MapRenderItem");
     qmlRegisterType<GpuMapItem>("Pandoeditor.Windowing", 1, 0, "GpuMapItem");
     qmlRegisterType<ReferenceImageItem>("Pandoeditor.Windowing", 1, 0, "ReferenceImageItem");
+    qmlRegisterType<GeographicImageItem>("Pandoeditor.Windowing", 1, 0, "GeographicImageItem");
     qmlRegisterType<ReferenceImageLibrary>("Pandoeditor.Windowing", 1, 0, "ReferenceImageLibrary");
 }
 

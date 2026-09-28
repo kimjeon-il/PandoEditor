@@ -17,6 +17,34 @@ Popup {
         ColumnLayout {
             width: parent.width
             Label { text: "지도 표시"; font.bold: true }
+            GroupBox {
+                Layout.fillWidth: true
+                title: "투영법"
+                RowLayout {
+                    anchors.fill: parent
+                    Button { objectName:"projectionGlobeButton"; text:"지구본"; checkable:true; checked:editor.projectionMode==="globe"; onClicked:editor.setProjectionMode("globe") }
+                    Button { objectName:"projectionFlatButton"; text:"평면지도"; checkable:true; checked:editor.projectionMode==="flat"; onClicked:editor.setProjectionMode("flat") }
+                }
+            }
+            GroupBox {
+                Layout.fillWidth: true
+                title: "지형"
+                ColumnLayout {
+                    anchors.fill: parent
+                    RadioButton { objectName:"terrainNoneButton"; text:"없음"; checked:editor.terrainMode==="none"; onClicked:editor.setTerrainMode("none") }
+                    RadioButton { objectName:"terrainGrayButton"; text:"흑백"; checked:editor.terrainMode==="gray"; onClicked:editor.setTerrainMode("gray") }
+                    RadioButton { objectName:"terrainColorButton"; text:"색채"; checked:editor.terrainMode==="color"; onClicked:editor.setTerrainMode("color") }
+                }
+            }
+            GroupBox {
+                Layout.fillWidth: true
+                title: "수계"
+                RowLayout {
+                    anchors.fill: parent
+                    CheckBox { text:"강"; checked:editor.hydroStyle.riversVisible; onClicked:editor.setPresentationVisibility("rivers",checked) }
+                    CheckBox { text:"호수"; checked:editor.hydroStyle.lakesVisible; onClicked:editor.setPresentationVisibility("lakes",checked) }
+                }
+            }
             Repeater {
                 model: editor.presentationGroups.length
                 delegate: GroupBox {

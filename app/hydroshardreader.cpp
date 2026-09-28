@@ -5,12 +5,26 @@
 #include <QFileInfo>
 #include <QMutexLocker>
 
+namespace {
+QString normalizedCanonical(const QString& path) {
+    return QDir::cleanPath(QDir::fromNativeSeparators(QFileInfo(path).canonicalFilePath()));
+}
+bool contained(const QString& root,const QString& path) {
+    const auto normalizedRoot=QDir::cleanPath(QDir::fromNativeSeparators(root));
+#ifdef Q_OS_WIN
+    return path.startsWith(normalizedRoot+'/',Qt::CaseInsensitive);
+#else
+    return path.startsWith(normalizedRoot+'/',Qt::CaseSensitive);
+#endif
+}
+}
+
 QByteArray HydroShardReader::readPack(quint32 offset,quint32 length,QString& error) {
     QMutexLocker lock(&mutex_);
     error.clear();
     const QFileInfo info(asset_.path);
-    const auto canonical=info.canonicalFilePath();
-    if(canonical.isEmpty()||!canonical.startsWith(asset_.assetRoot+QDir::separator())||
+    const auto canonical=normalizedCanonical(asset_.path);
+    if(canonical.isEmpty()||!contained(asset_.assetRoot,canonical)||
        info.size()!=asset_.bytes||!length||quint64(offset)+length>quint64(asset_.bytes)){
         error=QStringLiteral("수계 shard 경로, 길이 또는 pack 범위가 올바르지 않습니다.");return {};
     }
@@ -30,7 +44,7 @@ QByteArray HydroShardReader::readPack(quint32 offset,quint32 length,QString& err
     const auto compressed=file.read(length);
     const QFileInfo after(asset_.path);
     if(compressed.size()!=length||file.error()!=QFileDevice::NoError||
-       after.canonicalFilePath()!=canonical||after.size()!=asset_.bytes||
+       normalizedCanonical(after.filePath())!=canonical||after.size()!=asset_.bytes||
        after.lastModified()!=verifiedModified_){
         verified_=false;error=QStringLiteral("수계 shard가 pack 읽기 중 변경되었습니다.");return {};
     }
