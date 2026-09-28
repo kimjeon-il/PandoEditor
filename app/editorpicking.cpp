@@ -110,7 +110,7 @@ std::vector<ObjectRef> EditorController::mapCandidates(double x,double y,double 
             if(hit){found.push_back(ref);seen.insert(ref);}
         }
     }
-    QCollator names(QLocale(QLocale::Korean));
+    QCollator names{QLocale{QLocale::Korean}};
     std::stable_sort(found.begin(),found.end(),[&](const ObjectRef& a,const ObjectRef& b){
         // Chooser order is independent of paint order: kinds first, then names.
         const auto leftRank=chooserKindRank(project_,a);

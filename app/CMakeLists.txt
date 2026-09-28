@@ -2,7 +2,15 @@ find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 find_package(Qt6 REQUIRED COMPONENTS Svg)
 find_package(Qt6 REQUIRED COMPONENTS Sql)
 find_package(Qt6 REQUIRED COMPONENTS Network)
-find_package(Qt6 6.5 REQUIRED COMPONENTS ShaderTools)
+if(ANDROID)
+    find_package(Qt6ShaderToolsTools 6.5 REQUIRED
+        PATHS "${QT_HOST_PATH_CMAKE_DIR}/Qt6ShaderToolsTools"
+        NO_DEFAULT_PATH
+        NO_CMAKE_FIND_ROOT_PATH
+    )
+else()
+    find_package(Qt6 6.5 REQUIRED COMPONENTS ShaderTools)
+endif()
 find_package(ZLIB REQUIRED)
 qt_add_executable(pandoeditor main.cpp)
 

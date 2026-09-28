@@ -131,7 +131,7 @@ QVariantList EditorController::searchResults() const {
     rows.erase(std::remove_if(rows.begin(),rows.end(),[&](const QVariant& value){
         const auto row=value.toMap();const auto key=row["key"].toString();return !resultIds.insert(key).second;
     }),rows.end());
-    QCollator compare(QLocale(QLocale::Korean));
+    QCollator compare{QLocale{QLocale::Korean}};
     std::stable_sort(rows.begin(),rows.end(),[&](const QVariant& a,const QVariant& b){
         const auto left=a.toMap(),right=b.toMap();
         const int result=compare.compare(left["name"].toString(),right["name"].toString());
