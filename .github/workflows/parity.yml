@@ -28,7 +28,7 @@ jobs:
       - name: Fresh Debug build and shaders
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
       - name: Full CTest
-        run: ctest --test-dir build --output-on-failure --output-junit build/ctest-results.xml
+        run: ctest --test-dir build --output-on-failure --output-junit "$GITHUB_WORKSPACE/build/ctest-results.xml"
       - name: Collect registered web/native Oracle evidence
         if: always()
         continue-on-error: true

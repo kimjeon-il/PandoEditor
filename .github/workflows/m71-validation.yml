@@ -40,7 +40,7 @@ jobs:
           done
       - name: Full available CTest suite
         run: |
-          ctest --test-dir build --output-on-failure --output-junit build/results.xml
+          ctest --test-dir build --output-on-failure --output-junit "$GITHUB_WORKSPACE/build/results.xml"
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
           root = ET.parse('build/results.xml').getroot()
