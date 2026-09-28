@@ -131,7 +131,7 @@ QVariantList EditorController::searchResults() const {
     rows.erase(std::remove_if(rows.begin(),rows.end(),[&](const QVariant& value){
         const auto row=value.toMap();const auto key=row["key"].toString();return !resultIds.insert(key).second;
     }),rows.end());
-    QCollator compare(QLocale(QLocale::Korean));
+    QCollator compare{QLocale{QLocale::Korean}};
     std::stable_sort(rows.begin(),rows.end(),[&](const QVariant& a,const QVariant& b){
         const auto left=a.toMap(),right=b.toMap();
         const int result=compare.compare(left["name"].toString(),right["name"].toString());
@@ -215,7 +215,14 @@ void EditorController::selectLayer(const QString& id) {
 }
 QVariantMap EditorController::pickObject(double x,double y,double pixelsPerUnit,double zoom) const {
     if(!std::isfinite(x)||!std::isfinite(y)) return {};
-    const auto hits=mapCandidates(x,y,pixelsPerUnit,zoom);const auto visuals=countryVisuals();
+    return pickObjectFromCandidates(mapCandidates(x,y,pixelsPerUnit,zoom));
+}
+QVariantMap EditorController::pickObjectScreen(double x,double y,double zoom) const {
+    if(!std::isfinite(x)||!std::isfinite(y))return {};
+    return pickObjectFromCandidates(mapCandidatesScreen(x,y,zoom));
+}
+QVariantMap EditorController::pickObjectFromCandidates(const std::vector<ObjectRef>& hits) const {
+    const auto visuals=countryVisuals();
     std::optional<ObjectRef> top;int topLayer=std::numeric_limits<int>::min();double topRank=-std::numeric_limits<double>::infinity();
     for(const auto& path:projection_.paths) {
         const auto row=path.toMap();const ObjectRef ref=row.contains("domain")?ObjectRef{row["domain"].toString().toStdString(),row["objectId"].toString().toStdString()}:territorialRef(row["countryId"].toString().toStdString());

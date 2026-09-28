@@ -1,7 +1,16 @@
 find_package(Qt6 REQUIRED COMPONENTS Concurrent)
 find_package(Qt6 REQUIRED COMPONENTS Svg)
 find_package(Qt6 REQUIRED COMPONENTS Sql)
-find_package(Qt6 6.5 REQUIRED COMPONENTS ShaderTools)
+find_package(Qt6 REQUIRED COMPONENTS Network)
+if(ANDROID)
+    find_package(Qt6ShaderToolsTools 6.5 REQUIRED
+        PATHS "${QT_HOST_PATH_CMAKE_DIR}/Qt6ShaderToolsTools"
+        NO_DEFAULT_PATH
+        NO_CMAKE_FIND_ROOT_PATH
+    )
+else()
+    find_package(Qt6 6.5 REQUIRED COMPONENTS ShaderTools)
+endif()
 find_package(ZLIB REQUIRED)
 qt_add_executable(pandoeditor main.cpp)
 
@@ -18,8 +27,13 @@ add_library(pandoeditor_editor STATIC
     gisgeopackage.cpp gisgeopackage.h
     gisgeopackagewriter.cpp
     projectgeopackage.cpp projectgeopackage.h
+    autosavecoordinator.cpp autosavecoordinator.h
+    projectpreviewcache.cpp projectpreviewcache.h
+    countrylabelanchors.cpp countrylabelanchors.h
+    physicaldatastore.cpp physicaldatastore.h
     mapscenebuilder.cpp mapscenebuilder.h
     mapscenebridge.cpp mapscenebridge.h
+    builtinworldpolicy.cpp builtinworldpolicy.h
     worlddataset.cpp worlddataset.h
     worlddatasetloader.cpp worlddatasetloader.h
     terrainimageprovider.cpp terrainimageprovider.h
@@ -45,7 +59,7 @@ add_library(pandoeditor_editor STATIC
     editorgis.cpp
     editorgisexport.cpp
     editorcontent.cpp
-    editorcontroller.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
+    editorcontroller.cpp editorview.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
     ../renderer/mapviewstate.cpp
@@ -62,13 +76,15 @@ add_library(pandoeditor_editor STATIC
     ../renderer/scenepatch.cpp ../renderer/scenepatch.h
     ../renderer/geometrypacketcache.cpp
     ../renderer/maprenderitem.cpp ../renderer/maprenderitem.h
+    ../renderer/geographicimagemesh.cpp ../renderer/geographicimagemesh.h
+    ../renderer/geographicimageitem.cpp ../renderer/geographicimageitem.h
     ../renderer/gpumapitem.cpp ../renderer/gpumapitem.h
     ../renderer/scenegraph/mapmaterial.cpp ../renderer/scenegraph/mapmaterial.h
     ../renderer/scenegraph/mapscenenode.cpp ../renderer/scenegraph/mapscenenode.h
     ../renderer/referenceimageitem.cpp ../renderer/referenceimageitem.h
 )
 target_include_directories(pandoeditor_editor PUBLIC . ../renderer PRIVATE ../third_party/earcut)
-target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg Qt6::Sql ZLIB::ZLIB)
+target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg Qt6::Sql Qt6::Network ZLIB::ZLIB)
 qt_add_shaders(pandoeditor_editor m73_map_shaders
     PREFIX "/m73" BASE "${PROJECT_SOURCE_DIR}/renderer"
     FILES
@@ -106,6 +122,12 @@ qt_add_resources(pandoeditor ui
         "${PROJECT_SOURCE_DIR}/ui/common/ObjectSearch.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/ObjectChooser.qml"
 )
+qt_add_resources(pandoeditor world_metadata
+    PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
+    FILES "${PROJECT_SOURCE_DIR}/assets/world/country-label-anchors-v0.10.1.json")
+qt_add_resources(pandoeditor historical_pilot
+    PREFIX "/historical" BASE "${PROJECT_SOURCE_DIR}/assets/historical"
+    FILES "${PROJECT_SOURCE_DIR}/assets/historical/historical-library-pilot.json")
 
 qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
@@ -117,7 +139,9 @@ qt_add_resources(pandoeditor world_data PREFIX "/world" BASE "${PROJECT_SOURCE_D
         "${PROJECT_SOURCE_DIR}/assets/world/countries-canonical-v0.33.0.pcg.gz"
         "${PROJECT_SOURCE_DIR}/assets/world/world-mesh-v0.12.6.bin.gz"
         "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.12.6/manifest.json"
-        "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.1/manifest.json")
+        "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.1/manifest.json"
+        "${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-c0bd31d1.json")
+
 file(GLOB_RECURSE DEFAULT_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/assets/defaults/flags/*")
 qt_add_resources(pandoeditor default_flags PREFIX "/defaults/flags" BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags" FILES ${DEFAULT_FLAG_FILES})
 
@@ -212,6 +236,9 @@ if(BUILD_TESTING)
     target_link_libraries(historical_editor_tests PRIVATE pandoeditor_editor Qt6::Test)
     qt_add_resources(historical_editor_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    qt_add_resources(historical_editor_tests historical_pilot PREFIX "/historical"
+        BASE "${PROJECT_SOURCE_DIR}/assets/historical"
+        FILES "${PROJECT_SOURCE_DIR}/assets/historical/historical-library-pilot.json")
     add_test(NAME historical_editor_tests COMMAND historical_editor_tests -o -,txt)
     set_tests_properties(historical_editor_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     find_package(Qt6 REQUIRED COMPONENTS Test)
@@ -239,6 +266,38 @@ if(BUILD_TESTING)
     add_test(NAME map_render_tests COMMAND map_render_tests -o -,txt)
     set_tests_properties(map_render_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(world_corpus_tests ../tests/world_corpus_tests.cpp)
+    add_executable(builtin_world_policy_tests ../tests/builtin_world_policy_tests.cpp)
+    target_link_libraries(builtin_world_policy_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(builtin_world_policy_tests PRIVATE
+        PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world")
+    add_test(NAME builtin_world_policy_tests COMMAND builtin_world_policy_tests -o -,txt)
+    add_executable(autosave_tests ../tests/autosave_tests.cpp)
+    target_link_libraries(autosave_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(autosave_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME autosave_tests COMMAND autosave_tests -o -,txt)
+    add_executable(project_preview_cache_tests ../tests/project_preview_cache_tests.cpp)
+    target_link_libraries(project_preview_cache_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(project_preview_cache_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME project_preview_cache_tests COMMAND project_preview_cache_tests -o -,txt)
+    add_executable(country_label_anchor_tests ../tests/country_label_anchor_tests.cpp)
+    target_link_libraries(country_label_anchor_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(country_label_anchor_tests world_metadata
+        PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
+        FILES "${PROJECT_SOURCE_DIR}/assets/world/country-label-anchors-v0.10.1.json")
+    add_test(NAME country_label_anchor_tests COMMAND country_label_anchor_tests -o -,txt)
+    add_executable(physical_data_store_tests ../tests/physical_data_store_tests.cpp)
+    target_link_libraries(physical_data_store_tests PRIVATE pandoeditor_editor Qt6::Test Qt6::Network)
+    target_compile_definitions(physical_data_store_tests PRIVATE
+        PHYSICAL_INVENTORY="${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-c0bd31d1.json")
+    add_test(NAME physical_data_store_tests COMMAND physical_data_store_tests -o -,txt)
+    add_executable(view_navigation_tests ../tests/view_navigation_tests.cpp)
+    target_link_libraries(view_navigation_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(view_navigation_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME view_navigation_tests COMMAND view_navigation_tests -o -,txt)
+    set_tests_properties(view_navigation_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(m72_view_state_tests ../tests/m72_view_state_tests.cpp)
     target_link_libraries(m72_view_state_tests PRIVATE pandoeditor_editor)
     add_test(NAME m72_view_state_tests COMMAND m72_view_state_tests)

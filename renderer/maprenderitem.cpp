@@ -47,13 +47,36 @@ void MapRenderItem::setHydroStyle(QVariantMap value){if(hydroStyle_==value)retur
 void MapRenderItem::setHiddenHydroIds(QVariantList value){if(hiddenHydroIds_==value)return;hiddenHydroIds_=std::move(value);emit hydroPresentationChanged();update();}
 void MapRenderItem::setSelectedHydroId(QString value){if(selectedHydroId_==value)return;selectedHydroId_=std::move(value);emit hydroPresentationChanged();update();}
 void MapRenderItem::setHydroFrame(std::shared_ptr<const HydroRuntimeFrame> value){hydroFrame_=std::move(value);update();}
+void MapRenderItem::setSmoothLines(bool value){if(smoothLines_==value)return;smoothLines_=value;setAntialiasing(value);emit smoothLinesChanged();update();}
+void MapRenderItem::setSceneBridge(QObject* value) {
+    auto* next=qobject_cast<MapSceneBridge*>(value);
+    if(sceneBridge_==next)return;
+    if(sceneBridge_)disconnect(sceneBridge_,nullptr,this,nullptr);
+    sceneBridge_=next;
+    if(sceneBridge_) {
+        connect(sceneBridge_,&MapSceneBridge::sceneChanged,this,[this] {syncSceneBridge();});
+        connect(sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {syncSceneBridge();});
+        connect(sceneBridge_,&QObject::destroyed,this,[this] {
+            sceneBridge_=nullptr;typedScene_.reset();emit sceneBridgeChanged();update();
+        });
+    }
+    syncSceneBridge();
+}
+void MapRenderItem::syncSceneBridge() {
+    if(sceneBridge_)setSceneSnapshot(sceneBridge_->sceneSnapshot(),sceneBridge_->viewState());
+    else typedScene_.reset();
+    emit sceneBridgeChanged();update();
+}
 void MapRenderItem::setSceneSnapshot(std::shared_ptr<const RenderScene> scene,const MapViewState& view) {
     if(!validMapViewState(view))throw std::invalid_argument("invalid typed scene view");
     typedScene_=std::move(scene);typedView_=view;update();
 }
 void MapRenderItem::paint(QPainter* painter) {
-    if(typedScene_) {
-        painter->setRenderHint(QPainter::Antialiasing,true);
+    // The legacy flat adapter retains per-layer offscreen compositing. A
+    // standalone typed scene (no legacy paths) can still use the CPU adapter,
+    // while production globe rendering always consumes the typed snapshot.
+    if(typedScene_&&(typedView_.mode==ProjectionMode::Globe||paths_.isEmpty())) {
+        painter->setRenderHint(QPainter::Antialiasing,smoothLines_);
         const auto copies=visibleFlatWorldOffsets(typedView_);
         for(const auto& command:typedScene_->drawSequence)for(const double offset:copies) {
             const auto drawStyle=[&](const RenderStyle& style) {
@@ -95,7 +118,42 @@ void MapRenderItem::paint(QPainter* painter) {
                     if(a.finite&&b.finite&&a.visibleHemisphere&&b.visibleHemisphere)
                         painter->drawLine(QPointF(a.x,a.y),QPointF(b.x,b.y));
                 }
-            } else {
+            } else if(command.primitive==PrimitiveKind::WorldFill||command.primitive==PrimitiveKind::WorldStroke) {
+                if(!typedScene_->worldBase||!typedScene_->worldBase->mesh||
+                   command.index>=typedScene_->worldCountries.size()) {painter->restore();continue;}
+                const auto& mesh=*typedScene_->worldBase->mesh;
+                const auto& draw=typedScene_->worldCountries[command.index];
+                if(!draw.visible){painter->restore();continue;}
+                const auto& ranges=command.primitive==PrimitiveKind::WorldFill?
+                    mesh.countryTriangleRanges:mesh.countryBoundaryRanges;
+                const auto& indices=command.primitive==PrimitiveKind::WorldFill?
+                    mesh.triangleIndices:mesh.lineIndices;
+                if(command.index*2+1>=ranges.size()){painter->restore();continue;}
+                const auto start=ranges[command.index*2],count=ranges[command.index*2+1];
+                const auto style=command.primitive==PrimitiveKind::WorldFill?draw.fill:draw.boundary;
+                const auto strokeColor=drawStyle(style);
+                if(command.primitive==PrimitiveKind::WorldFill) {
+                    painter->setPen(Qt::NoPen);painter->setBrush(strokeColor);QPainterPath path;
+                    for(std::size_t i=0;i+2<count;i+=3) {
+                        ProjectedPoint points[3];bool visible=true;
+                        for(int j=0;j<3;++j) {const auto vertex=indices[start+i+j];
+                            points[j]=projectPoint({mesh.positionsMicrodegrees[vertex*2]/1e6,
+                                mesh.positionsMicrodegrees[vertex*2+1]/1e6},typedView_,offset);
+                            visible=visible&&points[j].finite&&points[j].visibleHemisphere;}
+                        if(!visible)continue;
+                        path.moveTo(points[0].x,points[0].y);path.lineTo(points[1].x,points[1].y);
+                        path.lineTo(points[2].x,points[2].y);path.closeSubpath();
+                    }
+                    painter->drawPath(path);
+                } else {
+                    painter->setBrush(Qt::NoBrush);painter->setPen(QPen(strokeColor,std::max(.1f,style.width),Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+                    for(std::size_t i=0;i+1<count;i+=2) {const auto a=indices[start+i],b=indices[start+i+1];
+                        const auto pa=projectPoint({mesh.positionsMicrodegrees[a*2]/1e6,mesh.positionsMicrodegrees[a*2+1]/1e6},typedView_,offset);
+                        const auto pb=projectPoint({mesh.positionsMicrodegrees[b*2]/1e6,mesh.positionsMicrodegrees[b*2+1]/1e6},typedView_,offset);
+                        if(pa.finite&&pb.finite&&pa.visibleHemisphere&&pb.visibleHemisphere)
+                            painter->drawLine(QPointF(pa.x,pa.y),QPointF(pb.x,pb.y));}
+                }
+            } else if(command.primitive==PrimitiveKind::Point) {
                 const auto& draw=typedScene_->points.at(command.index);
                 const auto color=drawStyle(draw.style);
                 painter->setPen(Qt::NoPen);painter->setBrush(color);
@@ -114,11 +172,98 @@ void MapRenderItem::paint(QPainter* painter) {
             }
             painter->restore();
         }
+        painter->save();painter->setOpacity(1);painter->setBrush(Qt::NoBrush);
+        for(const auto& selected:typedScene_->interaction.selected) {
+            painter->setPen(QPen(QColor("#163e64"),typedScene_->interaction.primary==selected?3:2,
+                                 Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+            for(const auto& stroke:typedScene_->strokes)if(stroke.object==selected) {
+                const auto& segments=*stroke.geometryPacket.startsEnds;
+                for(std::size_t i=0;i+3<segments.size();i+=4) {
+                    const auto a=projectPoint({segments[i],segments[i+1]},typedView_);
+                    const auto b=projectPoint({segments[i+2],segments[i+3]},typedView_);
+                    if(a.finite&&b.finite&&a.visibleHemisphere&&b.visibleHemisphere)
+                        painter->drawLine(QPointF(a.x,a.y),QPointF(b.x,b.y));
+                }
+            }
+            if(selected.domain=="territorial"&&typedScene_->worldBase&&typedScene_->worldBase->mesh) {
+                const auto& frame=*typedScene_->worldBase;const auto& mesh=*frame.mesh;
+                for(std::size_t country=0;country<frame.ranges.size();++country)if(frame.ranges[country].ownerId==selected.id) {
+                    const auto start=mesh.countryBoundaryRanges[country*2],count=mesh.countryBoundaryRanges[country*2+1];
+                    for(std::size_t i=0;i+1<count;i+=2) {const auto ai=mesh.lineIndices[start+i],bi=mesh.lineIndices[start+i+1];
+                        const auto a=projectPoint({mesh.positionsMicrodegrees[ai*2]/1e6,mesh.positionsMicrodegrees[ai*2+1]/1e6},typedView_);
+                        const auto b=projectPoint({mesh.positionsMicrodegrees[bi*2]/1e6,mesh.positionsMicrodegrees[bi*2+1]/1e6},typedView_);
+                        if(a.finite&&b.finite&&a.visibleHemisphere&&b.visibleHemisphere)
+                            painter->drawLine(QPointF(a.x,a.y),QPointF(b.x,b.y));}
+                }
+            }
+        }
+        if(typedScene_->interaction.editTarget)for(const auto& stroke:typedScene_->strokes)
+            if(stroke.object==*typedScene_->interaction.editTarget) {
+                painter->setPen(QPen(QColor("#92400e"),2));painter->setBrush(QColor("#ffffff"));
+                const auto& segments=*stroke.geometryPacket.startsEnds;
+                for(std::size_t i=0;i+1<segments.size();i+=2) {
+                    const auto point=projectPoint({segments[i],segments[i+1]},typedView_);
+                    if(point.finite&&point.visibleHemisphere)painter->drawEllipse(QPointF(point.x,point.y),5,5);
+                }
+            }
+        painter->restore();
+        if(hydroFrame_) {
+            std::set<QString> hidden;for(const auto& id:hiddenHydroIds_)hidden.insert(id.toString());
+            const auto visible=[&](std::uint32_t fid,std::uint32_t logical) {
+                if(hidden.count(QString::number(fid))||hidden.count(QString::number(logical)))return false;
+                if(hydroSource_)if(const auto record=hydroSource_->recordByFid(fid))return !hidden.count(record->awId);
+                return true;
+            };
+            const auto selected=[&](std::uint32_t fid) {if(!hydroSource_||selectedHydroId_.isEmpty())return false;
+                const auto record=hydroSource_->recordByFid(fid);return record&&record->awId==selectedHydroId_;};
+            const auto screen=[&](pandoeditor::HydroPoint point) {
+                return projectPoint({point.longitude*1e-6,point.latitude*1e-6},typedView_);
+            };
+            if(hydroStyle_.value("lakesVisible",true).toBool()) {
+                painter->save();painter->setOpacity(std::clamp(hydroStyle_.value("lakeOpacity",1.).toDouble(),0.,1.));
+                painter->setPen(Qt::NoPen);painter->setBrush(color(hydroStyle_.value("lakeColor"),QColor("#82bfd7")));
+                for(const auto& lake:hydroFrame_->packet.lakes)if(visible(lake.fid,lake.logicalFid))
+                    for(const auto& polygon:lake.polygons) {
+                        QPainterPath path;path.setFillRule(Qt::OddEvenFill);bool any=false;
+                        for(const auto& ring:polygon) {
+                            bool started=false;
+                            for(const auto point:ring) {const auto projected=screen(point);
+                                if(!projected.finite||!projected.visibleHemisphere){started=false;continue;}
+                                if(!started){path.moveTo(projected.x,projected.y);started=true;any=true;}
+                                else path.lineTo(projected.x,projected.y);
+                            }
+                            if(started)path.closeSubpath();
+                        }
+                        if(any)painter->drawPath(path);
+                        if(any&&selected(lake.fid)){painter->save();painter->setOpacity(1);
+                            painter->setPen(QPen(QColor("#163e64"),2));painter->setBrush(Qt::NoBrush);
+                            painter->drawPath(path);painter->restore();}
+                    }
+                painter->restore();
+            }
+            if(hydroStyle_.value("riversVisible",true).toBool()) {
+                painter->save();painter->setOpacity(std::clamp(hydroStyle_.value("riverOpacity",1.).toDouble(),0.,1.));
+                painter->setPen(QPen(color(hydroStyle_.value("riverColor"),QColor("#4b9cc6")),2,Qt::SolidLine,Qt::RoundCap));
+                for(int borderPass=0;borderPass<2;++borderPass)for(const auto& river:hydroFrame_->packet.rivers)
+                    if(river.borderAligned==bool(borderPass)&&visible(river.fid,river.logicalFid)) {
+                        const auto a=screen(river.start),b=screen(river.end);
+                        if(!a.finite||!b.finite||!a.visibleHemisphere||!b.visibleHemisphere)continue;
+                        const auto width=std::max(1.,(river.startWidth+river.endWidth)/2.);
+                        painter->setPen(QPen(color(hydroStyle_.value("riverColor"),QColor("#4b9cc6")),width,
+                                             Qt::SolidLine,Qt::RoundCap));
+                        painter->drawLine(QPointF(a.x,a.y),QPointF(b.x,b.y));
+                        if(selected(river.fid)){painter->save();painter->setOpacity(1);
+                            painter->setPen(QPen(QColor("#163e64"),width+2,Qt::SolidLine,Qt::RoundCap));
+                            painter->drawLine(QPointF(a.x,a.y),QPointF(b.x,b.y));painter->restore();}
+                    }
+                painter->restore();
+            }
+        }
         return;
     }
     struct Row{QString id;QVariantMap visual;Parsed geometry;QString type;QVariantList points;};std::vector<Row> rows;rows.reserve(paths_.size());
     for(const auto& entry:paths_){const auto path=entry.toMap();const auto id=path.value("countryId").toString();const auto visual=visuals_.value(id).toMap();if(!visual.value("visible").toBool())continue;rows.push_back({id,visual,parsePath(path.value("path").toString(),originX_,originY_,scale_),path.value("geometryType").toString(),path.value("points").toList()});}
-    painter->setRenderHint(QPainter::Antialiasing,true);
+    painter->setRenderHint(QPainter::Antialiasing,smoothLines_);
     auto order=[&](const Row& row,const char* key){return row.visual.value(key,20+row.visual.value("rank",0.).toInt()).toInt();};
     auto sorted=[&](const char* key){std::vector<const Row*> ordered;ordered.reserve(rows.size());
         for(const auto& row:rows)ordered.push_back(&row);
@@ -162,7 +307,7 @@ void MapRenderItem::paint(QPainter* painter) {
         if(opacity<1.){
             QImage buffer(std::max(1,int(std::ceil(width()))),std::max(1,int(std::ceil(height()))),
                 QImage::Format_ARGB32_Premultiplied);buffer.fill(Qt::transparent);
-            QPainter layerPainter(&buffer);layerPainter.setRenderHint(QPainter::Antialiasing,true);
+            QPainter layerPainter(&buffer);layerPainter.setRenderHint(QPainter::Antialiasing,smoothLines_);
             for(auto i=first;i<last;i++)paintRow(&layerPainter,*fillOrder[i],0,true);
             layerPainter.end();painter->save();painter->setOpacity(opacity);
             painter->drawImage(QPointF(0,0),buffer);painter->restore();

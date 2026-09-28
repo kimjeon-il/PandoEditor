@@ -7,9 +7,19 @@
 #include <limits>
 
 namespace {
+bool contained(const QString& root,const QString& path) {
+    const auto normalizedRoot=QDir::cleanPath(QDir::fromNativeSeparators(root));
+    const auto normalizedPath=QDir::cleanPath(QDir::fromNativeSeparators(path));
+#ifdef Q_OS_WIN
+    return normalizedPath.startsWith(normalizedRoot+'/',Qt::CaseInsensitive);
+#else
+    return normalizedPath.startsWith(normalizedRoot+'/',Qt::CaseSensitive);
+#endif
+}
 bool openChecked(const HydroAssetSpec& asset,QFile& file,QString& error) {
-    const auto actual=QFileInfo(asset.path).canonicalFilePath();
-    if(actual.isEmpty()||!actual.startsWith(asset.assetRoot+QDir::separator())){
+    const auto actual=QDir::cleanPath(QDir::fromNativeSeparators(
+        QFileInfo(asset.path).canonicalFilePath()));
+    if(actual.isEmpty()||!contained(asset.assetRoot,actual)){
         error=QStringLiteral("수계 자산 경로를 열 수 없거나 범위를 벗어났습니다: ")+asset.url;return false;
     }
     file.setFileName(actual);

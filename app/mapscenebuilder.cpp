@@ -124,25 +124,25 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     cache_.protect(protectedObjects);
     std::set<std::string> baseCountries;
     if(worldBase_&&worldBase_->mesh) {
-        if(worldBase_->countryIds.size()!=258)throw std::invalid_argument("world base needs 258 IDs");
+        if(worldBase_->ranges.size()!=258)throw std::invalid_argument("world base needs 258 ranges");
         if(worldBase_->mesh->preview)
-            baseCountries.insert(worldBase_->countryIds.begin(),worldBase_->countryIds.end());
+            for(const auto& range:worldBase_->ranges)baseCountries.insert(range.ownerId);
         scene->worldCountries.reserve(258);
-        for(const auto& id:worldBase_->countryIds) {
-            WorldCountryDraw base;base.id=id;
+        for(const auto& range:worldBase_->ranges) {
+            WorldCountryDraw base;base.id=range.ownerId;
             base.fill.color=0xa8c7db;base.boundary.color=0x61778a;
             base.boundary.width=1.2f;
             if(!worldBase_->mesh->preview) {
                 const auto unit=std::find_if(doc.units.begin(),doc.units.end(),
-                    [&](const auto& value){return value.id==id;});
-                if(unit==doc.units.end()||!(unit->geometry==GeometryRef{"world-country-"+id,1})) {
+                    [&](const auto& value){return value.id==range.ownerId;});
+                if(unit==doc.units.end()||!(unit->geometry==GeometryRef{range.geometryId,1})) {
                     base.visible=false;
                 } else {
-                    const auto ref=territorialRef(id);
+                    const auto ref=territorialRef(range.ownerId);
                     base.visible=effectiveMapVisibility(doc,ref);
                     base.fill=styleFor(doc,ref,0xa8c7db);
                     base.boundary.alpha=base.fill.alpha;
-                    baseCountries.insert(id);
+                    baseCountries.insert(range.ownerId);
                     if(base.visible) {
                         int layerOrder=-1;
                         const auto& layerId=nativeLayerId(doc,ref);
@@ -330,6 +330,9 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     if(worldBase_&&worldBase_->mesh) {
         mix(dataset,worldBase_->mesh->preview?1:2);
         mix(dataset,std::uint64_t(reinterpret_cast<std::uintptr_t>(worldBase_->mesh.get())));
+        for(const auto& range:worldBase_->ranges) {
+            mix(dataset,range.sourceId);mix(dataset,range.ownerId);mix(dataset,range.geometryId);
+        }
     }
     mix(dataset,doc.physicalData.dataset);mix(dataset,doc.physicalData.version);
     mix(dataset,doc.physicalData.source);

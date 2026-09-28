@@ -14,6 +14,7 @@ struct ObjectRef {
     std::string domain, id;
     bool operator<(const ObjectRef& b) const { return std::tie(domain,id)<std::tie(b.domain,b.id); }
     bool operator==(const ObjectRef& b) const { return domain==b.domain && id==b.id; }
+    bool operator!=(const ObjectRef& b) const { return !(*this==b); }
 };
 enum class UnitKind;
 struct PresentationStyle {

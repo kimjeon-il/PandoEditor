@@ -2,6 +2,7 @@
 #include "hydroassetreader.h"
 #include "hydroruntimecache.h"
 #include <pandoeditor/hydroformat.h>
+#include <QDir>
 #include <mutex>
 #include <iterator>
 #include <set>
@@ -203,4 +204,17 @@ void HydroRuntimeProvider::requestViewport(const pandoeditor::HydroFlatWindow& v
         }
         return std::shared_ptr<const HydroRuntimeFrame>(std::move(next));
     });
+}
+QStringList HydroRuntimeProvider::requiredAssetPaths(const pandoeditor::HydroFlatWindow& view) const {
+    QStringList result;if(!dataset_)return result;std::set<int> shards;
+    try {
+        const auto tiles=pandoeditor::hydroViewportTiles(dataset_->stages,view);
+        for(const auto& tile:tiles)if(const auto found=dataset_->index.tilePacks.find(tile);found!=dataset_->index.tilePacks.end())
+            for(const auto id:found->second)shards.insert(dataset_->index.packSpecs.at(id).shard);
+        for(const auto shard:shards) {
+            const auto relative=QDir(dataset_->manifest.assetRoot).relativeFilePath(dataset_->manifest.shards.at(shard).asset.path);
+            result.push_back(QStringLiteral("hydro/")+QDir::fromNativeSeparators(relative));
+        }
+    }catch(const std::exception&) {}
+    return result;
 }

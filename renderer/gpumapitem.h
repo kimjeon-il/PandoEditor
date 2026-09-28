@@ -7,7 +7,7 @@
 #include <atomic>
 #include <QString>
 
-class GpuMapItem final : public QQuickItem {
+class GpuMapItem : public QQuickItem {
     Q_OBJECT
     Q_PROPERTY(QObject* sceneBridge READ sceneBridge WRITE setSceneBridge NOTIFY sceneBridgeChanged)
     Q_PROPERTY(bool rendererReady READ rendererReady NOTIFY rendererReadyChanged)

@@ -27,6 +27,7 @@ jobs:
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
+          modules: 'qtshadertools'
           cache: true
       - name: Fresh configure and build
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
@@ -39,7 +40,7 @@ jobs:
           done
       - name: Full available CTest suite
         run: |
-          ctest --test-dir build --output-on-failure --output-junit build/results.xml
+          ctest --test-dir build --output-on-failure --output-junit "$GITHUB_WORKSPACE/build/results.xml"
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
           root = ET.parse('build/results.xml').getroot()

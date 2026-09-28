@@ -6,11 +6,16 @@ import Pandoeditor.Windowing 1.0
 
 Rectangle {
     id: view
-    color: "#e8eff4"
+    color: editor.appearancePreferences.effectiveTheme === "dark" ? "#101820" : "#e8eff4"
     clip: true
     property real zoom: 1
     property real panX: 0
     property real panY: 0
+    readonly property bool globeMode: editor.projectionMode === "globe"
+    property real globeZoom: 1
+    property real globeLongitude: 0
+    property real globeLatitude: 0
+    property string synchronizedProjection: ""
     property real fitScale: Math.max(0.01, Math.min(Math.max(1,width-48)/editor.mapWidth, Math.max(1,height-48)/editor.mapHeight))
     property real mapScale: fitScale * zoom
     property real originX: (width-editor.mapWidth*mapScale)/2+panX
@@ -57,6 +62,42 @@ Rectangle {
         panY = (editor.mapHeight/2-top-objectHeight/2)*mapScale
     }
     function invalidatePick() { editor.closeObjectChooser() }
+    function publishView() {
+        if (width <= 0 || height <= 0) return
+        if (globeMode) {
+            editor.publishMapView({"viewportWidth":width,"viewportHeight":height,
+                "scale":Math.max(1,Math.min(width,height)*0.44*globeZoom),
+                "translateX":width/2,"translateY":height/2,
+                "centerLongitude":globeLongitude,"centerLatitude":globeLatitude})
+        } else {
+            const scale=mapScale*editor.hydroProjection.cosLatitude*180/Math.PI
+            editor.publishMapView({"viewportWidth":width,"viewportHeight":height,"scale":scale,
+                "translateX":originX-editor.hydroProjection.minX*mapScale,
+                "translateY":originY+editor.hydroProjection.maxLatitude*mapScale,
+                "centerLongitude":0,"centerLatitude":0})
+        }
+    }
+    function syncProjectionCamera() {
+        const state=editor.mapViewState
+        synchronizedProjection=editor.projectionMode
+        if (globeMode) {
+            globeLongitude=state.centerLongitude || 0
+            globeLatitude=state.centerLatitude || 0
+            const oldFit=Math.min(state.viewportWidth || 1,state.viewportHeight || 1)*0.44
+            globeZoom=oldFit>1 ? Math.max(0.5,Math.min(20,state.scale/oldFit)) : 1
+        } else {
+            if ((state.viewportWidth || 1) <= 1 && (state.viewportHeight || 1) <= 1) {
+                zoom=1; panX=0; panY=0
+            } else {
+                const flatMapScale=state.scale/(Math.max(0.01,editor.hydroProjection.cosLatitude)*180/Math.PI)
+                zoom=Math.max(0.5,Math.min(20,flatMapScale/fitScale))
+                panX=state.translateX+editor.hydroProjection.minX*flatMapScale-(width-editor.mapWidth*flatMapScale)/2
+                panY=state.translateY-editor.hydroProjection.maxLatitude*flatMapScale-(height-editor.mapHeight*flatMapScale)/2
+            }
+        }
+        viewPublish.restart()
+    }
+    Timer { id: viewPublish; interval: 0; repeat: false; onTriggered: view.publishView() }
     Timer {
         id: hydroRequest
         interval: 40; repeat: false
@@ -65,13 +106,18 @@ Rectangle {
             editor.requestTerrainViewport(view.mapScale,view.originX,view.originY,view.width,view.height)
         }
     }
-    onZoomChanged: { invalidatePick(); hydroRequest.restart() }
-    onPanXChanged: { invalidatePick(); hydroRequest.restart() }
-    onPanYChanged: { invalidatePick(); hydroRequest.restart() }
-    onWidthChanged: { invalidatePick(); hydroRequest.restart() }
-    onHeightChanged: { invalidatePick(); hydroRequest.restart() }
-    function fit() { zoom=1; panX=0; panY=0 }
+    onZoomChanged: { invalidatePick(); hydroRequest.restart(); viewPublish.restart() }
+    onPanXChanged: { invalidatePick(); hydroRequest.restart(); viewPublish.restart() }
+    onPanYChanged: { invalidatePick(); hydroRequest.restart(); viewPublish.restart() }
+    onGlobeZoomChanged: { invalidatePick(); hydroRequest.restart(); viewPublish.restart() }
+    onGlobeLongitudeChanged: { invalidatePick(); hydroRequest.restart(); viewPublish.restart() }
+    onGlobeLatitudeChanged: { invalidatePick(); hydroRequest.restart(); viewPublish.restart() }
+    onWidthChanged: { invalidatePick(); hydroRequest.restart(); viewPublish.restart() }
+    onHeightChanged: { invalidatePick(); hydroRequest.restart(); viewPublish.restart() }
+    Component.onCompleted: syncProjectionCamera()
+    function fit() { if(globeMode){globeZoom=1;globeLongitude=0;globeLatitude=0}else{zoom=1;panX=0;panY=0} }
     function zoomAt(factor, px, py) {
+        if (globeMode) { globeZoom=Math.max(0.5,Math.min(20,globeZoom*factor)); return }
         let newZoom=Math.max(0.5,Math.min(20,zoom*factor))
         let ratio=newZoom/zoom
         panX=(px-width/2)*(1-ratio)+panX*ratio
@@ -84,6 +130,12 @@ Rectangle {
         // and the '전체' button remain the only viewport-reset routes.
         function onGeometryChanged() { view.invalidatePick(); hydroRequest.restart() }
         function onStateChanged() { hydroRequest.restart() }
+        function onViewStateChanged() {
+            if (editor.projectionMode !== view.synchronizedProjection) view.syncProjectionCamera()
+        }
+        function onGeometryEditChanged() {
+            if (editor.geometryEditState.active === true && view.globeMode) editor.setProjectionMode("flat")
+        }
         function onFocusRequested(left,top,width,height,maxZoom) { view.focusRect(left,top,width,height,maxZoom) }
         function onObjectChooserChanged() {
             if (editor.objectChooserOpen) objectChooser.openAt(view.chooserPoint)
@@ -92,20 +144,19 @@ Rectangle {
     }
     ObjectChooser { id: objectChooser; mapView: view }
 
-    // Optional pinned terrain tiles use Qt Quick's textured Image nodes. The
-    // geographic rect is display-only and never participates in picking.
+    // Terrain and reference images share the same immutable geographic view
+    // snapshot as countries and picking.
     Repeater {
         model: editor.terrainTiles
-        delegate: Image {
+        delegate: GeographicImageItem {
             required property var modelData
+            anchors.fill: parent
+            sceneBridge: editor.mapSceneBridge
             source: modelData.source
-            asynchronous: true
-            cache: false
             smooth: true
-            x: view.originX + (modelData.west * editor.hydroProjection.cosLatitude - editor.hydroProjection.minX) * view.mapScale
-            y: view.originY + (editor.hydroProjection.maxLatitude - modelData.north) * view.mapScale
-            width: (modelData.east - modelData.west) * editor.hydroProjection.cosLatitude * view.mapScale
-            height: (modelData.north - modelData.south) * view.mapScale
+            west: modelData.west; east: modelData.east
+            south: modelData.south; north: modelData.north
+            colorMode: editor.terrainMode === "gray" ? "gray" : "color"
             z: -0.5
         }
     }
@@ -122,7 +173,7 @@ Rectangle {
             height: modelData.height * view.mapScale
             source: modelData.source
             opacity: modelData.opacity
-            visible: modelData.visible
+            visible: modelData.visible && !view.globeMode
             blendMode: modelData.blend
             warpMode: modelData.warpMode
             controlPoints: modelData.controlPoints
@@ -182,6 +233,22 @@ Rectangle {
             }
         }
     }
+    Repeater {
+        model: referenceImages.images
+        delegate: GeographicImageItem {
+            required property var modelData
+            anchors.fill: parent
+            sceneBridge: editor.mapSceneBridge
+            source: modelData.source
+            visible: modelData.visible && view.globeMode
+            opacity: modelData.opacity
+            west: (modelData.x + editor.hydroProjection.minX) / editor.hydroProjection.cosLatitude
+            east: (modelData.x + modelData.width + editor.hydroProjection.minX) / editor.hydroProjection.cosLatitude
+            north: editor.hydroProjection.maxLatitude - modelData.y
+            south: editor.hydroProjection.maxLatitude - modelData.y - modelData.height
+            z: 0.5
+        }
+    }
 
     GpuMapItem {
         id: gpuMapRenderer
@@ -202,6 +269,8 @@ Rectangle {
         objectName: "canonicalMapRenderer"
         anchors.fill: parent
         visible: !gpuMapRenderer.rendererReady && !gpuMapRenderer.forcedGpu
+        sceneBridge: editor.mapSceneBridge
+        smoothLines: editor.appearancePreferences.smoothLines !== false
         paths: editor.paths
         visuals: editor.countryVisuals
         hydroSource: editor.hydroSource
@@ -322,9 +391,8 @@ Rectangle {
         onTapped: function(eventPoint) {
             view.selectionNavigationStarted()
             view.chooserPoint = eventPoint.position
-            editor.beginMapSelection((eventPoint.position.x-view.originX)/view.mapScale,
-                                     (eventPoint.position.y-view.originY)/view.mapScale,
-                                     !!(gestureModifiers & (Qt.ControlModifier | Qt.MetaModifier)),view.mapScale,view.zoom)
+            editor.beginMapSelectionScreen(eventPoint.position.x,eventPoint.position.y,
+                                           !!(gestureModifiers & (Qt.ControlModifier | Qt.MetaModifier)),view.globeMode?view.globeZoom:view.zoom)
         }
     }
     TapHandler {
@@ -350,8 +418,7 @@ Rectangle {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
         function updateHover() {
             if (!hovered || editor.objectChooserOpen) return
-            const ref=editor.pickObject((point.position.x-view.originX)/view.mapScale,
-                                        (point.position.y-view.originY)/view.mapScale, view.mapScale,view.zoom)
+            const ref=editor.pickObjectScreen(point.position.x,point.position.y,view.globeMode?view.globeZoom:view.zoom)
             editor.setHoverObject(ref,"map")
             view.mapHoverKey=ref.key || ""
         }
@@ -367,9 +434,17 @@ Rectangle {
         maximumPointCount: 1
         property real startX: 0
         property real startY: 0
-        onActiveChanged: { if (active) { startX=view.panX; startY=view.panY; editor.beginMapInteraction() }
+        property real startLongitude: 0
+        property real startLatitude: 0
+        onActiveChanged: { if (active) { startX=view.panX; startY=view.panY; startLongitude=view.globeLongitude; startLatitude=view.globeLatitude; editor.beginMapInteraction() }
                            else editor.endMapInteraction() }
-        onActiveTranslationChanged: if (active) { view.panX=startX+activeTranslation.x; view.panY=startY+activeTranslation.y }
+        onActiveTranslationChanged: if (active) {
+            if (view.globeMode) {
+                const radius=Math.max(1,Math.min(view.width,view.height)*0.44*view.globeZoom)
+                view.globeLongitude=startLongitude-activeTranslation.x/radius*180/Math.PI
+                view.globeLatitude=Math.max(-90,Math.min(90,startLatitude+activeTranslation.y/radius*180/Math.PI))
+            } else { view.panX=startX+activeTranslation.x; view.panY=startY+activeTranslation.y }
+        }
     }
     DragHandler {
         id: geometryDrag

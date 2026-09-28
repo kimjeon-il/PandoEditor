@@ -16,6 +16,7 @@ Item {
     signal openRequested()
     signal saveRequested()
     signal saveAsRequested()
+    signal preferencesRequested()
     property bool editorOpen:false
     property bool searchOpen:false
     property bool legacyOpen:false
@@ -123,6 +124,7 @@ Item {
             ToolButton { objectName:"gisImportButton";text:"GIS";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:workspace.gisImportRequested() }
             ToolButton { objectName:"gisExportButton";text:"GIS 내보내기";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:workspace.gisExportRequested() }
             ToolButton { objectName:"projectGpkgExportButton";text:"프로젝트 GPKG";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:workspace.projectGpkgExportRequested() }
+            ToolButton { objectName:"preferencesButton";text:"환경설정";font.pixelSize:11;focusPolicy:Qt.NoFocus;onClicked:workspace.preferencesRequested() }
             Label { visible:editor.projectGpkgState.stage==="working" || editor.projectGpkgState.stage==="done";text:editor.projectGpkgState.stage==="working"?"GPKG 저장 중…":"GPKG 저장 완료";verticalAlignment:Text.AlignVCenter;font.pixelSize:11 }
             ToolButton { objectName:"closeSidePanel";text:"닫기";visible:workspace.sideOpen;focusPolicy:Qt.NoFocus;onClicked:{workspace.navigationStarted();workspace.searchOpen=false;workspace.editorOpen=false;workspace.legacyOpen=false} }
         }
@@ -159,7 +161,7 @@ Item {
                     visible:workspace.legacyOpen;holdFieldCommits:workspace.holdFieldCommits
                 }
                 Common.ObjectPropertyPanel {
-                    id:properties;anchors.fill:parent;visible:workspace.editorOpen;holdFieldCommits:workspace.holdFieldCommits
+                    id:properties;anchors.fill:parent;visible:workspace.editorOpen;compact:workspace.compact;holdFieldCommits:workspace.holdFieldCommits
                     onCloseRequested:workspace.editorOpen=false
                 }
                 Rectangle {

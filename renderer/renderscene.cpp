@@ -14,3 +14,11 @@ std::uint64_t nextSceneRevision(const std::shared_ptr<const RenderScene>& previo
         throw std::overflow_error("render scene revision overflow");
     return previous->revision+1;
 }
+
+std::vector<std::size_t> worldRangeIndicesForOwner(const WorldBaseFrame& frame,
+                                                    const std::string& ownerId) {
+    std::vector<std::size_t> result;
+    for(std::size_t i=0;i<frame.ranges.size();++i)
+        if(frame.ranges[i].ownerId==ownerId)result.push_back(i);
+    return result;
+}

@@ -5,6 +5,8 @@
 #include <memory>
 #include "renderscene.h"
 #include "mapviewstate.h"
+#include "../app/mapscenebridge.h"
+#include <QPointer>
 
 struct HydroRuntimeFrame;
 class HydroRuntimeProvider;
@@ -25,6 +27,10 @@ class MapRenderItem : public QQuickPaintedItem {
     Q_PROPERTY(QVariantMap hydroStyle READ hydroStyle WRITE setHydroStyle NOTIFY hydroPresentationChanged)
     Q_PROPERTY(QVariantList hiddenHydroIds READ hiddenHydroIds WRITE setHiddenHydroIds NOTIFY hydroPresentationChanged)
     Q_PROPERTY(QString selectedHydroId READ selectedHydroId WRITE setSelectedHydroId NOTIFY hydroPresentationChanged)
+    Q_PROPERTY(QObject* sceneBridge READ sceneBridge WRITE setSceneBridge NOTIFY sceneBridgeChanged)
+    Q_PROPERTY(qulonglong sceneRevision READ sceneRevision NOTIFY sceneBridgeChanged)
+    Q_PROPERTY(qulonglong viewRevision READ viewRevision NOTIFY sceneBridgeChanged)
+    Q_PROPERTY(bool smoothLines READ smoothLines WRITE setSmoothLines NOTIFY smoothLinesChanged)
 public:
     explicit MapRenderItem(QQuickItem* parent=nullptr);
     void paint(QPainter*) override;
@@ -40,12 +46,19 @@ public:
     QVariantMap hydroStyle() const{return hydroStyle_;} void setHydroStyle(QVariantMap);
     QVariantList hiddenHydroIds() const{return hiddenHydroIds_;} void setHiddenHydroIds(QVariantList);
     QString selectedHydroId() const{return selectedHydroId_;} void setSelectedHydroId(QString);
+    QObject* sceneBridge() const{return sceneBridge_;} void setSceneBridge(QObject*);
+    qulonglong sceneRevision() const{return typedScene_?typedScene_->revision:0;}
+    qulonglong viewRevision() const{return typedView_.revision;}
+    bool smoothLines() const{return smoothLines_;} void setSmoothLines(bool);
     void setHydroFrame(std::shared_ptr<const HydroRuntimeFrame>);
     void setSceneSnapshot(std::shared_ptr<const RenderScene>,const MapViewState&);
 signals:
     void pathsChanged();void visualsChanged();void selectedPathsChanged();void primaryIdChanged();void viewportChanged();
     void hydroSourceChanged();void hydroPresentationChanged();
+    void sceneBridgeChanged();
+    void smoothLinesChanged();
 private:
+    void syncSceneBridge();
     QVariantList paths_,selected_;QVariantMap visuals_;QString primary_;
     double originX_=0,originY_=0,scale_=1;
     HydroRuntimeProvider* hydroSource_=nullptr;
@@ -55,4 +68,6 @@ private:
     QString selectedHydroId_;
     std::shared_ptr<const RenderScene> typedScene_;
     MapViewState typedView_;
+    QPointer<MapSceneBridge> sceneBridge_;
+    bool smoothLines_=true;
 };

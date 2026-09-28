@@ -383,12 +383,9 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             const auto baseHighlight=[&](const pandoeditor::ObjectRef& ref,
                                          const std::string& channel,std::uint32_t color,float width) {
                 if(ref.domain!="territorial")return;
-                const auto found=std::find(scene->worldBase->countryIds.begin(),
-                    scene->worldBase->countryIds.end(),ref.id);
-                if(found==scene->worldBase->countryIds.end())return;
-                const auto index=std::size_t(found-scene->worldBase->countryIds.begin());
                 RenderStyle style;style.color=color;style.width=width;
-                worldStroke(index,world,style,channel);
+                for(const auto index:worldRangeIndicesForOwner(*scene->worldBase,ref.id))
+                    worldStroke(index,world,style,channel);
             };
             for(const auto& candidate:scene->interaction.candidates)
                 if(!contains(scene->interaction.selected,candidate))

@@ -31,7 +31,7 @@ Dialog {
         RowLayout {
             Layout.fillWidth: true
             Button { text: "라이브러리 파일 선택"; onClicked: root.libraryFileRequested() }
-            Label { Layout.fillWidth: true; text: editor.historicalStage==="unloaded" ? "라이브러리를 선택하세요" : "로컬 라이브러리"; elide: Text.ElideRight }
+            Label { Layout.fillWidth: true; text: editor.historicalStage==="unloaded" ? "라이브러리를 선택하세요" : editor.historicalCatalogName; elide: Text.ElideRight }
         }
         RowLayout {
             Layout.fillWidth: true

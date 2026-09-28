@@ -153,6 +153,7 @@ struct Country {
     std::string memo;
     double opacity=1;
     std::string layerId="countries";
+    bool locked=false;
 };
 struct ProjectDocument {
     // Read-time provenance for a migration notice, not document content or wire data.

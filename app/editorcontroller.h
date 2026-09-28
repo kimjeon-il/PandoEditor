@@ -3,6 +3,10 @@
 #include "../platform/screencolorpicker.h"
 #include "commandjobrunner.h"
 #include "platformstorage.h"
+#include "autosavecoordinator.h"
+#include "projectpreviewcache.h"
+#include "countrylabelanchors.h"
+#include "physicaldatastore.h"
 #include "mapprojection.h"
 #include "mapscenebridge.h"
 #include "mapscenebuilder.h"
@@ -18,9 +22,13 @@
 #include <QVariantMap>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QHash>
 #include <map>
+#include <limits>
 #include <set>
 #include <optional>
+
+namespace pandoeditor { struct HistoricalSource; }
 
 struct EditorControllerConfig {
 #ifdef Q_OS_ANDROID
@@ -30,6 +38,12 @@ struct EditorControllerConfig {
 #endif
     QString privateProjectPath;
     bool bootstrapWorld=false;
+    bool autosaveEnabled=false;
+    QString autosaveProjectPath,autosaveViewPath;
+    bool projectPreviewEnabled=false;
+    QString projectPreviewCachePath;
+    QByteArray projectPreviewSourceSha="c0bd31d13dc8495593d78cf51f7cc195de7c9469";
+    QString appearancePath;
 };
 struct WebImportSession;
 
@@ -68,6 +82,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantList historicalCountries READ historicalCountries NOTIFY historicalChanged)
     Q_PROPERTY(QVariantList historicalOwnershipNeeded READ historicalOwnershipNeeded NOTIFY historicalChanged)
     Q_PROPERTY(QString historicalStage READ historicalStage NOTIFY historicalChanged)
+    Q_PROPERTY(QString historicalCatalogName READ historicalCatalogName NOTIFY historicalChanged)
     Q_PROPERTY(QString historicalError READ historicalError NOTIFY historicalChanged)
     Q_PROPERTY(qulonglong historicalSession READ historicalSession NOTIFY historicalChanged)
     Q_PROPERTY(QVariantMap gisImportState READ gisImportState NOTIFY gisImportChanged)
@@ -86,6 +101,11 @@ class EditorController : public QObject {
     Q_PROPERTY(QString documentId READ documentId NOTIFY stateChanged)
     Q_PROPERTY(QVariantList paths READ paths NOTIFY geometryChanged)
     Q_PROPERTY(QObject* mapSceneBridge READ mapSceneBridge CONSTANT)
+    Q_PROPERTY(QString projectionMode READ projectionMode NOTIFY viewStateChanged)
+    Q_PROPERTY(QVariantMap mapViewState READ mapViewState NOTIFY viewStateChanged)
+    Q_PROPERTY(QString terrainMode READ terrainMode NOTIFY terrainChanged)
+    Q_PROPERTY(QVariantMap appearancePreferences READ appearancePreferences NOTIFY appearanceChanged)
+    Q_PROPERTY(bool appearancePreviewOpen READ appearancePreviewOpen NOTIFY appearanceChanged)
     Q_PROPERTY(QVariantMap renderQuality READ renderQuality NOTIFY renderQualityChanged)
     Q_PROPERTY(QString worldStatus READ worldStatus NOTIFY worldStatusChanged)
     Q_PROPERTY(double mapWidth READ mapWidth NOTIFY geometryChanged)
@@ -135,6 +155,7 @@ public:
     Q_INVOKABLE QVariantList historicalParents(const QString& countryId) const;
     QVariantList historicalOwnershipNeeded() const {return historicalOwnershipNeeded_;}
     QString historicalStage() const {return historicalStage_;}
+    QString historicalCatalogName() const {return historicalCatalogName_;}
     QString historicalError() const {return historicalError_;}
     qulonglong historicalSession() const {return historicalSession_;}
     Q_INVOKABLE bool loadHistoricalLibrary(const QUrl& url);
@@ -222,9 +243,11 @@ public:
     QVariantList objectChooserCandidates() const;
     bool objectChooserOpen() const { return chooserBase_.has_value() && chooserRefs_.size()>1; }
     Q_INVOKABLE void beginMapSelection(double x,double y,bool additive=false,double pixelsPerUnit=0,double zoom=1);
+    Q_INVOKABLE void beginMapSelectionScreen(double x,double y,bool additive=false,double zoom=1);
     Q_INVOKABLE bool chooseMapCandidate(int index,bool toggle=false);
     Q_INVOKABLE void closeObjectChooser();
     Q_INVOKABLE QVariantMap pickObject(double x,double y,double pixelsPerUnit=1,double zoom=1) const;
+    Q_INVOKABLE QVariantMap pickObjectScreen(double x,double y,double zoom=1) const;
     Q_INVOKABLE void selectMapAt(double x,double y,bool additive=false);
     Q_INVOKABLE bool focusObject(const QVariantMap& ref={});
     // Read-only canonical serialization for non-mutating inspection/tests.
@@ -242,6 +265,19 @@ public:
     Q_INVOKABLE void cancelWebImport();
     QVariantList paths() const { return projection_.paths; }
     QObject* mapSceneBridge() {return &sceneBridge_;}
+    QString projectionMode() const;
+    QVariantMap mapViewState() const;
+    Q_INVOKABLE bool publishMapView(const QVariantMap& view);
+    Q_INVOKABLE bool setProjectionMode(const QString& mode);
+    QString terrainMode() const;
+    Q_INVOKABLE bool setTerrainMode(const QString& mode);
+    QVariantMap appearancePreferences() const;
+    bool appearancePreviewOpen() const {return appearancePreviewOpen_;}
+    Q_INVOKABLE void beginAppearancePreview();
+    Q_INVOKABLE bool previewAppearance(const QVariantMap& changes);
+    Q_INVOKABLE void resetAppearancePreview();
+    Q_INVOKABLE void cancelAppearancePreview();
+    Q_INVOKABLE bool applyAppearancePreview();
     QVariantMap renderQuality() const;
     std::shared_ptr<TerrainTileProvider> terrainProviderSnapshot() const {return terrainProvider_;}
     Q_INVOKABLE void recordMapFrame(double milliseconds);
@@ -397,17 +433,24 @@ signals:
     void hydroFrameChanged();
     void worldStatusChanged();
     void terrainChanged();
+    void viewStateChanged();
+    void appearanceChanged();
 private:
     void startWorldBootstrap();
     void startCanonicalWorld(std::uint64_t generation);
     void startCanonicalWorldMesh(std::uint64_t generation);
     void cancelWorldBootstrap();
     std::shared_ptr<const pandoeditor::HistoricalLibrary> historicalLibrary_;
+    std::shared_ptr<const pandoeditor::HistoricalSource> historicalSource_;
     pandoeditor::HistoricalSearch historicalFilter_;
     QString historicalSelectedId_,historicalVersionId_,historicalReferenceDate_;
     QVariantMap historicalImpact_;
     QVariantList historicalOwnershipNeeded_;
     QString historicalStage_=QStringLiteral("unloaded"),historicalError_;
+    QString historicalCatalogName_;
+    bool historicalCatalogBundled_=false;
+    bool installHistoricalSource(const QByteArray&,const QString&,bool bundled);
+    bool refreshHistoricalCatalog();
     qulonglong historicalSession_=0;
     std::optional<pandoeditor::CommandPreview> historicalCommandPreview_;
     struct GisLoadedLayer {
@@ -435,8 +478,19 @@ private:
     bool discardOwnPresentationRecovery();
     void publishPresentation();
     void syncHydroData();
+    void initializePhysicalData();
+    void ensureHydroBootstrap();
+    void requestPhysicalAsset(const QString& relativePath);
+    QString physicalAssetPath(const QString& relativePath) const;
+    bool physicalAssetReady(const QString& relativePath) const;
+    void requestHydroWindow(const pandoeditor::HydroFlatWindow& window);
+    void loadAppearancePreferences();
+    bool saveAppearancePreferences() const;
     ScreenColorPicker screenColorPicker_;
     std::vector<pandoeditor::ObjectRef> mapCandidates(double x,double y,double pixelsPerUnit,double zoom=1) const;
+    std::vector<pandoeditor::ObjectRef> mapCandidatesScreen(double x,double y,double zoom=1) const;
+    QVariantMap pickObjectFromCandidates(const std::vector<pandoeditor::ObjectRef>& hits) const;
+    void beginMapSelectionCandidates(std::vector<pandoeditor::ObjectRef> refs,bool additive);
     std::vector<pandoeditor::ObjectRef> chooserRefs_;
     std::optional<pandoeditor::ProjectSnapshot> chooserBase_;
     bool chooserToggle_=false;
@@ -481,9 +535,14 @@ private:
     void publish(bool pruneSelection=true);
     void refreshTypedScene();
     void noteAppliedImpact(const pandoeditor::ChangeImpact&);
+    QString labelSourceId(const std::string& ownerId) const;
+    void scheduleDerivedLabelAnchor(const pandoeditor::ObjectRef& owner);
     void reloadDrafts();
     bool replaceFromBytes(const QByteArray& bytes,bool imported,const QString& path={});
     pandoeditor::Project project_;
+    std::unique_ptr<ProjectPreviewService> projectPreview_;
+    QByteArray projectPreviewSourceSha_;
+    std::unique_ptr<CountryLabelAnchors> labelAnchors_;
     HydroRuntimeProvider hydroRuntime_;
     bool hydroCopyBusy_=false;
     std::unique_ptr<CommandJobRunner> jobs_;
@@ -548,12 +607,25 @@ private:
     int activeMapInteractions_=0;
     MapSceneBuilder sceneBuilder_{packetCache_};
     MapSceneBridge sceneBridge_;
+    MapViewState flatView_,globeView_;
+    QString appearancePath_;
+    QVariantMap appearance_;
+    QVariantMap appearanceOrigin_;
+    bool appearancePreviewOpen_=false;
+    QString terrainMode_=QStringLiteral("gray");
     std::shared_ptr<const WorldBaseFrame> worldBase_;
+    std::unique_ptr<PhysicalDataStore> physicalStore_;
+    QHash<QString,PhysicalAssetSpec> physicalAssets_;
+    QString physicalRoot_,physicalError_;
+    int physicalActive_=0,physicalQueued_=0;
     std::shared_ptr<TerrainTileProvider> terrainProvider_;
     QVariantList terrainTiles_;
     int terrainMissingTiles_=0;
+    double terrainLastScale_=0,terrainLastOriginX_=0,terrainLastOriginY_=0,
+           terrainLastWidth_=0,terrainLastHeight_=0;
+    std::optional<pandoeditor::HydroFlatWindow> pendingHydroWindow_;
     QString worldHydroNotice_;
-    std::vector<std::string> worldIds_;
+    std::vector<WorldBaseRange> worldRanges_;
     std::uint64_t worldGeneration_=0;
     QString worldStatus_=QStringLiteral("disabled");
     mutable pandoeditor::GeoSpatialIndex spatialIndex_;
@@ -569,6 +641,9 @@ private:
     QString nameDraft_,memoDraft_,colorDraft_,layerNameDraft_;
     std::optional<double> opacityPreview_,layerOpacityPreview_;
     ProjectStorage storage_;
+    std::unique_ptr<ProjectAutosave> autosave_;
+    std::string autosaveInstance_;
+    std::uint64_t autosaveRevision_=std::numeric_limits<std::uint64_t>::max();
     bool mobileMode_=false;
     bool importedDirty_=false;
     bool privateRecoveryRequired_=false;

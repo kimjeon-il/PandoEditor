@@ -7,6 +7,17 @@
 class HistoricalEditorTests:public QObject {
     Q_OBJECT
 private slots:
+    void bundledPilotIsDefaultCatalog() {
+        EditorController editor;
+        QCOMPARE(editor.historicalStage(),QStringLiteral("ready"));
+        QCOMPARE(editor.historicalCatalogName(),QStringLiteral("내장 pilot"));
+        QVERIFY(editor.historicalSnapshots().size()>=1);
+        bool pilot=false;for(const auto& row:editor.historicalSnapshots())
+            if(row.toMap().value("id")==QStringLiteral("pilot-1991"))pilot=true;
+        QVERIFY(pilot);
+        editor.searchHistorical(QString(),QString(),QStringLiteral("all"),QString(),QString());
+        QVERIFY(!editor.historicalResults().isEmpty());
+    }
     void catalogSearchPreviewAndConfirm() {
         QTemporaryDir dir;QVERIFY(dir.isValid());
         QFile file(dir.filePath("library.json"));QVERIFY(file.open(QIODevice::WriteOnly));
@@ -15,6 +26,7 @@ private slots:
         EditorController editor;
         const auto before=projectcodec::decode(editor.documentBytes()).units.size();
         QVERIFY(editor.loadHistoricalLibrary(QUrl::fromLocalFile(file.fileName())));
+        QVERIFY(editor.historicalCatalogName().startsWith(QStringLiteral("로컬: ")));
         QCOMPARE(editor.historicalSnapshots().size(),qsizetype(1));
         editor.searchHistorical(QStringLiteral("예시"),QString(),QStringLiteral("all"),QStringLiteral("1945"),QString());
         QCOMPARE(editor.historicalResults().size(),qsizetype(1));

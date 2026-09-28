@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <mutex>
+#include <functional>
 
 struct TerrainTileSpec {
     int level=0,column=0,row=0;
@@ -20,7 +21,8 @@ struct TerrainTileSpec {
 class TerrainTileProvider final {
 public:
     // dataRoot contains terrain/v0.12.6 and hydro/v0.13.1.
-    TerrainTileProvider(const QByteArray& pinnedManifest,const QString& dataRoot);
+    TerrainTileProvider(const QByteArray& pinnedManifest,const QString& dataRoot,
+                        std::function<QString(const QString&)> assetResolver={});
     bool available() const {return available_;}
     QString error() const {return error_;}
     std::vector<TerrainTileSpec> tilesForView(const MapViewState& view) const;
@@ -36,6 +38,8 @@ private:
     bool available_=false;
     struct CachedImage {QImage image;std::size_t bytes=0;std::uint64_t used=0;};
     void trim() const;
+    QString tilePath(int level,int column,int row) const;
+    std::function<QString(const QString&)> assetResolver_;
     mutable std::mutex mutex_;
     mutable std::map<QString,CachedImage> images_;
     mutable std::set<QString> visible_;
