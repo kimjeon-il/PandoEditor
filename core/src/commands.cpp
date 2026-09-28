@@ -1085,9 +1085,12 @@ CommandResult CommandProcessor::confirm(Project& project,CommandPreview& preview
         return {CommandStatus::Rejected,CommandError::RevisionOverflow,{}};
     const bool presentationRebased=!(project.document().presentation.webPresentation==
                                      change->before().presentation.webPresentation);
-    try { project.apply(*change); }
+    // CommandPreview owns a const ChangeSet, so taking its impact is a copy,
+    // not a move. Stage that allocation before mutating the project; otherwise
+    // an allocation failure could escape after apply() has already committed.
+    ChangeImpact impact;
+    try { impact=change->impact_; project.apply(*change); }
     catch(const std::exception&) { return {CommandStatus::Rejected,CommandError::CommitFailed,{}}; }
-    auto impact=std::move(change->impact_);
     if(presentationRebased)impact.requiresFullSceneRebuild=true;
     return {CommandStatus::Applied,CommandError::None,{},std::move(impact)};
 }
