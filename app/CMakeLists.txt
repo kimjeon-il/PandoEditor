@@ -18,6 +18,9 @@ add_library(pandoeditor_editor STATIC
     gisgeopackage.cpp gisgeopackage.h
     gisgeopackagewriter.cpp
     projectgeopackage.cpp projectgeopackage.h
+    autosavecoordinator.cpp autosavecoordinator.h
+    projectpreviewcache.cpp projectpreviewcache.h
+    countrylabelanchors.cpp countrylabelanchors.h
     mapscenebuilder.cpp mapscenebuilder.h
     mapscenebridge.cpp mapscenebridge.h
     builtinworldpolicy.cpp builtinworldpolicy.h
@@ -107,6 +110,12 @@ qt_add_resources(pandoeditor ui
         "${PROJECT_SOURCE_DIR}/ui/common/ObjectSearch.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/ObjectChooser.qml"
 )
+qt_add_resources(pandoeditor world_metadata
+    PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
+    FILES "${PROJECT_SOURCE_DIR}/assets/world/country-label-anchors-v0.10.1.json")
+qt_add_resources(pandoeditor historical_pilot
+    PREFIX "/historical" BASE "${PROJECT_SOURCE_DIR}/assets/historical"
+    FILES "${PROJECT_SOURCE_DIR}/assets/historical/historical-library-pilot.json")
 
 qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
@@ -213,6 +222,9 @@ if(BUILD_TESTING)
     target_link_libraries(historical_editor_tests PRIVATE pandoeditor_editor Qt6::Test)
     qt_add_resources(historical_editor_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    qt_add_resources(historical_editor_tests historical_pilot PREFIX "/historical"
+        BASE "${PROJECT_SOURCE_DIR}/assets/historical"
+        FILES "${PROJECT_SOURCE_DIR}/assets/historical/historical-library-pilot.json")
     add_test(NAME historical_editor_tests COMMAND historical_editor_tests -o -,txt)
     set_tests_properties(historical_editor_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     find_package(Qt6 REQUIRED COMPONENTS Test)
@@ -245,6 +257,22 @@ if(BUILD_TESTING)
     target_compile_definitions(builtin_world_policy_tests PRIVATE
         PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world")
     add_test(NAME builtin_world_policy_tests COMMAND builtin_world_policy_tests -o -,txt)
+    add_executable(autosave_tests ../tests/autosave_tests.cpp)
+    target_link_libraries(autosave_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(autosave_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME autosave_tests COMMAND autosave_tests -o -,txt)
+    add_executable(project_preview_cache_tests ../tests/project_preview_cache_tests.cpp)
+    target_link_libraries(project_preview_cache_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(project_preview_cache_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME project_preview_cache_tests COMMAND project_preview_cache_tests -o -,txt)
+    add_executable(country_label_anchor_tests ../tests/country_label_anchor_tests.cpp)
+    target_link_libraries(country_label_anchor_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(country_label_anchor_tests world_metadata
+        PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
+        FILES "${PROJECT_SOURCE_DIR}/assets/world/country-label-anchors-v0.10.1.json")
+    add_test(NAME country_label_anchor_tests COMMAND country_label_anchor_tests -o -,txt)
     add_executable(m72_view_state_tests ../tests/m72_view_state_tests.cpp)
     target_link_libraries(m72_view_state_tests PRIVATE pandoeditor_editor)
     add_test(NAME m72_view_state_tests COMMAND m72_view_state_tests)

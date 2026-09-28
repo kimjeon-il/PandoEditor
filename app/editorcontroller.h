@@ -3,6 +3,9 @@
 #include "../platform/screencolorpicker.h"
 #include "commandjobrunner.h"
 #include "platformstorage.h"
+#include "autosavecoordinator.h"
+#include "projectpreviewcache.h"
+#include "countrylabelanchors.h"
 #include "mapprojection.h"
 #include "mapscenebridge.h"
 #include "mapscenebuilder.h"
@@ -19,8 +22,11 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include <map>
+#include <limits>
 #include <set>
 #include <optional>
+
+namespace pandoeditor { struct HistoricalSource; }
 
 struct EditorControllerConfig {
 #ifdef Q_OS_ANDROID
@@ -30,6 +36,11 @@ struct EditorControllerConfig {
 #endif
     QString privateProjectPath;
     bool bootstrapWorld=false;
+    bool autosaveEnabled=false;
+    QString autosaveProjectPath,autosaveViewPath;
+    bool projectPreviewEnabled=false;
+    QString projectPreviewCachePath;
+    QByteArray projectPreviewSourceSha="c0bd31d13dc8495593d78cf51f7cc195de7c9469";
 };
 struct WebImportSession;
 
@@ -68,6 +79,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantList historicalCountries READ historicalCountries NOTIFY historicalChanged)
     Q_PROPERTY(QVariantList historicalOwnershipNeeded READ historicalOwnershipNeeded NOTIFY historicalChanged)
     Q_PROPERTY(QString historicalStage READ historicalStage NOTIFY historicalChanged)
+    Q_PROPERTY(QString historicalCatalogName READ historicalCatalogName NOTIFY historicalChanged)
     Q_PROPERTY(QString historicalError READ historicalError NOTIFY historicalChanged)
     Q_PROPERTY(qulonglong historicalSession READ historicalSession NOTIFY historicalChanged)
     Q_PROPERTY(QVariantMap gisImportState READ gisImportState NOTIFY gisImportChanged)
@@ -135,6 +147,7 @@ public:
     Q_INVOKABLE QVariantList historicalParents(const QString& countryId) const;
     QVariantList historicalOwnershipNeeded() const {return historicalOwnershipNeeded_;}
     QString historicalStage() const {return historicalStage_;}
+    QString historicalCatalogName() const {return historicalCatalogName_;}
     QString historicalError() const {return historicalError_;}
     qulonglong historicalSession() const {return historicalSession_;}
     Q_INVOKABLE bool loadHistoricalLibrary(const QUrl& url);
@@ -403,11 +416,16 @@ private:
     void startCanonicalWorldMesh(std::uint64_t generation);
     void cancelWorldBootstrap();
     std::shared_ptr<const pandoeditor::HistoricalLibrary> historicalLibrary_;
+    std::shared_ptr<const pandoeditor::HistoricalSource> historicalSource_;
     pandoeditor::HistoricalSearch historicalFilter_;
     QString historicalSelectedId_,historicalVersionId_,historicalReferenceDate_;
     QVariantMap historicalImpact_;
     QVariantList historicalOwnershipNeeded_;
     QString historicalStage_=QStringLiteral("unloaded"),historicalError_;
+    QString historicalCatalogName_;
+    bool historicalCatalogBundled_=false;
+    bool installHistoricalSource(const QByteArray&,const QString&,bool bundled);
+    bool refreshHistoricalCatalog();
     qulonglong historicalSession_=0;
     std::optional<pandoeditor::CommandPreview> historicalCommandPreview_;
     struct GisLoadedLayer {
@@ -481,9 +499,14 @@ private:
     void publish(bool pruneSelection=true);
     void refreshTypedScene();
     void noteAppliedImpact(const pandoeditor::ChangeImpact&);
+    QString labelSourceId(const std::string& ownerId) const;
+    void scheduleDerivedLabelAnchor(const pandoeditor::ObjectRef& owner);
     void reloadDrafts();
     bool replaceFromBytes(const QByteArray& bytes,bool imported,const QString& path={});
     pandoeditor::Project project_;
+    std::unique_ptr<ProjectPreviewService> projectPreview_;
+    QByteArray projectPreviewSourceSha_;
+    std::unique_ptr<CountryLabelAnchors> labelAnchors_;
     HydroRuntimeProvider hydroRuntime_;
     bool hydroCopyBusy_=false;
     std::unique_ptr<CommandJobRunner> jobs_;
@@ -569,6 +592,9 @@ private:
     QString nameDraft_,memoDraft_,colorDraft_,layerNameDraft_;
     std::optional<double> opacityPreview_,layerOpacityPreview_;
     ProjectStorage storage_;
+    std::unique_ptr<ProjectAutosave> autosave_;
+    std::string autosaveInstance_;
+    std::uint64_t autosaveRevision_=std::numeric_limits<std::uint64_t>::max();
     bool mobileMode_=false;
     bool importedDirty_=false;
     bool privateRecoveryRequired_=false;

@@ -62,6 +62,7 @@ void EditorController::startCanonicalWorld(std::uint64_t generation) {
             projection_=*prepared.projection;
             worldHydroNotice_=prepared.hydroAvailability;
             filePath_.clear();importedDirty_=false;
+            refreshHistoricalCatalog();
             worldStatus_=QStringLiteral("canonical-pending-mesh");emit worldStatusChanged();
             // While preview is displayed, no canonical country override is
             // shown on top of it. Edits made now stay in ProjectDocument.

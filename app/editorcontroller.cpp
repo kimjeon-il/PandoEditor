@@ -47,7 +47,33 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
 {
     qualityClock_.start();
     packetCache_.setBudget(quality_.profile().renderPacketCacheBudgetBytes);
-    if(config.bootstrapWorld) {
+    bool restoredAutosave=false;
+    if(config.autosaveEnabled) {
+        autosave_=std::make_unique<ProjectAutosave>(std::move(config.autosaveProjectPath),
+                                                     std::move(config.autosaveViewPath),this);
+        const auto restored=autosave_->restoreDocument();
+        if(!restored.isEmpty())try {
+            project_.replace(projectcodec::decode(restored));
+            projection_.rebuild(project_.document());restoredAutosave=true;
+        } catch(const std::exception& error) {
+            emit errorOccurred(QStringLiteral("자동저장 프로젝트를 복원하지 못했습니다: %1")
+                               .arg(QString::fromUtf8(error.what())));
+        }
+    }
+    if(config.projectPreviewEnabled) {
+        projectPreview_=std::make_unique<ProjectPreviewService>(std::move(config.projectPreviewCachePath),this);
+        projectPreviewSourceSha_=std::move(config.projectPreviewSourceSha);
+        connect(projectPreview_.get(),&ProjectPreviewService::generationFailed,this,&EditorController::errorOccurred);
+    }
+    QFile anchorFile(QStringLiteral(":/world/country-label-anchors-v0.10.1.json"));
+    labelAnchors_=std::make_unique<CountryLabelAnchors>(
+        anchorFile.open(QIODevice::ReadOnly)?anchorFile.readAll():QByteArray{},this);
+    connect(labelAnchors_.get(),&CountryLabelAnchors::changed,this,[this] {
+        emit presentationChanged();emit visualChanged();
+    });
+    if(restoredAutosave) {
+        if(const auto view=autosave_->restoreView())sceneBridge_.publishView(*view);
+    } else if(config.bootstrapWorld) {
         project_.replace(pandoeditor::ProjectDocument(
             std::vector<pandoeditor::Country>{},std::vector<pandoeditor::Layer>{{"countries","국가"}}));
         projection_.setWorldExtent();
@@ -86,13 +112,22 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::presentationChanged,this,refresh);
     connect(this,&EditorController::geometryChanged,this,refresh);
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,refresh);
+    if(autosave_) {
+        connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
+            autosave_->scheduleView(sceneBridge_.viewState());
+        });
+        connect(autosave_.get(),&ProjectAutosave::saveFailed,this,&EditorController::errorOccurred);
+    }
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
         if(sceneBridge_.viewState().mode==ProjectionMode::Globe&&!terrainTiles_.isEmpty()) {
             terrainTiles_.clear();emit terrainChanged();
         }
     });
+    QFile historicalFile(QStringLiteral(":/historical/historical-library-pilot.json"));
+    if(historicalFile.open(QIODevice::ReadOnly))
+        installHistoricalSource(historicalFile.readAll(),QStringLiteral("내장 pilot"),true);
     refreshTypedScene();
-    if(config.bootstrapWorld)QTimer::singleShot(0,this,&EditorController::startWorldBootstrap);
+    if(config.bootstrapWorld&&!restoredAutosave)QTimer::singleShot(0,this,&EditorController::startWorldBootstrap);
 }
 void EditorController::refreshTypedScene() {
     try {
@@ -154,6 +189,21 @@ void EditorController::noteAppliedImpact(const pandoeditor::ChangeImpact& impact
         pendingSceneImpact_=impact;
         pendingSceneImpactRevision_=project_.revision();
     }catch(...) {pendingSceneImpact_.reset();}
+    for(const auto& owner:impact.changedObjects)if(owner.domain=="territorial")scheduleDerivedLabelAnchor(owner);
+}
+
+QString EditorController::labelSourceId(const std::string& ownerId) const {
+    QString first;
+    for(const auto& range:worldRanges_)if(range.ownerId==ownerId) {
+        const auto source=text(range.sourceId);if(range.sourceId==ownerId)return source;if(first.isEmpty())first=source;
+    }
+    return first.isEmpty()?text(ownerId):first;
+}
+void EditorController::scheduleDerivedLabelAnchor(const pandoeditor::ObjectRef& owner) {
+    if(!labelAnchors_||owner.domain!="territorial")return;
+    const auto object=project_.index().objects.find(owner);if(object==project_.index().objects.end())return;
+    const auto& unit=project_.document().units.at(object->second);const auto geometry=project_.document().geometries.get(unit.geometry);
+    if(geometry)labelAnchors_->recompute(text(owner.id),*geometry,unit.geometry.version);
 }
 QVariantMap EditorController::renderQuality() const {
     const auto profile=quality_.profile();
@@ -395,6 +445,15 @@ void EditorController::publish(bool pruneSelection)
         if(project_.dirty()||importedDirty_)presentationSaveTimer_.start();
         else discardOwnPresentationRecovery();
     }
+    if(autosave_&&(autosaveInstance_!=project_.instanceId()||autosaveRevision_!=project_.revision())) {
+        try {
+            autosave_->scheduleDocument(projectcodec::encode(project_));
+            autosaveInstance_=project_.instanceId();autosaveRevision_=project_.revision();
+        } catch(const std::exception& error) {
+            emit errorOccurred(QStringLiteral("자동저장을 준비하지 못했습니다: %1")
+                               .arg(QString::fromUtf8(error.what())));
+        }
+    }
 }
 void EditorController::previewCountryOpacity(double value)
 {
@@ -433,7 +492,10 @@ bool EditorController::openFile(const QUrl& url)
     if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 도형 편집을 확인하거나 취소한 뒤 프로젝트를 여세요."));return false;}
     try {
         if(!url.isLocalFile())throw std::runtime_error("Please choose a local file");
-        return replaceFromBytes(storage_.read(url),false,url.toLocalFile());
+        const auto bytes=storage_.read(url);
+        const auto opened=replaceFromBytes(bytes,false,url.toLocalFile());
+        if(opened&&projectPreview_)projectPreview_->schedule(bytes,projectPreviewSourceSha_);
+        return opened;
     }catch(const std::exception& e){emit errorOccurred(QString::fromUtf8(e.what()));return false;}
 }
 bool EditorController::saveFile(const QUrl& url)
@@ -446,7 +508,8 @@ bool EditorController::saveFile(const QUrl& url)
     if(!commitPendingEdits())return false;
     if(!url.isLocalFile()){emit errorOccurred(QStringLiteral("로컬 파일을 선택해 주세요."));return false;}
     try {
-        storage_.write(url,projectcodec::encode(project_));
+        const auto persisted=projectcodec::encode(project_);storage_.write(url,persisted);
+        if(projectPreview_)projectPreview_->schedule(persisted,projectPreviewSourceSha_);
         filePath_=url.toLocalFile();importedDirty_=false;project_.markSaved();publish(false);return true;
     }catch(const std::exception& e){emit errorOccurred(QString::fromUtf8(e.what()));return false;}
 }
@@ -459,6 +522,7 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
     cancelWorldBootstrap();
     cancelPreview();cancelStructureMutation();project_=std::move(candidate);projection_=std::move(nextProjection);
     filePath_=path;importedDirty_=imported;selected_.clear();selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
+    refreshHistoricalCatalog();
     emit geometryChanged();publish(false);syncHydroData();return true;
 }
 bool EditorController::restorePrivateProject()
@@ -489,7 +553,7 @@ bool EditorController::savePrivate()
     if(isProtectedWebSource(QUrl::fromLocalFile(storage_.privateProjectPath()))){webImportFailure(QStringLiteral("SOURCE_OVERWRITE_BLOCKED: 웹 원본은 덮어쓰지 않습니다."));return false;}
     if(privateRecoveryRequired_){emit errorOccurred(QStringLiteral("손상된 저장 파일이 보존되어 있습니다. 덮어쓰기를 허용한 뒤 다시 저장해 주세요."));return false;}
     if(!commitPendingEdits())return false;
-    try {storage_.writePrivateAtomic(projectcodec::encode(project_));importedDirty_=false;project_.markSaved();publish(false);return true;}
+    try {const auto persisted=projectcodec::encode(project_);storage_.writePrivateAtomic(persisted);if(projectPreview_)projectPreview_->schedule(persisted,projectPreviewSourceSha_);importedDirty_=false;project_.markSaved();publish(false);return true;}
     catch(const std::exception& e){emit errorOccurred(QString::fromUtf8(e.what()));return false;}
 }
 bool EditorController::exportProject(const QUrl& url)

@@ -25,6 +25,8 @@ int main(int argc, char *argv[])
 
     EditorControllerConfig editorConfig;
     editorConfig.bootstrapWorld=true;
+    editorConfig.autosaveEnabled=true;
+    editorConfig.projectPreviewEnabled=true;
     EditorController editor(editorConfig);
     QQmlApplicationEngine engine;
     auto* terrainImages=new TerrainImageProvider;

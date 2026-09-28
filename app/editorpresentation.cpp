@@ -164,6 +164,9 @@ QVariantList EditorController::labelLayout(double scale,double originX,double or
         LabelSettings stored;if(const auto found=project_.document().presentation.webPresentation.labelSettings.find(ref);found!=project_.document().presentation.webPresentation.labelSettings.end())stored=found->second;
         std::string kind="country";if(ref.domain=="label")kind=project_.document().labels.at(project_.index().objects.at(ref)).kind;else {const auto unitKind=project_.document().units.at(project_.index().objects.at(ref)).kind;if(unitKind!=UnitKind::Country)kind="region";}
         const auto settings=automaticLabelSettings(kind,stored);double mapX=path["left"].toDouble()+path["width"].toDouble()/2,mapY=path["top"].toDouble()+path["height"].toDouble()/2;
+        if(ref.domain=="territorial"&&labelAnchors_)if(const auto anchor=labelAnchors_->anchor(displayText(ref.id),labelSourceId(ref.id))) {
+            const auto point=projection_.project(*anchor);mapX=point.x;mapY=point.y;
+        }
         if(settings.pinned&&settings.manualPosition){const auto point=projection_.project(*settings.manualPosition);mapX=point.x;mapY=point.y;}
         const auto name=QString::fromStdString(properties->displayName);const double x=originX+mapX*scale,y=originY+mapY*scale;
         LabelLayoutCandidate candidate{ref,ref.domain+":"+ref.id,settings.collisionGroup,x,y,

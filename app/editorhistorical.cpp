@@ -7,6 +7,7 @@
 #include <QtConcurrent>
 #include <QFutureWatcher>
 #include <QJsonDocument>
+#include <QFileInfo>
 #include <algorithm>
 #include <limits>
 
@@ -118,11 +119,23 @@ QVariantMap EditorController::historicalPreview() const {
     }catch(const std::exception& error){result["error"]=QString::fromUtf8(error.what());}
     return result;
 }
-bool EditorController::loadHistoricalLibrary(const QUrl& url) {
+bool EditorController::installHistoricalSource(const QByteArray& bytes,const QString& name,bool bundled) {
     cancelHistoricalAdd();
     try {
-        const auto source=pandoeditor::parseHistoricalLibrarySource(storage_.read(url));
-        auto materialized=pandoeditor::materializeHistoricalSource(source,
+        historicalSource_=std::make_shared<pandoeditor::HistoricalSource>(
+            pandoeditor::parseHistoricalLibrarySource(bytes));
+        historicalCatalogName_=name;historicalCatalogBundled_=bundled;
+        return refreshHistoricalCatalog();
+    }catch(const std::exception& error) {
+        historicalSource_.reset();historicalLibrary_.reset();historicalCatalogName_.clear();
+        historicalError_=QString::fromUtf8(error.what());historicalStage_=QStringLiteral("error");
+        emit historicalChanged();return false;
+    }
+}
+bool EditorController::refreshHistoricalCatalog() {
+    if(!historicalSource_)return false;
+    try {
+        auto materialized=pandoeditor::materializeHistoricalSource(*historicalSource_,
             [this](const std::string& id)->std::optional<pandoeditor::Geometry> {
                 const auto it=project_.index().objects.find(pandoeditor::territorialRef(id));
                 if(it==project_.index().objects.end())return std::nullopt;
@@ -136,6 +149,15 @@ bool EditorController::loadHistoricalLibrary(const QUrl& url) {
         if(!materialized.missingEntityIds.empty())
             historicalError_=QStringLiteral("원본 자료가 없어 %1개 항목을 사용할 수 없습니다.").arg(materialized.missingEntityIds.size());
         emit historicalChanged();return true;
+    }catch(const std::exception& error) {
+        historicalError_=QString::fromUtf8(error.what());historicalStage_=QStringLiteral("error");
+        emit historicalChanged();return false;
+    }
+}
+bool EditorController::loadHistoricalLibrary(const QUrl& url) {
+    try {
+        const auto name=url.isLocalFile()?QFileInfo(url.toLocalFile()).fileName():url.fileName();
+        return installHistoricalSource(storage_.read(url),QStringLiteral("로컬: ")+name,false);
     }catch(const std::exception& error) {
         historicalError_=QString::fromUtf8(error.what());historicalStage_=QStringLiteral("error");
         emit historicalChanged();return false;
