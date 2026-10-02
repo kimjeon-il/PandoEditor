@@ -1,6 +1,7 @@
 #include <pandoeditor/map/countryculling.h>
 #include <pandoeditor/map/builtinhydrochannel.h>
 #include <pandoeditor/map/geometrypacketcache.h>
+#include <pandoeditor/map/labelengine.h>
 #include <pandoeditor/map/mapscenebuilder.h>
 #include <pandoeditor/map/mapcamera.h>
 #include <pandoeditor/map/mappicker.h>

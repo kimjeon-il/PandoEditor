@@ -251,7 +251,6 @@ void EditorController::refreshPlacedLabelRows() {
 }
 
 void EditorController::reprojectLabelPlacements() {
-    if(labelEngine_.placements().empty())return;
     try {
         labelEngine_.reproject(sceneBridge_.viewState());
         refreshPlacedLabelRows();

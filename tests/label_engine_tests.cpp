@@ -73,6 +73,10 @@ void globeReprojectionDropsBackHemisphere() {
     globe.centerLongitude=180;globe.revision=1;
     const auto& rotated=engine.reproject(globe);
     require(rotated.empty(),"accepted front label disappears when rotated behind");
+    globe.centerLongitude=0;globe.revision=2;
+    const auto& returned=engine.reproject(globe);
+    require(returned.size()==1&&returned.front().ref.id=="front",
+            "accepted label can reappear without a new query");
 }
 
 void candidateBudgetCapsMillionScaleWork() {

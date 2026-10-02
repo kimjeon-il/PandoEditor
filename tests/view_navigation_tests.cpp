@@ -70,6 +70,8 @@ private slots:
         QCOMPARE(editor.renderQuality().value("labelLayouts").toULongLong(),labelLayouts);
         QCOMPARE(editor.renderQuality().value("labelQueries").toULongLong(),labelQueries);
         QVERIFY(editor.renderQuality().value("labelReprojects").toULongLong()>labelReprojects);
+        editor.pickObjectScreen(400,300,1);
+        QCOMPARE(editor.renderQuality().value("labelQueries").toULongLong(),labelQueries);
 
         editor.endMapInteraction();
         QTRY_COMPARE_WITH_TIMEOUT(
