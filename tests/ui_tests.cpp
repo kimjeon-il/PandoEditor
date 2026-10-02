@@ -873,10 +873,19 @@ private slots:
             QTest::qWait(50); return true;
         };
         double px=0,py=0;
-        // Find a point inside Germany, then exercise actual UI hit testing with a click.
+        // Find a German interior point that is also clear of map UI controls,
+        // then exercise the actual pointer route with the same map coordinate.
+        const auto initialScale=map->property("mapScale").toDouble();
+        const auto initialOriginX=map->property("originX").toDouble();
+        const auto initialOriginY=map->property("originY").toDouble();
         for (int y=0;y<100 && editor.selectedId()!="DEU";++y) for(int x=0;x<100;++x) {
-            px=editor.mapWidth()*x/100; py=editor.mapHeight()*y/100;
-            editor.selectAt(px,py); if(editor.selectedId()=="DEU") break;
+            const auto candidateX=editor.mapWidth()*x/100;
+            const auto candidateY=editor.mapHeight()*y/100;
+            const auto screenX=initialOriginX+candidateX*initialScale;
+            const auto screenY=initialOriginY+candidateY*initialScale;
+            if(screenX<80||screenX>map->width()-80||screenY<80||screenY>map->height()-80)continue;
+            px=candidateX;py=candidateY;
+            editor.selectAt(px,py);if(editor.selectedId()=="DEU")break;
         }
         QCOMPARE(editor.selectedId(),QString("DEU"));
         editor.selectAt(-100,-100);
