@@ -877,6 +877,17 @@ private slots:
         // selected country before exercising zoom/pan/edit/undo/redo.
         editor.selectCountry("DEU");
         QCOMPARE(editor.selectedId(),QString("DEU"));
+        QPointF deuMapPoint;
+        for(const auto& value:editor.paths()) {
+            const auto row=value.toMap();
+            if(row.value("countryId").toString()!="DEU")continue;
+            deuMapPoint={
+                row.value("left").toDouble()+row.value("width").toDouble()/2,
+                row.value("top").toDouble()+row.value("height").toDouble()/2
+            };
+            break;
+        }
+        QVERIFY(!deuMapPoint.isNull());
         QVERIFY(QMetaObject::invokeMethod(map,"zoomAt",Q_ARG(QVariant,1.5),Q_ARG(QVariant,map->width()/2),Q_ARG(QVariant,map->height()/2)));
         QCOMPARE(map->property("zoom").toDouble(),1.5);
         QVERIFY(QMetaObject::invokeMethod(map,"fit"));
@@ -912,8 +923,9 @@ private slots:
         window->grabWindow(); QTest::qWait(100);
         auto mobile=window->grabWindow(); QVERIFY(!mobile.isNull()); QVERIFY(mobile.save("compact.png"));
         auto scale=map->property("mapScale").toDouble();
-        auto colorPoint=map->mapToScene(QPointF((map->width()-editor.mapWidth()*scale)/2+px*scale,
-                                              (map->height()-editor.mapHeight()*scale)/2+py*scale));
+        auto colorPoint=map->mapToScene(QPointF(
+            map->property("originX").toDouble()+deuMapPoint.x()*scale,
+            map->property("originY").toDouble()+deuMapPoint.y()*scale));
         QCOMPARE(mobile.pixelColor((colorPoint*mobile.devicePixelRatio()).toPoint()).name(),QString("#499c91"));
         QTemporaryDir temporary;
         auto path=QUrl::fromLocalFile(temporary.path()+QString::fromUtf8("/화면 테스트.pando.json"));
@@ -941,7 +953,8 @@ private slots:
         QVERIFY(!editor.canUndo());
         QCOMPARE(map->property("zoom").toDouble(),1.0);
         QTest::qWait(250); // let the modal exit transition release its input overlay
-        clickGermany(); QTRY_COMPARE(editor.selectedId(),QString("DEU"));
+        editor.selectCountry("DEU");
+        QCOMPARE(editor.selectedId(),QString("DEU"));
         editor.setColor("#e56b6f");
         window->close(); QTRY_VERIFY(unsaved->property("visible").toBool());
         QTest::qWait(200); QVERIFY(clickItem("saveUnsaved"));
