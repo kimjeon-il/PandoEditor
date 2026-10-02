@@ -1,6 +1,7 @@
 #version 440
 layout(location=0) in vec4 segment;
 layout(location=1) in vec2 sideEnd;
+layout(location=2) in float endpointWidth;
 layout(location=0) out float frontness;
 layout(location=1) out float along;
 layout(std140,binding=0) uniform buf {
@@ -36,7 +37,8 @@ void main() {
     vec2 delta=b.xy-a.xy;
     float lengthPx=length(delta);
     vec2 normal=lengthPx>0.0001?vec2(-delta.y,delta.x)/lengthPx:vec2(0.0);
-    vec2 screen=mix(a.xy,b.xy,sideEnd.y)+sideEnd.x*normal*u.effects.x*0.5;
+    float widthPx=max(0.1,endpointWidth+u.effects.x);
+    vec2 screen=mix(a.xy,b.xy,sideEnd.y)+sideEnd.x*normal*widthPx*0.5;
     frontness=min(a.z,b.z);
     along=sideEnd.y*lengthPx;
     gl_Position=u.qt_Matrix*vec4(screen,0.0,1.0);

@@ -12,13 +12,14 @@
 
 namespace {
 struct FillVertex {float x,y;};
-struct StrokeVertex {float ax,ay,bx,by,side,endpoint;};
+struct StrokeVertex {float ax,ay,bx,by,side,endpoint,width;};
 struct PointVertex {float longitude,latitude,cornerX,cornerY;};
 
 const QSGGeometry::AttributeSet& attributes(MapPrimitive primitive) {
     static QSGGeometry::Attribute fill[]{QSGGeometry::Attribute::create(0,2,QSGGeometry::FloatType,true)};
     static QSGGeometry::Attribute stroke[]{QSGGeometry::Attribute::create(0,4,QSGGeometry::FloatType,true),
-        QSGGeometry::Attribute::create(1,2,QSGGeometry::FloatType)};
+        QSGGeometry::Attribute::create(1,2,QSGGeometry::FloatType),
+        QSGGeometry::Attribute::create(2,1,QSGGeometry::FloatType)};
     static QSGGeometry::Attribute point[]{QSGGeometry::Attribute::create(0,2,QSGGeometry::FloatType,true),
         QSGGeometry::Attribute::create(1,2,QSGGeometry::FloatType)};
     static const QSGGeometry::AttributeSet fillSet{1,sizeof(FillVertex),fill};
@@ -254,7 +255,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                 const float x1=mesh.positionsMicrodegrees[b*2]/1000000.f;
                 const float y1=mesh.positionsMicrodegrees[b*2+1]/1000000.f;
                 for(int j=0;j<4;++j)vertex[i*4+j]={x0,y0,x1,y1,
-                    (j%2)?1.f:-1.f,(j/2)?1.f:0.f};
+                    (j%2)?1.f:-1.f,(j/2)?1.f:0.f,0.f};
                 const std::uint32_t base=std::uint32_t(i*4);
                 const std::uint32_t quad[]{base,base+1,base+2,base+2,base+1,base+3};
                 std::memcpy(indices+i*6,quad,sizeof(quad));
@@ -274,10 +275,16 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             node.allocate(int(packet.segmentCount*4),int(packet.segmentCount*6));
             auto* vertex=static_cast<StrokeVertex*>(node.geometry()->vertexData());
             auto* index=node.geometry()->indexDataAsUInt();
+            const bool variable=packet.endpointWidths&&
+                packet.endpointWidths->size()==packet.segmentCount*2;
             for(std::size_t i=0;i<packet.segmentCount;++i) {
                 const auto* s=packet.startsEnds->data()+i*4;
-                for(int j=0;j<4;++j)vertex[i*4+j]={s[0],s[1],s[2],s[3],
-                    (j%2)?1.f:-1.f,(j/2)?1.f:0.f};
+                for(int j=0;j<4;++j) {
+                    const auto endpoint=(j/2)?1u:0u;
+                    const float width=variable?packet.endpointWidths->at(i*2+endpoint):0.f;
+                    vertex[i*4+j]={s[0],s[1],s[2],s[3],
+                        (j%2)?1.f:-1.f,(j/2)?1.f:0.f,width};
+                }
                 const std::uint32_t base=std::uint32_t(i*4);
                 const std::uint32_t quad[]{base,base+1,base+2,base+2,base+1,base+3};
                 std::memcpy(index+i*6,quad,sizeof(quad));

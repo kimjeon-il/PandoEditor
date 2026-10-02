@@ -186,7 +186,6 @@ Rectangle {
         objectName: "gpuMapRenderer"
         anchors.fill: parent
         sceneBridge: editor.mapSceneBridge
-        contentReady: !editor.hydroViewportLoaded
         uploadBudgetBytes: editor.renderQuality.uploadBudgetBytes
         onFrameSampled: function(milliseconds) { editor.recordMapFrame(milliseconds) }
         originX: view.originX; originY: view.originY; mapScale: view.mapScale

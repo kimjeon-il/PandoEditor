@@ -40,7 +40,7 @@ public:
     bool contentReady() const{return contentReady_;}
     void setContentReady(bool ready);
     QString diagnostic() const{return contentReady_?diagnostic_:
-        QStringLiteral("Built-in hydro requires CPU renderer until its typed GPU channel is available");}
+        QStringLiteral("GPU content channel unavailable");}
     double originX() const{return flat_.originX;}
     double originY() const{return flat_.originY;}
     double mapScale() const{return flat_.mapScale;}

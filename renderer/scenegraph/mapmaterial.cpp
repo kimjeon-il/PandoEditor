@@ -87,5 +87,5 @@ void MapMaterial::setStyle(const RenderStyle& style,float pointRadius) {
     color=QVector4D(float((style.color>>16)&255)/255*weight,
                     float((style.color>>8)&255)/255*weight,
                     float(style.color&255)/255*weight,alpha);
-    effects=QVector4D(std::max(.1f,style.width),style.dashOn,style.dashOff,pointRadius);
+    effects=QVector4D(std::max(0.f,style.width),style.dashOn,style.dashOff,pointRadius);
 }
