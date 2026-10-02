@@ -10,6 +10,7 @@
 #include <pandoeditor/map/renderquality.h>
 #include <pandoeditor/map/renderscene.h>
 #include <pandoeditor/map/scenepatch.h>
+#include <pandoeditor/map/viewportresourcescheduler.h>
 
 #include <cassert>
 

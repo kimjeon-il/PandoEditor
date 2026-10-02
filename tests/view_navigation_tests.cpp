@@ -50,6 +50,26 @@ private slots:
         QVERIFY(std::abs(fitted.value("panX").toDouble())<1e-9);
         QVERIFY(std::abs(fitted.value("panY").toDouble())<1e-9);
     }
+    void viewportResourcesCoalesceAndWaitForInteractionSettle() {
+        EditorController editor;
+        QVERIFY(editor.resizeMapCamera(800,600));
+        QTRY_VERIFY_WITH_TIMEOUT(
+            editor.renderQuality().value("viewportResourceIssuedRequests").toULongLong()>=1,1000);
+        const auto before=editor.renderQuality().value("viewportResourceIssuedRequests").toULongLong();
+
+        editor.beginMapInteraction();
+        QVERIFY(editor.zoomMapCameraAt(1.1,400,300));
+        QVERIFY(editor.zoomMapCameraAt(1.1,400,300));
+        QTest::qWait(ViewportResourceScheduler::SettleDelayMs*3);
+        QCOMPARE(editor.renderQuality().value("viewportResourceIssuedRequests").toULongLong(),before);
+        QVERIFY(editor.renderQuality().value("viewportResourceDeferredUpdates").toULongLong()>=2);
+
+        editor.endMapInteraction();
+        QTRY_COMPARE_WITH_TIMEOUT(
+            editor.renderQuality().value("viewportResourceIssuedRequests").toULongLong(),
+            before+1,1000);
+        QCOMPARE(editor.renderQuality().value("viewportResourcePending").toBool(),false);
+    }
     void screenPickingRejectsOutsideGlobeAndPublishesViewport() {
         EditorController editor;
         QVERIFY(editor.publishMapView({{"viewportWidth",800.},{"viewportHeight",600.},{"scale",240.},
