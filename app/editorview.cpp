@@ -108,41 +108,64 @@ bool EditorController::setTerrainMode(const QString& value)
     emit terrainChanged();return true;
 }
 
+MapCameraMetrics EditorController::mapCameraMetrics() const
+{
+    return {projection_.width,projection_.height,projection_.cosLatitudeValue(),
+            projection_.minXValue(),projection_.maxLatitudeValue()};
+}
+
+bool EditorController::publishCameraView()
+{
+    sceneBridge_.publishView(camera_.view());
+    camera_.acceptPublishedView(sceneBridge_.viewState());
+    return true;
+}
+
+void EditorController::syncMapCameraMetrics(bool publishCurrent)
+{
+    const bool changed=camera_.setMetrics(mapCameraMetrics());
+    if(!changed)return;
+    if(publishCurrent&&camera_.mode()==ProjectionMode::Flat)publishCameraView();
+    else emit viewStateChanged();
+}
+
 QString EditorController::projectionMode() const
 {
-    return sceneBridge_.viewState().mode==ProjectionMode::Globe?QStringLiteral("globe"):QStringLiteral("flat");
+    return camera_.mode()==ProjectionMode::Globe?QStringLiteral("globe"):QStringLiteral("flat");
 }
 
 QVariantMap EditorController::mapViewState() const
 {
-    const auto view=sceneBridge_.viewState();
-    return {{"projection",view.mode==ProjectionMode::Globe?QStringLiteral("globe"):QStringLiteral("flat")},
-        {"viewportWidth",view.viewportWidth},{"viewportHeight",view.viewportHeight},
-        {"centerLongitude",view.centerLongitude},{"centerLatitude",view.centerLatitude},
-        {"rotationLongitude",view.rotationLongitude},{"rotationLatitude",view.rotationLatitude},
-        {"rotationRoll",view.rotationRoll},{"scale",view.scale},{"translateX",view.translateX},
-        {"translateY",view.translateY},{"devicePixelRatio",view.devicePixelRatio},
-        {"revision",QVariant::fromValue<qulonglong>(view.revision)}};
+    const auto display=camera_.display();
+    const auto& state=display.view;
+    return {{"projection",state.mode==ProjectionMode::Globe?QStringLiteral("globe"):QStringLiteral("flat")},
+        {"viewportWidth",state.viewportWidth},{"viewportHeight",state.viewportHeight},
+        {"centerLongitude",state.centerLongitude},{"centerLatitude",state.centerLatitude},
+        {"rotationLongitude",state.rotationLongitude},{"rotationLatitude",state.rotationLatitude},
+        {"rotationRoll",state.rotationRoll},{"scale",state.scale},{"translateX",state.translateX},
+        {"translateY",state.translateY},{"devicePixelRatio",state.devicePixelRatio},
+        {"revision",QVariant::fromValue<qulonglong>(state.revision)},
+        {"zoom",display.zoom},{"flatZoom",display.flatZoom},{"globeZoom",display.globeZoom},
+        {"panX",display.panX},{"panY",display.panY},{"fitScale",display.fitScale},
+        {"mapScale",display.mapScale},{"originX",display.originX},{"originY",display.originY}};
 }
 
 bool EditorController::publishMapView(const QVariantMap& values)
 {
-    auto view=sceneBridge_.viewState();
-    if(!updateFinite(values,"viewportWidth",view.viewportWidth)||
-       !updateFinite(values,"viewportHeight",view.viewportHeight)||
-       !updateFinite(values,"centerLongitude",view.centerLongitude)||
-       !updateFinite(values,"centerLatitude",view.centerLatitude)||
-       !updateFinite(values,"rotationLongitude",view.rotationLongitude)||
-       !updateFinite(values,"rotationLatitude",view.rotationLatitude)||
-       !updateFinite(values,"rotationRoll",view.rotationRoll)||
-       !updateFinite(values,"scale",view.scale)||
-       !updateFinite(values,"translateX",view.translateX)||
-       !updateFinite(values,"translateY",view.translateY)||
-       !updateFinite(values,"devicePixelRatio",view.devicePixelRatio)||!validMapViewState(view))return false;
-    sceneBridge_.publishView(view);
-    const auto published=sceneBridge_.viewState();
-    if(published.mode==ProjectionMode::Globe)globeView_=published;else flatView_=published;
-    return true;
+    auto state=sceneBridge_.viewState();
+    if(!updateFinite(values,"viewportWidth",state.viewportWidth)||
+       !updateFinite(values,"viewportHeight",state.viewportHeight)||
+       !updateFinite(values,"centerLongitude",state.centerLongitude)||
+       !updateFinite(values,"centerLatitude",state.centerLatitude)||
+       !updateFinite(values,"rotationLongitude",state.rotationLongitude)||
+       !updateFinite(values,"rotationLatitude",state.rotationLatitude)||
+       !updateFinite(values,"rotationRoll",state.rotationRoll)||
+       !updateFinite(values,"scale",state.scale)||
+       !updateFinite(values,"translateX",state.translateX)||
+       !updateFinite(values,"translateY",state.translateY)||
+       !updateFinite(values,"devicePixelRatio",state.devicePixelRatio)||!validMapViewState(state))return false;
+    camera_.adoptView(state);
+    return publishCameraView();
 }
 
 bool EditorController::setProjectionMode(const QString& value)
@@ -151,11 +174,50 @@ bool EditorController::setProjectionMode(const QString& value)
     if(value.compare(QStringLiteral("globe"),Qt::CaseInsensitive)==0)mode=ProjectionMode::Globe;
     else if(value.compare(QStringLiteral("flat"),Qt::CaseInsensitive)==0)mode=ProjectionMode::Flat;
     else return false;
-    const auto current=sceneBridge_.viewState();
-    if(current.mode==mode)return true;
-    if(current.mode==ProjectionMode::Globe)globeView_=current;else flatView_=current;
-    auto next=mode==ProjectionMode::Globe?globeView_:flatView_;
-    next.mode=mode;
-    sceneBridge_.publishView(next);
+    if(!camera_.setProjectionMode(mode))return true;
+    return publishCameraView();
+}
+
+bool EditorController::resizeMapCamera(double width,double height,double devicePixelRatio)
+{
+    syncMapCameraMetrics(false);
+    if(!camera_.resize(width,height,devicePixelRatio))return true;
+    return publishCameraView();
+}
+
+bool EditorController::zoomMapCameraAt(double factor,double x,double y)
+{
+    if(!camera_.zoomAt(factor,x,y))return false;
+    return publishCameraView();
+}
+
+void EditorController::beginMapCameraPan()
+{
+    camera_.beginPan();
+}
+
+bool EditorController::updateMapCameraPan(double deltaX,double deltaY)
+{
+    if(!camera_.panFromGesture(deltaX,deltaY))return false;
+    return publishCameraView();
+}
+
+void EditorController::endMapCameraPan()
+{
+    camera_.endPan();
+}
+
+bool EditorController::fitMapCamera()
+{
+    if(!camera_.fit())return true;
+    return publishCameraView();
+}
+
+bool EditorController::focusMapCameraRect(double left,double top,double width,double height,double maxZoom)
+{
+    closeObjectChooser();
+    if(!camera_.focusRect(left,top,width,height,maxZoom))return false;
+    if(camera_.mode()==ProjectionMode::Flat)return publishCameraView();
+    emit viewStateChanged();
     return true;
 }

@@ -11,6 +11,7 @@
 #include "mapscenebridge.h"
 #include "mapscenebuilder.h"
 #include "renderquality.h"
+#include <pandoeditor/map/mapcamera.h>
 #include <pandoeditor/spatialindex.h>
 #include "hydroruntimeprovider.h"
 #include "../renderer/terrainprovider.h"
@@ -269,6 +270,13 @@ public:
     QVariantMap mapViewState() const;
     Q_INVOKABLE bool publishMapView(const QVariantMap& view);
     Q_INVOKABLE bool setProjectionMode(const QString& mode);
+    Q_INVOKABLE bool resizeMapCamera(double width,double height,double devicePixelRatio=1);
+    Q_INVOKABLE bool zoomMapCameraAt(double factor,double x,double y);
+    Q_INVOKABLE void beginMapCameraPan();
+    Q_INVOKABLE bool updateMapCameraPan(double deltaX,double deltaY);
+    Q_INVOKABLE void endMapCameraPan();
+    Q_INVOKABLE bool fitMapCamera();
+    Q_INVOKABLE bool focusMapCameraRect(double left,double top,double width,double height,double maxZoom);
     QString terrainMode() const;
     Q_INVOKABLE bool setTerrainMode(const QString& mode);
     QVariantMap appearancePreferences() const;
@@ -534,6 +542,9 @@ private:
     void commandError(pandoeditor::CommandError error,const QString& detail={});
     void publish(bool pruneSelection=true);
     void refreshTypedScene();
+    MapCameraMetrics mapCameraMetrics() const;
+    void syncMapCameraMetrics(bool publishCurrent=true);
+    bool publishCameraView();
     void noteAppliedImpact(const pandoeditor::ChangeImpact&);
     QString labelSourceId(const std::string& ownerId) const;
     void scheduleDerivedLabelAnchor(const pandoeditor::ObjectRef& owner);
@@ -607,7 +618,7 @@ private:
     int activeMapInteractions_=0;
     MapSceneBuilder sceneBuilder_{packetCache_};
     MapSceneBridge sceneBridge_;
-    MapViewState flatView_,globeView_;
+    MapCamera camera_;
     QString appearancePath_;
     QVariantMap appearance_;
     QVariantMap appearanceOrigin_;

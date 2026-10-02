@@ -44,25 +44,10 @@ bool geometryBindingsChanged(const pandoeditor::ProjectDocument& before,
     return false;
 }
 
-MapViewState defaultFlatView()
-{
-    MapViewState view;
-    view.mode=ProjectionMode::Flat;
-    view.translateX=.5;view.translateY=.5;
-    return view;
-}
-
-MapViewState defaultGlobeView()
-{
-    MapViewState view;
-    view.mode=ProjectionMode::Globe;
-    view.scale=.45;view.translateX=.5;view.translateY=.5;
-    return view;
-}
 }
 EditorController::EditorController(QObject* parent):EditorController(EditorControllerConfig{},parent) {}
 EditorController::EditorController(EditorControllerConfig config,QObject* parent)
-    :QObject(parent),quality_(config.mobileMode),flatView_(defaultFlatView()),globeView_(defaultGlobeView()),
+    :QObject(parent),quality_(config.mobileMode),
      appearancePath_(std::move(config.appearancePath)),storage_(std::move(config.privateProjectPath)),mobileMode_(config.mobileMode)
 {
     qualityClock_.start();
@@ -94,13 +79,9 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         emit presentationChanged();emit visualChanged();
     });
     initializePhysicalData();
-    bool restoredView=false;
+    std::optional<MapViewState> restoredView;
     if(restoredAutosave) {
-        if(const auto view=autosave_->restoreView()) {
-            sceneBridge_.publishView(*view);restoredView=true;
-            if(view->mode==ProjectionMode::Globe)globeView_=sceneBridge_.viewState();
-            else flatView_=sceneBridge_.viewState();
-        }
+        restoredView=autosave_->restoreView();
     } else if(config.bootstrapWorld) {
         project_.replace(pandoeditor::ProjectDocument(
             std::vector<pandoeditor::Country>{},std::vector<pandoeditor::Layer>{{"countries","국가"}}));
@@ -111,10 +92,10 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         project_.replace(projectcodec::decode(sample.readAll()));
         projection_.rebuild(project_.document());
     }
-    if(!restoredView) {
-        sceneBridge_.publishView(globeView_);
-        globeView_=sceneBridge_.viewState();
-    }
+    camera_.setMetrics(mapCameraMetrics());
+    if(restoredView)camera_.adoptView(*restoredView);
+    sceneBridge_.publishView(camera_.view());
+    camera_.acceptPublishedView(sceneBridge_.viewState());
     selectionInstance_=project_.instanceId();reloadDrafts();
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::hydroFrameChanged);
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::searchChanged);
@@ -143,10 +124,10 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::geometryEditChanged,this,refresh);
     connect(this,&EditorController::presentationChanged,this,refresh);
     connect(this,&EditorController::geometryChanged,this,refresh);
+    connect(this,&EditorController::geometryChanged,this,[this] {syncMapCameraMetrics();});
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,refresh);
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
-        const auto view=sceneBridge_.viewState();
-        if(view.mode==ProjectionMode::Globe)globeView_=view;else flatView_=view;
+        camera_.acceptPublishedView(sceneBridge_.viewState());
         emit viewStateChanged();
     });
     if(autosave_) {
