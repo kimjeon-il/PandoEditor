@@ -106,6 +106,18 @@ std::shared_ptr<RenderScene> scene() {
 class MapRenderTests:public QObject {
     Q_OBJECT
 private slots:
+    void typedSceneIsTheOnlyCpuRendererDataContract() {
+        MapRenderItem item;
+        const auto* meta=item.metaObject();
+        QVERIFY(meta->indexOfProperty("sceneBridge")>=0);
+        QVERIFY(meta->indexOfProperty("smoothLines")>=0);
+        for(const char* legacy:{"paths","visuals","selectedPaths","primaryId",
+                                "originX","originY","mapScale","hydroSource",
+                                "hydroProjection","hydroStyle","hiddenHydroIds",
+                                "selectedHydroId"})
+            QVERIFY2(meta->indexOfProperty(legacy)<0,legacy);
+    }
+
     void publishedViewIsTheOnlyCpuViewportState() {
         MapRenderItem item;item.setWidth(48);item.setHeight(48);
         auto s=scene();
