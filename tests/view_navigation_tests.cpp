@@ -4,6 +4,7 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <cmath>
 
 class ViewNavigationTests final : public QObject {
     Q_OBJECT
