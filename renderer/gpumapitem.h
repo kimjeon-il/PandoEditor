@@ -13,7 +13,6 @@ class GpuMapItem : public QQuickItem {
     Q_PROPERTY(bool rendererReady READ rendererReady NOTIFY rendererReadyChanged)
     Q_PROPERTY(bool forcedGpu READ forcedGpu CONSTANT)
     Q_PROPERTY(QString diagnostic READ diagnostic NOTIFY rendererReadyChanged)
-    Q_PROPERTY(bool contentReady READ contentReady WRITE setContentReady NOTIFY rendererReadyChanged)
     Q_PROPERTY(double originX READ originX WRITE setOriginX NOTIFY viewportChanged)
     Q_PROPERTY(double originY READ originY WRITE setOriginY NOTIFY viewportChanged)
     Q_PROPERTY(double mapScale READ mapScale WRITE setMapScale NOTIFY viewportChanged)
@@ -35,12 +34,9 @@ public:
     explicit GpuMapItem(QQuickItem* parent=nullptr);
     QObject* sceneBridge() const{return bridge_;}
     void setSceneBridge(QObject* bridge);
-    bool rendererReady() const{return ready_&&contentReady_;}
+    bool rendererReady() const{return ready_;}
     bool forcedGpu() const;
-    bool contentReady() const{return contentReady_;}
-    void setContentReady(bool ready);
-    QString diagnostic() const{return contentReady_?diagnostic_:
-        QStringLiteral("GPU content channel unavailable");}
+    QString diagnostic() const{return diagnostic_;}
     double originX() const{return flat_.originX;}
     double originY() const{return flat_.originY;}
     double mapScale() const{return flat_.mapScale;}
@@ -83,7 +79,7 @@ private:
     MapGpuStats publishedStats_;
     MapGpuStats renderStats_;
     QString diagnostic_;
-    bool ready_=false,contentReady_=true;
+    bool ready_=false;
     qulonglong uploadBudgetBytes_=8ull*1024*1024;
     std::atomic<qint64> frameStartNs_{0};
 };

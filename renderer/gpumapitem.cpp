@@ -38,11 +38,6 @@ void GpuMapItem::setSceneBridge(QObject* value) {
     }
     evaluateBackend();emit sceneBridgeChanged();update();
 }
-void GpuMapItem::setContentReady(bool value) {
-    if(contentReady_==value)return;
-    contentReady_=value;
-    emit rendererReadyChanged();update();
-}
 #define MAP_VIEW_SETTER(Name,Member) \
 void GpuMapItem::set##Name(double value) { \
     if(!std::isfinite(value)||flat_.Member==value)return; \
