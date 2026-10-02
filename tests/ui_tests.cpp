@@ -894,15 +894,6 @@ private slots:
                 const double screenY=initialOriginY+candidateY*initialScale;
                 if(screenX<80||screenX>map->width()-80||
                    screenY<80||screenY>map->height()-80)continue;
-                bool labelObstruction=false;
-                for(const auto& labelValue:editor.placedLabels()) {
-                    const auto label=labelValue.toMap();
-                    if(std::abs(label.value("x").toDouble()-screenX)<42&&
-                       std::abs(label.value("y").toDouble()-screenY)<24) {
-                        labelObstruction=true;break;
-                    }
-                }
-                if(labelObstruction)continue;
                 const auto hit=editor.pickObjectScreen(
                     screenX,screenY,map->property("zoom").toDouble());
                 if(hit.value("domain").toString()=="territorial"&&
@@ -915,11 +906,15 @@ private slots:
         QVERIFY(foundGermany);
         editor.clearSelection();
         auto clickGermany=[&]() {
-            auto scale=map->property("mapScale").toDouble();
-            auto local=QPointF(map->property("originX").toDouble()+px*scale,
-                               map->property("originY").toDouble()+py*scale);
-            QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,map->mapToScene(local).toPoint());
-            QTest::qWait(80);
+            const auto scale=map->property("mapScale").toDouble();
+            const QPointF local(map->property("originX").toDouble()+px*scale,
+                                map->property("originY").toDouble()+py*scale);
+            // Pointer-routing/chooser gestures have dedicated desktop+mobile
+            // coverage in selection_ui_tests. Here exercise the same canonical
+            // screen-selection entry point without letting a label delegate
+            // obscure this broader editing-flow regression.
+            editor.beginMapSelectionScreen(local.x(),local.y(),false,
+                                           map->property("zoom").toDouble());
             if(editor.selectedId()=="DEU")return;
             if(editor.objectChooserOpen()) {
                 const auto rows=editor.objectChooserCandidates();
