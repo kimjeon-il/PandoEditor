@@ -9,7 +9,7 @@ namespace {
 constexpr double Pi=3.1415926535897932384626433832795;
 constexpr double DegreesPerRadian=180.0/Pi;
 
-bool finite(double value) {return std::isfinite(value);}
+bool finiteValue(double value) {return std::isfinite(value);}
 
 auto viewFields(const MapViewState& value) {
     return std::tie(value.mode,value.viewportWidth,value.viewportHeight,
@@ -32,9 +32,9 @@ ViewportResourceRequest buildViewportResourceRequest(
     const MapCameraDisplay& display,const MapCameraMetrics& metrics,
     ViewportResourceKind resources,std::uint64_t generation) {
     if(!validMapViewState(display.view)||!validMapCameraMetrics(metrics)||
-       !finite(display.flatZoom)||display.flatZoom<=0||
-       !finite(display.mapScale)||display.mapScale<=0||
-       !finite(display.originX)||!finite(display.originY)||
+       !finiteValue(display.flatZoom)||display.flatZoom<=0||
+       !finiteValue(display.mapScale)||display.mapScale<=0||
+       !finiteValue(display.originX)||!finiteValue(display.originY)||
        !anyViewportResource(resources)||generation==0)
         throw std::invalid_argument("invalid viewport resource request");
 
