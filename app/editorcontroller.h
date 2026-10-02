@@ -12,6 +12,7 @@
 #include "mapscenebuilder.h"
 #include "renderquality.h"
 #include <pandoeditor/map/mapcamera.h>
+#include <pandoeditor/map/mappicker.h>
 #include <pandoeditor/spatialindex.h>
 #include "hydroruntimeprovider.h"
 #include "../renderer/terrainprovider.h"
@@ -495,6 +496,7 @@ private:
     void loadAppearancePreferences();
     bool saveAppearancePreferences() const;
     ScreenColorPicker screenColorPicker_;
+    MapPickContext mapPickContext(double zoom) const;
     std::vector<pandoeditor::ObjectRef> mapCandidates(double x,double y,double pixelsPerUnit,double zoom=1) const;
     std::vector<pandoeditor::ObjectRef> mapCandidatesScreen(double x,double y,double zoom=1) const;
     QVariantMap pickObjectFromCandidates(const std::vector<pandoeditor::ObjectRef>& hits) const;
@@ -639,15 +641,13 @@ private:
     std::vector<WorldBaseRange> worldRanges_;
     std::uint64_t worldGeneration_=0;
     QString worldStatus_=QStringLiteral("disabled");
-    mutable pandoeditor::GeoSpatialIndex spatialIndex_;
-    mutable std::uint64_t spatialIndexedRevision_=0;
+    mutable MapPicker mapPicker_;
     std::optional<pandoeditor::ChangeImpact> pendingSceneImpact_;
     std::uint64_t pendingSceneImpactRevision_=0;
     std::uint64_t sceneQualityRevision_=0;
-    std::uint64_t scenePatchCount_=0,sceneFullBuildCount_=0,spatialIncrementalUpdateCount_=0;
+    std::uint64_t scenePatchCount_=0,sceneFullBuildCount_=0;
     std::size_t lastEditAffectedObjects_=0,lastEditRetainedGeometries_=0,lastEditNewGeometryBytes_=0;
     std::string sceneInstance_;
-    mutable std::string spatialInstance_;
     QString selected_,selectedLayer_="countries",filePath_;
     QString nameDraft_,memoDraft_,colorDraft_,layerNameDraft_;
     std::optional<double> opacityPreview_,layerOpacityPreview_;

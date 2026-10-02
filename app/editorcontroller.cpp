@@ -188,16 +188,7 @@ void EditorController::noteAppliedImpact(const pandoeditor::ChangeImpact& impact
     lastEditAffectedObjects_=impact.changedObjects.size();
     lastEditRetainedGeometries_=impact.retainedGeometryCount;
     lastEditNewGeometryBytes_=impact.estimatedNewGeometryBytes;
-    if(spatialInstance_==project_.instanceId()&&spatialIndex_.geometryRevision()!=0&&
-       spatialIndexedRevision_!=std::numeric_limits<std::uint64_t>::max()&&
-       spatialIndexedRevision_+1==project_.revision()) {
-        try {
-            spatialIndex_.update(project_.document(),project_.index(),
-                impact.changedObjects,impact.changedObjects);
-            spatialIndexedRevision_=project_.revision();
-            if(!impact.changedObjects.empty())++spatialIncrementalUpdateCount_;
-        }catch(...) {spatialIndex_=pandoeditor::GeoSpatialIndex{};spatialInstance_.clear();}
-    }
+    mapPicker_.applyImpact(project_.snapshot(),impact.changedObjects);
     try {
         pendingSceneImpact_=impact;
         pendingSceneImpactRevision_=project_.revision();
@@ -290,7 +281,7 @@ QVariantMap EditorController::renderQuality() const {
         {"packetCacheBudgetBytes",qulonglong(packetCache_.budget())},
         {"scenePatchCount",qulonglong(scenePatchCount_)},
         {"sceneFullBuildCount",qulonglong(sceneFullBuildCount_)},
-        {"spatialIncrementalUpdateCount",qulonglong(spatialIncrementalUpdateCount_)},
+        {"spatialIncrementalUpdateCount",qulonglong(mapPicker_.incrementalUpdateCount())},
         {"lastEditAffectedObjects",qulonglong(lastEditAffectedObjects_)},
         {"lastEditRetainedGeometries",qulonglong(lastEditRetainedGeometries_)},
         {"lastEditEstimatedNewGeometryBytes",qulonglong(lastEditNewGeometryBytes_)},
