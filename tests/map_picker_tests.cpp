@@ -88,7 +88,11 @@ void labelAndDistributionFilters() {
     d.presentation.membership[{"label","L"}]="other";
 
     d.distributionLayers.push_back({"D","분포","language"});
-    DistributionEntry entry;entry.id="E";entry.layerId="D";entry.geometry=GeometryRef{"label",1};
+    Geometry area;area.type="Polygon";
+    area.polygons={{{{1.5,2.5},{2.5,2.5},{2.5,3.5},{1.5,3.5},{1.5,2.5}}}};
+    d.geometries.insert({"distribution",1},area);
+    DistributionEntry entry;entry.id="E";entry.layerId="D";
+    entry.geometry=GeometryRef{"distribution",1};
     d.distributionEntries.push_back(entry);
     d.presentation.membership[{"distributionEntry","E"}]="other";
     validateDocument(d);
