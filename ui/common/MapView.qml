@@ -38,13 +38,6 @@ Rectangle {
             event.accepted = true
         }
     }
-    readonly property var selectedPaths: {
-        const keys = editor.selectionItems.map(function(ref) { return ref.domain === "territorial" ? ref.id : "content/" + ref.domain + "/" + ref.id })
-        return editor.paths.filter(function(path) {
-            return keys.indexOf(path.countryId)>=0 && editor.countryVisuals[path.countryId]
-                && editor.countryVisuals[path.countryId].visible
-        })
-    }
     function dismissPopup() {
         if (objectChooser.visible) { objectChooser.close(); return true }
         return false
@@ -201,16 +194,6 @@ Rectangle {
         visible: !gpuMapRenderer.rendererReady && !gpuMapRenderer.forcedGpu
         sceneBridge: editor.mapSceneBridge
         smoothLines: editor.appearancePreferences.smoothLines !== false
-        paths: editor.paths
-        visuals: editor.countryVisuals
-        hydroSource: editor.hydroSource
-        hydroProjection: editor.hydroProjection
-        hydroStyle: editor.hydroStyle
-        hiddenHydroIds: editor.hiddenHydroIds
-        selectedHydroId: editor.primaryObject.domain === "hydroBuiltin" ? editor.primaryObject.id : ""
-        selectedPaths: view.selectedPaths
-        primaryId: editor.primaryObject.domain === "territorial" ? editor.primaryObject.id : editor.primaryObject.id ? "content/" + editor.primaryObject.domain + "/" + editor.primaryObject.id : ""
-        originX: view.originX; originY: view.originY; mapScale: view.mapScale
         z: 0
     }
     Label {
