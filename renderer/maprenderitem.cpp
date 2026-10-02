@@ -222,6 +222,15 @@ void MapRenderItem::paint(QPainter* painter) {
         painter->restore();
     };
 
+    // The immutable preview world base predates canonical document packets and
+    // is intentionally submitted outside drawSequence in both backends.
+    if(scene_->worldBase&&scene_->worldBase->mesh&&scene_->worldBase->mesh->preview)
+        for(const double offset:copies)
+            for(std::size_t i=0;i<scene_->worldCountries.size();++i) {
+                drawWorld(PrimitiveKind::WorldFill,i,offset);
+                drawWorld(PrimitiveKind::WorldStroke,i,offset);
+            }
+
     // Base pass: exactly the engine-authored draw sequence used by the GPU backend.
     for(const auto& command:scene_->drawSequence)for(const double offset:copies) {
         if(command.primitive==PrimitiveKind::Polygon&&command.index<scene_->polygons.size())
@@ -269,7 +278,8 @@ void MapRenderItem::paint(QPainter* painter) {
     for(const double offset:copies) {
         const auto worldOutline=[&](const pandoeditor::ObjectRef& ref,
                                     std::uint32_t color,float width) {
-            if(ref.domain!="territorial"||!scene_->worldBase)return;
+            if(ref.domain!="territorial"||!scene_->worldBase||
+               !scene_->worldBase->mesh||scene_->worldBase->mesh->preview)return;
             RenderStyle style;style.color=color;style.alpha=1;style.width=width;
             for(const auto index:worldRangeIndicesForOwner(*scene_->worldBase,ref.id))
                 drawWorld(PrimitiveKind::WorldStroke,index,offset,&style);
