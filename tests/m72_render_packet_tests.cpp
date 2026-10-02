@@ -1,4 +1,4 @@
-#include "renderpacket.h"
+#include <pandoeditor/map/renderpacket.h>
 #include <cassert>
 #include <cmath>
 #include <stdexcept>

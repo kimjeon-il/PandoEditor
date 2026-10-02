@@ -1,5 +1,5 @@
 #include "geographicimagemesh.h"
-#include "projectionengine.h"
+#include <pandoeditor/map/projectionengine.h>
 #include <algorithm>
 #include <stdexcept>
 

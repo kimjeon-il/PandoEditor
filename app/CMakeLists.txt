@@ -73,7 +73,7 @@ add_library(pandoeditor_editor STATIC
     ../renderer/scenegraph/mapscenenode.cpp ../renderer/scenegraph/mapscenenode.h
     ../renderer/referenceimageitem.cpp ../renderer/referenceimageitem.h
 )
-target_include_directories(pandoeditor_editor PUBLIC . ../renderer PRIVATE ../third_party/earcut)
+target_include_directories(pandoeditor_editor PUBLIC . ../renderer)
 target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Pandoeditor::MapEngine Qt6::Quick Qt6::Concurrent Qt6::Svg Qt6::Sql Qt6::Network ZLIB::ZLIB)
 qt_add_shaders(pandoeditor_editor m73_map_shaders
     PREFIX "/m73" BASE "${PROJECT_SOURCE_DIR}/renderer"

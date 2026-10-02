@@ -1,4 +1,4 @@
-#include "projectionengine.h"
+#include <pandoeditor/map/projectionengine.h>
 #include <pandoeditor/document.h>
 #include <cmath>
 #include <iostream>

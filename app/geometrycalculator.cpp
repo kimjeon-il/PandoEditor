@@ -115,7 +115,6 @@ GeometryOperationResult calculateGeometry(const GeometryOperationRequest& reques
 }
 
 namespace {
-double cutCross(Point a,Point b,Point c){return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);}
 bool near(Point a,Point b,double e=1e-8){return std::hypot(a.x-b.x,a.y-b.y)<=e;}
 struct CutHit{double position=0,boundaryT=0;std::size_t polygon=0,segment=0;Point point{};};
 std::optional<CutHit> cutIntersection(Point a,Point b,Point c,Point d,std::size_t lineIndex,std::size_t polygon,std::size_t segment){

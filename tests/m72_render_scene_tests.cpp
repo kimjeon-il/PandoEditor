@@ -1,4 +1,4 @@
-#include "renderscene.h"
+#include <pandoeditor/map/renderscene.h>
 #include <stdexcept>
 #include <type_traits>
 #include <limits>

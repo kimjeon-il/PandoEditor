@@ -1,4 +1,4 @@
-#include "mapscenebuilder.h"
+#include <pandoeditor/map/mapscenebuilder.h>
 #include "world_fixture_loader.h"
 #include <pandoeditor/spatialindex.h>
 #include <algorithm>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "renderpacket.h"
-#include "mapviewstate.h"
+#include <pandoeditor/map/renderpacket.h>
+#include <pandoeditor/map/mapviewstate.h>
 #include <QSGMaterial>
 #include <QSGRendererInterface>
 #include <QVector4D>

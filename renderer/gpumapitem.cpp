@@ -1,5 +1,5 @@
 #include "gpumapitem.h"
-#include "mapviewstate.h"
+#include <pandoeditor/map/mapviewstate.h>
 #include <QFile>
 #include <QQuickWindow>
 #include <QSGRendererInterface>

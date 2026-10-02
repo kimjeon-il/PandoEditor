@@ -1,7 +1,7 @@
 #pragma once
 
 #include "platformstorage.h"
-#include "../renderer/mapviewstate.h"
+#include <pandoeditor/map/mapviewstate.h>
 #include <QByteArray>
 #include <QObject>
 #include <QTimer>

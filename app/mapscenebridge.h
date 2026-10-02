@@ -1,6 +1,6 @@
 #pragma once
-#include "mapviewstate.h"
-#include "renderscene.h"
+#include <pandoeditor/map/mapviewstate.h>
+#include <pandoeditor/map/renderscene.h>
 #include <QObject>
 #include <memory>
 #include <mutex>

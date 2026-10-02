@@ -1,4 +1,4 @@
-#include "mapscenebuilder.h"
+#include <pandoeditor/map/mapscenebuilder.h>
 #include <stdexcept>
 
 namespace {

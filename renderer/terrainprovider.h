@@ -1,5 +1,5 @@
 #pragma once
-#include "mapviewstate.h"
+#include <pandoeditor/map/mapviewstate.h>
 #include <QByteArray>
 #include <QImage>
 #include <QString>

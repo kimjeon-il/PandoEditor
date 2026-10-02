@@ -1,5 +1,5 @@
-#include "geometrypacketcache.h"
-#include "mapviewstate.h"
+#include <pandoeditor/map/geometrypacketcache.h>
+#include <pandoeditor/map/mapviewstate.h>
 #include <stdexcept>
 
 namespace {

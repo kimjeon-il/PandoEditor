@@ -1,4 +1,4 @@
-#include "projectionengine.h"
+#include <pandoeditor/map/projectionengine.h>
 #include <pandoeditor/spatialindex.h>
 #include <algorithm>
 #include <stdexcept>

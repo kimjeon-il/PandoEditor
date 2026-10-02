@@ -1,7 +1,7 @@
 #pragma once
 
-#include "renderscene.h"
-#include "mapviewstate.h"
+#include <pandoeditor/map/renderscene.h>
+#include <pandoeditor/map/mapviewstate.h>
 #include "uploadscheduler.h"
 #include <QSGNode>
 #include <cstdint>

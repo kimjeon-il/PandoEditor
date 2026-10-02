@@ -1,5 +1,5 @@
 #include "maprenderitem.h"
-#include "renderpacket.h"
+#include <pandoeditor/map/renderpacket.h>
 #include <QGuiApplication>
 #include <QImage>
 #include <QPainter>

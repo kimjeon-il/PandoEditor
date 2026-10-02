@@ -2,7 +2,7 @@
 #include <pandoeditor/presentationcommands.h>
 #include "losslessjson.h"
 #include "hydrodataprovider.h"
-#include "../renderer/projectionengine.h"
+#include <pandoeditor/map/projectionengine.h>
 #include <QFile>
 #include <QFileInfo>
 #include <QUrl>
@@ -371,9 +371,4 @@ bool EditorController::setPresentationBoundary(const QString& group,bool visible
 }
 bool EditorController::toggleSelectionVisibility() {
     auto r=PresentationCommandProcessor::apply(project_,SetBatchVisibility{selection_.items(),{}});if(r==PresentationResult::Applied)publishPresentation();return r==PresentationResult::Applied||r==PresentationResult::NoOp;
-}
-bool EditorController::setScopedObjectVisibility(const QVariantMap& value,bool visible) {
-    auto ref=existingObjectRef(value);if(!ref)return false;
-    auto group=ref->domain=="territorial"?territorialGroup(project_.document().units.at(project_.index().objects.at(*ref)).kind):contentGroup(project_.document(),*ref);
-    auto r=PresentationCommandProcessor::apply(project_,SetScopedVisibility{group,{*ref},visible});if(r==PresentationResult::Applied)publishPresentation();return r==PresentationResult::Applied||r==PresentationResult::NoOp;
 }

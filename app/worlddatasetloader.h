@@ -3,7 +3,7 @@
 #include "../renderer/canonicalpacket.h"
 #include "../renderer/countrymesh.h"
 #include "../renderer/mapprojection.h"
-#include "../renderer/renderscene.h"
+#include <pandoeditor/map/renderscene.h>
 #include <pandoeditor/document.h>
 #include <memory>
 

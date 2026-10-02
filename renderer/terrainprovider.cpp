@@ -1,5 +1,5 @@
 #include "terrainprovider.h"
-#include "projectionengine.h"
+#include <pandoeditor/map/projectionengine.h>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>

@@ -9,8 +9,8 @@
 #include "physicaldatastore.h"
 #include "mapprojection.h"
 #include "mapscenebridge.h"
-#include "mapscenebuilder.h"
-#include "renderquality.h"
+#include <pandoeditor/map/mapscenebuilder.h>
+#include <pandoeditor/map/renderquality.h>
 #include <pandoeditor/map/mapcamera.h>
 #include <pandoeditor/map/mappicker.h>
 #include <pandoeditor/map/viewportresourcescheduler.h>
@@ -208,7 +208,6 @@ public:
     Q_INVOKABLE bool resetLabelPosition(const QVariantMap& ref);
     Q_INVOKABLE bool configureHydroData(const QUrl& path);
     Q_INVOKABLE bool toggleSelectionVisibility();
-    Q_INVOKABLE bool setScopedObjectVisibility(const QVariantMap& ref,bool visible);
     QObject* screenColorPicker() { return &screenColorPicker_; }
     QVariantMap objectProperties() const;
     QString validFromDraft() const { return validFromDraft_; }

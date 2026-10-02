@@ -1,5 +1,5 @@
 #include "maprenderitem.h"
-#include "projectionengine.h"
+#include <pandoeditor/map/projectionengine.h>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPen>
