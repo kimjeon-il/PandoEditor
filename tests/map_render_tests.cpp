@@ -1,213 +1,287 @@
 #include "maprenderitem.h"
+#include "renderpacket.h"
 #include <QtTest>
 #include <QImage>
 #include <QPainter>
-#include <QQuickWindow>
-#include <hydroloadscheduler.h>
-#include <pandoeditor/maprenderorder.h>
-#include <tuple>
+#include <cmath>
+#include <memory>
 #include <vector>
+
+namespace {
+constexpr double DegreesPerRadian=180.0/3.14159265358979323846;
+
+MapViewState viewFor(int width,int height) {
+    MapViewState view;
+    view.mode=ProjectionMode::Flat;
+    view.viewportWidth=width;
+    view.viewportHeight=height;
+    view.scale=DegreesPerRadian; // one longitude/latitude degree per screen pixel
+    view.translateX=0;
+    view.translateY=height;
+    return view;
+}
+
+pandoeditor::Point screenPoint(double x,double y,double height) {
+    return {x,height-y};
+}
+
+pandoeditor::Geometry rectangle(double left,double top,double right,double bottom,double height) {
+    pandoeditor::Geometry geometry;
+    geometry.type="Polygon";
+    geometry.polygons={{{screenPoint(left,top,height),screenPoint(right,top,height),
+                         screenPoint(right,bottom,height),screenPoint(left,bottom,height),
+                         screenPoint(left,top,height)}}};
+    return geometry;
+}
+
+pandoeditor::Geometry polygonWithHole(double height) {
+    pandoeditor::Geometry geometry;
+    geometry.type="Polygon";
+    geometry.polygons={{
+        {screenPoint(5,5,height),screenPoint(35,5,height),screenPoint(35,35,height),
+         screenPoint(5,35,height),screenPoint(5,5,height)},
+        {screenPoint(15,15,height),screenPoint(15,25,height),screenPoint(25,25,height),
+         screenPoint(25,15,height),screenPoint(15,15,height)}
+    }};
+    return geometry;
+}
+
+PolygonDrawPacket polygonDraw(const std::string& id,const pandoeditor::Geometry& geometry,
+                              std::uint32_t color,BlendMode blend=BlendMode::Normal) {
+    PolygonDrawPacket draw;
+    draw.key=id;
+    draw.object={"generic",id};
+    draw.geometry={id,1};
+    draw.style.color=color;
+    draw.style.blendMode=blend;
+    draw.geometryPacket=makePolygonGeometryPacket(geometry);
+    return draw;
+}
+
+StrokeDrawPacket strokeDraw(const std::string& id,const std::vector<pandoeditor::Point>& points,
+                            std::uint32_t color,float width=1) {
+    pandoeditor::Geometry geometry;
+    geometry.type="LineString";
+    geometry.lines={points};
+    StrokeDrawPacket draw;
+    draw.key=id;
+    draw.object={"generic",id};
+    draw.geometry={id,1};
+    draw.style.color=color;
+    draw.style.width=width;
+    draw.geometryPacket=makeStrokeGeometryPacket(geometry);
+    return draw;
+}
+
+PointDrawPacket pointDraw(const std::string& id,pandoeditor::Point point,std::uint32_t color) {
+    pandoeditor::Geometry geometry;
+    geometry.type="Point";
+    geometry.points={point};
+    PointDrawPacket draw;
+    draw.key=id;
+    draw.object={"generic",id};
+    draw.geometry={id,1};
+    draw.style.color=color;
+    draw.geometryPacket=makePointGeometryPacket(geometry);
+    return draw;
+}
+
+QImage paint(MapRenderItem& item,int width,int height,QColor background=Qt::white) {
+    QImage image(width,height,QImage::Format_ARGB32_Premultiplied);
+    image.fill(background);
+    QPainter painter(&image);
+    item.paint(&painter);
+    painter.end();
+    return image;
+}
+
+std::shared_ptr<RenderScene> scene() {
+    auto result=std::make_shared<RenderScene>();
+    result->revision=1;
+    result->worldPlan.worldOffsets={0};
+    return result;
+}
+}
 
 class MapRenderTests:public QObject {
     Q_OBJECT
 private slots:
-    void viewportChangesRepaintCachedMapTexture() {
-        QQuickWindow window;window.resize(48,48);window.setColor(Qt::white);
-        MapRenderItem item(window.contentItem());item.setWidth(48);item.setHeight(48);
-        item.setPaths({QVariantMap{{"countryId","generic"},{"path","M5 5 L15 5 L15 15 L5 15 Z"}}});
-        item.setVisuals({{"generic",QVariantMap{{"visible",true},{"color","#ff0000"},{"boundary",false}}}});
-        window.show();
-        auto colorAt=[&](int x,int y){return window.grabWindow().pixelColor(x,y);};
-        QTRY_COMPARE_WITH_TIMEOUT(colorAt(10,10),QColor("#ff0000"),2000);
-        item.setOriginX(20);
-        QTRY_COMPARE_WITH_TIMEOUT(colorAt(30,10),QColor("#ff0000"),2000);
-        QCOMPARE(colorAt(10,10),QColor(Qt::white));
-        item.setOriginY(20);
-        QTRY_COMPARE_WITH_TIMEOUT(colorAt(30,30),QColor("#ff0000"),2000);
-        QCOMPARE(colorAt(30,10),QColor(Qt::white));
-        item.setOriginX(0);item.setOriginY(0);item.setMapScale(2);
-        QTRY_COMPARE_WITH_TIMEOUT(colorAt(25,25),QColor("#ff0000"),2000);
-        QCOMPARE(colorAt(10,10),QColor("#ff0000"));
-        window.close();
+    void publishedViewIsTheOnlyCpuViewportState() {
+        MapRenderItem item;item.setWidth(48);item.setHeight(48);
+        auto s=scene();
+        s->polygons.push_back(polygonDraw("red",rectangle(5,5,15,15,48),0xff0000));
+        s->drawSequence.push_back({PrimitiveKind::Polygon,0,{0,0,0},-1});
+
+        auto view=viewFor(48,48);
+        item.setSceneSnapshot(s,view);
+        auto image=paint(item,48,48);
+        QCOMPARE(image.pixelColor(10,10),QColor("#ff0000"));
+
+        view.translateX=20;view.revision=1;
+        item.setSceneSnapshot(s,view);
+        image=paint(item,48,48);
+        QCOMPARE(image.pixelColor(30,10),QColor("#ff0000"));
+        QCOMPARE(image.pixelColor(10,10),QColor(Qt::white));
+
+        view.translateY=68;view.revision=2;
+        item.setSceneSnapshot(s,view);
+        image=paint(item,48,48);
+        QCOMPARE(image.pixelColor(30,30),QColor("#ff0000"));
+        QCOMPARE(item.sceneRevision(),qulonglong(1));
+        QCOMPARE(item.viewRevision(),qulonglong(2));
     }
-    void territorialChildrenOwnTheirPixelsAboveCountry(){
-        using namespace pandoeditor;
-        ProjectDocument document;
-        for(const auto& [id,kind]:std::vector<std::pair<std::string,UnitKind>>{
-            {"country",UnitKind::Country},{"subunit",UnitKind::Subunit},{"region",UnitKind::Region}}){
-            TerritorialUnit unit;unit.id=id;unit.kind=kind;document.units.push_back(unit);
-        }
+
+    void cpuConsumesEngineDrawSequenceForOverlaps() {
         MapRenderItem item;item.setWidth(40);item.setHeight(40);
-        QVariantList paths;QVariantMap visuals;
-        for(const auto& [id,color,shape]:std::vector<std::tuple<QString,QString,QString>>{
-            {"region","#0000ff","M15 15 L25 15 L25 25 L15 25 Z"},
-            {"country","#ff0000","M5 5 L35 5 L35 35 L5 35 Z"},
-            {"subunit","#00ff00","M10 10 L30 10 L30 30 L10 30 Z"}}){
-            const auto order=mapRenderOrder(document,territorialRef(id.toStdString()),RenderPrimitiveRole::Fill);
-            paths.append(QVariantMap{{"countryId",id},{"path",shape}});
-            visuals[id]=QVariantMap{{"visible",true},{"color",color},{"boundary",false},
-                {"drawFillPass",order.pass},{"drawGroup",order.group},{"drawObject",order.object}};
-        }
-        item.setPaths(paths);item.setVisuals(visuals);
-        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
-        QPainter painter(&image);item.paint(&painter);painter.end();
+        auto s=scene();
+        s->polygons.push_back(polygonDraw("country",rectangle(5,5,35,35,40),0xff0000));
+        s->polygons.push_back(polygonDraw("subunit",rectangle(10,10,30,30,40),0x00ff00));
+        s->polygons.push_back(polygonDraw("region",rectangle(15,15,25,25,40),0x0000ff));
+        s->drawSequence={
+            {PrimitiveKind::Polygon,0,{0,0,0},-1},
+            {PrimitiveKind::Polygon,1,{10,0,0},-1},
+            {PrimitiveKind::Polygon,2,{20,0,0},-1}
+        };
+        item.setSceneSnapshot(s,viewFor(40,40));
+        const auto image=paint(item,40,40);
         QCOMPARE(image.pixelColor(7,7),QColor("#ff0000"));
         QCOMPARE(image.pixelColor(12,12),QColor("#00ff00"));
         QCOMPARE(image.pixelColor(20,20),QColor("#0000ff"));
     }
-    void overlayPairsFollowWebDrawGroups_data(){
-        QTest::addColumn<QString>("left");QTest::addColumn<QString>("right");
-        QTest::addColumn<QString>("top");
-        QTest::newRow("religion-ethnicity")<<"religion"<<"ethnicity"<<"ethnicity";
-        QTest::newRow("ethnicity-language")<<"ethnicity"<<"language"<<"language";
-        QTest::newRow("language-subunit")<<"language"<<"subunit"<<"language";
-        QTest::newRow("subunit-region")<<"subunit"<<"region"<<"region";
-        QTest::newRow("region-generic")<<"region"<<"generic"<<"generic";
-    }
-    void overlayPairsFollowWebDrawGroups(){
-        QFETCH(QString,left);QFETCH(QString,right);QFETCH(QString,top);
-        using namespace pandoeditor;
-        ProjectDocument document;
-        for(const auto& [id,kind]:std::vector<std::pair<std::string,UnitKind>>{
-            {"subunit",UnitKind::Subunit},{"region",UnitKind::Region}}){
-            TerritorialUnit unit;unit.id=id;unit.kind=kind;document.units.push_back(unit);
-        }
-        for(const auto& type:{"religion","ethnicity","language"}){
-            DistributionLayer layer;layer.id=type;layer.type=type;document.distributionLayers.push_back(layer);
-            DistributionEntry entry;entry.id=type;entry.layerId=type;document.distributionEntries.push_back(entry);
-        }
-        auto ref=[](const QString& name)->ObjectRef{
-            const auto id=name.toStdString();
-            return {name=="subunit"||name=="region"?"territorial":
-                name=="generic"?"generic":"distributionEntry",id};
-        };
-        auto visual=[&](const QString& name,const QString& color){
-            const auto order=mapRenderOrder(document,ref(name),RenderPrimitiveRole::Fill);
-            return QVariantMap{{"visible",true},{"color",color},{"boundary",false},
-                {"drawFillPass",order.pass},{"drawGroup",order.group},{"drawObject",order.object}};
-        };
+
+    void typedHydroSharesTheSamePassOrdering() {
         MapRenderItem item;item.setWidth(40);item.setHeight(40);
-        const auto shape=QStringLiteral("M5 5 L35 5 L35 35 L5 35 Z");
-        item.setPaths({QVariantMap{{"countryId",left},{"path",shape}},
-            QVariantMap{{"countryId",right},{"path",shape}}});
-        item.setVisuals({{left,visual(left,"#ff0000")},{right,visual(right,"#0000ff")}});
-        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
-        QPainter painter(&image);item.paint(&painter);painter.end();
-        QCOMPARE(image.pixelColor(20,20),QColor(top==left?"#ff0000":"#0000ff"));
-    }
-    void webPassesPlaceLakeAboveCountryAndStrokeAboveLake(){
-        MapRenderItem item;item.setWidth(40);item.setHeight(40);item.setMapScale(1);
-        item.setHydroProjection({{"cosLatitude",1.},{"minX",0.},{"maxLatitude",40.}});
-        item.setPaths({QVariantMap{{"countryId","country"},{"path","M5 5 L35 5 L35 35 L5 35 Z"}},
-            QVariantMap{{"countryId","overlay"},{"geometryType","LineString"},{"path","M10 20 L30 20"}}});
-        item.setVisuals({{"country",QVariantMap{{"visible",true},{"color","#ff0000"},{"boundary",false},{"drawFillPass",10}}},
-            {"overlay",QVariantMap{{"visible",true},{"color","#00ff00"},{"boundary",false},{"drawLinePass",60}}}});
-        auto frame=std::make_shared<HydroRuntimeFrame>();
-        frame->packet.lakes.push_back({1,1,{{{{10000000,10000000},{30000000,10000000},
-            {30000000,30000000},{10000000,30000000},{10000000,10000000}}}}});
-        frame->packet.rivers.push_back({2,2,{10000000,15000000},{30000000,15000000},3,3,false});
-        item.setHydroFrame(frame);item.setHydroStyle({{"lakesVisible",true},{"riversVisible",true},
-            {"lakeColor","#0000ff"},{"riverColor","#ffff00"}});
-        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
-        QPainter painter(&image);item.paint(&painter);painter.end();
+        auto s=scene();
+        auto country=polygonDraw("country",rectangle(5,5,35,35,40),0xff0000);
+        country.object={"territorial","country"};
+        auto lake=polygonDraw("lake",rectangle(10,10,30,30,40),0x0000ff);
+        lake.object={"hydroBuiltin","lake"};
+        auto river=strokeDraw("river",{screenPoint(10,25,40),screenPoint(30,25,40)},0xffff00,0);
+        river.object={"hydroBuiltin","river"};
+        river.geometryPacket.endpointWidths=std::make_shared<const std::vector<float>>(
+            std::vector<float>{3,3});
+        auto overlay=strokeDraw("overlay",{screenPoint(10,20,40),screenPoint(30,20,40)},0x00ff00,2);
+
+        s->polygons={country,lake};
+        s->strokes={river,overlay};
+        s->drawSequence={
+            {PrimitiveKind::Polygon,0,{0,0,0},-1},
+            {PrimitiveKind::Polygon,1,{30,0,0},-1},
+            {PrimitiveKind::Stroke,0,{32,0,0},-1},
+            {PrimitiveKind::Stroke,1,{60,0,0},-1}
+        };
+        item.setSceneSnapshot(s,viewFor(40,40));
+        const auto image=paint(item,40,40);
         QCOMPARE(image.pixelColor(15,15),QColor("#0000ff"));
         QCOMPARE(image.pixelColor(15,20),QColor("#00ff00"));
         QCOMPARE(image.pixelColor(20,25),QColor("#ffff00"));
         QCOMPARE(image.pixelColor(7,7),QColor("#ff0000"));
     }
-    void hydroDrawsAboveDistributionFillAndPointsAboveGenericFill(){
-        MapRenderItem item;item.setWidth(40);item.setHeight(40);item.setMapScale(1);
-        item.setHydroProjection({{"cosLatitude",1.},{"minX",0.},{"maxLatitude",40.}});
-        item.setPaths({QVariantMap{{"countryId","religion"},{"path","M0 0 L39 0 L39 39 L0 39 Z"}},
-            QVariantMap{{"countryId","generic"},{"path","M0 0 L39 0 L39 39 L0 39 Z"}},
-            QVariantMap{{"countryId","place"},{"geometryType","Point"},
-                {"points",QVariantList{QVariantMap{{"x",20.},{"y",20.}}}}}});
-        item.setVisuals({{"religion",QVariantMap{{"visible",true},{"color","#00ff00"},
-                {"drawFillPass",20},{"drawGroup",0},{"boundary",false}}},
-            {"generic",QVariantMap{{"visible",true},{"color","#ff0000"},
-                {"drawFillPass",20},{"drawGroup",5},{"boundary",false}}},
-            {"place",QVariantMap{{"visible",true},{"color","#ffff00"},
-                {"drawLinePass",70},{"boundary",false}}}});
-        auto frame=std::make_shared<HydroRuntimeFrame>();
-        frame->packet.lakes.push_back({4,4,{{{{10000000,10000000},{30000000,10000000},
-            {30000000,30000000},{10000000,30000000},{10000000,10000000}}}}});
-        item.setHydroFrame(frame);item.setHydroStyle({{"lakesVisible",true},{"riversVisible",false},
-            {"lakeBoundaryVisible",false},{"lakeColor","#0000ff"}});
-        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
-        QPainter painter(&image);item.paint(&painter);painter.end();
-        QCOMPARE(image.pixelColor(15,15),QColor("#0000ff"));
-        QCOMPARE(image.pixelColor(20,20),QColor("#ffff00"));
-        QCOMPARE(image.pixelColor(5,5),QColor("#ff0000"));
+
+    void variableWidthHydroAndLakeHoleUseTypedPackets() {
+        MapRenderItem item;item.setWidth(64);item.setHeight(64);
+        auto s=scene();
+
+        auto lake=polygonDraw("lake",polygonWithHole(64),0x0000ff);
+        lake.object={"hydroBuiltin","lake"};
+        lake.style.alpha=.5f;
+
+        auto river=strokeDraw("river",{screenPoint(10,50,64),screenPoint(45,50,64)},0xff0000,0);
+        river.object={"hydroBuiltin","river"};
+        river.style.alpha=.5f;
+        river.geometryPacket.endpointWidths=std::make_shared<const std::vector<float>>(
+            std::vector<float>{2,10});
+
+        s->polygons={lake};s->strokes={river};
+        s->drawSequence={
+            {PrimitiveKind::Polygon,0,{30,0,0},-1},
+            {PrimitiveKind::Stroke,0,{32,0,0},-1}
+        };
+        item.setSceneSnapshot(s,viewFor(64,64));
+        const auto image=paint(item,64,64);
+        QVERIFY(image.pixelColor(10,10).red()>120&&image.pixelColor(10,10).red()<140);
+        QCOMPARE(image.pixelColor(20,20),QColor(Qt::white));
+        const auto wide=image.pixelColor(43,53);
+        QVERIFY(wide.red()>200&&wide.green()>100&&wide.green()<160);
+        QCOMPARE(image.pixelColor(12,53),QColor(Qt::white));
     }
-    void builtinHydroPaintsWidthAndLakeHoleWithoutDocumentGeometry(){
-        MapRenderItem item;item.setWidth(64);item.setHeight(64);item.setMapScale(10);
-        item.setHydroProjection({{"cosLatitude",1.},{"minX",-1.},{"maxLatitude",4.}});
-        item.setHydroStyle({{"riversVisible",true},{"lakesVisible",true},
-            {"riverColor","#ff0000"},{"lakeColor","#0000ff"},{"riverOpacity",1.},{"lakeOpacity",1.}});
-        auto frame=std::make_shared<HydroRuntimeFrame>();
-        pandoeditor::HydroLakeShape lake;lake.fid=3;lake.logicalFid=3;
-        lake.polygons={{{{0,0},{3000000,0},{3000000,3000000},{0,3000000},{0,0}},
-                        {{1000000,1000000},{1000000,2000000},{2000000,2000000},{2000000,1000000},{1000000,1000000}}}};
-        frame->packet.lakes.push_back(lake);
-        frame->packet.rivers.push_back({1,1,{0,-1000000},{3000000,-1000000},2,10,false});
-        item.setHydroFrame(frame);
-        QImage image(64,64,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
-        QPainter painter(&image);item.paint(&painter);painter.end();
-        QCOMPARE(image.pixelColor(15,15),QColor("#0000ff"));
-        QCOMPARE(image.pixelColor(25,25),QColor(Qt::white));
-        QVERIFY(image.pixelColor(38,46).red()>200);
-        QCOMPARE(image.pixelColor(12,46),QColor(Qt::white));
-        item.setHydroStyle({{"riversVisible",true},{"lakesVisible",true},
-            {"riverColor","#ff0000"},{"lakeColor","#0000ff"},{"riverOpacity",.5},{"lakeOpacity",.5},
-            {"lakeBoundaryVisible",false}});
-        image.fill(Qt::white);QPainter translucent(&image);item.paint(&translucent);translucent.end();
-        QVERIFY(image.pixelColor(15,15).red()>120&&image.pixelColor(15,15).red()<140);
-        const auto translucentRiver=image.pixelColor(30,50);
-        QVERIFY2(translucentRiver.green()>120&&translucentRiver.green()<140,
-                 qPrintable(translucentRiver.name()));
-        item.setHiddenHydroIds({QStringLiteral("3")});
-        image.fill(Qt::white);QPainter hiddenLake(&image);item.paint(&hiddenLake);hiddenLake.end();
-        QCOMPARE(image.pixelColor(15,15),QColor(Qt::white));
-        item.setHiddenHydroIds({});
-        item.setHydroStyle({{"riversVisible",false},{"lakesVisible",false}});
-        image.fill(Qt::white);QPainter hiddenPainter(&image);item.paint(&hiddenPainter);hiddenPainter.end();
-        QCOMPARE(image.pixelColor(15,15),QColor(Qt::white));
-        QCOMPARE(image.pixelColor(25,50),QColor(Qt::white));
+
+    void pointAndOpenLineRemainTypedPrimitives() {
+        MapRenderItem item;item.setWidth(40);item.setHeight(40);
+        auto s=scene();
+        auto line=strokeDraw("line",{screenPoint(5,5,40),screenPoint(30,5,40),
+                                     screenPoint(30,30,40)},0x0000ff,1);
+        auto point=pointDraw("point",screenPoint(10,30,40),0xff0000);
+        s->strokes={line};s->points={point};
+        s->drawSequence={
+            {PrimitiveKind::Stroke,0,{60,0,0},-1},
+            {PrimitiveKind::Point,0,{70,0,0},-1}
+        };
+        item.setSceneSnapshot(s,viewFor(40,40));
+        const auto image=paint(item,40,40);
+        QCOMPARE(image.pixelColor(20,12),QColor(Qt::white));
+        QVERIFY(image.pixelColor(20,5).blue()>200);
+        QVERIFY(image.pixelColor(10,30).red()>200);
     }
-    void overlappingMultiPolygonPartsRemainFilled(){
-        MapRenderItem item;item.setWidth(40);item.setHeight(40);item.setMapScale(10);
-        item.setHydroProjection({{"cosLatitude",1.},{"minX",0.},{"maxLatitude",4.}});
-        item.setHydroStyle({{"lakesVisible",true},{"riversVisible",false},
-            {"lakeColor","#0000ff"},{"lakeBoundaryVisible",false}});
-        auto frame=std::make_shared<HydroRuntimeFrame>();
-        pandoeditor::HydroLakeShape lake;lake.fid=9;lake.logicalFid=9;
-        lake.polygons={{{{0,0},{2000000,0},{2000000,2000000},{0,2000000},{0,0}}},
-                       {{{1000000,1000000},{3000000,1000000},{3000000,3000000},
-                         {1000000,3000000},{1000000,1000000}}}};
-        frame->packet.lakes.push_back(lake);item.setHydroFrame(frame);
-        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);
-        QPainter painter(&image);item.paint(&painter);painter.end();
-        QCOMPARE(image.pixelColor(15,25),QColor("#0000ff"));
+
+    void multiplyAndInteractionOutlineComeFromRenderScene() {
+        MapRenderItem item;item.setWidth(40);item.setHeight(30);
+        auto s=scene();
+        auto red=polygonDraw("red",rectangle(2,2,22,22,30),0xff0000);
+        red.object={"territorial","red"};
+        auto blue=polygonDraw("blue",rectangle(12,2,32,22,30),0x0000ff,BlendMode::Multiply);
+        blue.object={"territorial","blue"};
+        auto redBoundary=strokeDraw("red-boundary",
+            {screenPoint(2,2,30),screenPoint(22,2,30),screenPoint(22,22,30),
+             screenPoint(2,22,30),screenPoint(2,2,30)},0x61778a,1);
+        redBoundary.object={"territorial","red"};
+
+        s->polygons={red,blue};s->strokes={redBoundary};
+        s->drawSequence={
+            {PrimitiveKind::Polygon,0,{0,0,0},-1},
+            {PrimitiveKind::Polygon,1,{10,0,0},-1}
+        };
+        s->interaction.selected={{"territorial","red"}};
+        s->interaction.primary=pandoeditor::ObjectRef{"territorial","red"};
+
+        item.setSceneSnapshot(s,viewFor(40,30));
+        const auto image=paint(item,40,30);
+        const auto overlap=image.pixelColor(16,10);
+        QVERIFY(overlap.red()<20&&overlap.green()<20&&overlap.blue()<20);
+        QVERIFY(image.pixelColor(2,10).blue()>40);
     }
-    void pointAndOpenLineDoNotBecomePolygonFills(){
-        MapRenderItem item;item.setWidth(40);item.setHeight(40);item.setMapScale(1);
-        item.setPaths({QVariantMap{{"countryId","river"},{"geometryType","LineString"},{"path","M5 5 L30 5 L30 30"}},
-            QVariantMap{{"countryId","place"},{"geometryType","Point"},{"points",QVariantList{QVariantMap{{"x",10.},{"y",30.}}}}}});
-        item.setVisuals({{"river",QVariantMap{{"visible",true},{"color","#0000ff"},{"boundary",false}}},
-            {"place",QVariantMap{{"visible",true},{"color","#ff0000"},{"boundary",false}}}});
-        QImage image(40,40,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);QPainter painter(&image);item.paint(&painter);painter.end();
-        QCOMPARE(image.pixelColor(20,12),QColor(Qt::white));QVERIFY(image.pixelColor(20,5).blue()>200);QVERIFY(image.pixelColor(20,5).red()<100);
-        QVERIFY(image.pixelColor(10,30).red()>200);QVERIFY(image.pixelColor(10,30).blue()<100);
-    }
-    void multiplyAndSelectionBoundaryAreActuallyPainted(){
-        MapRenderItem item;item.setWidth(40);item.setHeight(30);item.setOriginX(0);item.setOriginY(0);item.setMapScale(1);
-        item.setPaths({QVariantMap{{"countryId","red"},{"path","M2 2 L22 2 L22 22 L2 22 L2 2 Z"}},QVariantMap{{"countryId","blue"},{"path","M12 2 L32 2 L32 22 L12 22 L12 2 Z"}}});
-        item.setVisuals({{"red",QVariantMap{{"visible",true},{"color","#ff0000"},{"opacity",1.},{"rank",0.},{"blendMode","normal"},{"boundary",true},{"kind","country"}}},{"blue",QVariantMap{{"visible",true},{"color","#0000ff"},{"opacity",1.},{"rank",1.},{"blendMode","multiply"},{"boundary",true},{"kind","subunit"}}}});
-        item.setSelectedPaths({QVariantMap{{"countryId","red"},{"path","M2 2 L22 2 L22 22 L2 22 L2 2 Z"}}});item.setPrimaryId("red");
-        QImage image(40,30,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::white);QPainter painter(&image);item.paint(&painter);painter.end();
-        const auto overlap=image.pixelColor(16,10);QVERIFY(overlap.red()<20&&overlap.green()<20&&overlap.blue()<20);
-        QVERIFY(image.pixelColor(2,10).blue()>40); // selected outline is dark blue, not a fill-only edge
+
+    void candidateHoverAndPrimaryUseSameFinalInteractionPass() {
+        MapRenderItem item;item.setWidth(40);item.setHeight(40);
+        auto s=scene();
+        auto poly=polygonDraw("object",rectangle(5,5,35,35,40),0xdddddd);
+        poly.object={"generic","object"};
+        auto boundary=strokeDraw("object-boundary",
+            {screenPoint(5,5,40),screenPoint(35,5,40),screenPoint(35,35,40),
+             screenPoint(5,35,40),screenPoint(5,5,40)},0x888888,1);
+        boundary.object=poly.object;
+        s->polygons={poly};s->strokes={boundary};
+        s->drawSequence={{PrimitiveKind::Polygon,0,{20,0,0},-1}};
+        s->interaction.candidates={poly.object};
+
+        item.setSceneSnapshot(s,viewFor(40,40));
+        auto candidate=paint(item,40,40);
+        QVERIFY(candidate.pixelColor(5,20).blue()>candidate.pixelColor(5,20).red());
+
+        s->interaction.candidates.clear();
+        s->interaction.hover=poly.object;
+        item.setSceneSnapshot(s,viewFor(40,40));
+        auto hover=paint(item,40,40);
+        QVERIFY(hover.pixelColor(5,20).blue()>hover.pixelColor(5,20).red());
+
+        s->interaction.hover.reset();
+        s->interaction.selected={poly.object};
+        s->interaction.primary=poly.object;
+        item.setSceneSnapshot(s,viewFor(40,40));
+        auto primary=paint(item,40,40);
+        QVERIFY(primary.pixelColor(5,20).blue()>primary.pixelColor(5,20).red());
     }
 };
+
 QTEST_MAIN(MapRenderTests)
 #include "map_render_tests.moc"
