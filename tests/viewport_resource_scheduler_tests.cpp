@@ -59,6 +59,26 @@ void nestedInteractionsWaitForLastEnd() {
     require(scheduler.takeReady().has_value(),"request after outer end");
 }
 
+void labelsShareTheViewportSettleContract() {
+    auto camera=makeCamera();
+    ViewportResourceScheduler scheduler;
+    require(scheduler.noteViewport(camera.display(),camera.metrics(),
+                                   ViewportResourceKind::Labels),"label viewport arms settle");
+    auto request=scheduler.takeReady();
+    require(request&&request->resources==ViewportResourceKind::Labels,"label-only request");
+
+    scheduler.beginInteraction();
+    camera.zoomAt(1.2,400,300);
+    require(!scheduler.noteViewport(camera.display(),camera.metrics(),
+                                    ViewportResourceKind::Labels),
+            "label layout deferred during interaction");
+    require(!scheduler.takeReady(),"label request blocked during interaction");
+    require(scheduler.endInteraction(),"label request ready at settle");
+    request=scheduler.takeReady();
+    require(request&&request->resources==ViewportResourceKind::Labels,
+            "deferred label request emitted once");
+}
+
 void invalidationsMergeByResourceKind() {
     auto camera=makeCamera();
     ViewportResourceScheduler scheduler;
@@ -105,6 +125,7 @@ int main() {
     coalescesIdleViewportChanges();
     defersEveryViewportQueryDuringInteraction();
     nestedInteractionsWaitForLastEnd();
+    labelsShareTheViewportSettleContract();
     invalidationsMergeByResourceKind();
     flatHydroWindowMatchesLegacyViewportMath();
     globeHydroWindowUsesPublishedCamera();

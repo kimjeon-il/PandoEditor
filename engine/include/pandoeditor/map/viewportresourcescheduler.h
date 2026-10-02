@@ -9,7 +9,8 @@ enum class ViewportResourceKind : std::uint8_t {
     None=0,
     Terrain=1,
     Hydro=2,
-    All=3
+    Labels=4,
+    All=7
 };
 
 constexpr ViewportResourceKind operator|(ViewportResourceKind left,
