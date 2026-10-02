@@ -874,7 +874,7 @@ private slots:
         };
         double px=0,py=0;
         // Find a point inside Germany, then exercise actual UI hit testing with a click.
-        for (int y=50;y<99 && editor.selectedId()!="DEU";++y) for(int x=20;x<99;++x) {
+        for (int y=0;y<100 && editor.selectedId()!="DEU";++y) for(int x=0;x<100;++x) {
             px=editor.mapWidth()*x/100; py=editor.mapHeight()*y/100;
             editor.selectAt(px,py); if(editor.selectedId()=="DEU") break;
         }
@@ -882,8 +882,8 @@ private slots:
         editor.selectAt(-100,-100);
         auto clickGermany=[&]() {
             auto scale=map->property("mapScale").toDouble();
-            auto local=QPointF((map->width()-editor.mapWidth()*scale)/2+px*scale+map->property("panX").toDouble(),
-                              (map->height()-editor.mapHeight()*scale)/2+py*scale+map->property("panY").toDouble());
+            auto local=QPointF(map->property("originX").toDouble()+px*scale,
+                              map->property("originY").toDouble()+py*scale);
             QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,map->mapToScene(local).toPoint());
         };
         clickGermany(); QTRY_COMPARE(editor.selectedId(),QString("DEU"));

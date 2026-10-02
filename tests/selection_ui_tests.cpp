@@ -258,7 +258,10 @@ private slots:
         h.editor.selectCountry("A");QCOMPARE(h.editor.nameDraft(),QString("Draft A"));
         auto map=h.control("mapView");QVERIFY(map);
         const auto localTarget=map->mapFromScene(h.mapPoint("S"));
-        map->setProperty("panY",map->property("panY").toDouble()+map->height()-26-localTarget.y());
+        const auto deltaY=map->height()-26-localTarget.y();
+        h.editor.beginMapInteraction();h.editor.beginMapCameraPan();
+        QVERIFY(h.editor.updateMapCameraPan(0,deltaY));
+        h.editor.endMapCameraPan();h.editor.endMapInteraction();
         QVERIFY(h.click("countryName"));
         QVERIFY(h.click("countryMemo"));
         // Switching to another field still performs the web's normal independent commit.

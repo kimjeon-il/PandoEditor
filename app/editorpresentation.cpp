@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QFontMetricsF>
 #include <QGuiApplication>
+#include <QCoreApplication>
 #include <QStringList>
 #include <cmath>
 #include <algorithm>
@@ -163,7 +164,13 @@ pandoeditor::Point geometryCenter(const pandoeditor::Geometry& geometry) {
 void EditorController::rebuildLabelSources() {
     if(labelSourceRevision_==std::numeric_limits<std::uint64_t>::max())
         throw std::overflow_error("label source revision overflow");
-    const QFontMetricsF metrics(QGuiApplication::font());
+    const auto* guiApp=qobject_cast<QGuiApplication*>(QCoreApplication::instance());
+    const std::optional<QFontMetricsF> metrics=guiApp?
+        std::optional<QFontMetricsF>(QFontMetricsF(QGuiApplication::font())):std::nullopt;
+    const auto textWidth=[&](const QString& value) {
+        return metrics?metrics->horizontalAdvance(value):double(value.size())*7.0;
+    };
+    const auto textHeight=[&]() {return metrics?metrics->height():14.0;};
     std::vector<MapLabelSource> sources;
     sources.reserve(project_.document().units.size()+project_.document().labels.size());
     labelFlagSources_.clear();
@@ -192,8 +199,8 @@ void EditorController::rebuildLabelSources() {
         MapLabelSource source;
         source.ref=ref;source.text=properties->displayName;source.geographic=geographic;
         source.collisionGroup=settings.collisionGroup;
-        source.width=nameVisible?std::max(22.,metrics.horizontalAdvance(name)+16):24.;
-        source.height=nameVisible?std::max(19.,metrics.height()):16.;
+        source.width=nameVisible?std::max(22.,textWidth(name)+16):24.;
+        source.height=nameVisible?std::max(19.,textHeight()):16.;
         source.priority=settings.priority.value_or(0);
         source.minZoom=settings.minZoom.value_or(0);
         source.maxZoom=settings.maxZoom.value_or(std::numeric_limits<double>::infinity());

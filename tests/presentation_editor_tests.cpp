@@ -99,6 +99,7 @@ private slots:
         QVERIFY(file.open(QIODevice::WriteOnly));QVERIFY(file.write(projectcodec::encode(project))>0);file.close();
         EditorController editor({false,dir.filePath("private.json")});
         QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.placedLabels().isEmpty(),1000);
         auto picked=[&](const QString& key) {
             for(const auto& value:editor.paths()){
                 const auto row=value.toMap();if(row.value("countryId").toString()!=key)continue;

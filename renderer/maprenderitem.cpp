@@ -147,8 +147,7 @@ void MapRenderItem::paint(QPainter* painter) {
             QPainterPath shape;
             shape.addPolygon(QPolygonF{pa+normal*ha,pb+normal*hb,
                                        pb-normal*hb,pa-normal*ha});
-            shape.addEllipse(pa,ha,ha);
-            shape.addEllipse(pb,hb,hb);
+            shape.closeSubpath();
             painter->drawPath(shape);
         }
         painter->restore();

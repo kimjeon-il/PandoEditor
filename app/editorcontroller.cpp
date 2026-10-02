@@ -135,11 +135,15 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::presentationChanged,this,refresh);
     connect(this,&EditorController::presentationChanged,this,[this] {
         labelSourcesDirty_=true;
+        labelEngine_.clear();labelFlagSources_.clear();
+        if(!placedLabels_.isEmpty()){placedLabels_.clear();emit labelLayoutChanged();}
         invalidateViewportResources(ViewportResourceKind::Labels);
     });
     connect(this,&EditorController::geometryChanged,this,refresh);
     connect(this,&EditorController::geometryChanged,this,[this] {
         labelSourcesDirty_=true;
+        labelEngine_.clear();labelFlagSources_.clear();
+        if(!placedLabels_.isEmpty()){placedLabels_.clear();emit labelLayoutChanged();}
         syncMapCameraMetrics();
         invalidateViewportResources(ViewportResourceKind::Labels);
     });
