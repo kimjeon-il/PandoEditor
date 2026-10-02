@@ -99,7 +99,17 @@ private slots:
         QVERIFY(file.open(QIODevice::WriteOnly));QVERIFY(file.write(projectcodec::encode(project))>0);file.close();
         EditorController editor({false,dir.filePath("private.json")});
         QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
-        QTRY_VERIFY_WITH_TIMEOUT(!editor.placedLabels().isEmpty(),1000);
+        QVERIFY(editor.resizeMapCamera(800,600));
+        QVERIFY(editor.setProjectionMode("flat"));
+        QVERIFY(editor.zoomMapCameraAt(2,400,300));
+        const auto hasPlacedLabel=[&] {
+            const auto rows=editor.placedLabels();
+            return std::any_of(rows.begin(),rows.end(),[](const QVariant& value){
+                const auto ref=value.toMap().value("ref").toMap();
+                return ref.value("domain").toString()=="label"&&ref.value("id").toString()=="L";
+            });
+        };
+        QTRY_VERIFY_WITH_TIMEOUT(hasPlacedLabel(),1000);
         auto picked=[&](const QString& key) {
             for(const auto& value:editor.paths()){
                 const auto row=value.toMap();if(row.value("countryId").toString()!=key)continue;
@@ -169,8 +179,18 @@ private slots:
         QVERIFY(controller.configureHydroData(QUrl::fromLocalFile(manifest)));
         auto* runtime=qobject_cast<HydroRuntimeProvider*>(controller.hydroSource());
         QVERIFY(runtime);
+        // Let the controller's initial settled viewport request finish first,
+        // then make the fixture viewport the newest runtime request.
+        QTest::qWait(ViewportResourceScheduler::SettleDelayMs*2);
         runtime->requestViewport({7.5,800,500,1500,20,1});
-        QTRY_VERIFY_WITH_TIMEOUT(controller.hydroViewportLoaded(),5000);
+        const auto targetLoaded=[&] {
+            const auto frame=runtime->frame();if(!frame)return false;
+            for(const auto& feature:frame->features)
+                if(const auto record=runtime->recordByFid(feature.fid);
+                   record&&record->awId=="fixture:4")return true;
+            return false;
+        };
+        QTRY_VERIFY_WITH_TIMEOUT(targetLoaded(),5000);
         controller.setSearchQuery("Hole");
         const auto results=controller.searchResults();
         QVERIFY(std::any_of(results.begin(),results.end(),[](const QVariant& row){
