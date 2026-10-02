@@ -13,9 +13,8 @@ MapPickContext EditorController::mapPickContext(double zoom,double layoutScale) 
     context.zoom=zoom;
     context.primary=selection_.primary();
 
-    for(const auto& row:labelLayout(layoutScale>0?layoutScale:1,0,0,zoom,1e9,1e9))
-        if(const auto ref=existingObjectRef(row.toMap().value("ref").toMap()))
-            context.placedLabels.insert(*ref);
+    Q_UNUSED(layoutScale);
+    context.placedLabels=labelEngine_.placedRefs();
 
     if(const auto frame=hydroRuntime_.frame()) {
         context.externalHydro.reserve(frame->features.size());

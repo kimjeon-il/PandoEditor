@@ -266,14 +266,8 @@ Rectangle {
         nameFilters: ["Images (*.png *.jpg *.jpeg *.webp)"]
         onAccepted: referenceImages.importImage(selectedFile)
     }
-    readonly property var placedLabels: {
-        const revision = editor.presentationRevision
-        const selection = editor.selectionRevision
-        const quality = editor.renderQuality.revision
-        return editor.labelLayout(mapScale,originX,originY,zoom,width,height)
-    }
     Repeater {
-        model: view.placedLabels
+        model: editor.placedLabels
         delegate: Column {
             objectName: "mapPlacedLabel"
             required property var modelData

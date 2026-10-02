@@ -143,56 +143,141 @@ bool EditorController::setDistributionDisplay(const QString& mode,bool boundaryV
     DistributionSettings settings;settings.renderMode=mode=="intensity"?DistributionRenderMode::Intensity:DistributionRenderMode::Dominant;settings.boundaryVisible=boundaryVisible;
     const auto result=PresentationCommandProcessor::apply(project_,SetDistributionSettings{settings});if(result==PresentationResult::Applied)publishPresentation();return result==PresentationResult::Applied||result==PresentationResult::NoOp;
 }
-QVariantList EditorController::labelLayout(double scale,double originX,double originY,double zoom,double viewportWidth,double viewportHeight) const {
-    if(!std::isfinite(scale)||scale<=0||!std::isfinite(originX)||!std::isfinite(originY)||!std::isfinite(zoom))return {};
-    const QFontMetricsF metrics(QGuiApplication::font());const auto visuals=countryVisuals();std::vector<LabelLayoutCandidate> candidates;std::map<ObjectRef,QVariantMap> rows;
-    for(const auto& pathValue:projection_.paths) {
-        const auto path=pathValue.toMap();ObjectRef ref;
-        if(path.contains("domain")){if(path["domain"]!="label")continue;ref={"label",path["objectId"].toString().toStdString()};}
-        else ref=territorialRef(path["countryId"].toString().toStdString());
-        if(!objectVisible(ref))continue;const auto properties=project_.propertyView(ref);if(!properties)continue;
-        const auto visualKey=ref.domain=="territorial"?displayText(ref.id):QStringLiteral("content/label/")+displayText(ref.id);const auto visual=visuals.value(visualKey).toMap();
-        const bool nameVisible=visual.value("nameVisible").toBool();
-        const bool flagVisible=ref.domain=="territorial"&&visual.value("flagVisible").toBool()&&
-            !visual.value("flagSource").toString().isEmpty();
-        if(!nameVisible&&!flagVisible)continue;
-        LabelSettings stored;if(const auto found=project_.document().presentation.webPresentation.labelSettings.find(ref);found!=project_.document().presentation.webPresentation.labelSettings.end())stored=found->second;
-        std::string kind="country";if(ref.domain=="label")kind=project_.document().labels.at(project_.index().objects.at(ref)).kind;else {const auto unitKind=project_.document().units.at(project_.index().objects.at(ref)).kind;if(unitKind!=UnitKind::Country)kind="region";}
-        const auto settings=automaticLabelSettings(kind,stored);double mapX=path["left"].toDouble()+path["width"].toDouble()/2,mapY=path["top"].toDouble()+path["height"].toDouble()/2;
-        auto geographic=projection_.unproject(mapX,mapY);
-        if(ref.domain=="territorial"&&labelAnchors_)if(const auto anchor=labelAnchors_->anchor(displayText(ref.id),labelSourceId(ref.id))) {
-            geographic=*anchor;const auto point=projection_.project(*anchor);mapX=point.x;mapY=point.y;
-        }
-        if(settings.pinned&&settings.manualPosition){geographic=*settings.manualPosition;const auto point=projection_.project(*settings.manualPosition);mapX=point.x;mapY=point.y;}
-        const auto view=sceneBridge_.viewState();double x=originX+mapX*scale,y=originY+mapY*scale;
-        const bool publishedGlobe=view.mode==ProjectionMode::Globe&&
-            std::abs(view.viewportWidth-viewportWidth)<.5&&
-            std::abs(view.viewportHeight-viewportHeight)<.5;
-        if(publishedGlobe) {
-            const auto projected=projectPoint(geographic,view);
-            if(!projected.finite||!projected.visibleHemisphere)continue;
-            x=projected.x;y=projected.y;
-        }
-        const auto name=QString::fromStdString(properties->displayName);
-        LabelLayoutCandidate candidate{ref,ref.domain+":"+ref.id,settings.collisionGroup,x,y,
-            nameVisible?std::max(22.,metrics.horizontalAdvance(name)+16):24.,
-            nameVisible?std::max(19.,metrics.height()):16.,settings.priority.value_or(0),
-            settings.minZoom.value_or(0),settings.maxZoom.value_or(std::numeric_limits<double>::infinity()),
-            selection_.has(ref),settings.pinned};candidates.push_back(candidate);
-        rows[ref]=QVariantMap{{"ref",objectRefValue(ref)},{"x",x},{"y",y},{"name",name},
-            {"nameVisible",nameVisible},{"pinned",settings.pinned},
-            {"flagSource",visual.value("flagSource")},{"flagVisible",flagVisible}};
-    }
-    // Pinned web workspace CSS reserves the 2rem desktop status bar and the
-    // 96px mobile bottom controls before ordinary label collision placement.
-    // Selected and pinned labels bypass this bound in layoutLabels.
-    const double bottomInset=mobileMode_?96.:32.;
-    const auto labelSlots=std::max(1,int(std::ceil((mobileMode_?5:3)*quality_.profile().labelDensity)));
-    QVariantList result;for(const auto& ref:layoutLabels(candidates,zoom,labelSlots,
-            LabelLayoutBounds{0,0,viewportWidth,std::max(0.,viewportHeight-bottomInset)})){
-        const auto row=rows.find(ref);if(row!=rows.end())result.append(row->second);
-    }return result;
+namespace {
+pandoeditor::Point geometryCenter(const pandoeditor::Geometry& geometry) {
+    double west=180,east=-180,south=90,north=-90;bool any=false;
+    const auto add=[&](pandoeditor::Point point) {
+        if(!std::isfinite(point.x)||!std::isfinite(point.y))return;
+        west=std::min(west,point.x);east=std::max(east,point.x);
+        south=std::min(south,point.y);north=std::max(north,point.y);any=true;
+    };
+    for(const auto point:geometry.points)add(point);
+    for(const auto& line:geometry.lines)for(const auto point:line)add(point);
+    for(const auto& polygon:geometry.polygons)for(const auto& ring:polygon)
+        for(const auto point:ring)add(point);
+    return any?pandoeditor::Point{(west+east)/2,(south+north)/2}:pandoeditor::Point{};
 }
+}
+
+void EditorController::rebuildLabelSources() {
+    if(labelSourceRevision_==std::numeric_limits<std::uint64_t>::max())
+        throw std::overflow_error("label source revision overflow");
+    const QFontMetricsF metrics(QGuiApplication::font());
+    std::vector<MapLabelSource> sources;
+    sources.reserve(project_.document().units.size()+project_.document().labels.size());
+    labelFlagSources_.clear();
+    const auto& document=project_.document();
+    const auto& index=project_.index();
+
+    for(const auto& unit:document.units) {
+        const auto ref=territorialRef(unit.id);
+        if(!effectiveMapVisibility(document,ref))continue;
+        const auto properties=project_.propertyView(ref);if(!properties)continue;
+        const auto resolved=resolvedTerritorialPresentation(document,ref);
+        const auto flag=labelFlagSource(ref);
+        const bool nameVisible=resolved.nameVisible;
+        const bool flagVisible=resolved.flagVisible&&!flag.isEmpty();
+        if(!nameVisible&&!flagVisible)continue;
+        const auto geometry=document.geometries.get(unit.geometry);if(!geometry)continue;
+        auto geographic=geometryCenter(*geometry);
+        if(labelAnchors_)if(const auto anchor=labelAnchors_->anchor(
+            displayText(ref.id),labelSourceId(ref.id)))geographic=*anchor;
+
+        LabelSettings stored;
+        if(const auto found=document.presentation.webPresentation.labelSettings.find(ref);
+           found!=document.presentation.webPresentation.labelSettings.end())stored=found->second;
+        const auto kind=unit.kind==UnitKind::Country?std::string("country"):std::string("region");
+        const auto settings=automaticLabelSettings(kind,stored);
+        if(settings.pinned&&settings.manualPosition)geographic=*settings.manualPosition;
+        const auto name=QString::fromStdString(properties->displayName);
+        MapLabelSource source;
+        source.ref=ref;source.text=properties->displayName;source.geographic=geographic;
+        source.collisionGroup=settings.collisionGroup;
+        source.width=nameVisible?std::max(22.,metrics.horizontalAdvance(name)+16):24.;
+        source.height=nameVisible?std::max(19.,metrics.height()):16.;
+        source.priority=settings.priority.value_or(0);
+        source.minZoom=settings.minZoom.value_or(0);
+        source.maxZoom=settings.maxZoom.value_or(std::numeric_limits<double>::infinity());
+        source.pinned=settings.pinned;source.nameVisible=nameVisible;source.flagVisible=flagVisible;
+        sources.push_back(std::move(source));
+        if(flagVisible)labelFlagSources_[ref]=flag;
+    }
+
+    for(const auto& label:document.labels) {
+        const ObjectRef ref{"label",label.id};
+        if(!effectiveMapVisibility(document,ref))continue;
+        const auto geometry=document.geometries.get(label.geometry);
+        if(!geometry||geometry->points.empty())continue;
+        const auto properties=project_.propertyView(ref);if(!properties)continue;
+        LabelSettings stored;
+        if(const auto found=document.presentation.webPresentation.labelSettings.find(ref);
+           found!=document.presentation.webPresentation.labelSettings.end())stored=found->second;
+        const auto settings=automaticLabelSettings(label.kind,stored);
+        auto geographic=geometry->points.front();
+        if(settings.pinned&&settings.manualPosition)geographic=*settings.manualPosition;
+        const auto name=QString::fromStdString(properties->displayName);
+        MapLabelSource source;
+        source.ref=ref;source.text=properties->displayName;source.geographic=geographic;
+        source.collisionGroup=settings.collisionGroup;
+        source.width=std::max(22.,metrics.horizontalAdvance(name)+16);
+        source.height=std::max(19.,metrics.height());
+        source.priority=settings.priority.value_or(0);
+        source.minZoom=settings.minZoom.value_or(0);
+        source.maxZoom=settings.maxZoom.value_or(std::numeric_limits<double>::infinity());
+        source.pinned=settings.pinned;source.nameVisible=true;source.flagVisible=false;
+        sources.push_back(std::move(source));
+    }
+
+    ++labelSourceRevision_;
+    labelEngine_.setSources(std::move(sources),labelSourceRevision_);
+    labelSourcesDirty_=false;
+}
+
+void EditorController::refreshPlacedLabelRows() {
+    QVariantList rows;rows.reserve(static_cast<qsizetype>(labelEngine_.placements().size()));
+    for(const auto& placement:labelEngine_.placements()) {
+        const auto flag=labelFlagSources_.find(placement.ref);
+        rows.append(QVariantMap{
+            {"ref",objectRefValue(placement.ref)},
+            {"x",placement.x},{"y",placement.y},
+            {"name",QString::fromStdString(placement.text)},
+            {"nameVisible",placement.nameVisible},{"pinned",placement.pinned},
+            {"flagSource",flag==labelFlagSources_.end()?QString():flag->second},
+            {"flagVisible",placement.flagVisible&&flag!=labelFlagSources_.end()}
+        });
+    }
+    if(rows==placedLabels_)return;
+    placedLabels_=std::move(rows);
+    emit labelLayoutChanged();
+}
+
+void EditorController::reprojectLabelPlacements() {
+    if(labelEngine_.placements().empty())return;
+    try {
+        labelEngine_.reproject(sceneBridge_.viewState());
+        refreshPlacedLabelRows();
+    } catch(const std::exception& error) {
+        emit errorOccurred(QStringLiteral("Label reprojection failed: ")+
+                           QString::fromUtf8(error.what()));
+    }
+}
+
+void EditorController::executeLabelResources(const ViewportResourceRequest& request) {
+    if(labelSourcesDirty_)rebuildLabelSources();
+    MapLabelLayoutOptions options;
+    options.zoom=request.flatZoom;
+    options.viewportWidth=request.view.viewportWidth;
+    options.viewportHeight=request.view.viewportHeight;
+    options.bottomInset=mobileMode_?96.:32.;
+    options.collisionPadding=std::max(1.,std::ceil(
+        (mobileMode_?5.:3.)*quality_.profile().labelDensity));
+    options.maxCandidates=mobileMode_?4096:8192;
+    options.maxPlaced=mobileMode_?2048:4096;
+    const std::set<ObjectRef> selected(selection_.items().begin(),selection_.items().end());
+    labelEngine_.layout(request.view,options,selected);
+    refreshPlacedLabelRows();
+}
+
 bool EditorController::setLabelPinned(const QVariantMap& value,bool pinned,double longitude,double latitude,bool hasPosition) {
     const auto ref=existingObjectRef(value);if(!ref||(ref->domain!="territorial"&&ref->domain!="label"))return false;
     LabelSettings settings;if(const auto found=project_.document().presentation.webPresentation.labelSettings.find(*ref);found!=project_.document().presentation.webPresentation.labelSettings.end())settings=found->second;

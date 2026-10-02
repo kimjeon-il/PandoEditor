@@ -15,6 +15,7 @@
 #include <pandoeditor/map/mappicker.h>
 #include <pandoeditor/map/viewportresourcescheduler.h>
 #include <pandoeditor/map/builtinhydrochannel.h>
+#include <pandoeditor/map/labelengine.h>
 #include "hydroruntimeprovider.h"
 #include "../renderer/terrainprovider.h"
 #include "giscontentimport.h"
@@ -106,6 +107,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QObject* mapSceneBridge READ mapSceneBridge CONSTANT)
     Q_PROPERTY(QString projectionMode READ projectionMode NOTIFY viewStateChanged)
     Q_PROPERTY(QVariantMap mapViewState READ mapViewState NOTIFY viewStateChanged)
+    Q_PROPERTY(QVariantList placedLabels READ placedLabels NOTIFY labelLayoutChanged)
     Q_PROPERTY(QString terrainMode READ terrainMode NOTIFY terrainChanged)
     Q_PROPERTY(QVariantMap appearancePreferences READ appearancePreferences NOTIFY appearanceChanged)
     Q_PROPERTY(bool appearancePreviewOpen READ appearancePreviewOpen NOTIFY appearanceChanged)
@@ -200,7 +202,7 @@ public:
     Q_INVOKABLE bool setPresentationOpacity(const QString& group,double opacity);
     Q_INVOKABLE bool setPresentationBoundary(const QString& group,bool visible);
     Q_INVOKABLE bool setDistributionDisplay(const QString& mode,bool boundaryVisible);
-    Q_INVOKABLE QVariantList labelLayout(double mapScale,double originX,double originY,double zoom,double viewportWidth,double viewportHeight) const;
+    QVariantList placedLabels() const {return placedLabels_;}
     Q_INVOKABLE bool setLabelPinned(const QVariantMap& ref,bool pinned,double longitude=0,double latitude=0,bool hasPosition=false);
     Q_INVOKABLE bool setLabelMapPosition(const QVariantMap& ref,double mapX,double mapY);
     Q_INVOKABLE bool resetLabelPosition(const QVariantMap& ref);
@@ -441,6 +443,7 @@ signals:
     void terrainChanged();
     void viewStateChanged();
     void appearanceChanged();
+    void labelLayoutChanged();
 private:
     void startWorldBootstrap();
     void startCanonicalWorld(std::uint64_t generation);
@@ -549,6 +552,11 @@ private:
     void flushViewportResources();
     void executeTerrainResources(const ViewportResourceRequest&);
     void executeHydroResources(const ViewportResourceRequest&);
+    void executeLabelResources(const ViewportResourceRequest&);
+    void rebuildLabelSources();
+    void reprojectLabelPlacements();
+    void refreshPlacedLabelRows();
+    QString labelFlagSource(const pandoeditor::ObjectRef&) const;
     void refreshBuiltinHydroScene();
     void noteAppliedImpact(const pandoeditor::ChangeImpact&);
     QString labelSourceId(const std::string& ownerId) const;
@@ -625,6 +633,11 @@ private:
     int activeMapInteractions_=0;
     ViewportResourceScheduler viewportResources_;
     QTimer viewportResourceTimer_;
+    MapLabelEngine labelEngine_;
+    QVariantList placedLabels_;
+    std::map<pandoeditor::ObjectRef,QString> labelFlagSources_;
+    std::uint64_t labelSourceRevision_=0;
+    bool labelSourcesDirty_=true;
     MapSceneBuilder sceneBuilder_{packetCache_};
     MapSceneBridge sceneBridge_;
     MapCamera camera_;

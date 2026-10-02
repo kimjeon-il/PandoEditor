@@ -120,6 +120,9 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     const auto refresh=[this] {refreshTypedScene();};
     connect(this,&EditorController::selectionChanged,this,refresh);
     connect(this,&EditorController::selectionChanged,this,[this] {
+        invalidateViewportResources(ViewportResourceKind::Labels);
+    });
+    connect(this,&EditorController::selectionChanged,this,[this] {
         std::optional<quint32> logical;
         if(const auto selected=selection_.primary();selected&&selected->domain=="hydroBuiltin")
             if(const auto record=hydroRuntime_.recordById(text(selected->id)))
@@ -130,11 +133,20 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::objectChooserChanged,this,refresh);
     connect(this,&EditorController::geometryEditChanged,this,refresh);
     connect(this,&EditorController::presentationChanged,this,refresh);
+    connect(this,&EditorController::presentationChanged,this,[this] {
+        labelSourcesDirty_=true;
+        invalidateViewportResources(ViewportResourceKind::Labels);
+    });
     connect(this,&EditorController::geometryChanged,this,refresh);
-    connect(this,&EditorController::geometryChanged,this,[this] {syncMapCameraMetrics();});
+    connect(this,&EditorController::geometryChanged,this,[this] {
+        labelSourcesDirty_=true;
+        syncMapCameraMetrics();
+        invalidateViewportResources(ViewportResourceKind::Labels);
+    });
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,refresh);
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
         camera_.acceptPublishedView(sceneBridge_.viewState());
+        reprojectLabelPlacements();
         scheduleViewportResources();
         emit viewStateChanged();
     });
@@ -148,6 +160,7 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     if(historicalFile.open(QIODevice::ReadOnly))
         installHistoricalSource(historicalFile.readAll(),QStringLiteral("내장 pilot"),true);
     refreshTypedScene();
+    scheduleViewportResources(ViewportResourceKind::Labels);
     if(config.bootstrapWorld&&!restoredAutosave)QTimer::singleShot(0,this,&EditorController::startWorldBootstrap);
 }
 void EditorController::refreshTypedScene() {
@@ -306,6 +319,15 @@ QVariantMap EditorController::renderQuality() const {
         {"hydroCacheBytes",qulonglong(hydroRuntime_.cachedBytes())},
         {"builtinHydroGpuRevision",qulonglong(builtinHydroRevision_)},
         {"builtinHydroGpuFeatures",qulonglong(builtinHydroScene_?builtinHydroScene_->features.size():0)},
+        {"labelSourceRevision",qulonglong(labelEngine_.stats().sourceRevision)},
+        {"labelLayoutRevision",qulonglong(labelEngine_.stats().layoutRevision)},
+        {"labelSourceCount",qulonglong(labelEngine_.stats().sourceCount)},
+        {"labelShardCount",qulonglong(labelEngine_.stats().cellCount)},
+        {"labelQueries",qulonglong(labelEngine_.stats().queries)},
+        {"labelLayouts",qulonglong(labelEngine_.stats().layouts)},
+        {"labelReprojects",qulonglong(labelEngine_.stats().reprojects)},
+        {"labelCandidatesExamined",qulonglong(labelEngine_.stats().candidatesExamined)},
+        {"labelPlacements",qulonglong(labelEngine_.stats().placements)},
         {"p95FrameMs",profile.p95FrameMs},{"p99FrameMs",profile.p99FrameMs},
         {"qualityChangeCount",qulonglong(quality_.changeCount())},
         {"longFrameCount",qulonglong(profile.longFrameCount)}};
@@ -316,6 +338,7 @@ void EditorController::recordMapFrame(double milliseconds) {
         packetCache_.setBudget(profile.renderPacketCacheBudgetBytes);
         hydroRuntime_.setCacheBudget(profile.hydroCacheBudgetBytes);
         if(terrainProvider_)terrainProvider_->setCacheBudget(profile.terrainCacheBudgetBytes);
+        invalidateViewportResources(ViewportResourceKind::Labels);
         emit renderQualityChanged();refreshTypedScene();
     }
 }
@@ -323,13 +346,19 @@ void EditorController::beginMapInteraction() {
     if(activeMapInteractions_==0)viewportResourceTimer_.stop();
     ++activeMapInteractions_;
     viewportResources_.beginInteraction();
-    if(activeMapInteractions_==1&&quality_.beginInteraction())emit renderQualityChanged();
+    if(activeMapInteractions_==1&&quality_.beginInteraction()) {
+        viewportResources_.invalidate(ViewportResourceKind::Labels);
+        emit renderQualityChanged();
+    }
 }
 void EditorController::endMapInteraction() {
     if(activeMapInteractions_<=0)return;
     --activeMapInteractions_;
+    if(activeMapInteractions_==0&&quality_.endInteraction()) {
+        viewportResources_.invalidate(ViewportResourceKind::Labels);
+        emit renderQualityChanged();
+    }
     const bool resourceReady=viewportResources_.endInteraction();
-    if(activeMapInteractions_==0&&quality_.endInteraction())emit renderQualityChanged();
     if(resourceReady) {
         viewportResourceTimer_.stop();
         flushViewportResources();
@@ -398,12 +427,32 @@ void EditorController::flushViewportResources() {
             executeTerrainResources(*request);
         if(anyViewportResource(request->resources&ViewportResourceKind::Hydro))
             executeHydroResources(*request);
+        if(anyViewportResource(request->resources&ViewportResourceKind::Labels))
+            executeLabelResources(*request);
         emit renderQualityChanged();
     } catch(const std::exception& error) {
         emit errorOccurred(QStringLiteral("Viewport resource request failed: ")+
             QString::fromUtf8(error.what()));
     }
 }
+QString EditorController::labelFlagSource(const pandoeditor::ObjectRef& ref) const {
+    if(ref.domain!="territorial")return {};
+    QString flag;bool retained=false;
+    for(const auto& extension:project_.document().extensions)
+        if(extension.status=="unsupported"&&extension.jsonPointer.size()>=12&&
+           extension.jsonPointer.compare(extension.jsonPointer.size()-12,12,"/flagDataUrl")==0&&
+           std::find(extension.dependencies.begin(),extension.dependencies.end(),ref)!=extension.dependencies.end()) {
+            const auto value=QJsonDocument::fromJson(
+                "["+QByteArray::fromStdString(extension.payload)+"]").array();
+            if(!value.isEmpty()&&value[0].isString()&&validImageDataUrl(value[0].toString())) {
+                flag=value[0].toString();retained=true;break;
+            }
+        }
+    if(!retained||project_.document().symbols.count(ref))
+        flag=resolveDefaultFlag(project_.document(),ref).source;
+    return flag;
+}
+
 QVariantMap EditorController::colors() const
 {
     QVariantMap result;
