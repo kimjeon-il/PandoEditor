@@ -5,6 +5,7 @@ add_library(pandoeditor_map_engine STATIC
     src/mappicker.cpp
     src/viewportresourcescheduler.cpp
     src/builtinhydrochannel.cpp
+    src/labelengine.cpp
     src/projectionengine.cpp
     src/renderlod.cpp
     src/renderquality.cpp
@@ -43,4 +44,7 @@ if(BUILD_TESTING)
     add_executable(builtin_hydro_channel_tests ../tests/builtin_hydro_channel_tests.cpp)
     target_link_libraries(builtin_hydro_channel_tests PRIVATE Pandoeditor::MapEngine)
     add_test(NAME builtin_hydro_channel_tests COMMAND builtin_hydro_channel_tests)
+    add_executable(label_engine_tests ../tests/label_engine_tests.cpp)
+    target_link_libraries(label_engine_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME label_engine_tests COMMAND label_engine_tests)
 endif()
