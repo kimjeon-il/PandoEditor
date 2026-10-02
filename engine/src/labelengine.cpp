@@ -23,7 +23,7 @@ bool finiteSource(const MapLabelSource& source) {
         std::isfinite(source.width)&&source.width>0&&
         std::isfinite(source.height)&&source.height>0&&
         std::isfinite(source.priority)&&std::isfinite(source.minZoom)&&
-        std::isfinite(source.maxZoom)&&source.minZoom<=source.maxZoom&&
+        !std::isnan(source.maxZoom)&&source.minZoom<=source.maxZoom&&
         !source.collisionGroup.empty();
 }
 
@@ -63,7 +63,7 @@ int MapLabelEngine::latitudeCell(double latitude) noexcept {
 void MapLabelEngine::setSources(std::vector<MapLabelSource> sources,
                                 std::uint64_t sourceRevision) {
     if(!sourceRevision)throw std::invalid_argument("label source revision must be nonzero");
-    cells_.clear();pinned_.clear();accepted_.clear();placements_.clear();
+    sourceByRef_.clear();cells_.clear();pinned_.clear();accepted_.clear();placements_.clear();
     sources_.clear();sources_.reserve(sources.size());
     for(auto& source:sources) {
         if(!finiteSource(source))continue;
@@ -71,6 +71,7 @@ void MapLabelEngine::setSources(std::vector<MapLabelSource> sources,
         const auto index=sources_.size();
         sources_.push_back(std::move(source));
         const auto& stored=sources_.back();
+        sourceByRef_[stored.ref]=index;
         cells_[cellKey(longitudeCell(stored.geographic.x),
                        latitudeCell(stored.geographic.y))].push_back(index);
         if(stored.pinned)pinned_.push_back(index);
@@ -183,8 +184,9 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
         if(index<sources_.size()&&seen.insert(index).second)candidates.push_back(index);
     };
     for(const auto index:pinned_)addForced(index);
-    if(!selected.empty())for(std::size_t i=0;i<sources_.size();++i)
-        if(selected.count(sources_[i].ref))addForced(i);
+    for(const auto& ref:selected)
+        if(const auto found=sourceByRef_.find(ref);found!=sourceByRef_.end())
+            addForced(found->second);
 
     while(!queue.empty()&&candidates.size()<options.maxCandidates) {
         const auto cursor=queue.top();queue.pop();
@@ -275,6 +277,6 @@ std::set<pandoeditor::ObjectRef> MapLabelEngine::placedRefs() const {
 }
 
 void MapLabelEngine::clear() {
-    sources_.clear();cells_.clear();pinned_.clear();accepted_.clear();placements_.clear();
+    sources_.clear();sourceByRef_.clear();cells_.clear();pinned_.clear();accepted_.clear();placements_.clear();
     stats_={};
 }

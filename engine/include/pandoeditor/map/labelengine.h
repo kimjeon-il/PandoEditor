@@ -72,6 +72,7 @@ private:
     bool projectPlacement(std::size_t,const MapViewState&,MapLabelPlacement&) const;
 
     std::vector<MapLabelSource> sources_;
+    std::map<pandoeditor::ObjectRef,std::size_t> sourceByRef_;
     std::map<int,std::vector<std::size_t>> cells_;
     std::vector<std::size_t> pinned_;
     std::vector<std::size_t> accepted_;

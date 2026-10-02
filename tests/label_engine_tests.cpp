@@ -8,7 +8,7 @@ void require(bool ok,const char* message){if(!ok)throw std::runtime_error(messag
 MapViewState flatView() {
     MapViewState view;view.mode=ProjectionMode::Flat;
     view.viewportWidth=800;view.viewportHeight=600;
-    view.scale=180/3.14159265358979323846;
+    view.scale=8*180/3.14159265358979323846;
     view.translateX=400;view.translateY=300;
     return view;
 }
@@ -32,7 +32,7 @@ void spatialQueryAndCollisionAreEngineOwned() {
     require(placed.size()==1,"collision keeps one visible label");
     require(placed.front().ref.id=="high","priority wins collision");
     require(engine.stats().cellCount>=2,"sources spatially sharded");
-    require(engine.stats().candidatesExamined<3,"offscreen shard is not queried");
+    require(engine.stats().candidatesExamined==2,"offscreen shard is not queried");
 }
 
 void selectedAndPinnedBypassOrdinaryCollisionAndBounds() {

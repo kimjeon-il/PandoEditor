@@ -167,8 +167,6 @@ void EditorController::rebuildLabelSources() {
     sources.reserve(project_.document().units.size()+project_.document().labels.size());
     labelFlagSources_.clear();
     const auto& document=project_.document();
-    const auto& index=project_.index();
-
     for(const auto& unit:document.units) {
         const auto ref=territorialRef(unit.id);
         if(!effectiveMapVisibility(document,ref))continue;
@@ -273,7 +271,8 @@ void EditorController::executeLabelResources(const ViewportResourceRequest& requ
         (mobileMode_?5.:3.)*quality_.profile().labelDensity));
     options.maxCandidates=mobileMode_?4096:8192;
     options.maxPlaced=mobileMode_?2048:4096;
-    const std::set<ObjectRef> selected(selection_.items().begin(),selection_.items().end());
+    const auto selectedItems=selection_.items();
+    const std::set<ObjectRef> selected(selectedItems.begin(),selectedItems.end());
     labelEngine_.layout(request.view,options,selected);
     refreshPlacedLabelRows();
 }

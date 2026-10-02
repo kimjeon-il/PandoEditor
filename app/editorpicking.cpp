@@ -7,13 +7,12 @@
 
 using namespace pandoeditor;
 
-MapPickContext EditorController::mapPickContext(double zoom,double layoutScale) const {
+MapPickContext EditorController::mapPickContext(double zoom) const {
     MapPickContext context;
     context.mobile=mobileMode_;
     context.zoom=zoom;
     context.primary=selection_.primary();
 
-    Q_UNUSED(layoutScale);
     context.placedLabels=labelEngine_.placedRefs();
 
     if(const auto frame=hydroRuntime_.frame()) {
@@ -62,16 +61,15 @@ std::vector<ObjectRef> EditorController::sortMapCandidates(std::vector<ObjectRef
 std::vector<ObjectRef> EditorController::mapCandidates(
     double x,double y,double pixelsPerUnit,double zoom) const {
     return sortMapCandidates(mapPicker_.pickMap(project_.snapshot(),mapCameraMetrics(),
-        {x,y,pixelsPerUnit},mapPickContext(zoom,pixelsPerUnit>0?pixelsPerUnit:1)));
+        {x,y,pixelsPerUnit},mapPickContext(zoom)));
 }
 
 std::vector<ObjectRef> EditorController::mapCandidatesScreen(
     double x,double y,double zoom) const {
     const auto view=sceneBridge_.viewState();
     const auto metrics=mapCameraMetrics();
-    const double layoutScale=mapPickPixelsPerMapUnit(view,metrics,x,y);
     return sortMapCandidates(mapPicker_.pickScreen(project_.snapshot(),view,
-        metrics,{x,y},mapPickContext(zoom,layoutScale>0?layoutScale:1)));
+        metrics,{x,y},mapPickContext(zoom)));
 }
 QVariantList EditorController::objectChooserCandidates() const {
     QVariantList rows;
