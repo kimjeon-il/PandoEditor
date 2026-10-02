@@ -226,10 +226,10 @@ void EditorController::initializePhysicalData() {
         [this](const QString& path,const QString&,bool) {
             physicalError_.clear();
             if(path.startsWith("terrain/"))
-                scheduleViewportResources(ViewportResourceKind::Terrain);
+                invalidateViewportResources(ViewportResourceKind::Terrain);
             if(path.startsWith("hydro/")) {
                 if(!hydroRuntime_.isOpen())syncHydroData();
-                scheduleViewportResources(ViewportResourceKind::Hydro);
+                invalidateViewportResources(ViewportResourceKind::Hydro);
             }
             emit terrainChanged();emit stateChanged();
         });
@@ -337,11 +337,23 @@ void EditorController::scheduleViewportResources(ViewportResourceKind resources)
             QString::fromUtf8(error.what()));
     }
 }
+void EditorController::invalidateViewportResources(ViewportResourceKind resources) {
+    try {
+        const bool arm=viewportResources_.invalidate(resources);
+        if(!viewportResources_.pending()) {
+            scheduleViewportResources(resources);
+            return;
+        }
+        if(arm)viewportResourceTimer_.start(ViewportResourceScheduler::SettleDelayMs);
+    } catch(const std::exception& error) {
+        emit errorOccurred(QStringLiteral("Viewport resource invalidation failed: ")+
+            QString::fromUtf8(error.what()));
+    }
+}
 void EditorController::flushViewportResources() {
     try {
         const auto request=viewportResources_.takeReady();
         if(!request)return;
-        lastViewportResourceRequest_=*request;
         if(anyViewportResource(request->resources&ViewportResourceKind::Terrain))
             executeTerrainResources(*request);
         if(anyViewportResource(request->resources&ViewportResourceKind::Hydro))

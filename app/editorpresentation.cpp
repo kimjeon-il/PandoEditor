@@ -135,7 +135,7 @@ void EditorController::syncHydroData() {
         if(const auto selected=selection_.primary();selected&&selected->domain=="hydroBuiltin")
             if(const auto record=hydroRuntime_.recordById(displayText(selected->id)))
                 hydroRuntime_.setSelectedLogical(record->logicalFid);
-        scheduleViewportResources(ViewportResourceKind::Hydro);
+        invalidateViewportResources(ViewportResourceKind::Hydro);
     }
 }
 bool EditorController::setDistributionDisplay(const QString& mode,bool boundaryVisible) {

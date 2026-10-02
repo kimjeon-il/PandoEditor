@@ -544,6 +544,7 @@ private:
     void syncMapCameraMetrics(bool publishCurrent=true);
     bool publishCameraView();
     void scheduleViewportResources(ViewportResourceKind resources=ViewportResourceKind::All);
+    void invalidateViewportResources(ViewportResourceKind resources=ViewportResourceKind::All);
     void flushViewportResources();
     void executeTerrainResources(const ViewportResourceRequest&);
     void executeHydroResources(const ViewportResourceRequest&);
@@ -620,7 +621,6 @@ private:
     int activeMapInteractions_=0;
     ViewportResourceScheduler viewportResources_;
     QTimer viewportResourceTimer_;
-    std::optional<ViewportResourceRequest> lastViewportResourceRequest_;
     MapSceneBuilder sceneBuilder_{packetCache_};
     MapSceneBridge sceneBridge_;
     MapCamera camera_;
