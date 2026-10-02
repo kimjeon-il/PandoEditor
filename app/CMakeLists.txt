@@ -62,14 +62,11 @@ add_library(pandoeditor_editor STATIC
     editorcontroller.cpp editorview.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
-    ../renderer/renderpacket.cpp
     ../renderer/canonicalpacket.cpp ../renderer/canonicalpacket.h
     ../renderer/countrymesh.cpp ../renderer/countrymesh.h
     ../renderer/terrainprovider.cpp ../renderer/terrainprovider.h
     ../renderer/countryculling.cpp ../renderer/countryculling.h
     ../renderer/uploadscheduler.cpp ../renderer/uploadscheduler.h
-    ../renderer/renderscene.cpp
-    ../renderer/scenepatch.cpp ../renderer/scenepatch.h
     ../renderer/geometrypacketcache.cpp
     ../renderer/maprenderitem.cpp ../renderer/maprenderitem.h
     ../renderer/geographicimagemesh.cpp ../renderer/geographicimagemesh.h
