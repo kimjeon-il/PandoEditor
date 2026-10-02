@@ -1,5 +1,6 @@
 #include <pandoeditor/map/builtinhydrochannel.h>
 #include <pandoeditor/map/mapscenebuilder.h>
+#include <pandoeditor/map/scenepatch.h>
 #include <pandoeditor/presentation.h>
 #include <algorithm>
 #include <cmath>
@@ -95,6 +96,21 @@ void builderPublishesHydroInM5Order() {
                 "hydro draw order sorted");
 }
 
+void scenePatchNeverRetainsExternalHydroPackets() {
+    RenderScene previous;
+    PolygonDrawPacket polygon;polygon.object={"hydroBuiltin","lake-aw"};
+    previous.polygons.push_back(polygon);
+    StrokeDrawPacket stroke;stroke.object={"hydroBuiltin","river-aw"};
+    previous.strokes.push_back(stroke);
+    previous.drawSequence.push_back({PrimitiveKind::Polygon,0,{30,0,0},-1});
+    previous.drawSequence.push_back({PrimitiveKind::Stroke,0,{32,0,0},-1});
+    RenderScene target;
+    const auto stats=appendUnchangedScenePackets(target,previous,{});
+    require(target.polygons.empty()&&target.strokes.empty()&&target.drawSequence.empty(),
+            "external hydro is rebuilt, never patch-retained");
+    require(stats.removedPackets==2,"external hydro packets counted as replaced");
+}
+
 void visibilityAndRevisionInvalidateTypedChannel() {
     GeometryPacketCache cache;MapSceneBuilder builder(cache);
     const auto river=prepareBuiltinHydroFeature(
@@ -120,5 +136,6 @@ void visibilityAndRevisionInvalidateTypedChannel() {
 int main() {
     preparationKeepsVariableWidthsAndPolygonBoundary();
     builderPublishesHydroInM5Order();
+    scenePatchNeverRetainsExternalHydroPackets();
     visibilityAndRevisionInvalidateTypedChannel();
 }
