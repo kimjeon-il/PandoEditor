@@ -225,8 +225,8 @@ void EditorController::rebuildLabelSources() {
         MapLabelSource source;
         source.ref=ref;source.text=properties->displayName;source.geographic=geographic;
         source.collisionGroup=settings.collisionGroup;
-        source.width=std::max(22.,metrics.horizontalAdvance(name)+16);
-        source.height=std::max(19.,metrics.height());
+        source.width=std::max(22.,textWidth(name)+16);
+        source.height=std::max(19.,textHeight());
         source.priority=settings.priority.value_or(0);
         source.minZoom=settings.minZoom.value_or(0);
         source.maxZoom=settings.maxZoom.value_or(std::numeric_limits<double>::infinity());
