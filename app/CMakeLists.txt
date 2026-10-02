@@ -62,14 +62,10 @@ add_library(pandoeditor_editor STATIC
     editorcontroller.cpp editorview.cpp editorcommands.cpp editorjobs.cpp editorfields.cpp commandjobrunner.cpp commandjobrunner.h editorcontroller.h platformstorage.cpp platformstorage.h projectcodec.cpp
     windowsframe.cpp windowsframe.h
     ../renderer/mapprojection.cpp
-    ../renderer/mapviewstate.cpp
-    ../renderer/projectionengine.cpp
     ../renderer/renderpacket.cpp
     ../renderer/canonicalpacket.cpp ../renderer/canonicalpacket.h
     ../renderer/countrymesh.cpp ../renderer/countrymesh.h
     ../renderer/terrainprovider.cpp ../renderer/terrainprovider.h
-    ../renderer/renderlod.cpp ../renderer/renderlod.h
-    ../renderer/renderquality.cpp ../renderer/renderquality.h
     ../renderer/countryculling.cpp ../renderer/countryculling.h
     ../renderer/uploadscheduler.cpp ../renderer/uploadscheduler.h
     ../renderer/renderscene.cpp
@@ -84,7 +80,7 @@ add_library(pandoeditor_editor STATIC
     ../renderer/referenceimageitem.cpp ../renderer/referenceimageitem.h
 )
 target_include_directories(pandoeditor_editor PUBLIC . ../renderer PRIVATE ../third_party/earcut)
-target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Qt6::Quick Qt6::Concurrent Qt6::Svg Qt6::Sql Qt6::Network ZLIB::ZLIB)
+target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Pandoeditor::MapEngine Qt6::Quick Qt6::Concurrent Qt6::Svg Qt6::Sql Qt6::Network ZLIB::ZLIB)
 qt_add_shaders(pandoeditor_editor m73_map_shaders
     PREFIX "/m73" BASE "${PROJECT_SOURCE_DIR}/renderer"
     FILES

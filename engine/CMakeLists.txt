@@ -1,5 +1,9 @@
 add_library(pandoeditor_map_engine STATIC
     src/engine.cpp
+    src/mapviewstate.cpp
+    src/projectionengine.cpp
+    src/renderlod.cpp
+    src/renderquality.cpp
 )
 add_library(Pandoeditor::MapEngine ALIAS pandoeditor_map_engine)
 
