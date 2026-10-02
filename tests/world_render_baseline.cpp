@@ -1,5 +1,6 @@
 #include "world_diagnostic_helper.h"
 #include "maprenderitem.h"
+#include <pandoeditor/map/mapscenebuilder.h>
 #include <QElapsedTimer>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -123,17 +124,23 @@ QJsonObject run(const QString& root,const QString& name) {
     QImage image(imageWidth,imageHeight,QImage::Format_ARGB32_Premultiplied);
     if(image.isNull()) throw std::runtime_error("paint image allocation failed");
     MapRenderItem item;item.setWidth(imageWidth);item.setHeight(imageHeight);
-    item.setPaths(projection.paths);
-    QVariantMap visuals;std::size_t pathChars=0;
-    for(const auto& value:projection.paths) {
-        const auto row=value.toMap();const auto id=row.value(QStringLiteral("countryId")).toString();
-        pathChars+=std::size_t(row.value(QStringLiteral("path")).toString().size());
-        visuals[id]=QVariantMap{{"visible",true},{"color",QStringLiteral("#a8c7db")},
-            {"boundary",false},{"opacity",1.0},{"layerOpacity",1.0}};
-    }
-    item.setVisuals(visuals);
-    const double scale=std::min((imageWidth-48)/projection.width,(imageHeight-48)/projection.height);
-    item.setMapScale(scale);item.setOriginX(24);item.setOriginY(24);
+    std::size_t pathChars=0;
+    for(const auto& value:projection.paths)
+        pathChars+=std::size_t(value.toMap().value(QStringLiteral("path")).toString().size());
+
+    const double scale=std::min((imageWidth-48)/projection.width,
+                                (imageHeight-48)/projection.height);
+    MapViewState view;
+    view.mode=ProjectionMode::Flat;
+    view.viewportWidth=imageWidth;view.viewportHeight=imageHeight;
+    view.scale=scale*projection.cosLatitudeValue()*180.0/3.14159265358979323846;
+    view.translateX=24-projection.minXValue()*scale;
+    view.translateY=24+projection.maxLatitudeValue()*scale;
+
+    GeometryPacketCache packetCache;
+    MapSceneBuilder sceneBuilder(packetCache);
+    const auto scene=sceneBuilder.buildDocument(document,1,view,{},{});
+    item.setSceneSnapshot(scene,view);
     auto paint=[&] {
         image.fill(Qt::white);
         QPainter painter(&image);
