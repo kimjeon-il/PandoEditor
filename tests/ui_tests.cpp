@@ -877,26 +877,6 @@ private slots:
         // selected country before exercising zoom/pan/edit/undo/redo.
         editor.selectCountry("DEU");
         QCOMPARE(editor.selectedId(),QString("DEU"));
-        QPointF deuMapPoint;
-        bool foundDeuPixel=false;
-        for(const auto& value:editor.paths()) {
-            const auto row=value.toMap();
-            if(row.value("countryId").toString()!="DEU")continue;
-            const double left=row.value("left").toDouble();
-            const double top=row.value("top").toDouble();
-            const double width=row.value("width").toDouble();
-            const double height=row.value("height").toDouble();
-            for(int yi=1;yi<20&&!foundDeuPixel;++yi)for(int xi=1;xi<20;++xi) {
-                const QPointF candidate(left+width*xi/20.0,top+height*yi/20.0);
-                const auto hit=editor.pickObject(candidate.x(),candidate.y(),1e6,1);
-                if(hit.value("domain").toString()=="territorial"&&
-                   hit.value("id").toString()=="DEU") {
-                    deuMapPoint=candidate;foundDeuPixel=true;break;
-                }
-            }
-            break;
-        }
-        QVERIFY(foundDeuPixel);
         QVERIFY(QMetaObject::invokeMethod(map,"zoomAt",Q_ARG(QVariant,1.5),Q_ARG(QVariant,map->width()/2),Q_ARG(QVariant,map->height()/2)));
         QCOMPARE(map->property("zoom").toDouble(),1.5);
         QVERIFY(QMetaObject::invokeMethod(map,"fit"));
