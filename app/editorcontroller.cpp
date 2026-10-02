@@ -336,28 +336,36 @@ void EditorController::endMapInteraction() {
     }
 }
 void EditorController::refreshBuiltinHydroScene() {
-    const auto frame=hydroRuntime_.frame();
-    if(!frame) {
+    try {
+        const auto frame=hydroRuntime_.frame();
+        if(!frame) {
+            builtinHydroScene_.reset();
+            if(builtinHydroRevision_!=std::numeric_limits<std::uint64_t>::max())++builtinHydroRevision_;
+            return;
+        }
+        if(builtinHydroRevision_==std::numeric_limits<std::uint64_t>::max()) {
+            emit errorOccurred(QStringLiteral("Built-in hydro GPU revision overflow"));
+            return;
+        }
+        std::vector<BuiltinHydroFeaturePacket> features;
+        features.reserve(frame->features.size());
+        std::set<std::uint32_t> seen;
+        for(const auto& feature:frame->features) {
+            if(!seen.insert(feature.fid).second)continue;
+            const auto record=hydroRuntime_.recordByFid(feature.fid);
+            if(!record)continue;
+            const auto category=record->category.toStdString();
+            if(category!="river"&&category!="lake")continue;
+            features.push_back(prepareBuiltinHydroFeature(
+                {"hydroBuiltin",record->awId.toStdString()},category,feature));
+        }
+        ++builtinHydroRevision_;
+        builtinHydroScene_=makeBuiltinHydroRenderFrame(builtinHydroRevision_,features);
+    } catch(const std::exception& error) {
         builtinHydroScene_.reset();
-        if(builtinHydroRevision_!=std::numeric_limits<std::uint64_t>::max())++builtinHydroRevision_;
-        return;
+        emit errorOccurred(QStringLiteral("Built-in hydro GPU preparation failed: ")+
+                           QString::fromUtf8(error.what()));
     }
-    if(builtinHydroRevision_==std::numeric_limits<std::uint64_t>::max())
-        throw std::overflow_error("built-in hydro render revision overflow");
-    std::vector<BuiltinHydroFeaturePacket> features;
-    features.reserve(frame->features.size());
-    std::set<std::uint32_t> seen;
-    for(const auto& feature:frame->features) {
-        if(!seen.insert(feature.fid).second)continue;
-        const auto record=hydroRuntime_.recordByFid(feature.fid);
-        if(!record)continue;
-        const auto category=record->category.toStdString();
-        if(category!="river"&&category!="lake")continue;
-        features.push_back(prepareBuiltinHydroFeature(
-            {"hydroBuiltin",record->awId.toStdString()},category,feature));
-    }
-    ++builtinHydroRevision_;
-    builtinHydroScene_=makeBuiltinHydroRenderFrame(builtinHydroRevision_,features);
 }
 
 void EditorController::scheduleViewportResources(ViewportResourceKind resources) {

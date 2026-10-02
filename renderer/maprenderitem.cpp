@@ -79,6 +79,20 @@ void MapRenderItem::paint(QPainter* painter) {
         painter->setRenderHint(QPainter::Antialiasing,smoothLines_);
         const auto copies=visibleFlatWorldOffsets(typedView_);
         for(const auto& command:typedScene_->drawSequence)for(const double offset:copies) {
+            const bool builtinHydro=
+                (command.primitive==PrimitiveKind::Polygon&&
+                 command.index<typedScene_->polygons.size()&&
+                 typedScene_->polygons[command.index].object.domain=="hydroBuiltin")||
+                (command.primitive==PrimitiveKind::Stroke&&
+                 command.index<typedScene_->strokes.size()&&
+                 typedScene_->strokes[command.index].object.domain=="hydroBuiltin")||
+                (command.primitive==PrimitiveKind::Point&&
+                 command.index<typedScene_->points.size()&&
+                 typedScene_->points[command.index].object.domain=="hydroBuiltin");
+            // M8.8 adds the typed hydro packets for the GPU backend. Until M8.9
+            // removes the legacy CPU hydro adapter, the CPU fallback deliberately
+            // keeps consuming HydroRuntimeFrame to preserve its exact raster path.
+            if(builtinHydro)continue;
             const auto drawStyle=[&](const RenderStyle& style) {
                 painter->setOpacity(std::clamp(double(style.alpha),0.,1.));
                 painter->setCompositionMode(style.blendMode==BlendMode::Multiply?
@@ -174,6 +188,7 @@ void MapRenderItem::paint(QPainter* painter) {
         }
         painter->save();painter->setOpacity(1);painter->setBrush(Qt::NoBrush);
         for(const auto& selected:typedScene_->interaction.selected) {
+            if(selected.domain=="hydroBuiltin")continue; // legacy CPU hydro adapter owns this highlight in M8.8
             painter->setPen(QPen(QColor("#163e64"),typedScene_->interaction.primary==selected?3:2,
                                  Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
             for(const auto& stroke:typedScene_->strokes)if(stroke.object==selected) {
