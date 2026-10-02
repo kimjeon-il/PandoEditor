@@ -131,8 +131,7 @@ std::vector<ObjectRef> MapPicker::pickMap(
        !std::isfinite(request.mapY)||!std::isfinite(request.pixelsPerMapUnit)||
        request.pixelsPerMapUnit<0)return {};
     const auto geographic=mapToGeographic(request.mapX,request.mapY,metrics);
-    const double pixels=request.pixelsPerMapUnit>0?request.pixelsPerMapUnit:1;
-    return pickGeographic(snapshot,metrics,geographic,pixels,context);
+    return pickGeographic(snapshot,metrics,geographic,request.pixelsPerMapUnit,context);
 }
 
 double mapPickPixelsPerMapUnit(
@@ -180,8 +179,10 @@ std::vector<ObjectRef> MapPicker::pickGeographic(
     const auto& document=snapshot.document();
     const auto& index=snapshot.index();
     const double xScale=metrics.cosLatitude;
-    const double tolerance=(context.mobile?18.:10.)/pixelsPerMapUnit;
-    const double boundaryTolerance=(context.mobile?12.:7.)/pixelsPerMapUnit;
+    const double safePixels=pixelsPerMapUnit>0?pixelsPerMapUnit:1;
+    const double tolerance=(context.mobile?18.:10.)/safePixels;
+    const double boundaryTolerance=pixelsPerMapUnit>0?
+        (context.mobile?12.:7.)/pixelsPerMapUnit:0.;
     const double latitudeMargin=std::max(tolerance,boundaryTolerance);
     const double longitudeMargin=latitudeMargin/std::abs(xScale);
     const auto spatial=spatialIndex_.queryLegacyFlat({{

@@ -13,7 +13,6 @@
 #include "renderquality.h"
 #include <pandoeditor/map/mapcamera.h>
 #include <pandoeditor/map/mappicker.h>
-#include <pandoeditor/spatialindex.h>
 #include "hydroruntimeprovider.h"
 #include "../renderer/terrainprovider.h"
 #include "giscontentimport.h"

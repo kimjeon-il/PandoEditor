@@ -26,7 +26,7 @@ ProjectDocument fixture() {
     };
     add("S","하하",UnitKind::Subunit,"other",1,4);
     add("T","가나다",UnitKind::Subunit,"other",1,4);
-    add("H","숨김",UnitKind::Region,"hidden",6,8);
+    add("H","숨김",UnitKind::Region,"hidden",40,42);
     d.presentation.webPresentation.objectOrder={
         "territorial:subunit:T","territorial:subunit:S"};
     d.relations.push_back({"s",territorialRef("S"),territorialRef("A"),territorialRef("A")});
@@ -36,7 +36,7 @@ ProjectDocument fixture() {
     return d;
 }
 
-MapCameraMetrics metrics(){return {10,10,1,0,10};}
+MapCameraMetrics metrics(){return {50,10,1,0,10};}
 
 void chooserOrderAndTopPaintOrder() {
     Project project;project.replace(fixture());
@@ -47,7 +47,7 @@ void chooserOrderAndTopPaintOrder() {
     require(hits[1]==territorialRef("S"),"second candidate");
     const auto top=picker.topCandidate(project.snapshot(),hits);
     require(top&&*top==territorialRef("S"),"paint order independently selects S");
-    const auto hidden=picker.pickMap(project.snapshot(),metrics(),{7,7,10},context);
+    const auto hidden=picker.pickMap(project.snapshot(),metrics(),{41,7,10},context);
     require(hidden.empty(),"hidden layer excluded");
 }
 
