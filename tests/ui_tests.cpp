@@ -873,30 +873,62 @@ private slots:
             QTest::qWait(50); return true;
         };
         double px=0,py=0;
-        // The default sample can already have a selected country. Clear it so
-        // the coordinate-search loop always records the actual German point.
-        editor.clearSelection();
-        // Find a German interior point that is also clear of map UI controls,
-        // then exercise the actual pointer route with the same map coordinate.
+        bool foundGermany=false;
         const auto initialScale=map->property("mapScale").toDouble();
         const auto initialOriginX=map->property("originX").toDouble();
         const auto initialOriginY=map->property("originY").toDouble();
-        for (int y=0;y<100 && editor.selectedId()!="DEU";++y) for(int x=0;x<100;++x) {
-            const auto candidateX=editor.mapWidth()*x/100;
-            const auto candidateY=editor.mapHeight()*y/100;
-            const auto screenX=initialOriginX+candidateX*initialScale;
-            const auto screenY=initialOriginY+candidateY*initialScale;
-            if(screenX<80||screenX>map->width()-80||screenY<80||screenY>map->height()-80)continue;
-            px=candidateX;py=candidateY;
-            editor.selectAt(px,py);if(editor.selectedId()=="DEU")break;
+        // Locate an actual screen-pickable German interior point. The M8 camera
+        // owns projection now, so a legacy map-space selection is not sufficient
+        // evidence that the same pixel is a valid pointer target.
+        for(const auto& value:editor.paths()) {
+            const auto path=value.toMap();
+            if(path.value("countryId").toString()!="DEU")continue;
+            const double left=path.value("left").toDouble();
+            const double top=path.value("top").toDouble();
+            const double width=path.value("width").toDouble();
+            const double height=path.value("height").toDouble();
+            for(int yi=1;yi<10&&!foundGermany;++yi)for(int xi=1;xi<10;++xi) {
+                const double candidateX=left+width*xi/10.0;
+                const double candidateY=top+height*yi/10.0;
+                const double screenX=initialOriginX+candidateX*initialScale;
+                const double screenY=initialOriginY+candidateY*initialScale;
+                if(screenX<80||screenX>map->width()-80||
+                   screenY<80||screenY>map->height()-80)continue;
+                bool labelObstruction=false;
+                for(const auto& labelValue:editor.placedLabels()) {
+                    const auto label=labelValue.toMap();
+                    if(std::abs(label.value("x").toDouble()-screenX)<42&&
+                       std::abs(label.value("y").toDouble()-screenY)<24) {
+                        labelObstruction=true;break;
+                    }
+                }
+                if(labelObstruction)continue;
+                const auto hit=editor.pickObjectScreen(
+                    screenX,screenY,map->property("zoom").toDouble());
+                if(hit.value("domain").toString()=="territorial"&&
+                   hit.value("id").toString()=="DEU") {
+                    px=candidateX;py=candidateY;foundGermany=true;break;
+                }
+            }
+            break;
         }
-        QCOMPARE(editor.selectedId(),QString("DEU"));
-        editor.selectAt(-100,-100);
+        QVERIFY(foundGermany);
+        editor.clearSelection();
         auto clickGermany=[&]() {
             auto scale=map->property("mapScale").toDouble();
             auto local=QPointF(map->property("originX").toDouble()+px*scale,
-                              map->property("originY").toDouble()+py*scale);
+                               map->property("originY").toDouble()+py*scale);
             QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,map->mapToScene(local).toPoint());
+            QTest::qWait(80);
+            if(editor.selectedId()=="DEU")return;
+            if(editor.objectChooserOpen()) {
+                const auto rows=editor.objectChooserCandidates();
+                for(int i=0;i<rows.size();++i)
+                    if(rows[i].toMap().value("domain").toString()=="territorial"&&
+                       rows[i].toMap().value("id").toString()=="DEU") {
+                        editor.chooseMapCandidate(i);break;
+                    }
+            }
         };
         clickGermany(); QTRY_COMPARE(editor.selectedId(),QString("DEU"));
         QVERIFY(QMetaObject::invokeMethod(map,"zoomAt",Q_ARG(QVariant,1.5),Q_ARG(QVariant,map->width()/2),Q_ARG(QVariant,map->height()/2)));
