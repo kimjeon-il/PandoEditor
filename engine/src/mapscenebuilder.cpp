@@ -1,5 +1,6 @@
 #include <pandoeditor/map/mapscenebuilder.h>
 #include <pandoeditor/map/scenepatch.h>
+#include <pandoeditor/map/countryculling.h>
 #include <pandoeditor/maprenderorder.h>
 #include <algorithm>
 #include <cstring>
@@ -119,6 +120,8 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     auto scene=std::make_shared<RenderScene>();
     scene->interaction=interaction;
     scene->worldBase=worldBase_;
+    if(worldBase_&&worldBase_->mesh)
+        scene->worldPlan=worldRenderPlanForView(*worldBase_->mesh,view);
     std::set<ObjectRef> protectedObjects(interaction.selected.begin(),interaction.selected.end());
     if(interaction.editTarget)protectedObjects.insert(*interaction.editTarget);
     cache_.protect(protectedObjects);

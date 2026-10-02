@@ -64,7 +64,6 @@ add_library(pandoeditor_editor STATIC
     ../renderer/canonicalpacket.cpp ../renderer/canonicalpacket.h
     ../renderer/countrymesh.cpp ../renderer/countrymesh.h
     ../renderer/terrainprovider.cpp ../renderer/terrainprovider.h
-    ../renderer/countryculling.cpp ../renderer/countryculling.h
     ../renderer/uploadscheduler.cpp ../renderer/uploadscheduler.h
     ../renderer/maprenderitem.cpp ../renderer/maprenderitem.h
     ../renderer/geographicimagemesh.cpp ../renderer/geographicimagemesh.h

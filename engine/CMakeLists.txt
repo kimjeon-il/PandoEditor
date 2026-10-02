@@ -4,6 +4,7 @@ add_library(pandoeditor_map_engine STATIC
     src/projectionengine.cpp
     src/renderlod.cpp
     src/renderquality.cpp
+    src/countryculling.cpp
     src/renderpacket.cpp
     src/renderscene.cpp
     src/scenepatch.cpp

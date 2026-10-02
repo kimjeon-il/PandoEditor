@@ -1,6 +1,7 @@
 #pragma once
 #include <pandoeditor/map/renderpacket.h>
 #include <pandoeditor/map/countrymesh.h>
+#include <pandoeditor/map/drawplan.h>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -56,6 +57,7 @@ struct RenderScene {
     std::vector<SceneDrawRef> drawSequence;
     std::shared_ptr<const WorldBaseFrame> worldBase;
     std::vector<WorldCountryDraw> worldCountries;
+    WorldRenderPlan worldPlan;
     InteractionRenderPacket interaction;
 };
 

@@ -1,6 +1,5 @@
 #include "mapscenenode.h"
 #include "mapmaterial.h"
-#include "projectionengine.h"
 #include <QSGGeometryNode>
 #include <QSGGeometry>
 #include <algorithm>
@@ -59,20 +58,16 @@ std::string key(const std::string& source,MapPrimitive kind,int world,bool inter
 bool contains(const std::vector<pandoeditor::ObjectRef>& refs,const pandoeditor::ObjectRef& object) {
     return std::find(refs.begin(),refs.end(),object)!=refs.end();
 }
-std::vector<double> offsets(const MapViewState& view) {
-    return view.mode==ProjectionMode::Globe?std::vector<double>{0}:visibleFlatWorldOffsets(view);
-}
 }
 
 void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                         const MapViewState& view,const MapFlatViewport& flat,
                         MapGpuStats& stats,std::size_t uploadBudgetBytes) {
-    const auto worldOffsets=scene?offsets(view):std::vector<double>{};
-    CountryDrawPlan fills,strokes;
-    if(scene&&scene->worldBase&&scene->worldBase->mesh) {
-        fills=countryDrawRangesForView(*scene->worldBase->mesh,view);
-        strokes=countryDrawRangesForView(*scene->worldBase->mesh,view,CountryRangeKind::Boundary);
-    }
+    const WorldRenderPlan emptyPlan;
+    const auto& worldPlan=scene?scene->worldPlan:emptyPlan;
+    const auto& worldOffsets=worldPlan.worldOffsets;
+    const auto& fills=worldPlan.fills;
+    const auto& strokes=worldPlan.strokes;
     stats.visibleCountryCount=0;
     stats.drawIndexCount=0;
     stats.fullIndexCount=(fills.fullIndexCount+strokes.fullIndexCount)*worldOffsets.size();

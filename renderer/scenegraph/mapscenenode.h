@@ -2,7 +2,6 @@
 
 #include "renderscene.h"
 #include "mapviewstate.h"
-#include "countryculling.h"
 #include "uploadscheduler.h"
 #include <QSGNode>
 #include <cstdint>
