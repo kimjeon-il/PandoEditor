@@ -23,7 +23,7 @@ const QSGGeometry::AttributeSet& attributes(MapPrimitive primitive) {
     static QSGGeometry::Attribute point[]{QSGGeometry::Attribute::create(0,2,QSGGeometry::FloatType,true),
         QSGGeometry::Attribute::create(1,2,QSGGeometry::FloatType)};
     static const QSGGeometry::AttributeSet fillSet{1,sizeof(FillVertex),fill};
-    static const QSGGeometry::AttributeSet strokeSet{2,sizeof(StrokeVertex),stroke};
+    static const QSGGeometry::AttributeSet strokeSet{3,sizeof(StrokeVertex),stroke};
     static const QSGGeometry::AttributeSet pointSet{2,sizeof(PointVertex),point};
     return primitive==MapPrimitive::Fill?fillSet:primitive==MapPrimitive::Stroke?strokeSet:pointSet;
 }
@@ -372,7 +372,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             auto style=draw.style;style.color=color;style.alpha=1;
             style.width=width;style.dashOn=style.dashOff=0;
             stroke(draw,world,true,style,channel);
-            if(vertices)selectionVertices(draw,world,channel);
+            if(vertices&&draw.object.domain!="hydroBuiltin")selectionVertices(draw,world,channel);
         }
         for(const auto& draw:scene->points)if(draw.object==ref) {
             RenderStyle style;style.color=color;style.alpha=1;
