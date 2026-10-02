@@ -24,6 +24,31 @@ private slots:
         QCOMPARE(editor.mapViewState().value("centerLongitude").toDouble(),-20.);
         QCOMPARE(editor.mapViewState().value("viewportWidth").toDouble(),900.);
     }
+    void engineCameraOwnsViewportZoomPanAndFit() {
+        EditorController editor;
+        QVERIFY(editor.resizeMapCamera(800,600));
+        auto globe=editor.mapViewState();
+        QCOMPARE(globe.value("viewportWidth").toDouble(),800.);
+        QCOMPARE(globe.value("viewportHeight").toDouble(),600.);
+        QVERIFY(std::abs(globe.value("globeZoom").toDouble()-1.)<1e-9);
+        QVERIFY(editor.setProjectionMode("flat"));
+        const auto before=editor.mapViewState();
+        const double oldZoom=before.value("flatZoom").toDouble();
+        QVERIFY(editor.zoomMapCameraAt(2,213,177));
+        const auto zoomed=editor.mapViewState();
+        QVERIFY(std::abs(zoomed.value("flatZoom").toDouble()-oldZoom*2)<1e-9);
+        editor.beginMapCameraPan();
+        QVERIFY(editor.updateMapCameraPan(30,-20));
+        editor.endMapCameraPan();
+        const auto panned=editor.mapViewState();
+        QVERIFY(std::abs(panned.value("panX").toDouble()-zoomed.value("panX").toDouble()-30)<1e-8);
+        QVERIFY(std::abs(panned.value("panY").toDouble()-zoomed.value("panY").toDouble()+20)<1e-8);
+        QVERIFY(editor.fitMapCamera());
+        const auto fitted=editor.mapViewState();
+        QVERIFY(std::abs(fitted.value("flatZoom").toDouble()-1.)<1e-9);
+        QVERIFY(std::abs(fitted.value("panX").toDouble())<1e-9);
+        QVERIFY(std::abs(fitted.value("panY").toDouble())<1e-9);
+    }
     void screenPickingRejectsOutsideGlobeAndPublishesViewport() {
         EditorController editor;
         QVERIFY(editor.publishMapView({{"viewportWidth",800.},{"viewportHeight",600.},{"scale",240.},
