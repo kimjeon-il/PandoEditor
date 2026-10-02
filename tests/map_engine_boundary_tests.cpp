@@ -1,6 +1,8 @@
 #include <pandoeditor/map/countryculling.h>
 #include <pandoeditor/map/geometrypacketcache.h>
 #include <pandoeditor/map/mapscenebuilder.h>
+#include <pandoeditor/map/mapcamera.h>
+#include <pandoeditor/map/mappicker.h>
 #include <pandoeditor/map/mapviewstate.h>
 #include <pandoeditor/map/projectionengine.h>
 #include <pandoeditor/map/renderlod.h>

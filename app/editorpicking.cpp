@@ -41,8 +41,8 @@ MapPickContext EditorController::mapPickContext(double zoom,double layoutScale) 
 
 std::vector<ObjectRef> EditorController::sortMapCandidates(std::vector<ObjectRef> found) const {
     QCollator names{QLocale{QLocale::Korean}};
+    const auto snapshot=project_.snapshot();
     std::stable_sort(found.begin(),found.end(),[&](const ObjectRef& a,const ObjectRef& b) {
-        const auto snapshot=project_.snapshot();
         const int leftRank=mapPicker_.candidateRank(snapshot,a);
         const int rightRank=mapPicker_.candidateRank(snapshot,b);
         if(leftRank!=rightRank)return leftRank>rightRank;
