@@ -2,6 +2,7 @@ add_library(pandoeditor_map_engine STATIC
     src/engine.cpp
     src/mapviewstate.cpp
     src/mapcamera.cpp
+    src/mappicker.cpp
     src/projectionengine.cpp
     src/renderlod.cpp
     src/renderquality.cpp
@@ -31,4 +32,7 @@ if(BUILD_TESTING)
     add_executable(map_camera_tests ../tests/map_camera_tests.cpp)
     target_link_libraries(map_camera_tests PRIVATE Pandoeditor::MapEngine)
     add_test(NAME map_camera_tests COMMAND map_camera_tests)
+    add_executable(map_picker_tests ../tests/map_picker_tests.cpp)
+    target_link_libraries(map_picker_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME map_picker_tests COMMAND map_picker_tests)
 endif()
