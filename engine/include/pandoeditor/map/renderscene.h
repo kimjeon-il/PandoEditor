@@ -23,6 +23,7 @@ struct SceneDrawRef {
     std::size_t index=0;
     pandoeditor::MapRenderOrder order;
     int layerOrder=-1;
+    float layerOpacity=1;
 };
 
 struct WorldBaseRange {

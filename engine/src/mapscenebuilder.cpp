@@ -85,6 +85,13 @@ RenderStyle styleFor(const ProjectDocument& doc,const ObjectRef& ref,
     style.alpha=static_cast<float>(defaultOpacity);
     return style;
 }
+float layerOpacityFor(const ProjectDocument& doc,const ObjectRef& ref) {
+    const auto membership=doc.presentation.membership.find(ref);
+    if(membership==doc.presentation.membership.end())return 1;
+    for(const auto& layer:doc.presentation.userLayers)
+        if(layer.id==membership->second)return static_cast<float>(std::clamp(layer.opacity,0.,1.));
+    return 1;
+}
 std::optional<GeometryRef> geometryFor(const ProjectDocument& doc,const ObjectRef& ref) {
     if(ref.domain=="territorial") {
         for(const auto& unit:doc.units)if(unit.id==ref.id)return unit.geometry;
@@ -169,10 +176,12 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
                             if(doc.presentation.userLayers[j].id==layerId){layerOrder=int(j);break;}
                         const auto i=scene->worldCountries.size();
                         const auto fillOrder=mapRenderOrder(doc,ref,RenderPrimitiveRole::Fill);
-                        scene->drawSequence.push_back({PrimitiveKind::WorldFill,i,fillOrder,layerOrder});
+                        scene->drawSequence.push_back({PrimitiveKind::WorldFill,i,fillOrder,layerOrder,
+                            layerOpacityFor(doc,ref)});
                         if(resolvedTerritorialPresentation(doc,ref).boundaryVisible) {
                             const auto edgeOrder=mapRenderOrder(doc,ref,RenderPrimitiveRole::Boundary);
-                            scene->drawSequence.push_back({PrimitiveKind::WorldStroke,i,edgeOrder,layerOrder});
+                            scene->drawSequence.push_back({PrimitiveKind::WorldStroke,i,edgeOrder,layerOrder,
+                                layerOpacityFor(doc,ref)});
                         }
                     }
                 }
@@ -201,6 +210,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
         const auto& layerId=nativeLayerId(doc,object);
         for(std::size_t i=0;i<doc.presentation.userLayers.size();++i)
             if(doc.presentation.userLayers[i].id==layerId){layerOrder=static_cast<int>(i);break;}
+        const float layerOpacity=layerOpacityFor(doc,object);
         if(polygon(*shape)) {
             PolygonDrawPacket draw;draw.key=key;draw.object=object;draw.geometry=*ref;
             draw.geometryRevision=ref->version;draw.style=style;
@@ -208,7 +218,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             draw.order=orderValue(draw.drawOrder);
             draw.geometryPacket=cache_.polygon(object,*ref,*shape,lod,preparation);
             const auto index=scene->polygons.size();scene->polygons.push_back(std::move(draw));
-            scene->drawSequence.push_back({PrimitiveKind::Polygon,index,scene->polygons.back().drawOrder,layerOrder});
+            scene->drawSequence.push_back({PrimitiveKind::Polygon,index,scene->polygons.back().drawOrder,layerOrder,layerOpacity});
             bool boundary=true;
             if(object.domain=="territorial")boundary=resolvedTerritorialPresentation(doc,object).boundaryVisible;
             if(object.domain=="distributionEntry")boundary=doc.presentation.webPresentation.distributionSettings.boundaryVisible;
@@ -236,7 +246,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
                 stroke.geometryPacket=cache_.stroke(object,*ref,*shape,lod,preparation);
                 const auto strokeIndex=scene->strokes.size();scene->strokes.push_back(std::move(stroke));
                 if(boundary)scene->drawSequence.push_back({PrimitiveKind::Stroke,strokeIndex,
-                    scene->strokes.back().drawOrder,layerOrder});
+                    scene->strokes.back().drawOrder,layerOrder,layerOpacity});
             }
         } else if(line(*shape)) {
             StrokeDrawPacket draw;draw.key=key;draw.object=object;draw.geometry=*ref;
@@ -245,7 +255,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             draw.order=orderValue(draw.drawOrder);
             draw.geometryPacket=cache_.stroke(object,*ref,*shape,lod,preparation);
             const auto index=scene->strokes.size();scene->strokes.push_back(std::move(draw));
-            scene->drawSequence.push_back({PrimitiveKind::Stroke,index,scene->strokes.back().drawOrder,layerOrder});
+            scene->drawSequence.push_back({PrimitiveKind::Stroke,index,scene->strokes.back().drawOrder,layerOrder,layerOpacity});
         } else if(shape->type=="Point"||shape->type=="MultiPoint") {
             PointDrawPacket draw;draw.key=key;draw.object=object;draw.geometry=*ref;
             draw.geometryRevision=ref->version;draw.style=style;
@@ -261,7 +271,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
                 }
             }
             const auto index=scene->points.size();scene->points.push_back(std::move(draw));
-            scene->drawSequence.push_back({PrimitiveKind::Point,index,scene->points.back().drawOrder,layerOrder});
+            scene->drawSequence.push_back({PrimitiveKind::Point,index,scene->points.back().drawOrder,layerOrder,layerOpacity});
         }
     };
     for(const auto& unit:doc.units)
@@ -377,7 +387,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             mixDouble(presentation,packet.style.width);
             mix(presentation,static_cast<std::uint64_t>(packet.style.blendMode));
             mix(presentation,order.pass);mix(presentation,order.group);mixDouble(presentation,order.object);
-            mix(presentation,command.layerOrder);
+            mix(presentation,command.layerOrder);mixDouble(presentation,command.layerOpacity);
         };
         if(command.primitive==PrimitiveKind::Polygon)addPacket(scene->polygons[command.index]);
         else if(command.primitive==PrimitiveKind::Stroke)addPacket(scene->strokes[command.index]);
@@ -396,6 +406,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             mixDouble(presentation,style.alpha);mixDouble(presentation,style.width);
             mix(presentation,order.pass);mix(presentation,order.group);
             mixDouble(presentation,order.object);mix(presentation,command.layerOrder);
+            mixDouble(presentation,command.layerOpacity);
         }
     }
     for(const auto& ref:interaction.candidates){mix(selection,ref.domain);mix(selection,ref.id);}

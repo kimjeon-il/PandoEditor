@@ -85,6 +85,17 @@ void GpuMapItem::evaluateBackend() {
     if(!window()||!bridge_||!bridge_->sceneSnapshot()) {
         setStatus(false,QStringLiteral("Waiting for map scene"));return;
     }
+    const auto scene=bridge_->sceneSnapshot();
+    if(scene)for(const auto& draw:scene->drawSequence)
+        if((draw.primitive==PrimitiveKind::Polygon||draw.primitive==PrimitiveKind::WorldFill)&&
+           draw.layerOpacity<.999f) {
+            if(policy=="gpu") {
+                setStatus(false,QStringLiteral("GPU renderer forced but layer group compositing requires CPU fallback"));
+            } else {
+                setStatus(false,QStringLiteral("Layer group compositing uses CPU fallback"));
+            }
+            return;
+        }
     for(const char* name:{"fill","stroke","point"}) {
         if(!QFile::exists(QStringLiteral(":/m73/shaders/")+name+".vert.qsb")||
            !QFile::exists(QStringLiteral(":/m73/shaders/")+name+".frag.qsb")) {

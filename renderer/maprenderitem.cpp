@@ -82,7 +82,7 @@ void MapRenderItem::paint(QPainter* painter) {
     const auto copies=scene_->worldPlan.worldOffsets.empty()?
         visibleFlatWorldOffsets(view_):scene_->worldPlan.worldOffsets;
 
-    const auto drawPolygon=[&](const PolygonDrawPacket& draw,double offset,
+    const auto drawPolygon=[&](QPainter* target,const PolygonDrawPacket& draw,double offset,
                                const RenderStyle* overrideStyle=nullptr) {
         const auto& packet=draw.geometryPacket;
         if(!packet.positions||!packet.indices)return;
@@ -90,10 +90,10 @@ void MapRenderItem::paint(QPainter* painter) {
             packet.globeIndices:packet.indices);
         if(indices.empty())return;
         const auto& style=overrideStyle?*overrideStyle:draw.style;
-        painter->save();
-        applyComposition(painter,style);
-        painter->setPen(Qt::NoPen);
-        painter->setBrush(colorFor(style));
+        target->save();
+        applyComposition(target,style);
+        target->setPen(Qt::NoPen);
+        target->setBrush(colorFor(style));
         QPainterPath path;
         const auto& positions=*packet.positions;
         for(std::size_t i=0;i+2<indices.size();i+=3) {
@@ -105,9 +105,9 @@ void MapRenderItem::paint(QPainter* painter) {
             path.moveTo(a.x,a.y);path.lineTo(b.x,b.y);path.lineTo(c.x,c.y);
             path.closeSubpath();
         }
-        painter->setOpacity(std::clamp(double(style.alpha*style.fillAlpha),0.,1.));
-        painter->drawPath(path);
-        painter->restore();
+        target->setOpacity(std::clamp(double(style.alpha*style.fillAlpha),0.,1.));
+        target->drawPath(path);
+        target->restore();
     };
 
     const auto drawStroke=[&](const StrokeDrawPacket& draw,double offset,
@@ -233,18 +233,55 @@ void MapRenderItem::paint(QPainter* painter) {
             }
 
     // Base pass: exactly the engine-authored draw sequence used by the GPU backend.
-    for(const auto& command:scene_->drawSequence)for(const double offset:copies) {
-        if(command.primitive==PrimitiveKind::Polygon&&command.index<scene_->polygons.size())
-            drawPolygon(scene_->polygons[command.index],offset);
-        else if(command.primitive==PrimitiveKind::Stroke&&command.index<scene_->strokes.size())
-            drawStroke(scene_->strokes[command.index],offset,
-                       scene_->strokes[command.index].style);
-        else if(command.primitive==PrimitiveKind::Point&&command.index<scene_->points.size()) {
-            const auto& point=scene_->points[command.index];
-            if(point.object.domain!="label")drawPoint(point,offset,point.style,3);
-        } else if(command.primitive==PrimitiveKind::WorldFill||
-                  command.primitive==PrimitiveKind::WorldStroke)
-            drawWorld(command.primitive,command.index,offset);
+    // Semi-transparent user-layer fills retain web/legacy group-opacity semantics:
+    // composite the layer once instead of applying its alpha to every overlap.
+    for(std::size_t commandIndex=0;commandIndex<scene_->drawSequence.size();) {
+        const auto& command=scene_->drawSequence[commandIndex];
+        if(command.primitive==PrimitiveKind::Polygon&&command.layerOpacity<.999f&&
+           command.index<scene_->polygons.size()) {
+            std::size_t end=commandIndex+1;
+            while(end<scene_->drawSequence.size()) {
+                const auto& next=scene_->drawSequence[end];
+                if(next.primitive!=PrimitiveKind::Polygon||
+                   next.layerOrder!=command.layerOrder||
+                   next.order.pass!=command.order.pass||
+                   std::abs(next.layerOpacity-command.layerOpacity)>1e-6f)break;
+                ++end;
+            }
+            QImage buffer(std::max(1,int(std::ceil(width()))),
+                          std::max(1,int(std::ceil(height()))),
+                          QImage::Format_ARGB32_Premultiplied);
+            buffer.fill(Qt::transparent);
+            QPainter layerPainter(&buffer);
+            layerPainter.setRenderHint(QPainter::Antialiasing,smoothLines_);
+            for(std::size_t i=commandIndex;i<end;++i) {
+                const auto& grouped=scene_->drawSequence[i];
+                if(grouped.index>=scene_->polygons.size())continue;
+                auto style=scene_->polygons[grouped.index].style;
+                style.alpha=grouped.layerOpacity>0?
+                    std::clamp(style.alpha/grouped.layerOpacity,0.f,1.f):0.f;
+                for(const double offset:copies)
+                    drawPolygon(&layerPainter,scene_->polygons[grouped.index],offset,&style);
+            }
+            layerPainter.end();
+            painter->save();painter->setOpacity(command.layerOpacity);
+            painter->drawImage(QPointF(0,0),buffer);painter->restore();
+            commandIndex=end;continue;
+        }
+        for(const double offset:copies) {
+            if(command.primitive==PrimitiveKind::Polygon&&command.index<scene_->polygons.size())
+                drawPolygon(painter,scene_->polygons[command.index],offset);
+            else if(command.primitive==PrimitiveKind::Stroke&&command.index<scene_->strokes.size())
+                drawStroke(scene_->strokes[command.index],offset,
+                           scene_->strokes[command.index].style);
+            else if(command.primitive==PrimitiveKind::Point&&command.index<scene_->points.size()) {
+                const auto& point=scene_->points[command.index];
+                if(point.object.domain!="label")drawPoint(point,offset,point.style,3);
+            } else if(command.primitive==PrimitiveKind::WorldFill||
+                      command.primitive==PrimitiveKind::WorldStroke)
+                drawWorld(command.primitive,command.index,offset);
+        }
+        ++commandIndex;
     }
 
     const auto strokeVertices=[&](const StrokeDrawPacket& draw,double offset,
