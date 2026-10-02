@@ -163,19 +163,19 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
     const auto cells=visibleCells(view,64);
     struct Cursor {
         int key=0;
-        std::size_t position=0;
+        std::size_t position=0,source=0;
     };
     struct Worse {
-        const MapLabelEngine* engine=nullptr;
+        const std::vector<MapLabelSource>* sources=nullptr;
         bool operator()(const Cursor& a,const Cursor& b) const {
-            const auto& ai=engine->cells_.at(a.key);
-            const auto& bi=engine->cells_.at(b.key);
-            return sourceOrder(engine->sources_[bi[b.position]],
-                               engine->sources_[ai[a.position]]);
+            return sourceOrder(sources->at(b.source),sources->at(a.source));
         }
     };
-    std::priority_queue<Cursor,std::vector<Cursor>,Worse> queue{Worse{this}};
-    for(const auto key:cells)if(!cells_.at(key).empty())queue.push({key,0});
+    std::priority_queue<Cursor,std::vector<Cursor>,Worse> queue{Worse{&sources_}};
+    for(const auto key:cells)if(!cells_.at(key).empty()) {
+        const auto& bucket=cells_.at(key);
+        queue.push({key,0,bucket.front()});
+    }
 
     std::vector<std::size_t> candidates;
     candidates.reserve(std::min(options.maxCandidates,sources_.size()));
@@ -191,9 +191,10 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
     while(!queue.empty()&&candidates.size()<options.maxCandidates) {
         const auto cursor=queue.top();queue.pop();
         const auto& bucket=cells_.at(cursor.key);
-        const auto index=bucket[cursor.position];
+        const auto index=cursor.source;
         if(seen.insert(index).second)candidates.push_back(index);
-        if(cursor.position+1<bucket.size())queue.push({cursor.key,cursor.position+1});
+        if(cursor.position+1<bucket.size())
+            queue.push({cursor.key,cursor.position+1,bucket[cursor.position+1]});
     }
     stats_.candidatesExamined+=candidates.size();
 

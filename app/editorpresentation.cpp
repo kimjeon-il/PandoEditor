@@ -14,6 +14,7 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <stdexcept>
 using namespace pandoeditor;
 namespace { QString displayText(const std::string& value){return QString::fromStdString(value);} }
 QVariantList EditorController::presentationGroups() const {

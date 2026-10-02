@@ -43,10 +43,10 @@ void selectedAndPinnedBypassOrdinaryCollisionAndBounds() {
     const std::set<pandoeditor::ObjectRef> selected{{"label","selected"}};
     const auto& placed=engine.layout(flatView(),options,selected);
     const auto refs=engine.placedRefs();
-    require(refs.count({"label","base"}),"base label placed");
-    require(refs.count({"label","selected"}),"selected bypasses collision");
+    require(!refs.count({"label","base"}),"selected label owns the overlapping collision slot");
+    require(refs.count({"label","selected"}),"selected bypasses ordinary collision rejection");
     require(refs.count({"label","pinned"}),"pinned is retained outside ordinary bounds");
-    require(placed.size()==3,"forced labels are all retained");
+    require(placed.size()==2,"selected and pinned forced labels are retained");
 }
 
 void interactionReprojectionDoesNotQueryOrRelayout() {

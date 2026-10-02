@@ -13,8 +13,13 @@ private slots:
         editor.selectCountry("DEU");
         QVERIFY(editor.countryVisuals().value("DEU").toMap().value("flagAvailable").toBool());
         QVERIFY(editor.setPresentationVisibility("basemapLabels",false));
-        QTRY_VERIFY_WITH_TIMEOUT(std::any_of(editor.placedLabels().begin(),editor.placedLabels().end(),
-            [](const QVariant& row){return row.toMap().value("ref").toMap().value("id").toString()=="DEU";}),1000);
+        const auto hasDeu=[&] {
+            const auto rows=editor.placedLabels();
+            return std::any_of(rows.begin(),rows.end(),[](const QVariant& row){
+                return row.toMap().value("ref").toMap().value("id").toString()=="DEU";
+            });
+        };
+        QTRY_VERIFY_WITH_TIMEOUT(hasDeu(),1000);
         const auto placed=editor.placedLabels();
         const auto it=std::find_if(placed.begin(),placed.end(),[](const QVariant& row){
             return row.toMap().value("ref").toMap().value("id").toString()=="DEU";
