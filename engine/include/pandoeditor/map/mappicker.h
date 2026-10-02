@@ -38,6 +38,9 @@ struct MapPickScreenRequest {
     double screenY=0;
 };
 
+double mapPickPixelsPerMapUnit(const MapViewState&,const MapCameraMetrics&,
+                                double screenX,double screenY);
+
 class MapPicker {
 public:
     std::vector<pandoeditor::ObjectRef> pickMap(

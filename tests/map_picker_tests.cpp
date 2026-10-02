@@ -1,5 +1,6 @@
 #include <pandoeditor/map/mappicker.h>
 #include <pandoeditor/objectproperties.h>
+#include <cmath>
 #include <stdexcept>
 #include <string>
 
@@ -48,6 +49,18 @@ void chooserOrderAndTopPaintOrder() {
     require(top&&*top==territorialRef("S"),"paint order independently selects S");
     const auto hidden=picker.pickMap(project.snapshot(),metrics(),{7,7,10},context);
     require(hidden.empty(),"hidden layer excluded");
+}
+
+void screenScaleMatchesProjection() {
+    MapViewState flat;flat.viewportWidth=800;flat.viewportHeight=600;
+    flat.scale=180;flat.translateX=400;flat.translateY=300;
+    const auto ppu=mapPickPixelsPerMapUnit(flat,metrics(),400,300);
+    require(std::abs(ppu-180.0/(180.0/3.14159265358979323846))<1e-9,
+            "flat screen scale");
+    auto globe=flat;globe.mode=ProjectionMode::Globe;globe.scale=240;
+    globe.centerLongitude=2.5;globe.centerLatitude=3;
+    require(mapPickPixelsPerMapUnit(globe,metrics(),400,300)>0,
+            "globe local screen scale");
 }
 
 void flatAndGlobeScreenPicking() {
@@ -117,6 +130,7 @@ void incrementalIndexUpdate() {
 
 int main() {
     chooserOrderAndTopPaintOrder();
+    screenScaleMatchesProjection();
     flatAndGlobeScreenPicking();
     labelAndDistributionFilters();
     externalHydroAndNormalization();

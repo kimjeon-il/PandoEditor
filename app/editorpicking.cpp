@@ -5,13 +5,13 @@
 
 using namespace pandoeditor;
 
-MapPickContext EditorController::mapPickContext(double zoom) const {
+MapPickContext EditorController::mapPickContext(double zoom,double layoutScale) const {
     MapPickContext context;
     context.mobile=mobileMode_;
     context.zoom=zoom;
     context.primary=selection_.primary();
 
-    for(const auto& row:labelLayout(1,0,0,zoom,1e9,1e9))
+    for(const auto& row:labelLayout(layoutScale>0?layoutScale:1,0,0,zoom,1e9,1e9))
         if(const auto ref=existingObjectRef(row.toMap().value("ref").toMap()))
             context.placedLabels.insert(*ref);
 
@@ -41,13 +41,16 @@ MapPickContext EditorController::mapPickContext(double zoom) const {
 std::vector<ObjectRef> EditorController::mapCandidates(
     double x,double y,double pixelsPerUnit,double zoom) const {
     return mapPicker_.pickMap(project_.snapshot(),mapCameraMetrics(),
-        {x,y,pixelsPerUnit},mapPickContext(zoom));
+        {x,y,pixelsPerUnit},mapPickContext(zoom,pixelsPerUnit>0?pixelsPerUnit:1));
 }
 
 std::vector<ObjectRef> EditorController::mapCandidatesScreen(
     double x,double y,double zoom) const {
-    return mapPicker_.pickScreen(project_.snapshot(),sceneBridge_.viewState(),
-        mapCameraMetrics(),{x,y},mapPickContext(zoom));
+    const auto view=sceneBridge_.viewState();
+    const auto metrics=mapCameraMetrics();
+    const double layoutScale=mapPickPixelsPerMapUnit(view,metrics,x,y);
+    return mapPicker_.pickScreen(project_.snapshot(),view,
+        metrics,{x,y},mapPickContext(zoom,layoutScale>0?layoutScale:1));
 }
 QVariantList EditorController::objectChooserCandidates() const {
     QVariantList rows;

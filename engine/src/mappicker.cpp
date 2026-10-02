@@ -135,6 +135,32 @@ std::vector<ObjectRef> MapPicker::pickMap(
     return pickGeographic(snapshot,metrics,geographic,pixels,context);
 }
 
+double mapPickPixelsPerMapUnit(
+    const MapViewState& view,const MapCameraMetrics& metrics,double screenX,double screenY) {
+    if(!validMapCameraMetrics(metrics)||!validMapViewState(view)||
+       !std::isfinite(screenX)||!std::isfinite(screenY))return 0;
+    if(view.mode==ProjectionMode::Flat)
+        return view.scale/(metrics.cosLatitude*DegreesPerRadian);
+
+    const auto geographic=unprojectView(screenX,screenY,view);
+    if(!geographic)return 0;
+    const auto mapPoint=geographicToMap(*geographic,metrics);
+    const auto screenPoint=projectPoint(*geographic,view);
+    double pixelsPerMapUnit=0;
+    const Point probes[]={{geographic->x+.01,geographic->y},
+        {geographic->x,std::clamp(geographic->y+.01,-90.,90.)}};
+    for(const auto& probe:probes) {
+        const auto screenProbe=projectPoint(probe,view);
+        const auto mapProbe=geographicToMap(probe,metrics);
+        const double mapDistance=std::hypot(mapProbe.x-mapPoint.x,mapProbe.y-mapPoint.y);
+        const double screenDistance=std::hypot(screenProbe.x-screenPoint.x,
+                                               screenProbe.y-screenPoint.y);
+        if(screenProbe.finite&&mapDistance>0&&std::isfinite(screenDistance))
+            pixelsPerMapUnit=std::max(pixelsPerMapUnit,screenDistance/mapDistance);
+    }
+    return pixelsPerMapUnit;
+}
+
 std::vector<ObjectRef> MapPicker::pickScreen(
     const ProjectSnapshot& snapshot,const MapViewState& view,const MapCameraMetrics& metrics,
     const MapPickScreenRequest& request,const MapPickContext& context) {
@@ -142,29 +168,11 @@ std::vector<ObjectRef> MapPicker::pickScreen(
        !std::isfinite(request.screenX)||!std::isfinite(request.screenY))return {};
     const auto geographic=unprojectView(request.screenX,request.screenY,view);
     if(!geographic)return {};
-
-    double pixelsPerMapUnit=0;
-    if(view.mode==ProjectionMode::Flat) {
-        pixelsPerMapUnit=view.scale/(metrics.cosLatitude*DegreesPerRadian);
-    } else {
-        const auto mapPoint=geographicToMap(*geographic,metrics);
-        const auto screenPoint=projectPoint(*geographic,view);
-        const Point probes[]={{geographic->x+.01,geographic->y},
-            {geographic->x,std::clamp(geographic->y+.01,-90.,90.)}};
-        for(const auto& probe:probes) {
-            const auto screenProbe=projectPoint(probe,view);
-            const auto mapProbe=geographicToMap(probe,metrics);
-            const double mapDistance=std::hypot(mapProbe.x-mapPoint.x,mapProbe.y-mapPoint.y);
-            const double screenDistance=std::hypot(screenProbe.x-screenPoint.x,
-                                                   screenProbe.y-screenPoint.y);
-            if(screenProbe.finite&&mapDistance>0&&std::isfinite(screenDistance))
-                pixelsPerMapUnit=std::max(pixelsPerMapUnit,screenDistance/mapDistance);
-        }
-    }
+    double pixelsPerMapUnit=mapPickPixelsPerMapUnit(
+        view,metrics,request.screenX,request.screenY);
     if(!(pixelsPerMapUnit>0)||!std::isfinite(pixelsPerMapUnit))pixelsPerMapUnit=1;
     return pickGeographic(snapshot,metrics,*geographic,pixelsPerMapUnit,context);
 }
-
 std::vector<ObjectRef> MapPicker::pickGeographic(
     const ProjectSnapshot& snapshot,const MapCameraMetrics& metrics,
     Point point,double pixelsPerMapUnit,const MapPickContext& context) {
