@@ -56,6 +56,10 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(
             editor.renderQuality().value("viewportResourceIssuedRequests").toULongLong()>=1,1000);
         const auto before=editor.renderQuality().value("viewportResourceIssuedRequests").toULongLong();
+        QTRY_VERIFY_WITH_TIMEOUT(editor.renderQuality().value("labelLayouts").toULongLong()>=1,1000);
+        const auto labelLayouts=editor.renderQuality().value("labelLayouts").toULongLong();
+        const auto labelQueries=editor.renderQuality().value("labelQueries").toULongLong();
+        const auto labelReprojects=editor.renderQuality().value("labelReprojects").toULongLong();
 
         editor.beginMapInteraction();
         QVERIFY(editor.zoomMapCameraAt(1.1,400,300));
@@ -63,12 +67,16 @@ private slots:
         QTest::qWait(ViewportResourceScheduler::SettleDelayMs*3);
         QCOMPARE(editor.renderQuality().value("viewportResourceIssuedRequests").toULongLong(),before);
         QVERIFY(editor.renderQuality().value("viewportResourceDeferredUpdates").toULongLong()>=2);
+        QCOMPARE(editor.renderQuality().value("labelLayouts").toULongLong(),labelLayouts);
+        QCOMPARE(editor.renderQuality().value("labelQueries").toULongLong(),labelQueries);
+        QVERIFY(editor.renderQuality().value("labelReprojects").toULongLong()>labelReprojects);
 
         editor.endMapInteraction();
         QTRY_COMPARE_WITH_TIMEOUT(
             editor.renderQuality().value("viewportResourceIssuedRequests").toULongLong(),
             before+1,1000);
         QCOMPARE(editor.renderQuality().value("viewportResourcePending").toBool(),false);
+        QTRY_VERIFY_WITH_TIMEOUT(editor.renderQuality().value("labelLayouts").toULongLong()>labelLayouts,1000);
     }
     void screenPickingRejectsOutsideGlobeAndPublishesViewport() {
         EditorController editor;
@@ -91,8 +99,8 @@ private slots:
         EditorController editor;
         QVERIFY(editor.publishMapView({{"viewportWidth",800.},{"viewportHeight",600.},{"scale",240.},
             {"translateX",400.},{"translateY",300.},{"centerLongitude",10.},{"centerLatitude",20.}}));
-        const auto labels=editor.labelLayout(10000,-5000,-5000,1,800,600);
-        QVERIFY(!labels.isEmpty());
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.placedLabels().isEmpty(),1000);
+        const auto labels=editor.placedLabels();
         for(const auto& value:labels) {
             const auto row=value.toMap();
             QVERIFY(std::hypot(row.value("x").toDouble()-400,row.value("y").toDouble()-300)<=241);

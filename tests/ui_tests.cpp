@@ -200,8 +200,15 @@ private slots:
         const auto geometry=editor.paths().front().toMap();
         const double centerY=geometry.value("top").toDouble()+geometry.value("height").toDouble()/2;
         auto moveLabel=[&](double screenY) {
-            const auto current=map->property("originY").toDouble()+centerY*map->property("mapScale").toDouble();
-            QVERIFY(map->setProperty("panY",map->property("panY").toDouble()+screenY-current));
+            QVERIFY(editor.fitMapCamera());
+            QTest::qWait(ViewportResourceScheduler::SettleDelayMs*2);
+            const auto state=editor.mapViewState();
+            const auto current=state.value("originY").toDouble()+
+                centerY*state.value("mapScale").toDouble();
+            editor.beginMapInteraction();editor.beginMapCameraPan();
+            QVERIFY(editor.updateMapCameraPan(0,screenY-current));
+            editor.endMapCameraPan();editor.endMapInteraction();
+            QTest::qWait(ViewportResourceScheduler::SettleDelayMs*2);
         };
         moveLabel(map->height()-(width==360?115:50));
         QTRY_VERIFY(visualItem(map,"mapPlacedLabel")!=nullptr);
@@ -229,7 +236,8 @@ private slots:
         editor.selectCountry("DEU");
         auto map=visualItem(window->contentItem(),"mapView");QVERIFY(map);
         auto painter=visualItem(map,"canonicalMapRenderer");QVERIFY(painter);
-        QTRY_VERIFY(!painter->property("selectedPaths").toList().isEmpty());
+        QTRY_VERIFY(painter->property("sceneRevision").toULongLong()>0);
+        QCOMPARE(editor.selectionItems().size(),1);
         QTRY_VERIFY(visualItem(map,"mapPlacedLabel")!=nullptr);
         auto label=visualItem(map,"mapPlacedLabel");
         auto flag=visualItem(label,"mapPlacedFlag");

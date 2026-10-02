@@ -13,7 +13,9 @@ private slots:
         editor.selectCountry("DEU");
         QVERIFY(editor.countryVisuals().value("DEU").toMap().value("flagAvailable").toBool());
         QVERIFY(editor.setPresentationVisibility("basemapLabels",false));
-        const auto placed=editor.labelLayout(1,0,0,2,100000,100000);
+        QTRY_VERIFY_WITH_TIMEOUT(std::any_of(editor.placedLabels().begin(),editor.placedLabels().end(),
+            [](const QVariant& row){return row.toMap().value("ref").toMap().value("id").toString()=="DEU";}),1000);
+        const auto placed=editor.placedLabels();
         const auto it=std::find_if(placed.begin(),placed.end(),[](const QVariant& row){
             return row.toMap().value("ref").toMap().value("id").toString()=="DEU";
         });
@@ -35,12 +37,22 @@ private slots:
             QVERIFY(file.open(QIODevice::WriteOnly));QVERIFY(file.write(projectcodec::encode(project))>0);file.close();
             EditorController editor({mobile,dir.filePath("private.json")});
             QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
+            QVERIFY(editor.resizeMapCamera(600,400));
+            QVERIFY(editor.setProjectionMode("flat"));
             const auto paths=editor.paths();QVERIFY(!paths.isEmpty());
             const auto geometry=paths.front().toMap();
-            const double mapX=geometry.value("left").toDouble()+geometry.value("width").toDouble()/2;
             const double mapY=geometry.value("top").toDouble()+geometry.value("height").toDouble()/2;
             auto placedAt=[&](double screenY) {
-                const auto rows=editor.labelLayout(1,300-mapX,screenY-mapY,2,600,400);
+                QVERIFY(editor.fitMapCamera());
+                QTest::qWait(ViewportResourceScheduler::SettleDelayMs*2);
+                const auto state=editor.mapViewState();
+                const double current=state.value("originY").toDouble()+
+                    mapY*state.value("mapScale").toDouble();
+                editor.beginMapInteraction();editor.beginMapCameraPan();
+                QVERIFY(editor.updateMapCameraPan(0,screenY-current));
+                editor.endMapCameraPan();editor.endMapInteraction();
+                QTest::qWait(ViewportResourceScheduler::SettleDelayMs*2);
+                const auto rows=editor.placedLabels();
                 return std::any_of(rows.begin(),rows.end(),[](const QVariant& row){
                     return row.toMap().value("ref").toMap().value("id").toString()=="A";
                 });
