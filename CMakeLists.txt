@@ -15,6 +15,7 @@ if(ANDROID AND BUILD_TESTING)
 endif()
 
 add_subdirectory(core)
+add_subdirectory(engine)
 
 if(PANDOEDITOR_BUILD_APP)
     find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2)
