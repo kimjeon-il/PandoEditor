@@ -1,5 +1,6 @@
 #pragma once
 #include <pandoeditor/map/geometrypacketcache.h>
+#include <pandoeditor/map/builtinhydrochannel.h>
 #include <pandoeditor/map/mapviewstate.h>
 #include <pandoeditor/map/renderscene.h>
 #include <pandoeditor/map/renderquality.h>
@@ -10,6 +11,7 @@ class MapSceneBuilder {
 public:
     explicit MapSceneBuilder(GeometryPacketCache& cache):cache_(cache){}
     void setWorldBase(std::shared_ptr<const WorldBaseFrame> base) {worldBase_=std::move(base);}
+    void setBuiltinHydro(std::shared_ptr<const BuiltinHydroRenderFrame> frame) {builtinHydro_=std::move(frame);}
     void setQuality(RenderQualityProfile quality) {quality_=quality;}
     std::shared_ptr<const RenderScene> build(
         const pandoeditor::ProjectSnapshot& snapshot,const MapViewState& view,
@@ -31,5 +33,6 @@ private:
         const std::set<pandoeditor::ObjectRef>* changed);
     GeometryPacketCache& cache_;
     std::shared_ptr<const WorldBaseFrame> worldBase_;
+    std::shared_ptr<const BuiltinHydroRenderFrame> builtinHydro_;
     RenderQualityProfile quality_;
 };
