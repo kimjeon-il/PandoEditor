@@ -13,7 +13,6 @@
 
 struct MapExternalHydroPickFeature {
     pandoeditor::ObjectRef ref;
-    std::string displayName;
     std::string category;
     std::array<double,4> bounds{};
     const pandoeditor::HydroPhysicalFeature* feature=nullptr;
@@ -53,6 +52,8 @@ public:
     std::optional<pandoeditor::ObjectRef> topCandidate(
         const pandoeditor::ProjectSnapshot&,
         const std::vector<pandoeditor::ObjectRef>&) const;
+    int candidateRank(const pandoeditor::ProjectSnapshot&,
+                      const pandoeditor::ObjectRef&) const;
     std::vector<pandoeditor::ObjectRef> normalizeSelectionCandidates(
         const pandoeditor::ProjectSnapshot&,
         std::vector<pandoeditor::ObjectRef>) const;

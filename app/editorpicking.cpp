@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
+#include <QCollator>
+#include <QLocale>
 
 using namespace pandoeditor;
 
@@ -22,7 +24,6 @@ MapPickContext EditorController::mapPickContext(double zoom,double layoutScale) 
             if(!record)continue;
             MapExternalHydroPickFeature pick;
             pick.ref={"hydroBuiltin",record->awId.toStdString()};
-            pick.displayName=record->name.toStdString();
             pick.category=record->category.toStdString();
             if(record->bounds.size()==4) {
                 pick.bounds={record->bounds[0],record->bounds[1],
@@ -38,10 +39,31 @@ MapPickContext EditorController::mapPickContext(double zoom,double layoutScale) 
     return context;
 }
 
+std::vector<ObjectRef> EditorController::sortMapCandidates(std::vector<ObjectRef> found) const {
+    QCollator names{QLocale{QLocale::Korean}};
+    std::stable_sort(found.begin(),found.end(),[&](const ObjectRef& a,const ObjectRef& b) {
+        const auto snapshot=project_.snapshot();
+        const int leftRank=mapPicker_.candidateRank(snapshot,a);
+        const int rightRank=mapPicker_.candidateRank(snapshot,b);
+        if(leftRank!=rightRank)return leftRank>rightRank;
+        const auto title=[&](const ObjectRef& ref) {
+            if(ref.domain=="hydroBuiltin") {
+                const auto record=hydroRuntime_.recordById(QString::fromStdString(ref.id));
+                return record?record->name:QString::fromStdString(ref.id);
+            }
+            const auto property=project_.propertyView(ref);
+            return property?QString::fromStdString(property->displayName):
+                QString::fromStdString(ref.id);
+        };
+        return names.compare(title(a),title(b))<0;
+    });
+    return found;
+}
+
 std::vector<ObjectRef> EditorController::mapCandidates(
     double x,double y,double pixelsPerUnit,double zoom) const {
-    return mapPicker_.pickMap(project_.snapshot(),mapCameraMetrics(),
-        {x,y,pixelsPerUnit},mapPickContext(zoom,pixelsPerUnit>0?pixelsPerUnit:1));
+    return sortMapCandidates(mapPicker_.pickMap(project_.snapshot(),mapCameraMetrics(),
+        {x,y,pixelsPerUnit},mapPickContext(zoom,pixelsPerUnit>0?pixelsPerUnit:1)));
 }
 
 std::vector<ObjectRef> EditorController::mapCandidatesScreen(
@@ -49,8 +71,8 @@ std::vector<ObjectRef> EditorController::mapCandidatesScreen(
     const auto view=sceneBridge_.viewState();
     const auto metrics=mapCameraMetrics();
     const double layoutScale=mapPickPixelsPerMapUnit(view,metrics,x,y);
-    return mapPicker_.pickScreen(project_.snapshot(),view,
-        metrics,{x,y},mapPickContext(zoom,layoutScale>0?layoutScale:1));
+    return sortMapCandidates(mapPicker_.pickScreen(project_.snapshot(),view,
+        metrics,{x,y},mapPickContext(zoom,layoutScale>0?layoutScale:1)));
 }
 QVariantList EditorController::objectChooserCandidates() const {
     QVariantList rows;

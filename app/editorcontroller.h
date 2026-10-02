@@ -496,6 +496,7 @@ private:
     bool saveAppearancePreferences() const;
     ScreenColorPicker screenColorPicker_;
     MapPickContext mapPickContext(double zoom,double layoutScale) const;
+    std::vector<pandoeditor::ObjectRef> sortMapCandidates(std::vector<pandoeditor::ObjectRef>) const;
     std::vector<pandoeditor::ObjectRef> mapCandidates(double x,double y,double pixelsPerUnit,double zoom=1) const;
     std::vector<pandoeditor::ObjectRef> mapCandidatesScreen(double x,double y,double zoom=1) const;
     QVariantMap pickObjectFromCandidates(const std::vector<pandoeditor::ObjectRef>& hits) const;

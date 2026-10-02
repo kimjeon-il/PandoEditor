@@ -1,7 +1,6 @@
 #include <pandoeditor/map/mappicker.h>
 #include <pandoeditor/map/projectionengine.h>
 #include <pandoeditor/maprenderorder.h>
-#include <pandoeditor/objectproperties.h>
 #include <pandoeditor/picking.h>
 #include <pandoeditor/presentation.h>
 #include <algorithm>
@@ -49,12 +48,6 @@ bool externalVisible(const ProjectDocument& document,const MapExternalHydroPickF
        document.physicalData.hiddenHydroIds.end())return false;
     const auto group=feature.category=="lake"?"lakes":"rivers";
     return groupVisible(document.presentation.webPresentation,group);
-}
-
-std::string documentName(const std::map<ObjectRef,ObjectPropertyView>& views,
-                         const ObjectRef& ref) {
-    const auto found=views.find(ref);
-    return found==views.end()?ref.id:found->second.displayName;
 }
 
 int layerOrder(const ProjectDocument& document,const ObjectRef& ref) {
@@ -246,10 +239,8 @@ std::vector<ObjectRef> MapPicker::pickGeographic(
     }
 
     std::set<ObjectRef> seenExternal;
-    std::map<ObjectRef,std::string> externalNames;
     for(const auto& external:context.externalHydro) {
         if(!externalVisible(document,external)||!seenExternal.insert(external.ref).second)continue;
-        externalNames[external.ref]=external.displayName.empty()?external.ref.id:external.displayName;
         if(point.x<external.bounds[0]-tolerance/xScale||
            point.x>external.bounds[2]+tolerance/xScale||
            point.y<external.bounds[1]-tolerance||
@@ -275,18 +266,15 @@ std::vector<ObjectRef> MapPicker::pickGeographic(
         if(hit)found.push_back(external.ref);
     }
 
-    const auto views=objectPropertyViews(document);
     std::stable_sort(found.begin(),found.end(),[&](const ObjectRef& a,const ObjectRef& b) {
-        const int leftRank=a.domain=="hydroBuiltin"?mapBuiltinHydroPickOrder():mapPickOrder(document,a);
-        const int rightRank=b.domain=="hydroBuiltin"?mapBuiltinHydroPickOrder():mapPickOrder(document,b);
-        if(leftRank!=rightRank)return leftRank>rightRank;
-        const auto leftName=a.domain=="hydroBuiltin"?
-            (externalNames.count(a)?externalNames.at(a):a.id):documentName(views,a);
-        const auto rightName=b.domain=="hydroBuiltin"?
-            (externalNames.count(b)?externalNames.at(b):b.id):documentName(views,b);
-        return leftName<rightName;
+        return candidateRank(snapshot,a)>candidateRank(snapshot,b);
     });
     return found;
+}
+
+int MapPicker::candidateRank(const ProjectSnapshot& snapshot,const ObjectRef& ref) const {
+    return ref.domain=="hydroBuiltin"?mapBuiltinHydroPickOrder():
+        mapPickOrder(snapshot.document(),ref);
 }
 
 std::optional<ObjectRef> MapPicker::topCandidate(
