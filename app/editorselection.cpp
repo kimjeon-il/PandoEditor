@@ -260,7 +260,7 @@ bool EditorController::focusObject(const QVariantMap& value) {
         if(!record||record->bounds.size()!=4)return false;
         const auto topLeft=projection_.project({record->bounds[0],record->bounds[3]});
         const auto bottomRight=projection_.project({record->bounds[2],record->bounds[1]});
-        emit focusRequested(topLeft.x,topLeft.y,std::max(.001,bottomRight.x-topLeft.x),
+        focusMapCameraRect(topLeft.x,topLeft.y,std::max(.001,bottomRight.x-topLeft.x),
             std::max(.001,bottomRight.y-topLeft.y),mobileMode_?12:10);
         return true;
     }
@@ -268,7 +268,7 @@ bool EditorController::focusObject(const QVariantMap& value) {
         const auto p=path.toMap();
         if(ref->domain=="territorial" ? p["countryId"].toString()!=q(ref->id) :
             (p["domain"].toString()!=q(ref->domain) || p["objectId"].toString()!=q(ref->id))) continue;
-        emit focusRequested(p["left"].toDouble(),p["top"].toDouble(),p["width"].toDouble(),p["height"].toDouble(),mobileMode_?12:10);
+        focusMapCameraRect(p["left"].toDouble(),p["top"].toDouble(),p["width"].toDouble(),p["height"].toDouble(),mobileMode_?12:10);
         return true;
     }
     return false;

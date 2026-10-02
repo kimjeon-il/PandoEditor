@@ -111,15 +111,9 @@ QSGNode* GpuMapItem::updatePaintNode(QSGNode* previous,UpdatePaintNodeData*) {
     }
     auto* node=previous?static_cast<MapSceneNode*>(previous):new MapSceneNode;
     auto view=bridge_->viewState();
-    view.viewportWidth=width();view.viewportHeight=height();
-    view.devicePixelRatio=window()?window()->devicePixelRatio():1;
-    if(view.mode==ProjectionMode::Flat) {
-        // Match the existing QML MapProjection adapter for picking and overlays.
-        view.scale=double(flat_.mapScale)*double(flat_.cosLatitude)*180/3.141592653589793;
-        view.translateX=flat_.originX-flat_.minX*flat_.mapScale;
-        view.translateY=flat_.originY+flat_.maxLatitude*flat_.mapScale;
-        view.centerLongitude=0;view.centerLatitude=0;
-    }
+    // The engine-owned camera snapshot is authoritative. Qt only contributes
+    // the actual framebuffer DPR for backend-specific rasterization.
+    view.devicePixelRatio=window()?window()->devicePixelRatio():view.devicePixelRatio;
     if(!validMapViewState(view)) {
         delete node;
         QMetaObject::invokeMethod(this,[this] {
