@@ -22,3 +22,9 @@ target_include_directories(pandoeditor_map_engine PRIVATE
 target_compile_features(pandoeditor_map_engine PUBLIC cxx_std_17)
 target_link_libraries(pandoeditor_map_engine PUBLIC Pandoeditor::Core)
 set_target_properties(pandoeditor_map_engine PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+if(BUILD_TESTING)
+    add_executable(map_engine_boundary_tests ../tests/map_engine_boundary_tests.cpp)
+    target_link_libraries(map_engine_boundary_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME map_engine_boundary_tests COMMAND map_engine_boundary_tests)
+endif()
