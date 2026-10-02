@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 namespace {
-bool contains(const std::vector<pandoeditor::ObjectRef>& refs,
+bool containsRef(const std::vector<pandoeditor::ObjectRef>& refs,
               const pandoeditor::ObjectRef& object) {
     return std::find(refs.begin(),refs.end(),object)!=refs.end();
 }
@@ -287,12 +287,12 @@ void MapRenderItem::paint(QPainter* painter) {
                 drawWorld(PrimitiveKind::WorldStroke,index,offset,&style);
         };
         for(const auto& candidate:scene_->interaction.candidates)
-            if(!contains(scene_->interaction.selected,candidate)) {
+            if(!containsRef(scene_->interaction.selected,candidate)) {
                 outline(candidate,offset,0x8abddd,1.5f);
                 worldOutline(candidate,0x8abddd,1.5f);
             }
         if(scene_->interaction.hover&&
-           !contains(scene_->interaction.selected,*scene_->interaction.hover)) {
+           !containsRef(scene_->interaction.selected,*scene_->interaction.hover)) {
             outline(*scene_->interaction.hover,offset,0x4083bc,2.f);
             worldOutline(*scene_->interaction.hover,0x4083bc,2.f);
         }
