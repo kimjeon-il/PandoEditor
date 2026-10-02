@@ -271,6 +271,8 @@ void EditorController::reconcileSelection() {
     if(replaced) {
         selectionInstance_=project_.instanceId();selection_.reset();hover_.reset();hoverSource_.clear();hoverRevision_=0;
         searchQuery_.clear();clearParkedDrafts();
+        labelEngine_.clear();labelFlagSources_.clear();labelSourcesDirty_=true;
+        if(!placedLabels_.isEmpty()){placedLabels_.clear();emit labelLayoutChanged();}
     } else {
         selection_.prune([this](const ObjectRef& ref){return ref.domain=="hydroBuiltin"?
             bool(hydroRuntime_.recordById(q(ref.id))):project_.index().objects.count(ref)!=0;});
