@@ -124,6 +124,23 @@ void externalHydroAndNormalization() {
     require(std::find(hits.begin(),hits.end(),external.ref)!=hits.end(),"external hydro hit");
 }
 
+void externalHydroFragmentsRemainPickable() {
+    Project project;project.replace(fixture());
+    HydroPhysicalFeature miss;miss.geometry.kind=1;
+    miss.geometry.lines={{{20000000,3000000},{21000000,3000000}}};
+    HydroPhysicalFeature hit;hit.geometry.kind=1;
+    hit.geometry.lines={{{2000000,3000000},{3000000,3000000}}};
+    MapExternalHydroPickFeature first;
+    first.ref={"hydroBuiltin","fragmented"};first.category="river";
+    first.bounds={0,0,50,10};first.feature=&miss;
+    auto second=first;second.feature=&hit;
+    MapPickContext context;context.externalHydro={first,second};
+    MapPicker picker;
+    const auto hits=picker.pickMap(project.snapshot(),metrics(),{2.5,7,10},context);
+    require(std::find(hits.begin(),hits.end(),ObjectRef{"hydroBuiltin","fragmented"})!=hits.end(),
+            "later hydro fragment can hit");
+}
+
 void incrementalIndexUpdate() {
     Project project;project.replace(fixture());
     MapPicker picker;MapPickContext context;
@@ -138,5 +155,6 @@ int main() {
     flatAndGlobeScreenPicking();
     labelAndDistributionFilters();
     externalHydroAndNormalization();
+    externalHydroFragmentsRemainPickable();
     incrementalIndexUpdate();
 }

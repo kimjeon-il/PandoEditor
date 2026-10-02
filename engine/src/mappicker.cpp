@@ -240,7 +240,7 @@ std::vector<ObjectRef> MapPicker::pickGeographic(
 
     std::set<ObjectRef> seenExternal;
     for(const auto& external:context.externalHydro) {
-        if(!externalVisible(document,external)||!seenExternal.insert(external.ref).second)continue;
+        if(!externalVisible(document,external)||seenExternal.count(external.ref))continue;
         if(point.x<external.bounds[0]-tolerance/xScale||
            point.x>external.bounds[2]+tolerance/xScale||
            point.y<external.bounds[1]-tolerance||
@@ -263,7 +263,7 @@ std::vector<ObjectRef> MapPicker::pickGeographic(
                 const Point b{line[i].longitude*1e-6*xScale,line[i].latitude*1e-6};
                 hit=segmentDistance(cursor,a,b)<=tolerance;
             }
-        if(hit)found.push_back(external.ref);
+        if(hit){found.push_back(external.ref);seenExternal.insert(external.ref);}
     }
 
     std::stable_sort(found.begin(),found.end(),[&](const ObjectRef& a,const ObjectRef& b) {
