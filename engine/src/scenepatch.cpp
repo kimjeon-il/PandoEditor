@@ -8,15 +8,18 @@ ScenePatchStats appendUnchangedScenePackets(RenderScene& target,const RenderScen
     std::vector<std::optional<std::size_t>> strokes(previous.strokes.size());
     std::vector<std::optional<std::size_t>> points(previous.points.size());
     for(std::size_t i=0;i<previous.polygons.size();++i)
-        if(!changed.count(previous.polygons[i].object)) {
+        if(previous.polygons[i].object.domain!="hydroBuiltin"&&
+           !changed.count(previous.polygons[i].object)) {
             polygons[i]=target.polygons.size();target.polygons.push_back(previous.polygons[i]);++stats.retainedPolygons;
         }else ++stats.removedPackets;
     for(std::size_t i=0;i<previous.strokes.size();++i)
-        if(!changed.count(previous.strokes[i].object)) {
+        if(previous.strokes[i].object.domain!="hydroBuiltin"&&
+           !changed.count(previous.strokes[i].object)) {
             strokes[i]=target.strokes.size();target.strokes.push_back(previous.strokes[i]);++stats.retainedStrokes;
         }else ++stats.removedPackets;
     for(std::size_t i=0;i<previous.points.size();++i)
-        if(!changed.count(previous.points[i].object)) {
+        if(previous.points[i].object.domain!="hydroBuiltin"&&
+           !changed.count(previous.points[i].object)) {
             points[i]=target.points.size();target.points.push_back(previous.points[i]);++stats.retainedPoints;
         }else ++stats.removedPackets;
     for(auto draw:previous.drawSequence) {

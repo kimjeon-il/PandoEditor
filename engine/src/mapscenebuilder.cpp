@@ -40,6 +40,22 @@ double orderValue(const MapRenderOrder& order) {
 BlendMode blend(const std::string& name) {
     return name=="multiply"?BlendMode::Multiply:BlendMode::Normal;
 }
+RenderStyle builtinHydroStyle(const ProjectDocument& doc,const std::string& group,
+                              std::uint32_t color,float width) {
+    RenderStyle style;style.color=color;style.width=width;
+    const auto found=doc.presentation.webPresentation.styles.find(group);
+    if(found!=doc.presentation.webPresentation.styles.end()) {
+        style.alpha=static_cast<float>(found->second.opacity.value_or(1));
+        style.blendMode=blend(found->second.blendMode.value_or("normal"));
+    }
+    return style;
+}
+bool builtinHydroHidden(const ProjectDocument& doc,const BuiltinHydroFeaturePacket& feature) {
+    const auto& hidden=doc.physicalData.hiddenHydroIds;
+    return std::find(hidden.begin(),hidden.end(),feature.object.id)!=hidden.end()||
+        std::find(hidden.begin(),hidden.end(),std::to_string(feature.fid))!=hidden.end()||
+        std::find(hidden.begin(),hidden.end(),std::to_string(feature.logicalFid))!=hidden.end();
+}
 RenderStyle styleFor(const ProjectDocument& doc,const ObjectRef& ref,
                      std::uint32_t defaultColor,double defaultOpacity=1) {
     RenderStyle style;style.color=defaultColor;
@@ -262,6 +278,60 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
                 add(ref,layer.color,distributionFillAlpha(entry.share));break;
             }
     }
+    if(builtinHydro_) {
+        const auto& presentation=doc.presentation.webPresentation;
+        for(const auto& feature:builtinHydro_->features) {
+            if(builtinHydroHidden(doc,feature))continue;
+            const bool lake=feature.category=="lake";
+            const auto group=lake?std::string("lakes"):std::string("rivers");
+            if(!groupVisible(presentation,group))continue;
+            const GeometryRef geometry{"builtin-hydro:"+std::to_string(feature.fid),1};
+            const auto key="hydroBuiltin:"+feature.object.id+":"+std::to_string(feature.fid);
+            if(lake) {
+                PolygonDrawPacket fill;
+                fill.key=key+"/fill";fill.object=feature.object;fill.geometry=geometry;
+                fill.geometryRevision=builtinHydro_->revision;
+                fill.style=builtinHydroStyle(doc,group,0x82bfd7,0);
+                fill.drawOrder=mapBuiltinHydroRenderOrder("lake",RenderPrimitiveRole::Fill);
+                fill.order=orderValue(fill.drawOrder);fill.geometryPacket=feature.polygon;
+                const auto fillIndex=scene->polygons.size();
+                scene->polygons.push_back(std::move(fill));
+                scene->drawSequence.push_back({PrimitiveKind::Polygon,fillIndex,
+                    scene->polygons.back().drawOrder,-1});
+
+                StrokeDrawPacket boundary;
+                boundary.key=key+"/boundary";boundary.object=feature.object;boundary.geometry=geometry;
+                boundary.geometryRevision=builtinHydro_->revision;
+                boundary.style=builtinHydroStyle(doc,group,0x5f9cba,.8f);
+                boundary.drawOrder=mapBuiltinHydroRenderOrder("lake",RenderPrimitiveRole::Boundary);
+                boundary.order=orderValue(boundary.drawOrder);boundary.geometryPacket=feature.stroke;
+                const auto boundaryIndex=scene->strokes.size();
+                scene->strokes.push_back(std::move(boundary));
+                const auto groupStyle=presentation.styles.find(group);
+                const bool boundaryVisible=groupStyle==presentation.styles.end()?true:
+                    groupStyle->second.boundaryVisible.value_or(true);
+                if(boundaryVisible)
+                    scene->drawSequence.push_back({PrimitiveKind::Stroke,boundaryIndex,
+                        scene->strokes.back().drawOrder,-1});
+            } else {
+                StrokeDrawPacket river;
+                river.key=key+(feature.borderAligned?"/border":"/river");
+                river.object=feature.object;river.geometry=geometry;
+                river.geometryRevision=builtinHydro_->revision;
+                // Variable widths are absolute endpoint pixels. A zero style
+                // width leaves the base width unchanged; interaction passes add
+                // their requested outline width in the GPU backend.
+                river.style=builtinHydroStyle(doc,group,0x4b9cc6,0);
+                river.drawOrder=mapBuiltinHydroRenderOrder(
+                    "river",RenderPrimitiveRole::Line,feature.borderAligned);
+                river.order=orderValue(river.drawOrder);river.geometryPacket=feature.stroke;
+                const auto riverIndex=scene->strokes.size();
+                scene->strokes.push_back(std::move(river));
+                scene->drawSequence.push_back({PrimitiveKind::Stroke,riverIndex,
+                    scene->strokes.back().drawOrder,-1});
+            }
+        }
+    }
     // A patch appends newly prepared packets after retained packets. Restore the
     // original document submission order for equal M5 draw-order keys.
     std::map<ObjectRef,std::size_t> submissionOrder;
@@ -293,6 +363,10 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
         });
     std::uint64_t geometry=basis,presentation=basis,selection=basis,dataset=basis;
     mix(geometry,static_cast<std::uint64_t>(quality_.backgroundLod));
+    if(builtinHydro_) {
+        mix(geometry,builtinHydro_->revision);
+        mix(dataset,builtinHydro_->revision);
+    }
     for(const auto& command:scene->drawSequence) {
         const auto& order=command.order;
         const auto addPacket=[&](const auto& packet) {

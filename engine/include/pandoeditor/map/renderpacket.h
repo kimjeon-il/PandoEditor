@@ -35,6 +35,10 @@ struct StrokeGeometryPacket {
     std::shared_ptr<const std::vector<float>> startsEnds;
     std::shared_ptr<const std::vector<float>> unitSphereStartsEnds;
     std::size_t segmentCount=0;
+    // Optional absolute endpoint widths in screen pixels, two entries per
+    // segment. The renderer adds RenderStyle::width as an interaction/outline
+    // expansion; ordinary strokes leave this null.
+    std::shared_ptr<const std::vector<float>> endpointWidths;
 };
 
 struct PointGeometryPacket {
