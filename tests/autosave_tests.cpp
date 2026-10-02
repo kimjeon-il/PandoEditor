@@ -175,16 +175,30 @@ private slots:
     }
     void suppliedRecoveryCopy() {
         const auto fixture=qEnvironmentVariable("PANDOEDITOR_RECOVERY_FIXTURE");
-        if(fixture.isEmpty())QSKIP("Optional local recovery copy was not supplied");
         QTemporaryDir dir;QVERIFY(dir.isValid());
         EditorControllerConfig config;config.autosaveEnabled=true;config.bootstrapWorld=true;
         config.worldDataRoot=QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR);
         config.privateProjectPath=dir.filePath("private.json");
         config.autosaveProjectPath=dir.filePath("autosave-project.json");
         config.autosaveViewPath=dir.filePath("autosave-view.json");
-        QVERIFY(QFile::copy(fixture,config.autosaveProjectPath));
-        const auto savedView=QFileInfo(fixture).dir().filePath("autosave-view.json");
-        if(QFile::exists(savedView))QVERIFY(QFile::copy(savedView,config.autosaveViewPath));
+        if(fixture.isEmpty()) {
+            // CI must exercise the legacy producer defect without private user data.
+            pandoeditor::Project world;
+            world.replace(*WorldDatasetLoader::canonical(config.worldDataRoot).document);
+            auto legacy=losslessjson::parse(projectcodec::encode(world));
+            int affected=0;
+            for(auto& unit:legacy.object.at("units").array) {
+                if(unit.object.at("kind").string!="subunit")continue;
+                unit.object.at("baseName")=unit.object.at("name");++affected;
+            }
+            QCOMPARE(affected,47);
+            ProjectAutosave seed(config.autosaveProjectPath,config.autosaveViewPath);
+            seed.scheduleDocument(legacy.encode());QVERIFY(seed.flushNow());
+        } else {
+            QVERIFY(QFile::copy(fixture,config.autosaveProjectPath));
+            const auto savedView=QFileInfo(fixture).dir().filePath("autosave-view.json");
+            if(QFile::exists(savedView))QVERIFY(QFile::copy(savedView,config.autosaveViewPath));
+        }
         const auto fingerprint=[](const QString& path){QFile f(path);if(!f.open(QIODevice::ReadOnly))return QByteArray{};return QCryptographicHash::hash(f.readAll(),QCryptographicHash::Sha256);};
         const auto before=fingerprint(config.autosaveProjectPath);
         const auto viewBefore=fingerprint(config.autosaveViewPath);
