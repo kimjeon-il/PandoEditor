@@ -42,6 +42,7 @@ struct EditorControllerConfig {
 #endif
     QString privateProjectPath;
     bool bootstrapWorld=false;
+    QString worldDataRoot=QStringLiteral(":/world");
     bool autosaveEnabled=false;
     QString autosaveProjectPath,autosaveViewPath;
     bool projectPreviewEnabled=false;
@@ -113,6 +114,7 @@ class EditorController : public QObject {
     Q_PROPERTY(bool appearancePreviewOpen READ appearancePreviewOpen NOTIFY appearanceChanged)
     Q_PROPERTY(QVariantMap renderQuality READ renderQuality NOTIFY renderQualityChanged)
     Q_PROPERTY(QString worldStatus READ worldStatus NOTIFY worldStatusChanged)
+    Q_PROPERTY(bool startupBusy READ startupBusy NOTIFY startupBusyChanged)
     Q_PROPERTY(double mapWidth READ mapWidth NOTIFY geometryChanged)
     Q_PROPERTY(double mapHeight READ mapHeight NOTIFY geometryChanged)
     Q_PROPERTY(QVariantMap colors READ colors NOTIFY visualChanged)
@@ -291,6 +293,7 @@ public:
     Q_INVOKABLE void beginMapInteraction();
     Q_INVOKABLE void endMapInteraction();
     QString worldStatus() const {return worldStatus_;}
+    bool startupBusy() const {return startupBusy_;}
     double mapWidth() const { return projection_.width; }
     double mapHeight() const { return projection_.height; }
     QVariantMap colors() const;
@@ -439,11 +442,13 @@ signals:
     void contentEditChanged();
     void hydroFrameChanged();
     void worldStatusChanged();
+    void startupBusyChanged();
     void terrainChanged();
     void viewStateChanged();
     void appearanceChanged();
     void labelLayoutChanged();
 private:
+    void startAutosaveRecovery(bool useWorldBase);
     void startWorldBootstrap();
     void startCanonicalWorld(std::uint64_t generation);
     void startCanonicalWorldMesh(std::uint64_t generation);
@@ -480,6 +485,10 @@ private:
     QString projectGpkgStage_=QStringLiteral("idle"),projectGpkgError_,projectGpkgFileName_;
     qulonglong projectGpkgToken_=0;
     QTimer presentationSaveTimer_;
+    QFutureWatcher<std::pair<QByteArray,QString>>* presentationRecoveryWrite_=nullptr;
+    std::uint64_t presentationRecoveryGeneration_=0;
+    bool presentationRecoveryPending_=false;
+    void startPresentationRecovery();
     std::string presentationSaveInstance_;
     QString presentationRecoveryPath() const;
     QString availablePresentationRecoveryPath() const;
@@ -657,6 +666,8 @@ private:
     std::vector<WorldBaseRange> worldRanges_;
     std::uint64_t worldGeneration_=0;
     QString worldStatus_=QStringLiteral("disabled");
+    QString worldDataRoot_;
+    bool startupBusy_=false;
     mutable MapPicker mapPicker_;
     std::optional<pandoeditor::ChangeImpact> pendingSceneImpact_;
     std::uint64_t pendingSceneImpactRevision_=0;

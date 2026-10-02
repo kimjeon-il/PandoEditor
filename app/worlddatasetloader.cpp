@@ -9,6 +9,7 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <set>
+#include <algorithm>
 #include <stdexcept>
 
 namespace {
@@ -121,4 +122,35 @@ WorldCanonicalResult WorldDatasetLoader::canonical(const QString& root) {
 std::shared_ptr<const CountryBaseMesh> WorldDatasetLoader::canonicalMesh(const QString& root) {
     WorldDataset source(root);
     return decodeCountryBaseMesh(source.decompress("canonicalMesh",40*1024*1024),false);
+}
+std::shared_ptr<const WorldBaseFrame> WorldDatasetLoader::matchingBaseFrame(
+    const pandoeditor::ProjectDocument& document,const QString& root) {
+    WorldDataset source(root);
+    CanonicalCountryStore packet(source.decompress("countryCanonical",12*1024*1024));
+    const auto canonical=materializeBuiltinWorld(packet);
+    bool matched=false;
+    for(const auto& range:canonical.ranges) {
+        const auto unit=std::find_if(document.units.begin(),document.units.end(),
+            [&](const auto& value){return value.id==range.ownerId;});
+        const pandoeditor::GeometryRef ref{range.geometryId,1};
+        if(unit==document.units.end()||!(unit->geometry==ref))continue;
+        const auto actual=document.geometries.get(ref);
+        const auto expected=canonical.document.geometries.get(ref);
+        if(!actual||!expected||actual->type!=expected->type||
+           !actual->points.empty()||!actual->lines.empty()||
+           actual->polygons.size()!=expected->polygons.size())return {};
+        // Serialized IDs alone are not proof that an imported/restored shape is canonical.
+        for(std::size_t p=0;p<actual->polygons.size();++p) {
+            const auto& a=actual->polygons[p];const auto& b=expected->polygons[p];
+            if(a.size()!=b.size())return {};
+            for(std::size_t r=0;r<a.size();++r)
+                if(a[r].size()!=b[r].size()||!std::equal(a[r].begin(),a[r].end(),b[r].begin(),
+                    [](const auto& x,const auto& y){return x.x==y.x&&x.y==y.y;}))return {};
+        }
+        matched=true;
+    }
+    if(!matched)return {};
+    auto frame=std::make_shared<WorldBaseFrame>();
+    frame->mesh=canonicalMesh(root);frame->ranges=renderRanges(canonical);
+    return frame;
 }

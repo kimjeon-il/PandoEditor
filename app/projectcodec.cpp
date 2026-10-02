@@ -1,4 +1,5 @@
 #include "projectcodec.h"
+#include "builtinworldpolicy.h"
 #include <pandoeditor/objectproperties.h>
 #include "losslessjson.h"
 #include "presentationmigration.h"
@@ -454,6 +455,22 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
         d.documentId=str(field(root,"documentId"));
         // Existing archives stay archives; their payloads never overwrite canonical fields.
         if (root.object.count("extensions")) readExtensions(field(root,"extensions"),d);
+        std::map<std::string,std::string> builtinSubunitGeometries;
+        if(schema==7)for(const auto& extension:d.extensions) {
+            if(extension.id!="pandoeditor.builtin-territory-policy"||
+               extension.sourceFormat!="world-map"||extension.sourceSchema!=2||
+               extension.status!="migrationArchive")continue;
+            try {
+                const auto policy=losslessjson::parse(QByteArray::fromStdString(extension.payload));
+                if(str(field(policy,"revision"))!="builtin-subunits-2")continue;
+                std::map<std::string,std::string> recognized;
+                for(const auto& row:array(field(policy,"subunits"))) {
+                    const auto source=str(field(row,"sourceCountryId")),id=str(field(row,"id"));
+                    if(id==builtinSubunitId(source))recognized.emplace(id,"world-country-"+source);
+                }
+                builtinSubunitGeometries.insert(recognized.begin(),recognized.end());
+            }catch(const std::exception&) { /* Unrecognized archives cannot authorize a repair. */ }
+        }
         for (const auto& v:array(field(root,"geometries"))) {
             auto path="/geometries/"+std::to_string(d.geometries.versions().size());
             GeometryRef r{str(field(v,"id")),integer(field(v,"version"))};
@@ -473,6 +490,16 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
                 u.libraryOrigin=libraryOrigin(field(v,"libraryOrigin"),d,path+"/libraryOrigin");
             if(schema>=4) {
                 u.baseName=str(field(v,"baseName"));u.nameExplicit=boolean(field(v,"nameExplicit"));
+                // The builtin-subunits-2 producer retained the former country's baseName.
+                // Repair only its identified subunits and archive the redundant field losslessly.
+                const auto builtin=builtinSubunitGeometries.find(u.id);
+                if(u.kind==UnitKind::Subunit&&u.nameExplicit&&!u.baseName.empty()&&
+                   builtin!=builtinSubunitGeometries.end()&&u.geometry.id==builtin->second) {
+                    preserve(d,int(schema),path+"/baseName",field(v,"baseName"));
+                    auto& archived=d.extensions.back();archived.status="migrationArchive";
+                    archived.dependencyKnowledge="known";archived.dependencies={territorialRef(u.id)};
+                    archived.forbiddenEffects.clear();u.baseName.clear();
+                }
                 require(u.kind==UnitKind::Country || (u.baseName.empty() && u.nameExplicit),"INVALID_JSON: country-only name state");
                 require(u.nameExplicit || u.name.empty(),"INVALID_JSON: automatic country name must be empty");
                 if(schema>=7)unknown(d,7,v,path,{"id","kind","name","notes","geometryRef","locked","coverageMode","validity","baseName","nameExplicit","libraryOrigin"});
@@ -602,7 +629,10 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
 }
 
 QByteArray encode(const pandoeditor::Project& project) {
-    const auto& d=project.document(); validateDocument(d);
+    return encode(project.snapshot());
+}
+QByteArray encode(const pandoeditor::ProjectSnapshot& snapshot) {
+    const auto& d=snapshot.document(); validateDocument(d);
     V units=V::arr(),relations=V::arr(),geometries=V::arr(),layers=V::arr(),membership=V::arr(),styles=V::obj(),extensions=V::arr();
     for (const auto& u:d.units) {
         auto value=object({{"id",V::str(u.id)},{"kind",V::str(u.kind==UnitKind::Country?"country":u.kind==UnitKind::Subunit?"subunit":"region")},{"name",V::str(u.name)},{"baseName",V::str(u.baseName)},{"nameExplicit",V::boolean(u.kind==UnitKind::Country?u.nameExplicit&&!u.name.empty():u.nameExplicit)},{"notes",V::str(u.kind==UnitKind::Country?trimWebText(u.notes):u.notes)},{"geometryRef",geometryRefValue(u.geometry)},{"locked",V::boolean(u.locked)},{"coverageMode",V::str(u.coverageMode)},{"validity",validityValue(u.validity)}});

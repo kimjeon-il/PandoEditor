@@ -1,6 +1,7 @@
 #include "editorcontroller.h"
 #include <pandoeditor/presentationcommands.h>
 #include "losslessjson.h"
+#include <QtConcurrent>
 #include "hydrodataprovider.h"
 #include <pandoeditor/map/projectionengine.h>
 #include <QFile>
@@ -298,6 +299,7 @@ bool EditorController::setLabelMapPosition(const QVariantMap& value,double mapX,
     if(!std::isfinite(mapX)||!std::isfinite(mapY))return false;const auto position=projection_.unproject(mapX,mapY);return setLabelPinned(value,true,position.x,position.y,true);
 }
 void EditorController::publishPresentation() {
+    ++presentationRecoveryGeneration_;
     closeObjectChooser();
     if(hover_&&!objectVisible(*hover_)) {
         hover_.reset();hoverSource_.clear();++hoverRevision_;emit hoverChanged();
@@ -318,22 +320,59 @@ QString EditorController::availablePresentationRecoveryPath() const {
     return files.empty()?QString():files.front().absoluteFilePath();
 }
 bool EditorController::presentationRecoveryAvailable() const { return !availablePresentationRecoveryPath().isEmpty(); }
+namespace {
+QByteArray presentationRecoveryBytes(const pandoeditor::ProjectSnapshot& snapshot,
+                                    const QString& sourcePath,std::uint64_t presentationRevision) {
+    using V=losslessjson::Value;V envelope=V::obj();
+    envelope.object["format"]=V::str("pandoeditor-presentation-recovery");
+    envelope.object["sourcePath"]=V::str(sourcePath.toStdString());
+    envelope.object["documentId"]=V::str(snapshot.document().documentId);
+    envelope.object["contentRevision"]=V::num(snapshot.revision());
+    envelope.object["presentationRevision"]=V::num(presentationRevision);
+    auto bytes=envelope.encode();bytes.chop(1);
+    // The codec already produced valid JSON; do not parse a whole second DOM to wrap it.
+    return bytes+",\"project\":"+projectcodec::encode(snapshot)+"}";
+}
+}
+void EditorController::startPresentationRecovery() {
+    if(startupBusy_||presentationSaveInstance_!=project_.instanceId())return;
+    if(presentationRecoveryWrite_){presentationRecoveryPending_=true;return;}
+    presentationRecoveryPending_=false;
+    const auto snapshot=project_.snapshot();
+    const auto revision=project_.presentationRevision(),generation=presentationRecoveryGeneration_;
+    const auto path=presentationRecoveryPath(),sourcePath=filePath_;
+    using Result=std::pair<QByteArray,QString>;
+    auto* watcher=new QFutureWatcher<Result>(this);presentationRecoveryWrite_=watcher;
+    connect(watcher,&QFutureWatcher<Result>::finished,this,[this,watcher,snapshot,revision,generation,path] {
+        presentationRecoveryWrite_=nullptr;
+        const auto result=watcher->result();watcher->deleteLater();
+        if(generation==presentationRecoveryGeneration_&&snapshot.matches(project_)&&
+           revision==project_.presentationRevision()&&presentationSaveInstance_==project_.instanceId()) {
+            if(!result.second.isEmpty())emit errorOccurred(result.second);
+            else try {
+                storage_.write(QUrl::fromLocalFile(path),result.first);
+                emit presentationRecoveryChanged();
+            }catch(const std::exception& error) {emit errorOccurred(QString::fromUtf8(error.what()));}
+        }
+        if(presentationRecoveryPending_&&!presentationSaveTimer_.isActive())startPresentationRecovery();
+    });
+    watcher->setFuture(QtConcurrent::run([snapshot,sourcePath,revision]() -> Result {
+        try {return {presentationRecoveryBytes(snapshot,sourcePath,revision),{}};}
+        catch(const std::exception& error){return {{},QString::fromUtf8(error.what())};}
+        catch(...){return {{},QStringLiteral("표시 설정 복구본을 준비하지 못했습니다.")};}
+    }));
+}
 bool EditorController::flushPresentationRecovery() {
-    presentationSaveTimer_.stop();
-    if(presentationSaveInstance_!=project_.instanceId())return false;
+    presentationSaveTimer_.stop();++presentationRecoveryGeneration_;presentationRecoveryPending_=false;
+    if(startupBusy_||presentationSaveInstance_!=project_.instanceId())return false;
     try {
-        using V=losslessjson::Value;V envelope=V::obj();
-        envelope.object["format"]=V::str("pandoeditor-presentation-recovery");
-        envelope.object["sourcePath"]=V::str(filePath_.toStdString());
-        envelope.object["documentId"]=V::str(project_.document().documentId);
-        envelope.object["contentRevision"]=V::num(project_.revision());
-        envelope.object["presentationRevision"]=V::num(project_.presentationRevision());
-        envelope.object["project"]=losslessjson::parse(projectcodec::encode(project_));
-        storage_.write(QUrl::fromLocalFile(presentationRecoveryPath()),envelope.encode());
+        storage_.write(QUrl::fromLocalFile(presentationRecoveryPath()),
+            presentationRecoveryBytes(project_.snapshot(),filePath_,project_.presentationRevision()));
         emit presentationRecoveryChanged();return true;
     }catch(const std::exception& e){emit errorOccurred(QStringLiteral("표시 설정 복구본을 저장하지 못했습니다: ")+QString::fromUtf8(e.what()));return false;}
 }
 bool EditorController::discardPresentationRecovery() {
+    ++presentationRecoveryGeneration_;presentationRecoveryPending_=false;
     presentationSaveTimer_.stop();presentationSaveInstance_.clear();
     const auto current=presentationRecoveryPath();
     const auto target=QFileInfo::exists(current)?current:availablePresentationRecoveryPath();
@@ -341,12 +380,14 @@ bool EditorController::discardPresentationRecovery() {
     if(ok)emit presentationRecoveryChanged();else emit errorOccurred(QStringLiteral("복구본을 삭제하지 못했습니다."));return ok;
 }
 bool EditorController::discardOwnPresentationRecovery() {
+    ++presentationRecoveryGeneration_;presentationRecoveryPending_=false;
     const auto path=presentationRecoveryPath();
     if(!QFileInfo::exists(path))return true;
     if(!QFile::remove(path)){emit errorOccurred(QStringLiteral("복구본을 삭제하지 못했습니다."));return false;}
     emit presentationRecoveryChanged();return true;
 }
 bool EditorController::restorePresentationRecovery() {
+    if(startupBusy_)return false;
     try {
         const auto recovery=availablePresentationRecoveryPath();
         losslessjson::require(!recovery.isEmpty(),"RECOVERY_NOT_FOUND");

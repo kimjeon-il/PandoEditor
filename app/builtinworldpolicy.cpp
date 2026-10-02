@@ -165,6 +165,7 @@ BuiltinWorldMaterialization materializeBuiltinWorld(const CanonicalCountryStore&
             owner=builtinSubunitId(source);
             item.id=owner;
             item.kind=UnitKind::Subunit;
+            item.baseName.clear();item.nameExplicit=true;
             item.notes=policy->note;
             item.coverageMode="explicit";
             document.relations.push_back({"builtin-subunit:"+source,territorialRef(owner),

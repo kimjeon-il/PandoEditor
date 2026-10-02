@@ -23,4 +23,6 @@ public:
     static WorldPreviewResult preview(const QString& root);
     static WorldCanonicalResult canonical(const QString& root);
     static std::shared_ptr<const CountryBaseMesh> canonicalMesh(const QString& root);
+    static std::shared_ptr<const WorldBaseFrame> matchingBaseFrame(
+        const pandoeditor::ProjectDocument& document,const QString& root);
 };

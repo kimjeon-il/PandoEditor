@@ -93,7 +93,7 @@ ApplicationWindow {
     Component.onCompleted: {
         if (editor.mobileMode)
             Qt.callLater(function() { editor.restorePrivateProject() })
-        Qt.callLater(function() { if(editor.presentationRecoveryAvailable) presentationRecoveryDialog.open() })
+        Qt.callLater(function() { if(!editor.startupBusy && editor.presentationRecoveryAvailable) presentationRecoveryDialog.open() })
     }
     function finishAction() {
         let action=pendingAction
@@ -102,12 +102,17 @@ ApplicationWindow {
         if (action === "close") { allowClose=true; window.close() }
     }
     function requestAction(action) {
+        if (editor.startupBusy) {
+            if (action === "close") { allowClose=true; window.close() }
+            return
+        }
         if (action !== "open" && action !== "import" && !editor.contentEditState.active && !editor.geometryEditState.active && !editor.commitPendingEdits()) return
         pendingAction=action
         if (editor.dirty) unsaved.open()
         else finishAction()
     }
     function requestSave(asNew) {
+        if (editor.startupBusy) return
         if (!editor.contentEditState.active && !editor.geometryEditState.active && !editor.commitPendingEdits()) return
         if (editor.mobileMode) {
             if (editor.savePrivate()) finishAction()
@@ -210,6 +215,7 @@ ApplicationWindow {
     }
     Desktop.DesktopWorkspace {
         id: workspace
+        enabled: !editor.startupBusy
         anchors.left: parent.left
         anchors.top: desktopTitleBar.bottom
         anchors.right: parent.right
@@ -226,8 +232,16 @@ ApplicationWindow {
         onSaveRequested: window.requestSave(false)
         onSaveAsRequested: editor.mobileMode ? window.requestExport() : window.requestSave(true)
     }
-    Shortcut { sequences: [StandardKey.Undo]; enabled: editor.canUndo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.undo() }
-    Shortcut { sequences: [StandardKey.Redo]; enabled: editor.canRedo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.redo() }
+    Column {
+        objectName: "startupRecoveryProgress"
+        anchors.centerIn: parent
+        visible: editor.startupBusy
+        spacing: 12
+        BusyIndicator { anchors.horizontalCenter: parent.horizontalCenter; running: parent.visible }
+        Label { text: "저장된 지도를 불러오는 중…" }
+    }
+    Shortcut { sequences: [StandardKey.Undo]; enabled: !editor.startupBusy && editor.canUndo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.undo() }
+    Shortcut { sequences: [StandardKey.Redo]; enabled: !editor.startupBusy && editor.canRedo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.redo() }
     Shortcut { sequence: StandardKey.Save; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestSave(false) }
     Shortcut { sequence: StandardKey.Open; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestAction(editor.mobileMode ? "import" : "open") }
     Popup {
@@ -472,6 +486,10 @@ ApplicationWindow {
     }
     Connections {
         target: editor
+        function onStartupBusyChanged() {
+            if (!editor.startupBusy && editor.presentationRecoveryAvailable)
+                presentationRecoveryDialog.open()
+        }
         function onProjectGpkgChanged() {
             if (editor.projectGpkgState.stage === "error") {
                 errorDialog.message=editor.projectGpkgState.error

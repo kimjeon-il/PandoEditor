@@ -263,6 +263,8 @@ if(BUILD_TESTING)
     add_test(NAME builtin_world_policy_tests COMMAND builtin_world_policy_tests -o -,txt)
     add_executable(autosave_tests ../tests/autosave_tests.cpp)
     target_link_libraries(autosave_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(autosave_tests PRIVATE
+        PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world")
     qt_add_resources(autosave_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME autosave_tests COMMAND autosave_tests -o -,txt)

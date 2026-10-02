@@ -8,4 +8,5 @@ namespace projectcodec {
 std::vector<std::string> promoteContent(pandoeditor::ProjectDocument& document);
 pandoeditor::ProjectDocument decode(const QByteArray& data);
 QByteArray encode(const pandoeditor::Project& project);
+QByteArray encode(const pandoeditor::ProjectSnapshot& snapshot);
 }

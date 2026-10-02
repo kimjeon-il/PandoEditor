@@ -107,6 +107,7 @@ void EditorController::discardPendingEdits()
 }
 bool EditorController::executeCommand(const std::string& commandId,pandoeditor::CommandAction action)
 {
+    if(startupBusy_||worldStatus_=="recovery-failed")return false;
     pandoeditor::CommandArguments args;args.action=std::move(action);
     const auto status=prepareCommand(commandId,std::move(args));
     if(status==pandoeditor::CommandStatus::NoOp){clearParkedDrafts();return true;}

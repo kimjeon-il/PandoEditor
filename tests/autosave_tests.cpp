@@ -1,9 +1,17 @@
 #include "autosavecoordinator.h"
 #include "editorcontroller.h"
+#include "worlddatasetloader.h"
+#include "mapscenebridge.h"
+#include "losslessjson.h"
 #include <QCoreApplication>
 #include <QFile>
+#include <QFileInfo>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QElapsedTimer>
+#include <QCryptographicHash>
+#include <QSignalSpy>
+#include <algorithm>
 
 class AutosaveTests final : public QObject {
     Q_OBJECT
@@ -59,6 +67,7 @@ private slots:
     void controllerRestoresCommittedDocumentWithoutTouchingSource() {
         QTemporaryDir dir;QVERIFY(dir.isValid());
         EditorControllerConfig config;config.autosaveEnabled=true;
+        config.privateProjectPath=dir.filePath("private.json");
         config.autosaveProjectPath=dir.filePath("autosave-project.json");
         config.autosaveViewPath=dir.filePath("autosave-view.json");
         const auto sourcePath=dir.filePath("opened-project.json");
@@ -76,7 +85,173 @@ private slots:
         }
         QVERIFY(source.open(QIODevice::ReadOnly));QCOMPARE(source.readAll(),original);source.close();
         EditorController restored(config);
+        QVERIFY(restored.startupBusy());
+        QTRY_VERIFY_WITH_TIMEOUT(!restored.startupBusy(),10000);
         QCOMPARE(restored.documentBytes(),expected);
+    }
+    void immutableSnapshotsCoalesceAndFlushInOrder() {
+        QTemporaryDir dir;QVERIFY(dir.isValid());
+        const auto path=dir.filePath("autosave-project.json");
+        QFile sample(":/assets/sample.pando.json");QVERIFY(sample.open(QIODevice::ReadOnly));
+        pandoeditor::Project project;project.replace(projectcodec::decode(sample.readAll()));
+        const auto first=project.snapshot();
+        QVERIFY(project.setColor("DEU",0x123456));
+        const auto second=project.snapshot();
+        QVERIFY(project.setColor("DEU",0xabcdef));
+        const auto latest=projectcodec::encode(project);
+        {
+            ProjectAutosave save(path,dir.filePath("view.json"));
+            save.scheduleDocument(first);
+            QTest::qWait(ProjectAutosave::SaveDelayMs+10);
+            save.scheduleDocument(second);
+            save.scheduleDocument(project.snapshot());
+            QVERIFY(save.flushNow());
+            QCOMPARE(save.restoreDocument(),latest);
+            // Destruction also drains a queued latest revision without losing edits.
+            save.scheduleDocument(first);
+        }
+        ProjectAutosave check(path,dir.filePath("view.json"));
+        QCOMPARE(check.restoreDocument(),projectcodec::encode(first));
+    }
+    void fullWorldRecoveryKeepsEventLoopResponsiveAndReusesMesh() {
+        QTemporaryDir dir;QVERIFY(dir.isValid());
+        const auto root=QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR);
+        pandoeditor::Project world;world.replace(*WorldDatasetLoader::canonical(root).document);
+        QVERIFY(world.setColor("DEU",0x123456));
+        const auto expected=projectcodec::encode(world);
+        EditorControllerConfig config;config.autosaveEnabled=true;config.bootstrapWorld=true;
+        config.privateProjectPath=dir.filePath("private.json");
+        config.worldDataRoot=root;
+        config.autosaveProjectPath=dir.filePath("autosave-project.json");
+        config.autosaveViewPath=dir.filePath("autosave-view.json");
+        MapViewState view;view.mode=ProjectionMode::Globe;view.scale=400;
+        view.viewportWidth=800;view.viewportHeight=600;view.rotationLongitude=31;
+        {
+            ProjectAutosave save(config.autosaveProjectPath,config.autosaveViewPath);
+            save.scheduleDocument(expected);save.scheduleView(view);QVERIFY(save.flushNow());
+        }
+        const auto read=[](const QString& path){QFile file(path);if(!file.open(QIODevice::ReadOnly))return QByteArray{};return file.readAll();};
+        const auto original=read(config.autosaveProjectPath),originalView=read(config.autosaveViewPath);
+        int beats=0;qint64 maxGap=0,lastBeat=0;QElapsedTimer clock;clock.start();
+        QTimer heartbeat;heartbeat.setInterval(5);
+        connect(&heartbeat,&QTimer::timeout,this,[&]{
+            const auto now=clock.elapsed();maxGap=std::max(maxGap,now-lastBeat);lastBeat=now;++beats;
+        });heartbeat.start();
+        EditorController restored(config);
+        const auto constructorMs=clock.elapsed();
+        QSignalSpy errors(&restored,&EditorController::errorOccurred);
+        QVERIFY(restored.startupBusy());
+        QVERIFY(!restored.saveFile(QUrl::fromLocalFile(dir.filePath("premature.json"))));
+        QTRY_VERIFY_WITH_TIMEOUT(beats>0,1000);
+        QTRY_VERIFY_WITH_TIMEOUT(!restored.startupBusy(),60000);
+        const auto readyMs=clock.elapsed();heartbeat.stop();
+        QVERIFY2(restored.worldStatus()==QStringLiteral("canonical"),
+            errors.isEmpty()?qPrintable(restored.worldStatus()):qPrintable(errors.first().first().toString()));
+        auto* bridge=qobject_cast<MapSceneBridge*>(restored.mapSceneBridge());QVERIFY(bridge);
+        const auto scene=bridge->sceneSnapshot();QVERIFY(scene);QVERIFY(scene->worldBase);
+        QCOMPARE(scene->worldCountries.size(),std::size_t(258));
+        QVERIFY(scene->polygons.empty());
+        QCOMPARE(restored.documentBytes(),expected);
+        QTest::qWait(ProjectAutosave::SaveDelayMs+100);
+        QCOMPARE(read(config.autosaveProjectPath),original);
+        QCOMPARE(read(config.autosaveViewPath),originalView);
+        qInfo()<<"Recovery constructor ms:"<<constructorMs<<"ready ms:"<<readyMs
+               <<"UI heartbeats:"<<beats<<"max gap ms:"<<maxGap;
+        beats=0;maxGap=0;lastBeat=0;clock.restart();heartbeat.start();
+        QVERIFY(restored.setPresentationOpacity("countries",.6));
+        QTRY_VERIFY_WITH_TIMEOUT(restored.presentationRecoveryAvailable(),60000);
+        heartbeat.stop();
+        qInfo()<<"Presentation recovery ms:"<<clock.elapsed()<<"UI heartbeats:"<<beats
+               <<"max gap ms:"<<maxGap;
+        QVERIFY(beats>0);
+        QVERIFY(restored.discardPresentationRecovery());
+        QTest::qWait(100);
+        QVERIFY(!restored.presentationRecoveryAvailable());
+        QVERIFY(restored.setPresentationOpacity("countries",.7));
+        QTest::qWait(550);
+        QVERIFY(restored.discardPresentationRecovery());
+        QTest::qWait(2000);
+        QVERIFY(!restored.presentationRecoveryAvailable());
+    }
+    void suppliedRecoveryCopy() {
+        const auto fixture=qEnvironmentVariable("PANDOEDITOR_RECOVERY_FIXTURE");
+        if(fixture.isEmpty())QSKIP("Optional local recovery copy was not supplied");
+        QTemporaryDir dir;QVERIFY(dir.isValid());
+        EditorControllerConfig config;config.autosaveEnabled=true;config.bootstrapWorld=true;
+        config.worldDataRoot=QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR);
+        config.privateProjectPath=dir.filePath("private.json");
+        config.autosaveProjectPath=dir.filePath("autosave-project.json");
+        config.autosaveViewPath=dir.filePath("autosave-view.json");
+        QVERIFY(QFile::copy(fixture,config.autosaveProjectPath));
+        const auto savedView=QFileInfo(fixture).dir().filePath("autosave-view.json");
+        if(QFile::exists(savedView))QVERIFY(QFile::copy(savedView,config.autosaveViewPath));
+        const auto fingerprint=[](const QString& path){QFile f(path);if(!f.open(QIODevice::ReadOnly))return QByteArray{};return QCryptographicHash::hash(f.readAll(),QCryptographicHash::Sha256);};
+        const auto before=fingerprint(config.autosaveProjectPath);
+        const auto viewBefore=fingerprint(config.autosaveViewPath);
+        int beats=0;qint64 maxGap=0,lastBeat=0;QElapsedTimer clock;clock.start();
+        QTimer pulse;pulse.setInterval(5);
+        connect(&pulse,&QTimer::timeout,this,[&]{const auto now=clock.elapsed();maxGap=std::max(maxGap,now-lastBeat);lastBeat=now;++beats;});pulse.start();
+        EditorController restored(config);const auto constructorMs=clock.elapsed();
+        QSignalSpy errors(&restored,&EditorController::errorOccurred);
+        QVERIFY(restored.startupBusy());
+        QTRY_VERIFY_WITH_TIMEOUT(!restored.startupBusy(),60000);
+        pulse.stop();
+        QVERIFY2(restored.worldStatus()==QStringLiteral("canonical"),
+            errors.isEmpty()?qPrintable(restored.worldStatus()):qPrintable(errors.first().first().toString()));
+        QVERIFY(beats>0);
+        auto* bridge=qobject_cast<MapSceneBridge*>(restored.mapSceneBridge());QVERIFY(bridge);
+        QVERIFY(bridge->sceneSnapshot()->worldBase);
+        QCOMPARE(fingerprint(config.autosaveProjectPath),before);
+        QCOMPARE(fingerprint(config.autosaveViewPath),viewBefore);
+        qInfo()<<"Supplied copy constructor ms:"<<constructorMs<<"ready ms:"<<clock.elapsed()
+               <<"UI heartbeats:"<<beats<<"max gap ms:"<<maxGap;
+        const auto recovered=restored.documentBytes();
+        pandoeditor::Project roundtrip;roundtrip.replace(projectcodec::decode(recovered));
+        QCOMPARE(projectcodec::encode(roundtrip),recovered);
+    }
+    void canonicalIdsDoNotReplaceEditedCoordinates() {
+        const auto root=QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR);
+        auto document=*WorldDatasetLoader::canonical(root).document;
+        const auto ref=document.units.front().geometry;
+        auto changed=*document.geometries.get(ref);
+        changed.polygons.front().front().front().x+=0.000001;
+        changed.polygons.front().front().back()=changed.polygons.front().front().front();
+        pandoeditor::GeometryStore replacement;
+        for(const auto& [key,geometry]:document.geometries.versions())
+            replacement.insert(key,key==ref?changed:*geometry);
+        document.geometries=std::move(replacement);
+        QVERIFY(!WorldDatasetLoader::matchingBaseFrame(document,root));
+    }
+    void ordinaryInvalidSubunitNamesRemainRejected() {
+        QFile sample(":/assets/sample.pando.json");QVERIFY(sample.open(QIODevice::ReadOnly));
+        pandoeditor::Project project;project.replace(projectcodec::decode(sample.readAll()));
+        auto encoded=losslessjson::parse(projectcodec::encode(project));
+        auto& unit=encoded.object.at("units").array.front();
+        unit.object.at("kind")=losslessjson::Value::str("subunit");
+        unit.object.at("baseName")=losslessjson::Value::str("invalid country-only field");
+        try {
+            projectcodec::decode(encoded.encode());
+            QFAIL("Unrelated invalid subunit name state must be rejected");
+        } catch(const std::invalid_argument& error) {
+            QCOMPARE(QByteArray(error.what()),QByteArray("INVALID_JSON: country-only name state"));
+        }
+    }
+    void failedRecoveryDoesNotOverwriteAutosave() {
+        QTemporaryDir dir;QVERIFY(dir.isValid());
+        EditorControllerConfig config;config.autosaveEnabled=true;
+        config.privateProjectPath=dir.filePath("private.json");
+        config.autosaveProjectPath=dir.filePath("autosave-project.json");
+        config.autosaveViewPath=dir.filePath("autosave-view.json");
+        QFile corrupt(config.autosaveProjectPath);QVERIFY(corrupt.open(QIODevice::WriteOnly));
+        corrupt.write("broken recovery");corrupt.close();
+        {
+            EditorController restored(config);
+            QTRY_VERIFY_WITH_TIMEOUT(!restored.startupBusy(),10000);
+            QCOMPARE(restored.worldStatus(),QStringLiteral("recovery-failed"));
+            QVERIFY(!restored.saveFile(QUrl::fromLocalFile(config.autosaveProjectPath)));
+        }
+        QVERIFY(corrupt.open(QIODevice::ReadOnly));QCOMPARE(corrupt.readAll(),QByteArray("broken recovery"));
+        QVERIFY(!QFile::exists(config.autosaveViewPath));
     }
 };
 

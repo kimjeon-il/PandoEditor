@@ -54,18 +54,12 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     loadAppearancePreferences();
     connect(QGuiApplication::styleHints(),&QStyleHints::colorSchemeChanged,this,[this]{emit appearanceChanged();});
     packetCache_.setBudget(quality_.profile().renderPacketCacheBudgetBytes);
-    bool restoredAutosave=false;
+    worldDataRoot_=std::move(config.worldDataRoot);
     if(config.autosaveEnabled) {
         autosave_=std::make_unique<ProjectAutosave>(std::move(config.autosaveProjectPath),
                                                      std::move(config.autosaveViewPath),this);
-        const auto restored=autosave_->restoreDocument();
-        if(!restored.isEmpty())try {
-            project_.replace(projectcodec::decode(restored));
-            projection_.rebuild(project_.document());restoredAutosave=true;
-        } catch(const std::exception& error) {
-            emit errorOccurred(QStringLiteral("자동저장 프로젝트를 복원하지 못했습니다: %1")
-                               .arg(QString::fromUtf8(error.what())));
-        }
+        startupBusy_=QFile::exists(autosave_->projectPath());
+        if(startupBusy_)worldStatus_=QStringLiteral("restoring");
     }
     if(config.projectPreviewEnabled) {
         projectPreview_=std::make_unique<ProjectPreviewService>(std::move(config.projectPreviewCachePath),this);
@@ -79,10 +73,7 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         emit presentationChanged();emit visualChanged();
     });
     initializePhysicalData();
-    std::optional<MapViewState> restoredView;
-    if(restoredAutosave) {
-        restoredView=autosave_->restoreView();
-    } else if(config.bootstrapWorld) {
+    if(startupBusy_||config.bootstrapWorld) {
         project_.replace(pandoeditor::ProjectDocument(
             std::vector<pandoeditor::Country>{},std::vector<pandoeditor::Layer>{{"countries","국가"}}));
         projection_.setWorldExtent();
@@ -93,7 +84,6 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         projection_.rebuild(project_.document());
     }
     camera_.setMetrics(mapCameraMetrics());
-    if(restoredView)camera_.adoptView(*restoredView);
     sceneBridge_.publishView(camera_.view());
     camera_.acceptPublishedView(sceneBridge_.viewState());
     selectionInstance_=project_.instanceId();reloadDrafts();
@@ -113,7 +103,7 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     jobs_=std::make_unique<CommandJobRunner>([this]() ->const pandoeditor::Project& {return project_;});
     connect(jobs_.get(),&CommandJobRunner::changed,this,&EditorController::jobChanged,Qt::QueuedConnection);
     presentationSaveTimer_.setSingleShot(true);presentationSaveTimer_.setInterval(500);
-    connect(&presentationSaveTimer_,&QTimer::timeout,this,&EditorController::flushPresentationRecovery);
+    connect(&presentationSaveTimer_,&QTimer::timeout,this,&EditorController::startPresentationRecovery);
     viewportResourceTimer_.setSingleShot(true);
     viewportResourceTimer_.setInterval(ViewportResourceScheduler::SettleDelayMs);
     connect(&viewportResourceTimer_,&QTimer::timeout,this,&EditorController::flushViewportResources);
@@ -156,7 +146,8 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     });
     if(autosave_) {
         connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
-            autosave_->scheduleView(sceneBridge_.viewState());
+            if(!startupBusy_&&worldStatus_!="recovery-failed")
+                autosave_->scheduleView(sceneBridge_.viewState());
         });
         connect(autosave_.get(),&ProjectAutosave::saveFailed,this,&EditorController::errorOccurred);
     }
@@ -165,9 +156,13 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         installHistoricalSource(historicalFile.readAll(),QStringLiteral("내장 pilot"),true);
     refreshTypedScene();
     scheduleViewportResources(ViewportResourceKind::Labels);
-    if(config.bootstrapWorld&&!restoredAutosave)QTimer::singleShot(0,this,&EditorController::startWorldBootstrap);
+    if(startupBusy_)QTimer::singleShot(0,this,[this,useWorldBase=config.bootstrapWorld] {
+        startAutosaveRecovery(useWorldBase);
+    });
+    else if(config.bootstrapWorld)QTimer::singleShot(0,this,&EditorController::startWorldBootstrap);
 }
 void EditorController::refreshTypedScene() {
+    if(startupBusy_)return;
     try {
         std::shared_ptr<const RenderScene> previous=sceneBridge_.sceneSnapshot();
         if(sceneInstance_!=project_.instanceId()) {
@@ -653,9 +648,10 @@ void EditorController::publish(bool pruneSelection)
         if(project_.dirty()||importedDirty_)presentationSaveTimer_.start();
         else discardOwnPresentationRecovery();
     }
-    if(autosave_&&(autosaveInstance_!=project_.instanceId()||autosaveRevision_!=project_.revision())) {
+    if(autosave_&&!startupBusy_&&worldStatus_!="recovery-failed"&&
+       (autosaveInstance_!=project_.instanceId()||autosaveRevision_!=project_.revision())) {
         try {
-            autosave_->scheduleDocument(projectcodec::encode(project_));
+            autosave_->scheduleDocument(project_.snapshot());
             autosaveInstance_=project_.instanceId();autosaveRevision_=project_.revision();
         } catch(const std::exception& error) {
             emit errorOccurred(QStringLiteral("자동저장을 준비하지 못했습니다: %1")
@@ -708,6 +704,7 @@ bool EditorController::openFile(const QUrl& url)
 }
 bool EditorController::saveFile(const QUrl& url)
 {
+    if(startupBusy_||worldStatus_=="recovery-failed")return false;
     if(worldStatus_=="loading-preview"||worldStatus_=="preview"||worldStatus_=="unavailable") {
         emit errorOccurred(QStringLiteral("세계지도 문서가 준비되기 전에는 저장할 수 없습니다."));return false;
     }
@@ -724,6 +721,7 @@ bool EditorController::saveFile(const QUrl& url)
 bool EditorController::save(){if(mobileMode_)return savePrivate();return saveFile(QUrl::fromLocalFile(filePath_));}
 bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,const QString& path)
 {
+    if(startupBusy_)return false;
     if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 도형 편집을 확인하거나 취소한 뒤 프로젝트를 바꾸세요."));return false;}
     pandoeditor::Project candidate;candidate.replace(projectcodec::decode(bytes));
     MapProjection nextProjection;nextProjection.rebuild(candidate.document());
@@ -754,6 +752,7 @@ bool EditorController::importProject(const QUrl& url)
 }
 bool EditorController::savePrivate()
 {
+    if(startupBusy_||worldStatus_=="recovery-failed")return false;
     if(worldStatus_=="loading-preview"||worldStatus_=="preview"||worldStatus_=="unavailable") {
         emit errorOccurred(QStringLiteral("세계지도 문서가 준비되기 전에는 저장할 수 없습니다."));return false;
     }

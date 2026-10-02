@@ -50,6 +50,7 @@ int main(int argc,char** argv) {
         const auto* item=unit(document,greenland);
         check(item,"Greenland subunit is missing");
         check(item->kind==pandoeditor::UnitKind::Subunit,"Greenland is not a subunit");
+        check(item->baseName.empty()&&item->nameExplicit,"subunit has country-only name state");
         check(item->geometry.id=="world-country-GRL","Greenland lost its canonical geometry ID");
         const auto* relation=baseRelation(document,greenland);
         check(relation,"Greenland base relation is missing");

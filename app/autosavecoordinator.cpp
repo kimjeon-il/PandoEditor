@@ -1,4 +1,6 @@
 #include "autosavecoordinator.h"
+#include "projectcodec.h"
+#include <QtConcurrent>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
@@ -31,11 +33,17 @@ ProjectAutosave::ProjectAutosave(QString projectPath,QString viewPath,QObject* p
     :QObject(parent),projectPath_(projectPath.isEmpty()?defaultPath("autosave-project.json"):std::move(projectPath)),
      viewPath_(viewPath.isEmpty()?defaultPath("autosave-view.json"):std::move(viewPath)) {
     timer_.setSingleShot(true);timer_.setInterval(SaveDelayMs);
-    connect(&timer_,&QTimer::timeout,this,[this]{flushNow();});
+    connect(&timer_,&QTimer::timeout,this,&ProjectAutosave::startWrite);
 }
+ProjectAutosave::~ProjectAutosave() { flushNow(); }
 
 void ProjectAutosave::scheduleDocument(QByteArray persistedProject) {
+    pendingSnapshot_.reset();
     pendingDocument_=std::move(persistedProject);documentPending_=true;timer_.start();
+}
+void ProjectAutosave::scheduleDocument(pandoeditor::ProjectSnapshot snapshot) {
+    pendingDocument_.clear();pendingSnapshot_=std::move(snapshot);
+    documentPending_=true;timer_.start();
 }
 
 void ProjectAutosave::scheduleView(const MapViewState& view) {
@@ -63,16 +71,50 @@ QByteArray ProjectAutosave::viewEnvelope(const MapViewState& view) {
         {"view",state}}).toJson(QJsonDocument::Compact);
 }
 
+std::function<ProjectAutosave::WriteResult()> ProjectAutosave::takePendingWrite() {
+    const bool document=documentPending_,view=viewPending_;
+    documentPending_=viewPending_=false;
+    auto bytes=std::move(pendingDocument_);
+    auto snapshot=std::move(pendingSnapshot_);pendingSnapshot_.reset();
+    auto state=std::move(pendingView_);pendingView_.reset();
+    return [document,view,bytes=std::move(bytes),snapshot=std::move(snapshot),state,
+            projectPath=projectPath_,viewPath=viewPath_]() -> WriteResult {
+        try {
+            if(document)ProjectStorage(projectPath).writePrivateAtomic(
+                documentEnvelope(snapshot?projectcodec::encode(*snapshot):bytes));
+            if(view&&state)ProjectStorage(viewPath).writePrivateAtomic(viewEnvelope(*state));
+            return {};
+        } catch(const std::exception& error) {return {QString::fromUtf8(error.what())};}
+          catch(...) {return {QStringLiteral("자동저장 처리 중 알 수 없는 오류가 발생했습니다.")};}
+    };
+}
+bool ProjectAutosave::reportWrite(const WriteResult& result) {
+    if(!result.error.isEmpty()){emit saveFailed(result.error);return false;}
+    emit saved();return true;
+}
+void ProjectAutosave::startWrite() {
+    if(write_||(!documentPending_&&!viewPending_))return;
+    auto* watcher=new QFutureWatcher<WriteResult>(this);write_=watcher;
+    connect(watcher,&QFutureWatcher<WriteResult>::finished,this,[this,watcher] {
+        write_=nullptr;
+        const auto result=watcher->result();watcher->deleteLater();
+        reportWrite(result);
+        if(!timer_.isActive())startWrite();
+    });
+    // Only one writer can commit at a time. Later edits replace the queued snapshot.
+    watcher->setFuture(QtConcurrent::run(takePendingWrite()));
+}
 bool ProjectAutosave::flushNow() {
     timer_.stop();
-    try {
-        if(documentPending_)ProjectStorage(projectPath_).writePrivateAtomic(documentEnvelope(pendingDocument_));
-        if(viewPending_&&pendingView_)ProjectStorage(viewPath_).writePrivateAtomic(viewEnvelope(*pendingView_));
-        documentPending_=false;viewPending_=false;pendingDocument_.clear();pendingView_.reset();
-        emit saved();return true;
-    } catch(const std::exception& error) {
-        emit saveFailed(QString::fromUtf8(error.what()));return false;
+    bool success=true;
+    if(write_) {
+        auto* watcher=write_;write_=nullptr;
+        disconnect(watcher,nullptr,this,nullptr);
+        watcher->waitForFinished();
+        success=reportWrite(watcher->result());delete watcher;
     }
+    if(documentPending_||viewPending_)success=reportWrite(takePendingWrite()())&&success;
+    return success;
 }
 
 QByteArray ProjectAutosave::restoreDocument() {

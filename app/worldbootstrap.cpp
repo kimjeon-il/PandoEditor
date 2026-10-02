@@ -6,7 +6,76 @@
 #include <stdexcept>
 
 namespace {
-const QString bundledRoot=QStringLiteral(":/world");
+struct RecoveredStartup {
+    pandoeditor::Project project;
+    MapProjection projection;
+    GeometryPacketCache packets;
+    std::shared_ptr<const WorldBaseFrame> base;
+    std::optional<MapViewState> view;
+    QString error;
+};
+}
+
+void EditorController::startAutosaveRecovery(bool useWorldBase) {
+    const auto initial=project_.snapshot();
+    const auto profile=quality_.profile();
+    const auto projectPath=autosave_->projectPath(),viewPath=autosave_->viewPath();
+    auto* watcher=new QFutureWatcher<std::shared_ptr<RecoveredStartup>>(this);
+    connect(watcher,&QFutureWatcher<std::shared_ptr<RecoveredStartup>>::finished,this,
+        [this,watcher,initial] {
+        const auto result=watcher->result();watcher->deleteLater();
+        if(!initial.matches(project_)) {
+            startupBusy_=false;emit startupBusyChanged();return;
+        }
+        if(!result->error.isEmpty()) {
+            worldStatus_=QStringLiteral("recovery-failed");
+            startupBusy_=false;emit worldStatusChanged();emit startupBusyChanged();
+            emit errorOccurred(QStringLiteral("자동저장 프로젝트를 복원하지 못했습니다: %1")
+                .arg(result->error));
+            return;
+        }
+        const auto viewport=sceneBridge_.viewState();
+        project_=std::move(result->project);
+        projection_=std::move(result->projection);
+        packetCache_=std::move(result->packets);sceneInstance_=project_.instanceId();
+        worldBase_=std::move(result->base);
+        if(worldBase_)worldRanges_=worldBase_->ranges;
+        worldStatus_=worldBase_?QStringLiteral("canonical"):QStringLiteral("disabled");
+        camera_.setMetrics(mapCameraMetrics());
+        if(result->view)camera_.adoptView(*result->view);
+        if(viewport.viewportWidth>1&&viewport.viewportHeight>1)
+            camera_.resize(viewport.viewportWidth,viewport.viewportHeight,viewport.devicePixelRatio);
+        sceneBridge_.publishView(camera_.view());
+        // Loading and viewport setup must never autosave the temporary empty document/view.
+        autosaveInstance_=project_.instanceId();autosaveRevision_=project_.revision();
+        startupBusy_=false;
+        publish(false);emit geometryChanged();emit worldStatusChanged();emit startupBusyChanged();
+        ensureHydroBootstrap();syncHydroData();
+    });
+    watcher->setFuture(QtConcurrent::run([projectPath,viewPath,profile,useWorldBase,root=worldDataRoot_] {
+        auto result=std::make_shared<RecoveredStartup>();
+        try {
+            ProjectAutosave source(projectPath,viewPath);
+            const auto bytes=source.restoreDocument();
+            if(bytes.isEmpty())throw std::runtime_error("자동저장 파일이 비어 있거나 손상되었습니다. 원본은 보존됩니다.");
+            result->project.replace(projectcodec::decode(bytes));
+            result->view=source.restoreView();
+            result->projection.rebuild(result->project.document());
+            if(useWorldBase)try {
+                result->base=WorldDatasetLoader::matchingBaseFrame(result->project.document(),root);
+            }catch(const std::exception&) {
+                // A missing optional base mesh must not discard a valid saved document.
+            }
+            result->packets.setBudget(profile.renderPacketCacheBudgetBytes);
+            MapSceneBuilder builder(result->packets);
+            builder.setWorldBase(result->base);builder.setQuality(profile);
+            const auto view=result->view.value_or(MapViewState{});
+            // Warm the fallback packets on this worker too, including edited/imported shapes.
+            builder.build(result->project.snapshot(),view,{},{});
+        } catch(const std::exception& error) {result->error=QString::fromUtf8(error.what());}
+          catch(...) {result->error=QStringLiteral("지도 복구 중 알 수 없는 오류가 발생했습니다.");}
+        return result;
+    }));
 }
 
 void EditorController::startWorldBootstrap() {
@@ -46,7 +115,7 @@ void EditorController::startWorldBootstrap() {
                 QString::fromUtf8(error.what()));
         }
     });
-    watcher->setFuture(QtConcurrent::run([] {return WorldDatasetLoader::preview(bundledRoot);}));
+    watcher->setFuture(QtConcurrent::run([root=worldDataRoot_] {return WorldDatasetLoader::preview(root);}));
 }
 
 void EditorController::startCanonicalWorld(std::uint64_t generation) {
@@ -78,7 +147,7 @@ void EditorController::startCanonicalWorld(std::uint64_t generation) {
                 QString::fromUtf8(error.what()));
         }
     });
-    watcher->setFuture(QtConcurrent::run([] {return WorldDatasetLoader::canonical(bundledRoot);}));
+    watcher->setFuture(QtConcurrent::run([root=worldDataRoot_] {return WorldDatasetLoader::canonical(root);}));
 }
 
 void EditorController::startCanonicalWorldMesh(std::uint64_t generation) {
@@ -103,7 +172,7 @@ void EditorController::startCanonicalWorldMesh(std::uint64_t generation) {
                 QString::fromUtf8(error.what()));
         }
     });
-    watcher->setFuture(QtConcurrent::run([] {return WorldDatasetLoader::canonicalMesh(bundledRoot);}));
+    watcher->setFuture(QtConcurrent::run([root=worldDataRoot_] {return WorldDatasetLoader::canonicalMesh(root);}));
 }
 
 void EditorController::cancelWorldBootstrap() {
