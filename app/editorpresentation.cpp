@@ -173,7 +173,7 @@ void EditorController::rebuildLabelSources() {
         if(!effectiveMapVisibility(document,ref))continue;
         const auto properties=project_.propertyView(ref);if(!properties)continue;
         const auto resolved=resolvedTerritorialPresentation(document,ref);
-        const auto flag=labelFlagSource(ref);
+        const auto flag=resolved.flagVisible?labelFlagSource(ref):QString();
         const bool nameVisible=resolved.nameVisible;
         const bool flagVisible=resolved.flagVisible&&!flag.isEmpty();
         if(!nameVisible&&!flagVisible)continue;
@@ -270,7 +270,7 @@ void EditorController::executeLabelResources(const ViewportResourceRequest& requ
     options.collisionPadding=std::max(1.,std::ceil(
         (mobileMode_?5.:3.)*quality_.profile().labelDensity));
     options.maxCandidates=mobileMode_?4096:8192;
-    options.maxPlaced=mobileMode_?2048:4096;
+    options.maxPlaced=mobileMode_?1024:2048;
     const auto selectedItems=selection_.items();
     const std::set<ObjectRef> selected(selectedItems.begin(),selectedItems.end());
     labelEngine_.layout(request.view,options,selected);

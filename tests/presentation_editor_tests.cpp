@@ -48,13 +48,15 @@ private slots:
             const auto geometry=paths.front().toMap();
             const double mapY=geometry.value("top").toDouble()+geometry.value("height").toDouble()/2;
             auto placedAt=[&](double screenY) {
-                QVERIFY(editor.fitMapCamera());
+                if(!editor.fitMapCamera())return false;
                 QTest::qWait(ViewportResourceScheduler::SettleDelayMs*2);
                 const auto state=editor.mapViewState();
                 const double current=state.value("originY").toDouble()+
                     mapY*state.value("mapScale").toDouble();
                 editor.beginMapInteraction();editor.beginMapCameraPan();
-                QVERIFY(editor.updateMapCameraPan(0,screenY-current));
+                if(!editor.updateMapCameraPan(0,screenY-current)) {
+                    editor.endMapCameraPan();editor.endMapInteraction();return false;
+                }
                 editor.endMapCameraPan();editor.endMapInteraction();
                 QTest::qWait(ViewportResourceScheduler::SettleDelayMs*2);
                 const auto rows=editor.placedLabels();

@@ -114,25 +114,25 @@ std::vector<int> MapLabelEngine::visibleCells(
     }
 
     // Globe queries inspect only the fixed 10-degree cell grid (<=648 cells),
-    // never the full label population. Nine samples make limb/pole cells
-    // conservative while the per-label projection remains authoritative.
+    // never the full label population. A conservative angular cell radius
+    // prevents tiny high-zoom viewport intersections and limb cells from being
+    // missed without scanning every label in those cells.
+    constexpr double cellRadiusRadians=8.0*3.14159265358979323846/180.0;
+    const double projectedRadius=view.scale*std::sin(cellRadiusRadians);
+    const double frontMargin=std::sin(cellRadiusRadians);
     for(const auto& [key,unused]:cells_) {
         (void)unused;
         const int x=key%36,y=key/36;
-        const double west=-180+x*CellDegrees,east=west+CellDegrees;
-        const double south=-90+y*CellDegrees,north=south+CellDegrees;
-        bool possible=false;
-        for(int sy=0;sy<3&&!possible;++sy)for(int sx=0;sx<3&&!possible;++sx) {
-            const pandoeditor::Point sample{
-                west+(east-west)*sx/2.0,
-                south+(north-south)*sy/2.0};
-            const auto projected=projectPoint(sample,view);
-            if(projected.finite&&projected.visibleHemisphere&&
-               projected.x>=-paddingPixels&&projected.x<=view.viewportWidth+paddingPixels&&
-               projected.y>=-paddingPixels&&projected.y<=view.viewportHeight+paddingPixels)
-                possible=true;
-        }
-        if(possible)result.push_back(key);
+        const pandoeditor::Point center{
+            -180+(x+.5)*CellDegrees,
+            -90+(y+.5)*CellDegrees};
+        const auto projected=projectPoint(center,view);
+        if(!projected.finite||projected.frontness< -frontMargin)continue;
+        if(projected.x+projectedRadius< -paddingPixels||
+           projected.x-projectedRadius>view.viewportWidth+paddingPixels||
+           projected.y+projectedRadius< -paddingPixels||
+           projected.y-projectedRadius>view.viewportHeight+paddingPixels)continue;
+        result.push_back(key);
     }
     return result;
 }
