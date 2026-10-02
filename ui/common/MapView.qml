@@ -54,16 +54,8 @@ Rectangle {
         if (width <= 0 || height <= 0) return
         editor.resizeMapCamera(width,height)
     }
-    Timer {
-        id: hydroRequest
-        interval: 40; repeat: false
-        onTriggered: {
-            editor.requestHydroViewport(view.zoom,view.mapScale,view.originX,view.originY,view.width,view.height)
-            editor.requestTerrainViewport(view.mapScale,view.originX,view.originY,view.width,view.height)
-        }
-    }
-    onWidthChanged: { invalidatePick(); syncViewport(); hydroRequest.restart() }
-    onHeightChanged: { invalidatePick(); syncViewport(); hydroRequest.restart() }
+    onWidthChanged: { invalidatePick(); syncViewport() }
+    onHeightChanged: { invalidatePick(); syncViewport() }
     Component.onCompleted: syncViewport()
     function fit() { editor.fitMapCamera() }
     function zoomAt(factor, px, py) { editor.zoomMapCameraAt(factor,px,py) }
@@ -71,9 +63,8 @@ Rectangle {
         target: editor
         // Geometry edits retain the user's inspection position.  Explicit focus
         // and the '전체' button remain the only viewport-reset routes.
-        function onGeometryChanged() { view.invalidatePick(); hydroRequest.restart() }
-        function onStateChanged() { hydroRequest.restart() }
-        function onViewStateChanged() { view.invalidatePick(); hydroRequest.restart() }
+        function onGeometryChanged() { view.invalidatePick() }
+        function onViewStateChanged() { view.invalidatePick() }
         function onGeometryEditChanged() {
             if (editor.geometryEditState.active === true && view.globeMode) editor.setProjectionMode("flat")
         }

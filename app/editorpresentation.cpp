@@ -56,38 +56,22 @@ QVariantMap EditorController::terrainDataStatus() const {
             {"error",!physicalError_.isEmpty()?physicalError_:(terrainProvider_?terrainProvider_->error():
                 QStringLiteral("Terrain package not installed"))}};
 }
-void EditorController::requestTerrainViewport(double mapScale,double originX,double originY,
-                                              double width,double height) {
-    terrainLastScale_=mapScale;terrainLastOriginX_=originX;terrainLastOriginY_=originY;
-    terrainLastWidth_=width;terrainLastHeight_=height;
+void EditorController::executeTerrainResources(const ViewportResourceRequest& request) {
     if(terrainMode_=="none") {
         if(terrainProvider_)terrainProvider_->protectVisible({});
         if(!terrainTiles_.isEmpty()){terrainTiles_.clear();emit terrainChanged();}
         return;
     }
-    if(!terrainProvider_||!terrainProvider_->available()||
-       !std::isfinite(mapScale)||mapScale<=0||
-       !std::isfinite(originX)||!std::isfinite(originY)||width<=0||height<=0)return;
-    auto state=sceneBridge_.viewState();
-    state.viewportWidth=width;state.viewportHeight=height;
-    if(state.mode==ProjectionMode::Flat) {
-        const auto parameters=projection_.hydroParameters();
-        const auto cosine=parameters.value("cosLatitude").toDouble();
-        state.scale=mapScale*cosine*180/3.14159265358979323846;
-        state.centerLongitude=0;state.centerLatitude=0;
-        state.translateX=originX-parameters.value("minX").toDouble()*mapScale;
-        state.translateY=originY+parameters.value("maxLatitude").toDouble()*mapScale;
-    }
+    if(!terrainProvider_||!terrainProvider_->available()||!validMapViewState(request.view))return;
     QVariantList visible;
     int missing=0;
-    const auto tileSpecs=terrainProvider_->tilesForView(state);
+    const auto tileSpecs=terrainProvider_->tilesForView(request.view);
     terrainProvider_->protectVisible(tileSpecs);
     for(const auto& tile:tileSpecs) {
         const auto relative=QString("terrain/v0.12.6/%1/%2-%3.webp")
             .arg(tile.level).arg(tile.column).arg(tile.row);
         if(!physicalAssetReady(relative)){
-            ++missing;requestPhysicalAsset(QString("terrain/v0.12.6/%1/%2-%3.webp")
-                .arg(tile.level).arg(tile.column).arg(tile.row));continue;
+            ++missing;requestPhysicalAsset(relative);continue;
         }
         const auto source=QUrl::fromLocalFile(physicalAssetPath(relative));
         visible.push_back(QVariantMap{{"source",source},
@@ -113,32 +97,13 @@ QVariantList EditorController::hiddenHydroIds() const {
         result.append(QString::fromStdString(id));
     return result;
 }
-void EditorController::requestHydroViewport(double zoom,double mapScale,double originX,double originY,
-                                            double width,double height) {
+void EditorController::executeHydroResources(const ViewportResourceRequest& request) {
     if(!hydroRuntime_.isOpen()){ensureHydroBootstrap();return;}
-    if(!std::isfinite(mapScale)||mapScale<=0||
-       !std::isfinite(originX)||!std::isfinite(originY)||width<=0||height<=0)return;
-    try {
-        const auto view=sceneBridge_.viewState();
-        const bool publishedGlobe=view.mode==ProjectionMode::Globe&&
-            std::abs(view.viewportWidth-width)<.5&&std::abs(view.viewportHeight-height)<.5;
-        if(publishedGlobe) {
-            requestHydroWindow({pandoeditor::webHydroThreshold(zoom),width,height,view.scale,
-                view.centerLongitude+view.rotationLongitude,
-                std::clamp(view.centerLatitude+view.rotationLatitude,-90.,90.)});
-            return;
-        }
-        const auto center=projection_.unproject((width/2-originX)/mapScale,(height/2-originY)/mapScale);
-        const auto unitX=projection_.project({1,0}).x-projection_.project({0,0}).x;
-        const auto webScale=mapScale*std::min(1.,unitX)*180./3.14159265358979323846;
-        requestHydroWindow({pandoeditor::webHydroThreshold(zoom),width,height,webScale,center.x,center.y});
-    }catch(const std::exception& error){emit errorOccurred(QString::fromUtf8(error.what()));}
-}
-void EditorController::requestHydroWindow(const pandoeditor::HydroFlatWindow& window) {
-    pendingHydroWindow_=window;bool missing=false;
-    for(const auto& path:hydroRuntime_.requiredAssetPaths(window))if(!physicalAssetReady(path))
-        {missing=true;requestPhysicalAsset(path);}
-    if(missing)return;pendingHydroWindow_.reset();hydroRuntime_.requestViewport(window);
+    bool missing=false;
+    for(const auto& path:hydroRuntime_.requiredAssetPaths(request.hydroWindow))
+        if(!physicalAssetReady(path)){missing=true;requestPhysicalAsset(path);}
+    if(missing)return;
+    hydroRuntime_.requestViewport(request.hydroWindow);
 }
 bool EditorController::configureHydroData(const QUrl& value) {
     if(hasPendingEdits()||jobBusy()||hasWebImportPreview())return false;
@@ -170,6 +135,7 @@ void EditorController::syncHydroData() {
         if(const auto selected=selection_.primary();selected&&selected->domain=="hydroBuiltin")
             if(const auto record=hydroRuntime_.recordById(displayText(selected->id)))
                 hydroRuntime_.setSelectedLogical(record->logicalFid);
+        scheduleViewportResources(ViewportResourceKind::Hydro);
     }
 }
 bool EditorController::setDistributionDisplay(const QString& mode,bool boundaryVisible) {

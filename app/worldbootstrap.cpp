@@ -36,6 +36,7 @@ void EditorController::startWorldBootstrap() {
                 terrainProvider_.reset(); // The optional terrain channel is unavailable.
             }
             emit terrainChanged();
+            scheduleViewportResources(ViewportResourceKind::Terrain);
             worldStatus_=QStringLiteral("preview");emit worldStatusChanged();
             emit geometryChanged();
             startCanonicalWorld(generation);

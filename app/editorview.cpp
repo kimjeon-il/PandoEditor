@@ -105,6 +105,7 @@ bool EditorController::setTerrainMode(const QString& value)
     const auto mode=value.toLower();if(mode!="none"&&mode!="gray"&&mode!="color")return false;
     if(mode==terrainMode_)return true;terrainMode_=mode;
     if(mode=="none"&&terrainProvider_)terrainProvider_->protectVisible({});
+    scheduleViewportResources(ViewportResourceKind::Terrain);
     emit terrainChanged();return true;
 }
 

@@ -13,6 +13,7 @@
 #include "renderquality.h"
 #include <pandoeditor/map/mapcamera.h>
 #include <pandoeditor/map/mappicker.h>
+#include <pandoeditor/map/viewportresourcescheduler.h>
 #include "hydroruntimeprovider.h"
 #include "../renderer/terrainprovider.h"
 #include "giscontentimport.h"
@@ -186,8 +187,6 @@ public:
     QVariantMap hydroDataStatus() const;
     QVariantMap terrainDataStatus() const;
     QVariantList terrainTiles() const {return terrainTiles_;}
-    Q_INVOKABLE void requestTerrainViewport(double mapScale,double originX,double originY,
-                                            double width,double height);
     bool hydroViewportLoaded() const {return bool(hydroRuntime_.frame());}
     QObject* hydroSource() {return &hydroRuntime_;}
     QVariantMap hydroProjection() const;
@@ -195,8 +194,6 @@ public:
     QVariantList hiddenHydroIds() const;
     bool hydroCopyBusy() const{return hydroCopyBusy_;}
     Q_INVOKABLE bool copyBuiltinHydro();
-    Q_INVOKABLE void requestHydroViewport(double zoom,double mapScale,double originX,double originY,
-                                          double width,double height);
     qulonglong presentationRevision() const { return project_.presentationRevision(); }
     Q_INVOKABLE bool setPresentationVisibility(const QString& key,bool visible);
     Q_INVOKABLE bool setPresentationOpacity(const QString& group,double opacity);
@@ -491,7 +488,6 @@ private:
     void requestPhysicalAsset(const QString& relativePath);
     QString physicalAssetPath(const QString& relativePath) const;
     bool physicalAssetReady(const QString& relativePath) const;
-    void requestHydroWindow(const pandoeditor::HydroFlatWindow& window);
     void loadAppearancePreferences();
     bool saveAppearancePreferences() const;
     ScreenColorPicker screenColorPicker_;
@@ -547,6 +543,10 @@ private:
     MapCameraMetrics mapCameraMetrics() const;
     void syncMapCameraMetrics(bool publishCurrent=true);
     bool publishCameraView();
+    void scheduleViewportResources(ViewportResourceKind resources=ViewportResourceKind::All);
+    void flushViewportResources();
+    void executeTerrainResources(const ViewportResourceRequest&);
+    void executeHydroResources(const ViewportResourceRequest&);
     void noteAppliedImpact(const pandoeditor::ChangeImpact&);
     QString labelSourceId(const std::string& ownerId) const;
     void scheduleDerivedLabelAnchor(const pandoeditor::ObjectRef& owner);
@@ -618,6 +618,9 @@ private:
     AdaptiveRenderQuality quality_;
     QElapsedTimer qualityClock_;
     int activeMapInteractions_=0;
+    ViewportResourceScheduler viewportResources_;
+    QTimer viewportResourceTimer_;
+    std::optional<ViewportResourceRequest> lastViewportResourceRequest_;
     MapSceneBuilder sceneBuilder_{packetCache_};
     MapSceneBridge sceneBridge_;
     MapCamera camera_;
@@ -634,9 +637,6 @@ private:
     std::shared_ptr<TerrainTileProvider> terrainProvider_;
     QVariantList terrainTiles_;
     int terrainMissingTiles_=0;
-    double terrainLastScale_=0,terrainLastOriginX_=0,terrainLastOriginY_=0,
-           terrainLastWidth_=0,terrainLastHeight_=0;
-    std::optional<pandoeditor::HydroFlatWindow> pendingHydroWindow_;
     QString worldHydroNotice_;
     std::vector<WorldBaseRange> worldRanges_;
     std::uint64_t worldGeneration_=0;

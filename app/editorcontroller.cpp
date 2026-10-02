@@ -110,6 +110,9 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(jobs_.get(),&CommandJobRunner::changed,this,&EditorController::jobChanged,Qt::QueuedConnection);
     presentationSaveTimer_.setSingleShot(true);presentationSaveTimer_.setInterval(500);
     connect(&presentationSaveTimer_,&QTimer::timeout,this,&EditorController::flushPresentationRecovery);
+    viewportResourceTimer_.setSingleShot(true);
+    viewportResourceTimer_.setInterval(ViewportResourceScheduler::SettleDelayMs);
+    connect(&viewportResourceTimer_,&QTimer::timeout,this,&EditorController::flushViewportResources);
     const auto refresh=[this] {refreshTypedScene();};
     connect(this,&EditorController::selectionChanged,this,refresh);
     connect(this,&EditorController::selectionChanged,this,[this] {
@@ -128,6 +131,7 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,refresh);
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
         camera_.acceptPublishedView(sceneBridge_.viewState());
+        scheduleViewportResources();
         emit viewStateChanged();
     });
     if(autosave_) {
@@ -221,11 +225,11 @@ void EditorController::initializePhysicalData() {
     connect(physicalStore_.get(),&PhysicalDataStore::assetReady,this,
         [this](const QString& path,const QString&,bool) {
             physicalError_.clear();
-            if(path.startsWith("terrain/")&&terrainLastWidth_>0)
-                requestTerrainViewport(terrainLastScale_,terrainLastOriginX_,terrainLastOriginY_,terrainLastWidth_,terrainLastHeight_);
+            if(path.startsWith("terrain/"))
+                scheduleViewportResources(ViewportResourceKind::Terrain);
             if(path.startsWith("hydro/")) {
                 if(!hydroRuntime_.isOpen())syncHydroData();
-                if(pendingHydroWindow_)requestHydroWindow(*pendingHydroWindow_);
+                scheduleViewportResources(ViewportResourceKind::Hydro);
             }
             emit terrainChanged();emit stateChanged();
         });
@@ -282,6 +286,13 @@ QVariantMap EditorController::renderQuality() const {
         {"scenePatchCount",qulonglong(scenePatchCount_)},
         {"sceneFullBuildCount",qulonglong(sceneFullBuildCount_)},
         {"spatialIncrementalUpdateCount",qulonglong(mapPicker_.incrementalUpdateCount())},
+        {"viewportResourceGeneration",qulonglong(viewportResources_.lastIssuedGeneration())},
+        {"viewportResourceUpdates",qulonglong(viewportResources_.stats().viewportUpdates)},
+        {"viewportResourceInvalidations",qulonglong(viewportResources_.stats().invalidations)},
+        {"viewportResourceDeferredUpdates",qulonglong(viewportResources_.stats().deferredUpdates)},
+        {"viewportResourceIssuedRequests",qulonglong(viewportResources_.stats().issuedRequests)},
+        {"viewportResourceCoalescedUpdates",qulonglong(viewportResources_.stats().coalescedUpdates)},
+        {"viewportResourcePending",viewportResources_.pending()},
         {"lastEditAffectedObjects",qulonglong(lastEditAffectedObjects_)},
         {"lastEditRetainedGeometries",qulonglong(lastEditRetainedGeometries_)},
         {"lastEditEstimatedNewGeometryBytes",qulonglong(lastEditNewGeometryBytes_)},
@@ -302,11 +313,44 @@ void EditorController::recordMapFrame(double milliseconds) {
     }
 }
 void EditorController::beginMapInteraction() {
-    if(++activeMapInteractions_==1&&quality_.beginInteraction())emit renderQualityChanged();
+    if(activeMapInteractions_==0)viewportResourceTimer_.stop();
+    ++activeMapInteractions_;
+    viewportResources_.beginInteraction();
+    if(activeMapInteractions_==1&&quality_.beginInteraction())emit renderQualityChanged();
 }
 void EditorController::endMapInteraction() {
-    if(activeMapInteractions_>0&&--activeMapInteractions_==0&&quality_.endInteraction())
+    if(activeMapInteractions_<=0)return;
+    --activeMapInteractions_;
+    const bool resourceReady=viewportResources_.endInteraction();
+    if(activeMapInteractions_==0&&quality_.endInteraction())emit renderQualityChanged();
+    if(resourceReady) {
+        viewportResourceTimer_.stop();
+        flushViewportResources();
+    }
+}
+void EditorController::scheduleViewportResources(ViewportResourceKind resources) {
+    try {
+        if(viewportResources_.noteViewport(camera_.display(),mapCameraMetrics(),resources))
+            viewportResourceTimer_.start(ViewportResourceScheduler::SettleDelayMs);
+    } catch(const std::exception& error) {
+        emit errorOccurred(QStringLiteral("Viewport resource scheduling failed: ")+
+            QString::fromUtf8(error.what()));
+    }
+}
+void EditorController::flushViewportResources() {
+    try {
+        const auto request=viewportResources_.takeReady();
+        if(!request)return;
+        lastViewportResourceRequest_=*request;
+        if(anyViewportResource(request->resources&ViewportResourceKind::Terrain))
+            executeTerrainResources(*request);
+        if(anyViewportResource(request->resources&ViewportResourceKind::Hydro))
+            executeHydroResources(*request);
         emit renderQualityChanged();
+    } catch(const std::exception& error) {
+        emit errorOccurred(QStringLiteral("Viewport resource request failed: ")+
+            QString::fromUtf8(error.what()));
+    }
 }
 QVariantMap EditorController::colors() const
 {
