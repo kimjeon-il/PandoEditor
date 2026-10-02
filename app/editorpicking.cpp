@@ -13,7 +13,7 @@ MapPickContext EditorController::mapPickContext(double zoom) const {
     context.zoom=zoom;
     context.primary=selection_.primary();
 
-    context.placedLabels=labelEngine_.placedRefs();
+    context.placedLabels=&labelEngine_.placedRefs();
 
     if(const auto frame=hydroRuntime_.frame()) {
         context.externalHydro.reserve(frame->features.size());

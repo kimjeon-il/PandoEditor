@@ -102,7 +102,8 @@ void labelAndDistributionFilters() {
     auto hits=picker.pickMap(project.snapshot(),metrics(),{2,7,10},context);
     require(std::find(hits.begin(),hits.end(),ObjectRef{"label","L"})==hits.end(),
             "unplaced label excluded");
-    context.placedLabels.insert({"label","L"});
+    const std::set<ObjectRef> placed{{"label","L"}};
+    context.placedLabels=&placed;
     hits=picker.pickMap(project.snapshot(),metrics(),{2,7,10},context);
     require(std::find(hits.begin(),hits.end(),ObjectRef{"label","L"})!=hits.end(),
             "placed label included");
@@ -114,7 +115,6 @@ void externalHydroAndNormalization() {
     feature.geometry.lines={{{2000000,3000000},{3000000,3000000}}};
     MapExternalHydroPickFeature external;
     external.ref={"hydroBuiltin","R"};
-    external.displayName="강";
     external.category="river";
     external.bounds={2,3,3,3};
     external.feature=&feature;

@@ -221,7 +221,7 @@ std::vector<ObjectRef> MapPicker::pickGeographic(
         (void)unused;
         if(!spatialCandidates.count(ref)||ref.domain=="territorial"||
            !effectiveMapVisibility(document,ref))continue;
-        if(ref.domain=="label"&&!context.placedLabels.count(ref))continue;
+        if(ref.domain=="label"&&(!context.placedLabels||!context.placedLabels->count(ref)))continue;
         if(ref.domain=="distributionEntry"&&!displayedDistribution.count(ref))continue;
         const auto geometryRef=objectGeometry(document,index,ref);
         if(!geometryRef)continue;

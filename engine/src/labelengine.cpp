@@ -63,7 +63,7 @@ int MapLabelEngine::latitudeCell(double latitude) noexcept {
 void MapLabelEngine::setSources(std::vector<MapLabelSource> sources,
                                 std::uint64_t sourceRevision) {
     if(!sourceRevision)throw std::invalid_argument("label source revision must be nonzero");
-    sourceByRef_.clear();cells_.clear();pinned_.clear();accepted_.clear();placements_.clear();
+    sourceByRef_.clear();cells_.clear();pinned_.clear();accepted_.clear();placements_.clear();placedRefs_.clear();
     sources_.clear();sources_.reserve(sources.size());
     for(auto& source:sources) {
         if(!finiteSource(source))continue;
@@ -205,7 +205,7 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
         return sourceOrder(sources_[a],sources_[b]);
     });
 
-    accepted_.clear();placements_.clear();
+    accepted_.clear();placements_.clear();placedRefs_.clear();
     accepted_.reserve(std::min(options.maxPlaced,candidates.size()));
     placements_.reserve(std::min(options.maxPlaced,candidates.size()));
     std::vector<CollisionBox> placedBoxes;
@@ -245,6 +245,7 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
         for(int y=yr.first;y<=yr.second;++y)for(int x=xr.first;x<=xr.second;++x)
             collisionGrid[{x,y}].push_back(placedIndex);
         accepted_.push_back(index);
+        placedRefs_.insert(placement.ref);
         placements_.push_back(std::move(placement));
     }
 
@@ -258,26 +259,21 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
 const std::vector<MapLabelPlacement>& MapLabelEngine::reproject(const MapViewState& view) {
     if(!validMapViewState(view))throw std::invalid_argument("invalid label reproject view");
     ++stats_.reprojects;
-    placements_.clear();placements_.reserve(accepted_.size());
+    placements_.clear();placedRefs_.clear();placements_.reserve(accepted_.size());
     for(const auto index:accepted_) {
         MapLabelPlacement placement;
         if(!projectPlacement(index,view,placement))continue;
         if(placement.x+placement.width/2<0||placement.x-placement.width/2>view.viewportWidth||
            placement.y+placement.height/2<0||placement.y-placement.height/2>view.viewportHeight)
             continue;
+        placedRefs_.insert(placement.ref);
         placements_.push_back(std::move(placement));
     }
     stats_.placements=placements_.size();
     return placements_;
 }
 
-std::set<pandoeditor::ObjectRef> MapLabelEngine::placedRefs() const {
-    std::set<pandoeditor::ObjectRef> result;
-    for(const auto& placement:placements_)result.insert(placement.ref);
-    return result;
-}
-
 void MapLabelEngine::clear() {
-    sources_.clear();sourceByRef_.clear();cells_.clear();pinned_.clear();accepted_.clear();placements_.clear();
+    sources_.clear();sourceByRef_.clear();cells_.clear();pinned_.clear();accepted_.clear();placements_.clear();placedRefs_.clear();
     stats_={};
 }

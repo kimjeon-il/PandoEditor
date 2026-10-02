@@ -52,7 +52,7 @@ public:
     void setSources(std::vector<MapLabelSource> sources,std::uint64_t sourceRevision);
     const std::vector<MapLabelSource>& sources() const noexcept {return sources_;}
     const std::vector<MapLabelPlacement>& placements() const noexcept {return placements_;}
-    std::set<pandoeditor::ObjectRef> placedRefs() const;
+    const std::set<pandoeditor::ObjectRef>& placedRefs() const noexcept {return placedRefs_;}
 
     const std::vector<MapLabelPlacement>& layout(
         const MapViewState&,const MapLabelLayoutOptions&,
@@ -77,5 +77,6 @@ private:
     std::vector<std::size_t> pinned_;
     std::vector<std::size_t> accepted_;
     std::vector<MapLabelPlacement> placements_;
+    std::set<pandoeditor::ObjectRef> placedRefs_;
     MapLabelEngineStats stats_;
 };

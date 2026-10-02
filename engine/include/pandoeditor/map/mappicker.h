@@ -22,7 +22,7 @@ struct MapPickContext {
     bool mobile=false;
     double zoom=1;
     std::optional<pandoeditor::ObjectRef> primary;
-    std::set<pandoeditor::ObjectRef> placedLabels;
+    const std::set<pandoeditor::ObjectRef>* placedLabels=nullptr;
     std::vector<MapExternalHydroPickFeature> externalHydro;
 };
 
