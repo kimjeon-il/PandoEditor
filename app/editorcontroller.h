@@ -14,6 +14,7 @@
 #include <pandoeditor/map/mapcamera.h>
 #include <pandoeditor/map/mappicker.h>
 #include <pandoeditor/map/viewportresourcescheduler.h>
+#include <pandoeditor/map/builtinhydrochannel.h>
 #include "hydroruntimeprovider.h"
 #include "../renderer/terrainprovider.h"
 #include "giscontentimport.h"
@@ -548,6 +549,7 @@ private:
     void flushViewportResources();
     void executeTerrainResources(const ViewportResourceRequest&);
     void executeHydroResources(const ViewportResourceRequest&);
+    void refreshBuiltinHydroScene();
     void noteAppliedImpact(const pandoeditor::ChangeImpact&);
     QString labelSourceId(const std::string& ownerId) const;
     void scheduleDerivedLabelAnchor(const pandoeditor::ObjectRef& owner);
@@ -558,6 +560,8 @@ private:
     QByteArray projectPreviewSourceSha_;
     std::unique_ptr<CountryLabelAnchors> labelAnchors_;
     HydroRuntimeProvider hydroRuntime_;
+    std::shared_ptr<const BuiltinHydroRenderFrame> builtinHydroScene_;
+    std::uint64_t builtinHydroRevision_=0;
     bool hydroCopyBusy_=false;
     std::unique_ptr<CommandJobRunner> jobs_;
     std::optional<pandoeditor::JobTicket> background_;

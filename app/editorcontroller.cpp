@@ -100,6 +100,10 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::hydroFrameChanged);
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::searchChanged);
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::stateChanged);
+    connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,[this] {
+        refreshBuiltinHydroScene();
+        refreshTypedScene();
+    });
     connect(&hydroRuntime_,&HydroRuntimeProvider::loadFailed,this,&EditorController::errorOccurred);
     connect(this,&EditorController::dirtyChanged,this,[this](){++importEditEpoch_;});
     connect(this,&EditorController::stateChanged,this,&EditorController::propertyChanged);
@@ -153,6 +157,7 @@ void EditorController::refreshTypedScene() {
             packetCache_.clear();sceneInstance_=project_.instanceId();previous.reset();pendingSceneImpact_.reset();
         }
         sceneBuilder_.setWorldBase(worldBase_);
+        sceneBuilder_.setBuiltinHydro(builtinHydroScene_);
         sceneBuilder_.setQuality(quality_.profile());
         InteractionRenderPacket interaction;
         if(objectChooserOpen())interaction.candidates=chooserRefs_;
@@ -299,6 +304,8 @@ QVariantMap EditorController::renderQuality() const {
         {"terrainCacheBudgetBytes",qulonglong(profile.terrainCacheBudgetBytes)},
         {"terrainCacheBytes",qulonglong(terrainProvider_?terrainProvider_->cachedBytes():0)},
         {"hydroCacheBytes",qulonglong(hydroRuntime_.cachedBytes())},
+        {"builtinHydroGpuRevision",qulonglong(builtinHydroRevision_)},
+        {"builtinHydroGpuFeatures",qulonglong(builtinHydroScene_?builtinHydroScene_->features.size():0)},
         {"p95FrameMs",profile.p95FrameMs},{"p99FrameMs",profile.p99FrameMs},
         {"qualityChangeCount",qulonglong(quality_.changeCount())},
         {"longFrameCount",qulonglong(profile.longFrameCount)}};
@@ -328,6 +335,31 @@ void EditorController::endMapInteraction() {
         flushViewportResources();
     }
 }
+void EditorController::refreshBuiltinHydroScene() {
+    const auto frame=hydroRuntime_.frame();
+    if(!frame) {
+        builtinHydroScene_.reset();
+        if(builtinHydroRevision_!=std::numeric_limits<std::uint64_t>::max())++builtinHydroRevision_;
+        return;
+    }
+    if(builtinHydroRevision_==std::numeric_limits<std::uint64_t>::max())
+        throw std::overflow_error("built-in hydro render revision overflow");
+    std::vector<BuiltinHydroFeaturePacket> features;
+    features.reserve(frame->features.size());
+    std::set<std::uint32_t> seen;
+    for(const auto& feature:frame->features) {
+        if(!seen.insert(feature.fid).second)continue;
+        const auto record=hydroRuntime_.recordByFid(feature.fid);
+        if(!record)continue;
+        const auto category=record->category.toStdString();
+        if(category!="river"&&category!="lake")continue;
+        features.push_back(prepareBuiltinHydroFeature(
+            {"hydroBuiltin",record->awId.toStdString()},category,feature));
+    }
+    ++builtinHydroRevision_;
+    builtinHydroScene_=makeBuiltinHydroRenderFrame(builtinHydroRevision_,features);
+}
+
 void EditorController::scheduleViewportResources(ViewportResourceKind resources) {
     try {
         if(viewportResources_.noteViewport(camera_.display(),mapCameraMetrics(),resources))
