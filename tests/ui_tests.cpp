@@ -873,6 +873,9 @@ private slots:
             QTest::qWait(50); return true;
         };
         double px=0,py=0;
+        // The default sample can already have a selected country. Clear it so
+        // the coordinate-search loop always records the actual German point.
+        editor.clearSelection();
         // Find a German interior point that is also clear of map UI controls,
         // then exercise the actual pointer route with the same map coordinate.
         const auto initialScale=map->property("mapScale").toDouble();
