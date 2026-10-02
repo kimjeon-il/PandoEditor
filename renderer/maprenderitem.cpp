@@ -156,6 +156,8 @@ void MapRenderItem::paint(QPainter* painter) {
 
     const auto drawPoint=[&](const PointDrawPacket& draw,double offset,
                              const RenderStyle& style,double radius) {
+        // Labels/flags remain in the shared QML safe-area layer in both backends.
+        if(draw.object.domain=="label")return;
         const auto& packet=draw.geometryPacket;
         if(!packet.positions)return;
         painter->save();
