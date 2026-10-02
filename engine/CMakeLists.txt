@@ -7,6 +7,8 @@ add_library(pandoeditor_map_engine STATIC
     src/renderpacket.cpp
     src/renderscene.cpp
     src/scenepatch.cpp
+    src/geometrypacketcache.cpp
+    src/mapscenebuilder.cpp
 )
 add_library(Pandoeditor::MapEngine ALIAS pandoeditor_map_engine)
 

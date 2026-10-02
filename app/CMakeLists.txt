@@ -31,7 +31,6 @@ add_library(pandoeditor_editor STATIC
     projectpreviewcache.cpp projectpreviewcache.h
     countrylabelanchors.cpp countrylabelanchors.h
     physicaldatastore.cpp physicaldatastore.h
-    mapscenebuilder.cpp mapscenebuilder.h
     mapscenebridge.cpp mapscenebridge.h
     builtinworldpolicy.cpp builtinworldpolicy.h
     worlddataset.cpp worlddataset.h
@@ -67,7 +66,6 @@ add_library(pandoeditor_editor STATIC
     ../renderer/terrainprovider.cpp ../renderer/terrainprovider.h
     ../renderer/countryculling.cpp ../renderer/countryculling.h
     ../renderer/uploadscheduler.cpp ../renderer/uploadscheduler.h
-    ../renderer/geometrypacketcache.cpp
     ../renderer/maprenderitem.cpp ../renderer/maprenderitem.h
     ../renderer/geographicimagemesh.cpp ../renderer/geographicimagemesh.h
     ../renderer/geographicimageitem.cpp ../renderer/geographicimageitem.h
