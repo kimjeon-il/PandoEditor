@@ -17,7 +17,7 @@ ColumnLayout {
             property string owner:""
             Layout.fillWidth:true
             Label { text:entry.modelData.label }
-            TextField {
+            UiTextField {
                 objectName:entry.modelData.name;Layout.fillWidth:true
                 text:entry.modelData.field==="validFrom"?editor.validFromDraft:editor.validToDraft
                 placeholderText:"YYYY 또는 YYYY-MM-DD";selectByMouse:true

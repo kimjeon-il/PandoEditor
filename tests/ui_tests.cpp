@@ -74,11 +74,15 @@ static bool clickControl(QQuickWindow* window,const QString& name)
                 auto maxY=std::max(0.0,parent->property("contentHeight").toDouble()-parent->height());
                 parent->setProperty("contentY",std::clamp(y-16.0,0.0,maxY));
             }
-            break;
         }
     }
     window->grabWindow(); QTest::qWait(100);
-    auto center=item->mapToScene(QPointF(item->width()/2,item->height()/2)).toPoint();
+    QRectF visibleRect(item->mapToScene(QPointF()),QSizeF(item->width(),item->height()));
+    for(auto parent=item->parentItem();parent;parent=parent->parentItem())if(parent->clip())
+        visibleRect=visibleRect.intersected(QRectF(parent->mapToScene(QPointF()),QSizeF(parent->width(),parent->height())));
+    visibleRect=visibleRect.intersected(QRectF(QPointF(),window->size()));
+    if(visibleRect.isEmpty())return false;
+    auto center=visibleRect.center().toPoint();
     if(!QRect(QPoint(),window->size()).contains(center)) return false;
     QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,center);
     QTest::qWait(80); return true;
@@ -162,7 +166,7 @@ private slots:
         editor.focusObject();QTest::qWait(150);
         const auto captureDir=qEnvironmentVariable("PANDOEDITOR_UI_CAPTURE_DIR",QDir::tempPath());QVERIFY(QDir().mkpath(captureDir));
         QVERIFY(capture(window).save(captureDir+"/ui-world-selection-light.png"));
-        QVERIFY(clickControl(window,"toggleObjectEditor"));
+        QVERIFY(clickControl(window,"openObjectEditor"));
         QVERIFY(capture(window).save(captureDir+"/ui-world-editor-light.png"));
         QVERIFY(editor.previewAppearance({{"theme","dark"}}));
         QVERIFY(capture(window).save(captureDir+"/ui-world-editor-dark.png"));
@@ -194,7 +198,7 @@ private slots:
             QVERIFY(within(card,item("mapView")));
             const auto mode=mobile?QString("compact"):QString("desktop");
             QVERIFY(capture(window).save(captureDir+"/ui-"+mode+"-selection-light.png"));
-            QVERIFY(clickControl(window,"toggleObjectEditor"));
+            QVERIFY(clickControl(window,"openObjectEditor"));
             auto* panel=item("objectPropertyPanel");QVERIFY(panel&&panel->isVisible());
             QCOMPARE(panel->width(),mobile?360.0:320.0);
             QCOMPARE(panel->mapToScene({0,0}).x(),0.0);
@@ -814,7 +818,7 @@ private slots:
         auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]); QVERIFY(window);
         exposeForTest(window);
         editor.selectCountry("DEU");
-        QVERIFY(clickControl(window,"countryName"));
+        QVERIFY(clickControl(window,"detailObjectName"));
         QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Draft name");
         QCOMPARE(editor.nameDraft(),QString("Draft name"));
         window->resize(390,760); QTest::qWait(200);
@@ -887,12 +891,12 @@ private slots:
             window->resize(mobile?360:1100,mobile?640:760); exposeForTest(window);
             editor.selectCountry("DEU");
             const auto name=editor.selectedName(),layerName=editor.layerNameDraft(),color=editor.colorDraft();
-            QVERIFY(clickControl(window,"countryName"));
+            QVERIFY(clickControl(window,"detailObjectName"));
             QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"Web name");
-            QVERIFY(clickControl(window,"countryMemo"));
+            QVERIFY(clickControl(window,"detailObjectNotes"));
             // Web change events commit each text field independently, without Apply.
             QCOMPARE(editor.selectedName(),QString("Web name")); QCOMPARE(editor.revision(),qulonglong(1));
-            typeText(window,"Web notes"); QVERIFY(clickControl(window,"countryColor"));
+            typeText(window,"Web notes"); QVERIFY(clickControl(window,"detailObjectName")); QVERIFY(clickControl(window,"countryColor"));
             QCOMPARE(editor.revision(),qulonglong(2));
             QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier); typeText(window,"#102030");
             QVERIFY(clickControl(window,"layersTab"));
@@ -1069,7 +1073,7 @@ private slots:
         QCOMPARE(editor.selectedId(),QString("DEU"));
         QVERIFY(QMetaObject::invokeMethod(map,"fit"));
         QVERIFY(clickItem("swatche56b6f")); QVERIFY(editor.dirty());
-        auto panel=window->findChild<QQuickItem*>("editorPanel"); QVERIFY(panel);
+        auto panel=navigationItem(window->contentItem(),"objectPropertyPanel"); QVERIFY(panel);
         QVERIFY(!panel->property("compact").toBool());
         QCOMPARE(editor.colors()["DEU"].toString(),QString("#e56b6f"));
         QVERIFY(clickItem("undoButton")); QVERIFY(!editor.dirty());

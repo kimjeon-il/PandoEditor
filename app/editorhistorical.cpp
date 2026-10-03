@@ -32,8 +32,16 @@ QVariantList EditorController::historicalResults() const {
         rows.push_back(QVariantMap{{"id",qs(entity->libraryId)},{"name",label(*entity)},
             {"canonicalName",qs(entity->canonicalName)},{"type",kindName(entity->type)},
             {"validFrom",opt(entity->validity.from)},{"validTo",opt(entity->validity.to)},
-            {"region",qs(entity->geographicRegion)}});
+            {"region",qs(entity->geographicRegion)},{"kind",entity->type==pandoeditor::UnitKind::Country?QStringLiteral("country"):entity->type==pandoeditor::UnitKind::Subunit?QStringLiteral("subunit"):QStringLiteral("region")},{"parentId",qs(entity->parentLibraryId)},
+            {"flagSource",QJsonDocument::fromJson(qs(entity->metadata).toUtf8()).object().value("defaultFlagDataUrl").toString()}});
     }
+    return rows;
+}
+QVariantList EditorController::historicalRegionOptions() const {
+    QVariantList rows;std::set<std::string> regions;
+    if(historicalLibrary_)for(const auto* entity:historicalLibrary_->search({}))
+        if(!entity->geographicRegion.empty())regions.insert(entity->geographicRegion);
+    for(const auto& region:regions)rows.append(QVariantMap{{"id",qs(region)},{"name",qs(region)}});
     return rows;
 }
 QVariantList EditorController::historicalSnapshots() const {
@@ -69,16 +77,17 @@ QVariantMap EditorController::historicalPreview() const {
     if(!historicalLibrary_||historicalSelectedId_.isEmpty())return {};
     const auto* entity=historicalLibrary_->get(historicalSelectedId_.toStdString());
     if(!entity)return {};
+    bool hasChildren=false;for(const auto* candidate:historicalLibrary_->search({}))if(candidate->parentLibraryId==entity->libraryId){hasChildren=true;break;}
     QVariantList versions;
     for(const auto& version:entity->geometryVersions)
-        versions.push_back(QVariantMap{{"id",qs(version.id)},
+        versions.push_back(QVariantMap{{"id",qs(version.id)},{"label",QStringLiteral("경계 %1 · %2 ~ %3").arg(versions.size()+1).arg(opt(version.validity.from).isEmpty()?QStringLiteral("시작 미정"):opt(version.validity.from)).arg(opt(version.validity.to).isEmpty()?QStringLiteral("종료 미정"):opt(version.validity.to))},
             {"validFrom",opt(version.validity.from)},{"validTo",opt(version.validity.to)},
             {"certainty",qs(version.certainty)},{"datePrecision",qs(version.datePrecision)},
             {"sourceId",qs(version.sourceId)}});
     QVariantMap result{{"id",historicalSelectedId_},{"name",label(*entity)},
         {"canonicalName",qs(entity->canonicalName)},{"type",kindName(entity->type)},
         {"validFrom",opt(entity->validity.from)},{"validTo",opt(entity->validity.to)},
-        {"region",qs(entity->geographicRegion)},{"versions",versions},
+        {"region",qs(entity->geographicRegion)},{"versions",versions},{"hasChildren",hasChildren},
         {"selectedVersionId",historicalVersionId_},{"mode",qs(entity->instantiation.mode)},
         {"parentLibraryId",qs(entity->parentLibraryId)},
         {"sovereignLibraryId",qs(entity->sovereignLibraryId)},
@@ -252,12 +261,13 @@ bool EditorController::prepareHistoricalAdd(const QVariantMap& options) {
                         pandoeditor::CommandProcessor::makeRequest(project_,"historical.instantiate",std::move(args)));
                     if(!result.ok()||!result.preview)throw std::runtime_error(result.detail.empty()?"INVALID_LIBRARY: prepare failed":result.detail);
                     historicalCommandPreview_=std::move(result.preview);
+                    auto display=[&](const pandoeditor::ObjectRef& ref){const auto view=project_.propertyView(ref);return view?qs(view->displayName):QStringLiteral("새 객체");};
                     QVariantList added,adjusted,updated;
                     for(const auto& item:plan.additions)added.push_back(qs(item.selection.name));
-                    for(const auto& patch:plan.territoryReplacements)adjusted.push_back(qs(patch.owner.id));
+                    for(const auto& patch:plan.territoryReplacements)adjusted.push_back(display(patch.owner));
                     for(const auto& [donor,target]:plan.territoryTransfers)
-                        adjusted.push_back(qs(donor.id)+QStringLiteral(" → ")+qs(target.id));
-                    for(const auto& [id,name]:plan.countryNameUpdates)updated.push_back(qs(id)+QStringLiteral(" → ")+qs(name));
+                        adjusted.push_back(display(donor)+QStringLiteral(" → ")+display(target));
+                    for(const auto& [id,name]:plan.countryNameUpdates)updated.push_back(display(pandoeditor::territorialRef(id))+QStringLiteral(" → ")+qs(name));
                     historicalImpact_={{"added",added},{"adjusted",adjusted},{"updated",updated},
                         {"summary",QStringLiteral("%1개 추가 · 영토 %2개 조정 · 국가 이름 %3개 변경")
                             .arg(added.size()).arg(adjusted.size()).arg(updated.size())}};

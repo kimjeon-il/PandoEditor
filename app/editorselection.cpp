@@ -72,12 +72,13 @@ QVariantList EditorController::objectRows() const {
     for(const auto& unit:project_.document().units) {
         const auto ref=territorialRef(unit.id);
         auto row=objectRefValue(ref);
+        row["flagSource"]=labelFlagSource(ref);row["color"]=rgb(effectiveObjectColor(project_.document(),ref));
         row["name"]=q(project_.propertyView(ref)->displayName);row["typeLabel"]=typeLabel(unit.kind);
-        row["visible"]=objectVisible(ref);row["locked"]=unit.locked;
+        row["visible"]=objectVisible(ref);row["locked"]=unit.locked;row["lockEnabled"]=true;
         const auto member=project_.document().presentation.membership.find(ref);
         if(member!=project_.document().presentation.membership.end()) {
             row["layerId"]=q(member->second);
-            if(const auto layer=project_.layer(member->second)) row["locked"]=unit.locked||layer->locked;
+            if(const auto layer=project_.layer(member->second)) {row["locked"]=unit.locked||layer->locked;row["lockEnabled"]=!layer->locked;}
         }
         row["editable"]=!row["locked"].toBool();
         row["selectionOnly"]=false;
@@ -113,7 +114,7 @@ QVariantList EditorController::searchResults() const {
     if(query.isEmpty()) return {};
     QVariantList rows;
     for(const auto& value:objectRows()) {
-        const auto row=value.toMap();
+        auto row=value.toMap();
         if((row["name"].toString()+" "+row["typeLabel"].toString()+" "+row["id"].toString()).toLower().contains(query)) rows.append(row);
     }
     if(const auto metadata=hydroRuntime_.coreMetadata()){

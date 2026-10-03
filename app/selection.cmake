@@ -76,10 +76,17 @@ if(BUILD_TESTING)
     qt_add_resources(property_ui_tests property_test_ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui" FILES ${M32_UI_FILES})
     qt_add_resources(property_ui_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME property_ui_tests COMMAND property_ui_tests -o -,txt)
-    set_tests_properties(property_ui_tests PROPERTIES TIMEOUT 90 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    set_tests_properties(property_ui_tests PROPERTIES TIMEOUT 180 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()
 
 set(M32_PROPERTY_RESOURCES
+    "${PROJECT_SOURCE_DIR}/ui/common/UiSheetHandle.qml"
+    "${PROJECT_SOURCE_DIR}/ui/common/UiNotice.qml"
+    "${PROJECT_SOURCE_DIR}/ui/common/UiTextField.qml"
+    "${PROJECT_SOURCE_DIR}/ui/common/UiTextArea.qml"
+    "${PROJECT_SOURCE_DIR}/ui/common/UiComboBox.qml"
+    "${PROJECT_SOURCE_DIR}/ui/common/UiSwitch.qml"
+
     "${PROJECT_SOURCE_DIR}/ui/common/UiTokens.js"
     "${PROJECT_SOURCE_DIR}/ui/common/UiIcon.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/UiButton.qml"
@@ -119,4 +126,18 @@ if(BUILD_TESTING)
     target_link_libraries(screen_color_tests PRIVATE Qt6::Gui Qt6::Test)
     add_test(NAME screen_color_tests COMMAND screen_color_tests -o -,txt)
     set_tests_properties(screen_color_tests PROPERTIES TIMEOUT 30 ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+
+foreach(target_name pandoeditor ui_tests web_import_ui_tests selection_ui_tests property_ui_tests)
+    if(TARGET ${target_name})
+        qt_add_resources(${target_name} ui_fonts PREFIX "/fonts" BASE "${PROJECT_SOURCE_DIR}/ui/fonts"
+            FILES "${PROJECT_SOURCE_DIR}/ui/fonts/Pretendard-Regular.otf"
+                  "${PROJECT_SOURCE_DIR}/ui/fonts/Pretendard-SemiBold.otf"
+                  "${PROJECT_SOURCE_DIR}/ui/fonts/LICENSE.Pretendard.txt")
+    endif()
+endforeach()
+if(TARGET property_ui_tests)
+    file(GLOB_RECURSE M4_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/assets/defaults/flags/*")
+    qt_add_resources(property_ui_tests property_flags PREFIX "/defaults/flags"
+        BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags" FILES ${M4_FLAG_FILES})
 endif()

@@ -14,6 +14,7 @@ Dialog {
     closePolicy: Popup.CloseOnEscape
     onClosed: editor.cancelGisImport()
     property var state: editor.gisImportState
+    readonly property string stepLabel:state.stage==="reading"||state.stage==="empty"||state.stage==="error"?"1 · 파일 확인":state.stage==="impact"?"3 · 결과 검토":"2 · 속성 연결"
     function resetFields() {
         const layers=state.layers || []
         const layer=layers[layerChoice.currentIndex]
@@ -27,17 +28,18 @@ Dialog {
         nameField.text=layer.target==="country" && web?"pandolab_name":"name"
     }
     function choices() {
-        return {target:targetChoice.currentText,idField:idField.text,nameField:nameField.text,
-            countryId:countryId.text,parentId:parentId.text,coast:coastChoice.currentValue,
+        return {target:targetChoice.currentValue,idField:idField.text,nameField:nameField.text,
+            countryId:countryId.currentValue,parentId:parentId.currentValue,coast:coastChoice.currentValue,
             layerId:layerId.text,
             layerName:layerName.text}
     }
     ColumnLayout {
         anchors.fill: parent
         spacing: 8
+        Label {objectName:"gisImportStep";text:root.stepLabel;font.bold:true;font.pixelSize:18}
         RowLayout {
             Layout.fillWidth: true
-            Button { objectName:"gisChooseFile";text:"GIS 파일 선택";onClicked:root.fileRequested() }
+            UiButton {symbol:"folder"; objectName:"gisChooseFile";text:"GIS 파일 선택";onClicked:root.fileRequested() }
             Label { Layout.fillWidth:true;text:root.state.fileName || "GeoJSON · ZIP · GeoPackage";elide:Text.ElideMiddle }
         }
         Label {
@@ -45,15 +47,19 @@ Dialog {
             text:"GIS 데이터 가져오기는 현재 프로젝트에 추가합니다. 프로젝트 파일 열기와 별개의 작업입니다."
             wrapMode:Text.WordWrap
         }
-        BusyIndicator { Layout.alignment:Qt.AlignHCenter;running:root.state.stage==="reading"||root.state.stage==="preparing";visible:running }
+        ProgressBar {Layout.fillWidth:true;indeterminate:true;visible:root.state.stage==="reading"||root.state.stage==="preparing"}
+        Label {visible:root.state.stage==="reading"||root.state.stage==="preparing";text:root.state.stage==="reading"?"선택한 파일을 확인하고 있습니다.":"적용 결과를 계산하고 있습니다."}
         ScrollView {
             Layout.fillWidth:true;Layout.fillHeight:true
             contentWidth:availableWidth
             ColumnLayout {
                 width:parent.width
-                spacing:8
+                spacing:12
+                enabled:root.state.stage!=="reading"&&root.state.stage!=="preparing"
+                Label {text:root.state.stage==="impact"?"적용 결과":"레이어와 속성 연결";font.bold:true}
+                ColumnLayout {Layout.fillWidth:true;visible:root.state.stage==="mapping"||root.state.stage==="preparing";enabled:root.state.stage==="mapping";spacing:12
                 Label { text:"가져올 레이어";visible:(root.state.layers || []).length>0 }
-                ComboBox {
+                UiComboBox {
                     id:layerChoice;objectName:"gisLayerChoice"
                     Layout.fillWidth:true
                     model:root.state.layers || []
@@ -61,20 +67,20 @@ Dialog {
                     onCurrentIndexChanged:root.resetFields()
                 }
                 Label { text:"대상 종류";visible:layerChoice.count>0 }
-                ComboBox {
+                UiComboBox {
                     id:targetChoice;objectName:"gisTargetChoice"
                     Layout.fillWidth:true
-                    model:["country","subunit","region","distribution","generic"]
+                    model:[{text:"국가",value:"country"},{text:"하위단위",value:"subunit"},{text:"지방",value:"region"},{text:"분포",value:"distribution"},{text:"기타 객체",value:"generic"}];textRole:"text";valueRole:"value"
                 }
                 RowLayout {
                     Layout.fillWidth:true
                     Label { text:"객체 ID 필드" }
-                    TextField { id:idField;objectName:"gisIdField";Layout.fillWidth:true;placeholderText:"__fid__ 또는 속성 이름" }
+                    UiTextField { id:idField;objectName:"gisIdField";Layout.fillWidth:true;placeholderText:"__fid__ 또는 속성 이름" }
                 }
                 RowLayout {
                     Layout.fillWidth:true
                     Label { text:"이름 필드" }
-                    TextField { id:nameField;objectName:"gisNameField";Layout.fillWidth:true }
+                    UiTextField { id:nameField;objectName:"gisNameField";Layout.fillWidth:true }
                 }
                 Label {
                     Layout.fillWidth:true;wrapMode:Text.WordWrap
@@ -83,21 +89,21 @@ Dialog {
                 }
                 RowLayout {
                     Layout.fillWidth:true
-                    visible:targetChoice.currentText==="subunit"||targetChoice.currentText==="region"
-                    Label { text:"소속 국가 ID" }
-                    TextField { id:countryId;objectName:"gisCountryId";Layout.fillWidth:true;placeholderText:"비우면 각 객체의 sovereign_id 사용" }
+                    visible:targetChoice.currentValue==="subunit"||targetChoice.currentValue==="region"
+                    Label { text:"소속 국가" }
+                    UiComboBox {id:countryId;objectName:"gisCountryId";Layout.fillWidth:true;textRole:"name";valueRole:"id";model:[{id:"",name:"각 객체의 소속 필드 사용"}].concat(editor.relationCountryOptions)}
                 }
                 RowLayout {
                     Layout.fillWidth:true
-                    visible:targetChoice.currentText==="subunit"||targetChoice.currentText==="region"
-                    Label { text:"상위 단위 ID" }
-                    TextField { id:parentId;objectName:"gisParentId";Layout.fillWidth:true;placeholderText:"비우면 각 객체의 parent_id 사용" }
+                    visible:targetChoice.currentValue==="subunit"||targetChoice.currentValue==="region"
+                    Label { text:"상위 단위" }
+                    UiComboBox {id:parentId;objectName:"gisParentId";Layout.fillWidth:true;textRole:"name";valueRole:"id";model:[{id:"",name:"각 객체의 상위 필드 사용"}].concat(editor.relationParentOptions)}
                 }
                 RowLayout {
                     Layout.fillWidth:true
-                    visible:targetChoice.currentText==="country"||targetChoice.currentText==="subunit"
+                    visible:targetChoice.currentValue==="country"||targetChoice.currentValue==="subunit"
                     Label { text:"해안선·영토 충돌" }
-                    ComboBox {
+                    UiComboBox {
                         id:coastChoice;objectName:"gisCoastChoice";Layout.fillWidth:true
                         model:[{text:"충돌 시 중단",value:"reject"},
                                {text:"가져온 경계 우선 · 영토 이전",value:"imported"},
@@ -106,43 +112,41 @@ Dialog {
                     }
                 }
                 RowLayout {
-                    Layout.fillWidth:true;visible:targetChoice.currentText==="distribution"
+                    Layout.fillWidth:true;visible:targetChoice.currentValue==="distribution"
                     Label { text:"분포 종류" }
                 }
                 RowLayout {
-                    Layout.fillWidth:true;visible:targetChoice.currentText==="distribution"
+                    Layout.fillWidth:true;visible:targetChoice.currentValue==="distribution"
                     Label { text:"레이어 ID" }
-                    TextField { id:layerId;Layout.fillWidth:true;placeholderText:"비우면 각 객체의 layer_id 사용" }
+                    UiTextField { id:layerId;Layout.fillWidth:true;placeholderText:"비우면 각 객체의 layer_id 사용" }
                 }
                 RowLayout {
-                    Layout.fillWidth:true;visible:targetChoice.currentText==="distribution"
+                    Layout.fillWidth:true;visible:targetChoice.currentValue==="distribution"
                     Label { text:"레이어 이름" }
-                    TextField { id:layerName;Layout.fillWidth:true;placeholderText:"비우면 name 필드 사용" }
+                    UiTextField { id:layerName;Layout.fillWidth:true;placeholderText:"비우면 name 필드 사용" }
+                }
                 }
                 Label {
                     Layout.fillWidth:true;wrapMode:Text.WordWrap
                     visible:root.state.stage==="impact"
                     text:"영향 미리보기: " + (root.state.summary || "")
                 }
-                Label {
-                    Layout.fillWidth:true;wrapMode:Text.WrapAnywhere
-                    visible:!!root.state.error;color:"#ae2828"
-                    text:root.state.error || ""
-                }
+                UiNotice {Layout.fillWidth:true;visible:!!root.state.error;kind:"error";text:root.state.error||""}
             }
         }
         RowLayout {
             Layout.fillWidth:true
-            Button { text:"취소";onClicked:root.close() }
+            UiButton {objectName:"gisReviewBack";visible:root.state.stage==="impact";text:"이전";onClicked:editor.backGisImport()}
+            UiButton { text:"취소";onClicked:root.close() }
             Item { Layout.fillWidth:true }
-            Button {
+            UiButton {
                 objectName:"gisPrepare";text:"영향 확인"
-                enabled:root.state.stage==="mapping" && layerChoice.currentIndex>=0
+                visible:root.state.stage!=="impact";enabled:root.state.stage==="mapping" && layerChoice.currentIndex>=0
                 onClicked:editor.prepareGisImport(layerChoice.currentValue,root.choices())
             }
-            Button {
+            UiButton {
                 objectName:"gisConfirm";text:"가져오기 확정"
-                enabled:root.state.stage==="impact"
+                visible:root.state.stage==="impact";enabled:root.state.stage==="impact"
                 onClicked:if(editor.confirmGisImport(root.state.session))root.close()
             }
         }

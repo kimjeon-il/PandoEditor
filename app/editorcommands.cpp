@@ -113,7 +113,21 @@ bool EditorController::executeCommand(const std::string& commandId,pandoeditor::
     if(status==pandoeditor::CommandStatus::NoOp){clearParkedDrafts();return true;}
     return status==pandoeditor::CommandStatus::Prepared&&confirmCommand();
 }
-bool EditorController::commitPendingEdits(){if(contentSession_||geometryEdit_)return false;if(!executeCommand("edit.properties",std::monostate{}))return false;publish(false);return true;}
+bool EditorController::commitPendingEdits(){
+    if(geometryEdit_)return false;
+    if(contentSession_){
+        // The integrated panel keeps a read/edit session open. Only creation,
+        // deletion previews and geometry need explicit confirmation.
+        if(contentSession_->edit.create||contentSession_->preview)return false;
+        const auto pending=contentSession_->pendingFields;
+        for(const auto& field:pending){
+            if(contentSession_->pendingFields.count(field)&&
+               !commitContentField(QString::fromStdString(field)))return false;
+        }
+    }
+    if(!executeCommand("edit.properties",std::monostate{}))return false;
+    publish(false);return true;
+}
 void EditorController::setColor(const QString& color)
 {
     if(!validColor(color)){commandError(pandoeditor::CommandError::InvalidArguments);return;}

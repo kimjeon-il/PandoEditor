@@ -159,6 +159,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantList geometryDraftPaths READ geometryDraftPaths NOTIFY geometryEditChanged)
 public:
     QVariantList historicalResults() const;
+    Q_INVOKABLE QVariantList historicalRegionOptions() const;
     QVariantList historicalSnapshots() const;
     QVariantMap historicalPreview() const;
     QVariantMap historicalImpact() const {return historicalImpact_;}
@@ -181,6 +182,7 @@ public:
     Q_INVOKABLE bool loadGisSource(const QUrl& url);
     Q_INVOKABLE bool prepareGisImport(int layerIndex,const QVariantMap& mapping);
     Q_INVOKABLE bool confirmGisImport(qulonglong session);
+    Q_INVOKABLE bool backGisImport();
     QVariantList gisExportLayers() const;
     QVariantMap gisExportState() const;
     Q_INVOKABLE bool exportGisData(const QUrl& destination,const QString& format,
@@ -366,6 +368,7 @@ public:
     Q_INVOKABLE bool updateContentField(const QString& field,const QVariant& value);
     Q_INVOKABLE bool commitContentField(const QString& field);
     Q_INVOKABLE bool loadContentFlag(const QUrl& url);
+    Q_INVOKABLE QVariantList flagLibrary() const;
     Q_INVOKABLE bool beginContentGeometry();
     Q_INVOKABLE bool previewContentEdit(bool remove=false);
     Q_INVOKABLE bool confirmContentEdit();
@@ -413,6 +416,7 @@ public:
     Q_INVOKABLE void moveCountry(const QString& layerId);
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
+    Q_INVOKABLE bool newProject();
     Q_INVOKABLE bool openFile(const QUrl& url);
     Q_INVOKABLE bool openProjectGeoPackage(const QUrl& url);
     Q_INVOKABLE bool exportProjectGeoPackage(const QUrl& url);
@@ -691,6 +695,7 @@ private:
     std::vector<WorldBaseRange> worldRanges_;
     std::uint64_t worldGeneration_=0;
     QString worldStatus_=QStringLiteral("disabled");
+    bool bootstrapWorldEnabled_=false;
     QString worldDataRoot_;
     bool startupBusy_=false;
     mutable MapPicker mapPicker_;

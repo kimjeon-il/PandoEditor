@@ -7,9 +7,10 @@ import "UiTokens.js" as Tokens
 Rectangle {
     id: panel
     property bool compact: false
+    property string mode: "all"
+    property bool ownsStructureDialog:true
     function showCountryControls(){tabs.currentIndex=0}
     function showLayers(){tabs.currentIndex=1}
-    function showContent(){tabs.currentIndex=2}
     property bool holdFieldCommits: false
     property bool selectionNavigation: false
     readonly property string selectedColor: editor.objectProperties.color || ""
@@ -30,18 +31,18 @@ Rectangle {
         spacing: 0
         TabBar {
             id: tabs
+            visible: panel.mode !== "country"
             Layout.fillWidth: true
-            UiTabButton {text:"Qt 국가 속성";objectName:"countryTab"}
+            UiTabButton {text:"영토 속성";visible:panel.mode==="all";objectName:panel.mode==="all"?"countryTab":""}
             UiTabButton {text:"레이어";objectName:"layersTab"}
-            UiTabButton {text:"지명·수계 등";objectName:"contentTab"}
 
         }
         RowLayout {
             Layout.fillWidth: true
             Layout.margins: 8
             Label { text: editor.selectionItems.length>1 ? editor.selectionItems.length+"개 선택" : editor.hasPendingEdits ? "미적용 편집" : "편집 내용"; Layout.fillWidth: true; elide: Text.ElideRight }
-            Button { objectName: "cancelEdits"; text: "취소"; enabled: editor.hasPendingEdits; onClicked: editor.discardPendingEdits() }
-            Button { objectName: "applyEdits"; text: "적용"; enabled: editor.hasPendingEdits; onClicked: editor.applyPendingEditsAsync() }
+            UiButton {outlined:true; objectName: "cancelEdits"; text: "취소"; enabled: editor.hasPendingEdits; onClicked: editor.discardPendingEdits() }
+            UiButton {outlined:true; objectName: "applyEdits"; text: "적용"; enabled: editor.hasPendingEdits; onClicked: editor.applyPendingEditsAsync() }
         }
         ColumnLayout {
             objectName: "backgroundWorkPanel"
@@ -55,7 +56,7 @@ Rectangle {
                     text: editor.jobProgress < 0 ? "작업 대기 중…" : "계산 중…"
                     elide: Text.ElideRight
                 }
-                Button {
+                UiButton {outlined:true;
                     objectName: "cancelBackgroundWork"
                     text: "작업 취소"
                     Accessible.name: "계산 작업 취소"
@@ -71,7 +72,7 @@ Rectangle {
             }
         }
         StackLayout {
-            currentIndex: tabs.currentIndex
+            currentIndex: panel.mode==="country"?0:panel.mode==="layers"?1:tabs.currentIndex
             Layout.fillWidth: true
             Layout.fillHeight: true
             ScrollView {
@@ -82,7 +83,7 @@ Rectangle {
                 ColumnLayout {
                     width: countryScroll.availableWidth
                     spacing: 10
-                    ComboBox {
+                    UiComboBox {
                         id: countryPicker
                         objectName: "countryPicker"
                         Layout.fillWidth: true
@@ -104,13 +105,13 @@ Rectangle {
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.leftMargin: 12; Layout.rightMargin: 12
-                        Button {
+                        UiButton {outlined:true;
                             objectName: "legacyFocusSelection"; text: "선택 객체로 이동"
                             focusPolicy: Qt.NoFocus
                             enabled: editor.selectionItems.length === 1
                             onClicked: { panel.beginSelectionNavigation(); editor.focusObject() }
                         }
-                        Button {
+                        UiButton {outlined:true;
                             objectName: "clearObjectSelection"; text: "선택 해제"
                             focusPolicy: Qt.NoFocus
                             enabled: editor.selectionItems.length > 0
@@ -131,7 +132,7 @@ Rectangle {
                         spacing: 8
                         Repeater {
                             model: ["#a8c7db","#e6b8a2","#b8d6b0","#d5c4e8","#f0d493","#e56b6f","#499c91","#667a99"]
-                            delegate: Button {
+                            delegate: UiButton {outlined:true;
                                 required property string modelData
                                 objectName: "swatch"+modelData.substring(1)
                                 width: 40; height: 40
@@ -163,7 +164,7 @@ Rectangle {
                         visible: editor.primaryObject.type === "subunit" || editor.primaryObject.type === "region" || editor.primaryObject.type === "country"
                         ColumnLayout {
                             anchors.fill: parent
-                            ComboBox {
+                            UiComboBox {
                                 id: parentChoice
                                 Layout.fillWidth: true
                                 visible: editor.primaryObject.type === "subunit"
@@ -171,14 +172,14 @@ Rectangle {
                                 textRole: "name"; valueRole: "id"
                                 displayText: editor.objectProperties.parentId || "상위 영역 선택"
                             }
-                            Button {
+                            UiButton {outlined:true;
                                 objectName: "changeTerritorialParent"
                                 visible: editor.primaryObject.type === "subunit"
                                 text: "상위 영역 변경"
                                 enabled: parentChoice.currentValue !== ""
                                 onClicked: editor.changeSelectedParent(parentChoice.currentValue)
                             }
-                            ComboBox {
+                            UiComboBox {
                                 id: sovereignChoice
                                 Layout.fillWidth: true
                                 visible: editor.primaryObject.type === "region"
@@ -186,21 +187,21 @@ Rectangle {
                                 textRole: "name"; valueRole: "id"
                                 displayText: editor.objectProperties.sovereignId || "소속 국가 없음"
                             }
-                            ComboBox {
+                            UiComboBox {
                                 id: transferCountry
                                 objectName: "transferCountry"
                                 Layout.fillWidth: true
                                 visible: editor.primaryObject.type === "subunit"
                                 model: editor.relationCountryOptions; textRole: "name"; valueRole: "id"
                             }
-                            Button {
+                            UiButton {outlined:true;
                                 objectName: "transferTerritorial"
                                 visible: editor.primaryObject.type === "subunit"
                                 text: "선택 국가로 영토 이전"
                                 enabled: transferCountry.currentValue !== ""
                                 onClicked: editor.transferSelectedSubunit(transferCountry.currentValue)
                             }
-                            Button {
+                            UiButton {outlined:true;
                                 objectName: "changeRegionSovereign"
                                 visible: editor.primaryObject.type === "region"
                                 text: "소속 국가 변경"
@@ -208,29 +209,29 @@ Rectangle {
                             }
                             RowLayout {
                                 Layout.fillWidth: true
-                                Button { objectName: "deleteTerritorial"; text: "삭제"; enabled: editor.selectionItems.length > 0; onClicked: editor.beginDeleteSelection() }
-                                Button { objectName: "convertTerritorial"; text: "종류 전환"; visible: editor.primaryObject.type === "subunit" || editor.primaryObject.type === "country"; onClicked: editor.beginTypeConversion() }
+                                UiButton {outlined:true; objectName: "deleteTerritorial"; text: "삭제"; enabled: editor.selectionItems.length > 0; onClicked: editor.beginDeleteSelection() }
+                                UiButton {outlined:true; objectName: "convertTerritorial"; text: "종류 전환"; visible: editor.primaryObject.type === "subunit" || editor.primaryObject.type === "country"; onClicked: editor.beginTypeConversion() }
                             }
                             RowLayout {
                                 Layout.fillWidth: true
-                                Button { objectName: "mergeTerritorial"; text: "합병"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginMergeSelection() }
-                                Button { objectName: "annexTerritorial"; text: "그린 영역 편입"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginAnnexGeometry() }
-                                Button { objectName: "splitTerritorial"; text: "절단선 분할"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginSplitGeometry() }
-                                Button { objectName: "sharedBoundaryTerritorial"; text: "공유 국경"; enabled: editor.selectionItems.length === 2; onClicked: editor.beginSharedBoundaryGeometry() }
-                                Button { objectName: "coastTerritorial"; text: "해안(국가)"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginCoastlineGeometry("country") }
-                                Button { objectName: "coastSubunitTerritorial"; text: "해안(하위)"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginCoastlineGeometry("subunit") }
-                                Button { objectName: "coastIndependentTerritorial"; text: "해안(독립)"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginCoastlineGeometry("independent") }
+                                UiButton {outlined:true; objectName: "mergeTerritorial"; text: "합병"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginMergeSelection() }
+                                UiButton {outlined:true; objectName: "annexTerritorial"; text: "그린 영역 편입"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginAnnexGeometry() }
+                                UiButton {outlined:true; objectName: "splitTerritorial"; text: "절단선 분할"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginSplitGeometry() }
+                                UiButton {outlined:true; objectName: "sharedBoundaryTerritorial"; text: "공유 국경"; enabled: editor.selectionItems.length === 2; onClicked: editor.beginSharedBoundaryGeometry() }
+                                UiButton {outlined:true; objectName: "coastTerritorial"; text: "해안(국가)"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginCoastlineGeometry("country") }
+                                UiButton {outlined:true; objectName: "coastSubunitTerritorial"; text: "해안(하위)"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginCoastlineGeometry("subunit") }
+                                UiButton {outlined:true; objectName: "coastIndependentTerritorial"; text: "해안(독립)"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginCoastlineGeometry("independent") }
                             }
                             RowLayout {
                                 Layout.fillWidth: true
-                                Button { objectName: "createCountry"; text: "국가 추가"; onClicked: editor.beginTerritorialCreate("country") }
-                                Button { objectName: "createSubunit"; text: "하위단위 추가"; onClicked: editor.beginTerritorialCreate("subunit") }
-                                Button { objectName: "createRegion"; text: "지방 추가"; onClicked: editor.beginTerritorialCreate("region") }
+                                UiButton {outlined:true; objectName: "createCountry"; text: "국가 추가"; onClicked: editor.beginTerritorialCreate("country") }
+                                UiButton {outlined:true; objectName: "createSubunit"; text: "하위단위 추가"; onClicked: editor.beginTerritorialCreate("subunit") }
+                                UiButton {outlined:true; objectName: "createRegion"; text: "지방 추가"; onClicked: editor.beginTerritorialCreate("region") }
                             }
                         }
                     }
                     Label { text: "이름"; Layout.leftMargin: 12 }
-                    TextField {
+                    UiTextField {
                         objectName: "legacyCountryName"
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
                         enabled: editor.selectedEditable
@@ -240,7 +241,7 @@ Rectangle {
                         onEditingFinished: if (!panel.fieldCommitsHeld) editor.commitCountryField("name")
                     }
                     Label { text: "메모"; Layout.leftMargin: 12 }
-                    TextArea {
+                    UiTextArea {
                         objectName: "legacyCountryMemo"
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
                         Layout.preferredHeight: 90
@@ -261,7 +262,7 @@ Rectangle {
                         background: Rectangle { color: "#f5f7f9"; border.color: "#c4cdd5"; radius: 4 }
                     }
                     Label { text: "RGB 색상"; Layout.leftMargin: 12 }
-                    TextField {
+                    UiTextField {
                         objectName: "countryColor"
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
                         enabled: editor.selectedEditable
@@ -281,7 +282,7 @@ Rectangle {
                         onMoved: editor.previewCountryOpacity(value)
                     }
                     Label { text: "소속 레이어"; Layout.leftMargin: 12 }
-                    ComboBox {
+                    UiComboBox {
                         id: countryLayer
                         objectName: "countryLayer"
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12; Layout.bottomMargin: 12
@@ -309,8 +310,8 @@ Rectangle {
                     spacing: 10
                     RowLayout {
                         Layout.fillWidth: true; Layout.margins: 12
-                        Button { objectName: "addLayer"; text: "추가"; onClicked: editor.addLayer() }
-                        Button { objectName: "removeLayer"; text: "삭제"; enabled: editor.canDeleteLayer; onClicked: editor.removeLayer() }
+                        UiButton {outlined:true; objectName: "addLayer"; text: "추가"; onClicked: editor.addLayer() }
+                        UiButton {outlined:true; objectName: "removeLayer"; text: "삭제"; enabled: editor.canDeleteLayer; onClicked: editor.removeLayer() }
                         Item { Layout.fillWidth: true }
                     }
                     Repeater {
@@ -326,10 +327,10 @@ Rectangle {
                     }
                     RowLayout {
                         Layout.leftMargin: 12; Layout.rightMargin: 12
-                        Button { objectName: "layerUp"; text: "위로"; onClicked: editor.moveLayer(1) }
-                        Button { objectName: "layerDown"; text: "아래로"; onClicked: editor.moveLayer(-1) }
+                        UiButton {outlined:true; objectName: "layerUp"; text: "위로"; onClicked: editor.moveLayer(1) }
+                        UiButton {outlined:true; objectName: "layerDown"; text: "아래로"; onClicked: editor.moveLayer(-1) }
                     }
-                    TextField {
+                    UiTextField {
                         objectName: "layerName"
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
                         text: editor.layerNameDraft
@@ -367,15 +368,17 @@ Rectangle {
                 }
             }
 
-            ContentPanel { Layout.fillWidth: true; Layout.fillHeight: true }
+
         }
     }
-    Dialog {
+    Loader {
+        active:panel.ownsStructureDialog
+        sourceComponent:Dialog {
         id: structureDialog
-        objectName: "territorialStructureDialog"
+        objectName: panel.ownsStructureDialog?"territorialStructureDialog":""
         parent: Overlay.overlay
         modal: true; anchors.centerIn: parent; width: Math.min(parent.width - 32, 380)
-        visible: editor.structureDialogOpen
+        visible: panel.ownsStructureDialog&&editor.structureDialogOpen
         title: "영토 구조 변경"
         closePolicy: Popup.NoAutoClose
         contentItem: ScrollView {
@@ -408,17 +411,17 @@ Rectangle {
                     }
                 }
             }
-            TextField { id: createName; objectName: "territorialCreateName"; visible: editor.structureState.createSetup === true; Layout.fillWidth: true; placeholderText: "이름"; text: editor.structureState.name || "" }
-            TextField { id: createId; objectName: "territorialCreateId"; visible: editor.structureState.createSetup === true; Layout.fillWidth: true; placeholderText: "객체 ID"; text: editor.structureState.generatedId || "" }
-            ComboBox {
+            UiTextField { id: createName; objectName: "territorialCreateName"; visible: editor.structureState.createSetup === true; Layout.fillWidth: true; placeholderText: "이름"; text: editor.structureState.name || "" }
+            UiTextField { id: createId; objectName: "territorialCreateId"; visible: editor.structureState.createSetup === true; Layout.fillWidth: true; placeholderText: "객체 ID"; text: editor.structureState.generatedId || "" }
+            UiComboBox {
                 id: createSovereign; objectName: "territorialCreateSovereign"; visible: editor.structureState.createSetup === true && editor.structureState.kind !== 0
                 Layout.fillWidth: true; model: editor.relationCountryOptions; textRole: "name"; valueRole: "id"; displayText: "소속 국가 선택"
             }
-            ComboBox {
+            UiComboBox {
                 id: createParent; objectName: "territorialCreateParent"; visible: editor.structureState.createSetup === true && editor.structureState.kind === 1
                 Layout.fillWidth: true; model: editor.relationParentOptions; textRole: "name"; valueRole: "id"; displayText: "상위 영역 선택"
             }
-            Button {
+            UiButton {outlined:true;
                 objectName: "saveTerritorialCreateSetup"; visible: editor.structureState.createSetup === true; text: "설정 저장 후 도형 그리기"
                 onClicked: {
                     if (editor.updateTerritorialCreateSetup(createName.text, createSovereign.currentValue || "", createParent.currentValue || "", createId.text))
@@ -426,21 +429,21 @@ Rectangle {
                 }
             }
             Label { visible: editor.structureState.conversionSetup === true || (editor.structureState.generatedId !== undefined && editor.structureState.generatedId !== "" && !editor.structureState.createSetup); Layout.fillWidth: true; text: "새 객체 ID: " + (editor.structureState.generatedId || "") ; wrapMode: Text.WrapAnywhere }
-            ComboBox {
+            UiComboBox {
                 id: conversionSovereign
                 objectName: "conversionSovereign"
                 visible: editor.structureState.conversionSetup === true
                 Layout.fillWidth: true; model: editor.relationCountryOptions; textRole: "name"; valueRole: "id"
                 displayText: "소속 국가 선택"
             }
-            ComboBox {
+            UiComboBox {
                 id: conversionParent
                 objectName: "conversionParent"
                 visible: editor.structureState.conversionSetup === true
                 Layout.fillWidth: true; model: editor.relationParentOptions; textRole: "name"; valueRole: "id"
                 displayText: "상위 영역 선택"
             }
-            Button {
+            UiButton {outlined:true;
                 objectName: "applyConversionTarget"
                 visible: editor.structureState.conversionSetup === true
                 text: "전환 대상 설정"
@@ -450,11 +453,12 @@ Rectangle {
             Repeater { model: editor.structureState.impacts || []; delegate: Label { required property var modelData; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; text: (modelData.kind === "transfer" ? "영토 이전·도형 갱신" : modelData.kind === "convert" ? "종류 전환" : modelData.messageKey) + " · " + modelData.id } }
             RowLayout {
                 Layout.fillWidth: true
-                Button { text: "취소"; onClicked: editor.cancelStructureMutation() }
+                UiButton {outlined:true; text: "취소"; onClicked: editor.cancelStructureMutation() }
                 Item { Layout.fillWidth: true }
-                Button { objectName: "confirmTerritorialStructure"; text: "확인"; enabled: editor.structureState.geometryRequired !== true && editor.structureState.conversionSetup !== true && editor.structureState.createSetup !== true; onClicked: editor.confirmStructureMutation() }
+                UiButton {outlined:true; objectName: "confirmTerritorialStructure"; text: "확인"; enabled: editor.structureState.geometryRequired !== true && editor.structureState.conversionSetup !== true && editor.structureState.createSetup !== true; onClicked: editor.confirmStructureMutation() }
             }
           }
         }
+    }
     }
 }

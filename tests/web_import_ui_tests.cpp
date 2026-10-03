@@ -31,7 +31,7 @@ private slots:
         QTemporaryDir dir;EditorController editor(EditorControllerConfig{false,dir.filePath("private.json")});
         QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));
         QVERIFY(!engine.rootObjects().isEmpty());auto window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());QVERIFY(window);
-        QTest::qWait(150);editor.selectCountry("DEU");auto original=editor.selectedName();auto field=item(window->contentItem(),"countryName");QVERIFY(field);
+        QTest::qWait(150);editor.selectCountry("DEU");auto original=editor.selectedName();enterExistingControlRoute(window,"detailObjectName");auto field=item(window->contentItem(),"detailObjectName");QVERIFY(field);
         field->forceActiveFocus();QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier);for(char c:QByteArray("Focus pending"))QTest::keyClick(window,c);
         QCOMPARE(editor.nameDraft(),QString("Focus pending"));QCOMPARE(editor.revision(),qulonglong(0));
         enterExistingControlRoute(window,"webImportButton");click(window,item(window->contentItem(),"webImportButton"));

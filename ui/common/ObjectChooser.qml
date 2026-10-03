@@ -45,8 +45,8 @@ Popup {
             boundsBehavior: Flickable.StopAtBounds
             model: editor.objectChooserCandidates
             ScrollBar.vertical: ScrollBar {}
-            Keys.onReturnPressed: function(event) { editor.chooseMapCandidate(currentIndex, !!(event.modifiers & (Qt.ControlModifier | Qt.MetaModifier))) }
-            Keys.onSpacePressed: function(event) { editor.chooseMapCandidate(currentIndex, !!(event.modifiers & (Qt.ControlModifier | Qt.MetaModifier))) }
+            Keys.onReturnPressed: function(event) { mapView.chooseCandidate(currentIndex, !!(event.modifiers & (Qt.ControlModifier | Qt.MetaModifier))) }
+            Keys.onSpacePressed: function(event) { mapView.chooseCandidate(currentIndex, !!(event.modifiers & (Qt.ControlModifier | Qt.MetaModifier))) }
             delegate: ObjectSelectionButton {
                 required property var modelData
                 required property int index
@@ -56,7 +56,7 @@ Popup {
                 text: modelData.name + " · " + modelData.typeLabel
                 highlighted: ListView.isCurrentItem || editor.selectionItems.some(function(ref) { return ref.key === modelData.key })
                 Accessible.name: text
-                onInvoked: function(modifiers) { editor.chooseMapCandidate(index, !!(modifiers & (Qt.ControlModifier | Qt.MetaModifier))) }
+                onInvoked: function(modifiers) { mapView.chooseCandidate(index, !!(modifiers & (Qt.ControlModifier | Qt.MetaModifier))) }
             }
         }
     }

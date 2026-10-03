@@ -11,6 +11,11 @@
 #include <QQuickStyle>
 #include <QStandardPaths>
 #include <QDir>
+#include <QTimer>
+#include <QFont>
+#include <QRawFont>
+#include <QImage>
+#include <QDebug>
 
 #include <cstdlib>
 
@@ -25,10 +30,12 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion(
         QString::fromUtf8(version.data(), static_cast<qsizetype>(version.size())));
 
+    const bool smokeCheck=QCoreApplication::arguments().contains(QStringLiteral("--smoke-check"));
+    if(smokeCheck)QStandardPaths::setTestModeEnabled(true);
     EditorControllerConfig editorConfig;
-    editorConfig.bootstrapWorld=true;
-    editorConfig.autosaveEnabled=true;
-    editorConfig.projectPreviewEnabled=true;
+    editorConfig.bootstrapWorld=!smokeCheck;
+    editorConfig.autosaveEnabled=!smokeCheck;
+    editorConfig.projectPreviewEnabled=!smokeCheck;
     editorConfig.appearancePath=QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation))
         .filePath(QStringLiteral("appearance-v2.json"));
     EditorController editor(editorConfig);
@@ -44,6 +51,17 @@ int main(int argc, char *argv[])
                      &application, [] { QCoreApplication::exit(EXIT_FAILURE); },
                      Qt::QueuedConnection);
     engine.load(QUrl(QStringLiteral("qrc:/common/Main.qml")));
+
+    if(smokeCheck)QTimer::singleShot(1500,&application,[&] {
+        if(engine.rootObjects().isEmpty()){application.exit(EXIT_FAILURE);return;}
+        const auto font=engine.rootObjects().front()->property("font").value<QFont>();
+        const auto rawFont=QRawFont::fromFont(font);
+        const bool fontReady=font.family().contains(QStringLiteral("Pretendard"))&&rawFont.supportsCharacter(0xD310);
+        const bool flagReady=!QImage(QStringLiteral(":/defaults/flags/native/ad.svg")).isNull();
+        qInfo().noquote()<<QStringLiteral("PORTABLE_SMOKE qml=PASS font=%1 korean=%2 svg=%3 autosave=OFF world=OFF")
+            .arg(font.family()).arg(fontReady?"PASS":"FAIL").arg(flagReady?"PASS":"FAIL");
+        application.exit(fontReady&&flagReady?EXIT_SUCCESS:EXIT_FAILURE);
+    });
 
     return application.exec();
 }

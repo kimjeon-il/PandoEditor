@@ -18,7 +18,7 @@ ColumnLayout {
             title: modelData.name + " · 소속 설정"
             ColumnLayout {
                 anchors.fill: parent
-                ComboBox {
+                UiComboBox {
                     id: mode
                     Layout.fillWidth: true
                     model: ["기존 국가의 하위단위로 추가", "독립 국가로 추가"]
@@ -26,7 +26,7 @@ ColumnLayout {
                         {mode: currentIndex===1 ? "country" : "subunit",countryId: country.currentValue,
                          parentId: parentUnit.currentValue,name: countryName.text})
                 }
-                ComboBox {
+                UiComboBox {
                     id: country
                     Layout.fillWidth: true
                     visible: mode.currentIndex===0
@@ -38,7 +38,7 @@ ColumnLayout {
                             {mode:"subunit",countryId:currentValue,parentId:"",name:countryName.text})
                     }
                 }
-                ComboBox {
+                UiComboBox {
                     id: parentUnit
                     Layout.fillWidth: true
                     visible: mode.currentIndex===0
@@ -47,7 +47,7 @@ ColumnLayout {
                     onActivated: root.choiceChanged(group.modelData.id,
                         {mode:"subunit",countryId:country.currentValue,parentId:currentValue,name:countryName.text})
                 }
-                TextField {
+                UiTextField {
                     id: countryName
                     Layout.fillWidth: true
                     visible: mode.currentIndex===1

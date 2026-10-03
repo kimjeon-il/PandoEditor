@@ -1,4 +1,3 @@
-#include "ui_navigation.h"
 #include "editorcontroller.h"
 #include "ui_navigation.h"
 #include "windowsframe.h"
@@ -68,7 +67,6 @@ struct Harness {
     QQuickItem* control(const QString& name)const{return window?item(window->contentItem(),name):nullptr;}
     bool click(const QString& name,Qt::KeyboardModifiers mods=Qt::NoModifier,bool touch=false) {
         enterExistingControlRoute(window,name);
-        enterExistingControlRoute(window,name);
         auto c=control(name);if(!c||!c->isVisible()||!c->isEnabled())return false;
         // Bring a delegate into view without replacing an actual input gesture.
         for(auto p=c->parentItem();p;p=p->parentItem()){
@@ -78,11 +76,11 @@ struct Harness {
                     double y=c->mapToItem(content,QPointF()).y();
                     const double max=std::max(0.,p->property("contentHeight").toDouble()-p->height());
                     p->setProperty("contentY",std::clamp(y-8.,0.,max));
-                }
-                break;
-            }
+                }            }
         }
-        QTest::qWait(50);auto pos=c->mapToScene(QPointF(c->width()/2,c->height()/2)).toPoint();
+        QTest::qWait(50);QRectF visibleRect(c->mapToScene(QPointF()),QSizeF(c->width(),c->height()));
+        for(auto p=c->parentItem();p;p=p->parentItem())if(p->clip())visibleRect=visibleRect.intersected(QRectF(p->mapToScene(QPointF()),QSizeF(p->width(),p->height())));
+        visibleRect=visibleRect.intersected(QRectF(QPointF(),window->size()));if(visibleRect.isEmpty())return false;auto pos=visibleRect.center().toPoint();
         if(!QRect(QPoint(),window->size()).contains(pos))return false;
         if(touch){
             QTest::keyRelease(window,Qt::Key_Control,Qt::NoModifier);
@@ -100,7 +98,8 @@ struct Harness {
         QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier);
         // IME commit also covers non-ASCII search input.
         QInputMethodEvent event;event.setCommitString(value);QGuiApplication::sendEvent(c,&event);
-        QTest::qWait(160);return true;
+        if(!QTest::qWaitFor([&]{return editor.searchQuery()==value;},3000))return false;
+        window->grabWindow();return true;
     }
     QPointF point(const QString& id) const {
         for(auto value:editor.paths()){
@@ -115,17 +114,21 @@ struct Harness {
                                map->property("originY").toDouble()+p.y()*map->property("mapScale").toDouble()}).toPoint();
     }
     void mapClick(const QString& id,Qt::KeyboardModifiers mods=Qt::NoModifier,bool touch=false){
+        QTest::qWait(220); // settle the 170ms sheet transition before checking its hit area
+        if(id=="H"){editor.fitMapCamera();QTest::qWait(100);}
+        auto panel=control("objectPropertyPanel");if(panel&&panel->isVisible())click("toggleObjectEditor");
         // Let focus/fit requests publish their new viewport before translating
         // project coordinates back into the window's scene coordinates.
         QTest::qWait(100);
+        if(id=="S"){auto map=control("mapView");const auto local=map->mapFromScene(mapPoint(id));if(map->property("zoom").toDouble()<3){editor.zoomMapCameraAt(3,local.x(),local.y());QTest::qWait(100);}}
         auto pos=mapPoint(id);
-        if(id=="A"){
+        if(id=="A"||id=="S"){
             // At 360px the web's 12px subunit tolerance reaches the rectangle
             // center. Use an interior point away from S/R for a single-country hit.
             for(auto value:editor.paths()){
                 const auto p=value.toMap();if(p["countryId"]!=id)continue;
                 auto map=control("mapView");
-                const QPointF projected(p["left"].toDouble()+p["width"].toDouble()*.85,
+                const QPointF projected(p["left"].toDouble()+p["width"].toDouble()*(id=="S"?.15:.85),
                                         p["top"].toDouble()+p["height"].toDouble()*.15);
                 pos=map->mapToScene({map->property("originX").toDouble()+projected.x()*map->property("mapScale").toDouble(),
                                      map->property("originY").toDouble()+projected.y()*map->property("mapScale").toDouble()}).toPoint();
@@ -185,10 +188,10 @@ private slots:
         QCOMPARE(ids(h.editor.selectionItems()),QStringList({"A","B"}));
         QCOMPARE(h.editor.selectedId(),QString("B"));
         h.window->grabWindow().save(mobile?"search-mobile-360.png":"search-desktop.png");
-        // The pinned web search handler deliberately supplies orderedRefs=[]:
-        // Shift in this search surface is a no-op, not a new range workflow.
+        // The current web search handler supplies the visible ordered result refs:
+        // Shift selects the visible result range and makes its endpoint primary.
         QVERIFY(h.click("searchSelect_A",Qt::ShiftModifier));
-        QCOMPARE(ids(h.editor.selectionItems()),QStringList({"A","B"}));
+        QCOMPARE(ids(h.editor.selectionItems()),QStringList({"A","B"}));QCOMPARE(h.editor.selectedId(),QString("A"));
         QVERIFY(h.click("searchSelect_B",Qt::ControlModifier));
         QCOMPARE(ids(h.editor.selectionItems()),QStringList({"A"}));
         QCOMPARE(h.editor.selectedId(),QString("A"));
@@ -196,7 +199,7 @@ private slots:
         QCOMPARE(ids(h.editor.selectionItems()),QStringList({"A","B"}));
         QVERIFY(h.click("searchSelect_A",Qt::NoModifier,mobile));
         QCOMPARE(ids(h.editor.selectionItems()),QStringList({"A"}));
-        QVERIFY(h.control("countryName")->isVisible()); // single result closes search
+        QVERIFY(h.control("selectionCardName")->isVisible()); // single result closes search
         QCOMPARE(h.editor.documentBytes(),bytes);QCOMPARE(h.editor.revision(),rev);
         QVERIFY(!h.editor.dirty());QVERIFY(!h.editor.canUndo());QVERIFY(!h.editor.canRedo());
         QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join('\n')));
@@ -250,7 +253,7 @@ private slots:
     void draftsSurviveRealNavigation_data(){modes();}
     void draftsSurviveRealNavigation(){
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
-        h.editor.selectCountry("A");QVERIFY(h.click("countryName"));
+        h.editor.selectCountry("A");QVERIFY(h.click("detailObjectName"));
         QTest::keyClick(h.window,Qt::Key_A,Qt::ControlModifier);for(char c:QByteArray("Draft A"))QTest::keyClick(h.window,c);
         QCOMPARE(h.editor.nameDraft(),QString("Draft A"));
         const auto bytes=h.editor.documentBytes();const auto rev=h.editor.revision();
@@ -260,16 +263,16 @@ private slots:
         h.editor.selectCountry("A");QCOMPARE(h.editor.nameDraft(),QString("Draft A"));
         auto map=h.control("mapView");QVERIFY(map);
         const auto localTarget=map->mapFromScene(h.mapPoint("S"));
-        const auto deltaY=map->height()-26-localTarget.y();
+        const auto deltaY=80-localTarget.y();
         h.editor.beginMapInteraction();h.editor.beginMapCameraPan();
-        // Keep the tested map pick outside the new bottom-center command bar.
-        QVERIFY(h.editor.updateMapCameraPan(mobile?24-localTarget.x():0,deltaY));
+        // Keep the map gesture above the compact sheet and the memo popup.
+        QVERIFY(h.editor.updateMapCameraPan(mobile?map->width()/2-localTarget.x():0,deltaY));
         h.editor.endMapCameraPan();h.editor.endMapInteraction();
-        QVERIFY(h.click("countryName"));
-        QVERIFY(h.click("countryMemo"));
+        QVERIFY(h.click("detailObjectName"));
+        QVERIFY(h.click("detailObjectNotes"));
         // Switching to another field still performs the web's normal independent commit.
         QCOMPARE(h.editor.revision(),rev+1);
-        QInputMethodEvent event;event.setCommitString(QStringLiteral("메모 초안"));QGuiApplication::sendEvent(h.control("countryMemo"),&event);
+        QInputMethodEvent event;event.setCommitString(QStringLiteral("메모 초안"));QGuiApplication::sendEvent(h.control("detailObjectNotes"),&event);
         const auto after=h.editor.documentBytes();const auto memoRev=h.editor.revision();
         h.mapClick("S");auto chooser=h.window->findChild<QObject*>("objectChooser");QVERIFY(chooser);
         QTRY_VERIFY(chooser->property("visible").toBool());QCOMPARE(h.editor.revision(),memoRev);

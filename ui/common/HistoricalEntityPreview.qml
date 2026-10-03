@@ -1,16 +1,19 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "UiTokens.js" as Tokens
 
 ColumnLayout {
     id: root
     property var preview: ({})
-    spacing: 6
-    Label { Layout.fillWidth: true; text: root.preview.name || "항목을 선택하세요"; font.bold: true; font.pixelSize: 17; wrapMode: Text.Wrap }
-    Label { Layout.fillWidth: true; text: root.preview.canonicalName || ""; color: "#536477"; visible: !!text }
+    readonly property var colors:Tokens.colors(editor.appearancePreferences)
+    function labelTerm(value){return ({exact:"정확",approximate:"근사",year:"연도",month:"월",day:"일",high:"높음",medium:"보통",low:"낮음",certain:"확실",uncertain:"불확실"})[value]||value||"기재 없음"}
+    spacing: 8
+    Label {textFormat:Text.PlainText; Layout.fillWidth: true; text: root.preview.name || "항목을 선택하세요"; font.bold: true; font.pixelSize: 17; wrapMode: Text.Wrap }
+    Label {textFormat:Text.PlainText; Layout.fillWidth: true; text: root.preview.canonicalName || ""; color:root.colors.muted; visible: !!text }
     Rectangle {
         Layout.fillWidth: true; Layout.preferredHeight: 150
-        color: "#e8f0f5"; border.color: "#b6c8d5"; radius: 6
+        color:root.colors.subtle;border.color:root.colors.border; radius: 6
         Canvas {
             anchors.fill: parent; anchors.margins: 10
             property var shape: root.preview.polygons || []
@@ -30,13 +33,13 @@ ColumnLayout {
                 }
             }
         }
-        Label { anchors.centerIn: parent; text: "표시할 경계 없음"; visible: !(root.preview.polygons || []).length }
+        Label {textFormat:Text.PlainText; anchors.centerIn: parent; text: "표시할 경계 없음"; visible: !(root.preview.polygons || []).length }
     }
-    Label { Layout.fillWidth: true; text: "기간: " + (root.preview.validFrom || "열림") + " ~ " + (root.preview.validTo || "열림"); wrapMode: Text.Wrap }
-    Label { Layout.fillWidth: true; text: "경계: " + (root.preview.geometryVersionId || "-") + " · 정밀도: " + (root.preview.datePrecision || "-"); wrapMode: Text.Wrap }
-    Label { Layout.fillWidth: true; text: "확실성: " + (root.preview.certainty || "-") + " · 출처: " + (root.preview.sourceId || "-"); wrapMode: Text.Wrap }
-    Label { Layout.fillWidth: true; visible: !!root.preview.partial; text: "일부 원본 자료가 누락되었습니다. 추가 시 명시적 승인이 필요합니다."; color: "#a24b18"; wrapMode: Text.Wrap }
-    Label { Layout.fillWidth: true; visible: !!root.preview.approximateGeometry; text: "근사 경계 자료"; color: "#a24b18" }
-    Label { Layout.fillWidth: true; visible: !!root.preview.sourceTitle; text: "자료: " + root.preview.sourceTitle + (root.preview.sourceLicense ? " · " + root.preview.sourceLicense : ""); wrapMode: Text.Wrap }
-    Label { Layout.fillWidth: true; text: root.preview.error || ""; color: "#a73535"; visible: !!text; wrapMode: Text.Wrap }
+    Label {textFormat:Text.PlainText; Layout.fillWidth: true; text: "기간: " + (root.preview.validFrom || "열림") + " ~ " + (root.preview.validTo || "열림"); wrapMode: Text.Wrap }
+    Label {textFormat:Text.PlainText; Layout.fillWidth: true; text: "경계 자료 · 정밀도: " + root.labelTerm(root.preview.datePrecision); wrapMode: Text.Wrap }
+    Label {textFormat:Text.PlainText; Layout.fillWidth: true; text: "확실성: " + root.labelTerm(root.preview.certainty); wrapMode: Text.Wrap }
+    Label {textFormat:Text.PlainText; Layout.fillWidth: true; visible: !!root.preview.partial; text: "일부 원본 자료가 누락되었습니다. 추가 시 명시적 승인이 필요합니다."; color: "#a24b18"; wrapMode: Text.Wrap }
+    Label {textFormat:Text.PlainText; Layout.fillWidth: true; visible: !!root.preview.approximateGeometry; text: "근사 경계 자료"; color: "#a24b18" }
+    Label {textFormat:Text.PlainText; Layout.fillWidth: true; visible: !!root.preview.sourceTitle; text: "자료: " + root.preview.sourceTitle + (root.preview.sourceLicense ? " · " + root.preview.sourceLicense : ""); wrapMode: Text.Wrap }
+    Label {textFormat:Text.PlainText; Layout.fillWidth: true; text: root.preview.error || ""; color: "#a73535"; visible: !!text; wrapMode: Text.Wrap }
 }

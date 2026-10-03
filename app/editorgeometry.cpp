@@ -68,15 +68,23 @@ QVariantMap EditorController::geometryEditState() const
 {
     if(!geometryEdit_) return {{"active",false}};
     const auto& edit=*geometryEdit_;
-    QVariantList providers;
-    if(edit.mergeIntent)for(const auto& ref:edit.mergeIntent->donors)providers.append(objectRefValue(ref));
-    if(edit.annexIntent)for(const auto& ref:edit.annexIntent->donors)providers.append(objectRefValue(ref));
-    return {{"active",true},{"tool",edit.tool},{"stage",edit.preview?QStringLiteral("review"):edit.stage},{"choosingProviders",edit.choosingProviders},{"providers",providers},
+    auto describe=[&](const ObjectRef& ref) {
+        auto row=objectRefValue(ref);QString name;
+        for(const auto& unit:project_.document().units)if(territorialRef(unit.id)==ref){name=QString::fromStdString(objectDisplayName(unit));break;}
+        if(name.isEmpty()&&ref==edit.target) { if(edit.createIntent)name=QString::fromStdString(edit.createIntent->name);else if(edit.content && contentSession_){name=contentEditState().value("name").toString();if(name.isEmpty()&&!contentSession_->edit.create)name=objectProperties().value("displayName").toString();}else name=objectProperties().value("displayName").toString(); }
+        row["name"]=name.isEmpty()?QStringLiteral("새 객체"):name;return row;
+    };
+    QVariantList providers,targets;
+    targets.append(describe(edit.target));
+    for(const auto& ref:edit.boundaryOwners)if(!(ref==edit.target))targets.append(describe(ref));
+    if(edit.mergeIntent)for(const auto& ref:edit.mergeIntent->donors)providers.append(describe(ref));
+    if(edit.annexIntent)for(const auto& ref:edit.annexIntent->donors)providers.append(describe(ref));
+    return {{"active",true},{"creating",bool(edit.createIntent)||(edit.content&&contentSession_&&contentSession_->edit.create)},{"tool",edit.tool},{"stage",edit.preview?QStringLiteral("review"):edit.stage},{"choosingProviders",edit.choosingProviders},{"providers",providers},
         {"splitChoice",edit.splitIntent?edit.splitIntent->retainedPart:-1},
         {"phase",edit.preview?"preview":edit.job?"calculating":"editing"},{"previewReady",bool(edit.preview)},
         {"calculating",bool(edit.job)},
         {"selectedVertex",edit.vertex},{"error",edit.error},{"canUndo",edit.tool=="split"?!edit.lineDraft.empty():!edit.undo.empty()},{"canRedo",!edit.redo.empty()},
-        {"target",objectRefValue(edit.target)},
+        {"target",objectRefValue(edit.target)},{"targets",targets},
         {"snapX",edit.snapPoint?projection_.project(*edit.snapPoint).x:std::numeric_limits<double>::quiet_NaN()},
         {"snapY",edit.snapPoint?projection_.project(*edit.snapPoint).y:std::numeric_limits<double>::quiet_NaN()}};
 }

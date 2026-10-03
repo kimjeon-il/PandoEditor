@@ -17,7 +17,9 @@ ApplicationWindow {
     readonly property var appearance: editor.appearancePreferences
     readonly property bool darkAppearance: appearance.effectiveTheme === "dark"
     readonly property var uiColors:Tokens.colors(appearance)
-    font.family:"Malgun Gothic"
+    FontLoader {id:uiFont;source:"qrc:/fonts/Pretendard-Regular.otf"}
+    FontLoader {source:"qrc:/fonts/Pretendard-SemiBold.otf"}
+    font.family:uiFont.status===FontLoader.Ready?uiFont.name:"Malgun Gothic"
     font.pixelSize:14
     function accentColor(preset) {
         const light={"red":"#d43d45","orange":"#dc781d","green":"#2c9857","teal":"#168f8b","blue":"#316fd3","purple":"#7856d6","pink":"#cc4b83"}
@@ -105,6 +107,7 @@ ApplicationWindow {
     function finishAction() {
         let action=pendingAction
         pendingAction=""
+        if (action === "new") { editor.discardPendingEdits(); if(editor.newProject())workspace.closePanels() }
         if (action === "open" || action === "import") openDialog.open()
         if (action === "close") { allowClose=true; window.close() }
     }
@@ -113,7 +116,7 @@ ApplicationWindow {
             if (action === "close") { allowClose=true; window.close() }
             return
         }
-        if (action !== "open" && action !== "import" && !editor.contentEditState.active && !editor.geometryEditState.active && !editor.commitPendingEdits()) return
+        if (action !== "open" && action !== "import" && action !== "new" && !editor.contentEditState.active && !editor.geometryEditState.active && !editor.commitPendingEdits()) return
         pendingAction=action
         if (editor.dirty) unsaved.open()
         else finishAction()
@@ -122,7 +125,7 @@ ApplicationWindow {
         if (editor.startupBusy) return
         if (!editor.contentEditState.active && !editor.geometryEditState.active && !editor.commitPendingEdits()) return
         if (editor.mobileMode) {
-            if (editor.savePrivate()) finishAction()
+            if (editor.savePrivate()) {window.notify("프로젝트를 저장했습니다.","success");finishAction()}
             else {
                 pendingAction=""
                 if (editor.privateRecoveryRequired) {
@@ -133,7 +136,7 @@ ApplicationWindow {
             return
         }
         if (!asNew && editor.hasFile()) {
-            if (editor.save()) finishAction()
+            if (editor.save()) {window.notify("프로젝트를 저장했습니다.","success");finishAction()}
             else pendingAction=""
         } else saveDialog.open()
     }
@@ -146,6 +149,7 @@ ApplicationWindow {
         }
     }
     function handleBack() {
+        if(appearancePreferencesDialog.visible){editor.cancelAppearancePreview();appearancePreferencesDialog.close();return}
         if (Qt.inputMethod.visible) { Qt.inputMethod.hide(); return }
         if (editor.geometryEditState.active) { editor.geometryBack(); return }
         if (historicalPanel.visible) { historicalPanel.close(); return }
@@ -239,6 +243,7 @@ ApplicationWindow {
         onGisExportRequested: gisExportPanel.open()
         onProjectGpkgExportRequested: projectGpkgSaveDialog.open()
         onPreferencesRequested: appearancePreferencesDialog.open()
+        onNewProjectRequested: window.requestAction("new")
         onOpenRequested: window.requestAction(editor.mobileMode ? "import" : "open")
         onSaveRequested: window.requestSave(false)
         onSaveAsRequested: editor.mobileMode ? window.requestExport() : window.requestSave(true)
@@ -252,7 +257,7 @@ ApplicationWindow {
         Label { text: "저장된 지도를 불러오는 중…" }
     }
     Shortcut { sequences: [StandardKey.Undo]; enabled: !editor.startupBusy && editor.canUndo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.undo() }
-    Shortcut { sequences: [StandardKey.Redo]; enabled: !editor.startupBusy && editor.canRedo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.redo() }
+    Shortcut { sequences: [StandardKey.Redo,"Ctrl+Shift+Z"]; enabled: !editor.startupBusy && editor.canRedo && !window.webImportFlowActive && !editor.colorEditOpen; onActivated: editor.redo() }
     Shortcut { sequence: StandardKey.Save; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestSave(false) }
     Shortcut { sequence: StandardKey.Open; enabled: !window.webImportFlowActive && !editor.colorEditOpen; onActivated: window.requestAction(editor.mobileMode ? "import" : "open") }
     Popup {
@@ -274,9 +279,9 @@ ApplicationWindow {
             Label { text:"테마";font.bold:true }
             Row {
                 spacing: 6
-                Button { objectName:"themeLightButton";text:"밝게";checkable:true;checked:editor.appearancePreferences.theme==="light";onClicked:editor.previewAppearance({"theme":"light"}) }
-                Button { objectName:"themeDarkButton";text:"어둡게";checkable:true;checked:editor.appearancePreferences.theme==="dark";onClicked:editor.previewAppearance({"theme":"dark"}) }
-                Button { objectName:"themeSystemButton";text:"시스템";checkable:true;checked:editor.appearancePreferences.theme==="system";onClicked:editor.previewAppearance({"theme":"system"}) }
+                UiButton { outlined:true;selected:checked;objectName:"themeLightButton";text:"밝게";checkable:true;checked:editor.appearancePreferences.theme==="light";onClicked:editor.previewAppearance({"theme":"light"}) }
+                UiButton { outlined:true;selected:checked;objectName:"themeDarkButton";text:"어둡게";checkable:true;checked:editor.appearancePreferences.theme==="dark";onClicked:editor.previewAppearance({"theme":"dark"}) }
+                UiButton { outlined:true;selected:checked;objectName:"themeSystemButton";text:"시스템";checkable:true;checked:editor.appearancePreferences.theme==="system";onClicked:editor.previewAppearance({"theme":"system"}) }
             }
             Label { text:"강조색";font.bold:true }
             Flow {
@@ -290,21 +295,22 @@ ApplicationWindow {
                     delegate: Button {
                         required property var modelData
                         objectName: "accent"+modelData.id.charAt(0).toUpperCase()+modelData.id.slice(1)+"Button"
-                        text: modelData.name
+                        text:"";implicitWidth:36;implicitHeight:36;Accessible.name:modelData.name;ToolTip.text:modelData.name;ToolTip.visible:hovered
                         checkable: true
                         checked: editor.appearancePreferences.accentPreset===modelData.id
-                        background: Rectangle { radius:4;color:window.accentColor(parent.modelData.id);border.width:parent.checked?3:1;border.color:window.darkAppearance?"#ffffff":"#263746" }
+                        contentItem:Item{}
+                        background: Rectangle { radius:18;color:window.accentColor(parent.modelData.id);border.width:parent.checked?3:1;border.color:window.darkAppearance?"#ffffff":"#263746" }
                         onClicked: editor.previewAppearance({"accentPreset":modelData.id})
                     }
                 }
             }
-            CheckBox { objectName:"statusBarToggle";text:"하단 상태표시줄 표시";checked:editor.appearancePreferences.statusBarVisible!==false;onClicked:editor.previewAppearance({"statusBarVisible":checked}) }
-            CheckBox { objectName:"smoothLinesToggle";text:"경계선 부드럽게";checked:editor.appearancePreferences.smoothLines!==false;onClicked:editor.previewAppearance({"smoothLines":checked}) }
+            UiSwitch { objectName:"statusBarToggle";text:"하단 상태표시줄 표시";checked:editor.appearancePreferences.statusBarVisible!==false;onClicked:editor.previewAppearance({"statusBarVisible":checked}) }
+            UiSwitch { objectName:"smoothLinesToggle";text:"경계선 부드럽게";checked:editor.appearancePreferences.smoothLines!==false;onClicked:editor.previewAppearance({"smoothLines":checked}) }
             Row {
                 spacing: 8
-                Button { objectName:"preferencesResetButton";text:"기본값 복원";onClicked:editor.resetAppearancePreview() }
-                Button { objectName:"preferencesCancelButton";text:"취소";onClicked:{editor.cancelAppearancePreview();appearancePreferencesDialog.close()} }
-                Button { objectName:"preferencesApplyButton";text:"적용";highlighted:true;onClicked:if(editor.applyAppearancePreview())appearancePreferencesDialog.close() }
+                UiButton {outlined:true;objectName:"preferencesResetButton";text:"기본값 복원";onClicked:editor.resetAppearancePreview() }
+                UiButton {outlined:true;objectName:"preferencesCancelButton";text:"취소";onClicked:{editor.cancelAppearancePreview();appearancePreferencesDialog.close()} }
+                UiButton {outlined:true;objectName:"preferencesApplyButton";text:"적용";highlighted:true;onClicked:if(editor.applyAppearancePreview())appearancePreferencesDialog.close() }
             }
         }
     }
@@ -418,7 +424,7 @@ ApplicationWindow {
         defaultSuffix: "pando.json"
         nameFilters: ["Pandoeditor 프로젝트 (*.pando.json)"]
         onAccepted: {
-            if (editor.saveFile(selectedFile)) window.finishAction()
+            if (editor.saveFile(selectedFile)) {window.notify("프로젝트를 저장했습니다.","success");window.finishAction()}
             else window.pendingAction=""
         }
         onRejected: window.pendingAction=""
@@ -438,17 +444,18 @@ ApplicationWindow {
             Button { objectName: "cancelUnsaved"; text: "취소"; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: { unsaved.close(); window.pendingAction="" } }
         }
     }
-    Dialog {
-        id: errorDialog
-        objectName: "errorDialog"
-        anchors.centerIn: parent
-        width: Math.min(460,window.width-24)
-        title: "작업을 완료하지 못했습니다"
-        modal: true
-        standardButtons: Dialog.Ok
-        property string message: ""
-        contentItem: Label { textFormat:Text.PlainText; text: errorDialog.message; wrapMode: Text.WrapAnywhere }
+    Popup {
+        id:errorDialog;objectName:"errorDialog"
+        parent:Overlay.overlay;x:(window.width-width)/2;y:Math.max(12,window.height-height-48)
+        width:Math.min(460,window.width-24);padding:0;modal:false;dim:false
+        closePolicy:Popup.NoAutoClose
+        property string message:""
+        property string kind:"error"
+        contentItem:UiNotice {text:errorDialog.message;kind:errorDialog.kind;closable:true;onDismissed:errorDialog.close()}
+        background:Item{}
     }
+    function notify(message,kind){errorDialog.message=message;errorDialog.kind=kind||"info";errorDialog.open();notificationTimer.restart()}
+    Timer {id:notificationTimer;interval:5000;onTriggered:if(errorDialog.kind!=="error"&&errorDialog.kind!=="progress")errorDialog.close()}
     Dialog {
         id: presentationRecoveryDialog
         objectName: "presentationRecoveryDialog"
@@ -503,13 +510,17 @@ ApplicationWindow {
         }
         function onProjectGpkgChanged() {
             if (editor.projectGpkgState.stage === "error") {
-                errorDialog.message=editor.projectGpkgState.error
-                errorDialog.open()
+                window.notify(editor.projectGpkgState.error,"error")
             }
         }
+        function onJobChanged(){
+            if(editor.jobBusy && (!errorDialog.visible || errorDialog.kind==="progress"))window.notify("작업 처리 중 · "+editor.jobProgress+"%","progress")
+            else if(!editor.jobBusy && errorDialog.kind==="progress")errorDialog.close()
+        }
+        function onGisExportChanged(){if(editor.gisExportState.stage==="done")window.notify("GIS 파일을 저장했습니다.","success")}
         function onErrorOccurred(message) {
             if (window.webImportFlowActive) webReport.extraError=message
-            else { errorDialog.message=message; errorDialog.open() }
+            else window.notify(message,"error")
         }
         function onPrivateRecoveryRequiredChanged() {
             if (editor.privateRecoveryRequired) {

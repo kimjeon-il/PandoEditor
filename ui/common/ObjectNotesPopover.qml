@@ -46,11 +46,11 @@ Popup {
         RowLayout {
             Layout.fillWidth:true
             Label { text:"메모";font.bold:true;Layout.fillWidth:true }
-            ToolButton { objectName:"closeObjectNotes";text:"닫기";onClicked:notes.close() }
+            UiButton { objectName:"closeObjectNotes";symbol:"close";ToolTip.text:"닫기";onClicked:notes.close() }
         }
         ScrollView {
             Layout.fillWidth:true;Layout.fillHeight:true;clip:true
-            TextArea {
+            UiTextArea {
                 id:textArea
                 objectName: notes.ownerType==="country"?"countryMemo":notes.ownerType==="subunit"?"subunitMemo":"regionMemo"
                 text:editor.memoDraft

@@ -1,4 +1,6 @@
 #include "editorcontroller.h"
+#include <QDir>
+#include <QLocale>
 #include "defaultflagresolver.h"
 #include <QFile>
 #include <QImage>
@@ -194,10 +196,24 @@ void EditorController::refreshContentSession() {
     contentSession_->base=project_.snapshot();contentSession_->edit.value=storedContentValue(contentSession_->base,contentSession_->edit);
     emit contentEditChanged();
 }
+QVariantList EditorController::flagLibrary() const {
+    QVariantList result;QDir directory(":/defaults/flags/native");
+    for(const auto& file:directory.entryList({"*.svg"},QDir::Files,QDir::Name)) {
+        const auto code=file.chopped(4);const QLocale locale("ko_"+code.toUpper());
+        const auto name=code=="xk"?QStringLiteral("코소보"):code.size()==2&&QLocale::territoryToCode(locale.territory())==code.toUpper()?locale.nativeTerritoryName():code.toUpper();
+        result.append(QVariantMap{{"name",name},{"code",code},{"source","qrc:/defaults/flags/native/"+file}});
+    }
+    return result;
+}
 bool EditorController::loadContentFlag(const QUrl& url) {
     if(!contentSession_||contentSession_->preview||!std::holds_alternative<TerritorialSymbolStyle>(contentSession_->edit.value))return false;
-    QFile file(url.isLocalFile()?url.toLocalFile():url.toString());if(!file.open(QIODevice::ReadOnly)||file.size()>16*1024*1024)return false;
-    const auto image=QImage::fromData(file.readAll());if(image.isNull())return false;
+    QByteArray bytes;
+    if(url.scheme()=="data") {
+        const auto data=url.toString().toUtf8();const auto comma=data.indexOf(',');
+        if(comma<0||!data.left(comma).contains(";base64")||data.size()>24*1024*1024)return false;
+        bytes=QByteArray::fromBase64(data.mid(comma+1));
+    }else {QFile file(url.scheme()=="qrc"?":"+url.path():url.isLocalFile()?url.toLocalFile():url.toString());if(!file.open(QIODevice::ReadOnly)||file.size()>16*1024*1024)return false;bytes=file.readAll();}
+    const auto image=QImage::fromData(bytes);if(image.isNull())return false;
     QByteArray png;QBuffer buffer(&png);buffer.open(QIODevice::WriteOnly);if(!image.save(&buffer,"PNG"))return false;
     contentSession_->edit.value=TerritorialSymbolStyle{FlagPolicy::Embedded,("data:image/png;base64,"+png.toBase64()).toStdString()};contentSession_->pendingFields.insert("flagSource");emit contentEditChanged();emit dirtyChanged();return true;
 }

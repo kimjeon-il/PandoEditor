@@ -24,13 +24,14 @@ Dialog {
     }
     ColumnLayout {
         anchors.fill:parent
-        spacing:8
+        spacing:12
+        Label {objectName:"gisExportStep";text:root.state.stage==="working"?"2 · 파일 생성":root.state.stage==="done"?"3 · 저장 완료":"1 · 내보낼 항목 선택";font.bold:true;font.pixelSize:18}
         Label {
             Layout.fillWidth:true
             text:"프로젝트에서 선택한 레이어를 GIS 파일로 내보냅니다. 프로젝트 전체 복원용 저장과 별개입니다."
             wrapMode:Text.WordWrap
         }
-        ComboBox {
+        UiComboBox {
             id: formatChoice
             objectName:"gisExportFormat"
             Layout.fillWidth:true
@@ -47,7 +48,7 @@ Dialog {
                 Repeater {
                     id:layerRepeater
                     model:editor.gisExportLayers
-                    CheckBox {
+                    UiSwitch {
                         property string category:modelData.category
                         objectName:"gisExportLayer_"+category
                         text:modelData.name+" · "+modelData.count+"개"
@@ -70,18 +71,12 @@ Dialog {
             text:"저장했습니다: "+(root.state.fileName||"")
             wrapMode:Text.WrapAnywhere
         }
-        Label {
-            Layout.fillWidth:true
-            visible:!!root.state.error
-            color:"#ae2828"
-            text:root.state.error||""
-            wrapMode:Text.WrapAnywhere
-        }
+        UiNotice {Layout.fillWidth:true;visible:!!root.state.error;kind:"error";text:root.state.error||""}
         RowLayout {
             Layout.fillWidth:true
-            Button {text:"닫기";onClicked:root.close()}
+            UiButton {text:"닫기";onClicked:root.close()}
             Item {Layout.fillWidth:true}
-            Button {
+            UiButton {
                 objectName:"gisExportConfirm"
                 text:"내보낼 위치 선택"
                 enabled:root.state.stage!=="working" && root.selectedLayers().length>0

@@ -49,6 +49,13 @@ void EditorController::cancelGisImport() {
         pandoeditor::CommandProcessor::cancel(*gisImport_->preview);
     gisImport_.reset();emit gisImportChanged();
 }
+bool EditorController::backGisImport() {
+    if(!gisImport_||gisImport_->stage!=QStringLiteral("impact"))return false;
+    ++gisImportToken_;
+    if(gisImport_->preview)pandoeditor::CommandProcessor::cancel(*gisImport_->preview);
+    gisImport_->preview.reset();gisImport_->stage=QStringLiteral("mapping");gisImport_->summary.clear();gisImport_->error.clear();
+    emit gisImportChanged();return true;
+}
 bool EditorController::loadGisSource(const QUrl& url) {
     cancelGisImport();
     try {

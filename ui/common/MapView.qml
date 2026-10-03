@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Window
+import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Shapes
 import QtQuick.Dialogs as Native
@@ -22,8 +23,12 @@ Rectangle {
     readonly property real mapScale: Number.isFinite(cameraState.mapScale) ? cameraState.mapScale : 1
     readonly property real originX: Number.isFinite(cameraState.originX) ? cameraState.originX : 0
     readonly property real originY: Number.isFinite(cameraState.originY) ? cameraState.originY : 0
+    signal objectActivated()
     signal selectionNavigationStarted()
     signal selectionPointerChanged(bool down)
+    signal selectionModifiersChanged(bool additive)
+    property bool mapSelectionAdditive:false
+    function chooseCandidate(index,additive){selectionModifiersChanged(additive||mapSelectionAdditive);const result=editor.chooseMapCandidate(index,additive);selectionModifiersChanged(false);return result}
     property real controlsTopMargin:12
     property bool externalCommandBar:false
     function showReferenceImages(trigger) {
@@ -32,6 +37,11 @@ Rectangle {
         referenceImageMenu.y=Math.max(8,point.y-referenceImageMenu.height-8)
         referenceImageMenu.open()
     }
+    property bool labelPress:false
+    property var hoverLabel: ({})
+    property point hoverLabelPoint:Qt.point(0,0)
+    property bool hoverPreviewVisible:false
+    property string hoverPreviewKey:""
     property point chooserPoint: Qt.point(0,0)
     property string mapHoverKey: ""
     readonly property bool geometryEditing: editor.geometryEditState.active === true
@@ -39,7 +49,7 @@ Rectangle {
     Keys.onPressed: function(event) {
         if (!geometryEditing) return
         if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace) {
-            if (editor.geometryDeleteSelectedVertex()) event.accepted = true
+            if (taskPanel.vertices && editor.geometryDeleteSelectedVertex()) event.accepted = true
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             if (editor.requestGeometryPreview()) event.accepted = true
         } else if (event.key === Qt.Key_Escape) {
@@ -242,7 +252,7 @@ Rectangle {
         anchors.topMargin: 10
         z: 9
     }
-    Button {
+    UiButton {outlined:true;
         id: referenceImageButton
         objectName: "referenceImageButton"
         visible:!view.externalCommandBar
@@ -291,7 +301,9 @@ Rectangle {
     Repeater {
         model: editor.placedLabelModel
         delegate: Column {
+            id:placedLabel
             objectName: "mapPlacedLabel"
+            opacity:view.hoverPreviewVisible && view.hoverPreviewKey===modelData.ref.key?0:1
             required property var modelData
             required property real labelX
             required property real labelY
@@ -309,6 +321,16 @@ Rectangle {
                 visible:!!parent.modelData.flagVisible&&source.toString()!==""
             }
             Label { objectName: "mapPlacedText"; textFormat:Text.PlainText; anchors.horizontalCenter:parent.horizontalCenter; text:parent.modelData.name||""; visible:parent.modelData.nameVisible!==false; color:"#243746"; style:Text.Outline; styleColor:"#ffffff"; font.pixelSize:12; font.weight:Font.DemiBold }
+            TapHandler {
+                enabled:!view.geometryEditing;gesturePolicy:TapHandler.ReleaseWithinBounds
+                onPressedChanged:{view.labelPress=pressed;view.selectionPointerChanged(pressed)}
+                onTapped:{view.selectionNavigationStarted();const additive=!!(point.modifiers&(Qt.ControlModifier|Qt.MetaModifier|Qt.ShiftModifier));view.selectionModifiersChanged(additive);const selected=editor.selectObject(placedLabel.modelData.ref,additive?"toggle":"replace","map-label");view.selectionModifiersChanged(false);if(selected&&!additive)view.objectActivated()}
+            }
+            HoverHandler {
+                acceptedDevices:PointerDevice.Mouse|PointerDevice.TouchPad
+                enabled:!editor.mobileMode&&!view.geometryEditing
+                onHoveredChanged:if(hovered){view.hoverLabel=placedLabel.modelData;view.hoverLabelPoint=Qt.point(placedLabel.labelX,placedLabel.labelY)}else if(view.hoverLabel.ref&&view.hoverLabel.ref.key===placedLabel.modelData.ref.key)view.hoverLabel=({})
+            }
             DragHandler {
                 enabled: !view.geometryEditing
                 target: null
@@ -321,7 +343,7 @@ Rectangle {
     }
     TapHandler {
         id: mapTap
-        enabled: !objectChooser.visible && !view.geometryEditing
+        enabled: !objectChooser.visible && !view.geometryEditing && !view.labelPress
         acceptedButtons: Qt.LeftButton
         property int gestureModifiers: Qt.NoModifier
         onPressedChanged: {
@@ -331,8 +353,12 @@ Rectangle {
         onTapped: function(eventPoint) {
             view.selectionNavigationStarted()
             view.chooserPoint = eventPoint.position
+            view.mapSelectionAdditive=!!(gestureModifiers&(Qt.ControlModifier|Qt.MetaModifier|Qt.ShiftModifier))
+            view.selectionModifiersChanged(view.mapSelectionAdditive)
             editor.beginMapSelectionScreen(eventPoint.position.x,eventPoint.position.y,
                                            !!(gestureModifiers & (Qt.ControlModifier | Qt.MetaModifier)),view.globeMode?view.globeZoom:view.zoom)
+            view.selectionModifiersChanged(false)
+            if(!editor.objectChooserOpen&&editor.selectionItems.length===1&&!view.mapSelectionAdditive)view.objectActivated()
         }
     }
     TapHandler {
@@ -501,37 +527,102 @@ Rectangle {
         z: editor.layers.length+2
         visible:!view.externalCommandBar
         anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 12; anchors.topMargin:view.controlsTopMargin; spacing: 4
-        Button { focusPolicy: Qt.NoFocus; text: "+"; width: 44; Accessible.name: "확대"; onClicked: view.zoomAt(1.25,view.width/2,view.height/2) }
-        Button { focusPolicy: Qt.NoFocus; text: "-"; width: 44; Accessible.name: "축소"; onClicked: view.zoomAt(0.8,view.width/2,view.height/2) }
-        Button { focusPolicy: Qt.NoFocus; text: "전체"; onClicked: view.fit() }
+        UiButton {outlined:true; focusPolicy: Qt.NoFocus; text: "+"; width: 44; Accessible.name: "확대"; onClicked: view.zoomAt(1.25,view.width/2,view.height/2) }
+        UiButton {outlined:true; focusPolicy: Qt.NoFocus; text: "-"; width: 44; Accessible.name: "축소"; onClicked: view.zoomAt(0.8,view.width/2,view.height/2) }
+        UiButton {outlined:true; focusPolicy: Qt.NoFocus; text: "전체"; onClicked: view.fit() }
     }
     Row {
         z: editor.layers.length+6
         anchors.left: parent.left; anchors.top: parent.top; anchors.margins: 12; anchors.topMargin: view.controlsTopMargin
         spacing: 4
         visible: !view.externalCommandBar && !view.geometryEditing && editor.selectionItems.length === 1 && editor.selectedEditable
-        Button { objectName: "beginGeometryEdit"; text: "도형 편집"; onClicked: editor.beginGeometryEdit("edit") }
-        Button { objectName: "beginGeometryDraw"; text: "다시 그리기"; onClicked: editor.beginGeometryDraw() }
+        UiButton {outlined:true; objectName: "beginGeometryEdit"; text: "도형 편집"; onClicked: editor.beginGeometryEdit("edit") }
+        UiButton {outlined:true; objectName: "beginGeometryDraw"; text: "다시 그리기"; onClicked: editor.beginGeometryDraw() }
     }
     Rectangle {
+        id: taskPanel
+        objectName: "geometryToolDock"
         z: editor.layers.length+7
-        anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 12
-        objectName:"geometryToolDock"
-        visible: view.geometryEditing; color:Tokens.colors(editor.appearancePreferences).panel; border.color:Tokens.colors(editor.appearancePreferences).border; radius:9; height:geometryTools.implicitHeight+16
-        Flow {
-            id:geometryTools;anchors.left:parent.left;anchors.right:parent.right;anchors.margins:8;y:8;spacing:4
-            Label { visible: editor.geometryEditState.choosingProviders === true; width:Math.min(implicitWidth,geometryTools.width);wrapMode:Text.Wrap;text: "대상 고정 · 지도에서 제공 영역 선택 (" + (editor.geometryEditState.providers || []).length + ")" }
-            Button { visible: editor.geometryEditState.stage === "setup" || (editor.geometryEditState.tool === "annex" && editor.geometryEditState.choosingProviders); text: "다음"; onClicked: editor.geometryAdvanceStage() }
-            ComboBox { objectName: "splitResultChoice";width:Math.min(implicitWidth,geometryTools.width); visible: editor.geometryEditState.tool === "split"; model: ["작은 부분을 새 영역으로", "결과 1을 새 영역으로", "결과 2를 새 영역으로"]; currentIndex: editor.geometryEditState.splitChoice === undefined || editor.geometryEditState.splitChoice < 0 ? 0 : 2-editor.geometryEditState.splitChoice; enabled: !editor.geometryEditState.calculating; onActivated: editor.geometryChooseSplitResult(currentIndex-1) }
-            Label {visible:editor.geometryEditState.tool==="edit";text:"변을 두 번 탭해 점 추가";verticalAlignment:Text.AlignVCenter}
-            Button { objectName: "geometryMoveObject"; visible: editor.geometryEditState.active === true && editor.geometryEditState.target && editor.geometryEditState.target.domain !== "territorial" && editor.geometryEditState.tool !== "draw"; text: editor.geometryEditState.tool === "move" ? "점 편집" : "전체 이동"; onClicked: editor.geometrySetMoveMode(editor.geometryEditState.tool !== "move") }
-            Button { objectName: "geometryDeleteVertex"; text: "점 삭제"; enabled: editor.geometryEditState.selectedVertex >= 0; onClicked: editor.geometryDeleteSelectedVertex() }
-            Button { objectName: "geometryUndoDraft"; text: "초안 실행 취소"; enabled: editor.geometryEditState.canUndo === true; onClicked: editor.geometryUndoDraft() }
-            Button { objectName: "geometryRedoDraft"; text: "다시 실행"; visible: editor.geometryEditState.canRedo === true; onClicked: editor.geometryRedoDraft() }
-            Button { objectName: "geometryPreview"; text: editor.geometryEditState.calculating ? "계산 중" : "미리보기"; enabled: editor.geometryEditState.stage !== "setup" && !(editor.geometryEditState.tool === "annex" && editor.geometryEditState.choosingProviders) && editor.geometryEditState.previewReady !== true && editor.geometryEditState.calculating !== true; onClicked: editor.requestGeometryPreview() }
-            Button { objectName: "geometryConfirm"; text: "확인"; enabled: editor.geometryEditState.previewReady === true; onClicked: editor.confirmGeometryEdit() }
-            Button { objectName: "geometryBack"; text: "이전"; onClicked: editor.geometryBack() }
-            Button { objectName: "geometryCancel"; text: "취소"; onClicked: editor.cancelGeometryEdit() }
+        anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 12
+        width: Math.min(380, parent.width-24)
+        height: minimized ? taskHeader.implicitHeight+24 : (view.width<800?(dragHeight>=0?dragHeight:[84,(parent.height-24)*.48,(parent.height-24)*.86][sheetLevel]):Math.min(parent.height-24, taskBody.implicitHeight+taskHeader.implicitHeight+taskFooter.implicitHeight+52))
+        visible: view.geometryEditing
+        color: palette.panel; border.color: palette.border; radius: 12
+        readonly property var palette: Tokens.colors(editor.appearancePreferences)
+        readonly property var taskState: editor.geometryEditState
+        property bool minimized: false
+        property int sheetLevel:1
+        property real dragHeight:-1
+        readonly property bool collapsed:view.width<800&&sheetLevel===0
+        Behavior on height {enabled:!geometryHandle.dragging;NumberAnimation {duration:170;easing.type:Easing.BezierSpline;easing.bezierCurve:[.25,.1,.25,1,1,1]}}
+        readonly property bool busy: taskState.calculating === true
+        readonly property bool review: taskState.previewReady === true
+        readonly property bool setup: taskState.stage === "setup"
+        readonly property bool picking: taskState.choosingProviders === true
+        readonly property bool editable: taskState.active === true && !busy && !review && !setup && !picking
+        readonly property bool vertices: editable && ["edit","draw","annex","boundary","coast"].indexOf(taskState.tool)>=0
+        readonly property string taskName: taskState.creating === true ? "새 객체 그리기" : ({edit:"모양 편집",draw:"다시 그리기",move:"객체 이동",merge:"영역 병합",annex:"영역 편입",split:"영역 분할",boundary:"공유 경계 편집",coast:"해안선 편집"})[taskState.tool] || "지도 편집"
+        readonly property string stageName: busy ? "계산 중" : review ? "3단계 · 결과 검토" : setup ? "1단계 · 작업 준비" : picking ? "2단계 · 제공 영역 선택" : "2단계 · 지도 편집"
+        readonly property string instruction: busy ? "결과를 계산하고 있습니다. 이전을 누르면 계산을 중단하고 초안으로 돌아갑니다." : review ? "지도에 표시된 결과를 검토한 뒤 확정하세요. 이전을 누르면 초안을 이어서 편집합니다." : setup ? "대상과 작업을 확인한 뒤 다음 단계로 진행하세요." : picking ? "대상은 고정됩니다. 지도에서 같은 종류의 제공 영역을 선택하거나 목록에서 제외하세요." : taskState.tool === "split" ? "영역을 가로지르는 절단선을 지도에서 그리세요. 새 객체로 남길 결과를 선택할 수 있습니다." : taskState.tool === "move" ? "지도에서 객체를 끌어 위치를 옮기세요." : taskState.tool === "draw" || taskState.tool === "annex" ? "지도에 점을 추가해 영역을 그린 뒤 미리보기를 누르세요." : taskState.tool === "merge" ? "선택한 제공 영역과 대상의 병합 결과를 미리보기로 확인하세요." : "지도에서 점을 끌어 편집하세요. 변을 두 번 누르면 점을 추가합니다."
+        onVisibleChanged: if (!visible) minimized=false
+        MouseArea { anchors.fill: parent; onWheel: wheel => wheel.accepted=true }
+        ColumnLayout {
+            anchors.fill: parent; anchors.margins: taskPanel.collapsed?8:12; spacing: taskPanel.collapsed?4:10
+            UiSheetHandle {id:geometryHandle;objectName:"geometrySheetHandle";snapHeights:[84,(taskPanel.parent.height-24)*.48,(taskPanel.parent.height-24)*.86];panelHeight:taskPanel.height;onPanelHeightRequested:value=>taskPanel.dragHeight=value;Layout.preferredHeight:taskPanel.collapsed?20:28;visible:view.width<800 && !taskPanel.minimized;Layout.fillWidth:true;level:taskPanel.sheetLevel;onHeightChangedByUser:value=>taskPanel.sheetLevel=value}
+            RowLayout {
+                id: taskHeader
+                Layout.fillWidth: true
+                ColumnLayout {
+                    Layout.fillWidth: true; spacing: 2
+                    Label { objectName:"geometryTaskName"; text:taskPanel.taskName; font.bold:true; color:taskPanel.palette.text; Layout.fillWidth:true; elide:Text.ElideRight }
+                    Label { text:taskPanel.stageName; color:taskPanel.palette.muted; font.pixelSize:12 }
+                }
+                UiButton {outlined:true; objectName:"geometryMinimize"; Layout.preferredHeight:taskPanel.collapsed?28:implicitHeight; focusPolicy:Qt.NoFocus; text:taskPanel.minimized?"펼치기":"접기"; onClicked:taskPanel.minimized=!taskPanel.minimized }
+            }
+            ScrollView {
+                visible: !taskPanel.minimized&&!taskPanel.collapsed
+                Layout.fillWidth:true; Layout.fillHeight:true
+                contentWidth: availableWidth; clip:true
+                ColumnLayout {
+                    id:taskBody; width:parent.width; spacing:10
+                    Label { text:"작업 대상"; color:taskPanel.palette.muted }
+                    Repeater {
+                        model:taskPanel.taskState.targets || []
+                        Label { required property var modelData; Layout.fillWidth:true; text:modelData.name; textFormat:Text.PlainText; color:taskPanel.palette.text; wrapMode:Text.Wrap }
+                    }
+                    Label { visible:(taskPanel.taskState.providers || []).length>0 || taskPanel.picking; text:"제공 영역 · "+(taskPanel.taskState.providers || []).length; color:taskPanel.palette.muted }
+                    Repeater {
+                        model:taskPanel.taskState.providers || []
+                        RowLayout {
+                            required property var modelData
+                            Layout.fillWidth:true
+                            Label { Layout.fillWidth:true; text:modelData.name; textFormat:Text.PlainText; color:taskPanel.palette.text; wrapMode:Text.Wrap }
+                            UiButton {outlined:true; objectName:"geometryRemoveProvider_"+modelData.id; text:"제외"; visible:taskPanel.picking && !taskPanel.busy && !taskPanel.review; onClicked:editor.geometryToggleProvider(modelData) }
+                        }
+                    }
+                    Label { objectName:"geometryTaskInstruction"; Layout.fillWidth:true; text:taskPanel.instruction; color:taskPanel.palette.text; wrapMode:Text.Wrap }
+                    Label { objectName:"geometryTaskError"; visible:!!taskPanel.taskState.error; Layout.fillWidth:true; text:taskPanel.taskState.error || ""; textFormat:Text.PlainText; color:"#d44848"; wrapMode:Text.Wrap }
+                    BusyIndicator { visible:taskPanel.busy; running:visible; Layout.alignment:Qt.AlignHCenter }
+                    ComboBox { objectName:"splitResultChoice"; Layout.fillWidth:true; visible:taskPanel.taskState.tool==="split"; model:["작은 부분을 새 객체로","결과 1을 새 객체로","결과 2를 새 객체로"]; currentIndex:taskPanel.taskState.splitChoice===undefined || taskPanel.taskState.splitChoice<0 ? 0 : 2-taskPanel.taskState.splitChoice; enabled:!taskPanel.busy; onActivated:editor.geometryChooseSplitResult(currentIndex-1) }
+                    Flow {
+                        Layout.fillWidth:true; spacing:4
+                        UiButton {outlined:true; objectName:"geometryMoveObject"; visible:taskPanel.editable && taskPanel.taskState.target && taskPanel.taskState.target.domain!=="territorial" && taskPanel.taskState.tool!=="draw"; text:taskPanel.taskState.tool==="move"?"점 편집":"객체 이동"; onClicked:editor.geometrySetMoveMode(taskPanel.taskState.tool!=="move") }
+                        UiButton {outlined:true; objectName:"geometryDeleteVertex"; visible:taskPanel.vertices; text:"점 삭제"; enabled:taskPanel.taskState.selectedVertex>=0; onClicked:editor.geometryDeleteSelectedVertex() }
+                        UiButton {outlined:true; objectName:"geometryUndoDraft"; visible:taskPanel.editable && taskPanel.taskState.tool!=="merge"; text:"초안 되돌리기"; enabled:taskPanel.taskState.canUndo===true; onClicked:editor.geometryUndoDraft() }
+                        UiButton {outlined:true; objectName:"geometryRedoDraft"; visible:taskPanel.editable && taskPanel.taskState.canRedo===true; text:"다시 실행"; onClicked:editor.geometryRedoDraft() }
+                    }
+                }
+            }
+            Rectangle { visible:!taskPanel.minimized&&!taskPanel.collapsed; Layout.fillWidth:true; implicitHeight:1; color:taskPanel.palette.border }
+            Flow {
+                id:taskFooter; visible:!taskPanel.minimized&&!taskPanel.collapsed
+                Layout.fillWidth:true; spacing:4
+                UiButton {outlined:true; objectName:"geometryBack"; text:"이전"; onClicked:editor.geometryBack() }
+                UiButton {outlined:true; objectName:"geometryCancel"; text:"취소"; onClicked:editor.cancelGeometryEdit() }
+                UiButton {outlined:true; objectName:"geometryAdvance"; visible:taskPanel.setup || (taskPanel.taskState.tool==="annex" && taskPanel.picking); enabled:!taskPanel.busy && (taskPanel.setup || (taskPanel.taskState.providers || []).length>0); text:"다음"; onClicked:editor.geometryAdvanceStage() }
+                UiButton {outlined:true; objectName:"geometryPreview"; visible:!taskPanel.review && !taskPanel.setup && !(taskPanel.taskState.tool==="annex" && taskPanel.picking); text:taskPanel.busy?"계산 중":"미리보기"; enabled:!taskPanel.busy && (taskPanel.taskState.tool!=="merge" || (taskPanel.taskState.providers || []).length>0); onClicked:editor.requestGeometryPreview() }
+                UiButton {outlined:true; objectName:"geometryConfirm"; visible:taskPanel.review; text:"확정"; enabled:taskPanel.review && !taskPanel.busy; onClicked:editor.confirmGeometryEdit() }
+            }
         }
     }
     Label {

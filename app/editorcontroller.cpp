@@ -72,6 +72,7 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(labelAnchors_.get(),&CountryLabelAnchors::changed,this,[this] {
         emit presentationChanged();emit visualChanged();
     });
+    bootstrapWorldEnabled_=config.bootstrapWorld;
     initializePhysicalData();
     if(startupBusy_||config.bootstrapWorld) {
         project_.replace(pandoeditor::ProjectDocument(
@@ -726,6 +727,24 @@ bool EditorController::openFile(const QUrl& url)
         if(opened&&projectPreview_)projectPreview_->schedule(bytes,projectPreviewSourceSha_);
         return opened;
     }catch(const std::exception& e){emit errorOccurred(QString::fromUtf8(e.what()));return false;}
+}
+bool EditorController::newProject()
+{
+    if(startupBusy_||jobBusy()||geometryEdit_||hasWebImportPreview())return false;
+    try {
+        if(!bootstrapWorldEnabled_){
+            QFile sample(":/assets/sample.pando.json");
+            if(!sample.open(QIODevice::ReadOnly))return false;
+            if(!replaceFromBytes(sample.readAll(),false,{}))return false;
+        }else{
+            pandoeditor::Project initial;
+            initial.replace(pandoeditor::ProjectDocument(std::vector<pandoeditor::Country>{},
+                std::vector<pandoeditor::Layer>{{"countries","국가"}}));
+            if(!replaceFromBytes(projectcodec::encode(initial),false,{}))return false;
+            startWorldBootstrap();
+        }
+        fitMapCamera();return true;
+    }catch(const std::exception& error){emit errorOccurred(QString::fromUtf8(error.what()));return false;}
 }
 bool EditorController::saveFile(const QUrl& url)
 {

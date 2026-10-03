@@ -62,6 +62,8 @@ QVariantMap EditorController::computeObjectProperties() const {
  result["validFrom"]=validFromDraft_;result["validTo"]=validToDraft_;
  const auto r=baseRelation(project_.document(),ref);
  result["parentId"]=r&&r->parent?q(r->parent->id):QString();result["sovereignId"]=r&&r->sovereign?q(r->sovereign->id):QString();
+ auto relationName=[&](const std::optional<ObjectRef>& related){if(!related)return QString();const auto view=project_.propertyView(*related);return view?q(view->displayName):QStringLiteral("참조 객체를 찾을 수 없음");};
+ result["parentName"]=relationName(r?r->parent:std::optional<ObjectRef>{});result["sovereignName"]=relationName(r?r->sovereign:std::optional<ObjectRef>{});
  bool conflict=false;auto normalized=q(trimWebText(u->name)).toLower();
  if(u->kind!=UnitKind::Country && !normalized.isEmpty())for(const auto& other:project_.document().units){
   const auto relation=baseRelation(project_.document(),territorialRef(other.id));

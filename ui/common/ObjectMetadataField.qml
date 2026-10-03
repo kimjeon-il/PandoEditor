@@ -24,13 +24,14 @@ ColumnLayout {
         }
         edited=true
     }
-    function finish(){
+    function finish(force){
+        if(nameInput.inputMethodComposing||notesInput.inputMethodComposing)return
         const current=token;token=""
-        if(current){if(edited&&!holdCommits&&owner===editor.selectedId)editor.confirmPropertyEdit(current);else editor.endPropertyEdit(current)}
+        if(current){if(edited&&(force===true||!holdCommits)&&owner===editor.selectedId)editor.confirmPropertyEdit(current);else editor.endPropertyEdit(current)}
         edited=false
     }
     Label {text:entry.field==="name"?(editor.primaryObject.type==="country"?"국명":"이름"):"메모";color:entry.colors.muted;font.pixelSize:14}
-    TextField {
+    UiTextField {
         id:nameInput;objectName:entry.field==="name"?"detailObjectName":"";visible:entry.field==="name";Layout.fillWidth:true;Layout.preferredHeight:36
         text:editor.nameDraft;enabled:!!editor.objectProperties.editable;selectByMouse:true
         font.pixelSize:14;color:entry.colors.text;padding:10
@@ -41,7 +42,7 @@ ColumnLayout {
     }
     ScrollView {
         visible:entry.field==="notes";Layout.fillWidth:true;Layout.preferredHeight:112;clip:true
-        TextArea {
+        UiTextArea {
             id:notesInput;objectName:entry.field==="notes"?"detailObjectNotes":"";text:editor.memoDraft;readOnly:!editor.objectProperties.editable
             placeholderText:"객체에 대한 메모를 입력하세요.";wrapMode:TextEdit.Wrap;selectByMouse:true
             font.pixelSize:14;color:entry.colors.text;padding:10
