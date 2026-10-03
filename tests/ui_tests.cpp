@@ -109,7 +109,6 @@ private slots:
         model.setRows({row});QVERIFY(retained.isValid());QCOMPARE(retained.row(),0);
         model.setRows({});QCOMPARE(resets.count(),0);QCOMPARE(model.rowCount(),0);
     }
-    void nativePerformanceProbe() { runNativePerformanceProbe(); }
     void labelDelegateSurvivesCameraMotion() {
         EditorController editor(EditorControllerConfig{});QQmlApplicationEngine engine;
         editor.selectCountry("DEU");
@@ -1139,6 +1138,14 @@ private slots:
         window->close();
     }
 };
+// Device measurements are explicitly selected by the native runner, not part
+// of the headless functional suite. Keep them separate so CI neither skips a
+// functional test nor pretends to validate GPU performance without a device.
+class NativePerformanceTests : public QObject {
+    Q_OBJECT
+private slots:
+    void nativePerformanceProbe() { runNativePerformanceProbe(); }
+};
 int main(int argc,char** argv) {
     QQuickStyle::setStyle("Basic");
     QGuiApplication app(argc,argv);
@@ -1146,6 +1153,11 @@ int main(int argc,char** argv) {
     if (qEnvironmentVariable("QT_QPA_PLATFORM")=="offscreen") {
         int font=QFontDatabase::addApplicationFont(qEnvironmentVariable("WINDIR")+"/Fonts/malgun.ttf");
         if (font>=0) app.setFont(QFont(QFontDatabase::applicationFontFamilies(font).first()));
+    }
+    for(int i=1;i<argc;++i) {
+        if(QString::fromLocal8Bit(argv[i])==QStringLiteral("nativePerformanceProbe")) {
+            NativePerformanceTests test;return QTest::qExec(&test,argc,argv);
+        }
     }
     UiTests test; return QTest::qExec(&test,argc,argv);
 }
