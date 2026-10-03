@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Shapes
+import "UiTokens.js" as Tokens
 
 Rectangle {
     id: panel
@@ -21,17 +22,17 @@ Rectangle {
         if (countryLayer.popup.visible) { countryLayer.popup.close(); return true }
         return false
     }
-    color: "#ffffff"
-    border.color: "#dce2e8"
+    color:Tokens.colors(editor.appearancePreferences).panel
+    border.color:Tokens.colors(editor.appearancePreferences).border
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
         TabBar {
             id: tabs
             Layout.fillWidth: true
-            TabButton { text: "Qt 국가 속성"; objectName: "countryTab" }
-            TabButton { text: "레이어"; objectName: "layersTab" }
-            TabButton { text: "지명·수계 등"; objectName: "contentTab" }
+            UiTabButton {text:"Qt 국가 속성";objectName:"countryTab"}
+            UiTabButton {text:"레이어";objectName:"layersTab"}
+            UiTabButton {text:"지명·수계 등";objectName:"contentTab"}
 
         }
         RowLayout {
@@ -211,8 +212,8 @@ Rectangle {
                             }
                             RowLayout {
                                 Layout.fillWidth: true
-                                Button { objectName: "mergeTerritorial"; text: "합병"; enabled: editor.selectionItems.length > 1; onClicked: editor.beginMergeSelection() }
-                                Button { objectName: "annexTerritorial"; text: "그린 영역 편입"; enabled: editor.selectionItems.length > 1; onClicked: editor.beginAnnexGeometry() }
+                                Button { objectName: "mergeTerritorial"; text: "합병"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginMergeSelection() }
+                                Button { objectName: "annexTerritorial"; text: "그린 영역 편입"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginAnnexGeometry() }
                                 Button { objectName: "splitTerritorial"; text: "절단선 분할"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginSplitGeometry() }
                                 Button { objectName: "sharedBoundaryTerritorial"; text: "공유 국경"; enabled: editor.selectionItems.length === 2; onClicked: editor.beginSharedBoundaryGeometry() }
                                 Button { objectName: "coastTerritorial"; text: "해안(국가)"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginCoastlineGeometry("country") }

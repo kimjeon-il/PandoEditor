@@ -8,7 +8,6 @@
 namespace pandoeditor {
 struct GisContentMapping {
     GisExchangeTarget target=GisExchangeTarget::Generic;
-    std::string distributionType="language";
     std::string layerId,layerName;
     std::string idField="",nameField="name",layerIdField="layer_id",
         territoryField="territorial_unit_id",sourceModeField="source_mode";

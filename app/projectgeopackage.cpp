@@ -141,7 +141,7 @@ QByteArray exportProjectGeoPackage(const Project& project) {
         QSqlQuery source(db);
         require(source.prepare("INSERT INTO pandolab_source_info VALUES ('source',?)"),
                 "PROJECT_GPKG_WRITE_FAILED");
-        source.addBindValue(QStringLiteral("{\"format\":\"pandoeditor-project\",\"version\":7}"));
+        source.addBindValue(QStringLiteral("{\"format\":\"pandoeditor-project\",\"version\":8}"));
         require(source.exec(),"PROJECT_GPKG_WRITE_FAILED");
         QSqlQuery asset(db);
         require(asset.prepare("INSERT INTO pandolab_country_assets VALUES (?,?,?)"),
@@ -171,7 +171,7 @@ QByteArray readProjectGeoPackage(const QString& filePath) {
     require(root.kind==V::Object,"UNSUPPORTED_PROJECT_GPKG_STATE");
     const auto native=root.object.count("format")&&
         root.object.at("format").kind==V::String&&root.object.at("format").string=="pandoeditor-project";
-    if(native)require(member(root,"version").kind==V::Number&&member(root,"version").raw=="7",
+    if(native)require(member(root,"version").kind==V::Number&&(member(root,"version").raw=="7"||member(root,"version").raw=="8"),
                       "UNSUPPORTED_PROJECT_GPKG_STATE");
     std::map<std::string,Asset> assets;
     QSqlQuery rows(db);

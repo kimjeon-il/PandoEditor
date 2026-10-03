@@ -66,7 +66,7 @@ void indexContent(const ProjectDocument& d,DocumentIndex& idx) {
     }
     for(std::size_t i=0;i<d.distributionLayers.size();++i) {
         const auto& v=d.distributionLayers[i]; add("distributionLayer",v.id,i);
-        require(v.type=="language" || v.type=="ethnicity" || v.type=="religion","INVALID_DISTRIBUTION: type");
+        require(!v.valueScale.manual||(std::isfinite(v.valueScale.min)&&std::isfinite(v.valueScale.max)&&v.valueScale.min<v.valueScale.max),"INVALID_DISTRIBUTION: value scale");
         require(v.color<=0xffffff,"INVALID_DISTRIBUTION: color"); temporalBounds(v.validity);
     }
     for(const auto& v:d.distributionLayers) {
@@ -76,7 +76,7 @@ void indexContent(const ProjectDocument& d,DocumentIndex& idx) {
             auto it=idx.objects.find({"distributionLayer",*parent});
             require(it!=idx.objects.end(),"DANGLING_REF: distribution parent");
             const auto& p=d.distributionLayers.at(it->second);
-            require(p.type==v.type,"INVALID_DISTRIBUTION: parent type"); parent=p.parentId;
+            parent=p.parentId;
         }
         if(v.parentId) idx.dependents[{"distributionLayer",*v.parentId}].push_back({"distributionLayer",v.id});
     }
@@ -85,7 +85,7 @@ void indexContent(const ProjectDocument& d,DocumentIndex& idx) {
         require(idx.objects.count({"distributionLayer",v.layerId}),"DANGLING_REF: distribution layer");
         idx.dependents[{"distributionLayer",v.layerId}].push_back(ref);
         require(bool(v.territory)!=bool(v.geometry),"INVALID_DISTRIBUTION: exactly one source required");
-        require(std::isfinite(v.share) && v.share>=0 && v.share<=100,"INVALID_DISTRIBUTION: share");
+        require(std::isfinite(v.value),"INVALID_DISTRIBUTION: value");
         temporalBounds(v.validity);
         if(v.territory) territory(ref,*v.territory);
         if(v.geometry) {
@@ -99,31 +99,13 @@ void indexContent(const ProjectDocument& d,DocumentIndex& idx) {
     }
 }
 
-std::vector<ObjectRef> dominantDistributionEntries(const ProjectDocument& d,const std::vector<std::string>& visibleLayers) {
-    const std::set<std::string> visible(visibleLayers.begin(),visibleLayers.end());
-    std::map<ObjectRef,std::size_t> positions;
-    std::vector<const DistributionEntry*> winners;
-    std::vector<ObjectRef> independent;
-    for(const auto& entry:d.distributionEntries) {
-        if(!visible.count(entry.layerId)) continue;
-        if(entry.geometry) { independent.push_back({"distributionEntry",entry.id}); continue; }
-        if(!entry.territory) continue;
-        const auto [found,inserted]=positions.emplace(*entry.territory,winners.size());
-        if(inserted) winners.push_back(&entry);
-        else if(entry.share>winners[found->second]->share) winners[found->second]=&entry;
-    }
-    std::vector<ObjectRef> result;
-    for(const auto* entry:winners) result.push_back({"distributionEntry",entry->id});
-    result.insert(result.end(),independent.begin(),independent.end());
-    return result;
-}
 bool sameContent(const ProjectDocument& a,const ProjectDocument& b) {
     return equalContentRows(a.countryDetails,b.countryDetails,[](const auto& v){return std::tie(v.first,v.second.capital);}) &&
         equalContentRows(a.symbols,b.symbols,[](const auto& v){return std::tie(v.first,v.second.policy,v.second.embeddedDataUrl);}) &&
         equalContentRows(a.labels,b.labels,[](const auto& v){return std::make_tuple(v.id,v.name,v.kind,v.notes,v.geometry,v.territory,sourceKey(v.source));}) &&
         equalContentRows(a.hydro,b.hydro,[](const auto& v){return std::make_tuple(v.id,v.name,v.kind,v.notes,v.geometry,v.color,v.locked,sourceKey(v.source),v.sourceFeatureId);}) &&
-        equalContentRows(a.distributionLayers,b.distributionLayers,[](const auto& v){return std::make_tuple(v.id,v.name,v.type,v.color,v.locked,v.parentId,v.groups,validityKey(v.validity),v.metadata);}) &&
-        equalContentRows(a.distributionEntries,b.distributionEntries,[](const auto& v){return std::make_tuple(v.id,v.layerId,v.territory,v.geometry,v.share,v.certainty,v.metadata,validityKey(v.validity));}) &&
+        equalContentRows(a.distributionLayers,b.distributionLayers,[](const auto& v){return std::make_tuple(v.id,v.name,v.unit,v.color,v.locked,v.parentId,v.groups,validityKey(v.validity),v.metadata,v.valueScale.manual,v.valueScale.manual?v.valueScale.min:0,v.valueScale.manual?v.valueScale.max:1);}) &&
+        equalContentRows(a.distributionEntries,b.distributionEntries,[](const auto& v){return std::make_tuple(v.id,v.layerId,v.territory,v.geometry,v.value,v.certainty,v.metadata,validityKey(v.validity));}) &&
         equalContentRows(a.genericFeatures,b.genericFeatures,[](const auto& v){return std::make_tuple(v.id,v.name,v.notes,v.geometry,v.color,v.locked,v.fallbackOnly,sourceKey(v.source));}) &&
         std::tie(a.physicalData.dataset,a.physicalData.version,a.physicalData.source,a.physicalData.hiddenHydroIds)==
         std::tie(b.physicalData.dataset,b.physicalData.version,b.physicalData.source,b.physicalData.hiddenHydroIds);
@@ -162,9 +144,7 @@ std::string contentGroup(const ProjectDocument& d,const ObjectRef& ref) {
         for(const auto& v:d.hydro) if(v.id==ref.id) return v.kind=="river"?"rivers":"lakes";
     }
     if(ref.domain=="distributionEntry" || ref.domain=="distributionLayer") {
-        auto id=ref.id;
-        if(ref.domain=="distributionEntry") for(const auto& v:d.distributionEntries) if(v.id==ref.id) {id=v.layerId;break;}
-        for(const auto& v:d.distributionLayers) if(v.id==id) return v.type=="language"?"languages":v.type=="ethnicity"?"ethnicities":"religions";
+        return "distributions";
     }
     return {};
 }

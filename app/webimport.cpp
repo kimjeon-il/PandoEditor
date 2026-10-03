@@ -175,29 +175,37 @@ struct Builder {
         for(const auto& row:optionalArray(at(root,"distributionLayers"),"/distributionLayers")) {
             auto path="/distributionLayers/"+std::to_string(i++);auto key=id(row,path,true);
             require(layers.emplace(key,&row).second,"DUPLICATE_ID: "+path);
-            require(number(at(row,"schemaVersion"))==2,"UNSUPPORTED_VERSION: "+path);
-            auto type=text(at(row,"type"));require(type=="language"||type=="ethnicity"||type=="religion","INVALID_DISTRIBUTION: "+path);
+            require(number(at(row,"schemaVersion"))==3,"UNSUPPORTED_VERSION: "+path);
+            const auto& unit=at(row,"unit");require(unit.kind==V::String,"INVALID_DISTRIBUTION: "+path+"/unit");
+            const auto& scale=at(row,"valueScale");const auto mode=text(at(scale,"mode"));
+            require(mode=="auto"||mode=="manual","INVALID_DISTRIBUTION: "+path+"/valueScale");
+            if(mode=="manual") {
+                for(const auto* key:{"min","max"}) {
+                    const auto& value=at(scale,key);
+                    require((value.kind==V::Number||value.kind==V::String)&&!text(value).empty(),"INVALID_DISTRIBUTION: "+path+"/valueScale");
+                }
+                const auto min=number(at(scale,"min")),max=number(at(scale,"max"));
+                require(std::isfinite(min)&&std::isfinite(max)&&min<max,"INVALID_DISTRIBUTION: "+path+"/valueScale");
+            }
             validity(row,path);
         }
         for(const auto& [key,row]:layers) {
             auto parent=text(at(*row,"parentId"));std::set<std::string> seen{key};
             while(!parent.empty()) {
                 require(layers.count(parent),"DANGLING_REF: /distributionLayers parent "+parent);
-                require(text(at(*layers.at(parent),"type"))==text(at(*row,"type")),"INVALID_DISTRIBUTION: parent type");
                 require(seen.insert(parent).second,"RELATION_CYCLE: /distributionLayers");parent=text(at(*layers.at(parent),"parentId"));
             }
         }
         std::set<std::string> seen;i=0;
         for(const auto& row:optionalArray(at(root,"distributionEntries"),"/distributionEntries")) {
             check();auto path="/distributionEntries/"+std::to_string(i++);auto key=id(row,path,true);
-            require(seen.insert(key).second,"DUPLICATE_ID: "+path);require(number(at(row,"schemaVersion"))==2,"UNSUPPORTED_VERSION: "+path);
+            require(seen.insert(key).second,"DUPLICATE_ID: "+path);require(number(at(row,"schemaVersion"))==3,"UNSUPPORTED_VERSION: "+path);
             require(layers.count(text(at(row,"layerId"))),"DANGLING_REF: "+path+"/layerId");
             auto mode=text(at(row,"mode"));require(mode=="geometry"||mode=="territorial","INVALID_DISTRIBUTION: "+path+"/mode");
             if(mode=="territorial")require(ids.count(text(at(row,"territorialUnitId"))),"DANGLING_REF: "+path+"/territorialUnitId");
             else {GeometryStore validation;validation.insert({"validate",1},geometry(at(row,"geometry"),path+"/geometry",true));}
-            double share=at(row,"share").kind==V::Null?100:number(at(row,"share"));
-            require(std::isfinite(share)&&share>=0&&share<=100,"INVALID_DISTRIBUTION: "+path+"/share");validity(row,path);
-            // No sum-of-shares constraint: 60 + 70 is valid in the original.
+            const auto& value=at(row,"value");
+            require((value.kind==V::Number||value.kind==V::String)&&!text(value).empty()&&std::isfinite(number(value)),"INVALID_DISTRIBUTION: "+path+"/value");validity(row,path);
         }
         for(auto domain:{"genericFeatures","hydroEdits","labels"}) {
             seen.clear();i=0;
@@ -245,7 +253,7 @@ struct Builder {
         extras(at(root,"countriesData"),"/countriesData",{"type","features"});
         extras(at(root,"landObjectModel"),"/landObjectModel",{"schemaVersion","coastlineAuthority","purpose","directCreation","sourceProvenanceSchemaVersion","canonicalProperties"});
         extras(at(root,"territorialModel"),"/territorialModel",{"schemaVersion","coastlineAuthority","countryStorage","types","coverageModes"});
-        extras(at(root,"distributionModel"),"/distributionModel",{"schemaVersion","types","sourceModes","shareRange","sharesAreIndependent"});
+        extras(at(root,"distributionModel"),"/distributionModel",{"schemaVersion","sourceModes","valueKind"});
         report("","notice",QStringLiteral("검증된 영토·지명·수계·분포·기타 객체는 앱 모델로 변환합니다. 해석할 수 없는 데이터와 외부 자료는 원본을 보존하며 관련 변경이 제한될 수 있습니다."));
     }
 };
@@ -266,7 +274,7 @@ Candidate prepare(const QByteArray& bytes,const std::function<bool()>& cancelled
         require(value.kind==V::Null||value.kind==V::Object,std::string("INVALID_DOCUMENT: /layerPresentation/")+field+" expected object");
         for(const auto& [key,style]:value.object)require(style.kind==V::Object,"INVALID_DOCUMENT: /layerPresentation/"+std::string(field)+"/"+key);
     }
-    for(const auto& [model,version]:std::initializer_list<std::pair<const char*,int>>{{"landObjectModel",2},{"territorialModel",2},{"distributionModel",2},{"layerPresentation",3}})
+    for(const auto& [model,version]:std::initializer_list<std::pair<const char*,int>>{{"landObjectModel",2},{"territorialModel",2},{"distributionModel",3},{"layerPresentation",4}})
         require(number(at(at(root,model),"schemaVersion"))==version,std::string("UNSUPPORTED_VERSION: /")+model+"/schemaVersion");
     const auto& land=at(root,"landObjectModel");
     require(text(at(land,"purpose"))=="lossless-fallback"&&isFalse(at(land,"directCreation"))&&number(at(land,"sourceProvenanceSchemaVersion"))==1,"INVALID_DOCUMENT: /landObjectModel fallback contract");
@@ -300,7 +308,7 @@ Candidate prepare(const QByteArray& bytes,const std::function<bool()>& cancelled
         if(promoted){row["status"]="mapped";row["message"]=QStringLiteral("검증 후 앱 모델로 승격 · 원본은 이관 기록에 보존");value=row;}
     }
     b.preserve("",original,true,{},true);
-    if(migration.sourceSchema<5)b.report("/schemaVersion","migrated",QStringLiteral("웹 schema %1 → 5 변환. 변환 전 원본은 migrationArchive로 보존.").arg(migration.sourceSchema));
+    if(migration.sourceSchema<6)b.report("/schemaVersion","migrated",QStringLiteral("웹 schema %1 → 6 변환. 변환 전 원본은 migrationArchive로 보존.").arg(migration.sourceSchema));
     b.check();
     Project validated;validated.replace(b.output.document);
     auto encoded=projectcodec::encode(validated);

@@ -76,19 +76,20 @@ struct HydroFeature {
     std::optional<std::string> sourceFeatureId;
 };
 struct DistributionLayer {
-    std::string id, name, type="language";
-    std::uint32_t color=0x3388cc;
+    std::string id, name, unit;
+    std::uint32_t color=0x8c68d8;
     bool locked=false;
     std::optional<std::string> parentId;
     std::vector<std::string> groups;
     Validity validity;
     std::string metadata="{}";
+    DistributionValueScale valueScale;
 };
 struct DistributionEntry {
     std::string id, layerId;
     std::optional<ObjectRef> territory;
     std::optional<GeometryRef> geometry;
-    double share=100;
+    double value=0;
     std::string certainty="unknown", metadata="{}";
     Validity validity;
 };
@@ -157,7 +158,7 @@ struct Country {
 };
 struct ProjectDocument {
     // Read-time provenance for a migration notice, not document content or wire data.
-    int nativeSourceVersion=7;
+    int nativeSourceVersion=8;
     std::string documentId;
     std::vector<TerritorialUnit> units;
     std::vector<TerritorialRelation> relations;
@@ -196,7 +197,6 @@ struct DocumentIndex {
 DocumentIndex validateDocument(const ProjectDocument& document);
 void indexContent(const ProjectDocument&, DocumentIndex&);
 bool sameContent(const ProjectDocument&, const ProjectDocument&);
-std::vector<ObjectRef> dominantDistributionEntries(const ProjectDocument&, const std::vector<std::string>& visibleLayers);
 std::optional<GeometryRef> objectGeometry(const ProjectDocument&,const DocumentIndex&,const ObjectRef&);
 bool objectLocked(const ProjectDocument&,const DocumentIndex&,const ObjectRef&);
 std::string contentGroup(const ProjectDocument&,const ObjectRef&);

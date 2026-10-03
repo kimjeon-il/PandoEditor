@@ -16,7 +16,7 @@ inline bool scalarFields(const V& v,const std::set<std::string>& allowed){
  if(!keys(v,allowed))return false;for(const auto& [k,x]:v.object){(void)k;if(!scalar(x))return false;}return true;
 }
 inline bool booleanMap(const V& v){if(v.kind!=V::Object)return false;for(const auto& [k,x]:v.object){(void)k;if(x.kind!=V::Bool)return false;}return true;}
-inline bool styles(const V& v){return scalarFields(v,{"opacity","boundaryVisible","boundaryWidth","labelsVisible","blendMode"});}
+inline bool styles(const V& v){return scalarFields(v,{"opacity","colorVisible","boundaryVisible","boundaryWidth","labelsVisible","blendMode"});}
 inline bool sourceInfo(const std::string& key,const V& v){
  if(empty(v))return true;
  if(key=="baseDataset")return v.kind==V::String;
@@ -30,10 +30,10 @@ inline bool sourceInfo(const std::string& key,const V& v){
 inline bool recognized(const std::string& key,const V& v){
  const std::set<std::string> collections={"labels","hydroEdits","genericFeatures","distributionLayers","distributionEntries"};
  if(collections.count(key))return empty(v);
- if(key=="distributionSettings")return empty(v)||scalarFields(v,{"renderMode","boundaryVisible"});
- if(key=="layerVisibility")return keys(v,{"countries","subunits","regions","languages","ethnicities","religions","rivers","lakes","genericFeatures","labels","basemapLabels","countryFlags","subunitLabels","subunitFlags","regionLabels","regionFlags"})&&booleanMap(v);
+ if(key=="distributionSettings")return empty(v)||scalarFields(v,{"renderMode","activeLayerId","boundaryVisible"});
+ if(key=="layerVisibility")return keys(v,{"countries","subunits","regions","distributions","rivers","lakes","genericFeatures","labels","basemapLabels","countryFlags","subunitLabels","subunitFlags","regionLabels","regionFlags"})&&booleanMap(v);
  if(key=="itemVisibility"){
-  if(!keys(v,{"countries","subunits","regions","languages","ethnicities","religions","hydro","genericFeatures","labels","countryLabels"}))return false;
+  if(!keys(v,{"countries","subunits","regions","distributions","hydro","genericFeatures","labels","countryLabels"}))return false;
   for(const auto& [k,x]:v.object){(void)k;if(!booleanMap(x))return false;}return true;
  }
  if(key=="physicalSettings"){
@@ -52,7 +52,7 @@ inline bool recognized(const std::string& key,const V& v){
   }return true;
  }
  if(key!="layerPresentation"||!keys(v,{"schemaVersion","overlayOrder","styles","objectStyles","objectOrder"}))return false;
- const std::set<std::string> groups={"countries","subunits","regions","languages","ethnicities","religions","rivers","lakes","hydro","genericFeatures","labels","countryLabels","terrain"};
+ const std::set<std::string> groups={"countries","subunits","regions","distributions","rivers","lakes","hydro","genericFeatures","labels","countryLabels","terrain"};
  for(const auto& [k,x]:v.object){
   if(k=="schemaVersion"){if(x.kind!=V::Number)return false;continue;}
   if(k=="styles"||k=="objectStyles"){

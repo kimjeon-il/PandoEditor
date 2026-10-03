@@ -144,6 +144,7 @@ class EditorController : public QObject {
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY stateChanged)
     Q_PROPERTY(QString fileName READ fileName NOTIFY stateChanged)
     Q_PROPERTY(QString documentNotice READ documentNotice NOTIFY stateChanged)
+    Q_PROPERTY(bool hasPreservedData READ hasPreservedData NOTIFY stateChanged)
     Q_PROPERTY(bool mobileMode READ mobileMode CONSTANT)
     Q_PROPERTY(bool privateRecoveryRequired READ privateRecoveryRequired NOTIFY privateRecoveryRequiredChanged)
     Q_PROPERTY(QVariantMap structureState READ structureState NOTIFY structureChanged)
@@ -203,7 +204,8 @@ public:
     Q_INVOKABLE bool setPresentationVisibility(const QString& key,bool visible);
     Q_INVOKABLE bool setPresentationOpacity(const QString& group,double opacity);
     Q_INVOKABLE bool setPresentationBoundary(const QString& group,bool visible);
-    Q_INVOKABLE bool setDistributionDisplay(const QString& mode,bool boundaryVisible);
+    Q_INVOKABLE bool setPresentationColorVisible(const QString& group,bool visible);
+    Q_INVOKABLE bool setDistributionDisplay(const QString& mode,bool boundaryVisible,const QString& activeLayerId=QString());
     QVariantList placedLabels() const {return placedLabels_;}
     Q_INVOKABLE bool setLabelPinned(const QVariantMap& ref,bool pinned,double longitude=0,double latitude=0,bool hasPosition=false);
     Q_INVOKABLE bool setLabelMapPosition(const QVariantMap& ref,double mapX,double mapY);
@@ -319,6 +321,7 @@ public:
     double layerOpacity() const;
     QString fileName() const;
     QString documentNotice() const;
+    bool hasPreservedData() const { return !project_.document().extensions.empty(); }
     bool dirty() const;
     bool jobBusy() const { return background_ && !background_->token().cancelled(); }
     int jobProgress() const { return background_ ? background_->token().progress() : -1; }
@@ -356,6 +359,7 @@ public:
     QVariantMap contentEditState() const;
     Q_INVOKABLE bool beginContentEdit(const QString& domain,const QString& type=QString(),bool create=false);
     Q_INVOKABLE bool updateContentField(const QString& field,const QVariant& value);
+    Q_INVOKABLE bool commitContentField(const QString& field);
     Q_INVOKABLE bool loadContentFlag(const QUrl& url);
     Q_INVOKABLE bool beginContentGeometry();
     Q_INVOKABLE bool previewContentEdit(bool remove=false);
@@ -375,6 +379,10 @@ public:
     Q_INVOKABLE bool geometryUndoDraft();
     Q_INVOKABLE bool geometryRedoDraft();
     Q_INVOKABLE bool requestGeometryPreview();
+    Q_INVOKABLE bool geometryToggleProvider(const QVariantMap& object);
+    Q_INVOKABLE bool geometryAdvanceStage();
+    Q_INVOKABLE bool geometryBack();
+    Q_INVOKABLE bool geometryChooseSplitResult(int createdCandidate);
     Q_INVOKABLE bool confirmGeometryEdit();
     Q_INVOKABLE void cancelGeometryEdit();
     Q_INVOKABLE void selectAt(double x,double y);
@@ -467,7 +475,7 @@ private:
     qulonglong historicalSession_=0;
     std::optional<pandoeditor::CommandPreview> historicalCommandPreview_;
     struct GisLoadedLayer {
-        QString name,target,distributionType;
+        QString name,target;
         pandoeditor::GisGeoJsonCollection collection;
     };
     struct GisImportSession {
@@ -604,8 +612,10 @@ private:
         pandoeditor::ContentEdit edit;
         std::optional<pandoeditor::CommandPreview> preview;
         QString error;
+        std::set<std::string> pendingFields;
     };
     std::optional<ContentSession> contentSession_;
+    void refreshContentSession();
     struct GeometryEditSession {
         pandoeditor::ProjectSnapshot base;
         pandoeditor::ObjectRef target;
@@ -631,6 +641,9 @@ private:
         bool objectDragMoved=false;
         std::optional<pandoeditor::Point> snapPoint;
         bool content=false;
+        QString stage=QStringLiteral("selection");
+        bool choosingProviders=false;
+        std::optional<pandoeditor::MergeTerritorialIntent> mergeIntent;
     };
     std::optional<GeometryEditSession> geometryEdit_;
     bool setStructurePlan(const pandoeditor::TerritorialMutationIntent&);

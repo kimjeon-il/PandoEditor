@@ -2,6 +2,7 @@
 #include "projectcodec.h"
 #include "editorcontroller.h"
 #include <pandoeditor/geometrypredicates.h>
+#include <pandoeditor/map/projectionengine.h>
 #include <pandoeditor/presentationcommands.h>
 #include <QtTest>
 #include <QTemporaryDir>
@@ -33,6 +34,93 @@ PrepareResult prepare(Project& p,const TerritorialMutationIntent& intent) {
 class TerritorialGeometryTests:public QObject {
     Q_OBJECT
 private slots:
+    void fixedTargetProviderSelectionAndBack() {
+        QTemporaryDir dir;Project source;source.replace(ProjectDocument({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}}));
+        QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();
+        EditorController c({false,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(file.fileName())));c.selectCountry("A");
+        const auto before=c.documentBytes();QVERIFY(c.beginMergeSelection());
+        QCOMPARE(c.geometryEditState().value("target").toMap().value("id").toString(),QStringLiteral("A"));
+        QVERIFY(!c.geometryToggleProvider({{"domain","territorial"},{"id","A"}}));
+        QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","B"}}));
+        QCOMPARE(c.primaryObject().value("id").toString(),QStringLiteral("A"));
+        QVERIFY(c.requestGeometryPreview());QVERIFY(c.geometryBack());
+        QVERIFY(!c.geometryEditState().value("calculating").toBool());QVERIFY(!c.geometryEditState().value("previewReady").toBool());QCOMPARE(c.documentBytes(),before);
+        QVERIFY(c.requestGeometryPreview());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);
+        QCOMPARE(c.documentBytes(),before);QVERIFY(!c.geometryDraftPaths().empty());QVERIFY(c.geometryBack());
+        QCOMPARE(c.geometryEditState().value("providers").toList().size(),1);QVERIFY(c.geometryBack());
+        QCOMPARE(c.geometryEditState().value("stage").toString(),QStringLiteral("setup"));QVERIFY(c.geometryAdvanceStage());
+        QVERIFY(c.requestGeometryPreview());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);QVERIFY(c.confirmGeometryEdit());
+        QCOMPARE(projectcodec::decode(c.documentBytes()).units.size(),std::size_t(1));c.undo();QCOMPARE(c.documentBytes(),before);c.redo();
+    }
+    void annexBackPreservesProvidersAndDrawing() {
+        QTemporaryDir dir;Project source;source.replace(ProjectDocument({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}}));
+        QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();
+        EditorController c({false,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(file.fileName())));c.selectCountry("A");const auto before=c.documentBytes();
+        QVERIFY(c.beginAnnexGeometry());QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","B"}}));QVERIFY(c.geometryAdvanceStage());
+        MapProjection projection;projection.rebuild(source.document());
+        for(const auto point:{Point{10,2},Point{12,2},Point{12,4},Point{10,4}}){const auto xy=projection.project(point);QVERIFY(c.geometryAddPoint(xy.x,xy.y,0));}
+        const auto drawing=c.geometryDraftPaths();QVERIFY(c.geometryBack());
+        QVERIFY(c.geometryEditState().value("choosingProviders").toBool());QCOMPARE(c.geometryDraftPaths(),drawing);
+        QCOMPARE(c.geometryEditState().value("providers").toList().size(),1);QCOMPARE(c.primaryObject().value("id").toString(),QStringLiteral("A"));
+        QVERIFY(c.geometryAdvanceStage());QVERIFY(c.requestGeometryPreview());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);
+        QCOMPARE(c.documentBytes(),before);QVERIFY(c.geometryBack());QCOMPARE(c.geometryDraftPaths(),drawing);
+        QVERIFY(c.requestGeometryPreview());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);QVERIFY(c.confirmGeometryEdit());
+        Project after;after.replace(projectcodec::decode(c.documentBytes()));QCOMPARE(area(after,"A"),104.);QCOMPARE(area(after,"B"),96.);c.undo();QCOMPARE(c.documentBytes(),before);
+    }
+    void providerPickingIgnoresCoveringContent() {
+        QTemporaryDir dir;ProjectDocument document({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}});
+        Geometry point;point.type="Point";point.points={{15,5}};document.geometries.insert({"label",1},point);
+        PlaceLabel label;label.id="label";label.name="covering";label.geometry={"label",1};document.labels.push_back(label);
+        DistributionLayer layer;layer.id="covering";layer.name="Covering distribution";document.distributionLayers.push_back(layer);
+        DistributionEntry entry;entry.id="covering-entry";entry.layerId=layer.id;entry.geometry=document.units[1].geometry;entry.value=10;document.distributionEntries.push_back(entry);
+        document.presentation.membership.clear(); // Current web documents have no legacy native-layer membership.
+        Project source;source.replace(document);
+        QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();
+        EditorController c({false,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(file.fileName())));QVERIFY(c.setProjectionMode("flat"));
+        QVERIFY(c.publishMapView({{"viewportWidth",800.},{"viewportHeight",600.},{"scale",200.},{"translateX",400.},{"translateY",300.},{"centerLongitude",15.},{"centerLatitude",5.}}));
+        const auto screen=projectPoint({15,5},static_cast<MapSceneBridge*>(c.mapSceneBridge())->viewState());QVERIFY(screen.finite);
+        const auto normal=c.pickObjectScreen(screen.x,screen.y,1).value("domain").toString();
+        QVERIFY2(normal=="label"||normal=="distributionLayer",qPrintable(normal));
+        c.selectCountry("A");QVERIFY(c.beginMergeSelection());
+        const auto provider=c.pickObjectScreen(screen.x,screen.y,1);QCOMPARE(provider.value("id").toString(),QStringLiteral("B"));QVERIFY(c.geometryToggleProvider(provider));
+        QCOMPARE(c.primaryObject().value("id").toString(),QStringLiteral("A"));
+    }
+    void splitDefaultsToSmallerResultAndCanChooseOtherResult() {
+        QTemporaryDir dir;Project source;source.replace(ProjectDocument({{"A","A",square(0,0,10).polygons,0xabcdef}},{{"countries","Countries"}}));
+        QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();
+        EditorController c({false,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(file.fileName())));c.selectCountry("A");const auto before=c.documentBytes();
+        MapProjection projection;projection.rebuild(source.document());QVERIFY(c.beginSplitGeometry());
+        for(const auto point:{Point{2,-1},Point{2,11}}){const auto xy=projection.project(point);QVERIFY(c.geometryAddPoint(xy.x,xy.y,0));}
+        QVERIFY(c.requestGeometryPreview());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);
+        QVERIFY(c.geometryChooseSplitResult(0));QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);
+        QVERIFY(c.geometryChooseSplitResult(-1));QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);
+        QVERIFY(c.confirmGeometryEdit());const auto doc=projectcodec::decode(c.documentBytes());
+        const auto created=std::find_if(doc.units.begin(),doc.units.end(),[](const auto& u){return u.id!="A";});QVERIFY(created!=doc.units.end());
+        QCOMPARE(planarArea(*doc.geometries.get(created->geometry)),20.);c.undo();QCOMPARE(c.documentBytes(),before);
+        std::array<double,2> chosenAreas{};
+        for(int choice=0;choice<2;++choice) {
+            c.selectCountry("A");QVERIFY(c.beginSplitGeometry());
+            for(const auto point:{Point{2,-1},Point{2,11}}){const auto xy=projection.project(point);QVERIFY(c.geometryAddPoint(xy.x,xy.y,0));}
+            QVERIFY(c.geometryChooseSplitResult(choice));QVERIFY(c.requestGeometryPreview());
+            QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);QVERIFY(c.confirmGeometryEdit());
+            const auto chosen=projectcodec::decode(c.documentBytes());
+            const auto unit=std::find_if(chosen.units.begin(),chosen.units.end(),[](const auto& u){return u.id!="A";});QVERIFY(unit!=chosen.units.end());
+            chosenAreas[choice]=planarArea(*chosen.geometries.get(unit->geometry));c.undo();QCOMPARE(c.documentBytes(),before);
+        }
+        QVERIFY(chosenAreas[0]!=chosenAreas[1]);QCOMPARE(chosenAreas[0]+chosenAreas[1],100.);
+    }
+    void metadataFieldsCommitAndUndoIndependently() {
+        QTemporaryDir dir;auto d=fixture();Geometry point;point.type="Point";point.points={{1,1}};d.geometries.insert({"city",1},point);
+        PlaceLabel label;label.id="city";label.name="old";label.notes="old notes";label.geometry={"city",1};d.labels.push_back(label);Project source;source.replace(d);
+        QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();
+        EditorController c({false,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(file.fileName())));QVERIFY(c.selectObject({{"domain","label"},{"id","city"}},"replace","test"));
+        QVERIFY(c.beginContentEdit("label","",false));QVERIFY(!c.hasPendingEdits());QSignalSpy geometryChanged(&c,&EditorController::geometryChanged);
+        QVERIFY(c.updateContentField("name","new"));QVERIFY(c.updateContentField("notes","new notes"));QVERIFY(c.commitContentField("name"));
+        auto doc=projectcodec::decode(c.documentBytes());QCOMPARE(doc.labels.front().name,std::string("new"));QCOMPARE(doc.labels.front().notes,std::string("old notes"));QVERIFY(c.hasPendingEdits());
+        QVERIFY(c.commitContentField("notes"));QVERIFY(!c.hasPendingEdits());QCOMPARE(geometryChanged.size(),0);c.undo();
+        QCOMPARE(c.contentEditState().value("notes").toString(),QStringLiteral("old notes"));QCOMPARE(c.contentEditState().value("name").toString(),QStringLiteral("new"));c.undo();
+        QCOMPARE(c.contentEditState().value("name").toString(),QStringLiteral("old"));c.redo();c.redo();QCOMPARE(c.contentEditState().value("notes").toString(),QStringLiteral("new notes"));
+    }
     void contentPointLineSession_data(){QTest::addColumn<bool>("mobile");QTest::newRow("desktop")<<false;QTest::newRow("mobile")<<true;}
     void contentPointLineSession(){
         QFETCH(bool,mobile);QTemporaryDir dir;Project source;source.replace(fixture());

@@ -47,6 +47,7 @@ ResolvedTerritorialPresentation resolvedTerritorialPresentation(const ProjectDoc
             if(os.blendMode)r.blendMode=*os.blendMode;else if(gs.blendMode==std::optional<std::string>("multiply"))r.blendMode="multiply";
         }
         r.boundaryVisible=os.boundaryVisible.value_or(gs.boundaryVisible.value_or(true));
+        r.colorVisible=os.colorVisible.value_or(gs.colorVisible.value_or(true));
         const std::string name=u.kind==UnitKind::Country?"basemapLabels":u.kind==UnitKind::Subunit?"subunitLabels":"regionLabels";
         const std::string flag=u.kind==UnitKind::Country?"countryFlags":u.kind==UnitKind::Subunit?"subunitFlags":"regionFlags";
         const bool visible=effectiveMapVisibility(d,territorialRef(u.id));
@@ -117,13 +118,35 @@ std::vector<ObjectRef> layoutLabels(const std::vector<LabelLayoutCandidate>& inp
         if(overlap&&!c.selected&&!c.pinned)continue;placed.push_back(box);result.push_back(c.ref);
     }return result;
 }
-std::vector<ObjectRef> visibleDistributionEntries(const ProjectDocument& d,const std::optional<std::string>& selectedLayer) {
+std::vector<ObjectRef> visibleDistributionEntries(const ProjectDocument& d) {
     const auto& settings=d.presentation.webPresentation.distributionSettings;std::vector<std::string> visible;
     for(const auto& layer:d.distributionLayers){const auto group=contentGroup(d,{"distributionLayer",layer.id});if(groupVisible(d.presentation.webPresentation,group)&&itemVisible(d.presentation.webPresentation,group,layer.id))visible.push_back(layer.id);}
-    if(settings.renderMode==DistributionRenderMode::Intensity){if(!selectedLayer||std::find(visible.begin(),visible.end(),*selectedLayer)==visible.end())return {};std::vector<ObjectRef> result;for(const auto& e:d.distributionEntries)if(e.layerId==*selectedLayer)result.push_back({"distributionEntry",e.id});return result;}
-    std::vector<ObjectRef> result;for(const auto& type:{"language","ethnicity","religion"}){std::vector<std::string> subset;for(const auto& id:visible)for(const auto& layer:d.distributionLayers)if(layer.id==id&&layer.type==type)subset.push_back(id);auto rows=dominantDistributionEntries(d,subset);result.insert(result.end(),rows.begin(),rows.end());}return result;
+    std::vector<ObjectRef> result;
+    if(visible.empty())return result;
+    const auto active=std::find(visible.begin(),visible.end(),settings.activeLayerId)!=visible.end()?settings.activeLayerId:visible.front();
+    for(const auto& layer:visible) {
+        if(settings.renderMode==DistributionRenderMode::Single&&layer!=active)continue;
+        for(const auto& entry:d.distributionEntries)if(entry.layerId==layer)result.push_back({"distributionEntry",entry.id});
+    }
+    return result;
 }
-double distributionFillAlpha(double share,double opacity){return (0.12+std::clamp(share,0.,100.)/100.*0.58)*std::clamp(opacity,0.,1.);}
+std::optional<DistributionValueRange> distributionValueRange(const ProjectDocument& d,const std::string& layerId) {
+    const auto layer=std::find_if(d.distributionLayers.begin(),d.distributionLayers.end(),[&](const auto& v){return v.id==layerId;});
+    if(layer==d.distributionLayers.end())return {};
+    if(layer->valueScale.manual)return DistributionValueRange{layer->valueScale.min,layer->valueScale.max};
+    std::optional<DistributionValueRange> range;
+    for(const auto& entry:d.distributionEntries)if(entry.layerId==layerId&&std::isfinite(entry.value)) {
+        if(!range)range=DistributionValueRange{entry.value,entry.value};
+        else {range->min=std::min(range->min,entry.value);range->max=std::max(range->max,entry.value);}
+    }
+    return range;
+}
+double distributionValueAlpha(double value,const std::optional<DistributionValueRange>& range,double opacity) {
+    if(!range)return 0;
+    const auto span=range->max-range->min;
+    const auto ratio=span>0?std::clamp((value-range->min)/span,0.,1.):1.;
+    return (0.12+0.58*ratio)*opacity;
+}
 WebPresentation rebasePresentation(const ProjectDocument& current,const ProjectDocument& from,const ProjectDocument& to) {
     auto candidate=to;candidate.presentation.webPresentation=current.presentation.webPresentation;
     auto& out=candidate.presentation.webPresentation;

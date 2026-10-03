@@ -218,7 +218,7 @@ TerritorialMutationPlan planAnnex(const ProjectSnapshot& s,const AnnexTerritoryI
     requireRewritableGuards(p,s.document());p.impacts.push_back({"annex",in.target,"territorial.annex"});return p;
 }
 TerritorialMutationPlan planSplit(const ProjectSnapshot& s,const SplitTerritorialIntent& in) {
-    const auto& source=unit(s,in.source);unlocked(source);if(in.cutLine.size()<2||in.retainedPart<0||in.retainedPart>1||in.createdId.empty()||in.createdName.empty())throw std::invalid_argument("INVALID_ARGUMENTS");
+    const auto& source=unit(s,in.source);unlocked(source);if(in.cutLine.size()<2||in.retainedPart< -1||in.retainedPart>1||in.createdId.empty()||in.createdName.empty())throw std::invalid_argument("INVALID_ARGUMENTS");
     const auto created=territorialRef(in.createdId);if(created==in.source||s.index().objects.count(created))throw std::invalid_argument("DUPLICATE_ID");
     const auto layer=s.layer(nativeLayerId(s.document(),in.source));if(layer&&layer->locked)throw std::invalid_argument("LOCKED");
     auto p=initial(s,TerritorialMutationKind::SplitTerritorial,in);p.targets={in.source};p.affectedObjects={in.source};p.selectedAfter=in.source;p.requiresConfirmation=true;

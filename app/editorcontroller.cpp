@@ -175,7 +175,11 @@ void EditorController::refreshTypedScene() {
         if(objectChooserOpen())interaction.candidates=chooserRefs_;
         interaction.selected=selection_.items();
         interaction.primary=selection_.primary();interaction.hover=hover_;
-        if(geometryEdit_)interaction.editTarget=geometryEdit_->target;
+        if(geometryEdit_) {
+            interaction.editTarget=geometryEdit_->target;
+            if(geometryEdit_->mergeIntent)interaction.selected=geometryEdit_->mergeIntent->donors;
+            if(geometryEdit_->annexIntent)interaction.selected=geometryEdit_->annexIntent->donors;
+        }
         const bool patch=previous&&pendingSceneImpact_&&
             pendingSceneImpactRevision_==project_.revision()&&
             previous->revisions.document+1==project_.revision()&&
@@ -463,13 +467,12 @@ QVariantMap EditorController::colors() const
 }
 QVariantMap EditorController::countryVisuals() const
 {
-    QVariantMap result;std::optional<std::string> selectedDistribution;
-    if(const auto primary=selection_.primary()) {
-        if(primary->domain=="distributionLayer")selectedDistribution=primary->id;
-        else if(primary->domain=="distributionEntry")for(const auto& entry:project_.document().distributionEntries)if(entry.id==primary->id){selectedDistribution=entry.layerId;break;}
-    }
-    const auto distributionRows=pandoeditor::visibleDistributionEntries(project_.document(),selectedDistribution);
+    QVariantMap result;
+    const auto distributionRows=pandoeditor::visibleDistributionEntries(project_.document());
     const std::set<pandoeditor::ObjectRef> visibleDistribution(distributionRows.begin(),distributionRows.end());
+    std::map<std::string,std::optional<pandoeditor::DistributionValueRange>> distributionRanges;
+    for(const auto& layer:project_.document().distributionLayers)
+        distributionRanges.emplace(layer.id,pandoeditor::distributionValueRange(project_.document(),layer.id));
     for(const auto& unit:project_.document().units) {
         const auto ref=pandoeditor::territorialRef(unit.id);
         const auto style=project_.document().presentation.objectStyles.find(ref);
@@ -483,7 +486,7 @@ QVariantMap EditorController::countryVisuals() const
             if(!value.isEmpty()&&value[0].isString()&&validImageDataUrl(value[0].toString())) {flag=value[0].toString();flagAvailable=true;retainedFlag=true;}
         }
         if(!retainedFlag||project_.document().symbols.count(ref)){const auto resolvedFlag=resolveDefaultFlag(project_.document(),ref);flag=resolvedFlag.source;flagAvailable=resolvedFlag.available;flagReason=resolvedFlag.reason;}
-        result[text(unit.id)]=QVariantMap{{"color",rgb(pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(unit.id)))},
+        result[text(unit.id)]=QVariantMap{{"color",rgb(resolved.colorVisible?pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(unit.id)):0xa8c7db)},
             {"name",text(project_.propertyView(ref)->displayName)},{"nameVisible",resolved.nameVisible},{"flagVisible",resolved.flagVisible},{"flagSource",flag},{"flagAvailable",flagAvailable},{"flagReason",flagReason},
             {"boundary",pandoeditor::resolvedTerritorialPresentation(project_.document(),ref).boundaryVisible},
             {"blendMode",text(resolved.blendMode)},
@@ -506,7 +509,8 @@ QVariantMap EditorController::countryVisuals() const
         for(std::size_t i=0;i<project_.layers().size();++i) if(project_.layers()[i].id==layerId) {layerOrder=int(i);layerOpacity=project_.layers()[i].opacity;}
         if(ref.domain=="distributionEntry") {
             if(!visibleDistribution.count(ref))continue;
-            opacity=pandoeditor::distributionFillAlpha(project_.document().distributionEntries.at(index).share,opacity);
+            const auto& entry=project_.document().distributionEntries.at(index);
+            opacity=pandoeditor::distributionValueAlpha(entry.value,distributionRanges.at(entry.layerId),opacity);
         }
         result[QStringLiteral("content/")+text(ref.domain)+"/"+text(ref.id)]=QVariantMap{
             {"color",rgb(properties->effectiveColor)},{"name",text(properties->displayName)},
@@ -591,11 +595,11 @@ bool EditorController::canDeleteLayer() const
 QString EditorController::fileName() const {return filePath_.isEmpty()?QStringLiteral("새 프로젝트"):QFileInfo(filePath_).fileName();}
 QString EditorController::documentNotice() const
 {
-    QString notice=QStringLiteral("저장 형식: Qt v7 · 이전 앱에서는 열 수 없습니다. 열기만으로 원본 파일은 변경되지 않습니다.");
+    QString notice=QStringLiteral("저장 형식: Qt v8 · 이전 앱에서는 열 수 없습니다. 열기만으로 원본 파일은 변경되지 않습니다.");
     const auto& d=project_.document();
     if(d.nativeSourceVersion<4)notice+=QStringLiteral(" 이전 Qt 파일의 색은 명시값으로 보존했습니다. 과거 상속 의도와 최초 국명은 복원할 수 없으며 현재 값을 우선합니다.");
     if(d.units.size()>project_.countries().size())
-        notice+=QStringLiteral(" 하위단위·지방 %1개의 기본 속성을 편집할 수 있습니다. 관계 편집은 후속 단계입니다.").arg(d.units.size()-project_.countries().size());
+        notice+=QStringLiteral(" 하위단위·지방 %1개: 정보·편집·관계 메뉴에서 편집할 수 있습니다.").arg(d.units.size()-project_.countries().size());
     if(!d.extensions.empty())
         notice+=QStringLiteral(" 미해석 데이터 %1개 보존 중: 관련 편집이 제한될 수 있습니다.").arg(d.extensions.size());
     return notice;
@@ -606,7 +610,7 @@ bool EditorController::hasPendingEdits() const
     // GeometryEditSession is intentionally not document data.  Treat it as a
     // pending draft so document-level undo/navigation cannot silently replace
     // its baseline while a user is dragging vertices.
-    if(geometryEdit_||contentSession_) return true;
+    if(geometryEdit_||(contentSession_&&(contentSession_->edit.create||contentSession_->preview||!contentSession_->pendingFields.empty()))) return true;
     if(!parkedCountryDrafts_.empty()||!parkedLayerDrafts_.empty()) return true;
     const auto u=selectedUnit();
     if(u && (nameDraft_!=QString::fromStdString(u->kind==pandoeditor::UnitKind::Country?pandoeditor::objectDisplayName(*u):u->name)
@@ -638,6 +642,7 @@ void EditorController::publish(bool pruneSelection)
     QScopedValueRollback<bool> guard(selectionTransition_,true);
     // Hidden/locked is not missing. A selected object remains addressable from a list.
     reconcileSelection();
+    refreshContentSession();
     if(!project_.layer(selectedLayer_.toStdString())) selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
     reloadDrafts();
     emit stateChanged();emit selectionChanged();emit searchChanged();emit hoverChanged();

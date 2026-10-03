@@ -68,7 +68,12 @@ QVariantMap EditorController::geometryEditState() const
 {
     if(!geometryEdit_) return {{"active",false}};
     const auto& edit=*geometryEdit_;
-    return {{"active",true},{"tool",edit.tool},{"phase",edit.preview?"preview":edit.job?"calculating":"editing"},{"previewReady",bool(edit.preview)},
+    QVariantList providers;
+    if(edit.mergeIntent)for(const auto& ref:edit.mergeIntent->donors)providers.append(objectRefValue(ref));
+    if(edit.annexIntent)for(const auto& ref:edit.annexIntent->donors)providers.append(objectRefValue(ref));
+    return {{"active",true},{"tool",edit.tool},{"stage",edit.preview?QStringLiteral("review"):edit.stage},{"choosingProviders",edit.choosingProviders},{"providers",providers},
+        {"splitChoice",edit.splitIntent?edit.splitIntent->retainedPart:-1},
+        {"phase",edit.preview?"preview":edit.job?"calculating":"editing"},{"previewReady",bool(edit.preview)},
         {"calculating",bool(edit.job)},
         {"selectedVertex",edit.vertex},{"error",edit.error},{"canUndo",edit.tool=="split"?!edit.lineDraft.empty():!edit.undo.empty()},{"canRedo",!edit.redo.empty()},
         {"target",objectRefValue(edit.target)},
@@ -79,6 +84,25 @@ QVariantMap EditorController::geometryEditState() const
 QVariantList EditorController::geometryDraftPaths() const
 {
     QVariantList paths;if(!geometryEdit_)return paths;
+    if(geometryEdit_->preview) {
+        const auto& document=geometryEdit_->preview->change().after();
+        std::vector<ObjectRef> refs{geometryEdit_->target};
+        if(geometryEdit_->splitIntent)refs.push_back(territorialRef(geometryEdit_->splitIntent->createdId));
+        const auto index=validateDocument(document);
+        for(const auto& ref:refs) {
+            const auto geometryRef=objectGeometry(document,index,ref);if(!geometryRef)continue;
+            const auto geometry=document.geometries.get(*geometryRef);if(!geometry)continue;
+            for(const auto& polygon:geometry->polygons) {
+                QString path;
+                for(const auto& ring:polygon) {
+                    for(std::size_t i=0;i<ring.size();++i) {const auto point=projection_.project(ring[i]);path+=QString("%1%2 %3 ").arg(i?"L":"M").arg(point.x,0,'g',17).arg(point.y,0,'g',17);}
+                    path+="Z ";
+                }
+                paths.append(QVariantMap{{"path",path},{"vertices",QVariantList{}},{"hole",false},{"preview",true},{"created",!(ref==geometryEdit_->target)}});
+            }
+        }
+        return paths;
+    }
     if(!isArea(geometryEdit_->draft)&&geometryEdit_->tool!="split") {
         const auto& g=geometryEdit_->draft;
         const auto sources=(g.type=="Point"||g.type=="MultiPoint")?std::vector<Ring>{g.points}:g.lines;
@@ -127,7 +151,7 @@ bool EditorController::beginGeometryDraw()
 
 bool EditorController::geometryAddPoint(double x,double y,double tolerance)
 {
-    if(!geometryEdit_||geometryEdit_->preview||!std::isfinite(x)||!std::isfinite(y))return false;
+    if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->stage=="setup"||geometryEdit_->choosingProviders||!std::isfinite(x)||!std::isfinite(y))return false;
     auto& edit=*geometryEdit_;if(edit.tool=="split"){edit.lineDraft.push_back(snappedPoint(project_.document(),projection_,projection_.unproject(x,y),tolerance,edit.snapPoint));++edit.request;emit geometryEditChanged();return true;}if(edit.tool!="draw"&&edit.tool!="annex")return false;
     if(!isArea(edit.draft)) {
         edit.undo.push_back(edit.draft);edit.redo.clear();
@@ -240,7 +264,9 @@ bool EditorController::requestGeometryPreview()
 {
     std::string validationDetail;
     if(!geometryEdit_||geometryEdit_->preview||!geometryEdit_->base.matches(project_))return false;
-    if(geometryEdit_->tool!="split"&&!validGeometry(geometryEdit_->draft,&validationDetail)){geometryEdit_->error=validationDetail.empty()?QStringLiteral("닫힌 유효 폴리곤이 필요합니다."):QStringLiteral("닫힌 유효 폴리곤이 필요합니다: %1").arg(QString::fromStdString(validationDetail));emit geometryEditChanged();return false;}
+    if(geometryEdit_->stage=="setup")return false;
+    if(geometryEdit_->annexIntent&&geometryEdit_->choosingProviders)return false;
+    if(geometryEdit_->tool!="split"&&geometryEdit_->tool!="merge"&&!validGeometry(geometryEdit_->draft,&validationDetail)){geometryEdit_->error=validationDetail.empty()?QStringLiteral("닫힌 유효 폴리곤이 필요합니다."):QStringLiteral("닫힌 유효 폴리곤이 필요합니다: %1").arg(QString::fromStdString(validationDetail));emit geometryEditChanged();return false;}
     auto& edit=*geometryEdit_;
     if(edit.content) {
         if(!contentSession_||!contentSession_->base.matches(project_))return false;
@@ -260,6 +286,7 @@ bool EditorController::requestGeometryPreview()
     TerritorialMutationIntent intent=ReplaceGeometryIntent{edit.target};
     QString command=QStringLiteral("territorial.geometry.replace");
     if(edit.createIntent) { auto create=*edit.createIntent;create.geometry=edit.draft;intent=std::move(create);command=QStringLiteral("territorial.create"); }
+    else if(edit.mergeIntent){intent=*edit.mergeIntent;}
     else if(edit.annexIntent){auto annex=*edit.annexIntent;annex.selection=edit.draft;intent=std::move(annex);}
     else if(edit.splitIntent){auto split=*edit.splitIntent;split.cutLine=edit.lineDraft;intent=std::move(split);}
     else if(!edit.boundaryOwners.empty()&&edit.boundaryOwners.size()!=2){edit.error=QStringLiteral("공유 국경은 두 객체를 선택해야 합니다.");emit geometryEditChanged();return false;}
@@ -277,7 +304,7 @@ bool EditorController::requestGeometryPreview()
                     current.error=QStringLiteral("초안 또는 문서가 변경되어 계산 결과를 폐기했습니다.");
                 } else if(!result.ok()||!result.preview) {
                     current.error=QString::fromStdString(result.detail.empty()?"GEOMETRY_PREPARATION_FAILED":result.detail);
-                } else {current.preview=std::move(result.preview);current.error.clear();}
+                } else {current.preview=std::move(result.preview);current.stage="review";current.error.clear();}
                 emit geometryEditChanged();
             });
         emit geometryEditChanged();return true;
@@ -313,7 +340,7 @@ bool EditorController::requestGeometryPreview()
             return prepareTerritorialGeometry(snapshot,*planned.plan,token);
         });
     }
-    if(edit.annexIntent||edit.splitIntent||edit.coastIntent) {
+    if(edit.mergeIntent||edit.annexIntent||edit.splitIntent||edit.coastIntent) {
         return schedule([intent](const ProjectSnapshot& snapshot,const JobToken& token){
             auto planned=CommandProcessor::planTerritorial(snapshot,intent);
             if(!planned.ok()||!planned.plan){PrepareResult failed;failed.error=planned.error;failed.detail=planned.detail;return failed;}
@@ -332,7 +359,7 @@ bool EditorController::requestGeometryPreview()
 bool EditorController::confirmGeometryEdit()
 {
     if(!geometryEdit_||!geometryEdit_->preview)return false;MapProjection next;try{next.rebuild(geometryEdit_->preview->change().after());}catch(...){return false;}
-    auto applied=CommandProcessor::confirm(project_,*geometryEdit_->preview);if(!applied.ok()){commandError(applied.error,QString::fromStdString(applied.detail));geometryEdit_.reset();emit geometryEditChanged();return false;}
+    auto applied=CommandProcessor::confirm(project_,*geometryEdit_->preview);if(!applied.ok()){commandError(applied.error,QString::fromStdString(applied.detail));geometryEdit_->preview.reset();geometryEdit_->stage="selection";geometryEdit_->error=QString::fromStdString(applied.detail);emit geometryEditChanged();return false;}
     noteAppliedImpact(applied.impact);
     projection_=std::move(next);const bool created=bool(geometryEdit_->createIntent);const bool content=geometryEdit_->content;geometryEdit_.reset();if(content){contentSession_.reset();emit contentEditChanged();}if(created)createDraft_.reset();hover_.reset();++hoverRevision_;closeObjectChooser();publish(false);emit geometryChanged();emit structureChanged();emit geometryEditChanged();return true;
 }
@@ -340,4 +367,44 @@ bool EditorController::confirmGeometryEdit()
 void EditorController::cancelGeometryEdit()
 {
     if(!geometryEdit_)return;if(geometryEdit_->job)jobs_->cancel(geometryEdit_->job->id());if(geometryEdit_->preview)CommandProcessor::cancel(*geometryEdit_->preview);geometryEdit_.reset();emit geometryEditChanged();emit contentEditChanged();emit draftsChanged();emit dirtyChanged();
+}
+
+bool EditorController::geometryToggleProvider(const QVariantMap& object) {
+    if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->job||!geometryEdit_->choosingProviders||geometryEdit_->stage!="selection"||!geometryEdit_->base.matches(project_))return false;
+    const auto ref=existingObjectRef(object);auto& edit=*geometryEdit_;
+    if(!ref||ref->domain!="territorial"||*ref==edit.target||objectLocked(project_.document(),project_.index(),*ref))return false;
+    const auto& target=project_.document().units.at(project_.index().objects.at(edit.target));
+    const auto& provider=project_.document().units.at(project_.index().objects.at(*ref));
+    if(target.kind!=provider.kind)return false;
+    auto& providers=edit.mergeIntent?edit.mergeIntent->donors:edit.annexIntent->donors;
+    const auto found=std::find(providers.begin(),providers.end(),*ref);
+    if(found==providers.end())providers.push_back(*ref);else providers.erase(found);
+    ++edit.request;edit.error.clear();emit geometryEditChanged();emit visualChanged();return true;
+}
+bool EditorController::geometryAdvanceStage() {
+    if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->job)return false;
+    auto& edit=*geometryEdit_;
+    if(edit.stage=="setup"){edit.stage="selection";emit geometryEditChanged();return true;}
+    if(edit.annexIntent&&edit.choosingProviders&&!edit.annexIntent->donors.empty()) {
+        edit.choosingProviders=false;edit.error.clear();emit geometryEditChanged();return true;
+    }
+    return false;
+}
+bool EditorController::geometryBack() {
+    if(!geometryEdit_)return false;auto& edit=*geometryEdit_;
+    if(edit.job){jobs_->cancel(edit.job->id());edit.job.reset();++edit.request;edit.error.clear();emit geometryEditChanged();return true;}
+    if(edit.preview){CommandProcessor::cancel(*edit.preview);edit.preview.reset();edit.stage="selection";edit.error.clear();++edit.request;emit geometryEditChanged();return true;}
+    if(edit.annexIntent&&!edit.choosingProviders){edit.choosingProviders=true;emit geometryEditChanged();return true;}
+    if(edit.stage=="selection"){edit.stage="setup";edit.error.clear();emit geometryEditChanged();return true;}
+    cancelGeometryEdit();return true;
+}
+bool EditorController::geometryChooseSplitResult(int createdCandidate) {
+    if(!geometryEdit_||!geometryEdit_->splitIntent||createdCandidate< -1||createdCandidate>1)return false;
+    auto& edit=*geometryEdit_;if(edit.job)return false;
+    const int retainedPart=createdCandidate<0?-1:1-createdCandidate;
+    if(edit.splitIntent->retainedPart==retainedPart)return true;
+    const bool preview=bool(edit.preview);
+    if(preview){CommandProcessor::cancel(*edit.preview);edit.preview.reset();}
+    edit.splitIntent->retainedPart=retainedPart;edit.stage="selection";++edit.request;emit geometryEditChanged();
+    return !preview||requestGeometryPreview();
 }

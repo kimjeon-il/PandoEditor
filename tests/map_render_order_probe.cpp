@@ -15,7 +15,7 @@ int main() {
         TerritorialUnit unit;unit.id=id;unit.kind=kind;document.units.push_back(unit);
     }
     for(const auto& type:{"religion","ethnicity","language"}){
-        DistributionLayer layer;layer.id=type;layer.type=type;document.distributionLayers.push_back(layer);
+        DistributionLayer layer;layer.id=type;layer.unit=type;document.distributionLayers.push_back(layer);
         DistributionEntry entry;entry.id=type;entry.layerId=type;document.distributionEntries.push_back(entry);
     }
     for(const auto& kind:{"river","lake"}){HydroFeature hydro;hydro.id=kind;hydro.kind=kind;document.hydro.push_back(hydro);}

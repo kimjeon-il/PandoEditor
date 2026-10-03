@@ -88,7 +88,7 @@ private slots:
             document.geometries.insert({id,1},std::move(shape));
         };
         addPolygon("distribution",40);addPolygon("generic",60);
-        DistributionLayer layer;layer.id="D";layer.name="Distribution";layer.type="language";
+        DistributionLayer layer;layer.id="D";layer.name="Distribution";layer.unit="language";
         document.distributionLayers.push_back(layer);
         DistributionEntry entry;entry.id="E";entry.layerId="D";entry.geometry=GeometryRef{"distribution",1};
         document.distributionEntries.push_back(entry);
@@ -120,7 +120,7 @@ private slots:
         };
         for(const auto& [key,domain,id,group]:std::vector<std::tuple<QString,QString,QString,QString>>{
             {"content/label/L","label","L","labels"},
-            {"content/distributionEntry/E","distributionLayer","D","languages"},
+            {"content/distributionEntry/E","distributionLayer","D","distributions"},
             {"content/generic/G","generic","G","genericFeatures"}}){
             const auto hit=picked(key);
             QCOMPARE(hit.value("domain").toString(),domain);QCOMPARE(hit.value("id").toString(),id);
@@ -150,15 +150,18 @@ private slots:
                  std::vector<ObjectRef>({{"label","a"}}));
         const auto city=automaticLabelSettings("city",LabelSettings{12.,0.,99.,Point{1,2},false,"foreign"});
         QCOMPARE(*city.priority,70.);QCOMPARE(*city.minZoom,1.25);QCOMPARE(city.collisionGroup,std::string("place"));QVERIFY(city.pinned);
-        QCOMPARE(distributionFillAlpha(50,.5),.205);
+        QCOMPARE(distributionValueAlpha(50,DistributionValueRange{0,100},.5),.205);
     }
-    void distributionModeUsesSelectedVisibleLayer() {
+    void distributionModeUsesExplicitActiveVisibleLayer() {
         using namespace pandoeditor;ProjectDocument d;d.distributionLayers={{"a","A","language"},{"b","B","language"},{"c","C","religion"}};
         d.distributionEntries={{"a1","a",territorialRef("T"),{},50},{"b1","b",territorialRef("T"),{},50},{"c1","c",territorialRef("T"),{},30}};
-        d.presentation.webPresentation.hiddenItems["languages"].insert("b");
+        d.presentation.webPresentation.hiddenItems["distributions"].insert("b");
         auto dominant=visibleDistributionEntries(d);QCOMPARE(dominant,std::vector<ObjectRef>({{"distributionEntry","a1"},{"distributionEntry","c1"}}));
-        d.presentation.webPresentation.distributionSettings.renderMode=DistributionRenderMode::Intensity;
-        QVERIFY(visibleDistributionEntries(d,"b").empty());QCOMPARE(visibleDistributionEntries(d,"a"),std::vector<ObjectRef>({{"distributionEntry","a1"}}));
+        d.presentation.webPresentation.distributionSettings.renderMode=DistributionRenderMode::Single;
+        d.presentation.webPresentation.distributionSettings.activeLayerId="c";
+        QCOMPARE(visibleDistributionEntries(d),std::vector<ObjectRef>({{"distributionEntry","c1"}}));
+        d.presentation.webPresentation.distributionSettings.activeLayerId="b";
+        QCOMPARE(visibleDistributionEntries(d),std::vector<ObjectRef>({{"distributionEntry","a1"}}));
     }
     void localHydroManifestConfiguresAtomically() {
         QTemporaryDir dir;

@@ -5,26 +5,17 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <iostream>
-
 int main(int argc,char** argv) {
-    QCoreApplication app(argc,argv);
-    QFile input;
-    if(!input.open(stdin,QIODevice::ReadOnly)) return 2;
-    QJsonParseError error;
-    const auto json=QJsonDocument::fromJson(input.readAll(),&error);
-    if(error.error!=QJsonParseError::NoError || !json.isObject()) return 2;
-    pandoeditor::ProjectDocument d;
-    std::vector<std::string> visible;
-    for(const auto& value:json.object()["layers"].toArray()) visible.push_back(value.toObject()["id"].toString().toStdString());
-    for(const auto& value:json.object()["entries"].toArray()) {
-        const auto row=value.toObject(); pandoeditor::DistributionEntry entry;
-        entry.id=row["id"].toString().toStdString(); entry.layerId=row["layerId"].toString().toStdString();
-        entry.share=row["share"].toDouble();
-        if(row["mode"].toString()=="geometry") entry.geometry=pandoeditor::GeometryRef{"fixture",1};
-        else entry.territory=pandoeditor::territorialRef(row["territorialUnitId"].toString().toStdString());
-        d.distributionEntries.push_back(std::move(entry));
+    QCoreApplication app(argc,argv);QFile input;if(!input.open(stdin,QIODevice::ReadOnly))return 2;
+    const auto json=QJsonDocument::fromJson(input.readAll()).object();pandoeditor::ProjectDocument d;
+    for(const auto& row:json["layers"].toArray()) {
+        const auto v=row.toObject();pandoeditor::DistributionLayer layer;layer.id=v["id"].toString().toStdString();
+        const auto scale=v["valueScale"].toObject();if(scale["mode"].toString()=="manual")layer.valueScale={true,scale["min"].toDouble(),scale["max"].toDouble()};
+        d.distributionLayers.push_back(layer);
     }
-    QJsonArray output;
-    for(const auto& ref:pandoeditor::dominantDistributionEntries(d,visible)) output.append(QString::fromStdString(ref.id));
-    std::cout<<QJsonDocument(output).toJson(QJsonDocument::Compact).constData()<<'\n';
+    for(const auto& row:json["entries"].toArray()) {const auto v=row.toObject();pandoeditor::DistributionEntry e;e.id=v["id"].toString().toStdString();e.layerId=v["layerId"].toString().toStdString();e.value=v["value"].toDouble();d.distributionEntries.push_back(e);}
+    QJsonObject ranges,alpha;
+    for(const auto& layer:d.distributionLayers) {const auto range=pandoeditor::distributionValueRange(d,layer.id);const auto key=QString::fromStdString(layer.id);ranges[key]=range?QJsonValue(QJsonObject{{"min",range->min},{"max",range->max}}):QJsonValue();}
+    for(const auto& e:d.distributionEntries)alpha[QString::fromStdString(e.id)]=pandoeditor::distributionValueAlpha(e.value,pandoeditor::distributionValueRange(d,e.layerId),json["opacity"].toDouble(1));
+    std::cout<<QJsonDocument(QJsonObject{{"ranges",ranges},{"alpha",alpha}}).toJson(QJsonDocument::Compact).constData()<<'\n';
 }

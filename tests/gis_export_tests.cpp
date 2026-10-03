@@ -17,10 +17,10 @@ ProjectDocument document() {
         {{1,1},{1,2},{2,2},{2,1},{1,1}}}},0x123456}},
         {{"countries","Countries"}});
     doc.units.front().libraryOrigin=LibraryOrigin{"historical-country:A","v1","1945","archive","2","high","year",false,{}};
-    DistributionLayer language;language.id="lang:1";language.type="language";language.name="Language";
+    DistributionLayer language;language.id="lang:1";language.unit="%";language.name="Language";
     doc.distributionLayers.push_back(language);
     DistributionEntry entry;entry.id="entry:1";entry.layerId=language.id;
-    entry.territory=territorialRef("A");entry.share=73;doc.distributionEntries.push_back(entry);
+    entry.territory=territorialRef("A");entry.value=73;doc.distributionEntries.push_back(entry);
     Geometry point;point.type="Point";point.points={{2,2}};
     doc.geometries.insert({"label:1",1},point);
     PlaceLabel label;label.id="label:1";label.name="City";label.geometry={"label:1",1};
@@ -54,7 +54,7 @@ int main(int argc,char** argv) {
     assert(layers.size()==4);
     assert(layers[0].file=="countries.geojson"&&layers[0].targetType=="country");
     assert(layers[1].file=="generic_features.geojson");
-    assert(layers[2].file=="language_distribution.geojson");
+    assert(layers[2].file=="distributions.geojson");
     assert(layers[2].collection.features.front().propertiesJson.find("territorial_unit_id")!=std::string::npos);
     assert(layers[3].file=="labels.geojson");
     const auto zip=exportGisGeoJsonZip(doc,{"countries","distributions","genericFeatures","labels"},
@@ -62,7 +62,7 @@ int main(int argc,char** argv) {
     const auto archive=parseGisGeoJsonZip(zip);
     assert(archive.webManifest&&archive.layers.size()==4);
     assert(archive.layers.front().collection.features.front().propertiesJson.find("historical-country:A")!=std::string::npos);
-    assert(archive.layers[2].distributionType=="language");
+    assert(archive.layers[2].distributionType.empty());
     const auto raw=readGisZipArchive(std::string_view(zip.constData(),std::size_t(zip.size())));
     assert(raw.entries.back().path=="manifest.json");
     assert(raw.entries.back().bytes.find("\"schemaVersion\":3")!=std::string::npos);

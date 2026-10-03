@@ -163,15 +163,64 @@ void v4(V& p) {
     }
     p.object["schemaVersion"]=V::num(5);
 }
+void v5(V& p) {
+    auto visibility=objectOrEmpty(at(p,"layerVisibility"));
+    auto items=objectOrEmpty(at(p,"itemVisibility"));
+    auto nextItems=objectOrEmpty(at(items,"distributions"));
+    auto layers=optionalArray(at(p,"distributionLayers"),"/distributionLayers");
+    for(auto& layer:layers) {
+        const auto type=text(at(layer,"type"));
+        const auto group=type=="language"?"languages":type=="ethnicity"?"ethnicities":type=="religion"?"religions":"";
+        if(*group&&(isFalse(at(visibility,group))||isFalse(at(at(items,group),text(at(layer,"id"))))))nextItems.object[text(at(layer,"id"))]=V::boolean(false);
+        layer.object.erase("type");layer.object["schemaVersion"]=V::num(3);layer.object["unit"]=V::str("%");
+        layer.object["valueScale"]=obj({{"mode",V::str("manual")},{"min",V::num(0)},{"max",V::num(100)}});
+    }
+    auto entries=optionalArray(at(p,"distributionEntries"),"/distributionEntries");
+    for(auto& entry:entries){entry.object["value"]=at(entry,"share");entry.object.erase("share");entry.object["schemaVersion"]=V::num(3);}
+    V ls=V::arr(),es=V::arr();ls.array=std::move(layers);es.array=std::move(entries);
+    p.object["distributionLayers"]=std::move(ls);p.object["distributionEntries"]=std::move(es);
+    auto presentation=objectOrEmpty(at(p,"layerPresentation"));auto styles=objectOrEmpty(at(presentation,"styles"));
+    for(auto group:{"languages","ethnicities","religions"})if(truth(at(styles,group))) {styles.object["distributions"]=at(styles,group);break;}
+    for(auto group:{"languages","ethnicities","religions"}){visibility.object.erase(group);items.object.erase(group);styles.object.erase(group);}
+    visibility.object["distributions"]=V::boolean(true);items.object["distributions"]=nextItems;
+    const auto normalizeStyle=[](const V& input) {
+        auto opacity=has(input,"opacity")?number(at(input,"opacity")):1.;if(!std::isfinite(opacity))opacity=1.;
+        return obj({{"opacity",V::num(std::clamp(opacity,0.,1.))},{"colorVisible",V::boolean(!isFalse(at(input,"colorVisible")))},
+            {"boundaryVisible",V::boolean(!isFalse(at(input,"boundaryVisible")))},{"boundaryWidth",V::num(1)},
+            {"labelsVisible",V::boolean(!isFalse(at(input,"labelsVisible")))},{"blendMode",V::str(text(at(input,"blendMode"))=="multiply"?"multiply":"normal")}});
+    };
+    V normalizedStyles=V::obj();
+    for(const auto* group:{"labels","countryLabels","distributions","subunits","regions","genericFeatures","rivers","lakes","countries","terrain"}) {
+        auto input=at(styles,group);
+        if((std::string(group)=="rivers"||std::string(group)=="lakes")&&!has(styles,group)&&has(styles,"hydro")) {
+            input=normalizeStyle(at(styles,"hydro"));
+            if(std::string(group)=="rivers") {if(isFalse(at(input,"boundaryVisible")))input.object["opacity"]=V::num(0);input.object["boundaryVisible"]=V::boolean(true);}
+        }
+        normalizedStyles.object[group]=normalizeStyle(input);
+    }
+    V normalizedObjects=V::obj();
+    for(const auto& [key,style]:objectOrEmpty(at(presentation,"objectStyles")).object) {
+        const auto normalized=normalizeStyle(style);V sparse=V::obj();
+        for(const auto& [field,value]:normalized.object)if(has(style,field))sparse.object[field]=value;
+        normalizedObjects.object[key]=std::move(sparse);
+    }
+    V objectOrder=V::arr();for(const auto& key:optionalArray(at(presentation,"objectOrder"),"/layerPresentation/objectOrder"))uniqueAppend(objectOrder,V::str(jsString(key)));
+    presentation=obj({{"schemaVersion",V::num(4)},{"styles",normalizedStyles},{"objectStyles",normalizedObjects},{"objectOrder",objectOrder}});
+    presentation.object["overlayOrder"]=arr({V::str("distributions"),V::str("subunits"),V::str("regions"),V::str("genericFeatures")});
+    p.object["layerVisibility"]=visibility;p.object["itemVisibility"]=items;p.object["layerPresentation"]=presentation;
+    p.object["distributionSettings"]=obj({{"renderMode",V::str("overlap")},{"activeLayerId",V::str("")},{"boundaryVisible",V::boolean(!isFalse(at(at(p,"distributionSettings"),"boundaryVisible")))}});
+    p.object["distributionModel"]=obj({{"schemaVersion",V::num(3)},{"sourceModes",arr({V::str("territorial"),V::str("geometry")})},{"valueKind",V::str("finite-number")}});
+    p.object["schemaVersion"]=V::num(6);
+}
 FileKind classifyValue(const V& p) {
     require(p.kind==V::Object,"UNSUPPORTED_FORMAT: expected project object");
     const auto f=text(at(p,"format"));
     if(f=="pandolab-autosave-delta")throw std::invalid_argument("BASE_DATA_REQUIRED: 웹에서 완전 저장본을 내보내 주세요.");
     if(f=="pandoeditor-project") {
-        double v=number(at(p,"version"));require(std::isfinite(v)&&std::floor(v)==v&&v>=1&&v<=4,"UNSUPPORTED_VERSION: Qt version");return FileKind::QtProject;
+        double v=number(at(p,"version"));require(std::isfinite(v)&&std::floor(v)==v&&v>=1&&v<=8,"UNSUPPORTED_VERSION: Qt version");return FileKind::QtProject;
     }
     require(f=="pandolab-project-state"||f=="pandolab-autosave-full","UNSUPPORTED_FORMAT: not a web full project");
-    double v=number(at(p,"schemaVersion"));require(std::isfinite(v)&&std::floor(v)==v&&v>=3&&v<=5,"UNSUPPORTED_VERSION: web schema 3..5 required");
+    double v=number(at(p,"schemaVersion"));require(std::isfinite(v)&&std::floor(v)==v&&v>=3&&v<=6,"UNSUPPORTED_VERSION: web schema 3..6 required");
     require(!has(p,"countryDelta"),"BASE_DATA_REQUIRED: delta content needs base data");return FileKind::WebFull;
 }
 }
@@ -181,6 +230,7 @@ Migration migrate(const QByteArray& bytes) {
     Migration result;result.sourceFormat=QString::fromStdString(text(at(p,"format")));result.sourceSchema=static_cast<int>(number(at(p,"schemaVersion")));
     if(result.sourceSchema==3)v3(p);
     if(result.sourceSchema<=4)v4(p);
+    if(result.sourceSchema<=5)v5(p);
     result.normalized=p.encode();return result;
 }
 }

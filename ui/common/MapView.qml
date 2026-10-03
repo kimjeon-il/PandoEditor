@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Shapes
 import QtQuick.Dialogs as Native
 import Pandoeditor.Windowing 1.0
+import "UiTokens.js" as Tokens
 
 Rectangle {
     id: view
@@ -23,6 +24,13 @@ Rectangle {
     signal selectionNavigationStarted()
     signal selectionPointerChanged(bool down)
     property real controlsTopMargin:12
+    property bool externalCommandBar:false
+    function showReferenceImages(trigger) {
+        const point=trigger.mapToItem(view,0,0)
+        referenceImageMenu.x=Math.max(8,Math.min(point.x,view.width-referenceImageMenu.width-8))
+        referenceImageMenu.y=Math.max(8,point.y-referenceImageMenu.height-8)
+        referenceImageMenu.open()
+    }
     property point chooserPoint: Qt.point(0,0)
     property string mapHoverKey: ""
     readonly property bool geometryEditing: editor.geometryEditState.active === true
@@ -34,7 +42,7 @@ Rectangle {
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             if (editor.requestGeometryPreview()) event.accepted = true
         } else if (event.key === Qt.Key_Escape) {
-            editor.cancelGeometryEdit()
+            editor.geometryBack()
             event.accepted = true
         }
     }
@@ -224,6 +232,7 @@ Rectangle {
     Button {
         id: referenceImageButton
         objectName: "referenceImageButton"
+        visible:!view.externalCommandBar
         anchors.left: parent.left; anchors.top: parent.top
         anchors.margins: 12
         text: "참조 이미지"
@@ -308,13 +317,18 @@ Rectangle {
         acceptedButtons: Qt.LeftButton
         onTapped: function(eventPoint) {
             view.forceActiveFocus()
+            if (editor.geometryEditState.stage === "setup" || editor.geometryEditState.previewReady) return
+            if (editor.geometryEditState.choosingProviders) {
+                editor.geometryToggleProvider(editor.pickObjectScreen(eventPoint.position.x,eventPoint.position.y,view.globeMode?view.globeZoom:view.zoom))
+                return
+            }
             const x=(eventPoint.position.x-view.originX)/view.mapScale
             const y=(eventPoint.position.y-view.originY)/view.mapScale
             if (editor.geometryEditState.tool === "draw" || editor.geometryEditState.tool === "annex" || editor.geometryEditState.tool === "split") editor.geometryAddPoint(x,y,(editor.mobileMode?18:10)/view.mapScale)
             else if (editor.geometryEditState.tool !== "move") editor.geometrySelectNearest(x,y,(editor.mobileMode?18:10)/view.mapScale)
         }
         onDoubleTapped: function(eventPoint) {
-            if (editor.geometryEditState.tool !== "draw" && editor.geometryEditState.tool !== "move")
+            if (editor.geometryEditState.stage !== "setup" && !editor.geometryEditState.choosingProviders && editor.geometryEditState.tool !== "draw" && editor.geometryEditState.tool !== "move")
                 editor.geometryInsertNearest((eventPoint.position.x-view.originX)/view.mapScale,
                                              (eventPoint.position.y-view.originY)/view.mapScale,
                                              (editor.mobileMode?18:10)/view.mapScale)
@@ -433,14 +447,14 @@ Rectangle {
                 width: editor.mapWidth; height: editor.mapHeight
                 transform: Scale { xScale: view.mapScale; yScale: view.mapScale }
                 ShapePath {
-                    strokeColor: "#d97706"; strokeWidth: 2 / view.mapScale
-                    fillColor: modelData.hole ? "#00000000" : "#60f59e0b"
+                    strokeColor: modelData.created ? "#059669" : "#d97706"; strokeWidth: 2 / view.mapScale
+                    fillColor: modelData.hole || modelData.line ? "#00000000" : modelData.created ? "#6010b981" : "#60f59e0b"
                     fillRule: ShapePath.OddEvenFill; joinStyle: ShapePath.RoundJoin
                     PathSvg { path: modelData.path }
                 }
             }
             Repeater {
-                model: modelData.vertices
+                model: editor.geometryEditState.choosingProviders || editor.geometryEditState.stage === "setup" || editor.geometryEditState.previewReady ? [] : modelData.vertices
                 delegate: Rectangle {
                     required property var modelData
                     x: view.originX + modelData.x * view.mapScale - width / 2
@@ -461,6 +475,7 @@ Rectangle {
     }
     Row {
         z: editor.layers.length+2
+        visible:!view.externalCommandBar
         anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 12; anchors.topMargin:view.controlsTopMargin; spacing: 4
         Button { focusPolicy: Qt.NoFocus; text: "+"; width: 44; Accessible.name: "확대"; onClicked: view.zoomAt(1.25,view.width/2,view.height/2) }
         Button { focusPolicy: Qt.NoFocus; text: "-"; width: 44; Accessible.name: "축소"; onClicked: view.zoomAt(0.8,view.width/2,view.height/2) }
@@ -470,29 +485,35 @@ Rectangle {
         z: editor.layers.length+6
         anchors.left: parent.left; anchors.top: parent.top; anchors.margins: 12; anchors.topMargin: view.controlsTopMargin
         spacing: 4
-        visible: !view.geometryEditing && editor.selectionItems.length === 1 && editor.selectedEditable
+        visible: !view.externalCommandBar && !view.geometryEditing && editor.selectionItems.length === 1 && editor.selectedEditable
         Button { objectName: "beginGeometryEdit"; text: "도형 편집"; onClicked: editor.beginGeometryEdit("edit") }
         Button { objectName: "beginGeometryDraw"; text: "다시 그리기"; onClicked: editor.beginGeometryDraw() }
     }
     Rectangle {
         z: editor.layers.length+7
         anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 12
-        visible: view.geometryEditing; color: "#ffffffee"; border.color: "#d7b77f"; radius: 6; height: geometryTools.implicitHeight + 16
-        Row {
-            id: geometryTools; anchors.centerIn: parent; spacing: 6
-            Label { visible: editor.geometryEditState.tool !== "draw" && editor.geometryEditState.tool !== "move"; text: "변을 두 번 탭해 점 추가"; verticalAlignment: Text.AlignVCenter }
+        objectName:"geometryToolDock"
+        visible: view.geometryEditing; color:Tokens.colors(editor.appearancePreferences).panel; border.color:Tokens.colors(editor.appearancePreferences).border; radius:9; height:geometryTools.implicitHeight+16
+        Flow {
+            id:geometryTools;anchors.left:parent.left;anchors.right:parent.right;anchors.margins:8;y:8;spacing:4
+            Label { visible: editor.geometryEditState.choosingProviders === true; width:Math.min(implicitWidth,geometryTools.width);wrapMode:Text.Wrap;text: "대상 고정 · 지도에서 제공 영역 선택 (" + (editor.geometryEditState.providers || []).length + ")" }
+            Button { visible: editor.geometryEditState.stage === "setup" || (editor.geometryEditState.tool === "annex" && editor.geometryEditState.choosingProviders); text: "다음"; onClicked: editor.geometryAdvanceStage() }
+            ComboBox { objectName: "splitResultChoice";width:Math.min(implicitWidth,geometryTools.width); visible: editor.geometryEditState.tool === "split"; model: ["작은 부분을 새 영역으로", "결과 1을 새 영역으로", "결과 2를 새 영역으로"]; currentIndex: editor.geometryEditState.splitChoice === undefined || editor.geometryEditState.splitChoice < 0 ? 0 : 2-editor.geometryEditState.splitChoice; enabled: !editor.geometryEditState.calculating; onActivated: editor.geometryChooseSplitResult(currentIndex-1) }
+            Label {visible:editor.geometryEditState.tool==="edit";text:"변을 두 번 탭해 점 추가";verticalAlignment:Text.AlignVCenter}
             Button { objectName: "geometryMoveObject"; visible: editor.geometryEditState.active === true && editor.geometryEditState.target && editor.geometryEditState.target.domain !== "territorial" && editor.geometryEditState.tool !== "draw"; text: editor.geometryEditState.tool === "move" ? "점 편집" : "전체 이동"; onClicked: editor.geometrySetMoveMode(editor.geometryEditState.tool !== "move") }
             Button { objectName: "geometryDeleteVertex"; text: "점 삭제"; enabled: editor.geometryEditState.selectedVertex >= 0; onClicked: editor.geometryDeleteSelectedVertex() }
             Button { objectName: "geometryUndoDraft"; text: "초안 실행 취소"; enabled: editor.geometryEditState.canUndo === true; onClicked: editor.geometryUndoDraft() }
             Button { objectName: "geometryRedoDraft"; text: "다시 실행"; visible: editor.geometryEditState.canRedo === true; onClicked: editor.geometryRedoDraft() }
-            Button { objectName: "geometryPreview"; text: editor.geometryEditState.calculating ? "계산 중" : "미리보기"; enabled: editor.geometryEditState.previewReady !== true && editor.geometryEditState.calculating !== true; onClicked: editor.requestGeometryPreview() }
+            Button { objectName: "geometryPreview"; text: editor.geometryEditState.calculating ? "계산 중" : "미리보기"; enabled: editor.geometryEditState.stage !== "setup" && !(editor.geometryEditState.tool === "annex" && editor.geometryEditState.choosingProviders) && editor.geometryEditState.previewReady !== true && editor.geometryEditState.calculating !== true; onClicked: editor.requestGeometryPreview() }
             Button { objectName: "geometryConfirm"; text: "확인"; enabled: editor.geometryEditState.previewReady === true; onClicked: editor.confirmGeometryEdit() }
+            Button { objectName: "geometryBack"; text: "이전"; onClicked: editor.geometryBack() }
             Button { objectName: "geometryCancel"; text: "취소"; onClicked: editor.cancelGeometryEdit() }
         }
     }
     Label {
         z: editor.layers.length+2
         anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 12
-        text: "Made with Natural Earth · 5개국 예제"; color: "#526377"; font.pixelSize: 11
+        visible:false
+        text:"Made with Natural Earth";color:Tokens.colors(editor.appearancePreferences).muted;font.pixelSize:11
     }
 }

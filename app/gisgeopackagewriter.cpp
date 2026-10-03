@@ -57,9 +57,10 @@ std::vector<Table> tables() {
         {"parent_id"},{"topology_group"},{"land_binding"},{"color"},{"notes"},
         {"locked","INTEGER"},{"properties_json"}};
     const std::vector<Column> distribution={{"entry_id"},{"layer_id"},{"name"},
-        {"distribution_type"},{"parent_layer_id"},{"color"},{"layer_visible","INTEGER"},
+        {"unit"},{"value_scale_mode"},{"value_scale_min","REAL"},{"value_scale_max","REAL"},
+        {"parent_layer_id"},{"color"},{"layer_visible","INTEGER"},
         {"layer_locked","INTEGER"},{"source_mode"},{"territorial_unit_id"},
-        {"share","REAL"},{"certainty"},{"valid_from"},{"valid_to"},
+        {"value","REAL"},{"certainty"},{"valid_from"},{"valid_to"},
         {"layer_metadata_json"},{"entry_metadata_json"}};
     return {
         {"countries","countries","MULTIPOLYGON",{{"pandolab_id"},{"pandolab_name"},
@@ -69,9 +70,7 @@ std::vector<Table> tables() {
         {"generic_features_point","genericFeatures","POINT",generic},
         {"generic_features_line","genericFeatures","MULTILINESTRING",generic},
         {"generic_features_polygon","genericFeatures","MULTIPOLYGON",generic},
-        {"language_distribution","distributions","MULTIPOLYGON",distribution},
-        {"ethnicity_distribution","distributions","MULTIPOLYGON",distribution},
-        {"religion_distribution","distributions","MULTIPOLYGON",distribution},
+        {"distributions","distributions","MULTIPOLYGON",distribution},
         {"places","labels","POINT",{{"pandolab_id"},{"name"},{"kind"},
             {"country_id"},{"notes"}}}
     };
@@ -90,7 +89,7 @@ std::string tableFor(const GisExportLayer& layer,const Geometry& geometry) {
     if(layer.category=="subunits")return "subunits";
     if(layer.category=="regions")return "regions";
     if(layer.category=="labels")return "places";
-    if(layer.category=="distributions")return layer.distributionType+"_distribution";
+    if(layer.category=="distributions")return "distributions";
     if(layer.category=="genericFeatures") {
         if(geometry.type=="Point")return "generic_features_point";
         if(geometry.type=="LineString"||geometry.type=="MultiLineString")return "generic_features_line";

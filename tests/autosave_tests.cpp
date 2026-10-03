@@ -186,6 +186,13 @@ private slots:
             pandoeditor::Project world;
             world.replace(*WorldDatasetLoader::canonical(config.worldDataRoot).document);
             auto legacy=losslessjson::parse(projectcodec::encode(world));
+            // The defective builtin-subunits-2 producer wrote native v7, not v8.
+            // Keep the regression pinned to that bounded recovery contract.
+            legacy.object.at("version")=losslessjson::Value::num(7);
+            auto& distributionSettings=legacy.object.at("presentation").object.at("webPresentation")
+                .object.at("distributionSettings");
+            distributionSettings.object.at("renderMode")=losslessjson::Value::str("dominant");
+            distributionSettings.object.erase("activeLayerId");
             int affected=0;
             for(auto& unit:legacy.object.at("units").array) {
                 if(unit.object.at("kind").string!="subunit")continue;

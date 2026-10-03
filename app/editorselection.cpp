@@ -219,7 +219,18 @@ QVariantMap EditorController::pickObject(double x,double y,double pixelsPerUnit,
 }
 QVariantMap EditorController::pickObjectScreen(double x,double y,double zoom) const {
     if(!std::isfinite(x)||!std::isfinite(y))return {};
-    return pickObjectFromCandidates(mapCandidatesScreen(x,y,zoom));
+    auto candidates=mapCandidatesScreen(x,y,zoom);
+    if(geometryEdit_&&geometryEdit_->choosingProviders) {
+        const auto& document=project_.document();const auto& index=project_.index();
+        const auto target=index.objects.find(geometryEdit_->target);if(target==index.objects.end())return {};
+        const auto kind=document.units.at(target->second).kind;
+        candidates.erase(std::remove_if(candidates.begin(),candidates.end(),[&](const auto& ref){
+            const auto found=index.objects.find(ref);
+            return ref.domain!="territorial"||ref==geometryEdit_->target||found==index.objects.end()||
+                document.units.at(found->second).kind!=kind||objectLocked(document,index,ref);
+        }),candidates.end());
+    }
+    return pickObjectFromCandidates(candidates);
 }
 QVariantMap EditorController::pickObjectFromCandidates(
     const std::vector<ObjectRef>& hits) const {

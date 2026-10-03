@@ -128,9 +128,9 @@ private slots:
         QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(original); file.close();
         EditorController editor; QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
         QCOMPARE(readFile(path),original); QVERIFY(!editor.dirty());
-        QVERIFY(editor.documentNotice().contains("Qt v7"));
+        QVERIFY(editor.documentNotice().contains("Qt v8"));
         QVERIFY(editor.saveFile(QUrl::fromLocalFile(path)));
-        QCOMPARE(QJsonDocument::fromJson(readFile(path)).object()["version"].toInt(),7);
+        QCOMPARE(QJsonDocument::fromJson(readFile(path)).object()["version"].toInt(),8);
         auto extended=original; extended.insert(extended.indexOf('{')+1,"\"future\":{\"x\":true},");
         QVERIFY(file.open(QIODevice::WriteOnly)); file.write(extended); file.close();
         QVERIFY(editor.openFile(QUrl::fromLocalFile(path))); editor.selectCountry("DEU");

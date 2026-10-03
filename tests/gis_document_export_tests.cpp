@@ -8,10 +8,10 @@ int main(int argc,char** argv) {
     QCoreApplication app(argc,argv);
     ProjectDocument doc({{"A","Alpha",{{{{0,0},{4,0},{4,4},{0,4},{0,0}}}},0x123456}},{{"countries","Countries"}});
     doc.units.front().libraryOrigin=LibraryOrigin{"historical-country:A","v-1945","1945","archive","2","medium","year",false,{}};
-    DistributionLayer layer;layer.id="language:1";layer.type="language";layer.name="L";
+    DistributionLayer layer;layer.id="language:1";layer.unit="language";layer.name="L";
     doc.distributionLayers.push_back(layer);
     DistributionEntry entry;entry.id="entry:1";entry.layerId=layer.id;
-    entry.territory=territorialRef("A");entry.share=73;entry.certainty="high";
+    entry.territory=territorialRef("A");entry.value=73;entry.certainty="high";
     doc.distributionEntries.push_back(entry);
     Geometry point;point.type="Point";point.points={{2,2}};
     doc.geometries.insert({"label:1",1},point);

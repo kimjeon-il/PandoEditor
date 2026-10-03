@@ -155,7 +155,7 @@ QByteArray convertWebProjectGeoPackage(const GisGeoPackage& vectors,V state,
     align(state,"genericFeatures",features(vectors,{
         "generic_features_point","generic_features_line","generic_features_polygon"}));
     align(state,"labels",features(vectors,{"places"}),true);
-    alignDistribution(state,features(vectors,{"language_distribution",
+    alignDistribution(state,features(vectors,{"distributions","language_distribution",
         "ethnicity_distribution","religion_distribution"}),fixtureProjection);
     auto& layers=state.object["distributionLayers"];
     if(layers.kind==V::Null)layers=V::arr();

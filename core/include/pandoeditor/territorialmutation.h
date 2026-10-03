@@ -27,7 +27,8 @@ struct ConvertTerritorialTypeIntent { ObjectRef source; UnitKind targetKind=Unit
 struct ReplaceGeometryIntent { ObjectRef target; };
 struct MergeTerritorialIntent { ObjectRef target; std::vector<ObjectRef> donors; };
 struct AnnexTerritoryIntent { ObjectRef target; std::vector<ObjectRef> donors; Geometry selection; };
-struct SplitTerritorialIntent { ObjectRef source; Ring cutLine; int retainedPart=0; std::string createdId,createdName; };
+// -1 retains the larger cut result; 0/1 explicitly choose the retained result.
+struct SplitTerritorialIntent { ObjectRef source; Ring cutLine; int retainedPart=-1; std::string createdId,createdName; };
 struct DraftGeometry { ObjectRef owner; Geometry geometry; };
 struct SharedBoundaryIntent { std::vector<DraftGeometry> drafts; };
 enum class CoastlineAuthority { Country, Subunit, Independent };

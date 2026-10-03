@@ -1,5 +1,6 @@
 #include "ui_navigation.h"
 #include "editorcontroller.h"
+#include "ui_navigation.h"
 #include "windowsframe.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -67,6 +68,7 @@ struct Harness {
     QQuickItem* control(const QString& name)const{return window?item(window->contentItem(),name):nullptr;}
     bool click(const QString& name,Qt::KeyboardModifiers mods=Qt::NoModifier,bool touch=false) {
         enterExistingControlRoute(window,name);
+        enterExistingControlRoute(window,name);
         auto c=control(name);if(!c||!c->isVisible()||!c->isEnabled())return false;
         // Bring a delegate into view without replacing an actual input gesture.
         for(auto p=c->parentItem();p;p=p->parentItem()){
@@ -92,7 +94,7 @@ struct Harness {
         QTest::qWait(70);return true;
     }
     bool search(const QString& value) {
-        if(!click("searchTab"))return false;
+        if(!control("objectSearchField")->isVisible()&&!click("searchTab"))return false;
         if(!click("objectSearchField"))return false;
         auto c=control("objectSearchField");
         QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier);
@@ -260,7 +262,8 @@ private slots:
         const auto localTarget=map->mapFromScene(h.mapPoint("S"));
         const auto deltaY=map->height()-26-localTarget.y();
         h.editor.beginMapInteraction();h.editor.beginMapCameraPan();
-        QVERIFY(h.editor.updateMapCameraPan(0,deltaY));
+        // Keep the tested map pick outside the new bottom-center command bar.
+        QVERIFY(h.editor.updateMapCameraPan(mobile?24-localTarget.x():0,deltaY));
         h.editor.endMapCameraPan();h.editor.endMapInteraction();
         QVERIFY(h.click("countryName"));
         QVERIFY(h.click("countryMemo"));

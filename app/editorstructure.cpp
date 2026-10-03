@@ -69,15 +69,21 @@ bool EditorController::transferSelectedSubunit(const QString& countryId) {
 bool EditorController::changeSelectedParent(const QString& parentId){const auto u=selectedUnit();return u&&u->kind==UnitKind::Subunit&&setStructurePlan(ChangeParentIntent{territorialRef(u->id),territorialRef(parentId.toStdString())});}
 bool EditorController::changeSelectedRegionSovereign(const QString& countryId){const auto u=selectedUnit();if(!u||u->kind!=UnitKind::Region)return false;std::optional<ObjectRef> sovereign;if(!countryId.isEmpty())sovereign=territorialRef(countryId.toStdString());return setStructurePlan(ChangeRegionSovereignIntent{territorialRef(u->id),sovereign});}
 bool EditorController::beginDeleteSelection(){return !selection_.items().empty()&&setStructurePlan(DeleteTerritorialIntent{selection_.items()});}
-bool EditorController::beginMergeSelection(){const auto primary=selection_.primary();if(!primary||selection_.items().size()<2)return false;std::vector<ObjectRef> donors;for(const auto& ref:selection_.items())if(!(ref==*primary))donors.push_back(ref);return setStructurePlan(MergeTerritorialIntent{*primary,std::move(donors)});}
+bool EditorController::beginMergeSelection(){
+    const auto primary=selection_.primary();const auto unit=selectedUnit();
+    if(!primary||!unit||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
+    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(unit->geometry),{},{},0,0,-1,QStringLiteral("merge"),{}};
+    geometryEdit_->mergeIntent=MergeTerritorialIntent{*primary,{}};
+    geometryEdit_->choosingProviders=true;emit geometryEditChanged();emit visualChanged();return true;
+}
 bool EditorController::beginAnnexGeometry(){
-    const auto primary=selection_.primary();if(!primary||selection_.items().size()<2||geometryEdit_||structureDialogOpen())return false;std::vector<ObjectRef> donors;for(const auto& ref:selection_.items())if(!(ref==*primary))donors.push_back(ref);
-    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,{"Polygon",{}, {}, {}},{},{},0,0,-1,QStringLiteral("annex"),{}};geometryEdit_->annexIntent=AnnexTerritoryIntent{*primary,std::move(donors),{}};emit geometryEditChanged();return true;
+    const auto primary=selection_.primary();if(!primary||!selectedUnit()||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
+    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,{"Polygon",{}, {}, {}},{},{},0,0,-1,QStringLiteral("annex"),{}};geometryEdit_->annexIntent=AnnexTerritoryIntent{*primary,{}, {}};geometryEdit_->choosingProviders=true;emit geometryEditChanged();emit visualChanged();return true;
 }
 bool EditorController::beginSplitGeometry(){
-    const auto primary=selection_.primary();const auto unit=selectedUnit();if(!primary||!unit||geometryEdit_||structureDialogOpen())return false;
+    const auto primary=selection_.primary();const auto unit=selectedUnit();if(!primary||!unit||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
     geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(unit->geometry),{},{},0,0,-1,QStringLiteral("split"),{}};
-    geometryEdit_->splitIntent=SplitTerritorialIntent{*primary,{},0,QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString(),objectDisplayName(*unit)+" 분할"};emit geometryEditChanged();return true;
+    geometryEdit_->splitIntent=SplitTerritorialIntent{*primary,{},-1,QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString(),objectDisplayName(*unit)+" 분할"};emit geometryEditChanged();return true;
 }
 bool EditorController::beginSharedBoundaryGeometry(){
     for(const auto& ref:selection_.items())if(ref.domain!="territorial")return false;

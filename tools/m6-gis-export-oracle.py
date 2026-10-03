@@ -28,23 +28,30 @@ def main(executable):
             assert [(item["file"], item["targetType"]) for item in manifest["layers"]] == [
                 ("countries.geojson", "country"),
                 ("generic_features.geojson", "generic"),
-                ("language_distribution.geojson", "distribution"),
+                ("distributions.geojson", "distribution"),
                 ("labels.geojson", "label"),
             ]
-            assert manifest["layers"][2]["distributionType"] == "language"
+            assert "distributionType" not in manifest["layers"][2]
             assert set(bundle.namelist()) == {"manifest.json"} | {
                 item["file"] for item in manifest["layers"]
             }
             country = json.loads(bundle.read("countries.geojson"))["features"][0]
             assert len(country["geometry"]["coordinates"][0]) == 2
             assert country["properties"]["source_library_id"] == "historical-country:A"
-            distribution = json.loads(bundle.read("language_distribution.geojson"))["features"][0]
+            distribution = json.loads(bundle.read("distributions.geojson"))["features"][0]
             assert distribution["properties"]["source_mode"] == "territorial"
             assert distribution["properties"]["territorial_unit_id"] == "A"
+            assert distribution["properties"]["unit"] == "%"
+            assert distribution["properties"]["value"] == 73
+            assert distribution["properties"]["value_scale_mode"] == "auto"
+            assert distribution["properties"]["value_scale_min"] is None
+            assert distribution["properties"]["value_scale_max"] is None
+            assert "share" not in distribution["properties"]
+            assert "distribution_type" not in distribution["properties"]
         with closing(sqlite3.connect(root / "countries.gpkg")) as db:
             all_tables = tables(db)
             assert "countries" in all_tables
-            assert "language_distribution" not in all_tables
+            assert "distributions" not in all_tables
             assert "pandolab_project_settings" not in all_tables
             assert "pandolab_country_assets" not in all_tables
             assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
@@ -61,12 +68,19 @@ def main(executable):
         with closing(sqlite3.connect(root / "selected.gpkg")) as db:
             all_tables = tables(db)
             assert {"countries", "places", "generic_features_point", "generic_features_line",
-                    "generic_features_polygon", "language_distribution", "ethnicity_distribution",
-                    "religion_distribution"} <= all_tables
+                    "generic_features_polygon", "distributions"} <= all_tables
+            assert not {"language_distribution", "ethnicity_distribution",
+                        "religion_distribution"} & all_tables
             assert "pandolab_project_settings" not in all_tables
             assert "pandolab_country_assets" not in all_tables
-            assert db.execute("SELECT COUNT(*) FROM language_distribution").fetchone()[0] == 1
-            assert db.execute("SELECT source_mode,territorial_unit_id,share FROM language_distribution").fetchone() == ("territorial", "A", 73)
+            assert db.execute("SELECT COUNT(*) FROM distributions").fetchone()[0] == 1
+            assert db.execute(
+                "SELECT source_mode,territorial_unit_id,unit,value,"
+                "value_scale_mode,value_scale_min,value_scale_max FROM distributions"
+            ).fetchone() == ("territorial", "A", "%", 73, "auto", None, None)
+            distribution_columns = {row[1] for row in db.execute("PRAGMA table_info(distributions)")}
+            assert "share" not in distribution_columns
+            assert "distribution_type" not in distribution_columns
             assert db.execute("SELECT COUNT(*) FROM generic_features_point").fetchone()[0] == 1
             assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
     print("native GIS ZIP/GeoPackage: independent SQLite and zipfile checks passed")

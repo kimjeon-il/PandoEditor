@@ -64,16 +64,19 @@ GisGeoJsonCollection exportGisDocumentLayer(const ProjectDocument& document,
             auto properties=webjson::obj({
                 {"entry_id",V::str(entry.id)},{"layer_id",V::str(entry.layerId)},
                 {"name",V::str(layerIt->name)},
-                {"distribution_type",V::str(layerIt->type)},
+                {"unit",V::str(layerIt->unit)},
+                {"value_scale_mode",V::str(layerIt->valueScale.manual?"manual":"auto")},
+                {"value_scale_min",layerIt->valueScale.manual?V::num(layerIt->valueScale.min):V{}},
+                {"value_scale_max",layerIt->valueScale.manual?V::num(layerIt->valueScale.max):V{}},
                 {"parent_layer_id",layerIt->parentId?V::str(*layerIt->parentId):V{}},
                 {"color",V::str(color(layerIt->color))},
                 {"layer_visible",V::num(itemVisible(document.presentation.webPresentation,
-                    layerIt->type=="language"?"languages":layerIt->type=="ethnicity"?"ethnicities":"religions",
+                    "distributions",
                     layerIt->id)?1:0)},
                 {"layer_locked",V::num(layerIt->locked?1:0)},
                 {"source_mode",V::str(entry.territory?"territorial":"geometry")},
                 {"territorial_unit_id",entry.territory?V::str(entry.territory->id):V{}},
-                {"share",V::num(entry.share)},{"certainty",V::str(entry.certainty)},
+                {"value",V::num(entry.value)},{"certainty",V::str(entry.certainty)},
                 {"valid_from",nullable(entry.validity.from)},{"valid_to",nullable(entry.validity.to)},
                 {"layer_metadata_json",V::str(layerIt->metadata)},
                 {"entry_metadata_json",V::str(entry.metadata)}
@@ -111,9 +114,9 @@ std::vector<GisExportLayer> buildGisExportLayers(const ProjectDocument& document
     }
     std::vector<GisExportLayer> layers;
     auto add=[&](const char* category,const char* file,const char* target,
-                 GisGeoJsonCollection collection,const char* distributionType="") {
+                 GisGeoJsonCollection collection) {
         if(!chosen.count(category)||collection.features.empty())return;
-        layers.push_back({category,file,target,distributionType,std::move(collection)});
+        layers.push_back({category,file,target,std::move(collection)});
     };
     for(const auto& specification:std::vector<std::tuple<const char*,const char*,const char*>>{
         {"countries","countries.geojson","country"},{"subunits","subunits.geojson","subunit"},
@@ -122,19 +125,7 @@ std::vector<GisExportLayer> buildGisExportLayers(const ProjectDocument& document
         if(chosen.count(category))add(category,file,target,exportGisDocumentLayer(document,category));
     }
     if(chosen.count("distributions")) {
-        auto entries=exportGisDocumentLayer(document,"distributions");
-        for(const auto& [type,file]:std::vector<std::pair<const char*,const char*>>{
-            {"language","language_distribution.geojson"},
-            {"ethnicity","ethnicity_distribution.geojson"},
-            {"religion","religion_distribution.geojson"}}) {
-            GisGeoJsonCollection collection;
-            for(const auto& feature:entries.features) {
-                const auto props=losslessjson::parse(QByteArray::fromStdString(feature.propertiesJson));
-                if(webjson::text(webjson::at(props,"distribution_type"))==type)
-                    collection.features.push_back(feature);
-            }
-            add("distributions",file,"distribution",std::move(collection),type);
-        }
+        add("distributions","distributions.geojson","distribution",exportGisDocumentLayer(document,"distributions"));
     }
     if(chosen.count("labels"))add("labels","labels.geojson","label",
         exportGisDocumentLayer(document,"labels"));
@@ -152,7 +143,6 @@ QByteArray exportGisGeoJsonZip(const ProjectDocument& document,
         auto row=webjson::obj({{"name",V::str(layer.file.substr(0,layer.file.size()-8))},
             {"file",V::str(layer.file)},{"category",V::str(layer.category)},
             {"targetType",V::str(layer.targetType)},
-            {"distributionType",V::str(layer.distributionType)},
             {"crs",V::str("EPSG:4326")},
             {"featureCount",V::num(layer.collection.features.size())}});
         if(layer.targetType=="country")row.object["fields"]=webjson::arr({

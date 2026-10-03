@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "ColorPalette.js" as Palette
+import "UiTokens.js" as Tokens
 Popup {
     id:picker
     objectName:"objectColorPicker"
@@ -15,6 +16,7 @@ Popup {
     x:Math.max(8,Math.min(anchorPoint.x,parent?parent.width-width-8:8))
     y:editor.mobileMode?Math.max(8,(parent?parent.height:540)-height-8):Math.max(8,Math.min(anchorPoint.y,parent?parent.height-height-8:8))
     padding:8;modal:false;focus:true
+    background:Rectangle {color:Tokens.colors(editor.appearancePreferences).panel;border.color:Tokens.colors(editor.appearancePreferences).border;radius:9}
     closePolicy:Popup.CloseOnEscape|Popup.CloseOnPressOutside
     function showAt(trigger){
         if(visible){close();return}

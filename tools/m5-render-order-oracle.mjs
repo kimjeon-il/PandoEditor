@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 import { createHash } from 'node:crypto';
-import { OVERLAY_GROUPS } from '../tests/fixtures/web-hydro/source/layer-presentation.js';
+import { OVERLAY_GROUPS } from '../tests/fixtures/web-current/source/layer-presentation.js';
 import { layoutCountryFlags } from '../tests/fixtures/web-hydro/source/country-label-flags.js';
 
 const source=resolve(dirname(fileURLToPath(import.meta.url)),'../tests/fixtures/web-hydro/source');
@@ -39,7 +39,10 @@ drawGpuBaseScene({
   drawCountryBoundaryStrokes:()=>draw.push('country-boundary'),
   polygonOverlayPass:pass,strokeRenderer:pass});
 
-const pickingSource=await readFile(resolve(source,'app-object-picking.js'),'utf8');
+// Preserve exact committed bytes; the adjacent web checkout can change during this task.
+const pickBytes=Buffer.from(await readFile(new URL('../tests/fixtures/web-current/source/app-object-picking.js.base64',import.meta.url),'utf8'),'base64');
+const pickingSource=pickBytes.toString('utf8');
+assert.equal(createHash('sha1').update(`blob ${pickBytes.length}\0`).update(pickBytes).digest('hex'),'5997bbced0700e03d22aa2517b6db6d00d11b51f');
 const start=pickingSource.indexOf('  function selectableVisualRank(ref) {');
 const end=pickingSource.indexOf('\n  async function selectableObjectsAt',start);
 assert.ok(start>=0&&end>start);

@@ -32,7 +32,7 @@ QVariantMap EditorController::gisImportState() const {
     if(gisImport_)for(std::size_t i=0;i<gisImport_->layers.size();++i) {
         const auto& layer=gisImport_->layers[i];
         layers.push_back(QVariantMap{{"index",int(i)},{"name",layer.name},
-            {"target",layer.target},{"distributionType",layer.distributionType},
+            {"target",layer.target},
             {"count",int(layer.collection.features.size())}});
     }
     return {{"stage",gisImport_?gisImport_->stage:QStringLiteral("empty")},
@@ -77,13 +77,13 @@ bool EditorController::loadGisSource(const QUrl& url) {
         watcher->setFuture(QtConcurrent::run([bytes,kind]() {
             std::vector<GisLoadedLayer> layers;
             if(kind=="geojson") {
-                layers.push_back({QStringLiteral("GeoJSON"),{}, {},
+                layers.push_back({QStringLiteral("GeoJSON"),{},
                     pandoeditor::parseGisGeoJson(bytes)});
             } else if(kind=="geojson-zip") {
                 const auto archive=pandoeditor::parseGisGeoJsonZip(bytes);
                 for(const auto& layer:archive.layers)
                     layers.push_back({qs(layer.path),qs(layer.targetType),
-                        qs(layer.distributionType),layer.collection});
+                        layer.collection});
             } else {
                 QTemporaryFile temp(QDir::tempPath()+"/pando-gis-XXXXXX.gpkg");
                 if(!temp.open()||temp.write(bytes)!=bytes.size()||!temp.flush())
@@ -91,11 +91,8 @@ bool EditorController::loadGisSource(const QUrl& url) {
                 temp.close();
                 const auto archive=pandoeditor::readGisGeoPackage(temp.fileName());
                 for(const auto& layer:archive.layers) {
-                    QString distribution;
-                    for(const auto& type:{"language","ethnicity","religion"})
-                        if(layer.tableName==std::string(type)+"_distribution")distribution=type;
                     layers.push_back({qs(layer.tableName),qs(layer.targetType),
-                        distribution,layer.collection});
+                        layer.collection});
                 }
             }
             if(layers.empty())throw std::invalid_argument("GIS_NO_LAYERS");
@@ -185,7 +182,6 @@ bool EditorController::prepareGisImport(int index,const QVariantMap& values) {
         pandoeditor::GisContentMapping mapping;mapping.target=*targetType;
         mapping.idField=option(values,"idField");mapping.nameField=option(values,"nameField",QStringLiteral("name"));
         mapping.layerId=option(values,"layerId");mapping.layerName=option(values,"layerName");
-        mapping.distributionType=option(values,"distributionType",layer.distributionType.isEmpty()?QStringLiteral("language"):layer.distributionType);
         if(!layer.target.isEmpty()&&layer.target!=QString::fromStdString(target))
             throw std::invalid_argument("GIS_LAYER_TARGET_MISMATCH");
         auto result=pandoeditor::planGisContentImport(base,layer.collection,planId,source,mapping);

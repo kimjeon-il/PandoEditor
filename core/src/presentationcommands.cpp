@@ -6,9 +6,9 @@
 
 namespace pandoeditor {
 namespace {
-bool group(const std::string& g){return g=="countries"||g=="subunits"||g=="regions"||g=="labels"||g=="rivers"||g=="lakes"||g=="genericFeatures"||g=="languages"||g=="ethnicities"||g=="religions";}
+bool group(const std::string& g){return g=="countries"||g=="subunits"||g=="regions"||g=="labels"||g=="rivers"||g=="lakes"||g=="genericFeatures"||g=="distributions";}
 void require(bool v){if(!v)throw std::invalid_argument("INVALID_PRESENTATION_COMMAND");}
-void merge(PresentationStyle& s,const PresentationStyle& p){if(p.opacity)s.opacity=p.opacity;if(p.boundaryVisible)s.boundaryVisible=p.boundaryVisible;if(p.labelsVisible)s.labelsVisible=p.labelsVisible;if(p.boundaryWidth)s.boundaryWidth=p.boundaryWidth;if(p.blendMode)s.blendMode=p.blendMode;}
+void merge(PresentationStyle& s,const PresentationStyle& p){if(p.opacity)s.opacity=p.opacity;if(p.boundaryVisible)s.boundaryVisible=p.boundaryVisible;if(p.labelsVisible)s.labelsVisible=p.labelsVisible;if(p.boundaryWidth)s.boundaryWidth=p.boundaryWidth;if(p.blendMode)s.blendMode=p.blendMode;if(p.colorVisible)s.colorVisible=p.colorVisible;}
 }
 PresentationResult PresentationCommandProcessor::apply(Project& project,const PresentationAction& action) noexcept {
     try {

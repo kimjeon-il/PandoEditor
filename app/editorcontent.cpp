@@ -77,8 +77,8 @@ QVariantMap EditorController::contentEditState() const {
             if constexpr(std::is_same_v<T,PlaceLabel>||std::is_same_v<T,HydroFeature>||std::is_same_v<T,GenericFeature>) out["notes"]=q(v.notes);
             if constexpr(std::is_same_v<T,PlaceLabel>||std::is_same_v<T,HydroFeature>) out["kind"]=q(v.kind);
             if constexpr(std::is_same_v<T,HydroFeature>||std::is_same_v<T,GenericFeature>||std::is_same_v<T,DistributionLayer>) {out["locked"]=v.locked;out["color"]=QString("#%1").arg(v.color,6,16,QChar('0'));}
-            if constexpr(std::is_same_v<T,DistributionLayer>) {out["type"]=q(v.type);out["parentId"]=q(v.parentId.value_or(""));}
-            if constexpr(std::is_same_v<T,DistributionEntry>) {out["share"]=v.share;out["layerId"]=q(v.layerId);out["territoryId"]=v.territory?q(v.territory->id):QString{};out["certainty"]=q(v.certainty);}
+            if constexpr(std::is_same_v<T,DistributionLayer>) {out["unit"]=q(v.unit);out["valueScaleMode"]=v.valueScale.manual?"manual":"auto";out["valueMin"]=v.valueScale.min;out["valueMax"]=v.valueScale.max;out["parentId"]=q(v.parentId.value_or(""));}
+            if constexpr(std::is_same_v<T,DistributionEntry>) {out["value"]=v.value;out["layerId"]=q(v.layerId);out["territoryId"]=v.territory?q(v.territory->id):QString{};out["certainty"]=q(v.certainty);}
             if constexpr(std::is_same_v<T,DistributionLayer>||std::is_same_v<T,DistributionEntry>) {out["validFrom"]=q(v.validity.from.value_or(""));out["validTo"]=q(v.validity.to.value_or(""));}
         }
     },s.edit.value);
@@ -93,7 +93,7 @@ bool EditorController::beginContentEdit(const QString& domain,const QString& typ
     const auto i=found==project_.index().objects.end()?0:found->second;
     if(domain=="label") {PlaceLabel v=create?PlaceLabel{}:d.labels.at(i);v.id=edit.target.id;if(create)v.kind=type.isEmpty()?"custom":type.toStdString();edit.value=v;}
     else if(domain=="hydro") {HydroFeature v=create?HydroFeature{}:d.hydro.at(i);v.id=edit.target.id;if(create)v.kind=type=="lake"?"lake":"river";edit.value=v;}
-    else if(domain=="distributionLayer") {DistributionLayer v=create?DistributionLayer{}:d.distributionLayers.at(i);v.id=edit.target.id;if(create)v.type=type.isEmpty()?"language":type.toStdString();edit.value=v;}
+    else if(domain=="distributionLayer") {DistributionLayer v=create?DistributionLayer{}:d.distributionLayers.at(i);v.id=edit.target.id;edit.value=v;}
     else if(domain=="distributionEntry") {DistributionEntry v=create?DistributionEntry{}:d.distributionEntries.at(i);v.id=edit.target.id;edit.value=v;}
     else if(domain=="generic"&&!create) edit.value=d.genericFeatures.at(i);
     else if(domain=="territorial"&&!create) {
@@ -108,9 +108,9 @@ bool EditorController::beginContentEdit(const QString& domain,const QString& typ
     contentSession_=ContentSession{project_.snapshot(),std::move(edit),{},QString{}};
     emit contentEditChanged();emit draftsChanged();emit dirtyChanged();return true;
 }
-bool EditorController::updateContentField(const QString& field,const QVariant& input) {
-    if(!contentSession_||contentSession_->preview||geometryEdit_) return false;
-    auto next=contentSession_->edit.value; bool handled=false;
+namespace {
+bool updateContentValue(ContentValue& next,const QString& field,const QVariant& input) {
+    bool handled=false;
     const auto text=input.toString().toStdString();
     std::visit([&](auto& v) {
         using T=std::decay_t<decltype(v)>;
@@ -125,13 +125,15 @@ bool EditorController::updateContentField(const QString& field,const QVariant& i
                 if(field=="color"){QColor c(input.toString());if(c.isValid()){v.color=c.rgb()&0xffffff;handled=true;}}
             }
             if constexpr(std::is_same_v<T,DistributionLayer>) {
-                if(field=="type"){v.type=text;handled=true;}
+                if(field=="unit"){v.unit=text;handled=true;}
+                if(field=="valueScaleMode"&&(text=="auto"||text=="manual")){v.valueScale.manual=text=="manual";handled=true;}
+                if(field=="valueMin"||field=="valueMax"){bool ok=false;const auto n=input.toDouble(&ok);if(ok&&std::isfinite(n)){(field=="valueMin"?v.valueScale.min:v.valueScale.max)=n;handled=true;}}
                 if(field=="parentId"){v.parentId=text.empty()?std::nullopt:std::optional<std::string>(text);handled=true;}
             }
             if constexpr(std::is_same_v<T,DistributionEntry>) {
                 if(field=="layerId"){v.layerId=text;handled=true;}
                 if(field=="territoryId"){v.territory=text.empty()?std::nullopt:std::optional<ObjectRef>(territorialRef(text));if(v.territory)v.geometry.reset();handled=true;}
-                if(field=="share"){bool ok=false;auto n=input.toDouble(&ok);if(ok&&std::isfinite(n)&&n>=0&&n<=100){v.share=n;handled=true;}}
+                if(field=="value"){bool ok=false;auto n=input.toDouble(&ok);if(ok&&std::isfinite(n)){v.value=n;handled=true;}}
                 if(field=="certainty"){v.certainty=text;handled=true;}
             }
             if constexpr(std::is_same_v<T,DistributionLayer>||std::is_same_v<T,DistributionEntry>) if(field=="validFrom"||field=="validTo") {
@@ -139,14 +141,65 @@ bool EditorController::updateContentField(const QString& field,const QVariant& i
             }
         }
     },next);
-    if(!handled)return false; contentSession_->edit.value=std::move(next);contentSession_->error.clear();emit contentEditChanged();return true;
+    return handled;
+}
+ContentValue storedContentValue(const ProjectSnapshot& snapshot,const ContentEdit& edit) {
+    const auto& d=snapshot.document();const auto i=snapshot.index().objects.at(edit.target);
+    return std::visit([&](const auto& value)->ContentValue {
+        using T=std::decay_t<decltype(value)>;
+        if constexpr(std::is_same_v<T,PlaceLabel>)return d.labels.at(i);
+        else if constexpr(std::is_same_v<T,HydroFeature>)return d.hydro.at(i);
+        else if constexpr(std::is_same_v<T,DistributionLayer>)return d.distributionLayers.at(i);
+        else if constexpr(std::is_same_v<T,DistributionEntry>)return d.distributionEntries.at(i);
+        else if constexpr(std::is_same_v<T,GenericFeature>)return d.genericFeatures.at(i);
+        else if constexpr(std::is_same_v<T,CountryDetails>) {const auto found=d.countryDetails.find(edit.target);return found==d.countryDetails.end()?CountryDetails{}:found->second;}
+        else if constexpr(std::is_same_v<T,TerritorialSymbolStyle>) {const auto found=d.symbols.find(edit.target);return found==d.symbols.end()?TerritorialSymbolStyle{}:found->second;}
+        else return std::monostate{};
+    },edit.value);
+}
+}
+bool EditorController::updateContentField(const QString& field,const QVariant& input) {
+    if(!contentSession_||contentSession_->preview||geometryEdit_)return false;
+    auto next=contentSession_->edit.value;if(!updateContentValue(next,field,input))return false;
+    contentSession_->edit.value=std::move(next);contentSession_->pendingFields.insert(field.toStdString());
+    contentSession_->error.clear();emit contentEditChanged();emit dirtyChanged();return true;
+}
+bool EditorController::commitContentField(const QString& field) {
+    if(!contentSession_||contentSession_->edit.create||contentSession_->preview||geometryEdit_)return false;
+    auto& s=*contentSession_;if(!s.base.matches(project_))return false;
+    const bool scale=field=="valueScaleMode"||field=="valueMin"||field=="valueMax";
+    if(scale&&!std::holds_alternative<DistributionLayer>(s.edit.value))return false;
+    if(field=="flagSource"&&!std::holds_alternative<TerritorialSymbolStyle>(s.edit.value))return false;
+    auto edit=s.edit;edit.value=storedContentValue(s.base,s.edit);edit.geometry.reset();
+    if(scale)std::get<DistributionLayer>(edit.value).valueScale=std::get<DistributionLayer>(s.edit.value).valueScale;
+    else if(field=="flagSource")edit.value=s.edit.value;
+    else if(!updateContentValue(edit.value,field,contentEditState().value(field)))return false;
+    CommandArguments args;args.action=edit;
+    auto result=CommandProcessor::prepare(project_,CommandProcessor::makeRequest(project_,"content.edit",args));
+    if(!result.ok()){s.error=q(result.detail.empty()?commandErrorCode(result.error):result.detail);emit contentEditChanged();return false;}
+    if(result.preview) {
+        const auto committed=CommandProcessor::confirm(project_,*result.preview);
+        if(!committed.ok()){s.error=q(commandErrorCode(committed.error));emit contentEditChanged();return false;}
+        noteAppliedImpact(committed.impact);
+    }
+    s.base=project_.snapshot();s.error.clear();
+    if(scale){s.pendingFields.erase("valueScaleMode");s.pendingFields.erase("valueMin");s.pendingFields.erase("valueMax");}
+    else s.pendingFields.erase(field.toStdString());
+    if(s.pendingFields.empty())s.edit.value=storedContentValue(s.base,s.edit);
+    publish(false);emit contentEditChanged();return true;
+}
+void EditorController::refreshContentSession() {
+    if(!contentSession_||contentSession_->edit.create||contentSession_->preview||!contentSession_->pendingFields.empty()||geometryEdit_)return;
+    if(!project_.index().objects.count(contentSession_->edit.target)){contentSession_.reset();emit contentEditChanged();return;}
+    contentSession_->base=project_.snapshot();contentSession_->edit.value=storedContentValue(contentSession_->base,contentSession_->edit);
+    emit contentEditChanged();
 }
 bool EditorController::loadContentFlag(const QUrl& url) {
     if(!contentSession_||contentSession_->preview||!std::holds_alternative<TerritorialSymbolStyle>(contentSession_->edit.value))return false;
     QFile file(url.isLocalFile()?url.toLocalFile():url.toString());if(!file.open(QIODevice::ReadOnly)||file.size()>16*1024*1024)return false;
     const auto image=QImage::fromData(file.readAll());if(image.isNull())return false;
     QByteArray png;QBuffer buffer(&png);buffer.open(QIODevice::WriteOnly);if(!image.save(&buffer,"PNG"))return false;
-    contentSession_->edit.value=TerritorialSymbolStyle{FlagPolicy::Embedded,("data:image/png;base64,"+png.toBase64()).toStdString()};emit contentEditChanged();return true;
+    contentSession_->edit.value=TerritorialSymbolStyle{FlagPolicy::Embedded,("data:image/png;base64,"+png.toBase64()).toStdString()};contentSession_->pendingFields.insert("flagSource");emit contentEditChanged();emit dirtyChanged();return true;
 }
 bool EditorController::beginContentGeometry() {
     if(!contentSession_||contentSession_->preview||geometryEdit_||!contentSession_->base.matches(project_))return false;

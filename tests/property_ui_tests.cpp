@@ -1,4 +1,5 @@
 #include "editorcontroller.h"
+#include "ui_navigation.h"
 #include "windowsframe.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -65,7 +66,9 @@ struct Harness {
     ~Harness(){if(window){window->setProperty("allowClose",true);window->close();}engine.clearComponentCache();}
     QQuickItem* control(const QString& name)const{return window?item(window->contentItem(),name):nullptr;}
     bool click(const QString& name,Qt::KeyboardModifiers mods=Qt::NoModifier,bool touch=false) {
+        enterExistingControlRoute(window,name);
         auto c=control(name);if(!c||!c->isVisible()||!c->isEnabled())return false;
+        window->grabWindow();QTest::qWait(50); // settle visibility-driven form layout before scrolling
         // Bring a delegate into view without replacing an actual input gesture.
         for(auto p=c->parentItem();p;p=p->parentItem()){
             if(p->property("contentY").isValid()){
@@ -90,7 +93,7 @@ struct Harness {
         QTest::qWait(70);return true;
     }
     bool search(const QString& value) {
-        if(!click("searchTab"))return false;
+        if(!control("objectSearchField")->isVisible()&&!click("searchTab"))return false;
         if(!click("objectSearchField"))return false;
         auto c=control("objectSearchField");
         QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier);
@@ -163,9 +166,10 @@ private slots:
     void objectNamesRenderAsLiteralText(){
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);h.editor.selectCountry("A");
         const QString name="<b>literal</b>";h.editor.setNameDraft(name);QVERIFY(h.editor.commitObjectField("name"));
-        QVERIFY(h.click("toggleObjectEditor"));QList<QQuickItem*> pending{h.control("objectPropertyPanel")};QQuickItem* label=nullptr;
-        while(!pending.isEmpty()){auto current=pending.takeLast();if(current->property("text").toString()==name&&current->property("textFormat").isValid())label=current;for(auto child:current->childItems())pending<<child;}
-        QVERIFY(label);QCOMPARE(label->property("textFormat").toInt(),int(Qt::PlainText));
+        QVERIFY(h.click("toggleObjectEditor"));
+        auto field=h.control("detailObjectName");QVERIFY(field&&field->isVisible());
+        QCOMPARE(field->property("displayText").toString(),name);
+        QCOMPARE(h.control("countryName")->property("displayText").toString(),name);
         QVERIFY(h.search("literal"));auto row=h.control("searchSelect_A");QVERIFY(row);
         auto content=qvariant_cast<QQuickItem*>(row->property("contentItem"));QVERIFY(content);
         QCOMPARE(content->property("textFormat").toInt(),int(Qt::PlainText));QCOMPARE(h.editor.selectedName(),name);

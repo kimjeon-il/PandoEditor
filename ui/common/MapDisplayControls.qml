@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "UiTokens.js" as Tokens
 
 Popup {
     id: popup
@@ -10,6 +11,7 @@ Popup {
     x: 8
     y: editor.mobileMode && parent ? Math.max(8,parent.height-height-8) : 8
     modal: true
+    background:Rectangle {color:Tokens.colors(editor.appearancePreferences).panel;border.color:Tokens.colors(editor.appearancePreferences).border;radius:9}
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
     contentItem: ScrollView {
         clip: true
@@ -57,6 +59,7 @@ Popup {
                         RowLayout {
                             CheckBox { text: "표시"; checked: modelData.visible; onClicked: editor.setPresentationVisibility(modelData.key,checked) }
                             CheckBox { visible: modelData.content !== true; text: "경계"; checked: modelData.boundary === true; onClicked: editor.setPresentationBoundary(modelData.key,checked) }
+                            CheckBox { visible: modelData.content !== true; text: "색상"; checked: modelData.colorVisible === true; onClicked: editor.setPresentationColorVisible(modelData.key,checked) }
                         }
                         RowLayout {
                             visible: modelData.content !== true
@@ -73,9 +76,9 @@ Popup {
                 title: "분포 표시"
                 ColumnLayout {
                     anchors.fill: parent
-                    RadioButton { text: "지배 분포"; checked: editor.distributionDisplay.mode === "dominant"; onClicked: editor.setDistributionDisplay("dominant",editor.distributionDisplay.boundaryVisible) }
-                    RadioButton { text: "선택 레이어 강도"; checked: editor.distributionDisplay.mode === "intensity"; enabled: editor.distributionDisplay.intensityAvailable; onClicked: editor.setDistributionDisplay("intensity",editor.distributionDisplay.boundaryVisible) }
-                    Label { visible: editor.distributionDisplay.mode === "intensity" && !editor.distributionDisplay.intensityAvailable; text: "분포 레이어를 먼저 선택하세요"; wrapMode: Text.Wrap }
+                    RadioButton { text: "여러 분포 겹쳐 보기"; checked: editor.distributionDisplay.mode === "overlap"; onClicked: editor.setDistributionDisplay("overlap",editor.distributionDisplay.boundaryVisible) }
+                    RadioButton { text: "분포 하나만 보기"; checked: editor.distributionDisplay.mode === "single"; onClicked: editor.setDistributionDisplay("single",editor.distributionDisplay.boundaryVisible) }
+                    ComboBox { visible:editor.distributionDisplay.mode === "single";Layout.fillWidth:true;textRole:"name";valueRole:"id";model:editor.distributionDisplay.layers;currentIndex:Math.max(0,model.findIndex(function(row){return row.id===editor.distributionDisplay.activeLayerId}));onActivated:editor.setDistributionDisplay("single",editor.distributionDisplay.boundaryVisible,currentValue) }
                     CheckBox { text: "분포 경계"; checked: editor.distributionDisplay.boundaryVisible; onClicked: editor.setDistributionDisplay(editor.distributionDisplay.mode,checked) }
                 }
             }

@@ -2,6 +2,8 @@
 #include <pandoeditor/project.h>
 #include <QCoreApplication>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <cassert>
 #include <functional>
 #include <stdexcept>
@@ -21,6 +23,18 @@ QByteArray fixture(const char* name) {
     QFile file(QString::fromUtf8(WEB_GIS_FIXTURE)+"/"+name);
     assert(file.open(QIODevice::ReadOnly));return file.readAll();
 }
+GisGeoJsonCollection currentDistributionFields(GisGeoJsonCollection collection) {
+    // The archived transport fixture is schema 2. Exercise the current GIS
+    // field mapping without adding a legacy-share fallback to the importer.
+    for(auto& feature:collection.features) {
+        auto properties=QJsonDocument::fromJson(QByteArray::fromStdString(feature.propertiesJson)).object();
+        properties["value"]=properties.take("share");properties.remove("distribution_type");
+        properties["unit"]="%";properties["value_scale_mode"]="manual";
+        properties["value_scale_min"]=0;properties["value_scale_max"]=100;
+        feature.propertiesJson=QJsonDocument(properties).toJson(QJsonDocument::Compact).toStdString();
+    }
+    return collection;
+}
 template<typename Plan> void confirm(Project& project,const Plan& plan,const char* command) {
     CommandArguments args;args.action=plan;
     const auto request=CommandProcessor::makeRequest(project,command,args);
@@ -32,11 +46,12 @@ template<typename Plan> void confirm(Project& project,const Plan& plan,const cha
 }
 int main(int argc,char** argv) {
     QCoreApplication app(argc,argv);
-    const auto zip=parseGisGeoJsonZip(fixture("web-gis-geojson.zip"));
+    auto zip=parseGisGeoJsonZip(fixture("web-gis-geojson.zip"));
     assert(zip.layers.size()==5);
     auto p=project();
     GisContentMapping distribution;distribution.target=GisExchangeTarget::Distribution;
-    distribution.distributionType="language";
+    assert(rejected([&]{planGisContentZipImport(p.snapshot(),zip,3,"old-share",{"old.zip","geojson-zip"},distribution);}));
+    zip.layers[3].collection=currentDistributionFields(zip.layers[3].collection);
     auto imported=planGisContentZipImport(p.snapshot(),zip,3,"web-distribution",
         {"web.zip","geojson-zip"},distribution);
     const auto& plan=std::get<GisDistributionImportPlan>(imported);
@@ -64,13 +79,14 @@ int main(int argc,char** argv) {
     assert(rejected([&]{planGisContentZipImport(p.snapshot(),zip,0,"wrong",
         {"web.zip","geojson-zip"},generic);}));
 
-    const auto gpkg=readGisGeoPackage(QString::fromUtf8(WEB_GIS_FIXTURE)+"/web-gis.gpkg");
+    auto gpkg=readGisGeoPackage(QString::fromUtf8(WEB_GIS_FIXTURE)+"/web-gis.gpkg");
     std::size_t distributionIndex=gpkg.layers.size(),genericIndex=gpkg.layers.size();
     for(std::size_t i=0;i<gpkg.layers.size();++i) {
         if(gpkg.layers[i].tableName=="language_distribution")distributionIndex=i;
         if(gpkg.layers[i].tableName=="generic_features_point")genericIndex=i;
     }
     assert(distributionIndex<gpkg.layers.size()&&genericIndex<gpkg.layers.size());
+    gpkg.layers[distributionIndex].collection=currentDistributionFields(gpkg.layers[distributionIndex].collection);
     auto other=project();
     auto gpkgDistribution=std::get<GisDistributionImportPlan>(planGisContentGeoPackageImport(
         other.snapshot(),gpkg,distributionIndex,"gpkg-distribution",
@@ -90,7 +106,7 @@ int main(int argc,char** argv) {
         {"x","geojson"},distribution);}));
     broken=zip.layers[3].collection;
     broken.features.front().propertiesJson.replace(
-        broken.features.front().propertiesJson.find("\"share\":60"),10,"\"share\":101");
+        broken.features.front().propertiesJson.find("\"value\":60"),10,"\"value\":\"not-a-number\"");
     assert(rejected([&]{planGisContentImport(fresh.snapshot(),broken,"share",
         {"x","geojson"},distribution);}));
     broken=zip.layers[3].collection;

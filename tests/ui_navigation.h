@@ -12,6 +12,20 @@ inline bool navigationClick(QQuickWindow* window,const QString& name) {
  QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,c->mapToScene({c->width()/2,c->height()/2}).toPoint());QTest::qWait(100);return true;
 }
 inline void enterExistingControlRoute(QQuickWindow* window,const QString& name) {
+ const bool memo=name=="countryMemo"||name=="subunitMemo"||name=="regionMemo";
+ if(name=="objectNotesTrigger"||name=="objectColorTrigger"||memo) {
+  auto c=navigationItem(window->contentItem(),memo?"objectNotesTrigger":name);
+  if(!c||!c->isVisible())navigationClick(window,"toggleObjectEditor");
+ }
+ const QStringList fileActions={"importButton","deviceSaveButton","exportButton","saveAsButton","webImportButton","gisImportButton","gisExportButton","projectGpkgExportButton","legacyPanelButton"};
+ if(fileActions.contains(name)) {
+  auto c=navigationItem(window->contentItem(),name);
+  if(!c||!c->isVisible())navigationClick(window,"fileMenuButton");
+ }
+ if(name=="contentPanelButton"||name=="historicalLibraryButton") {
+  auto c=navigationItem(window->contentItem(),name);
+  if(!c||!c->isVisible())navigationClick(window,"createMenuButton");
+ }
  // Compatibility tests still exercise real pointer events and all old assertions.
  // The web metadata entry now lives on the selection toolbar, not the native panel.
  if(name=="countryMemo"||name=="subunitMemo"||name=="regionMemo") {
@@ -30,10 +44,16 @@ inline void enterExistingControlRoute(QQuickWindow* window,const QString& name) 
   auto c=navigationItem(window->contentItem(),name);
   if(!c||!c->isVisible()) {
    auto notes=navigationItem(window->contentItem(),"closeObjectNotes");if(notes&&notes->isVisible())navigationClick(window,"closeObjectNotes");
+   enterExistingControlRoute(window,"legacyPanelButton");
    navigationClick(window,"legacyPanelButton");
   }
  }
- if(name=="focusSelection") {
-  auto c=navigationItem(window->contentItem(),name);if(!c||!c->isVisible())navigationClick(window,"openObjectEditor");
+ if(name=="focusSelection"||name=="objectLockButton") {
+  auto c=navigationItem(window->contentItem(),name);
+  if(!c||!c->isVisible()) {
+   auto panel=navigationItem(window->contentItem(),"objectPropertyPanel");
+   if(!panel||!panel->isVisible())navigationClick(window,"openObjectEditor");
+   navigationClick(window,"objectActionsTab");
+  }
  }
 }

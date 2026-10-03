@@ -7,10 +7,11 @@ AbstractButton {
     required property var frame
     property bool maximized: false
     property bool windowActive: true
+    property bool darkAppearance: false
     readonly property bool highlighted: frame.hoveredButton === captionAction || hovered
     readonly property bool held: frame.pressedButton === captionAction || down
     readonly property color ink: captionAction === 3 && highlighted ? "white"
-                                : windowActive ? "#1b1b1b" : "#858585"
+                                : windowActive ? (darkAppearance ? "#edf1f5" : "#1b1b1b") : "#858585"
     width: 46
     height: 32
     padding: 0
@@ -21,7 +22,7 @@ AbstractButton {
     background: Rectangle {
         color: control.highlighted
                ? control.captionAction === 3 ? (control.held ? "#b62b22" : "#c42b1c")
-                                     : (control.held ? "#d6d6d6" : "#e5e5e5")
+                                     : control.darkAppearance ? (control.held ? "#29313a" : "#222931") : (control.held ? "#d6d6d6" : "#e5e5e5")
                : "transparent"
         Rectangle {
             anchors.fill: parent

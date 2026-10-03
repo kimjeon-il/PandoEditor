@@ -673,8 +673,8 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
                 if constexpr(std::is_same_v<T,GenericFeature>)allow(old.fallbackOnly!=next.fallbackOnly,"source");
                 if constexpr(std::is_same_v<T,HydroFeature>)allow(old.sourceFeatureId!=next.sourceFeatureId,"source");
                 if constexpr(std::is_same_v<T,HydroFeature>||std::is_same_v<T,GenericFeature>||std::is_same_v<T,DistributionLayer>){allow(old.color!=next.color,"color");allow(old.locked!=next.locked,"locked");}
-                if constexpr(std::is_same_v<T,DistributionLayer>){allow(old.parentId!=next.parentId||old.type!=next.type,"relation");allow(old.groups!=next.groups||old.metadata!=next.metadata,"metadata");}
-                if constexpr(std::is_same_v<T,DistributionEntry>){allow(!(old.territory==next.territory)||old.layerId!=next.layerId,"relation");allow(!(old.geometry==next.geometry),"geometry");allow(old.share!=next.share||old.certainty!=next.certainty||old.metadata!=next.metadata,"metadata");}
+                if constexpr(std::is_same_v<T,DistributionLayer>){allow(old.parentId!=next.parentId,"relation");allow(old.unit!=next.unit||!(old.valueScale==next.valueScale)||old.groups!=next.groups||old.metadata!=next.metadata,"metadata");}
+                if constexpr(std::is_same_v<T,DistributionEntry>){allow(!(old.territory==next.territory)||old.layerId!=next.layerId,"relation");allow(!(old.geometry==next.geometry),"geometry");allow(old.value!=next.value||old.certainty!=next.certainty||old.metadata!=next.metadata,"metadata");}
                 if constexpr(std::is_same_v<T,DistributionLayer>||std::is_same_v<T,DistributionEntry>)allow(old.validity.from!=next.validity.from||old.validity.to!=next.validity.to,"validity");
             };
             const auto i=found->second;

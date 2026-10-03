@@ -58,7 +58,7 @@ int main() {
     }
     for(long index=0;index<5000;++index) {
         auto p=project();auto snapshot=p.snapshot();
-        DistributionLayer layer;layer.id="lang:allocation";layer.name="Language";layer.type="language";
+        DistributionLayer layer;layer.id="lang:allocation";layer.name="Language";layer.unit="language";
         GisDistributionInput entry;entry.entry.id="entry:allocation";
         entry.entry.layerId=layer.id;entry.entry.territory=territorialRef("A");
         const auto* before=&p.document();const auto revision=p.revision();

@@ -31,7 +31,7 @@ private slots:
         document.units.front().libraryOrigin=origin;
         Project project;project.replace(document);
         const auto saved=projectcodec::encode(project);
-        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),7);
+        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),8);
         const auto reopened=projectcodec::decode(saved);
         QVERIFY(reopened.units.front().libraryOrigin.has_value());
         const auto& actual=*reopened.units.front().libraryOrigin;
@@ -51,9 +51,9 @@ private slots:
         PreservedExtension distribution=labels;distribution.id="distribution-settings";distribution.jsonPointer="/distributionSettings";distribution.payload=R"({"renderMode":"intensity","boundaryVisible":false,"future":[3,1,2]})";
         d.extensions.push_back(labels);d.extensions.push_back(distribution);presentationmigration::promote(d);
         QCOMPARE(d.presentation.webPresentation.labelSettings.at({"label","city"}).manualPosition->x,10.);
-        QCOMPARE(d.presentation.webPresentation.distributionSettings.renderMode,DistributionRenderMode::Intensity);QVERIFY(!d.presentation.webPresentation.distributionSettings.boundaryVisible);
+        QCOMPARE(d.presentation.webPresentation.distributionSettings.renderMode,DistributionRenderMode::Overlap);QVERIFY(!d.presentation.webPresentation.distributionSettings.boundaryVisible);
         Project project;project.replace(d);const auto saved=projectcodec::encode(project);QVERIFY(saved.contains("1e+09"));QVERIFY(saved.contains("[3,1,2]"));
-        const auto reopened=projectcodec::decode(saved);QVERIFY(reopened.presentation.webPresentation.labelSettings.at({"label","city"}).pinned);QCOMPARE(reopened.presentation.webPresentation.distributionSettings.renderMode,DistributionRenderMode::Intensity);
+        const auto reopened=projectcodec::decode(saved);QVERIFY(reopened.presentation.webPresentation.labelSettings.at({"label","city"}).pinned);QCOMPARE(reopened.presentation.webPresentation.distributionSettings.renderMode,DistributionRenderMode::Overlap);
     }
     void contentMetadataDependencyAndPresentationUndo() {
         using namespace pandoeditor;auto d=projectcodec::decode(sample());
@@ -145,8 +145,8 @@ private slots:
         HydroFeature lake; lake.id="lake"; lake.kind="lake"; lake.geometry=d.units.front().geometry; d.hydro.push_back(lake);
         DistributionLayer layer; layer.id="language"; layer.name="Language"; d.distributionLayers.push_back(layer);
         auto child=layer; child.id="child"; child.parentId="language"; d.distributionLayers.push_back(child);
-        DistributionEntry entry; entry.id="entry-60"; entry.layerId="language"; entry.territory=country; entry.share=60;
-        d.distributionEntries.push_back(entry); entry.id="entry-70"; entry.share=70; d.distributionEntries.push_back(entry);
+        DistributionEntry entry; entry.id="entry-60"; entry.layerId="language"; entry.territory=country; entry.value=60;
+        d.distributionEntries.push_back(entry); entry.id="entry-70"; entry.value=70; d.distributionEntries.push_back(entry);
         GenericFeature generic; generic.id="place"; generic.geometry={"label-geometry",1}; generic.source=label.source;
         d.genericFeatures.push_back(generic);
         for(const auto& type:{"MultiPoint","LineString","MultiLineString","Polygon","MultiPolygon"}) {
@@ -176,7 +176,7 @@ private slots:
         QVERIFY_EXCEPTION_THROWN(validateDocument(invalid),std::invalid_argument);
         invalid=d; invalid.labels.front().territory=territorialRef("missing");
         QVERIFY_EXCEPTION_THROWN(validateDocument(invalid),std::invalid_argument);
-        invalid=d; invalid.distributionEntries.front().share=101;
+        invalid=d; invalid.distributionEntries.front().value=std::numeric_limits<double>::infinity();
         QVERIFY_EXCEPTION_THROWN(validateDocument(invalid),std::invalid_argument);
         invalid=d; invalid.hydro.front().kind="lake";
         QVERIFY_EXCEPTION_THROWN(validateDocument(invalid),std::invalid_argument);
@@ -216,7 +216,7 @@ private slots:
         p.objectStyles["territorial:subunit:presentation-S"].blendMode="normal";
         p.objectOrder={"territorial:subunit:presentation-S"};
         pandoeditor::Project project;project.replace(d);
-        const auto bytes=projectcodec::encode(project);QCOMPARE(QJsonDocument::fromJson(bytes).object()["version"].toInt(),7);
+        const auto bytes=projectcodec::encode(project);QCOMPARE(QJsonDocument::fromJson(bytes).object()["version"].toInt(),8);
         auto legacy=QJsonDocument::fromJson(bytes).object(); legacy["version"]=5; legacy.remove("content");
         auto reopened=projectcodec::decode(QJsonDocument(legacy).toJson(QJsonDocument::Compact));
         QCOMPARE(reopened.nativeSourceVersion,5); QVERIFY(reopened.presentation.webPresentation==p);
@@ -442,7 +442,7 @@ private slots:
         pandoeditor::Project project;
         project.replace(projectcodec::decode(sample()));
         const auto saved=projectcodec::encode(project);
-        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),7);
+        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),8);
         pandoeditor::Project reopened;
         reopened.replace(projectcodec::decode(saved));
         QCOMPARE(projectcodec::encode(reopened),saved);

@@ -22,8 +22,9 @@ struct PresentationStyle {
     std::optional<bool> boundaryVisible, labelsVisible;
     std::optional<double> boundaryWidth;
     std::optional<std::string> blendMode;
+    std::optional<bool> colorVisible;
     bool operator==(const PresentationStyle& b) const {
-        return opacity==b.opacity && boundaryVisible==b.boundaryVisible && labelsVisible==b.labelsVisible && boundaryWidth==b.boundaryWidth && blendMode==b.blendMode;
+        return opacity==b.opacity && boundaryVisible==b.boundaryVisible && labelsVisible==b.labelsVisible && boundaryWidth==b.boundaryWidth && blendMode==b.blendMode && colorVisible==b.colorVisible;
     }
 };
 struct LabelSettings {
@@ -33,12 +34,19 @@ struct LabelSettings {
     std::string collisionGroup="map";
     bool operator==(const LabelSettings& b) const;
 };
-enum class DistributionRenderMode { Dominant, Intensity };
+enum class DistributionRenderMode { Overlap, Single };
 struct DistributionSettings {
-    DistributionRenderMode renderMode=DistributionRenderMode::Dominant;
+    DistributionRenderMode renderMode=DistributionRenderMode::Overlap;
+    std::string activeLayerId;
     bool boundaryVisible=true;
-    bool operator==(const DistributionSettings& b) const { return renderMode==b.renderMode&&boundaryVisible==b.boundaryVisible; }
+    bool operator==(const DistributionSettings& b) const { return renderMode==b.renderMode&&activeLayerId==b.activeLayerId&&boundaryVisible==b.boundaryVisible; }
 };
+struct DistributionValueScale {
+    bool manual=false;
+    double min=0,max=1;
+    bool operator==(const DistributionValueScale& b) const { return manual==b.manual&&(!manual||(min==b.min&&max==b.max)); }
+};
+struct DistributionValueRange { double min,max; };
 struct WebPresentation {
     std::map<std::string,bool> visibility;
     std::map<std::string,std::set<std::string>> hiddenItems;
@@ -60,11 +68,12 @@ struct LabelLayoutBounds { double left=0,top=0,right=0,bottom=0; };
 LabelSettings automaticLabelSettings(const std::string& kind,const LabelSettings& stored={});
 std::vector<ObjectRef> layoutLabels(const std::vector<LabelLayoutCandidate>&,double zoom,double padding,
                                     std::optional<LabelLayoutBounds> bounds={});
-std::vector<ObjectRef> visibleDistributionEntries(const ProjectDocument&,const std::optional<std::string>& selectedLayer={});
-double distributionFillAlpha(double share,double resolvedOpacity=1);
+std::vector<ObjectRef> visibleDistributionEntries(const ProjectDocument&);
+std::optional<DistributionValueRange> distributionValueRange(const ProjectDocument&,const std::string& layerId);
+double distributionValueAlpha(double value,const std::optional<DistributionValueRange>&,double resolvedOpacity=1);
 struct ResolvedTerritorialPresentation {
     double opacity=1, effectiveAlpha=1;
-    bool boundaryVisible=true, nameVisible=true, flagVisible=true;
+    bool boundaryVisible=true, nameVisible=true, flagVisible=true, colorVisible=true;
     std::string blendMode="normal";
 };
 std::string territorialGroup(UnitKind);

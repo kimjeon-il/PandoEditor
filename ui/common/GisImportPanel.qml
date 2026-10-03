@@ -21,8 +21,6 @@ Dialog {
         const values=["country","subunit","region","distribution","generic"]
         let requested=values.indexOf(layer.target)
         targetChoice.currentIndex=requested<0?4:requested
-        distributionType.currentIndex=["language","ethnicity","religion"].indexOf(layer.distributionType)
-        if(distributionType.currentIndex<0)distributionType.currentIndex=0
         const web=state.sourceKind==="geojson-zip" || state.sourceKind==="geopackage"
         idField.text=layer.target==="country" && web?"pandolab_id":
                      layer.target==="distribution"?"entry_id":"__fid__"
@@ -31,7 +29,7 @@ Dialog {
     function choices() {
         return {target:targetChoice.currentText,idField:idField.text,nameField:nameField.text,
             countryId:countryId.text,parentId:parentId.text,coast:coastChoice.currentValue,
-            distributionType:distributionType.currentText,layerId:layerId.text,
+            layerId:layerId.text,
             layerName:layerName.text}
     }
     ColumnLayout {
@@ -110,7 +108,6 @@ Dialog {
                 RowLayout {
                     Layout.fillWidth:true;visible:targetChoice.currentText==="distribution"
                     Label { text:"분포 종류" }
-                    ComboBox { id:distributionType;Layout.fillWidth:true;model:["language","ethnicity","religion"] }
                 }
                 RowLayout {
                     Layout.fillWidth:true;visible:targetChoice.currentText==="distribution"

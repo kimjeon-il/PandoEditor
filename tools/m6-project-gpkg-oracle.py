@@ -37,7 +37,7 @@ with tempfile.TemporaryDirectory() as temporary:
         state = json.loads(database.execute(
             "select json_value from pandolab_project_settings where setting_key='project_state'"
         ).fetchone()[0])
-        assert state["format"] == "pandoeditor-project" and state["version"] == 7
+        assert state["format"] == "pandoeditor-project" and state["version"] == 8
         assert {unit["id"] for unit in state["units"]} == {"A", "B", "C"}
         assert next(unit for unit in state["units"] if unit["id"] == "A")\
             ["libraryOrigin"]["libraryId"] == "history:A"

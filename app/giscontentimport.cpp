@@ -66,11 +66,9 @@ GisContentImport planGisContentImport(const ProjectSnapshot& project,
         }
         return planGenericGisImport(project,std::move(planId),std::move(source),std::move(rows));
     }
-    require(mapping.distributionType=="language"||mapping.distributionType=="ethnicity"||
-        mapping.distributionType=="religion","INVALID_GIS_DISTRIBUTION_TYPE");
     std::vector<DistributionLayer> layers;
     std::vector<GisDistributionInput> entries;
-    std::map<std::string,std::string> layerTypes;
+    std::map<std::string,std::pair<std::string,DistributionValueScale>> layerScales;
     for(const auto& feature:collection.features) {
         require(feature.geometry.type=="Polygon"||feature.geometry.type=="MultiPolygon",
             "INVALID_GIS_DISTRIBUTION_GEOMETRY");
@@ -79,24 +77,33 @@ GisContentImport planGisContentImport(const ProjectSnapshot& project,
         auto identifier=id(feature,props,mapping,"entry_id");
         auto layerId=mapping.layerId.empty()?field(props,mapping.layerIdField):mapping.layerId;
         require(!identifier.empty()&&!layerId.empty(),"INVALID_GIS_DISTRIBUTION_ID");
-        const auto declared=field(props,"distribution_type");
-        require(declared.empty()||declared==mapping.distributionType,"GIS_DISTRIBUTION_TYPE_MISMATCH");
-        auto found=layerTypes.find(layerId);
-        if(found==layerTypes.end()) {
+        const auto unit=field(props,"unit");
+        DistributionValueScale scale;
+        const auto scaleMode=field(props,"value_scale_mode");
+        require(scaleMode.empty()||scaleMode=="auto"||scaleMode=="manual","INVALID_GIS_VALUE_SCALE");
+        if(scaleMode=="manual") {
+            const auto& min=webjson::at(props,"value_scale_min");const auto& max=webjson::at(props,"value_scale_max");
+            require((min.kind==V::Number||min.kind==V::String)&&(max.kind==V::Number||max.kind==V::String)&&!webjson::text(min).empty()&&!webjson::text(max).empty(),"INVALID_GIS_VALUE_SCALE");
+            scale={true,webjson::number(min),webjson::number(max)};
+            require(std::isfinite(scale.min)&&std::isfinite(scale.max)&&scale.min<scale.max,"INVALID_GIS_VALUE_SCALE");
+        }
+        auto found=layerScales.find(layerId);
+        if(found==layerScales.end()) {
             const auto prior=project.index().objects.find({"distributionLayer",layerId});
             if(prior!=project.index().objects.end()) {
                 const auto& existing=project.document().distributionLayers.at(prior->second);
-                require(existing.type==mapping.distributionType&&!existing.locked,
+                require(existing.unit==unit&&existing.valueScale==scale&&!existing.locked,
                     "GIS_DISTRIBUTION_LAYER_CONFLICT");
             } else {
-                DistributionLayer layer;layer.id=layerId;layer.type=mapping.distributionType;
+                DistributionLayer layer;layer.id=layerId;layer.unit=unit;layer.valueScale=scale;
                 layer.name=mapping.layerName.empty()?field(props,mapping.nameField):mapping.layerName;
                 require(!layer.name.empty(),"INVALID_GIS_DISTRIBUTION_NAME");
                 layer.color=color(props,0x3388cc);
                 layers.push_back(std::move(layer));
             }
-            layerTypes.emplace(layerId,mapping.distributionType);
-        }
+            layerScales.emplace(layerId,std::make_pair(unit,scale));
+        } else require(found->second.first==unit&&found->second.second==scale,
+            "GIS_DISTRIBUTION_LAYER_CONFLICT");
         GisDistributionInput input;input.entry.id=std::move(identifier);
         input.entry.layerId=std::move(layerId);
         const auto mode=field(props,mapping.sourceModeField);
@@ -108,11 +115,10 @@ GisContentImport planGisContentImport(const ProjectSnapshot& project,
                 "DANGLING_GIS_DISTRIBUTION_TERRITORY");
             input.entry.territory=territorialRef(territory);
         } else input.geometry=feature.geometry;
-        const auto& share=webjson::at(props,"share");
-        if(share.kind!=V::Null) {
-            require(share.kind==V::Number,"INVALID_GIS_SHARE");
-            input.entry.share=webjson::number(share);
-        }
+        const auto& value=webjson::at(props,"value");
+        require((value.kind==V::Number||value.kind==V::String)&&!webjson::text(value).empty(),"INVALID_GIS_VALUE");
+        input.entry.value=webjson::number(value);
+        require(std::isfinite(input.entry.value),"INVALID_GIS_VALUE");
         const auto certainty=field(props,"certainty");
         if(!certainty.empty())input.entry.certainty=certainty;
         input.entry.validity=validity(props);
@@ -126,8 +132,6 @@ GisContentImport planGisContentZipImport(const ProjectSnapshot& project,const Gi
     std::size_t index,std::string planId,GisSource source,const GisContentMapping& mapping) {
     require(index<archive.layers.size(),"GIS_LAYER_MISSING");
     const auto& layer=archive.layers[index];target(layer.targetType,mapping.target);
-    require(mapping.target!=GisExchangeTarget::Distribution||layer.distributionType.empty()||
-        mapping.distributionType==layer.distributionType,"GIS_DISTRIBUTION_TYPE_MISMATCH");
     return planGisContentImport(project,layer.collection,std::move(planId),std::move(source),mapping);
 }
 GisContentImport planGisContentGeoPackageImport(const ProjectSnapshot& project,const GisGeoPackage& archive,

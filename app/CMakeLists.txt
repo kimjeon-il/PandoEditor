@@ -121,7 +121,9 @@ qt_add_resources(pandoeditor historical_pilot
 
 qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
-qt_add_resources(pandoeditor world_data PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
+# Embed large map bytes directly into a resource object instead of compiling
+# a 100+ MB C++ byte array, which exhausts MinGW's compiler heap in Debug.
+qt_add_resources(pandoeditor world_data BIG_RESOURCES PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
     FILES
         "${PROJECT_SOURCE_DIR}/assets/world/manifest.json"
         "${PROJECT_SOURCE_DIR}/assets/world/countries-preview-v0.33.0.geojson.gz"
@@ -395,6 +397,7 @@ if(BUILD_TESTING)
     set_tests_properties(selection_editor_tests editor_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(ui_tests ../tests/ui_tests.cpp)
     target_link_libraries(ui_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
+    target_compile_definitions(ui_tests PRIVATE PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world")
     qt_add_resources(ui_tests ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui"
         FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"

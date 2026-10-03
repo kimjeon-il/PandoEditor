@@ -14,6 +14,7 @@
 #include <QFontDatabase>
 #include <functional>
 #include <QFile>
+#include <QDir>
 #include <algorithm>
 #ifdef Q_OS_WIN
 #ifndef NOMINMAX
@@ -85,6 +86,111 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void canonicalWorldShellCapture() {
+        EditorControllerConfig config;config.bootstrapWorld=true;config.worldDataRoot=QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR);
+        EditorController editor(config);QQmlApplicationEngine engine;QStringList warnings;
+        QSignalSpy errors(&editor,&EditorController::errorOccurred);
+        connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& values){for(const auto& value:values)warnings<<value.toString();});
+        QVERIFY(editor.setTerrainMode("none"));
+        engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+        window->resize(1280,800);exposeForTest(window);
+        QTRY_COMPARE_WITH_TIMEOUT(editor.worldStatus(),QString("canonical"),30000);
+        QVERIFY(editor.countryRows().size()>200);
+        editor.beginAppearancePreview();QVERIFY(editor.previewAppearance({{"theme","light"}}));
+        editor.selectCountry("DEU");QCOMPARE(editor.selectedId(),QString("DEU"));
+        editor.focusObject();QTest::qWait(150);
+        const auto captureDir=qEnvironmentVariable("PANDOEDITOR_UI_CAPTURE_DIR",QDir::tempPath());QVERIFY(QDir().mkpath(captureDir));
+        QVERIFY(capture(window).save(captureDir+"/ui-world-selection-light.png"));
+        QVERIFY(clickControl(window,"toggleObjectEditor"));
+        QVERIFY(capture(window).save(captureDir+"/ui-world-editor-light.png"));
+        QVERIFY(editor.previewAppearance({{"theme","dark"}}));
+        QVERIFY(capture(window).save(captureDir+"/ui-world-editor-dark.png"));
+        QCOMPARE(editor.revision(),qulonglong(0));QVERIFY(!editor.dirty());
+        QCOMPARE(errors.count(),0);
+        QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+        editor.cancelAppearancePreview();window->setProperty("allowClose",true);window->close();
+    }
+    void webShellLayoutAndMetadata() {
+        const auto captureDir=qEnvironmentVariable("PANDOEDITOR_UI_CAPTURE_DIR",QDir::tempPath());
+        QVERIFY(QDir().mkpath(captureDir));
+        for(bool mobile:{false,true}) {
+            EditorController editor(EditorControllerConfig{mobile,{}});QQmlApplicationEngine engine;QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& error:errors)warnings<<error.toString();});
+            engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));
+            QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+            auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+            window->resize(mobile?360:1100,760);exposeForTest(window);
+            editor.beginAppearancePreview();QVERIFY(editor.previewAppearance({{"theme","light"}}));
+            editor.selectCountry("DEU");QTest::qWait(100);
+            auto item=[&](const char* name){return visualItem(window->contentItem(),name);};
+            auto within=[&](QQuickItem* child,QQuickItem* parent){
+                const auto r=child->mapRectToItem(parent,QRectF(0,0,child->width(),child->height()));
+                return r.left()>=-.5&&r.top()>=-.5&&r.right()<=parent->width()+.5&&r.bottom()<=parent->height()+.5;
+            };
+            QCOMPARE(item("storageToolbar")->height(),48.0);
+            QVERIFY(!item("importButton")||!item("importButton")->isVisible());
+            auto* card=item("territorialToolbar");QVERIFY(card&&card->isVisible());
+            QVERIFY(within(card,item("mapView")));
+            const auto mode=mobile?QString("compact"):QString("desktop");
+            QVERIFY(capture(window).save(captureDir+"/ui-"+mode+"-selection-light.png"));
+            QVERIFY(clickControl(window,"toggleObjectEditor"));
+            auto* panel=item("objectPropertyPanel");QVERIFY(panel&&panel->isVisible());
+            QCOMPARE(panel->width(),mobile?360.0:320.0);
+            QCOMPARE(panel->mapToScene({0,0}).x(),0.0);
+            QVERIFY(within(panel,window->contentItem()));
+            QVERIFY(item("objectInfoTab")->isVisible());
+            QVERIFY(item("detailObjectName")->isVisible());
+            QVERIFY(item("detailObjectNotes")->isVisible());
+            const auto before=editor.documentBytes();
+            const auto revision=editor.revision();
+            QVERIFY(clickControl(window,"detailObjectName"));
+            QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier);typeText(window,"Germany UI");
+            QTest::keyClick(window,Qt::Key_Return);QTest::qWait(100);
+            QCOMPARE(editor.selectedName(),QString("Germany UI"));
+            QCOMPARE(editor.revision(),revision+1);
+            editor.undo();QCOMPARE(editor.documentBytes(),before);
+            QVERIFY(clickControl(window,"detailObjectNotes"));
+            typeText(window,"UI notes");
+            QVERIFY(clickControl(window,"detailObjectName"));
+            QCOMPARE(editor.memoDraft(),QString("UI notes"));
+            QCOMPARE(editor.revision(),revision+3); // name commit, undo, notes commit
+            editor.undo();QCOMPARE(editor.documentBytes(),before);
+            QVERIFY(clickControl(window,"detailObjectName"));
+            QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier);typeText(window,"Pending UI");
+            QCOMPARE(editor.nameDraft(),QString("Pending UI"));
+            const auto navigationRevision=editor.revision();
+            QVERIFY(clickControl(window,"fileMenuButton"));
+            QCOMPARE(editor.documentBytes(),before);QCOMPARE(editor.revision(),navigationRevision);
+            QCOMPARE(editor.nameDraft(),QString("Pending UI"));
+            QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
+            editor.discardPendingEdits();QCOMPARE(editor.documentBytes(),before);
+            QVERIFY(capture(window).save(captureDir+"/ui-"+mode+"-editor-light.png"));
+            QVERIFY(editor.previewAppearance({{"theme","dark"}}));
+            QVERIFY(capture(window).save(captureDir+"/ui-"+mode+"-editor-dark.png"));
+            QVERIFY(clickControl(window,"objectActionsTab"));
+            QVERIFY(clickControl(window,"editorMergeAction"));
+            QVERIFY(editor.geometryEditState().value("active").toBool());
+            QVERIFY(!panel->isVisible());
+            QVERIFY(!card->isVisible()); // cards must not cover the geometry dock or map picks
+            auto* dock=item("geometryToolDock");QVERIFY(dock&&dock->isVisible());
+            QVERIFY(within(dock,item("mapView")));
+            QVERIFY(within(item("geometryCancel"),dock));
+            QVERIFY(capture(window).save(captureDir+"/ui-"+mode+"-merge-dark.png"));
+            QVERIFY(clickControl(window,"geometryCancel"));
+            QCOMPARE(editor.documentBytes(),before);
+            QVERIFY(clickControl(window,"fileMenuButton"));
+            QVERIFY(item("importButton")->isVisible());
+            QVERIFY(within(item("importButton"),window->contentItem()));
+            QVERIFY(capture(window).save(captureDir+"/ui-"+mode+"-file-dark.png"));
+            QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
+            QVERIFY(!item("importButton")||!item("importButton")->isVisible());
+            editor.cancelAppearancePreview();
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+            window->setProperty("allowClose",true);window->close();
+        }
+    }
     void viewAndAppearanceControlsMatchDesktopAndCompact() {
         for(bool mobile:{false,true}) {
             EditorController editor(EditorControllerConfig{mobile,{}});QQmlApplicationEngine engine;QStringList warnings;
@@ -272,6 +378,8 @@ private slots:
             QVERIFY(confirm&&confirm->isEnabled());
             QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
             QMetaObject::invokeMethod(panel,"close");
+            QTest::qWait(150);
+            enterExistingControlRoute(window,"projectGpkgExportButton");
             QVERIFY(visualItem(window->contentItem(),"projectGpkgExportButton"));
             QVERIFY(window->findChild<QObject*>("projectGpkgSaveDialog"));
             QVERIFY(window->findChild<QObject*>("openDialog"));
@@ -387,7 +495,7 @@ private slots:
         QCOMPARE(editor.nameDraft(),QString("uncommitted")); QVERIFY(!editor.canUndo());
         QVERIFY(clickControl(window,"cancelUnsaved"));
         auto notice=visualItem(window->contentItem(),"documentFormatNotice"); QVERIFY(notice);
-        QVERIFY(notice->property("text").toString().contains("Qt v7"));
+        QVERIFY(notice->property("text").toString().contains("Qt v8"));
         QVERIFY(clickControl(window,"documentFormatNotice"));
         QVERIFY(notice->property("expanded").toBool());
         window->setProperty("allowClose",true); window->close();
@@ -522,7 +630,8 @@ private slots:
         QVERIFY(!window->flags().testFlag(Qt::FramelessWindowHint));
 
         auto toolbar=visualItem(window->contentItem(),"storageToolbar"); QVERIFY(toolbar);
-        const QStringList buttonNames{"importButton","deviceSaveButton","exportButton","undoButton","redoButton"};
+        QCOMPARE(toolbar->height(),48.0);
+        const QStringList buttonNames{"fileMenuButton","mapDisplayButton","preferencesButton","undoButton","redoButton"};
         QList<QQuickItem*> buttons;
         for(const auto& name:buttonNames) {
             auto button=visualItem(window->contentItem(),name); QVERIFY2(button,qPrintable(name));
@@ -531,9 +640,16 @@ private slots:
             QVERIFY2(bounds.left()>=-0.5 && bounds.right()<=toolbar->width()+0.5,qPrintable(name));
             buttons.append(button);
         }
-        QCOMPARE(buttons[0]->property("text").toString(),QString("가져오기"));
-        QCOMPARE(buttons[1]->property("text").toString(),QString("기기에 저장"));
-        QCOMPARE(buttons[2]->property("text").toString(),QString("내보내기"));
+        QVERIFY(clickControl(window,"fileMenuButton"));
+        for(const auto& name:QStringList{"importButton","deviceSaveButton","exportButton"}) {
+            auto button=visualItem(window->contentItem(),name);QVERIFY(button&&button->isVisible());
+            const auto bounds=button->mapRectToItem(window->contentItem(),QRectF(0,0,button->width(),button->height()));
+            QVERIFY(bounds.left()>=0&&bounds.right()<=window->width());
+        }
+        QCOMPARE(visualItem(window->contentItem(),"importButton")->property("text").toString(),QString("가져오기…"));
+        QCOMPARE(visualItem(window->contentItem(),"deviceSaveButton")->property("text").toString(),QString("기기에 저장"));
+        QCOMPARE(visualItem(window->contentItem(),"exportButton")->property("text").toString(),QString("내보내기…"));
+        QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
 
         editor.selectCountry("DEU");
         editor.setMemoDraft("rotation draft");
@@ -576,6 +692,10 @@ private slots:
         QVERIFY(!editor.dirty());
 
         editor.setColor("#654321");
+        QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
+        QVERIFY(!visualItem(window->contentItem(),"editorPanel")->isVisible());
+        QVERIFY(!unsaved->property("visible").toBool());
+        QVERIFY(editor.dirty());
         QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
         QTRY_VERIFY(unsaved->property("visible").toBool());
         QVERIFY(clickControl(window,"cancelUnsaved"));

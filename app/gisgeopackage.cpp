@@ -69,7 +69,7 @@ std::string target(const std::string& name) {
     if(name=="subunits"||name=="territories"||name=="administrative")return "subunit";
     if(name=="regions")return "region";
     if(name=="places")return "label";
-    if(name=="language_distribution"||name=="ethnicity_distribution"||
+    if(name=="distributions"||name=="language_distribution"||name=="ethnicity_distribution"||
        name=="religion_distribution")return "distribution";
     if(name=="generic_features_point"||name=="generic_features_line"||
        name=="generic_features_polygon")return "generic";
@@ -80,7 +80,7 @@ std::string identityColumn(const std::string& name) {
     if(name=="subunits"||name=="territories"||name=="administrative"||name=="regions"||
        name=="generic_features_point"||name=="generic_features_line"||
        name=="generic_features_polygon")return "id";
-    if(name=="language_distribution"||name=="ethnicity_distribution"||
+    if(name=="distributions"||name=="language_distribution"||name=="ethnicity_distribution"||
        name=="religion_distribution")return "entry_id";
     return {};
 }

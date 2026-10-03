@@ -4,8 +4,8 @@
 
 namespace pandoeditor {
 namespace {
-constexpr std::array<const char*,6> overlayGroups{
-    "religions","ethnicities","languages","subunits","regions","genericFeatures"};
+constexpr std::array<const char*,4> overlayGroups{
+    "distributions","subunits","regions","genericFeatures"};
 std::string groupFor(const ProjectDocument& document,const ObjectRef& ref) {
     if(ref.domain=="territorial")for(const auto& unit:document.units)if(unit.id==ref.id)
         return unit.kind==UnitKind::Country?"countries":unit.kind==UnitKind::Subunit?"subunits":"regions";
@@ -43,7 +43,13 @@ MapRenderOrder mapRenderOrder(const ProjectDocument& document,const ObjectRef& r
         return mapBuiltinHydroRenderOrder(group=="lakes"?"lake":"river",role);
     if(group=="labels")return {role==RenderPrimitiveRole::Label?80:70,0,0};
     const auto overlay=overlayIndex(group);
-    if(overlay>=0)return {role==RenderPrimitiveRole::Fill?20:60,overlay,0};
+    if(overlay>=0) {
+        double layerOrder=0;
+        if(ref.domain=="distributionEntry")for(const auto& entry:document.distributionEntries)if(entry.id==ref.id)
+            for(std::size_t i=0;i<document.distributionLayers.size();++i)if(document.distributionLayers[i].id==entry.layerId)
+                layerOrder=double(i)/double(document.distributionLayers.size()+1);
+        return {role==RenderPrimitiveRole::Fill?20:60,overlay,layerOrder};
+    }
     return {90,0,0};
 }
 int mapPickOrder(const ProjectDocument& document,const ObjectRef& ref) {

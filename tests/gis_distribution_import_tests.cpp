@@ -12,12 +12,12 @@ bool rejects(const std::function<void()>& fn){try{fn();}catch(const std::invalid
 }
 int main() {
     auto p=project();
-    DistributionLayer layer;layer.id="lang:1";layer.name="Languages";layer.type="language";
+    DistributionLayer layer;layer.id="lang:1";layer.name="Languages";layer.unit="language";
     GisDistributionInput territorial;territorial.entry.id="entry:1";
     territorial.entry.layerId=layer.id;territorial.entry.territory=territorialRef("A");
-    territorial.entry.share=60;
+    territorial.entry.value=60;
     GisDistributionInput free;free.entry.id="entry:2";
-    free.entry.layerId=layer.id;free.entry.share=70;free.geometry=square();
+    free.entry.layerId=layer.id;free.entry.value=70;free.geometry=square();
     auto plan=planDistributionGisImport(p.snapshot(),"gis:distribution",{"source.geojson","geojson"},
         {layer},{territorial,free});
     assert(p.document().distributionEntries.empty());

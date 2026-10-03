@@ -1,4 +1,5 @@
 #include "projectcodec.h"
+#include "webjson.h"
 #include "builtinworldpolicy.h"
 #include <pandoeditor/objectproperties.h>
 #include "losslessjson.h"
@@ -203,13 +204,15 @@ V contentValue(const ProjectDocument& d) {
     }
     for(const auto& v:d.distributionLayers) {
         V groups=V::arr(); for(const auto& group:v.groups) groups.array.push_back(V::str(group));
-        layers.array.push_back(object({{"id",V::str(v.id)},{"name",V::str(v.name)},{"type",V::str(v.type)},
+        V scale=object({{"mode",V::str(v.valueScale.manual?"manual":"auto")}});
+        if(v.valueScale.manual){scale.object["min"]=V::num(v.valueScale.min);scale.object["max"]=V::num(v.valueScale.max);}
+        layers.array.push_back(object({{"id",V::str(v.id)},{"name",V::str(v.name)},{"unit",V::str(v.unit)},{"valueScale",scale},
             {"color",colorValue(v.color)},{"locked",V::boolean(v.locked)},{"parentId",v.parentId?V::str(*v.parentId):V{}},
             {"groups",groups},{"validity",validityValue(v.validity)},{"metadata",jsonObject(v.metadata)}}));
     }
     for(const auto& v:d.distributionEntries) entries.array.push_back(object({{"id",V::str(v.id)},
         {"layerId",V::str(v.layerId)},{"territory",v.territory?refValue(*v.territory):V{}},
-        {"geometryRef",v.geometry?geometryRefValue(*v.geometry):V{}},{"share",V::num(v.share)},
+        {"geometryRef",v.geometry?geometryRefValue(*v.geometry):V{}},{"value",V::num(v.value)},
         {"certainty",V::str(v.certainty)},{"validity",validityValue(v.validity)},{"metadata",jsonObject(v.metadata)}}));
     for(const auto& [ref,v]:d.countryDetails) countries.array.push_back(object({{"ref",refValue(ref)},{"capital",V::str(v.capital)}}));
     for(const auto& [ref,v]:d.symbols) symbols.array.push_back(object({{"ref",refValue(ref)},
@@ -245,22 +248,40 @@ void readContent(const V& content,ProjectDocument& d) {
     }
     for(const auto& row:array(field(content,"distributionLayers"))) {
         auto path="/content/distributionLayers/"+std::to_string(d.distributionLayers.size()); DistributionLayer v;
-        v.id=str(field(row,"id")); v.name=str(field(row,"name")); v.type=str(field(row,"type"));
+        v.id=str(field(row,"id")); v.name=str(field(row,"name"));
+        if(d.nativeSourceVersion<8){
+            v.unit="%";v.valueScale={true,0,100};
+            const auto type=str(field(row,"type"));
+            const auto group=type=="language"?"languages":type=="ethnicity"?"ethnicities":"religions";
+            auto& presentation=d.presentation.webPresentation;
+            if(!groupVisible(presentation,group)||!itemVisible(presentation,group,v.id))presentation.hiddenItems["distributions"].insert(v.id);
+        }
+        else {
+            v.unit=str(field(row,"unit"));const auto& scale=field(row,"valueScale");const auto mode=str(field(scale,"mode"));
+            require(mode=="auto"||mode=="manual","INVALID_DISTRIBUTION: value scale");
+            if(mode=="manual")v.valueScale={true,number(field(scale,"min")),number(field(scale,"max"))};
+        }
         v.color=color(field(row,"color")); v.locked=boolean(field(row,"locked"));
         if(field(row,"parentId").kind!=V::Null) v.parentId=str(field(row,"parentId"));
         for(const auto& group:array(field(row,"groups"))) v.groups.push_back(str(group));
         v.validity=validity(field(row,"validity"),d,path+"/validity");
         v.metadata=field(row,"metadata").encode().toStdString(); jsonObject(v.metadata);
-        unknown(d,6,row,path,{"id","name","type","color","locked","parentId","groups","validity","metadata"}); d.distributionLayers.push_back(std::move(v));
+        unknown(d,d.nativeSourceVersion,row,path,{"id","name","type","unit","valueScale","color","locked","parentId","groups","validity","metadata"}); d.distributionLayers.push_back(std::move(v));
+    }
+    if(d.nativeSourceVersion<8) {
+        auto& presentation=d.presentation.webPresentation;
+        for(const auto* group:{"languages","ethnicities","religions"})if(presentation.styles.count(group)){presentation.styles["distributions"]=presentation.styles.at(group);break;}
+        for(const auto* group:{"languages","ethnicities","religions"}){presentation.visibility.erase(group);presentation.hiddenItems.erase(group);presentation.styles.erase(group);}
+        if(!d.distributionLayers.empty())presentation.visibility["distributions"]=true;
     }
     for(const auto& row:array(field(content,"distributionEntries"))) {
         auto path="/content/distributionEntries/"+std::to_string(d.distributionEntries.size()); DistributionEntry v;
-        v.id=str(field(row,"id")); v.layerId=str(field(row,"layerId")); v.share=number(field(row,"share"));
+        v.id=str(field(row,"id")); v.layerId=str(field(row,"layerId")); v.value=number(field(row,d.nativeSourceVersion<8?"share":"value"));
         v.certainty=str(field(row,"certainty")); v.metadata=field(row,"metadata").encode().toStdString(); jsonObject(v.metadata);
         v.validity=validity(field(row,"validity"),d,path+"/validity");
         if(field(row,"territory").kind!=V::Null) v.territory=ref(field(row,"territory"),d,path+"/territory");
         if(field(row,"geometryRef").kind!=V::Null) v.geometry=geometryRef(field(row,"geometryRef"),d,path+"/geometryRef");
-        unknown(d,6,row,path,{"id","layerId","share","certainty","metadata","validity","territory","geometryRef"}); d.distributionEntries.push_back(std::move(v));
+        unknown(d,d.nativeSourceVersion,row,path,{"id","layerId","share","value","certainty","metadata","validity","territory","geometryRef"}); d.distributionEntries.push_back(std::move(v));
     }
     for(const auto& row:array(field(content,"countryDetails"))) {
         auto path="/content/countryDetails/"+std::to_string(d.countryDetails.size());
@@ -369,23 +390,30 @@ std::vector<std::string> promoteContent(ProjectDocument& document) {
                         unknown(candidate,extension.sourceSchema,row,path,{"id","type","geometry","properties"});
                     } else if(extension.jsonPointer=="/distributionLayers") {
                         if(hasId(candidate.distributionLayers)) continue;
-                        DistributionLayer v; v.id=objectId; v.name=textOr(row,"name",objectId); v.type=textOr(row,"type");
+                        DistributionLayer v; v.id=objectId; v.name=textOr(row,"name",objectId);
+                        const auto old=number(field(row,"schemaVersion"))==2;
+                        if(old){v.unit="%";v.valueScale={true,0,100};}
+                        else {
+                            v.unit=textOr(row,"unit");const auto& scale=field(row,"valueScale");const auto mode=textOr(scale,"mode","auto");
+                            require(mode=="auto"||mode=="manual","INVALID_DISTRIBUTION: value scale");
+                            if(mode=="manual")v.valueScale={true,webjson::number(field(scale,"min")),webjson::number(field(scale,"max"))};
+                        }
                         v.color=row.object.count("color")?color(field(row,"color")):0x8c68d8;
                         v.locked=row.object.count("locked")?boolean(field(row,"locked")):false;
                         auto parent=textOr(row,"parentId"); if(!parent.empty()) v.parentId=parent;
                         if(row.object.count("groups")) for(const auto& group:array(field(row,"groups"))) v.groups.push_back(str(group));
                         v.validity=interval(row); if(row.object.count("metadata")) v.metadata=field(row,"metadata").encode().toStdString();
                         jsonObject(v.metadata); candidate.distributionLayers.push_back(std::move(v));
-                        unknown(candidate,extension.sourceSchema,row,path,{"id","schemaVersion","name","type","color","locked","parentId","groups","validFrom","validTo","metadata"});
+                        unknown(candidate,extension.sourceSchema,row,path,{"id","schemaVersion","name","type","unit","valueScale","color","locked","parentId","groups","validFrom","validTo","metadata"});
                     } else {
                         if(hasId(candidate.distributionEntries)) continue;
                         DistributionEntry v; v.id=objectId; v.layerId=textOr(row,"layerId"); const auto mode=textOr(row,"mode");
                         require(mode=="territorial"||mode=="geometry","INVALID_DISTRIBUTION: mode");
                         if(mode=="territorial") v.territory=territorialRef(textOr(row,"territorialUnitId")); else v.geometry=geo("distributionEntry",field(row,"geometry"));
-                        v.share=row.object.count("share")?number(field(row,"share")):100; v.certainty=textOr(row,"certainty","unknown");
+                        v.value=number(field(row,"schemaVersion"))==2?(row.object.count("share")?number(field(row,"share")):100):webjson::number(field(row,"value")); v.certainty=textOr(row,"certainty","unknown");
                         v.validity=interval(row); if(row.object.count("metadata")) v.metadata=field(row,"metadata").encode().toStdString();
                         jsonObject(v.metadata); candidate.distributionEntries.push_back(std::move(v));
-                        unknown(candidate,extension.sourceSchema,row,path,{"id","schemaVersion","layerId","mode","territorialUnitId","geometry","share","certainty","validFrom","validTo","metadata"});
+                        unknown(candidate,extension.sourceSchema,row,path,{"id","schemaVersion","layerId","mode","territorialUnitId","geometry","share","value","certainty","validFrom","validTo","metadata"});
                     }
                 }
                 auto archived=std::find_if(candidate.extensions.begin(),candidate.extensions.end(),[&](const auto& e){return e.id==id;});
@@ -427,7 +455,7 @@ std::vector<std::string> promoteContent(ProjectDocument& document) {
 pandoeditor::ProjectDocument decode(const QByteArray& data) {
     const auto root=losslessjson::parse(data);
     require(str(field(root,"format"))=="pandoeditor-project","UNSUPPORTED_FORMAT: expected Qt project");
-    const auto schema=integer(field(root,"version")); require(schema>=1 && schema<=7,"UNSUPPORTED_VERSION: expected Qt v1 through v7");
+    const auto schema=integer(field(root,"version")); require(schema>=1 && schema<=8,"UNSUPPORTED_VERSION: expected Qt v1 through v8");
     ProjectDocument d;d.nativeSourceVersion=int(schema);
     bool canonicalLabelSettings=false,canonicalDistributionSettings=false;
     if (schema<3) {
@@ -562,10 +590,11 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
                     PresentationStyle s;require(value.kind==V::Object,"INVALID_JSON: presentation style");
                     if(value.object.count("opacity"))s.opacity=number(field(value,"opacity"));
                     if(value.object.count("boundaryVisible"))s.boundaryVisible=boolean(field(value,"boundaryVisible"));
+                    if(value.object.count("colorVisible"))s.colorVisible=boolean(field(value,"colorVisible"));
                     if(value.object.count("labelsVisible"))s.labelsVisible=boolean(field(value,"labelsVisible"));
                     if(value.object.count("boundaryWidth"))s.boundaryWidth=number(field(value,"boundaryWidth"));
                     if(value.object.count("blendMode"))s.blendMode=str(field(value,"blendMode"));
-                    target[key]=s;unknown(d,5,value,pointer(std::string("/presentation/webPresentation/")+name,key),{"opacity","boundaryVisible","labelsVisible","boundaryWidth","blendMode"});
+                    target[key]=s;unknown(d,5,value,pointer(std::string("/presentation/webPresentation/")+name,key),{"opacity","colorVisible","boundaryVisible","labelsVisible","boundaryWidth","blendMode"});
                 }
             };
             readStyles("styles",out.styles);readStyles("objectStyles",out.objectStyles);
@@ -595,10 +624,11 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
             }
             if(schema>=6 && w.object.count("distributionSettings")) {
                 const auto& value=field(w,"distributionSettings");const auto mode=str(field(value,"renderMode"));
-                require(mode=="dominant"||mode=="intensity","INVALID_DISTRIBUTION_SETTINGS");
-                out.distributionSettings.renderMode=mode=="intensity"?DistributionRenderMode::Intensity:DistributionRenderMode::Dominant;
+                require(schema<8?(mode=="dominant"||mode=="intensity"):(mode=="overlap"||mode=="single"),"INVALID_DISTRIBUTION_SETTINGS");
+                out.distributionSettings.renderMode=mode=="single"?DistributionRenderMode::Single:DistributionRenderMode::Overlap;
+                if(schema>=8)out.distributionSettings.activeLayerId=str(field(value,"activeLayerId"));
                 out.distributionSettings.boundaryVisible=boolean(field(value,"boundaryVisible"));
-                unknown(d,6,value,"/presentation/webPresentation/distributionSettings",{"renderMode","boundaryVisible"});
+                unknown(d,d.nativeSourceVersion,value,"/presentation/webPresentation/distributionSettings",{"renderMode","activeLayerId","boundaryVisible"});
             }
             unknown(d,5,w,"/presentation/webPresentation",{"visibility","hiddenItems","styles","objectStyles","objectOrder","labelSettings","distributionSettings"});
             validatePresentation(d); // Content owners are decoded below.
@@ -653,13 +683,13 @@ QByteArray encode(const pandoeditor::ProjectSnapshot& snapshot) {
     V visibility=V::obj(),hidden=V::obj(),groups=V::obj(),overrides=V::obj(),order=V::arr(),labelSettings=V::arr();
     for(const auto& [key,value]:web.visibility)visibility.object[key]=V::boolean(value);
     for(const auto& [key,ids]:web.hiddenItems){V values=V::arr();for(const auto& id:ids)values.array.push_back(V::str(id));hidden.object[key]=values;}
-    auto writeStyles=[](const auto& source,V& target){for(const auto& [key,s]:source){V v=V::obj();if(s.opacity)v.object["opacity"]=V::num(*s.opacity);if(s.boundaryVisible)v.object["boundaryVisible"]=V::boolean(*s.boundaryVisible);if(s.labelsVisible)v.object["labelsVisible"]=V::boolean(*s.labelsVisible);if(s.boundaryWidth)v.object["boundaryWidth"]=V::num(*s.boundaryWidth);if(s.blendMode)v.object["blendMode"]=V::str(*s.blendMode);target.object[key]=v;}};
+    auto writeStyles=[](const auto& source,V& target){for(const auto& [key,s]:source){V v=V::obj();if(s.opacity)v.object["opacity"]=V::num(*s.opacity);if(s.colorVisible)v.object["colorVisible"]=V::boolean(*s.colorVisible);if(s.boundaryVisible)v.object["boundaryVisible"]=V::boolean(*s.boundaryVisible);if(s.labelsVisible)v.object["labelsVisible"]=V::boolean(*s.labelsVisible);if(s.boundaryWidth)v.object["boundaryWidth"]=V::num(*s.boundaryWidth);if(s.blendMode)v.object["blendMode"]=V::str(*s.blendMode);target.object[key]=v;}};
     writeStyles(web.styles,groups);writeStyles(web.objectStyles,overrides);for(const auto& key:web.objectOrder)order.array.push_back(V::str(key));
     for(const auto& [owner,s]:web.labelSettings){V value=object({{"ref",refValue(owner)},{"pinned",V::boolean(s.pinned)},{"collisionGroup",V::str(s.collisionGroup)}});if(s.priority)value.object["priority"]=V::num(*s.priority);if(s.minZoom)value.object["minZoom"]=V::num(*s.minZoom);if(s.maxZoom)value.object["maxZoom"]=V::num(*s.maxZoom);if(s.manualPosition){V point=V::arr();point.array={V::num(s.manualPosition->x),V::num(s.manualPosition->y)};value.object["manualPosition"]=point;}labelSettings.array.push_back(std::move(value));}
-    auto distributionSettings=object({{"renderMode",V::str(web.distributionSettings.renderMode==DistributionRenderMode::Intensity?"intensity":"dominant")},{"boundaryVisible",V::boolean(web.distributionSettings.boundaryVisible)}});
+    auto distributionSettings=object({{"renderMode",V::str(web.distributionSettings.renderMode==DistributionRenderMode::Single?"single":"overlap")},{"activeLayerId",V::str(web.distributionSettings.activeLayerId)},{"boundaryVisible",V::boolean(web.distributionSettings.boundaryVisible)}});
     auto webValue=object({{"visibility",visibility},{"hiddenItems",hidden},{"styles",groups},{"objectStyles",overrides},{"objectOrder",order},{"labelSettings",labelSettings},{"distributionSettings",distributionSettings}});
     auto root=object({{"format",V::str("pandoeditor-project")},{"version",V::num(5)},{"documentId",V::str(d.documentId)},{"units",units},{"relations",relations},{"geometries",geometries},{"presentation",object({{"userLayers",layers},{"membership",membership},{"objectStyles",styles},{"webPresentation",webValue}})},{"extensions",extensions}});
-    root.object["version"]=V::num(7);
+    root.object["version"]=V::num(8);
     root.object["content"]=contentValue(d);
     auto bytes=root.encode()+"\n";
     require(bytes.size()<=256ll*1024*1024,"LIMIT_EXCEEDED: encoded JSON exceeds 256 MiB");

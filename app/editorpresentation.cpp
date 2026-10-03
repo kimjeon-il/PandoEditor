@@ -27,9 +27,9 @@ QVariantList EditorController::presentationGroups() const {
         const auto flag=kind==UnitKind::Country?"countryFlags":kind==UnitKind::Subunit?"subunitFlags":"regionFlags";
         const auto found=p.styles.find(group);auto s=found==p.styles.end()?PresentationStyle{}:found->second;
         rows.append(QVariantMap{{"key",QString::fromStdString(group)},{"title",kind==UnitKind::Country?QStringLiteral("국가"):kind==UnitKind::Subunit?QStringLiteral("하위단위"):QStringLiteral("지방")},
-            {"visible",groupVisible(p,group)},{"nameKey",name},{"flagKey",flag},{"names",groupVisible(p,name)},{"flags",groupVisible(p,flag)},{"opacity",s.opacity.value_or(1)},{"boundary",s.boundaryVisible.value_or(true)}});
+            {"visible",groupVisible(p,group)},{"nameKey",name},{"flagKey",flag},{"names",groupVisible(p,name)},{"flags",groupVisible(p,flag)},{"opacity",s.opacity.value_or(1)},{"boundary",s.boundaryVisible.value_or(true)},{"colorVisible",s.colorVisible.value_or(true)}});
     }
-    for(const auto& entry:std::vector<std::pair<std::string,QString>>{{"labels",QStringLiteral("지명")},{"rivers",QStringLiteral("강")},{"lakes",QStringLiteral("호수")},{"languages",QStringLiteral("언어")},{"ethnicities",QStringLiteral("민족")},{"religions",QStringLiteral("종교")},{"genericFeatures",QStringLiteral("기타 객체")}}) {
+    for(const auto& entry:std::vector<std::pair<std::string,QString>>{{"labels",QStringLiteral("지명")},{"rivers",QStringLiteral("강")},{"lakes",QStringLiteral("호수")},{"distributions",QStringLiteral("분포")},{"genericFeatures",QStringLiteral("기타 객체")}}) {
         const auto found=p.styles.find(entry.first);const auto style=found==p.styles.end()?PresentationStyle{}:found->second;
         rows.append(QVariantMap{{"key",QString::fromStdString(entry.first)},{"title",entry.second},{"visible",groupVisible(p,entry.first)},{"opacity",style.opacity.value_or(1)},{"content",true}});
     }
@@ -37,12 +37,11 @@ QVariantList EditorController::presentationGroups() const {
 }
 QVariantMap EditorController::distributionDisplay() const {
     const auto& settings=project_.document().presentation.webPresentation.distributionSettings;
-    QString selected;
-    if(const auto primary=selection_.primary()) {
-        if(primary->domain=="distributionLayer")selected=displayText(primary->id);
-        else if(primary->domain=="distributionEntry")for(const auto& entry:project_.document().distributionEntries)if(entry.id==primary->id){selected=displayText(entry.layerId);break;}
-    }
-    return {{"mode",settings.renderMode==DistributionRenderMode::Intensity?"intensity":"dominant"},{"boundaryVisible",settings.boundaryVisible},{"selectedLayerId",selected},{"intensityAvailable",!selected.isEmpty()}};
+    QVariantList layers;
+    for(const auto& layer:project_.document().distributionLayers)if(effectiveMapVisibility(project_.document(),{"distributionLayer",layer.id}))layers.append(QVariantMap{{"id",displayText(layer.id)},{"name",displayText(layer.name.empty()?layer.id:layer.name)}});
+    const auto selected=std::find_if(layers.begin(),layers.end(),[&](const auto& v){return v.toMap()["id"].toString()==displayText(settings.activeLayerId);});
+    const auto active=selected!=layers.end()?selected->toMap()["id"].toString():layers.empty()?QString{}:layers.front().toMap()["id"].toString();
+    return {{"mode",settings.renderMode==DistributionRenderMode::Single?"single":"overlap"},{"boundaryVisible",settings.boundaryVisible},{"activeLayerId",active},{"layers",layers}};
 }
 QVariantMap EditorController::hydroDataStatus() const {
     const auto& settings=project_.document().physicalData;if(settings.source.empty()&&!hydroRuntime_.isOpen())return QVariantMap{{"ready",false},{"version",displayText(settings.version)},{"dataset",displayText(settings.dataset)},{"error",physicalActive_+physicalQueued_>0?QStringLiteral("필요한 수계 자료를 받는 중입니다."):(physicalError_.isEmpty()?(worldHydroNotice_.isEmpty()?QStringLiteral("수계 자료가 아직 준비되지 않았습니다."):worldHydroNotice_):physicalError_)}};
@@ -141,10 +140,22 @@ void EditorController::syncHydroData() {
         invalidateViewportResources(ViewportResourceKind::Hydro);
     }
 }
-bool EditorController::setDistributionDisplay(const QString& mode,bool boundaryVisible) {
-    if(mode!="dominant"&&mode!="intensity")return false;
-    DistributionSettings settings;settings.renderMode=mode=="intensity"?DistributionRenderMode::Intensity:DistributionRenderMode::Dominant;settings.boundaryVisible=boundaryVisible;
+bool EditorController::setDistributionDisplay(const QString& mode,bool boundaryVisible,const QString& activeLayerId) {
+    if(mode!="overlap"&&mode!="single")return false;
+    auto settings=project_.document().presentation.webPresentation.distributionSettings;
+    if(!activeLayerId.isNull()) {
+        if(!activeLayerId.isEmpty()&&!project_.index().objects.count({"distributionLayer",activeLayerId.toStdString()}))return false;
+        settings.activeLayerId=activeLayerId.toStdString();
+    }
+    settings.renderMode=mode=="single"?DistributionRenderMode::Single:DistributionRenderMode::Overlap;settings.boundaryVisible=boundaryVisible;
     const auto result=PresentationCommandProcessor::apply(project_,SetDistributionSettings{settings});if(result==PresentationResult::Applied)publishPresentation();return result==PresentationResult::Applied||result==PresentationResult::NoOp;
+}
+bool EditorController::setPresentationColorVisible(const QString& group,bool visible) {
+    if(group!="countries"&&group!="subunits"&&group!="regions")return false;
+    PresentationStyle patch;patch.colorVisible=visible;
+    const auto result=PresentationCommandProcessor::apply(project_,PatchGroupPresentation{group.toStdString(),patch});
+    if(result==PresentationResult::Applied)publishPresentation();
+    return result==PresentationResult::Applied||result==PresentationResult::NoOp;
 }
 namespace {
 pandoeditor::Point geometryCenter(const pandoeditor::Geometry& geometry) {

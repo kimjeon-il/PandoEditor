@@ -1,4 +1,5 @@
 #include "editorcontroller.h"
+#include "ui_navigation.h"
 #include "windowsframe.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -33,7 +34,7 @@ private slots:
         QTest::qWait(150);editor.selectCountry("DEU");auto original=editor.selectedName();auto field=item(window->contentItem(),"countryName");QVERIFY(field);
         field->forceActiveFocus();QTest::keyClick(window,Qt::Key_A,Qt::ControlModifier);for(char c:QByteArray("Focus pending"))QTest::keyClick(window,c);
         QCOMPARE(editor.nameDraft(),QString("Focus pending"));QCOMPARE(editor.revision(),qulonglong(0));
-        click(window,item(window->contentItem(),"webImportButton"));
+        enterExistingControlRoute(window,"webImportButton");click(window,item(window->contentItem(),"webImportButton"));
         QVERIFY(window->property("webImportFlowActive").toBool());QCOMPARE(editor.selectedName(),original);QCOMPARE(editor.revision(),qulonglong(0));
         auto picker=window->findChild<QObject*>("webOpenDialog");QVERIFY(picker);QVERIFY(QMetaObject::invokeMethod(picker,"reject"));
         QTest::qWait(150);QCOMPARE(editor.nameDraft(),QString("Focus pending"));QCOMPARE(editor.revision(),qulonglong(0));
@@ -57,8 +58,10 @@ private slots:
         engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));
         QVERIFY(!engine.rootObjects().isEmpty());auto window=qobject_cast<QQuickWindow*>(engine.rootObjects().first());QVERIFY(window);
         window->resize(mobile?360:1100,720);QTest::qWait(200);window->grabWindow();
-        auto button=item(window->contentItem(),"webImportButton");QVERIFY2(button,"web import must have a real PC/mobile entry");
-        QCOMPARE(button->property("text").toString(),QString("웹 프로젝트 가져오기"));
+        enterExistingControlRoute(window,"webImportButton");
+        auto button=item(window->contentItem(),"webImportButton");QVERIFY2(button&&button->isVisible(),"web import must have a real PC/mobile entry");
+        QCOMPARE(button->property("text").toString(),QString("웹 프로젝트 가져오기…"));
+        QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
         editor.selectCountry("DEU");editor.setColor("#102030");editor.undo();editor.setNameDraft("uncommitted name");
         auto revision=editor.revision();auto name=editor.selectedName();
         // The file dialog callback and tests share the same QML entry. Opening

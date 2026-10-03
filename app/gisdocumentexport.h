@@ -6,7 +6,7 @@ namespace pandoeditor {
 GisGeoJsonCollection exportGisDocumentLayer(const ProjectDocument&,
                                             const std::string& layer);
 struct GisExportLayer {
-    std::string category,file,targetType,distributionType;
+    std::string category,file,targetType;
     GisGeoJsonCollection collection;
 };
 std::vector<GisExportLayer> buildGisExportLayers(const ProjectDocument&,

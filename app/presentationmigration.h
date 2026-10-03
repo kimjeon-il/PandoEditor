@@ -5,7 +5,7 @@
 
 namespace presentationmigration {
 inline bool group(const std::string& key){return key=="countries"||key=="subunits"||key=="regions";}
-inline bool contentGroup(const std::string& key){return key=="labels"||key=="rivers"||key=="lakes"||key=="languages"||key=="ethnicities"||key=="religions"||key=="genericFeatures";}
+inline bool contentGroup(const std::string& key){return key=="labels"||key=="rivers"||key=="lakes"||key=="distributions"||key=="genericFeatures";}
 inline bool symbol(const std::string& key){return key=="basemapLabels"||key=="countryFlags"||key=="subunitLabels"||key=="subunitFlags"||key=="regionLabels"||key=="regionFlags";}
 inline pandoeditor::PresentationStyle style(losslessjson::Value& v) {
     using V=losslessjson::Value;pandoeditor::PresentationStyle s;
@@ -13,6 +13,7 @@ inline pandoeditor::PresentationStyle style(losslessjson::Value& v) {
     auto take=[&](const char* key,auto assign){auto i=v.object.find(key);if(i!=v.object.end()){assign(i->second);v.object.erase(i);}};
     take("opacity",[&](const V& n){losslessjson::require(n.kind==V::Number,"INVALID_PRESENTATION_OPACITY");s.opacity=n.raw.toDouble();});
     take("boundaryVisible",[&](const V& n){losslessjson::require(n.kind==V::Bool,"INVALID_PRESENTATION_BOUNDARY");s.boundaryVisible=n.raw=="true";});
+    take("colorVisible",[&](const V& n){losslessjson::require(n.kind==V::Bool,"INVALID_PRESENTATION_COLOR");s.colorVisible=n.raw=="true";});
     take("labelsVisible",[&](const V& n){losslessjson::require(n.kind==V::Bool,"INVALID_PRESENTATION_LABELS");s.labelsVisible=n.raw=="true";});
     take("boundaryWidth",[&](const V&){s.boundaryWidth=1;});
     take("blendMode",[&](const V& n){s.blendMode=n.string=="multiply"?"multiply":"normal";});return s;
@@ -62,7 +63,8 @@ inline void promote(pandoeditor::ProjectDocument& d,bool promoteLabels=true,bool
             }
         }else {
             if(!promoteDistribution){++i;continue;}
-            if(auto mode=root.object.find("renderMode");mode!=root.object.end()){losslessjson::require(mode->second.kind==V::String&&(mode->second.string=="dominant"||mode->second.string=="intensity"),"INVALID_DISTRIBUTION_SETTINGS");p.distributionSettings.renderMode=mode->second.string=="intensity"?pandoeditor::DistributionRenderMode::Intensity:pandoeditor::DistributionRenderMode::Dominant;root.object.erase(mode);}
+            if(auto mode=root.object.find("renderMode");mode!=root.object.end()){losslessjson::require(mode->second.kind==V::String&&(mode->second.string=="overlap"||mode->second.string=="single"||mode->second.string=="dominant"||mode->second.string=="intensity"),"INVALID_DISTRIBUTION_SETTINGS");p.distributionSettings.renderMode=mode->second.string=="single"?pandoeditor::DistributionRenderMode::Single:pandoeditor::DistributionRenderMode::Overlap;root.object.erase(mode);}
+            if(auto active=root.object.find("activeLayerId");active!=root.object.end()){losslessjson::require(active->second.kind==V::String,"INVALID_DISTRIBUTION_SETTINGS");p.distributionSettings.activeLayerId=active->second.string;root.object.erase(active);}
             if(auto boundary=root.object.find("boundaryVisible");boundary!=root.object.end()){losslessjson::require(boundary->second.kind==V::Bool,"INVALID_DISTRIBUTION_SETTINGS");p.distributionSettings.boundaryVisible=boundary->second.raw=="true";root.object.erase(boundary);}
         }
         if(root.object.empty())i=d.extensions.erase(i);else{i->payload=root.encode().toStdString();++i;}

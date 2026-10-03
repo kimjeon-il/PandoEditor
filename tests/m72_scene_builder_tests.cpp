@@ -1,5 +1,8 @@
 #include <pandoeditor/map/mapscenebuilder.h>
+#include <pandoeditor/commands.h>
+#include <algorithm>
 #include <stdexcept>
+#include <cmath>
 
 namespace {
 void require(bool ok,const char* message){if(!ok)throw std::runtime_error(message);}
@@ -31,6 +34,29 @@ void builderPreservesM5DrawOrderAndCache() {
     auto panned=builder.buildDocument(doc,3,view,{},restyled);
     require(panned->polygons.front().geometryPacket.positions==firstPositions,"view does not retriangulate");
     require(panned->revisions.view==1,"view revision carried");
+}
+void disabledTerritorialColorPreservesFillAndBoundary() {
+    auto doc=sample();doc.presentation.objectStyles[{"territorial","C"}].color=0x112233;
+    doc.presentation.webPresentation.styles["countries"].colorVisible=false;
+    MapViewState view;GeometryPacketCache cache;MapSceneBuilder builder(cache);
+    const auto scene=builder.buildDocument(doc,0,view,{},{});
+    const auto fill=std::find_if(scene->polygons.begin(),scene->polygons.end(),[](const auto& p){return p.object==pandoeditor::territorialRef("C");});
+    require(fill!=scene->polygons.end()&&fill->style.color==0xa8c7db,"disabled color uses base land palette, not an invisible fill");
+    require(std::any_of(scene->strokes.begin(),scene->strokes.end(),[](const auto& p){return p.object==pandoeditor::territorialRef("C");}),"disabled color retains boundary");
+    require(doc.presentation.objectStyles.at({"territorial","C"}).color==0x112233,"display option does not overwrite saved color");
+}
+void distributionRangeRestylesUnchangedPeersInPatch() {
+    using namespace pandoeditor;ProjectDocument doc;doc.documentId="distribution-range-test";doc.geometries.insert({"distribution",1},square(0));
+    doc.distributionLayers.push_back({"D","Values","people"});
+    for(int i=0;i<3;++i){DistributionEntry entry;entry.id="E"+std::to_string(i);entry.layerId="D";entry.geometry=GeometryRef{"distribution",1};entry.value=i*10;doc.distributionEntries.push_back(entry);}
+    Project project;project.replace(doc);MapViewState view;GeometryPacketCache cache;MapSceneBuilder builder(cache);
+    auto before=builder.build(project.snapshot(),view,{},{});
+    auto changed=doc.distributionEntries.back();changed.value=40;ContentEdit edit;edit.target={"distributionEntry",changed.id};edit.value=changed;
+    CommandArguments args;args.action=edit;auto prepared=CommandProcessor::prepare(project,CommandProcessor::makeRequest(project,"content.edit",args));
+    require(prepared.ok()&&prepared.preview&&CommandProcessor::confirm(project,*prepared.preview).ok(),"distribution value commit");
+    auto after=builder.buildPatch(project.snapshot(),view,{},before,{{"distributionEntry","E2"}});
+    const auto packet=std::find_if(after->polygons.begin(),after->polygons.end(),[](const auto& p){return p.object==ObjectRef{"distributionEntry","E1"};});
+    require(packet!=after->polygons.end()&&std::abs(packet->style.alpha-.265)<1e-6,"range change restyles unchanged peer");
 }
 void worldRangesKeepSourceSlotsAndLogicalOwnersSeparate() {
     pandoeditor::ProjectDocument doc({},{{"countries","Countries"}});
@@ -64,4 +90,4 @@ void worldRangesKeepSourceSlotsAndLogicalOwnersSeparate() {
             "selection highlight covers all ranges of a merged owner");
 }
 }
-int main(){builderPreservesM5DrawOrderAndCache();worldRangesKeepSourceSlotsAndLogicalOwnersSeparate();}
+int main(){builderPreservesM5DrawOrderAndCache();worldRangesKeepSourceSlotsAndLogicalOwnersSeparate();distributionRangeRestylesUnchangedPeersInPatch();disabledTerritorialColorPreservesFillAndBoundary();}

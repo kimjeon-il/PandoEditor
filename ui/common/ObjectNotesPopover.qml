@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "UiTokens.js" as Tokens
 Popup {
     id: notes
     objectName: "objectNotesPopover"
@@ -17,6 +18,7 @@ Popup {
     x: Math.max(8,Math.min(anchorPoint.x,parent ? parent.width-width-8 : 8))
     y: Math.max(8,Math.min(anchorPoint.y,parent ? parent.height-height-8 : 8))
     padding: 10; focus: true
+    background:Rectangle {color:Tokens.colors(editor.appearancePreferences).panel;border.color:Tokens.colors(editor.appearancePreferences).border;radius:9}
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnReleaseOutside
     function finish() {
         const token=editToken;editToken=""
@@ -29,7 +31,9 @@ Popup {
     function showAt(trigger) {
         if(visible) { close();return }
         ownerId=editor.selectedId;ownerType=editor.primaryObject.type
-        anchorPoint=trigger.mapToItem(parent,0,trigger.height+4)
+        const below=trigger.mapToItem(parent,0,trigger.height+4)
+        const above=trigger.parent.mapToItem(parent,0,0)
+        anchorPoint=Qt.point(below.x,below.y+height<=parent.height-8?below.y:Math.max(8,above.y-height-8))
         open();Qt.callLater(function(){if(notes.visible)textArea.forceActiveFocus()})
     }
     onClosed: finish()

@@ -31,16 +31,6 @@ Point geographicToMap(Point point,const MapCameraMetrics& metrics) {
     return {point.x*metrics.cosLatitude-metrics.minX,metrics.maxLatitude-point.y};
 }
 
-std::optional<std::string> selectedDistributionLayer(
-    const ProjectDocument& document,const std::optional<ObjectRef>& primary) {
-    if(!primary)return std::nullopt;
-    if(primary->domain=="distributionLayer")return primary->id;
-    if(primary->domain=="distributionEntry")
-        for(const auto& entry:document.distributionEntries)
-            if(entry.id==primary->id)return entry.layerId;
-    return std::nullopt;
-}
-
 bool externalVisible(const ProjectDocument& document,const MapExternalHydroPickFeature& feature) {
     if(!feature.feature||feature.ref.domain!="hydroBuiltin")return false;
     if(std::find(document.physicalData.hiddenHydroIds.begin(),
@@ -214,8 +204,7 @@ std::vector<ObjectRef> MapPicker::pickGeographic(
     }
 
     const Point cursor{point.x*xScale,point.y};
-    const auto selectedLayer=selectedDistributionLayer(document,context.primary);
-    const auto distributionRows=visibleDistributionEntries(document,selectedLayer);
+    const auto distributionRows=visibleDistributionEntries(document);
     const std::set<ObjectRef> displayedDistribution(distributionRows.begin(),distributionRows.end());
     for(const auto& [ref,unused]:index.objects) {
         (void)unused;

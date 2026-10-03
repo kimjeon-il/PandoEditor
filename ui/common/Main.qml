@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs as Native
 import "../desktop" as Desktop
 import Pandoeditor.Windowing 1.0
+import "UiTokens.js" as Tokens
 
 ApplicationWindow {
     id: window
@@ -15,35 +16,41 @@ ApplicationWindow {
     title: (editor.dirty ? "* " : "") + editor.fileName + " — Pandoeditor " + Qt.application.version
     readonly property var appearance: editor.appearancePreferences
     readonly property bool darkAppearance: appearance.effectiveTheme === "dark"
+    readonly property var uiColors:Tokens.colors(appearance)
+    font.family:"Malgun Gothic"
+    font.pixelSize:14
     function accentColor(preset) {
         const light={"red":"#d43d45","orange":"#dc781d","green":"#2c9857","teal":"#168f8b","blue":"#316fd3","purple":"#7856d6","pink":"#cc4b83"}
         const dark={"red":"#ff7078","orange":"#f4a24c","green":"#58c97f","teal":"#3ac5bb","blue":"#70a6ff","purple":"#ad8cff","pink":"#ef78ab"}
         return (darkAppearance?dark:light)[preset] || (darkAppearance?dark.blue:light.blue)
     }
     readonly property color resolvedAccent: accentColor(appearance.accentPreset)
-    color: darkAppearance ? "#111820" : "#f3f5f7"
+    color:uiColors.background
     palette.highlight: resolvedAccent
     palette.link: resolvedAccent
-    palette.window: darkAppearance ? "#111820" : "#f3f5f7"
-    palette.windowText: darkAppearance ? "#edf4f8" : "#182531"
-    palette.base: darkAppearance ? "#19242e" : "#ffffff"
-    palette.text: darkAppearance ? "#edf4f8" : "#182531"
-    palette.button: darkAppearance ? "#24313c" : "#f5f7f9"
-    palette.buttonText: darkAppearance ? "#edf4f8" : "#182531"
+    palette.window:uiColors.panel
+    palette.windowText:uiColors.text
+    palette.base:uiColors.input
+    palette.text:uiColors.text
+    palette.button:uiColors.subtle
+    palette.buttonText:uiColors.text
+    palette.mid:uiColors.border
     footer: Label {
         objectName: "documentFormatNotice"
         visible: editor.appearancePreferences.statusBarVisible !== false
         property bool expanded: false
         width: window.width
-        height: expanded ? contentHeight+12 : 26
+        height:expanded?contentHeight+12:32
         leftPadding: 8
         rightPadding: 8
         verticalAlignment: Text.AlignVCenter
-        text: editor.documentNotice
+        text:expanded?editor.documentNotice:(editor.dirty?"● 미저장":"● 저장됨")+"   |   "+(editor.projectionMode==="globe"?"지구본":"평면지도")+"   |   "+(editor.objectProperties.displayName||"선택 없음")+"   ·   Qt v8"
+        color:window.uiColors.muted
+        Accessible.description:editor.documentNotice
         wrapMode: expanded ? Text.Wrap : Text.NoWrap
         elide: expanded ? Text.ElideNone : Text.ElideRight
         font.pixelSize: 11
-        background: Rectangle { color: "#edf1f5" }
+        background:Rectangle {color:window.uiColors.panel;Rectangle {width:parent.width;height:1;color:window.uiColors.border}}
         TapHandler { onTapped: parent.expanded = !parent.expanded }
     }
     readonly property bool desktopFrameEnabled: nativeFrame.active
@@ -140,6 +147,7 @@ ApplicationWindow {
     }
     function handleBack() {
         if (Qt.inputMethod.visible) { Qt.inputMethod.hide(); return }
+        if (editor.geometryEditState.active) { editor.geometryBack(); return }
         if (historicalPanel.visible) { historicalPanel.close(); return }
         if (gisPanel.visible) { gisPanel.close(); return }
         if (gisExportPanel.visible) { gisExportPanel.close(); return }
@@ -167,11 +175,11 @@ ApplicationWindow {
         anchors.left: parent.left
         anchors.right: parent.right
         z: 100
-        color: window.active ? "#f3f3f3" : "#fafafa"
+        color: window.uiColors.panel
         Rectangle {
             anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
             height: 1 / Screen.devicePixelRatio
-            color: window.active ? "#dddddd" : "#e8e8e8"
+            color: window.uiColors.border
         }
         Label {
             anchors.left: parent.left
@@ -181,7 +189,7 @@ ApplicationWindow {
             anchors.verticalCenter: parent.verticalCenter
             text: window.title
             elide: Text.ElideRight
-            color: window.active ? "#222222" : "#777777"
+            color: window.active ? window.uiColors.text : window.uiColors.muted
             font: nativeFrame.captionFont
         }
         Row {
@@ -193,6 +201,7 @@ ApplicationWindow {
                 id: minimizeWindowButton
                 objectName: "minimizeWindowButton"
                 captionAction: 1
+                darkAppearance: window.darkAppearance
                 frame: nativeFrame
                 windowActive: window.active
             }
@@ -200,6 +209,7 @@ ApplicationWindow {
                 id: maximizeWindowButton
                 objectName: "maximizeWindowButton"
                 captionAction: 2
+                darkAppearance: window.darkAppearance
                 frame: nativeFrame
                 maximized: window.maximized
                 windowActive: window.active
@@ -208,6 +218,7 @@ ApplicationWindow {
                 id: closeWindowButton
                 objectName: "closeWindowButton"
                 captionAction: 3
+                darkAppearance: window.darkAppearance
                 frame: nativeFrame
                 windowActive: window.active
             }

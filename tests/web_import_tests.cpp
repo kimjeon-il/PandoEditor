@@ -13,6 +13,22 @@ QString errorFor(const std::function<void()>& f) { try { f(); } catch(const std:
 class WebImportTests : public QObject {
     Q_OBJECT
 private slots:
+    void currentSchema6ValuesAndManualScale() {
+        auto root=losslessjson::parse(full(6));
+        root.object["distributionModel"]=losslessjson::parse(R"({"schemaVersion":3,"sourceModes":["territorial","geometry"],"valueKind":"finite-number"})");
+        root.object["layerPresentation"]=losslessjson::parse(R"({"schemaVersion":4,"styles":{"countries":{"colorVisible":false}}})");
+        root.object["distributionLayers"]=losslessjson::parse(R"([{"id":"00000000-0000-4000-8000-000000000011","schemaVersion":3,"name":"Population","unit":"people","valueScale":{"mode":"manual","min":"-100","max":"2000"}}])");
+        root.object["distributionEntries"]=losslessjson::parse(R"([{"id":"00000000-0000-4000-8000-000000000012","schemaVersion":3,"layerId":"00000000-0000-4000-8000-000000000011","mode":"territorial","territorialUnitId":"A","value":"1500"}])");
+        root.object["distributionSettings"]=losslessjson::parse(R"({"renderMode":"single","activeLayerId":"00000000-0000-4000-8000-000000000011","boundaryVisible":true})");
+        const auto candidate=webimport::prepare(root.encode());QCOMPARE(candidate.document.distributionEntries.front().value,1500.);
+        QCOMPARE(candidate.document.distributionLayers.front().unit,std::string("people"));QVERIFY(candidate.document.distributionLayers.front().valueScale.manual);
+        Project project;project.replace(candidate.document);const auto reopened=projectcodec::decode(projectcodec::encode(project));QVERIFY(sameContent(candidate.document,reopened));
+        QCOMPARE(reopened.presentation.webPresentation.distributionSettings.renderMode,DistributionRenderMode::Single);
+        QVERIFY(!resolvedTerritorialPresentation(candidate.document,territorialRef("A")).colorVisible);
+        QVERIFY(!resolvedTerritorialPresentation(reopened,territorialRef("A")).colorVisible);
+        root.object["distributionEntries"].array.front().object["value"]=losslessjson::Value::boolean(false);
+        QVERIFY(errorFor([&]{webimport::prepare(root.encode());}).contains("INVALID_DISTRIBUTION"));
+    }
     void formats() {
         QCOMPARE(webimport::classify(full()),webimport::FileKind::WebFull);
         QCOMPARE(webimport::classify(full(5,"pandolab-autosave-full")),webimport::FileKind::WebFull);
@@ -20,20 +36,20 @@ private slots:
     }
     void rejectAmbiguousOrUnsupported() {
         QVERIFY(errorFor([]{webimport::classify(full(5,"pandolab-autosave-delta"));}).startsWith("BASE_DATA_REQUIRED"));
-        QVERIFY(errorFor([]{webimport::classify(full(6));}).startsWith("UNSUPPORTED_VERSION"));
+        QVERIFY(errorFor([]{webimport::classify(full(7));}).startsWith("UNSUPPORTED_VERSION"));
         QVERIFY(errorFor([]{webimport::classify(full(2));}).startsWith("UNSUPPORTED_VERSION"));
         QVERIFY(errorFor([]{webimport::classify(full(5,"random"));}).startsWith("UNSUPPORTED_FORMAT"));
         QVERIFY(errorFor([]{webimport::classify(R"({"format":"pandolab-project-state","schemaVersion":5,"schemaVersion":4})");}).startsWith("DUPLICATE_KEY"));
     }
-    void schema5IsNotRewritten() {
+    void schema5MigratesToCurrent() {
         auto b=full(); auto m=webimport::migrate(b);
         QCOMPARE(m.sourceSchema,5);
-        QCOMPARE(m.normalized,losslessjson::parse(b).encode());
+        QCOMPARE(losslessjson::parse(m.normalized).object.at("schemaVersion").raw,QByteArray("6"));
     }
     void originalJsGoldenMigration() {
         for(const char* version:{"v3","v4","v5","scalars"}) {
             QFile input(QStringLiteral(WEB_IMPORT_FIXTURES)+"/"+version+".input.json");
-            QFile expected(QStringLiteral(WEB_IMPORT_FIXTURES)+"/"+version+".expected.json");
+            QFile expected(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../web-current/"+version+".expected.json");
             QVERIFY(input.open(QIODevice::ReadOnly)); QVERIFY(expected.open(QIODevice::ReadOnly));
             QCOMPARE(webimport::migrate(input.readAll()).normalized,losslessjson::parse(expected.readAll()).encode());
         }
@@ -103,7 +119,7 @@ private slots:
     }
     void malformedKnownContainersAreRejected() {
         for(const char* field:{"countryOverrides","layerVisibility","itemVisibility","labelSettings","distributionSettings"}) {
-            auto doc=losslessjson::parse(full());doc.object[field]=losslessjson::Value::num(42);
+            auto doc=losslessjson::parse(webimport::migrate(full()).normalized);doc.object[field]=losslessjson::Value::num(42);
             QVERIFY2(errorFor([&]{webimport::prepare(doc.encode());}).contains("INVALID"),field);
         }
         auto b=full();b.replace("\"name\":\"Alpha\"","\"name\":\"\"");
@@ -121,19 +137,25 @@ private slots:
         auto doc=losslessjson::parse(full());
         doc.object["distributionLayers"]=losslessjson::parse(R"([{"id":"00000000-0000-4000-8000-000000000011","schemaVersion":2,"type":"religion","name":"R"}])");
         doc.object["distributionEntries"]=losslessjson::parse(R"([{"id":"00000000-0000-4000-8000-000000000012","schemaVersion":2,"layerId":"00000000-0000-4000-8000-000000000011","mode":"territorial","territorialUnitId":"A","share":60},{"id":"00000000-0000-4000-8000-000000000013","schemaVersion":2,"layerId":"00000000-0000-4000-8000-000000000011","mode":"territorial","territorialUnitId":"A","share":70}])");
-        auto c=webimport::prepare(doc.encode());bool archived=false;
+        auto c=webimport::prepare(doc.encode());bool archived=false,sourceArchived=false;
+        auto migratedEntries=doc.object["distributionEntries"];
+        for(auto& row:migratedEntries.array){row.object["schemaVersion"]=losslessjson::Value::num(3);row.object["value"]=row.object.at("share");row.object.erase("share");}
         for(const auto& e:c.document.extensions)if(e.jsonPointer=="/distributionEntries") {
-            QCOMPARE(e.payload,doc.object["distributionEntries"].encode().toStdString());
+            QCOMPARE(e.payload,migratedEntries.encode().toStdString());
             archived=e.status=="migrationArchive";
         }
         QVERIFY(archived);
+        for(const auto& e:c.document.extensions)if(e.jsonPointer.empty()&&e.status=="migrationArchive") {
+            QCOMPARE(e.payload,doc.encode().toStdString());sourceArchived=true;
+        }
+        QVERIFY(sourceArchived);
         QCOMPARE(c.document.distributionEntries.size(),std::size_t(2));
         for(const auto& entry:c.document.distributionEntries) {
             QVERIFY(entry.territory.has_value());
             QCOMPARE(*entry.territory,territorialRef("A"));
         }
-        QCOMPARE(c.document.distributionEntries[0].share,60.);
-        QCOMPARE(c.document.distributionEntries[1].share,70.);
+        QCOMPARE(c.document.distributionEntries[0].value,60.);
+        QCOMPARE(c.document.distributionEntries[1].value,70.);
         doc.object["distributionEntries"].array[0].object["territorialUnitId"]=losslessjson::Value::str("missing");
         QVERIFY(errorFor([&]{webimport::prepare(doc.encode());}).contains("DANGLING_REF"));
     }

@@ -69,6 +69,7 @@ RenderStyle styleFor(const ProjectDocument& doc,const ObjectRef& ref,
     }():contentGroup(doc,ref);
     if(ref.domain=="territorial") {
         const auto resolved=resolvedTerritorialPresentation(doc,ref);
+        if(!resolved.colorVisible)style.color=0xa8c7db;
         defaultOpacity*=resolved.effectiveAlpha;
         style.blendMode=blend(resolved.blendMode);
     } else {
@@ -131,7 +132,16 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildPatch(
     const std::set<ObjectRef>& changed) {
     if(!previous||changed.empty()||previous->worldBase!=worldBase_)
         return build(snapshot,view,interaction,previous);
-    return buildDocumentImpl(snapshot.document(),snapshot.revision(),view,interaction,previous,&changed);
+    auto expanded=changed;
+    // Automatic color scaling is shared by all entries in a layer. A changed
+    // extremum (or a removed active layer) can restyle unchanged geometries.
+    const bool distributionChanged=std::any_of(changed.begin(),changed.end(),[](const auto& ref){return ref.domain=="distributionEntry"||ref.domain=="distributionLayer";});
+    if(distributionChanged) {
+        for(const auto& entry:snapshot.document().distributionEntries)expanded.insert({"distributionEntry",entry.id});
+        for(const auto& packet:previous->polygons)if(packet.object.domain=="distributionEntry")expanded.insert(packet.object);
+        for(const auto& packet:previous->strokes)if(packet.object.domain=="distributionEntry")expanded.insert(packet.object);
+    }
+    return buildDocumentImpl(snapshot.document(),snapshot.revision(),view,interaction,previous,&expanded);
 }
 
 std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
@@ -279,14 +289,15 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     for(const auto& hydro:doc.hydro)add({"hydro",hydro.id},hydro.color);
     for(const auto& feature:doc.genericFeatures)add({"generic",feature.id},feature.color);
     for(const auto& label:doc.labels)add({"label",label.id},0x222222);
-    std::optional<std::string> selectedLayer;
-    if(interaction.primary&&interaction.primary->domain=="distributionLayer")
-        selectedLayer=interaction.primary->id;
-    for(const auto& ref:visibleDistributionEntries(doc,selectedLayer)) {
-        for(const auto& entry:doc.distributionEntries)if(entry.id==ref.id)
-            for(const auto& layer:doc.distributionLayers)if(layer.id==entry.layerId) {
-                add(ref,layer.color,distributionFillAlpha(entry.share));break;
-            }
+    std::map<std::string,const DistributionEntry*> distributionEntries;
+    std::map<std::string,std::pair<std::uint32_t,std::optional<DistributionValueRange>>> distributionLayers;
+    for(const auto& entry:doc.distributionEntries)distributionEntries.emplace(entry.id,&entry);
+    for(const auto& layer:doc.distributionLayers)
+        distributionLayers.emplace(layer.id,std::make_pair(layer.color,distributionValueRange(doc,layer.id)));
+    for(const auto& ref:visibleDistributionEntries(doc)) {
+        const auto entry=distributionEntries.at(ref.id);
+        const auto& layer=distributionLayers.at(entry->layerId);
+        add(ref,layer.first,distributionValueAlpha(entry->value,layer.second));
     }
     if(builtinHydro_) {
         const auto& presentation=doc.presentation.webPresentation;
@@ -351,7 +362,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
         for(const auto& hydro:doc.hydro)submissionOrder.emplace(ObjectRef{"hydro",hydro.id},rank++);
         for(const auto& feature:doc.genericFeatures)submissionOrder.emplace(ObjectRef{"generic",feature.id},rank++);
         for(const auto& label:doc.labels)submissionOrder.emplace(ObjectRef{"label",label.id},rank++);
-        for(const auto& ref:visibleDistributionEntries(doc,selectedLayer))submissionOrder.emplace(ref,rank++);
+        for(const auto& ref:visibleDistributionEntries(doc))submissionOrder.emplace(ref,rank++);
     }
     std::stable_sort(scene->drawSequence.begin(),scene->drawSequence.end(),
         [&](const auto& a,const auto& b) {

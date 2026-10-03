@@ -24,6 +24,8 @@ if(BUILD_TESTING)
         COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m5-render-order-oracle.mjs" "$<TARGET_FILE:map_render_order_probe>")
     add_test(NAME m5_content_web_parity
         COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m5-content-oracle.mjs" "$<TARGET_FILE:content_probe>")
+    add_test(NAME current_migration_web_goldens
+        COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/current-migration-goldens.mjs" --verify)
     add_test(NAME m5_label_safe_area_web
         COMMAND "${PANDOEDITOR_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m5-label-safe-area-oracle.mjs")
     else()
@@ -77,6 +79,11 @@ if(BUILD_TESTING)
 endif()
 
 set(M32_PROPERTY_RESOURCES
+    "${PROJECT_SOURCE_DIR}/ui/common/UiTokens.js"
+    "${PROJECT_SOURCE_DIR}/ui/common/UiIcon.qml"
+    "${PROJECT_SOURCE_DIR}/ui/common/UiButton.qml"
+    "${PROJECT_SOURCE_DIR}/ui/common/UiTabButton.qml"
+    "${PROJECT_SOURCE_DIR}/ui/common/ObjectMetadataField.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/ContentPanel.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/MapDisplayControls.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/ColorMath.js"

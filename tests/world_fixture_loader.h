@@ -147,13 +147,14 @@ inline pandoeditor::ProjectDocument loadWorldCorpusProject(const QString& fixtur
         const auto entry=value.toObject();const auto id=entry.value(QStringLiteral("id")).toString().toStdString();
         DistributionLayer layer;layer.id=entry.value(QStringLiteral("layerId")).toString().toStdString();
         layer.name=entry.value(QStringLiteral("name")).toString().toStdString();
-        layer.type=entry.value(QStringLiteral("type")).toString().toStdString();
+        // Frozen schema-2 corpus: the public importer performs this same migration.
+        layer.unit="%";layer.valueScale={true,0,100};
         d.distributionLayers.push_back(std::move(layer));
         DistributionEntry item;item.id=id;item.layerId=d.distributionLayers.back().id;
         // Native entries require exactly one of territory or geometry. Keep
         // the composition's owning territory as provenance in metadata.
         item.geometry=put("distribution-"+id,entry.value(QStringLiteral("geometry")).toObject());
-        item.share=entry.value(QStringLiteral("share")).toDouble();
+        item.value=entry.value(QStringLiteral("share")).toDouble();
         item.metadata=QJsonDocument(QJsonObject{{QStringLiteral("compositionTerritory"),
             entry.value(QStringLiteral("territory"))}}).toJson(QJsonDocument::Compact).toStdString();
         d.distributionEntries.push_back(std::move(item));
