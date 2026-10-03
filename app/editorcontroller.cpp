@@ -96,6 +96,13 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     });
     connect(&hydroRuntime_,&HydroRuntimeProvider::loadFailed,this,&EditorController::errorOccurred);
     connect(this,&EditorController::dirtyChanged,this,[this](){++importEditEpoch_;});
+    // Connect before any QML observers: all readers of one notification share
+    // one read model, including the panels that are currently hidden.
+    connect(this,&EditorController::propertyChanged,this,[this]{objectPropertiesCache_.reset();});
+    connect(this,&EditorController::selectionChanged,this,[this]{objectPropertiesCache_.reset();});
+    connect(this,&EditorController::stateChanged,this,[this]{objectRowsCache_.reset();});
+    connect(this,&EditorController::stateChanged,this,[this]{layersCache_.reset();});
+    connect(this,&EditorController::geometryChanged,this,[this]{layersCache_.reset();});
     connect(this,&EditorController::stateChanged,this,&EditorController::propertyChanged);
     connect(this,&EditorController::draftsChanged,this,&EditorController::propertyChanged);
     connect(this,&EditorController::jobChanged,this,&EditorController::propertyChanged);
@@ -126,14 +133,14 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::presentationChanged,this,[this] {
         labelSourcesDirty_=true;
         labelEngine_.clear();labelFlagSources_.clear();
-        if(!placedLabels_.isEmpty()){placedLabels_.clear();emit labelLayoutChanged();}
+        if(!placedLabels_.isEmpty()){placedLabels_.clear();placedLabelModel_.setRows({});emit labelLayoutChanged();}
         invalidateViewportResources(ViewportResourceKind::Labels);
     });
     connect(this,&EditorController::geometryChanged,this,refresh);
     connect(this,&EditorController::geometryChanged,this,[this] {
         labelSourcesDirty_=true;
         labelEngine_.clear();labelFlagSources_.clear();
-        if(!placedLabels_.isEmpty()){placedLabels_.clear();emit labelLayoutChanged();}
+        if(!placedLabels_.isEmpty()){placedLabels_.clear();placedLabelModel_.setRows({});emit labelLayoutChanged();}
         syncMapCameraMetrics();
         invalidateViewportResources(ViewportResourceKind::Labels);
     });
@@ -194,12 +201,14 @@ void EditorController::refreshTypedScene() {
         const std::set<pandoeditor::ObjectRef> changed=patch?
             std::set<pandoeditor::ObjectRef>(pendingSceneImpact_->changedObjects.begin(),pendingSceneImpact_->changedObjects.end()):
             std::set<pandoeditor::ObjectRef>{};
+        const auto preparationsBefore=sceneBuilder_.preparationCount();
         auto scene=patch?sceneBuilder_.buildPatch(project_.snapshot(),sceneBridge_.viewState(),
             interaction,previous,changed):
             sceneBuilder_.build(project_.snapshot(),sceneBridge_.viewState(),interaction,previous);
         if(scene!=sceneBridge_.sceneSnapshot()) {
             sceneBridge_.publishScene(std::move(scene));
-            if(patch)++scenePatchCount_;else ++sceneFullBuildCount_;
+            if(patch)++scenePatchCount_;
+            else if(sceneBuilder_.preparationCount()!=preparationsBefore)++sceneFullBuildCount_;
             emit renderQualityChanged();
         }
         sceneQualityRevision_=quality_.profile().revision;
@@ -306,6 +315,9 @@ QVariantMap EditorController::renderQuality() const {
         {"packetCacheBudgetBytes",qulonglong(packetCache_.budget())},
         {"scenePatchCount",qulonglong(scenePatchCount_)},
         {"sceneFullBuildCount",qulonglong(sceneFullBuildCount_)},
+        {"scenePreparationCount",qulonglong(sceneBuilder_.preparationCount())},
+        {"sceneTransientUpdateCount",qulonglong(sceneBuilder_.transientUpdateCount())},
+        {"sceneUnchangedCount",qulonglong(sceneBuilder_.unchangedCount())},
         {"spatialIncrementalUpdateCount",qulonglong(mapPicker_.incrementalUpdateCount())},
         {"viewportResourceGeneration",qulonglong(viewportResources_.lastIssuedGeneration())},
         {"viewportResourceUpdates",qulonglong(viewportResources_.stats().viewportUpdates)},
@@ -465,6 +477,10 @@ QVariantMap EditorController::colors() const
     }
     return result;
 }
+QString EditorController::selectedFlagSource() const {
+    const auto* unit=selectedUnit();
+    return unit?labelFlagSource(pandoeditor::territorialRef(unit->id)):QString{};
+}
 QVariantMap EditorController::countryVisuals() const
 {
     QVariantMap result;
@@ -534,6 +550,7 @@ QVariantMap EditorController::layerVisuals() const
 }
 QVariantList EditorController::layers() const
 {
+    if(layersCache_)return *layersCache_;
     QVariantList result;
     const auto& layers=project_.layers();
     QVariantList unassigned;
@@ -550,10 +567,12 @@ QVariantList EditorController::layers() const
         result.append(QVariantMap{{"id",text(l.id)},{"name",text(l.name)},{"visible",l.visible},
             {"locked",l.locked},{"opacity",l.opacity},{"order",i},{"paths",paths},{"count",paths.size()}});
     }
+    layersCache_=result;
     return result;
 }
 QVariantList EditorController::countryRows() const
 {
+    if(countryRowsSnapshot_&&countryRowsSnapshot_->matches(project_))return countryRowsCache_;
     QVariantList result;
     for(const auto& c:project_.countries()) {
         const auto l=project_.layer(c.layerId);
@@ -561,6 +580,7 @@ QVariantList EditorController::countryRows() const
             {"visible",objectVisible(pandoeditor::territorialRef(c.id))},{"locked",(l&&l->locked)||c.locked},
             {"limited",!pandoeditor::effectAllowed(project_.document(),pandoeditor::territorialRef(c.id),"color")}});
     }
+    countryRowsSnapshot_=project_.snapshot();countryRowsCache_=result;
     return result;
 }
 QString EditorController::selectedName() const

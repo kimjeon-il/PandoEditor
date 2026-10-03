@@ -27,29 +27,35 @@ Item {
     property bool pointerNavigation:false
     function navigationStarted(){
         if(pointerNavigation)return
-        toolbar.navigationStarted();properties.navigationStarted();panel.beginSelectionNavigation()
+        toolbar.navigationStarted();properties.navigationStarted();if(panel.item)panel.item.beginSelectionNavigation()
     }
     function navigationPointer(down){
-        if(down){pointerNavigation=true;toolbar.navigating=true;properties.navigating=true;panel.selectionNavigation=true}
-        else Qt.callLater(function(){workspace.pointerNavigation=false;toolbar.navigating=false;properties.navigating=false;panel.selectionNavigation=false})
+        if(down){pointerNavigation=true;toolbar.navigating=true;properties.navigating=true;if(panel.item)panel.item.selectionNavigation=true}
+        else Qt.callLater(function(){workspace.pointerNavigation=false;toolbar.navigating=false;properties.navigating=false;if(panel.item)panel.item.selectionNavigation=false})
     }
     function dismissPopup(){
         if(fileMenu.visible){fileMenu.close();return true}
         if(createMenu.visible){createMenu.close();return true}
         if(displayControls.visible){displayControls.close();return true}
-        if(toolbar.dismissPopup()||mapView.dismissPopup()||properties.dismissPopup()||panel.dismissPopup())return true
+        if(toolbar.dismissPopup()||mapView.dismissPopup()||properties.dismissPopup()||(panel.item&&panel.item.dismissPopup()))return true
         if(searchOpen||sideOpen){navigationStarted();searchOpen=false;editorOpen=false;legacyOpen=false;return true}
         return false
     }
     function toggleEditor(){navigationStarted();searchOpen=false;legacyOpen=false;editorOpen=!editorOpen}
     function showLegacy(content){
         navigationStarted();legacyOpen=true;editorOpen=false;searchOpen=false
-        if(content)panel.showContent();else panel.showCountryControls()
+        panel.active=true
+        if(content)panel.item.showContent();else panel.item.showCountryControls()
     }
     Connections {
         target:editor
         function onGeometryEditChanged(){
             if(editor.geometryEditState.active===true){workspace.navigationStarted();workspace.editorOpen=false;workspace.legacyOpen=false;workspace.searchOpen=false}
+        }
+        function onStructureChanged(){
+            // Structure actions can originate on the map toolbar before the
+            // optional forms have ever been opened; their dialog lives there.
+            if(editor.structureDialogOpen)panel.active=true
         }
     }
     Common.MapDisplayControls {id:displayControls;parent:workspace;y:topbar.height+4}
@@ -132,7 +138,12 @@ Item {
             width:workspace.compact?parent.width:320
             height:workspace.compact?Math.min(360,parent.height*.52):parent.height
             visible:workspace.sideOpen;z:30
-            Common.EditorPanel {id:panel;objectName:"editorPanel";anchors.fill:parent;compact:workspace.compact;visible:workspace.legacyOpen;holdFieldCommits:workspace.holdFieldCommits}
+            // Instantiate the expensive, optional forms only on first use. Keep
+            // the instance afterwards so closing the panel preserves its drafts.
+            Loader {
+                id:panel;anchors.fill:parent;active:false;visible:workspace.legacyOpen
+                sourceComponent:Common.EditorPanel {objectName:"editorPanel";compact:workspace.compact;holdFieldCommits:workspace.holdFieldCommits}
+            }
             Common.ObjectPropertyPanel {
                 id:properties;anchors.fill:parent;visible:workspace.editorOpen;compact:workspace.compact;holdFieldCommits:workspace.holdFieldCommits||workspace.searchOpen||editor.objectChooserOpen||fileMenu.visible||createMenu.visible
                 onCloseRequested:workspace.editorOpen=false
@@ -148,8 +159,10 @@ Item {
             x:workspace.editorOpen?0:Math.max(12,Math.min(anchorPoint.x-width/2,parent.width-width-12))
             y:workspace.editorOpen?0:Math.max(12,Math.min(anchorPoint.y-height-18,parent.height-height-76))
             readonly property point anchorPoint:{
+                if(!visible)return Qt.point(mapView.width/2,mapView.height/2)
+                const key=editor.primaryObject.key
                 const labels=editor.placedLabels
-                for(let i=0;i<labels.length;i++)if(labels[i].ref.key===editor.primaryObject.key)return Qt.point(labels[i].x,labels[i].y)
+                for(let i=0;i<labels.length;i++)if(labels[i].ref.key===key)return Qt.point(labels[i].x,labels[i].y)
                 return Qt.point(mapView.width/2,mapView.height/2)
             }
             editorOpen:workspace.editorOpen

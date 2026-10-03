@@ -12,6 +12,7 @@ Rectangle {
     function showContent(){tabs.currentIndex=2}
     property bool holdFieldCommits: false
     property bool selectionNavigation: false
+    readonly property string selectedColor: editor.objectProperties.color || ""
     readonly property bool fieldCommitsHeld: holdFieldCommits || selectionNavigation || editor.objectChooserOpen
     function beginSelectionNavigation() {
         selectionNavigation = true
@@ -141,8 +142,8 @@ Rectangle {
                                     radius: 8
                                     color: parent.modelData
                                     opacity: parent.enabled ? 1 : 0.45
-                                    border.width: editor.colors[editor.selectedId] === parent.modelData ? 3 : 1
-                                    border.color: editor.colors[editor.selectedId] === parent.modelData ? "#172d42" : "#aab5be"
+                                    border.width: panel.selectedColor === parent.modelData ? 3 : 1
+                                    border.color: panel.selectedColor === parent.modelData ? "#172d42" : "#aab5be"
                                 }
                             }
                         }

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Shapes
 import QtQuick.Dialogs as Native
@@ -78,6 +79,15 @@ Rectangle {
 
     // Terrain and reference images share the same immutable geographic view
     // snapshot as countries and picking.
+    Item {
+        id: mapSurface
+        objectName: "retainedMapSurface"
+        anchors.fill: parent
+        // Keep the map in its own retained render pass. Qt can rebuild label
+        // batches without re-uploading the world mesh. Include the backdrop,
+        // terrain and reference images to preserve destination-color blending.
+        layer.enabled: gpuMapRenderer.rendererReady
+        Rectangle { anchors.fill: parent; color: view.color; z: -1 }
     Repeater {
         model: editor.terrainTiles
         delegate: GeographicImageItem {
@@ -200,9 +210,12 @@ Rectangle {
         objectName: "canonicalMapRenderer"
         anchors.fill: parent
         visible: !gpuMapRenderer.rendererReady && !gpuMapRenderer.forcedGpu
-        sceneBridge: editor.mapSceneBridge
+        // An invisible QQuickPaintedItem can still synchronize a dirty texture.
+        // Do not feed the CPU fallback full-world snapshots while GPU is active.
+        sceneBridge: visible ? editor.mapSceneBridge : null
         smoothLines: editor.appearancePreferences.smoothLines !== false
         z: 0
+    }
     }
     Label {
         objectName: "gpuRendererDiagnostic"
@@ -276,22 +289,33 @@ Rectangle {
         onAccepted: referenceImages.importImage(selectedFile)
     }
     Repeater {
-        model: editor.placedLabels
+        model: editor.placedLabelModel
         delegate: Column {
             objectName: "mapPlacedLabel"
             required property var modelData
-            x: modelData.x-width/2
-            y: modelData.y-height/2
+            required property real labelX
+            required property real labelY
+            x: labelX-width/2
+            y: labelY-height/2
             z: editor.layers.length+2
-            Image { objectName: "mapPlacedFlag"; anchors.horizontalCenter: parent.horizontalCenter; width:24; height:16; fillMode:Image.PreserveAspectFit; source:parent.modelData.flagSource||""; visible:!!parent.modelData.flagVisible&&source.toString()!=="" }
+            Image {
+                objectName: "mapPlacedFlag"
+                anchors.horizontalCenter: parent.horizontalCenter
+                width:24; height:16; fillMode:Image.PreserveAspectFit
+                // SVG intrinsic sizes can exceed 100 megapixels. Rasterize at
+                // display resolution, including HiDPI, before texture upload.
+                sourceSize: Qt.size(Math.ceil(width*Screen.devicePixelRatio), Math.ceil(height*Screen.devicePixelRatio))
+                source:parent.modelData.flagVisible ? (parent.modelData.flagSource||"") : ""
+                visible:!!parent.modelData.flagVisible&&source.toString()!==""
+            }
             Label { objectName: "mapPlacedText"; textFormat:Text.PlainText; anchors.horizontalCenter:parent.horizontalCenter; text:parent.modelData.name||""; visible:parent.modelData.nameVisible!==false; color:"#243746"; style:Text.Outline; styleColor:"#ffffff"; font.pixelSize:12; font.weight:Font.DemiBold }
             DragHandler {
                 enabled: !view.geometryEditing
                 target: null
                 onActiveChanged: if(!active && activeTranslation.x*activeTranslation.x+activeTranslation.y*activeTranslation.y>4)
                     editor.setLabelMapPosition(parent.modelData.ref,
-                        (parent.modelData.x+activeTranslation.x-view.originX)/view.mapScale,
-                        (parent.modelData.y+activeTranslation.y-view.originY)/view.mapScale)
+                        (parent.labelX+activeTranslation.x-view.originX)/view.mapScale,
+                        (parent.labelY+activeTranslation.y-view.originY)/view.mapScale)
             }
         }
     }

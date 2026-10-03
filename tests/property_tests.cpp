@@ -27,6 +27,36 @@ static CommandResult run(Project& p,const std::string& id,CommandAction action) 
 class PropertyTests: public QObject {
  Q_OBJECT
 private slots:
+ void cachedReadModelsFollowEditsAndUndo() {
+  EditorController editor;
+  const auto countries=editor.countryRows(),objects=editor.objectRows(),layers=editor.layers();
+  QVERIFY(!countries.isEmpty());
+  const auto id=countries.front().toMap().value("id").toString();
+  editor.selectCountry(id);
+  QCOMPARE(editor.countryRows(),countries);QCOMPARE(editor.layers(),layers);
+  editor.setNameDraft("Read model regression");QVERIFY(editor.commitObjectField("name"));
+  QVERIFY(editor.countryRows()!=countries);QVERIFY(editor.objectRows()!=objects);
+  editor.undo();QCOMPARE(editor.countryRows(),countries);QCOMPARE(editor.objectRows(),objects);
+  editor.addLayer();QCOMPARE(editor.layers().size(),layers.size()+1);
+  editor.undo();QCOMPARE(editor.layers(),layers);
+ }
+ void scalarAndBulkColorResolutionAgreeAcrossInheritance() {
+  auto document=fixture();
+  const auto verify=[&] {
+   const auto all=objectPropertyViews(document);
+   for(const auto& unit:document.units)
+    QCOMPARE(effectiveObjectColor(document,territorialRef(unit.id)),all.at(territorialRef(unit.id)).effectiveColor);
+  };
+  verify();
+  document.presentation.objectStyles[territorialRef("S")]={0xabcdef,1,true};verify();
+  QCOMPARE(effectiveObjectColor(document,territorialRef("R")),0xabcdefu);
+  QCOMPARE(effectiveObjectColor(document,territorialRef("S"),0xcccccc,0x8c68d8,true),0x336699u);
+  document.presentation.objectStyles[territorialRef("S")].explicitColor=false;
+  document.relations[0].parent=territorialRef("S");verify();
+  QCOMPARE(effectiveObjectColor(document,territorialRef("S")),0x8c68d8u);
+  QCOMPARE(effectiveObjectColor(document,{"label","A"}),0x8c68d8u);
+  QCOMPARE(effectiveObjectColor(document,territorialRef("missing")),0x8c68d8u);
+ }
  void defaultColorPreviewAndLegacyMigrationNotice() {
   QTemporaryDir dir;EditorController editor;
   auto json=QJsonDocument::fromJson(editor.documentBytes()).object();json["version"]=3;

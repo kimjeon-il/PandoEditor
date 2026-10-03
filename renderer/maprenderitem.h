@@ -6,6 +6,7 @@
 #include <QPointer>
 #include <QQuickPaintedItem>
 #include <memory>
+#include <atomic>
 
 // CPU fallback backend. It consumes exactly the same immutable RenderScene and
 // MapViewState as the Qt Scene Graph GPU backend; no legacy path/visual/hydro
@@ -26,6 +27,8 @@ public:
     qulonglong viewRevision() const{return view_.revision;}
     bool smoothLines() const{return smoothLines_;}
     void setSmoothLines(bool);
+    std::uint64_t paintCount() const {return paintCount_.load();}
+    double paintMilliseconds() const {return paintNanoseconds_.load()/1.e6;}
 
     void setSceneSnapshot(std::shared_ptr<const RenderScene>,const MapViewState&);
 signals:
@@ -38,4 +41,6 @@ private:
     MapViewState view_;
     QPointer<MapSceneBridge> sceneBridge_;
     bool smoothLines_=true;
+    std::atomic<std::uint64_t> paintCount_{0};
+    std::atomic<qint64> paintNanoseconds_{0};
 };

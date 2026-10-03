@@ -266,6 +266,7 @@ void EditorController::refreshPlacedLabelRows() {
     }
     if(rows==placedLabels_)return;
     placedLabels_=std::move(rows);
+    placedLabelModel_.setRows(placedLabels_);
     emit labelLayoutChanged();
 }
 

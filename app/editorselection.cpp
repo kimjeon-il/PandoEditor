@@ -67,6 +67,7 @@ bool EditorController::objectVisible(const ObjectRef& ref) const {
     return effectiveMapVisibility(project_.document(),ref);
 }
 QVariantList EditorController::objectRows() const {
+    if(objectRowsCache_)return *objectRowsCache_;
     QVariantList rows;
     for(const auto& unit:project_.document().units) {
         const auto ref=territorialRef(unit.id);
@@ -101,7 +102,7 @@ QVariantList EditorController::objectRows() const {
             row["editable"]=false;row["selectionOnly"]=false;rows.append(row);
         }
     }
-    return rows;
+    objectRowsCache_=rows;return rows;
 }
 void EditorController::setSearchQuery(const QString& query) {
     if(query==searchQuery_) return;
@@ -180,7 +181,9 @@ void EditorController::applySelection(SelectionState next) {
     cancelColorEdit();fieldSessions_.clear();parkDrafts();selection_=std::move(next);
     selected_=selection_.primary()?q(selection_.primary()->id):QString();
     reloadDrafts();
-    emit selectionChanged();emit stateChanged();emit draftsChanged();emit visualChanged();
+    emit selectionChanged();
+    emit stateChanged();emit draftsChanged();
+    emit visualChanged();
     // No dirtyChanged, project revision, history, import epoch, preview or worker mutation.
 }
 bool EditorController::selectObject(const QVariantMap& value,const QString& mode,const QString& scope,const QVariantList& ordered,bool additive) {

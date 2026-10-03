@@ -89,5 +89,53 @@ void worldRangesKeepSourceSlotsAndLogicalOwnersSeparate() {
     require(owned==std::vector<std::size_t>({0,1}),
             "selection highlight covers all ranges of a merged owner");
 }
+void immutableSnapshotsReusePreparationButRespectInvalidation() {
+    using namespace pandoeditor;
+    ProjectDocument doc({},{{"countries","Countries"}});
+    doc.units.push_back({"C","Country",{},UnitKind::Country,{"C",1}});
+    doc.geometries.insert({"C",1},square(0));
+    doc.presentation.membership.emplace(territorialRef("C"),"countries");
+    doc.presentation.objectStyles.emplace(territorialRef("C"),ObjectStyle{});
+    doc.presentation.webPresentation.styles["countries"].boundaryVisible=false;
+    Project project;project.replace(doc);
+    MapViewState view;GeometryPacketCache cache;MapSceneBuilder builder(cache);
+    auto first=builder.build(project.snapshot(),view,{},{});
+    require(first->strokes.empty(),"hidden boundary is initially unprepared");
+    const auto count=builder.preparationCount();
+    auto duplicate=builder.build(project.snapshot(),view,{},first);
+    require(duplicate==first&&builder.preparationCount()==count,"duplicate notification does no preparation");
+    view.revision++;view.centerLongitude=10;
+    auto panned=builder.build(project.snapshot(),view,{},first);
+    require(builder.preparationCount()==count&&panned->preparationIdentity==first->preparationIdentity,
+            "camera only updates view and culling");
+    require(panned->polygons.front().geometryPacket.positions==first->polygons.front().geometryPacket.positions,
+            "camera retains packet storage");
+    InteractionRenderPacket hover;hover.hover=territorialRef("C");
+    auto highlighted=builder.build(project.snapshot(),view,hover,panned);
+    require(builder.preparationCount()==count+1&&!highlighted->strokes.empty(),
+            "first hidden-boundary highlight prepares the missing stroke");
+    auto cleared=builder.build(project.snapshot(),view,{},highlighted);
+    require(builder.preparationCount()==count+1&&cleared->drawSequence.size()==1,
+            "retaining highlight packet does not expose hidden base boundary");
+    auto again=builder.build(project.snapshot(),view,hover,cleared);
+    require(builder.preparationCount()==count+1&&again->revisions.selection>cleared->revisions.selection,
+            "subsequent hover reuses prepared geometry");
+    view.mode=ProjectionMode::Globe;view.revision++;
+    auto globe=builder.build(project.snapshot(),view,hover,again);
+    require(builder.preparationCount()==count+2,"projection preparation policy invalidates reuse");
+    RenderQualityProfile quality;quality.backgroundLod=RenderLod::Coarse;builder.setQuality(quality);
+    auto coarse=builder.build(project.snapshot(),view,hover,globe);
+    require(builder.preparationCount()==count+3,"background LOD invalidates reuse");
+    project.replace(doc);
+    auto replaced=builder.build(project.snapshot(),view,hover,coarse);
+    require(builder.preparationCount()==count+4&&replaced->preparationIdentity!=coarse->preparationIdentity,
+            "replacement cannot reuse another immutable document's preparation");
+    require(project.renameCountry("C","Renamed country"),"rename for snapshot invalidation");
+    auto renamed=builder.build(project.snapshot(),view,hover,replaced);
+    require(builder.preparationCount()==count+5,"document edit invalidates preparation");
+    require(project.undo(),"undo rename");
+    builder.build(project.snapshot(),view,hover,renamed);
+    require(builder.preparationCount()==count+6,"undo revision invalidates preparation");
 }
-int main(){builderPreservesM5DrawOrderAndCache();worldRangesKeepSourceSlotsAndLogicalOwnersSeparate();distributionRangeRestylesUnchangedPeersInPatch();disabledTerritorialColorPreservesFillAndBoundary();}
+}
+int main(){builderPreservesM5DrawOrderAndCache();worldRangesKeepSourceSlotsAndLogicalOwnersSeparate();distributionRangeRestylesUnchangedPeersInPatch();disabledTerritorialColorPreservesFillAndBoundary();immutableSnapshotsReusePreparationButRespectInvalidation();}

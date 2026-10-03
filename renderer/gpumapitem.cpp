@@ -75,7 +75,7 @@ void GpuMapItem::attachWindow(QQuickWindow* next) {
         const auto started=frameStartNs_.exchange(0);
         if(!rendererReady()||!isVisible()||started<=0)return;
         const auto elapsed=double(monotonicNanoseconds()-started)/1000000.;
-        if(elapsed>0&&elapsed<500)emit frameSampled(elapsed);
+        if(elapsed>0)emit frameSampled(elapsed);
     },Qt::QueuedConnection);
     evaluateBackend();
 }
@@ -128,8 +128,11 @@ QSGNode* GpuMapItem::updatePaintNode(QSGNode* previous,UpdatePaintNodeData*) {
         return nullptr;
     }
     node->sync(bridge_->sceneSnapshot(),view,flat_,renderStats_,uploadBudgetBytes_);
-    if(renderStats_.uploadsPending)
-        QMetaObject::invokeMethod(this,[this] {update();},Qt::QueuedConnection);
+    if(renderStats_.uploadsPending&&!uploadContinuationQueued_.exchange(true))
+        QMetaObject::invokeMethod(this,[this] {
+            uploadContinuationQueued_.store(false);
+            ++uploadContinuations_;update();
+        },Qt::QueuedConnection);
     const auto current=renderStats_;
     QMetaObject::invokeMethod(this,[this,current] {publishedStats_=current;emit statsChanged();},Qt::QueuedConnection);
     return node;

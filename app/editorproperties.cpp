@@ -26,6 +26,10 @@ bool EditorController::selectedEditable() const {
  return (!layer || !layer->locked) && !u->locked;
 }
 QVariantMap EditorController::objectProperties() const {
+ if(!objectPropertiesCache_)objectPropertiesCache_=computeObjectProperties();
+ return *objectPropertiesCache_;
+}
+QVariantMap EditorController::computeObjectProperties() const {
  QVariantMap result{{"count",int(selection_.items().size())},{"busy",propertyBusy()}};
  if(std::any_of(selection_.items().begin(),selection_.items().end(),[this](const auto& ref){return ref.domain=="hydroBuiltin"?
    !hydroRuntime_.recordById(q(ref.id)).has_value():!project_.index().objects.count(ref);})) {

@@ -30,6 +30,7 @@ add_library(pandoeditor_editor STATIC
     autosavecoordinator.cpp autosavecoordinator.h
     projectpreviewcache.cpp projectpreviewcache.h
     countrylabelanchors.cpp countrylabelanchors.h
+    labelplacementmodel.h
     physicaldatastore.cpp physicaldatastore.h
     mapscenebridge.cpp mapscenebridge.h
     builtinworldpolicy.cpp builtinworldpolicy.h

@@ -15,6 +15,10 @@ struct MapGpuStats {
     std::size_t visibleCountryCount=0,drawIndexCount=0,fullIndexCount=0;
     std::size_t uploadBytesThisFrame=0;
     bool uploadsPending=false;
+    std::uint64_t syncCount=0,treeRebuildCount=0,uploadedBytes=0;
+    std::uint64_t nodeAttachmentCount=0;
+    std::size_t drawNodes=0,strokeBytes=0;
+    double syncMilliseconds=0,uploadMilliseconds=0,strokeUploadMilliseconds=0;
 };
 
 struct MapFlatViewport {

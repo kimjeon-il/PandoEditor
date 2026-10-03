@@ -59,6 +59,8 @@ public:
     qulonglong fullIndexCount() const{return publishedStats_.fullIndexCount;}
     qulonglong uploadBytesThisFrame() const{return publishedStats_.uploadBytesThisFrame;}
     bool uploadsPending() const{return publishedStats_.uploadsPending;}
+    const MapGpuStats& gpuStats() const {return publishedStats_;}
+    qulonglong uploadContinuationCount() const {return uploadContinuations_;}
     qulonglong uploadBudgetBytes() const{return uploadBudgetBytes_;}
     void setUploadBudgetBytes(qulonglong bytes) {if(uploadBudgetBytes_!=bytes){uploadBudgetBytes_=bytes;emit viewportChanged();update();}}
 signals:
@@ -82,4 +84,6 @@ private:
     bool ready_=false;
     qulonglong uploadBudgetBytes_=8ull*1024*1024;
     std::atomic<qint64> frameStartNs_{0};
+    std::atomic<bool> uploadContinuationQueued_{false};
+    qulonglong uploadContinuations_=0;
 };

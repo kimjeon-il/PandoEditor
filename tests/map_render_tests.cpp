@@ -1,8 +1,11 @@
 #include "maprenderitem.h"
+#include "scenegraph/mapscenenode.h"
+#include <QSGGeometryNode>
 #include <pandoeditor/map/renderpacket.h>
 #include <QtTest>
 #include <QImage>
 #include <QPainter>
+#include <QQuickWindow>
 #include <cmath>
 #include <memory>
 #include <vector>
@@ -106,6 +109,83 @@ std::shared_ptr<RenderScene> scene() {
 class MapRenderTests:public QObject {
     Q_OBJECT
 private slots:
+    void worldMeshSlotsWithOneOwnerNeverAliasOrUploadForever() {
+        auto mesh=std::make_shared<CountryBaseMesh>();
+        mesh->positionsMicrodegrees={0,0,1000000,0,0,1000000,10000000,0,11000000,0,10000000,1000000};
+        mesh->countryIndices={0,0,0,1,1,1};mesh->triangleIndices={0,1,2,3,4,5};
+        mesh->lineIndices={0,1,3,4};mesh->countryTriangleRanges={0,3,3,3};mesh->countryBoundaryRanges={0,2,2,2};
+        auto base=std::make_shared<WorldBaseFrame>();base->mesh=mesh;
+        auto s=scene();s->worldBase=base;s->worldCountries.resize(2);
+        s->worldCountries[0].id=s->worldCountries[1].id="owner";
+        s->worldPlan.fills.visible={true,true};s->worldPlan.strokes.visible={true,true};
+        s->drawSequence={{PrimitiveKind::WorldFill,0,{},-1},{PrimitiveKind::WorldFill,1,{},-1},
+                         {PrimitiveKind::WorldStroke,0,{},-1},{PrimitiveKind::WorldStroke,1,{},-1}};
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;
+        node.sync(s,viewFor(40,40),flat,stats,1024*1024);
+        QCOMPARE(stats.geometryUploadCount,std::uint64_t(4));
+        for(int i=0;i<8;++i) {
+            auto changed=std::make_shared<RenderScene>(*s);changed->revision=2+i;changed->revisions.selection=2+i;
+            node.sync(changed,viewFor(40,40),flat,stats,1024*1024);
+            QCOMPARE(node.childCount(),4);QVERIFY(!stats.uploadsPending);
+            QCOMPARE(stats.geometryUploadCount,std::uint64_t(4));
+            QCOMPARE(stats.nodeAttachmentCount,std::uint64_t(4));
+        }
+        auto globe=viewFor(40,40);globe.mode=ProjectionMode::Globe;
+        node.sync(s,globe,flat,stats,1024*1024);
+        QCOMPARE(node.childCount(),2); // adjacent equal fill and stroke groups
+        auto* fill=static_cast<QSGGeometryNode*>(node.firstChild());
+        QCOMPARE(fill->geometry()->vertexCount(),6);QCOMPARE(fill->geometry()->indexCount(),6);
+        QCOMPARE(fill->geometry()->indexDataAsUInt()[3],std::uint32_t(3));
+        const auto uploads=stats.geometryUploadCount,attachments=stats.nodeAttachmentCount;
+        globe.centerLongitude=15;node.sync(s,globe,flat,stats,1024*1024);
+        QCOMPARE(stats.geometryUploadCount,uploads);QCOMPARE(stats.nodeAttachmentCount,attachments);
+        auto recolored=std::make_shared<RenderScene>(*s);++recolored->revision;
+        recolored->worldCountries[1].fill.color=0xff0000;
+        node.sync(recolored,globe,flat,stats,1024*1024);
+        QCOMPARE(node.childCount(),3); // color mismatch must split the batch
+        auto interleaved=std::make_shared<RenderScene>(*s);interleaved->revision=3;
+        std::swap(interleaved->drawSequence[1],interleaved->drawSequence[2]);
+        node.sync(interleaved,globe,flat,stats,1024*1024);
+        QCOMPARE(node.childCount(),4); // never merge across intervening draws
+    }
+    void sceneGraphReconciliationRetainsUnchangedAttachments() {
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;
+        auto s=scene();
+        s->polygons={polygonDraw("a",rectangle(2,2,12,12,40),0xff0000),
+                     polygonDraw("b",rectangle(8,8,18,18,40),0x0000ff)};
+        s->drawSequence={{PrimitiveKind::Polygon,0,{0,0,0},-1},{PrimitiveKind::Polygon,1,{1,0,0},-1}};
+        node.sync(s,viewFor(40,40),flat,stats,1024*1024);
+        auto* a=node.firstChild();auto* b=a->nextSibling();QVERIFY(b);
+        QCOMPARE(stats.nodeAttachmentCount,std::uint64_t(2));
+        auto changed=std::make_shared<RenderScene>(*s);++changed->revision;++changed->revisions.selection;
+        node.sync(changed,viewFor(40,40),flat,stats,1024*1024);
+        QCOMPARE(node.firstChild(),a);QCOMPARE(a->nextSibling(),b);
+        QCOMPARE(stats.nodeAttachmentCount,std::uint64_t(2));QCOMPARE(stats.geometryUploadCount,std::uint64_t(2));
+        auto reordered=std::make_shared<RenderScene>(*changed);++reordered->revision;
+        std::reverse(reordered->drawSequence.begin(),reordered->drawSequence.end());
+        node.sync(reordered,viewFor(40,40),flat,stats,1024*1024);
+        QCOMPARE(node.firstChild(),b);QCOMPARE(b->nextSibling(),a);
+        QCOMPARE(stats.nodeAttachmentCount,std::uint64_t(3));QCOMPARE(stats.geometryUploadCount,std::uint64_t(2));
+        auto culled=std::make_shared<RenderScene>(*reordered);++culled->revision;culled->drawSequence.resize(1);
+        node.sync(culled,viewFor(40,40),flat,stats,1024*1024);
+        QCOMPARE(node.firstChild(),b);QVERIFY(!b->nextSibling());
+        QCOMPARE(stats.nodeAttachmentCount,std::uint64_t(3));
+    }
+    void hiddenFallbackDoesNotRasterizeAndResumesWhenShown() {
+        QQuickWindow window;window.resize(48,48);window.show();
+        MapRenderItem item(window.contentItem());item.setWidth(48);item.setHeight(48);
+        auto s=scene();
+        s->polygons.push_back(polygonDraw("red",rectangle(5,5,15,15,48),0xff0000));
+        s->drawSequence.push_back({PrimitiveKind::Polygon,0,{0,0,0},-1});
+        item.setSceneSnapshot(s,viewFor(48,48));item.setVisible(false);
+        QCOMPARE(paint(item,48,48).pixelColor(10,10),QColor(Qt::white));
+        QCOMPARE(item.paintCount(),std::uint64_t(0));
+        item.setVisible(true);
+        QVERIFY(item.isVisible());
+        QCOMPARE(item.sceneRevision(),qulonglong(1));
+        QCOMPARE(paint(item,48,48).pixelColor(10,10),QColor("#ff0000"));
+        QCOMPARE(item.paintCount(),std::uint64_t(1));
+    }
     void typedSceneIsTheOnlyCpuRendererDataContract() {
         MapRenderItem item;
         const auto* meta=item.metaObject();

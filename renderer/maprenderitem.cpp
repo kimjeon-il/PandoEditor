@@ -4,6 +4,7 @@
 #include <QPainterPath>
 #include <QPen>
 #include <QPolygonF>
+#include <QElapsedTimer>
 #include <algorithm>
 #include <cmath>
 #include <set>
@@ -33,6 +34,9 @@ bool visibleCountry(const std::vector<bool>& mask,std::size_t index) {
 MapRenderItem::MapRenderItem(QQuickItem* parent):QQuickPaintedItem(parent) {
     setAntialiasing(true);
     setOpaquePainting(false);
+    connect(this,&QQuickItem::visibleChanged,this,[this] {
+        if(isVisible()) {if(sceneBridge_)syncSceneBridge();else update();}
+    });
 }
 
 void MapRenderItem::setSmoothLines(bool value) {
@@ -40,7 +44,7 @@ void MapRenderItem::setSmoothLines(bool value) {
     smoothLines_=value;
     setAntialiasing(value);
     emit smoothLinesChanged();
-    update();
+    if(isVisible())update();
 }
 
 void MapRenderItem::setSceneBridge(QObject* value) {
@@ -55,7 +59,7 @@ void MapRenderItem::setSceneBridge(QObject* value) {
             sceneBridge_=nullptr;
             scene_.reset();
             emit sceneBridgeChanged();
-            update();
+            if(isVisible())update();
         });
     }
     syncSceneBridge();
@@ -65,7 +69,7 @@ void MapRenderItem::syncSceneBridge() {
     if(sceneBridge_)setSceneSnapshot(sceneBridge_->sceneSnapshot(),sceneBridge_->viewState());
     else scene_.reset();
     emit sceneBridgeChanged();
-    update();
+    if(isVisible())update();
 }
 
 void MapRenderItem::setSceneSnapshot(
@@ -73,11 +77,15 @@ void MapRenderItem::setSceneSnapshot(
     if(!validMapViewState(view))throw std::invalid_argument("invalid typed scene view");
     scene_=std::move(scene);
     view_=view;
-    update();
+    if(isVisible())update();
 }
 
 void MapRenderItem::paint(QPainter* painter) {
-    if(!scene_||!validMapViewState(view_))return;
+    if(!isVisible()||!scene_||!validMapViewState(view_))return;
+    ++paintCount_;
+    QElapsedTimer paintClock;paintClock.start();
+    struct Timing {std::atomic<qint64>& total;QElapsedTimer& clock;
+        ~Timing(){total.fetch_add(clock.nsecsElapsed());}} timing{paintNanoseconds_,paintClock};
     painter->setRenderHint(QPainter::Antialiasing,smoothLines_);
     const auto copies=scene_->worldPlan.worldOffsets.empty()?
         visibleFlatWorldOffsets(view_):scene_->worldPlan.worldOffsets;

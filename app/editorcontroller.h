@@ -6,6 +6,7 @@
 #include "autosavecoordinator.h"
 #include "projectpreviewcache.h"
 #include "countrylabelanchors.h"
+#include "labelplacementmodel.h"
 #include "physicaldatastore.h"
 #include "mapprojection.h"
 #include "mapscenebridge.h"
@@ -109,6 +110,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QString projectionMode READ projectionMode NOTIFY viewStateChanged)
     Q_PROPERTY(QVariantMap mapViewState READ mapViewState NOTIFY viewStateChanged)
     Q_PROPERTY(QVariantList placedLabels READ placedLabels NOTIFY labelLayoutChanged)
+    Q_PROPERTY(QAbstractItemModel* placedLabelModel READ placedLabelModel CONSTANT)
     Q_PROPERTY(QString terrainMode READ terrainMode NOTIFY terrainChanged)
     Q_PROPERTY(QVariantMap appearancePreferences READ appearancePreferences NOTIFY appearanceChanged)
     Q_PROPERTY(bool appearancePreviewOpen READ appearancePreviewOpen NOTIFY appearanceChanged)
@@ -119,6 +121,7 @@ class EditorController : public QObject {
     Q_PROPERTY(double mapHeight READ mapHeight NOTIFY geometryChanged)
     Q_PROPERTY(QVariantMap colors READ colors NOTIFY visualChanged)
     Q_PROPERTY(QVariantMap countryVisuals READ countryVisuals NOTIFY visualChanged)
+    Q_PROPERTY(QString selectedFlagSource READ selectedFlagSource NOTIFY visualChanged)
     Q_PROPERTY(QVariantMap layerVisuals READ layerVisuals NOTIFY visualChanged)
     Q_PROPERTY(QVariantList layers READ layers NOTIFY stateChanged)
     Q_PROPERTY(QVariantList countryRows READ countryRows NOTIFY stateChanged)
@@ -207,6 +210,7 @@ public:
     Q_INVOKABLE bool setPresentationColorVisible(const QString& group,bool visible);
     Q_INVOKABLE bool setDistributionDisplay(const QString& mode,bool boundaryVisible,const QString& activeLayerId=QString());
     QVariantList placedLabels() const {return placedLabels_;}
+    QAbstractItemModel* placedLabelModel() {return &placedLabelModel_;}
     Q_INVOKABLE bool setLabelPinned(const QVariantMap& ref,bool pinned,double longitude=0,double latitude=0,bool hasPosition=false);
     Q_INVOKABLE bool setLabelMapPosition(const QVariantMap& ref,double mapX,double mapY);
     Q_INVOKABLE bool resetLabelPosition(const QVariantMap& ref);
@@ -300,6 +304,7 @@ public:
     double mapHeight() const { return projection_.height; }
     QVariantMap colors() const;
     QVariantMap countryVisuals() const;
+    QString selectedFlagSource() const;
     QVariantMap layerVisuals() const;
     QVariantList layers() const;
     QVariantList countryRows() const;
@@ -456,6 +461,12 @@ signals:
     void appearanceChanged();
     void labelLayoutChanged();
 private:
+    QVariantMap computeObjectProperties() const;
+    mutable std::optional<QVariantMap> objectPropertiesCache_;
+    mutable std::optional<pandoeditor::ProjectSnapshot> countryRowsSnapshot_;
+    mutable QVariantList countryRowsCache_;
+    mutable std::optional<QVariantList> objectRowsCache_;
+    mutable std::optional<QVariantList> layersCache_;
     void startAutosaveRecovery(bool useWorldBase);
     void startWorldBootstrap();
     void startCanonicalWorld(std::uint64_t generation);
@@ -656,6 +667,7 @@ private:
     QTimer viewportResourceTimer_;
     MapLabelEngine labelEngine_;
     QVariantList placedLabels_;
+    LabelPlacementModel placedLabelModel_{this};
     std::map<pandoeditor::ObjectRef,QString> labelFlagSources_;
     std::uint64_t labelSourceRevision_=0;
     bool labelSourcesDirty_=true;

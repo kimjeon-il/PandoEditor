@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Layouts
 import "UiTokens.js" as Tokens
@@ -15,7 +16,7 @@ Rectangle {
     signal toggleEditor()
     visible:editor.selectionItems.length===1
     readonly property var colors:Tokens.colors(editor.appearancePreferences)
-    readonly property var selectedVisual:editor.countryVisuals[editor.selectedId]||({})
+    readonly property string flagSource:editor.selectedFlagSource
     implicitHeight:editorOpen?80:142
     radius:editorOpen?0:16;color:colors.panel;border.color:editorOpen?"transparent":colors.border
     function navigationStarted(){navigating=true;Qt.callLater(function(){bar.navigating=false})}
@@ -42,13 +43,14 @@ Rectangle {
         objectName:"selectionCardFlag"
         x:bar.editorOpen?12:16;y:bar.editorOpen?12:18
         width:bar.editorOpen?56:108;height:bar.editorOpen?42:86
-        source:bar.selectedVisual.flagSource||""
+        sourceSize: Qt.size(Math.ceil(width*Screen.devicePixelRatio), Math.ceil(height*Screen.devicePixelRatio))
+        source:bar.flagSource
         fillMode:Image.PreserveAspectFit
     }
     UiIcon {
         x:bar.editorOpen?30:55;y:bar.editorOpen?22:50
         name:"globe";color:bar.colors.muted
-        visible:!bar.selectedVisual.flagAvailable
+        visible:!bar.flagSource
     }
     TextField {
             id:nameField

@@ -37,26 +37,46 @@ const TerritorialRelation* baseRelation(const ProjectDocument& d,const ObjectRef
     for(const auto& r:d.relations)if(!r.dated && r.unit==ref)return &r;
     return nullptr;
 }
-std::uint32_t effectiveObjectColor(const ProjectDocument& d,const ObjectRef& ref,std::uint32_t countryDefault,std::uint32_t fallback,bool ignoreOwnExplicit) {
-    std::map<ObjectRef,const TerritorialUnit*> byId;for(const auto& u:d.units)byId.emplace(territorialRef(u.id),&u);
-    std::set<ObjectRef> seen;auto current=byId.find(ref);
-    while(current!=byId.end() && seen.insert(current->first).second) {
-      const auto& u=*current->second;const auto style=d.presentation.objectStyles.find(current->first);
-      if(style!=d.presentation.objectStyles.end() && style->second.explicitColor && !(ignoreOwnExplicit && current->first==ref))return style->second.color;
-      if(u.kind==UnitKind::Country)return countryDefault;
-      const auto r=baseRelation(d,current->first);if(!r)return fallback;
-      auto parent=r->parent?byId.find(*r->parent):byId.end();
-      if(parent!=byId.end() && parent->second->kind==UnitKind::Subunit){current=parent;continue;}
-      if(parent==byId.end() || parent->second->kind!=UnitKind::Country)parent=r->sovereign?byId.find(*r->sovereign):byId.end();
-      if(parent==byId.end() || parent->second->kind!=UnitKind::Country)return fallback;
-      const auto s=d.presentation.objectStyles.find(parent->first);
+namespace {
+template<class Lookup>
+std::uint32_t resolveColor(const ProjectDocument& d,const ObjectRef& ref,
+                          std::uint32_t countryDefault,std::uint32_t fallback,
+                          bool ignoreOwnExplicit,const Lookup& lookup) {
+    std::set<ObjectRef> seen;auto* current=lookup(ref);
+    while(current) {
+      const auto currentRef=territorialRef(current->id);
+      const auto style=d.presentation.objectStyles.find(currentRef);
+      if(style!=d.presentation.objectStyles.end() && style->second.explicitColor && !(ignoreOwnExplicit && currentRef==ref))return style->second.color;
+      if(current->kind==UnitKind::Country)return countryDefault;
+      if(!seen.insert(currentRef).second)return fallback;
+      const auto r=baseRelation(d,currentRef);if(!r)return fallback;
+      auto* parent=r->parent?lookup(*r->parent):nullptr;
+      if(parent && parent->kind==UnitKind::Subunit){current=parent;continue;}
+      if(!parent || parent->kind!=UnitKind::Country)parent=r->sovereign?lookup(*r->sovereign):nullptr;
+      if(!parent || parent->kind!=UnitKind::Country)return fallback;
+      const auto s=d.presentation.objectStyles.find(territorialRef(parent->id));
       return s!=d.presentation.objectStyles.end()&&s->second.explicitColor?s->second.color:countryDefault;
     }
     return fallback;
 }
+}
+std::uint32_t effectiveObjectColor(const ProjectDocument& d,const ObjectRef& ref,std::uint32_t countryDefault,std::uint32_t fallback,bool ignoreOwnExplicit) {
+    // A scalar lookup must not allocate an index of every country. QML can
+    // query this repeatedly while updating one selected object's properties.
+    return resolveColor(d,ref,countryDefault,fallback,ignoreOwnExplicit,[&](const ObjectRef& key)->const TerritorialUnit* {
+        if(key.domain!="territorial")return nullptr;
+        const auto found=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return u.id==key.id;});
+        return found==d.units.end()?nullptr:&*found;
+    });
+}
 std::map<ObjectRef,ObjectPropertyView> objectPropertyViews(const ProjectDocument& d) {
     std::map<ObjectRef,ObjectPropertyView> result;
-    for(const auto& u:d.units){auto ref=territorialRef(u.id);result.emplace(ref,ObjectPropertyView{objectDisplayName(u),effectiveObjectColor(d,ref)});}
+    std::map<ObjectRef,const TerritorialUnit*> byId;
+    for(const auto& u:d.units)byId.emplace(territorialRef(u.id),&u);
+    const auto lookup=[&](const ObjectRef& key)->const TerritorialUnit* {
+        const auto found=byId.find(key);return found==byId.end()?nullptr:found->second;
+    };
+    for(const auto& u:d.units){auto ref=territorialRef(u.id);result.emplace(ref,ObjectPropertyView{objectDisplayName(u),resolveColor(d,ref,0xcccccc,0x8c68d8,false,lookup)});}
     for(const auto& v:d.labels) result.emplace(ObjectRef{"label",v.id},ObjectPropertyView{v.name.empty()?v.id:v.name,0x253b50});
     for(const auto& v:d.hydro) result.emplace(ObjectRef{"hydro",v.id},ObjectPropertyView{v.name.empty()?v.id:v.name,v.color});
     for(const auto& v:d.genericFeatures) result.emplace(ObjectRef{"generic",v.id},ObjectPropertyView{v.name.empty()?v.id:v.name,v.color});

@@ -110,13 +110,78 @@ std::optional<GeometryRef> geometryFor(const ProjectDocument& doc,const ObjectRe
     }
     return std::nullopt;
 }
+bool sameInteraction(const InteractionRenderPacket& a,const InteractionRenderPacket& b) {
+    return a.candidates==b.candidates&&a.selected==b.selected&&a.primary==b.primary&&
+        a.hover==b.hover&&a.editTarget==b.editTarget;
+}
+std::uint64_t interactionSignature(const InteractionRenderPacket& interaction) {
+    std::uint64_t selection=basis;
+    for(const auto& ref:interaction.candidates){mix(selection,ref.domain);mix(selection,ref.id);}
+    for(const auto& ref:interaction.selected){mix(selection,ref.domain);mix(selection,ref.id);}
+    for(const auto* ref:{&interaction.primary,&interaction.hover,&interaction.editTarget})if(*ref){
+        mix(selection,(*ref)->domain);mix(selection,(*ref)->id);
+    }
+    return selection;
+}
 }
 
+void MapSceneBuilder::remember(const ProjectSnapshot& snapshot,const MapViewState& view,
+                              const std::shared_ptr<const RenderScene>& scene) {
+    preparedSnapshot_=snapshot;preparedScene_=scene;preparedHydro_=builtinHydro_;
+    preparedMode_=view.mode;preparedLod_=quality_.backgroundLod;
+}
 std::shared_ptr<const RenderScene> MapSceneBuilder::build(
     const ProjectSnapshot& snapshot,const MapViewState& view,
     const InteractionRenderPacket& interaction,
     const std::shared_ptr<const RenderScene>& previous) {
-    return buildDocument(snapshot.document(),snapshot.revision(),view,interaction,previous);
+    if(!validMapViewState(view))throw std::invalid_argument("invalid scene view");
+    if(preparedSnapshot_&&preparedSnapshot_->instanceId()!=snapshot.instanceId()) {
+        // Geometry ids/versions and revision zero may repeat in a new project.
+        cache_.clear();
+        auto scene=std::make_shared<RenderScene>(*buildDocument(snapshot.document(),snapshot.revision(),view,interaction,{}));
+        scene->revision=nextSceneRevision(previous);
+        remember(snapshot,view,scene);return scene;
+    }
+    bool reusable=previous&&previous==preparedScene_.lock()&&preparedSnapshot_&&
+        &preparedSnapshot_->document()==&snapshot.document()&&
+        preparedSnapshot_->instanceId()==snapshot.instanceId()&&
+        preparedSnapshot_->revision()==snapshot.revision()&&
+        previous->worldBase==worldBase_&&preparedHydro_==builtinHydro_&&
+        preparedMode_==view.mode&&preparedLod_==quality_.backgroundLod;
+    const bool unchangedInteraction=previous&&sameInteraction(previous->interaction,interaction);
+    if(reusable&&!unchangedInteraction) {
+        // Selection/editing can promote background fallback geometry to high
+        // LOD. Hidden boundaries may also need their first stroke packet.
+        if((previous->interaction.selected!=interaction.selected||
+            previous->interaction.editTarget!=interaction.editTarget)&&
+           std::any_of(snapshot.document().genericFeatures.begin(),snapshot.document().genericFeatures.end(),
+                       [](const auto& feature){return feature.fallbackOnly;}))reusable=false;
+        std::set<ObjectRef> highlighted(interaction.selected.begin(),interaction.selected.end());
+        highlighted.insert(interaction.candidates.begin(),interaction.candidates.end());
+        for(const auto* ref:{&interaction.primary,&interaction.hover,&interaction.editTarget})
+            if(*ref)highlighted.insert(**ref);
+        for(const auto& polygon:previous->polygons)if(highlighted.count(polygon.object)&&
+            std::none_of(previous->strokes.begin(),previous->strokes.end(),
+                [&](const auto& stroke){return stroke.object==polygon.object;}))reusable=false;
+    }
+    if(reusable) {
+        if(unchangedInteraction&&previous->revisions.view==view.revision) {
+            ++unchanged_;return previous;
+        }
+        auto scene=std::make_shared<RenderScene>(*previous);
+        std::set<ObjectRef> protectedObjects(interaction.selected.begin(),interaction.selected.end());
+        if(interaction.editTarget)protectedObjects.insert(*interaction.editTarget);
+        cache_.protect(protectedObjects);
+        scene->revision=nextSceneRevision(previous);
+        scene->interaction=interaction;scene->interactionSignature=interactionSignature(interaction);
+        if(!unchangedInteraction)scene->revisions.selection=advance(previous->revisions.selection);
+        if(previous->revisions.view!=view.revision&&worldBase_&&worldBase_->mesh)
+            scene->worldPlan=worldRenderPlanForView(*worldBase_->mesh,view);
+        scene->revisions.view=view.revision;
+        ++transientUpdates_;remember(snapshot,view,scene);return scene;
+    }
+    auto scene=buildDocument(snapshot.document(),snapshot.revision(),view,interaction,previous);
+    remember(snapshot,view,scene);return scene;
 }
 
 std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocument(
@@ -141,7 +206,8 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildPatch(
         for(const auto& packet:previous->polygons)if(packet.object.domain=="distributionEntry")expanded.insert(packet.object);
         for(const auto& packet:previous->strokes)if(packet.object.domain=="distributionEntry")expanded.insert(packet.object);
     }
-    return buildDocumentImpl(snapshot.document(),snapshot.revision(),view,interaction,previous,&expanded);
+    auto scene=buildDocumentImpl(snapshot.document(),snapshot.revision(),view,interaction,previous,&expanded);
+    remember(snapshot,view,scene);return scene;
 }
 
 std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
@@ -150,7 +216,9 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     const std::shared_ptr<const RenderScene>& previous,
     const std::set<ObjectRef>* changed) {
     if(!validMapViewState(view))throw std::invalid_argument("invalid scene view");
+    ++preparations_;
     auto scene=std::make_shared<RenderScene>();
+    scene->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
     scene->interaction=interaction;
     scene->worldBase=worldBase_;
     if(worldBase_&&worldBase_->mesh)
@@ -420,11 +488,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             mixDouble(presentation,command.layerOpacity);
         }
     }
-    for(const auto& ref:interaction.candidates){mix(selection,ref.domain);mix(selection,ref.id);}
-    for(const auto& ref:interaction.selected){mix(selection,ref.domain);mix(selection,ref.id);}
-    for(const auto* ref:{&interaction.primary,&interaction.hover,&interaction.editTarget})if(*ref){
-        mix(selection,(*ref)->domain);mix(selection,(*ref)->id);
-    }
+    selection=interactionSignature(interaction);
     mix(dataset,doc.documentId);
     if(worldBase_&&worldBase_->mesh) {
         mix(dataset,worldBase_->mesh->preview?1:2);

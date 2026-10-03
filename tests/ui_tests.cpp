@@ -16,6 +16,7 @@
 #include <QFile>
 #include <QDir>
 #include <algorithm>
+#include <cmath>
 #ifdef Q_OS_WIN
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -83,9 +84,68 @@ static bool clickControl(QQuickWindow* window,const QString& name)
     QTest::qWait(80); return true;
 }
 
+#include "native_performance_probe.h"
+
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void labelReprojectionPreservesModelRows() {
+        LabelPlacementModel model;
+        QVariantMap row{{"ref",QVariantMap{{"type","territorial"},{"id","DEU"}}},{"x",10.},{"y",20.}};
+        model.setRows({row});
+        QSignalSpy resets(&model,&QAbstractItemModel::modelReset);
+        QSignalSpy changes(&model,&QAbstractItemModel::dataChanged);
+        row["x"]=30.;model.setRows({row});
+        QCOMPARE(resets.count(),0);QCOMPARE(changes.count(),1);
+        QCOMPARE(qvariant_cast<QList<int>>(changes.at(0).at(2)),QList<int>{LabelPlacementModel::LabelX});
+        QCOMPARE(model.data(model.index(0),Qt::UserRole).toMap().value("x").toDouble(),30.);
+        model.setRows({row});QCOMPARE(changes.count(),1);
+        row["name"]="updated";model.setRows({row});
+        QCOMPARE(qvariant_cast<QList<int>>(changes.at(1).at(2)),QList<int>{LabelPlacementModel::Content});
+        auto second=row;second["ref"]=QVariantMap{{"id","FRA"}};
+        model.setRows({second,row});QCOMPARE(resets.count(),0);
+        QPersistentModelIndex retained=model.index(1);
+        model.setRows({row,second});QCOMPARE(retained.row(),0);QCOMPARE(resets.count(),0);
+        model.setRows({row});QVERIFY(retained.isValid());QCOMPARE(retained.row(),0);
+        model.setRows({});QCOMPARE(resets.count(),0);QCOMPARE(model.rowCount(),0);
+    }
+    void nativePerformanceProbe() { runNativePerformanceProbe(); }
+    void labelDelegateSurvivesCameraMotion() {
+        EditorController editor(EditorControllerConfig{});QQmlApplicationEngine engine;
+        editor.selectCountry("DEU");
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+        window->resize(1100,760);exposeForTest(window);
+        auto* map=visualItem(window->contentItem(),"mapView");QVERIFY(map);
+        QVERIFY(editor.setPresentationVisibility("basemapLabels",false));
+        QTRY_VERIFY(placedLabel(map,"DEU")!=nullptr);
+        QPointer<QQuickItem> original=placedLabel(map,"DEU");const auto x=original->x();
+        editor.beginMapCameraPan();QVERIFY(editor.updateMapCameraPan(8,0));
+        QCoreApplication::processEvents();
+        QVERIFY(original);QCOMPARE(placedLabel(map,"DEU"),original.data());QVERIFY(original->x()!=x);
+        editor.endMapCameraPan();
+        editor.selectCountry("DEU");
+        QCOMPARE(editor.selectedFlagSource(),editor.countryVisuals().value("DEU").toMap().value("flagSource").toString());
+        window->setProperty("allowClose",true);window->close();
+    }
+    void oversizedFlagSourcesStayDisplaySized() {
+        EditorController editor(EditorControllerConfig{});QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+        window->resize(1280,800);exposeForTest(window);
+        editor.selectCountry("DEU");QTest::qWait(150);
+        auto* flag=visualItem(window->contentItem(),"selectionCardFlag");QVERIFY(flag);
+        // Eritrea's SVG viewBox is 14400x7200 (> 256 MB when unbounded).
+        QVERIFY(flag->setProperty("source",QUrl("qrc:/defaults/flags/native/er.svg")));
+        QTRY_COMPARE(flag->property("status").toInt(),1); // Image.Ready
+        const auto size=flag->property("sourceSize").toSize();
+        QVERIFY(size.width()>0&&size.width()<=std::ceil(flag->width()*window->devicePixelRatio()));
+        QVERIFY(size.height()>0&&size.height()<=std::ceil(flag->height()*window->devicePixelRatio()));
+        QVERIFY(!capture(window).isNull());
+        window->setProperty("allowClose",true);window->close();
+    }
     void canonicalWorldShellCapture() {
         EditorControllerConfig config;config.bootstrapWorld=true;config.worldDataRoot=QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR);
         EditorController editor(config);QQmlApplicationEngine engine;QStringList warnings;
@@ -974,8 +1034,7 @@ private slots:
         // Hidden Windows launches defer scene polish until the first render.
         QVERIFY(!window->grabWindow().isNull());
         auto map=window->findChild<QQuickItem*>("mapView"); QVERIFY(map);
-        auto panel=window->findChild<QQuickItem*>("editorPanel"); QVERIFY(panel);
-        QVERIFY(!panel->property("compact").toBool());
+        QVERIFY(!window->findChild<QQuickItem*>("editorPanel")); // optional forms are lazy
         auto clickItem=[&](const char* name) {
             enterExistingControlRoute(window,QString::fromLatin1(name));
             QTest::qWait(80); // settle layout before reading delegate coordinates
@@ -1011,6 +1070,8 @@ private slots:
         QCOMPARE(editor.selectedId(),QString("DEU"));
         QVERIFY(QMetaObject::invokeMethod(map,"fit"));
         QVERIFY(clickItem("swatche56b6f")); QVERIFY(editor.dirty());
+        auto panel=window->findChild<QQuickItem*>("editorPanel"); QVERIFY(panel);
+        QVERIFY(!panel->property("compact").toBool());
         QCOMPARE(editor.colors()["DEU"].toString(),QString("#e56b6f"));
         QVERIFY(clickItem("undoButton")); QVERIFY(!editor.dirty());
         QVERIFY(clickItem("redoButton")); QVERIFY(editor.dirty());

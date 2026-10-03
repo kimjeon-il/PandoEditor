@@ -13,6 +13,9 @@ public:
     void setWorldBase(std::shared_ptr<const WorldBaseFrame> base) {worldBase_=std::move(base);}
     void setBuiltinHydro(std::shared_ptr<const BuiltinHydroRenderFrame> frame) {builtinHydro_=std::move(frame);}
     void setQuality(RenderQualityProfile quality) {quality_=quality;}
+    std::uint64_t preparationCount() const {return preparations_;}
+    std::uint64_t transientUpdateCount() const {return transientUpdates_;}
+    std::uint64_t unchangedCount() const {return unchanged_;}
     std::shared_ptr<const RenderScene> build(
         const pandoeditor::ProjectSnapshot& snapshot,const MapViewState& view,
         const InteractionRenderPacket& interaction,
@@ -27,6 +30,8 @@ public:
         const MapViewState& view,const InteractionRenderPacket& interaction,
         const std::shared_ptr<const RenderScene>& previous);
 private:
+    void remember(const pandoeditor::ProjectSnapshot&,const MapViewState&,
+                  const std::shared_ptr<const RenderScene>&);
     std::shared_ptr<const RenderScene> buildDocumentImpl(
         const pandoeditor::ProjectDocument&,std::uint64_t,const MapViewState&,
         const InteractionRenderPacket&,const std::shared_ptr<const RenderScene>&,
@@ -35,4 +40,12 @@ private:
     std::shared_ptr<const WorldBaseFrame> worldBase_;
     std::shared_ptr<const BuiltinHydroRenderFrame> builtinHydro_;
     RenderQualityProfile quality_;
+    // Retain the immutable snapshot: raw document-address reuse alone is not
+    // a safe identity check after a project replacement/undo.
+    std::optional<pandoeditor::ProjectSnapshot> preparedSnapshot_;
+    std::weak_ptr<const RenderScene> preparedScene_;
+    std::shared_ptr<const BuiltinHydroRenderFrame> preparedHydro_;
+    ProjectionMode preparedMode_=ProjectionMode::Flat;
+    RenderLod preparedLod_=RenderLod::High;
+    std::uint64_t preparations_=0,transientUpdates_=0,unchanged_=0;
 };

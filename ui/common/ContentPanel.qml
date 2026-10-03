@@ -69,7 +69,7 @@ ScrollView {
                     visible: root.editState[field] !== undefined
                     Layout.fillWidth: true
                     textRole: "name"; valueRole: "id"
-                    model: [{id:"", name:field === "parentId" ? "상위 분포 없음" : field === "layerId" ? "분포 레이어 선택" : "독립 도형 (영토 참조 없음)"}].concat(editor.objectRows.filter(function(row) { return row.domain === (field === "territoryId" ? "territorial" : "distributionLayer") && row.id !== root.editState.id }))
+                    model: visible ? [{id:"", name:field === "parentId" ? "상위 분포 없음" : field === "layerId" ? "분포 레이어 선택" : "독립 도형 (영토 참조 없음)"}].concat(editor.objectRows.filter(function(row) { return row.domain === (field === "territoryId" ? "territorial" : "distributionLayer") && row.id !== root.editState.id })) : []
                     currentIndex: Math.max(0, model.findIndex(function(row) { return row.id === root.editState[field] }))
                     onActivated: root.update(field, currentValue)
                 }

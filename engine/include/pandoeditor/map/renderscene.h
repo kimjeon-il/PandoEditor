@@ -47,6 +47,10 @@ struct WorldCountryDraw {
 };
 
 struct RenderScene {
+    // Shared only by transient view/interaction copies of one preparation.
+    // Revisions alone can collide when another project replaces the scene.
+    struct PreparationIdentity {};
+    std::shared_ptr<const PreparationIdentity> preparationIdentity;
     std::uint64_t revision=0;
     SceneRevisions revisions;
     // Preparation signatures permit comparison without retaining source document state.

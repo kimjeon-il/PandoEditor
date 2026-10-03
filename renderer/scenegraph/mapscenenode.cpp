@@ -2,6 +2,7 @@
 #include "mapmaterial.h"
 #include <QSGGeometryNode>
 #include <QSGGeometry>
+#include <QElapsedTimer>
 #include <algorithm>
 #include <climits>
 #include <cmath>
@@ -64,11 +65,20 @@ bool contains(const std::vector<pandoeditor::ObjectRef>& refs,const pandoeditor:
 void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                         const MapViewState& view,const MapFlatViewport& flat,
                         MapGpuStats& stats,std::size_t uploadBudgetBytes) {
+    QElapsedTimer syncClock;syncClock.start();++stats.syncCount;
+    struct Timing {MapGpuStats& stats;QElapsedTimer& clock;
+        ~Timing(){stats.syncMilliseconds=clock.nsecsElapsed()/1.e6;}} timing{stats,syncClock};
     const WorldRenderPlan emptyPlan;
     const auto& worldPlan=scene?scene->worldPlan:emptyPlan;
     const auto& worldOffsets=worldPlan.worldOffsets;
     const auto& fills=worldPlan.fills;
     const auto& strokes=worldPlan.strokes;
+    // The canonical globe base is a static mesh. Batch only adjacent compatible
+    // draw commands; hemisphere/screen clipping remains in the shaders. Keeping
+    // the batches view-independent avoids RHI buffer churn at country bounds.
+    const bool batchBase=view.mode==ProjectionMode::Globe&&scene&&scene->worldBase&&
+        scene->worldBase->mesh&&!scene->worldBase->mesh->preview&&
+        worldOffsets.size()==1&&worldOffsets.front()==0;
     stats.visibleCountryCount=0;
     stats.drawIndexCount=0;
     stats.fullIndexCount=(fills.fullIndexCount+strokes.fullIndexCount)*worldOffsets.size();
@@ -79,9 +89,9 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                 ++stats.visibleCountryCount;
         const auto submit=[&](PrimitiveKind kind,std::size_t i) {
             if(i>=scene->worldCountries.size()||!scene->worldCountries[i].visible)return;
-            if(kind==PrimitiveKind::WorldFill&&i<fills.visible.size()&&fills.visible[i])
+            if(kind==PrimitiveKind::WorldFill&&(batchBase||(i<fills.visible.size()&&fills.visible[i])))
                 stats.drawIndexCount+=mesh.countryTriangleRanges[i*2+1]*worldOffsets.size();
-            if(kind==PrimitiveKind::WorldStroke&&i<strokes.visible.size()&&strokes.visible[i])
+            if(kind==PrimitiveKind::WorldStroke&&(batchBase||(i<strokes.visible.size()&&strokes.visible[i])))
                 stats.drawIndexCount+=mesh.countryBoundaryRanges[i*2+1]*worldOffsets.size();
         };
         if(mesh.preview)for(std::size_t i=0;i<scene->worldCountries.size();++i) {
@@ -93,9 +103,16 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                 submit(command.primitive,command.index);
     }
     stats.uploadBytesThisFrame=0;stats.uploadsPending=false;
-    if(!pending_&&scene&&scene==lastScene_&&worldOffsets==lastOffsets_&&
+    const bool samePreparedScene=scene&&lastScene_&&
+        (scene==lastScene_||(scene->preparationIdentity&&scene->preparationIdentity==lastScene_->preparationIdentity))&&
+        scene->worldBase==lastScene_->worldBase&&
+        scene->revisions.geometry==lastScene_->revisions.geometry&&
+        scene->revisions.presentation==lastScene_->revisions.presentation&&
+        scene->revisions.selection==lastScene_->revisions.selection&&
+        scene->revisions.dataset==lastScene_->revisions.dataset;
+    if(!pending_&&samePreparedScene&&worldOffsets==lastOffsets_&&
        view.mode==lastMode_&&
-       fills.visible==lastFillVisibility_&&strokes.visible==lastStrokeVisibility_) {
+       (batchBase||(fills.visible==lastFillVisibility_&&strokes.visible==lastStrokeVisibility_))) {
         // QML pan/zoom and globe rotation change uniforms only. The SG tree,
         // vertex/index buffers and render packet pointers are untouched.
         for(auto* child=firstChild();child;child=child->nextSibling()) {
@@ -111,16 +128,18 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                 ++stats.viewUniformUpdateCount;
             }
         }
+        lastScene_=scene;stats.sceneRevision=scene->revision;
         return;
     }
     std::map<std::string,Entry*> old;
+    ++stats.treeRebuildCount;stats.drawNodes=0;stats.strokeBytes=0;
     const auto previousScene=lastScene_; // Retain packet allocations while comparing raw identities.
     (void)previousScene;
-    while(auto* child=firstChild()) {
-        removeChildNode(child);
+    for(auto* child=firstChild();child;child=child->nextSibling()) {
         auto* entry=static_cast<Entry*>(child);
         old.emplace(entry->key,entry);
     }
+    std::vector<Entry*> ordered;
     stats.geometryBytes=0;
     pending_=false;
     lastScene_=scene;lastOffsets_=worldOffsets;lastMode_=view.mode;
@@ -160,7 +179,12 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                 pending_=true;return;
             }
             node=new Entry(identity,kind,blend);
+            QElapsedTimer uploadClock;uploadClock.start();
             upload(*node);
+            const auto ms=uploadClock.nsecsElapsed()/1.e6;
+            stats.uploadMilliseconds+=ms;
+            if(kind==MapPrimitive::Stroke)stats.strokeUploadMilliseconds+=ms;
+            stats.uploadedBytes+=node->bytes;
             node->source=source;node->indices=indexSource;
             ++stats.geometryUploadCount;
         }
@@ -181,7 +205,9 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             ++stats.materialUpdateCount;node->markDirty(QSGNode::DirtyMaterial);
         }
         stats.geometryBytes+=node->bytes;
-        appendChildNode(node);
+        ++stats.drawNodes;
+        if(kind==MapPrimitive::Stroke)stats.strokeBytes+=node->bytes;
+        ordered.push_back(node);
     };
     auto fill=[&](const PolygonDrawPacket& draw,int world) {
         const auto& packet=draw.geometryPacket;
@@ -217,7 +243,9 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         const auto vertices=std::size_t(last-first);
         if(vertices>INT_MAX||count>INT_MAX)return;
         const auto& countryDraw=scene->worldCountries[country];
-        install("world/"+countryDraw.id,MapPrimitive::Fill,countryDraw.fill.blendMode,
+        // Several immutable mesh slots can belong to one logical country.
+        // The owner alone is not a geometry identity (e.g. overseas islands).
+        install("world/"+std::to_string(country)+"/"+countryDraw.id,MapPrimitive::Fill,countryDraw.fill.blendMode,
                 countryDraw.fill,&mesh,&mesh.triangleIndices,world,false,
                 vertices*sizeof(FillVertex)+count*sizeof(std::uint32_t),false,[&](Entry& node) {
             node.allocate(int(vertices),int(count));
@@ -238,7 +266,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         const auto start=mesh.countryBoundaryRanges.at(country*2);
         const auto count=mesh.countryBoundaryRanges.at(country*2+1);
         if(!count||count/2>std::size_t(INT_MAX/4))return;
-        install("world/"+scene->worldCountries[country].id+
+        install("world/"+std::to_string(country)+"/"+scene->worldCountries[country].id+
                 (channel.empty()?"":"/"+channel),MapPrimitive::Stroke,style.blendMode,
                 style,&mesh,&mesh.lineIndices,world,!channel.empty(),
                 (count/2)*(4*sizeof(StrokeVertex)+6*sizeof(std::uint32_t)),
@@ -348,7 +376,81 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             worldFill(i,int(offset));
             worldStroke(i,int(offset),scene->worldCountries[i].boundary);
         }
-    for(const auto& command:scene->drawSequence)
+    struct BasePart {std::size_t slot,first,vertices,indexFirst,indices;};
+    std::vector<BasePart> batch;
+    MapPrimitive batchKind=MapPrimitive::Fill;RenderStyle batchStyle;
+    std::size_t batchBytes=0;
+    const auto sameStyle=[](const RenderStyle& a,const RenderStyle& b) {
+        return a.color==b.color&&a.alpha==b.alpha&&a.fillAlpha==b.fillAlpha&&
+            a.width==b.width&&a.dashOn==b.dashOn&&a.dashOff==b.dashOff&&a.blendMode==b.blendMode;
+    };
+    const auto flushBase=[&] {
+        if(batch.empty())return;
+        const auto& mesh=*scene->worldBase->mesh;
+        std::string id="base-batch";std::size_t vertices=0,indices=0;
+        for(const auto& part:batch) {
+            id+="/"+std::to_string(part.slot);
+            vertices+=part.vertices;indices+=part.indices;
+        }
+        install(id,batchKind,batchStyle.blendMode,batchStyle,&mesh,
+                batchKind==MapPrimitive::Fill?static_cast<const void*>(&mesh.triangleIndices):&mesh.lineIndices,
+                0,false,batchBytes,false,[&](Entry& node) {
+            node.allocate(int(vertices),int(indices));
+            auto* outputIndices=node.geometry()->indexDataAsUInt();
+            std::size_t vertexOffset=0,indexOffset=0;
+            for(const auto& part:batch) {
+                if(batchKind==MapPrimitive::Fill) {
+                    auto* output=static_cast<FillVertex*>(node.geometry()->vertexData());
+                    for(std::size_t i=0;i<part.vertices;++i)
+                        output[vertexOffset+i]={mesh.positionsMicrodegrees[(part.first+i)*2]/1000000.f,
+                                               mesh.positionsMicrodegrees[(part.first+i)*2+1]/1000000.f};
+                    for(std::size_t i=0;i<part.indices;++i)
+                        outputIndices[indexOffset+i]=std::uint32_t(vertexOffset)+mesh.triangleIndices[part.indexFirst+i]-std::uint32_t(part.first);
+                } else {
+                    auto* output=static_cast<StrokeVertex*>(node.geometry()->vertexData());
+                    for(std::size_t i=0;i<part.vertices/4;++i) {
+                        const auto a=std::size_t(mesh.lineIndices[part.indexFirst+i*2]);
+                        const auto b=std::size_t(mesh.lineIndices[part.indexFirst+i*2+1]);
+                        const float ax=mesh.positionsMicrodegrees[a*2]/1000000.f,ay=mesh.positionsMicrodegrees[a*2+1]/1000000.f;
+                        const float bx=mesh.positionsMicrodegrees[b*2]/1000000.f,by=mesh.positionsMicrodegrees[b*2+1]/1000000.f;
+                        for(int j=0;j<4;++j)output[vertexOffset+i*4+j]={ax,ay,bx,by,(j%2)?1.f:-1.f,(j/2)?1.f:0.f,0.f};
+                        const std::uint32_t base=std::uint32_t(vertexOffset+i*4);
+                        const std::uint32_t quad[]{base,base+1,base+2,base+2,base+1,base+3};
+                        std::memcpy(outputIndices+indexOffset+i*6,quad,sizeof(quad));
+                    }
+                }
+                vertexOffset+=part.vertices;indexOffset+=part.indices;
+            }
+        });
+        batch.clear();batchBytes=0;
+    };
+    for(const auto& command:scene->drawSequence) {
+        if(batchBase&&(command.primitive==PrimitiveKind::WorldFill||command.primitive==PrimitiveKind::WorldStroke)) {
+            const auto slot=command.index;
+            if(slot>=scene->worldCountries.size()||!scene->worldCountries[slot].visible)continue;
+            const auto& mesh=*scene->worldBase->mesh;
+            const auto kind=command.primitive==PrimitiveKind::WorldFill?MapPrimitive::Fill:MapPrimitive::Stroke;
+            const auto& style=kind==MapPrimitive::Fill?scene->worldCountries[slot].fill:scene->worldCountries[slot].boundary;
+            BasePart part{slot,0,0,0,0};
+            if(kind==MapPrimitive::Fill) {
+                const auto begin=std::lower_bound(mesh.countryIndices.begin(),mesh.countryIndices.end(),std::uint16_t(slot));
+                const auto end=std::upper_bound(begin,mesh.countryIndices.end(),std::uint16_t(slot));
+                part.first=std::size_t(begin-mesh.countryIndices.begin());part.vertices=std::size_t(end-begin);
+                part.indexFirst=mesh.countryTriangleRanges.at(slot*2);part.indices=mesh.countryTriangleRanges.at(slot*2+1);
+            } else {
+                part.indexFirst=mesh.countryBoundaryRanges.at(slot*2);
+                const auto segments=mesh.countryBoundaryRanges.at(slot*2+1)/2;
+                part.vertices=segments*4;part.indices=segments*6;
+            }
+            if(!part.vertices||!part.indices)continue;
+            if(part.vertices>INT_MAX||part.indices>INT_MAX)continue;
+            const auto bytes=part.vertices*(kind==MapPrimitive::Fill?sizeof(FillVertex):sizeof(StrokeVertex))+part.indices*sizeof(std::uint32_t);
+            // Bounded batches limit the upload cost of a color/order edit.
+            if(!batch.empty()&&(kind!=batchKind||!sameStyle(style,batchStyle)||batchBytes+bytes>4*1024*1024))flushBase();
+            batchKind=kind;batchStyle=style;batch.push_back(part);batchBytes+=bytes;
+            continue;
+        }
+        flushBase();
         for(double offset:worldOffsets) {
             const int world=int(offset);
             if(command.primitive==PrimitiveKind::Polygon&&command.index<scene->polygons.size())
@@ -364,6 +466,8 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                     command.index<scene->worldCountries.size())
                 worldStroke(command.index,world,scene->worldCountries[command.index].boundary);
         }
+    }
+    flushBase();
     // Interaction is a separate final pass; the source packets remain immutable.
     const auto outline=[&](const pandoeditor::ObjectRef& ref,int world,
                            const std::string& channel,std::uint32_t color,
@@ -417,7 +521,17 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         if(scene->interaction.editTarget)
             outline(*scene->interaction.editTarget,world,"edit-target",0xe89b1a,3.5f,true);
     }
+    // Removing/re-adding unchanged nodes invalidates Qt's RHI batches, even
+    // when our QSGGeometry allocations were retained. Reconcile only actual
+    // additions/order changes so camera culling and hover preserve GPU buffers.
     for(auto& [name,node]:old)delete node;
+    auto* cursor=firstChild();
+    for(auto* node:ordered) {
+        if(node==cursor) {cursor=cursor->nextSibling();continue;}
+        if(node->parent()==this)removeChildNode(node);
+        if(cursor)insertChildNodeBefore(node,cursor);else appendChildNode(node);
+        ++stats.nodeAttachmentCount;
+    }
     stats.uploadBytesThisFrame=scheduler_.frameBytes();
     stats.uploadsPending=pending_;
 }
