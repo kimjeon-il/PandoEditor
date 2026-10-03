@@ -43,3 +43,6 @@
 - C: 공간 부족으로 이번에 만든 불완전한 Temp 패키지만 제거했고 221MB를 확보했다. 패키지·실화면 캡처는 66GB 여유 공간이 있는 D:에 준비했다. 사용자 덤프(2,696,729바이트, 기존 수정시각 유지)는 보존했다.
 
 로컬 증거: Temp의 `pando-final-local109.{txt,xml}`, `pando-final-local109-LastTest.log`, `pando-final-selection.txt`, `pando-final-shell.txt`; `D:/Pandoeditor-release-ui-20261003/logs/ui-preview6-windows.txt`와 `ui-preview6-captures/`. 전세계 데이터 검사 3종, 전체 수계 실데이터 및 전체 `ui_tests`는 로컬에서 실행하지 않았고 최종 커밋의 원격 전체 114 CTest/skip audit 결과를 별도로 확인한다. 장시간 GPU, Android 전체, ASan 및 PC/커널 강제 종료 원인 분석은 이번 검증에서 수행하지 않았다.
+## Final full UI follow-up
+
+The first integration CI at 6ea8d54 built successfully and passed 113/114 CTest suites; ui_tests stopped at a stale legacy editorPanel dereference. The storage-flow assertion now checks the unified objectPropertyPanel safely. File dialogs close before workspace Back; non-error notifications no longer consume workspace Back. Compositing tests explicitly clear selection through the existing clearSelection API before sampling map pixels. The complete software/offscreen ui_tests suite subsequently passed all 30 cases, with no failures or skips. Release portable startup was rebuilt from this correction; final same-commit remote CI remains the publication gate.

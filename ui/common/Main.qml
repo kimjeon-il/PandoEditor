@@ -149,6 +149,9 @@ ApplicationWindow {
         }
     }
     function handleBack() {
+        if (openDialog.visible) { openDialog.close(); return }
+        if (saveDialog.visible) { saveDialog.close(); return }
+        if (exportDialog.visible) { exportDialog.close(); return }
         if(appearancePreferencesDialog.visible){editor.cancelAppearancePreview();appearancePreferencesDialog.close();return}
         if (Qt.inputMethod.visible) { Qt.inputMethod.hide(); return }
         if (editor.geometryEditState.active) { editor.geometryBack(); return }
@@ -156,7 +159,7 @@ ApplicationWindow {
         if (gisPanel.visible) { gisPanel.close(); return }
         if (gisExportPanel.visible) { gisExportPanel.close(); return }
         if (webReport.visible) { cancelWebImportFlow(); return }
-        if (errorDialog.visible) { errorDialog.close(); return }
+        if (errorDialog.visible) { const consumesBack=errorDialog.kind === "error"; errorDialog.close(); if (consumesBack) return }
         if (recoveryDialog.visible) { recoveryDialog.close(); return }
         if (unsaved.visible) { unsaved.close(); pendingAction=""; return }
         if (workspace.dismissPopup()) return

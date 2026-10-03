@@ -753,10 +753,15 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(window,"requestExport"));
         QVERIFY(QFile::exists(privatePath));
         QVERIFY(!editor.dirty());
+        auto exportDialog=window->findChild<QObject*>("exportDialog");QVERIFY(exportDialog);
+        QTRY_VERIFY(exportDialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
+        QTRY_VERIFY(!exportDialog->property("visible").toBool());
 
         editor.setColor("#654321");
         QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
-        QVERIFY(!visualItem(window->contentItem(),"editorPanel")->isVisible());
+        auto properties=visualItem(window->contentItem(),"objectPropertyPanel");QVERIFY(properties);
+        QVERIFY(!properties->isVisible());
         QVERIFY(!unsaved->property("visible").toBool());
         QVERIFY(editor.dirty());
         QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
@@ -1001,15 +1006,15 @@ private slots:
         auto overlap=pixel(3,2); QVERIFY2(near(overlap,QColor(116,120,250)),qPrintable(overlap.name()));
         auto red=pixel(1,2); QVERIFY2(near(red,QColor(244,120,122)),qPrintable(red.name()));
         editor.selectCountry("A"); editor.previewCountryOpacity(0.5); QVERIFY(editor.commitPendingEdits());
-        editor.selectCountry("");
+        editor.clearSelection();
         auto quarter=pixel(1,2); QVERIFY2(near(quarter,QColor(238,179,183)),qPrintable(quarter.name()));
         editor.selectCountry("A"); editor.previewCountryOpacity(1); QVERIFY(editor.commitPendingEdits());
         editor.selectLayer("countries"); editor.previewLayerOpacity(1); QVERIFY(editor.commitPendingEdits());
         editor.addLayer(); auto top=editor.selectedLayerId();
         editor.selectCountry("B"); editor.moveCountry(top);
-        editor.previewLayerOpacity(0.5); QVERIFY(editor.commitPendingEdits()); editor.selectCountry("");
+        editor.previewLayerOpacity(0.5); QVERIFY(editor.commitPendingEdits()); editor.clearSelection();
         auto purple=pixel(3,2); QVERIFY2(near(purple,QColor(127,0,128)),qPrintable(purple.name()));
-        editor.selectCountry("B"); editor.previewCountryOpacity(0.5); QVERIFY(editor.commitPendingEdits()); editor.selectCountry("");
+        editor.selectCountry("B"); editor.previewCountryOpacity(0.5); QVERIFY(editor.commitPendingEdits()); editor.clearSelection();
         auto nested=pixel(3,2); QVERIFY2(near(nested,QColor(191,0,64)),qPrintable(nested.name()));
         editor.moveLayer(-1);
         auto reordered=pixel(3,2); QVERIFY2(near(reordered,QColor(255,0,0)),qPrintable(reordered.name()));
