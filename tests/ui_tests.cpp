@@ -755,6 +755,8 @@ private slots:
         QVERIFY(!editor.dirty());
         auto exportDialog=window->findChild<QObject*>("exportDialog");QVERIFY(exportDialog);
         QTRY_VERIFY(exportDialog->property("visible").toBool());
+        // Let the platform process its deferred native dialog creation before Back.
+        QCoreApplication::processEvents();
         QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
         QTRY_VERIFY(!exportDialog->property("visible").toBool());
 
