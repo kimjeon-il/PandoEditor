@@ -22,6 +22,9 @@ Rectangle {
     visible:editor.selectionItems.length===1
     readonly property var colors:Tokens.colors(editor.appearancePreferences)
     readonly property string flagSource:editorOpen?editor.selectedFlagSource:(previewData.flagSource||"")
+    readonly property bool compactPreview:Window.window!==null&&Window.window.width<800
+    readonly property real previewFlagWidth:compactPreview?80:92
+    readonly property real previewFlagHeight:compactPreview?60:68
     implicitHeight:editorOpen?(collapsed?56:116):142
     radius:editorOpen?0:16;color:colors.panel;border.color:editorOpen?"transparent":colors.border
     function navigationStarted(){navigating=true;Qt.callLater(function(){bar.navigating=false})}
@@ -33,10 +36,10 @@ Rectangle {
     Rectangle {visible:!bar.editorOpen;anchors.fill:parent;anchors.topMargin:5;anchors.bottomMargin:-5;color:"#16000000";radius:16;z:-2}
     Rectangle {objectName:"selectionCardTail";visible:!bar.editorOpen;width:12;height:12;x:parent.width/2-6;y:parent.height-6;rotation:45;color:bar.colors.panel;border.color:bar.colors.border;z:-1}
     UiButton {objectName:bar.editorOpen?"":"toggleObjectEditor";anchors.fill:parent;visible:!bar.editorOpen;Accessible.name:"상세 편집 · "+(bar.displayed.displayName||bar.displayed.name||"");background:Item{} contentItem:Item{} onClicked:{bar.targetPreview();bar.navigationStarted();bar.toggleEditor()}}
-    Rectangle {x:bar.editorOpen?12:16;y:bar.editorOpen?12:18;width:bar.editorOpen?56:108;height:bar.editorOpen?42:86;radius:6;color:bar.colors.subtle}
+    Rectangle {x:bar.editorOpen||bar.compactPreview?12:16;y:bar.editorOpen?12:bar.compactPreview?14:18;width:bar.editorOpen?56:bar.compactPreview?94:108;height:bar.editorOpen?42:bar.compactPreview?76:86;radius:6;color:bar.colors.subtle}
     Image {
-        objectName:"selectionCardFlag";x:bar.editorOpen?16:24;y:bar.editorOpen?16:26
-        width:bar.editorOpen?48:92;height:bar.editorOpen?34:70
+        objectName:"selectionCardFlag";x:bar.editorOpen?16:bar.compactPreview?19:24;y:bar.editorOpen?16:bar.compactPreview?22:27
+        width:bar.editorOpen?48:bar.previewFlagWidth;height:bar.editorOpen?34:bar.previewFlagHeight
         sourceSize:Qt.size(Math.ceil(width*Screen.devicePixelRatio),Math.ceil(height*Screen.devicePixelRatio))
         source:bar.flagSource;fillMode:Image.PreserveAspectFit
     }

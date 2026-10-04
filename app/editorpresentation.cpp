@@ -211,8 +211,8 @@ void EditorController::rebuildLabelSources() {
         MapLabelSource source;
         source.ref=ref;source.text=properties->displayName;source.geographic=geographic;
         source.collisionGroup=settings.collisionGroup;
-        source.width=nameVisible?std::max(22.,textWidth(name)+16):24.;
-        source.height=nameVisible?std::max(19.,textHeight()):16.;
+        source.width=nameVisible?std::max(22.,textWidth(name)+16):MapFlagWidth;
+        source.height=nameVisible?std::max(19.,textHeight()):MapFlagHeight;
         source.priority=settings.priority.value_or(0);
         source.minZoom=settings.minZoom.value_or(0);
         source.maxZoom=settings.maxZoom.value_or(std::numeric_limits<double>::infinity());
@@ -261,6 +261,7 @@ void EditorController::refreshPlacedLabelRows() {
             {"name",QString::fromStdString(placement.text)},
             {"nameVisible",placement.nameVisible},{"pinned",placement.pinned},
             {"flagSource",flag==labelFlagSources_.end()?QString():flag->second},
+            {"flagWidth",MapFlagWidth},{"flagHeight",MapFlagHeight},{"flagGap",MapFlagGap},
             {"flagVisible",placement.flagVisible&&flag!=labelFlagSources_.end()}
         });
     }
@@ -272,7 +273,7 @@ void EditorController::refreshPlacedLabelRows() {
 
 void EditorController::reprojectLabelPlacements() {
     try {
-        labelEngine_.reproject(sceneBridge_.viewState());
+        labelEngine_.reproject(sceneBridge_.viewState(),camera_.display().zoom);
         refreshPlacedLabelRows();
     } catch(const std::exception& error) {
         emit errorOccurred(QStringLiteral("Label reprojection failed: ")+
@@ -283,7 +284,7 @@ void EditorController::reprojectLabelPlacements() {
 void EditorController::executeLabelResources(const ViewportResourceRequest& request) {
     if(labelSourcesDirty_)rebuildLabelSources();
     MapLabelLayoutOptions options;
-    options.zoom=request.flatZoom;
+    options.zoom=camera_.display().zoom;
     options.viewportWidth=request.view.viewportWidth;
     options.viewportHeight=request.view.viewportHeight;
     options.bottomInset=mobileMode_?96.:32.;

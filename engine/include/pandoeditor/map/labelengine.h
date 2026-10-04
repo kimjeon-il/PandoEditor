@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+inline constexpr double MapFlagWidth=18,MapFlagHeight=12,MapFlagGap=5,MapFlagMinZoom=1.8;
+
 struct MapLabelSource {
     pandoeditor::ObjectRef ref;
     std::string text;
@@ -57,7 +59,7 @@ public:
     const std::vector<MapLabelPlacement>& layout(
         const MapViewState&,const MapLabelLayoutOptions&,
         const std::set<pandoeditor::ObjectRef>& selected={});
-    const std::vector<MapLabelPlacement>& reproject(const MapViewState&);
+    const std::vector<MapLabelPlacement>& reproject(const MapViewState&,double zoom);
 
     void clear();
     const MapLabelEngineStats& stats() const noexcept {return stats_;}
@@ -70,6 +72,7 @@ private:
 
     std::vector<int> visibleCells(const MapViewState&,double paddingPixels) const;
     bool projectPlacement(std::size_t,const MapViewState&,MapLabelPlacement&) const;
+    void decorateFlags(double zoom);
 
     std::vector<MapLabelSource> sources_;
     std::map<pandoeditor::ObjectRef,std::size_t> sourceByRef_;

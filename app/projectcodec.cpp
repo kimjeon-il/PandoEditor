@@ -217,7 +217,8 @@ V contentValue(const ProjectDocument& d) {
     for(const auto& [ref,v]:d.countryDetails) countries.array.push_back(object({{"ref",refValue(ref)},{"capital",V::str(v.capital)}}));
     for(const auto& [ref,v]:d.symbols) symbols.array.push_back(object({{"ref",refValue(ref)},
         {"policy",V::str(v.policy==FlagPolicy::Default?"default":v.policy==FlagPolicy::None?"none":"embedded")},
-        {"embeddedDataUrl",V::str(v.embeddedDataUrl)}}));
+        {"embeddedDataUrl",V::str(v.embeddedDataUrl)},{"defaultCountryId",V::str(v.defaultCountryId)},
+        {"defaultFlagDataUrl",v.defaultFlagDataUrl?V::str(*v.defaultFlagDataUrl):V{}}}));
     V hidden=V::arr(); for(const auto& id:d.physicalData.hiddenHydroIds) hidden.array.push_back(V::str(id));
     return object({{"labels",labels},{"hydro",hydro},{"distributionLayers",layers},{"distributionEntries",entries},
         {"genericFeatures",generic},{"countryDetails",countries},{"symbols",symbols},
@@ -293,8 +294,11 @@ void readContent(const V& content,ProjectDocument& d) {
         const auto policy=str(field(row,"policy")); require(policy=="default" || policy=="none" || policy=="embedded","INVALID_FLAG: policy");
         v.policy=policy=="default"?FlagPolicy::Default:policy=="none"?FlagPolicy::None:FlagPolicy::Embedded;
         v.embeddedDataUrl=str(field(row,"embeddedDataUrl"));
+        if(row.object.count("defaultCountryId"))v.defaultCountryId=str(field(row,"defaultCountryId"));
+        if(row.object.count("defaultFlagDataUrl")&&field(row,"defaultFlagDataUrl").kind!=V::Null)
+            v.defaultFlagDataUrl=str(field(row,"defaultFlagDataUrl"));
         require(d.symbols.emplace(ref(field(row,"ref"),d,path+"/ref"),v).second,"DUPLICATE_ID: symbol");
-        unknown(d,6,row,path,{"ref","policy","embeddedDataUrl"});
+        unknown(d,6,row,path,{"ref","policy","embeddedDataUrl","defaultCountryId","defaultFlagDataUrl"});
     }
     const auto& physical=field(content,"physicalData");
     d.physicalData.dataset=str(field(physical,"dataset")); d.physicalData.version=str(field(physical,"version"));

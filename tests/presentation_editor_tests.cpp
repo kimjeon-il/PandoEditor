@@ -1,17 +1,157 @@
 #include "editorcontroller.h"
+#include "defaultflagresolver.h"
 #include <QTemporaryDir>
 #include <QFile>
+#include <QBuffer>
+#include <QImage>
 #include <QtTest>
 #include <algorithm>
 #include <tuple>
 class PresentationEditorTests:public QObject {
     Q_OBJECT
 private slots:
+    void countryConversionRetainsItsDefaultFlagAcrossSaveAndReset_data() {
+        QTest::addColumn<QString>("overridePolicy");
+        QTest::newRow("default")<<QString("default");
+        QTest::newRow("embedded")<<QString("embedded");
+        QTest::newRow("none")<<QString("none");
+    }
+    void countryConversionRetainsItsDefaultFlagAcrossSaveAndReset() {
+        QFETCH(QString,overridePolicy);
+        using namespace pandoeditor;
+        QTemporaryDir dir;EditorController resources({false,dir.filePath("private.json")});
+        const auto box=[](double x,double y,double size) {
+            Geometry g;g.type="Polygon";g.polygons={Polygon{Ring{{x,y},{x+size,y},{x+size,y+size},{x,y+size},{x,y}}}};return g;
+        };
+        ProjectDocument document({{"DEU","Germany",box(0,0,10).polygons,0x112233},
+                                  {"FRA","France",box(-5,-5,40).polygons,0x334455}},{{"countries","Countries"}});
+        QString expected="qrc:/defaults/flags/native/de.svg";
+        if(overridePolicy=="none") {document.symbols[territorialRef("DEU")]={FlagPolicy::None,{}};expected.clear();}
+        if(overridePolicy=="embedded") {
+            QFile original(":/defaults/flags/native/kr.svg");QVERIFY(original.open(QIODevice::ReadOnly));
+            expected=QString::fromLatin1("data:image/svg+xml;base64,"+original.readAll().toBase64());
+            document.symbols[territorialRef("DEU")]={FlagPolicy::Embedded,expected.toStdString()};
+        }
+        Project project;project.replace(document);
+        auto planned=CommandProcessor::planTerritorial(project,ConvertTerritorialTypeIntent{
+            territorialRef("DEU"),UnitKind::Subunit,territorialRef("FRA"),territorialRef("FRA"),"deu-subunit"});
+        QVERIFY(planned.ok()&&planned.plan);
+        CommandArguments args;args.action=ApplyTerritorialMutation{*planned.plan,GeometryPatch{
+            project.revision(),{{territorialRef("deu-subunit"),box(0,0,10)},{territorialRef("FRA"),box(-5,-5,40)}},{},{}}};
+        auto prepared=CommandProcessor::prepare(project,CommandProcessor::makeRequest(project,"territorial.geometry.commit",args));
+        QVERIFY(prepared.ok()&&prepared.preview);QVERIFY(CommandProcessor::confirm(project,*prepared.preview).ok());
+        QCOMPARE(resolveDefaultFlag(project.document(),territorialRef("deu-subunit")).source,expected);
+        QVERIFY(project.undo());QVERIFY(project.redo());
+        QFile file(dir.filePath("converted.json"));QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(projectcodec::encode(project));file.close();
+        EditorController editor({false,dir.filePath("converted-private.json")});
+        QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
+        QVERIFY(editor.selectObject({{"domain","territorial"},{"id","deu-subunit"}},"replace","map"));
+        QCOMPARE(editor.selectedFlagSource(),expected);
+        QVERIFY(editor.beginContentEdit("territorial","flag"));
+        QVERIFY(editor.loadContentFlag(QUrl("qrc:/defaults/flags/native/np.svg")));
+        QVERIFY(editor.commitContentField("flagSource"));editor.cancelContentEdit();
+        QVERIFY(editor.beginContentEdit("territorial","flag"));
+        QVERIFY(editor.updateContentField("flagPolicy","default"));QVERIFY(editor.commitContentField("flagPolicy"));
+        QCOMPARE(editor.selectedFlagSource(),expected);
+    }
+    void flagLibraryUsesTheSameDefaultAssetsAsWeb() {
+        QTemporaryDir dir;EditorController editor({false,dir.filePath("private.json")});
+        const auto library=editor.flagLibrary();
+        auto source=[&](const QString& code) {
+            for(const auto& row:library)if(row.toMap().value("code").toString()==code)return row.toMap().value("source").toString();
+            return QString{};
+        };
+        QCOMPARE(source("cd"),QString("qrc:/defaults/flags/legacy/cd.svg"));
+        QCOMPARE(source("sm"),QString("qrc:/defaults/flags/legacy/sm.svg"));
+        QCOMPARE(source("ga"),QString("qrc:/defaults/flags/legacy/ga.svg"));
+        QCOMPARE(source("pg"),QString("qrc:/defaults/flags/legacy/pg.svg"));
+        QCOMPARE(source("cyn"),QString("qrc:/defaults/flags/political/cyn.svg"));
+        QCOMPARE(source("sol"),QString("qrc:/defaults/flags/political/sol.svg"));
+    }
+    void flagLibraryPreservesOriginalSvgBytes() {
+        QTemporaryDir dir;EditorController editor({false,dir.filePath("private.json")});
+        editor.selectCountry("DEU");
+        QFile source(":/defaults/flags/native/np.svg");QVERIFY(source.open(QIODevice::ReadOnly));
+        const auto original=source.readAll();
+        QVERIFY(editor.beginContentEdit("territorial","flag"));
+        QVERIFY(editor.loadContentFlag(QUrl("qrc:/defaults/flags/native/np.svg")));
+        QCOMPARE(editor.contentEditState().value("flagSource").toString(),
+                 QString::fromLatin1("data:image/svg+xml;base64,"+original.toBase64()));
+        QVERIFY(editor.commitContentField("flagSource"));
+        QCOMPARE(editor.selectedFlagSource(),QString::fromLatin1("data:image/svg+xml;base64,"+original.toBase64()));
+        editor.cancelContentEdit();editor.undo();
+        QCOMPARE(editor.selectedFlagSource(),QString("qrc:/defaults/flags/native/de.svg"));
+        editor.redo();
+        QCOMPARE(editor.selectedFlagSource(),QString::fromLatin1("data:image/svg+xml;base64,"+original.toBase64()));
+    }
+    void uploadedRasterPreservesBytesAcrossSaveAndReopen() {
+        QTemporaryDir dir;QImage image(3,2,QImage::Format_ARGB32);image.fill(Qt::red);
+        image.setText("flag-provenance","original upload metadata must survive");
+        QByteArray original;QBuffer buffer(&original);QVERIFY(buffer.open(QIODevice::WriteOnly));
+        QVERIFY(image.save(&buffer,"PNG"));buffer.close();
+        QFile source(dir.filePath("original.png"));QVERIFY(source.open(QIODevice::WriteOnly));
+        source.write(original);source.close();
+        EditorController editor({false,dir.filePath("private.json")});editor.selectCountry("DEU");
+        QVERIFY(editor.beginContentEdit("territorial","flag"));
+        QVERIFY(editor.loadContentFlag(QUrl::fromLocalFile(source.fileName())));
+        QVERIFY(editor.commitContentField("flagSource"));editor.cancelContentEdit();
+        const auto expected=QString::fromLatin1("data:image/png;base64,"+original.toBase64());
+        QCOMPARE(editor.selectedFlagSource(),expected);
+        QFile saved(dir.filePath("saved.json"));QVERIFY(saved.open(QIODevice::WriteOnly));
+        saved.write(editor.documentBytes());saved.close();
+        EditorController reopened({false,dir.filePath("reopened-private.json")});
+        QVERIFY(reopened.openFile(QUrl::fromLocalFile(saved.fileName())));reopened.selectCountry("DEU");
+        QCOMPARE(reopened.selectedFlagSource(),expected);
+    }
+    void territorialFlagMetadataUsesWebPrecedence() {
+        using namespace pandoeditor;
+        QTemporaryDir dir;EditorController resources({false,dir.filePath("private.json")});
+        ProjectDocument document;
+        TerritorialUnit unit;unit.id="child";unit.kind=UnitKind::Subunit;
+        document.units.push_back(unit);
+        auto metadata=[&](const std::string& field,const std::string& json) {
+            document.extensions.clear();
+            PreservedExtension extension;extension.id="flag-metadata";
+            extension.jsonPointer="/territorialEntities/0/properties/metadata/"+field;
+            extension.payload=json;extension.dependencies={territorialRef("child")};
+            document.extensions.push_back(extension);
+        };
+        metadata("defaultFlagDataUrl","\"data:image/svg+xml;base64,PHN2Zy8+\"");
+        QCOMPARE(resolveDefaultFlag(document,territorialRef("child")).source,
+                 QString("data:image/svg+xml;base64,PHN2Zy8+"));
+        document.symbols[territorialRef("child")]={FlagPolicy::None,{}};
+        QVERIFY(resolveDefaultFlag(document,territorialRef("child")).source.isEmpty());
+        document.symbols.clear();
+        metadata("convertedFromCountry","{\"countryId\":\"DEU\"}");
+        QCOMPARE(resolveDefaultFlag(document,territorialRef("child")).source,
+                 QString("qrc:/defaults/flags/native/de.svg"));
+        metadata("convertedFromCountry","{\"countryId\":\"DEU\",\"override\":{\"flagDataUrl\":null}}");
+        QVERIFY(resolveDefaultFlag(document,territorialRef("child")).source.isEmpty());
+        metadata("builtinSubunit","{\"sourceCountryId\":\"KOR\"}");
+        QCOMPARE(resolveDefaultFlag(document,territorialRef("child")).source,
+                 QString("qrc:/defaults/flags/native/kr.svg"));
+        auto empty=document.extensions.front();empty.id="empty-default";
+        empty.jsonPointer="/territorialEntities/0/properties/metadata/defaultFlagDataUrl";empty.payload="\"\"";
+        document.extensions.push_back(empty);
+        QCOMPARE(resolveDefaultFlag(document,territorialRef("child")).source,
+                 QString("qrc:/defaults/flags/native/kr.svg"));
+    }
     void countryFlagRemainsWhenNameChannelIsHidden() {
         QTemporaryDir dir;
+        pandoeditor::ProjectDocument document({{"DEU","Germany",{{{{0,0},{10,0},{10,10},{0,10},{0,0}}}},0x112233}},{{"countries","Countries"}});
+        pandoeditor::Project project;project.replace(document);
+        QFile file(dir.filePath("flag-only.json"));QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(projectcodec::encode(project));file.close();
         EditorController editor({false,dir.filePath("private.json")});
+        QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
+        QVERIFY(editor.resizeMapCamera(800,600));
+        QVERIFY(editor.setProjectionMode("flat"));
         editor.selectCountry("DEU");
+        QVERIFY(editor.setLabelPinned({{"domain","territorial"},{"id","DEU"}},true,5,5,true));
         QVERIFY(editor.countryVisuals().value("DEU").toMap().value("flagAvailable").toBool());
+        QVERIFY(editor.focusObject());
+        QVERIFY(editor.zoomMapCameraAt(4,640,360));
         QVERIFY(editor.setPresentationVisibility("basemapLabels",false));
         const auto hasDeu=[&] {
             const auto rows=editor.placedLabels();

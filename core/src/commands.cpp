@@ -387,6 +387,11 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
                 for(auto& r:d.relations)if(moved.count(r.unit)&&!(r.unit==in.source))r.sovereign=in.source;
             } else {
                 const auto old=in.source,newRef=territorialRef(in.generatedId);const auto oldId=unit->id;
+                d.symbols[old].defaultCountryId=oldId;
+                auto& symbol=d.symbols.at(old);
+                if(symbol.policy==FlagPolicy::Embedded)symbol.defaultFlagDataUrl=symbol.embeddedDataUrl;
+                else if(symbol.policy==FlagPolicy::None)symbol.defaultFlagDataUrl=std::string{};
+                else symbol.defaultFlagDataUrl.reset();
                 unit->id=in.generatedId;unit->kind=UnitKind::Subunit;unit->coverageMode="partition";unit->baseName.clear();
                 auto membership=d.presentation.membership.extract(old);if(!membership.empty()){membership.key()=newRef;d.presentation.membership.insert(std::move(membership));}
                 auto style=d.presentation.objectStyles.extract(old);style.key()=newRef;d.presentation.objectStyles.insert(std::move(style));

@@ -300,27 +300,30 @@ Rectangle {
     }
     Repeater {
         model: editor.placedLabelModel
-        delegate: Column {
+        delegate: Item {
             id:placedLabel
             objectName: "mapPlacedLabel"
             opacity:view.hoverPreviewVisible && view.hoverPreviewKey===modelData.ref.key?0:1
             required property var modelData
             required property real labelX
             required property real labelY
+            width:(placedFlag.visible?placedFlag.width+(placedText.visible?modelData.flagGap:0):0)+(placedText.visible?placedText.implicitWidth:0)
+            height:Math.max(placedFlag.visible?placedFlag.height:0,placedText.visible?placedText.implicitHeight:0)
             x: labelX-width/2
             y: labelY-height/2
             z: editor.layers.length+2
             Image {
+                id:placedFlag
                 objectName: "mapPlacedFlag"
-                anchors.horizontalCenter: parent.horizontalCenter
-                width:24; height:16; fillMode:Image.PreserveAspectFit
+                x:0;y:(parent.height-height)/2
+                width:parent.modelData.flagWidth; height:parent.modelData.flagHeight; fillMode:Image.PreserveAspectFit
                 // SVG intrinsic sizes can exceed 100 megapixels. Rasterize at
                 // display resolution, including HiDPI, before texture upload.
                 sourceSize: Qt.size(Math.ceil(width*Screen.devicePixelRatio), Math.ceil(height*Screen.devicePixelRatio))
                 source:parent.modelData.flagVisible ? (parent.modelData.flagSource||"") : ""
-                visible:!!parent.modelData.flagVisible&&source.toString()!==""
+                visible:!!parent.modelData.flagVisible&&source.toString()!==""&&status!==Image.Error
             }
-            Label { objectName: "mapPlacedText"; textFormat:Text.PlainText; anchors.horizontalCenter:parent.horizontalCenter; text:parent.modelData.name||""; visible:parent.modelData.nameVisible!==false; color:"#243746"; style:Text.Outline; styleColor:"#ffffff"; font.pixelSize:12; font.weight:Font.DemiBold }
+            Label { id:placedText;objectName: "mapPlacedText"; textFormat:Text.PlainText;x:placedFlag.visible?placedFlag.width+parent.modelData.flagGap:0;y:(parent.height-height)/2;text:parent.modelData.name||""; visible:parent.modelData.nameVisible!==false; color:"#243746"; style:Text.Outline; styleColor:"#ffffff"; font.pixelSize:12; font.weight:Font.DemiBold }
             TapHandler {
                 enabled:!view.geometryEditing;gesturePolicy:TapHandler.ReleaseWithinBounds
                 onPressedChanged:{view.labelPress=pressed;view.selectionPointerChanged(pressed)}

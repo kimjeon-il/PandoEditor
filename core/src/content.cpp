@@ -48,6 +48,7 @@ void indexContent(const ProjectDocument& d,DocumentIndex& idx) {
         require(ref.domain=="territorial" && idx.objects.count(ref),"DANGLING_REF: symbol owner");
         require(s.policy==FlagPolicy::Default || s.policy==FlagPolicy::None || s.policy==FlagPolicy::Embedded,"INVALID_FLAG: policy");
         require(s.policy==FlagPolicy::Embedded ? s.embeddedDataUrl.rfind("data:image/",0)==0 : s.embeddedDataUrl.empty(),"INVALID_FLAG: payload");
+        require(!s.defaultFlagDataUrl || s.defaultFlagDataUrl->empty() || s.defaultFlagDataUrl->rfind("data:image/",0)==0,"INVALID_FLAG: converted default payload");
     }
     static const std::set<std::string> labelKinds={"capital","city","town","region","mountain","water","custom"};
     for(std::size_t i=0;i<d.labels.size();++i) {
@@ -101,7 +102,7 @@ void indexContent(const ProjectDocument& d,DocumentIndex& idx) {
 
 bool sameContent(const ProjectDocument& a,const ProjectDocument& b) {
     return equalContentRows(a.countryDetails,b.countryDetails,[](const auto& v){return std::tie(v.first,v.second.capital);}) &&
-        equalContentRows(a.symbols,b.symbols,[](const auto& v){return std::tie(v.first,v.second.policy,v.second.embeddedDataUrl);}) &&
+        equalContentRows(a.symbols,b.symbols,[](const auto& v){return std::tie(v.first,v.second.policy,v.second.embeddedDataUrl,v.second.defaultCountryId,v.second.defaultFlagDataUrl);}) &&
         equalContentRows(a.labels,b.labels,[](const auto& v){return std::make_tuple(v.id,v.name,v.kind,v.notes,v.geometry,v.territory,sourceKey(v.source));}) &&
         equalContentRows(a.hydro,b.hydro,[](const auto& v){return std::make_tuple(v.id,v.name,v.kind,v.notes,v.geometry,v.color,v.locked,sourceKey(v.source),v.sourceFeatureId);}) &&
         equalContentRows(a.distributionLayers,b.distributionLayers,[](const auto& v){return std::make_tuple(v.id,v.name,v.unit,v.color,v.locked,v.parentId,v.groups,validityKey(v.validity),v.metadata,v.valueScale.manual,v.valueScale.manual?v.valueScale.min:0,v.valueScale.manual?v.valueScale.max:1);}) &&

@@ -3,7 +3,9 @@
 #include <QLocale>
 #include "defaultflagresolver.h"
 #include <QFile>
-#include <QImage>
+#include <QImageReader>
+#include <QMimeDatabase>
+#include <QSvgRenderer>
 #include <QBuffer>
 #include <QColor>
 #include <QUuid>
@@ -197,11 +199,14 @@ void EditorController::refreshContentSession() {
     emit contentEditChanged();
 }
 QVariantList EditorController::flagLibrary() const {
-    QVariantList result;QDir directory(":/defaults/flags/native");
+    QVariantList result;
+    for(const auto& family:{QString("native"),QString("legacy"),QString("political")}) {
+    QDir directory(":/defaults/flags/"+family);
     for(const auto& file:directory.entryList({"*.svg"},QDir::Files,QDir::Name)) {
         const auto code=file.chopped(4);const QLocale locale("ko_"+code.toUpper());
-        const auto name=code=="xk"?QStringLiteral("코소보"):code.size()==2&&QLocale::territoryToCode(locale.territory())==code.toUpper()?locale.nativeTerritoryName():code.toUpper();
-        result.append(QVariantMap{{"name",name},{"code",code},{"source","qrc:/defaults/flags/native/"+file}});
+        const auto name=code=="cyn"?QStringLiteral("북키프로스"):code=="sol"?QStringLiteral("소말릴란드"):code=="xk"?QStringLiteral("코소보"):code.size()==2&&QLocale::territoryToCode(locale.territory())==code.toUpper()?locale.nativeTerritoryName():code.toUpper();
+        result.append(QVariantMap{{"name",name},{"code",code},{"source","qrc:/defaults/flags/"+family+"/"+file}});
+    }
     }
     return result;
 }
@@ -213,9 +218,18 @@ bool EditorController::loadContentFlag(const QUrl& url) {
         if(comma<0||!data.left(comma).contains(";base64")||data.size()>24*1024*1024)return false;
         bytes=QByteArray::fromBase64(data.mid(comma+1));
     }else {QFile file(url.scheme()=="qrc"?":"+url.path():url.isLocalFile()?url.toLocalFile():url.toString());if(!file.open(QIODevice::ReadOnly)||file.size()>16*1024*1024)return false;bytes=file.readAll();}
-    const auto image=QImage::fromData(bytes);if(image.isNull())return false;
-    QByteArray png;QBuffer buffer(&png);buffer.open(QIODevice::WriteOnly);if(!image.save(&buffer,"PNG"))return false;
-    contentSession_->edit.value=TerritorialSymbolStyle{FlagPolicy::Embedded,("data:image/png;base64,"+png.toBase64()).toStdString()};contentSession_->pendingFields.insert("flagSource");emit contentEditChanged();emit dirtyChanged();return true;
+    const auto mime=QMimeDatabase().mimeTypeForData(bytes).name();
+    if(mime=="image/svg+xml") {
+        // Validate vectors without rasterizing their potentially enormous intrinsic size.
+        QSvgRenderer svg(bytes);if(!svg.isValid())return false;
+    } else {
+        QBuffer buffer(&bytes);buffer.open(QIODevice::ReadOnly);
+        QImageReader image(&buffer);if(!mime.startsWith("image/")||!image.canRead())return false;
+    }
+    const auto dataUrl="data:"+mime.toLatin1()+";base64,"+bytes.toBase64();
+    auto& symbol=std::get<TerritorialSymbolStyle>(contentSession_->edit.value);
+    symbol.policy=FlagPolicy::Embedded;symbol.embeddedDataUrl=dataUrl.toStdString();
+    contentSession_->pendingFields.insert("flagSource");emit contentEditChanged();emit dirtyChanged();return true;
 }
 bool EditorController::beginContentGeometry() {
     if(!contentSession_||contentSession_->preview||geometryEdit_||!contentSession_->base.matches(project_))return false;

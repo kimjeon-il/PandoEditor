@@ -463,21 +463,7 @@ void EditorController::flushViewportResources() {
     }
 }
 QString EditorController::labelFlagSource(const pandoeditor::ObjectRef& ref) const {
-    if(ref.domain!="territorial")return {};
-    QString flag;bool retained=false;
-    for(const auto& extension:project_.document().extensions)
-        if(extension.status=="unsupported"&&extension.jsonPointer.size()>=12&&
-           extension.jsonPointer.compare(extension.jsonPointer.size()-12,12,"/flagDataUrl")==0&&
-           std::find(extension.dependencies.begin(),extension.dependencies.end(),ref)!=extension.dependencies.end()) {
-            const auto value=QJsonDocument::fromJson(
-                "["+QByteArray::fromStdString(extension.payload)+"]").array();
-            if(!value.isEmpty()&&value[0].isString()&&validImageDataUrl(value[0].toString())) {
-                flag=value[0].toString();retained=true;break;
-            }
-        }
-    if(!retained||project_.document().symbols.count(ref))
-        flag=resolveDefaultFlag(project_.document(),ref).source;
-    return flag;
+    return resolveDefaultFlag(project_.document(),ref).source;
 }
 
 QVariantMap EditorController::colors() const
@@ -508,12 +494,9 @@ QVariantMap EditorController::countryVisuals() const
         const auto resolved=pandoeditor::resolvedTerritorialPresentation(project_.document(),ref);
         const auto nativeLayer=pandoeditor::nativeLayerId(project_.document(),ref);double nativeOpacity=1;int nativeOrder=-1;
         for(std::size_t i=0;i<project_.document().presentation.userLayers.size();++i)if(project_.document().presentation.userLayers[i].id==nativeLayer){nativeOpacity=project_.document().presentation.userLayers[i].opacity;nativeOrder=int(i);break;}
-        QString flag;bool flagAvailable=false;QString flagReason;bool retainedFlag=false;
-        for(const auto& e:project_.document().extensions)if(e.status=="unsupported" && e.jsonPointer.size()>=12 && e.jsonPointer.compare(e.jsonPointer.size()-12,12,"/flagDataUrl")==0 && std::find(e.dependencies.begin(),e.dependencies.end(),ref)!=e.dependencies.end()) {
-            const auto value=QJsonDocument::fromJson("["+QByteArray::fromStdString(e.payload)+"]").array();
-            if(!value.isEmpty()&&value[0].isString()&&validImageDataUrl(value[0].toString())) {flag=value[0].toString();flagAvailable=true;retainedFlag=true;}
-        }
-        if(!retainedFlag||project_.document().symbols.count(ref)){const auto resolvedFlag=resolveDefaultFlag(project_.document(),ref);flag=resolvedFlag.source;flagAvailable=resolvedFlag.available;flagReason=resolvedFlag.reason;}
+        const auto resolvedFlag=resolveDefaultFlag(project_.document(),ref);
+        const auto& flag=resolvedFlag.source;const auto flagAvailable=resolvedFlag.available;
+        const auto& flagReason=resolvedFlag.reason;
         result[text(unit.id)]=QVariantMap{{"color",rgb(resolved.colorVisible?pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(unit.id)):0xa8c7db)},
             {"name",text(project_.propertyView(ref)->displayName)},{"nameVisible",resolved.nameVisible},{"flagVisible",resolved.flagVisible},{"flagSource",flag},{"flagAvailable",flagAvailable},{"flagReason",flagReason},
             {"boundary",pandoeditor::resolvedTerritorialPresentation(project_.document(),ref).boundaryVisible},

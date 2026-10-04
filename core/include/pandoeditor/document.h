@@ -59,6 +59,11 @@ enum class FlagPolicy { Default, None, Embedded };
 struct TerritorialSymbolStyle {
     FlagPolicy policy=FlagPolicy::Default;
     std::string embeddedDataUrl;
+    // Original country default retained when a country becomes a subunit.
+    // Independent of the editable override so reset can restore the default.
+    std::string defaultCountryId;
+    // Present (including empty) when conversion captured an explicit override.
+    std::optional<std::string> defaultFlagDataUrl;
 };
 struct CountryDetails { std::string capital; };
 struct PlaceLabel {

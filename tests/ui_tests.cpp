@@ -157,13 +157,22 @@ private slots:
         model.setRows({});QCOMPARE(resets.count(),0);QCOMPARE(model.rowCount(),0);
     }
     void labelDelegateSurvivesCameraMotion() {
-        EditorController editor(EditorControllerConfig{});QQmlApplicationEngine engine;
+        QTemporaryDir dir;
+        pandoeditor::ProjectDocument document({{"DEU","Germany",{{{{0,0},{10,0},{10,10},{0,10},{0,0}}}},0x112233}},{{"countries","Countries"}});
+        pandoeditor::Project project;project.replace(document);
+        QFile file(dir.filePath("flag-only.json"));QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(projectcodec::encode(project));file.close();
+        EditorController editor({false,dir.filePath("private.json")});QQmlApplicationEngine engine;
+        QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
         editor.selectCountry("DEU");
+        QVERIFY(editor.setLabelPinned({{"domain","territorial"},{"id","DEU"}},true,5,5,true));
         engine.rootContext()->setContextProperty("editor",&editor);
         engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
         auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
         window->resize(1100,760);exposeForTest(window);
         auto* map=visualItem(window->contentItem(),"mapView");QVERIFY(map);
+        QVERIFY(editor.focusObject());
+        QVERIFY(editor.zoomMapCameraAt(2,map->width()/2,map->height()/2));
         QVERIFY(editor.setPresentationVisibility("basemapLabels",false));
         QTRY_VERIFY(placedLabel(map,"DEU")!=nullptr);
         QPointer<QQuickItem> original=placedLabel(map,"DEU");const auto x=original->x();
@@ -191,6 +200,21 @@ private slots:
         QVERIFY(size.height()>0&&size.height()<=std::ceil(flag->height()*window->devicePixelRatio()));
         QVERIFY(!capture(window).isNull());
         window->setProperty("allowClose",true);window->close();
+    }
+    void flagPreviewUsesWebResponsiveDimensions() {
+        QTemporaryDir dir;EditorController editor({false,dir.filePath("private.json")});editor.selectCountry("DEU");
+        QQmlEngine engine;engine.rootContext()->setContextProperty("editor",&editor);
+        QQmlComponent component(&engine,QUrl("qrc:/common/TerritorialSelectionToolbar.qml"));
+        QScopedPointer<QObject> object(component.create());QVERIFY2(object,qPrintable(component.errorString()));
+        auto* bar=qobject_cast<QQuickItem*>(object.data());QVERIFY(bar);
+        QQuickWindow window;window.resize(1100,760);bar->setParentItem(window.contentItem());bar->setWidth(378);bar->setHeight(142);
+        bar->setProperty("previewData",QVariantMap{{"domain","territorial"},{"id","DEU"},{"flagSource","qrc:/defaults/flags/native/de.svg"}});
+        window.show();exposeForTest(&window);
+        auto* flag=visualItem(bar,"selectionCardFlag");QVERIFY(flag);
+        QCOMPARE(flag->width(),92.);QCOMPARE(flag->height(),68.);
+        window.resize(700,760);QCoreApplication::processEvents();
+        QCOMPARE(flag->width(),80.);QCOMPARE(flag->height(),60.);
+        window.close();
     }
     void canonicalWorldShellCapture() {
         EditorControllerConfig config;config.bootstrapWorld=true;config.worldDataRoot=QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR);
@@ -297,6 +321,46 @@ private slots:
             window->setProperty("allowClose",true);window->close();
         }
     }
+    void mapFlagsUseWebSizeAndHorizontalNameLayout_data() {
+        QTest::addColumn<QString>("projection");
+        QTest::newRow("globe")<<QString("globe");
+        QTest::newRow("flat")<<QString("flat");
+    }
+    void mapFlagsUseWebSizeAndHorizontalNameLayout() {
+        QFETCH(QString,projection);
+        QTemporaryDir dir;EditorController editor({false,dir.filePath("private.json")});
+        pandoeditor::ProjectDocument document({{"DEU","Germany",{{{{0,0},{10,0},{10,10},{0,10},{0,0}}}},0x112233}},
+                                              {{"countries","Countries"}});
+        pandoeditor::Project project;project.replace(document);
+        QFile file(dir.filePath("map.json"));QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(projectcodec::encode(project));file.close();
+        QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
+        QVERIFY(editor.setProjectionMode(projection));
+        QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+        window->resize(1100,760);exposeForTest(window);editor.selectCountry("DEU");
+        QVERIFY(editor.setLabelPinned({{"domain","territorial"},{"id","DEU"}},true,5,5,true));
+        QVERIFY(editor.zoomMapCameraAt(4,550,380));
+        QTRY_VERIFY(placedLabel(window->contentItem(),"DEU")!=nullptr);
+        auto* label=placedLabel(window->contentItem(),"DEU");
+        auto* flag=visualItem(label,"mapPlacedFlag");auto* name=visualItem(label,"mapPlacedText");
+        QVERIFY(flag&&name);QTRY_VERIFY(flag->isVisible());QVERIFY(name->isVisible());
+        QCOMPARE(flag->width(),18.);QCOMPARE(flag->height(),12.);
+        QVERIFY(std::abs(name->x()-flag->x()-flag->width()-5.)<.01);
+        QVERIFY(std::abs((flag->y()+flag->height()/2)-(name->y()+name->height()/2))<.01);
+        QVERIFY(capture(window).save("flag-parity-"+projection+".png"));
+        flag->setProperty("source",QUrl("data:image/svg+xml;base64,YmFk"));
+        QTRY_COMPARE(flag->property("status").toInt(),3); // Image.Error
+        QVERIFY(!flag->isVisible());QVERIFY(name->isVisible());
+        QCOMPARE(name->x(),0.);QCOMPARE(label->width(),name->implicitWidth());
+        QVERIFY(editor.zoomMapCameraAt(.1,550,380));
+        QTRY_VERIFY(placedLabel(window->contentItem(),"DEU")!=nullptr);
+        label=placedLabel(window->contentItem(),"DEU");flag=visualItem(label,"mapPlacedFlag");
+        QTRY_VERIFY(!flag->isVisible());
+        window->setProperty("allowClose",true);window->close();
+    }
     void viewAndAppearanceControlsMatchDesktopAndCompact() {
         for(bool mobile:{false,true}) {
             EditorController editor(EditorControllerConfig{mobile,{}});QQmlApplicationEngine engine;QStringList warnings;
@@ -370,6 +434,8 @@ private slots:
         auto window=qobject_cast<QQuickWindow*>(engine.rootObjects()[0]);QVERIFY(window);
         window->resize(width,width==360?640:760);exposeForTest(window);
         auto map=visualItem(window->contentItem(),"mapView");QVERIFY(map);
+        QVERIFY(editor.focusObject());
+        QVERIFY(editor.zoomMapCameraAt(4,map->width()/2,map->height()/2));
         QVERIFY(editor.setPresentationVisibility("basemapLabels",false));
         QTRY_VERIFY(placedLabel(map,"DEU")!=nullptr);
         auto label=placedLabel(map,"DEU");

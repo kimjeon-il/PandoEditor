@@ -56,7 +56,7 @@ void interactionReprojectionDoesNotQueryOrRelayout() {
     engine.layout(flatView(),options);
     const auto queries=engine.stats().queries,layouts=engine.stats().layouts;
     auto moved=flatView();moved.translateX+=50;moved.revision=1;
-    const auto& placed=engine.reproject(moved);
+    const auto& placed=engine.reproject(moved,options.zoom);
     require(placed.size()==1&&std::abs(placed.front().x-450)<1e-8,"placement follows camera");
     require(engine.stats().queries==queries&&engine.stats().layouts==layouts,
             "reprojection performs no candidate query or collision layout");
@@ -71,10 +71,10 @@ void globeReprojectionDropsBackHemisphere() {
     const auto& placed=engine.layout(globe,options);
     require(placed.size()==1&&placed.front().ref.id=="front","back hemisphere excluded");
     globe.centerLongitude=180;globe.revision=1;
-    const auto& rotated=engine.reproject(globe);
+    const auto& rotated=engine.reproject(globe,options.zoom);
     require(rotated.empty(),"accepted front label disappears when rotated behind");
     globe.centerLongitude=0;globe.revision=2;
-    const auto& returned=engine.reproject(globe);
+    const auto& returned=engine.reproject(globe,options.zoom);
     require(returned.size()==1&&returned.front().ref.id=="front",
             "accepted label can reappear without a new query");
 }
@@ -91,6 +91,36 @@ void candidateBudgetCapsMillionScaleWork() {
     require(engine.stats().candidatesExamined<=2048,"candidate budget bounds layout work");
     require(engine.placements().size()<=512,"placement budget bounds collision work");
 }
+
+void territorialFlagsFollowWebZoomAndNeverEvictNames() {
+    auto named=label("country",0,0,100);named.ref.domain="territorial";named.flagVisible=true;
+    MapLabelEngine engine;engine.setSources({named},1);
+    MapLabelLayoutOptions options;options.viewportWidth=800;options.viewportHeight=600;
+    options.zoom=1.79;
+    auto placed=engine.layout(flatView(),options);
+    require(placed.size()==1&&placed[0].nameVisible&&!placed[0].flagVisible,
+            "below zoom 1.8 the name remains but its flag is hidden");
+    options.zoom=1.8;placed=engine.layout(flatView(),options);
+    require(placed.size()==1&&placed[0].flagVisible,"flags appear at zoom 1.8");
+    const auto queries=engine.stats().queries,layouts=engine.stats().layouts;
+    placed=engine.reproject(flatView(),1.79);
+    require(placed.size()==1&&!placed[0].flagVisible,"zoom interaction hides flags without a source rebuild");
+    placed=engine.reproject(flatView(),1.8);
+    require(placed.size()==1&&placed[0].flagVisible,"zoom interaction restores flags without a source rebuild");
+    require(engine.stats().queries==queries&&engine.stats().layouts==layouts,"flag zoom does not trigger document-wide preparation");
+
+    auto neighbor=label("neighbor",11.75,0,10); // 94 px apart: names fit, flag extension does not.
+    engine.setSources({named,neighbor},2);
+    placed=engine.layout(flatView(),options);
+    require(placed.size()==2,"adding a flag must not evict either already placed name");
+    require(!placed[0].flagVisible,"suppress only the flag when its expanded box overlaps another label");
+
+    named.nameVisible=false;named.width=18;named.height=12;
+    engine.setSources({named},3);options.zoom=1.79;
+    require(engine.layout(flatView(),options).empty(),"flag-only labels vanish below the flag zoom threshold");
+    options.zoom=1.8;
+    require(engine.layout(flatView(),options).size()==1,"flag-only labels appear at the flag zoom threshold");
+}
 }
 
 int main() {
@@ -99,4 +129,5 @@ int main() {
     interactionReprojectionDoesNotQueryOrRelayout();
     globeReprojectionDropsBackHemisphere();
     candidateBudgetCapsMillionScaleWork();
+    territorialFlagsFollowWebZoomAndNeverEvictNames();
 }

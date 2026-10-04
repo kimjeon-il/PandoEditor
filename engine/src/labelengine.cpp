@@ -218,6 +218,7 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
         if(accepted_.size()>=options.maxPlaced)break;
         const auto& source=sources_[index];
         if(options.zoom<source.minZoom||options.zoom>source.maxZoom)continue;
+        if(!source.nameVisible&&(!source.flagVisible||options.zoom<MapFlagMinZoom))continue;
         MapLabelPlacement placement;
         if(!projectPlacement(index,view,placement))continue;
         const bool forced=source.pinned||selected.count(source.ref);
@@ -249,6 +250,7 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
         placements_.push_back(std::move(placement));
     }
 
+    decorateFlags(options.zoom);
     if(stats_.layoutRevision==std::numeric_limits<std::uint64_t>::max())
         throw std::overflow_error("label layout revision overflow");
     ++stats_.layoutRevision;
@@ -256,8 +258,61 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
     return placements_;
 }
 
-const std::vector<MapLabelPlacement>& MapLabelEngine::reproject(const MapViewState& view) {
-    if(!validMapViewState(view))throw std::invalid_argument("invalid label reproject view");
+void MapLabelEngine::decorateFlags(double zoom) {
+    // Port of web territorial-label-flags: decorate accepted names, never evict
+    // them. The screen grid preserves its ordered decisions without an O(n²) scan.
+    const auto finish=[&] {
+        placements_.erase(std::remove_if(placements_.begin(),placements_.end(),[](const auto& placement) {
+            return !placement.nameVisible&&!placement.flagVisible;
+        }),placements_.end());
+        placedRefs_.clear();for(const auto& placement:placements_)placedRefs_.insert(placement.ref);
+    };
+    if(zoom<MapFlagMinZoom) {
+        for(auto& placement:placements_)if(placement.ref.domain=="territorial")placement.flagVisible=false;
+        finish();return;
+    }
+    if(std::none_of(placements_.begin(),placements_.end(),[](const auto& placement) {
+        return placement.flagVisible&&placement.ref.domain=="territorial";
+    }))return;
+    std::vector<CollisionBox> boxes;boxes.reserve(placements_.size());
+    std::map<std::pair<int,int>,std::vector<std::size_t>> grid;
+    constexpr double cellSize=64;
+    const auto insert=[&](std::size_t index,const CollisionBox& box) {
+        const auto xr=collisionRange(box.left,box.right,cellSize);
+        const auto yr=collisionRange(box.top,box.bottom,cellSize);
+        for(int y=yr.first;y<=yr.second;++y)for(int x=xr.first;x<=xr.second;++x)
+            grid[{x,y}].push_back(index);
+    };
+    for(const auto& placement:placements_) {
+        boxes.push_back({placement.x-placement.width/2,placement.y-placement.height/2,
+                         placement.x+placement.width/2,placement.y+placement.height/2,{}});
+        insert(boxes.size()-1,boxes.back());
+    }
+    for(std::size_t i=0;i<placements_.size();++i) {
+        auto& placement=placements_[i];
+        if(!placement.flagVisible||placement.ref.domain!="territorial")continue;
+        placement.flagVisible=false;
+        auto box=boxes[i];
+        if(placement.nameVisible){box.left-=12;box.right+=12;}
+        const auto xr=collisionRange(box.left-3,box.right+3,cellSize);
+        const auto yr=collisionRange(box.top-3,box.bottom+3,cellSize);
+        bool collision=false;
+        for(int y=yr.first;y<=yr.second&&!collision;++y)
+            for(int x=xr.first;x<=xr.second&&!collision;++x)
+                if(const auto cell=grid.find({x,y});cell!=grid.end())
+                    for(const auto other:cell->second)if(other!=i) {
+                        const auto& b=boxes[other];
+                        if(!(box.right+3<b.left||b.right+3<box.left||
+                             box.bottom+3<b.top||b.bottom+3<box.top)){collision=true;break;}
+                    }
+        if(collision)continue;
+        boxes[i]=box;insert(i,box);placement.flagVisible=true;
+    }
+    finish();
+}
+
+const std::vector<MapLabelPlacement>& MapLabelEngine::reproject(const MapViewState& view,double zoom) {
+    if(!validMapViewState(view)||!std::isfinite(zoom)||zoom<=0)throw std::invalid_argument("invalid label reproject view");
     ++stats_.reprojects;
     placements_.clear();placedRefs_.clear();placements_.reserve(accepted_.size());
     for(const auto index:accepted_) {
@@ -269,6 +324,7 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::reproject(const MapViewSta
         placedRefs_.insert(placement.ref);
         placements_.push_back(std::move(placement));
     }
+    decorateFlags(zoom);
     stats_.placements=placements_.size();
     return placements_;
 }
