@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include "mapprojection.h"
 #include <QCoreApplication>
 #include <stdexcept>
@@ -8,7 +9,7 @@ int main(int argc,char** argv) {
     document.geometries.insert({"country",1},{"Polygon",{},{},{{
         {{0,0},{2,0},{2,2},{0,2},{0,0}}
     }}});
-    document.units.push_back({"C","Country",{},pandoeditor::UnitKind::Country,{"country",1}});
+    appendTerritory(document,{"C","Country",{},pandoeditor::UnitKind::General,false},{"country",1});
     document.presentation.userLayers={{"custom","Custom"}};
     document.presentation.membership[pandoeditor::territorialRef("C")]="custom";
     document.presentation.objectStyles[pandoeditor::territorialRef("C")]={0x556677,1};

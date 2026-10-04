@@ -128,9 +128,8 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                     }
                     require(!selection.partial||addition.partialApproved,CommandError::InvalidArguments,
                             "partial historical source not approved");
-                    require(selection.type!=UnitKind::Subunit||addition.asIndependentCountry||(addition.parent&&addition.sovereign),
-                            CommandError::InvalidArguments,"explicit historical ownership required");
-                    require(!addition.asIndependentCountry||(selection.type==UnitKind::Subunit&&!addition.parent&&!addition.sovereign&&!addition.countryName.empty()),
+                    require(!addition.sovereign,CommandError::InvalidArguments,"UNSUPPORTED_POLITICAL_RELATION");
+                    require(!addition.asIndependentCountry||(selection.type==UnitKind::General&&!addition.parent&&!addition.sovereign&&!addition.countryName.empty()),
                             CommandError::InvalidArguments,"invalid independent country choice");
                 }
                 require(action.countryNameUpdates==expectedNames,CommandError::InvalidArguments,"country updates differ from library");
@@ -142,7 +141,7 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                 for(const auto& [donor,target]:action.territoryTransfers) {
                     const auto found=project.index().objects.find(donor);
                     require(found!=project.index().objects.end()&&donor.domain=="territorial"&&
-                            project.document().units.at(found->second).kind==UnitKind::Country&&
+                            project.document().units.at(found->second).kind==UnitKind::General&&
                             std::any_of(action.additions.begin(),action.additions.end(),[&](const auto& item){
                                 return territorialRef(item.selection.libraryId)==target&&
                                     item.selection.instantiation.mode=="territory-replacement";
@@ -150,7 +149,7 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                 }
                 for(const auto& [id,name]:action.countryNameUpdates)
                     require(!name.empty()&&project.index().objects.count(territorialRef(id))&&
-                            project.document().units.at(project.index().objects.at(territorialRef(id))).kind==UnitKind::Country,
+                            project.document().units.at(project.index().objects.at(territorialRef(id))).kind==UnitKind::General,
                             CommandError::InvalidArguments,"invalid country name update");
             } else if constexpr(std::is_same_v<T,GisGenericImportPlan>) {
                 require(action.info.projectInstanceId==project.instanceId(),CommandError::ProjectMismatch,"GIS plan project changed");
@@ -277,20 +276,16 @@ void applyField(ProjectDocument& candidate,const DocumentIndex& index,const Terr
             const auto value=trimWebText(action.value);
             switch(action.field) {
             case TerritorialField::Name:
-                if(u.kind!=UnitKind::Country || trimWebText(u.nameExplicit&&!u.name.empty()?u.name:!u.baseName.empty()?u.baseName:u.id)!=value){u.name=value;u.nameExplicit=true;}
+                if(u.kind!=UnitKind::General || trimWebText(u.nameExplicit&&!u.name.empty()?u.name:!u.baseName.empty()?u.baseName:u.id)!=value){u.name=value;u.nameExplicit=true;}
                 break;
-            case TerritorialField::Notes:u.notes=u.kind==UnitKind::Country?action.value:value;break;
+            case TerritorialField::Notes:u.notes=u.kind==UnitKind::General?action.value:value;break;
             case TerritorialField::ValidFrom:case TerritorialField::ValidTo:
-                require(u.kind==UnitKind::Region,CommandError::InvalidArguments,"validity fields are region-only");
-                (action.field==TerritorialField::ValidFrom?u.validity.from:u.validity.to)=value.empty()?std::nullopt:std::optional<std::string>(value);
-                (void)temporalBounds(u.validity);break;
+                require(value.empty(),CommandError::InvalidArguments,"TIMELINE_ACTIVATION: dated edits require T4");
+                (void)staticLifetime(candidate,u.id);break;
             }
 }
-TerritorialRelation* baseRelation(ProjectDocument& d,const ObjectRef& ref) {
-    for(auto& relation:d.relations) if(!relation.dated&&relation.unit==ref)return &relation;
-    return nullptr;
-}
 bool sameGeometry(const Geometry& a,const Geometry& b);
+bool sameValidity(const Validity& a,const Validity& b);
 void applyGeometryPatch(ProjectDocument& d,const TerritorialMutationPlan& plan,const GeometryPatch& patch) {
     if(patch.sourceRevision!=plan.baseRevision) throw Rejection{CommandError::StaleRevision,"geometry patch stale"};
     const auto& mappings=plan.geometry.replacements;
@@ -315,7 +310,7 @@ void applyGeometryPatch(ProjectDocument& d,const TerritorialMutationPlan& plan,c
         const auto removed=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==owner;});
         const auto targetPatch=std::find_if(patch.replacements.begin(),patch.replacements.end(),[&](const auto& r){return !plan.geometry.replacements.empty()&&r.owner==plan.geometry.replacements.front().result;});
         const auto target=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return !plan.geometry.readOwners.empty()&&territorialRef(u.id)==plan.geometry.readOwners.front();});
-        require(plan.geometry.operation=="coast"||(target!=d.units.end()&&removed!=d.units.end()&&targetPatch!=patch.replacements.end()&&geometryContains(targetPatch->geometry,*d.geometries.get(removed->geometry))),CommandError::InvalidArguments,"removed owner is not covered by result");
+        require(plan.geometry.operation=="coast"||(target!=d.units.end()&&removed!=d.units.end()&&targetPatch!=patch.replacements.end()&&geometryContains(targetPatch->geometry,*d.geometries.get(staticGeometryBinding(d,removed->id).geometryRef))),CommandError::InvalidArguments,"removed owner is not covered by result");
     }
     if(seen!=expected) throw Rejection{CommandError::InvalidArguments,"geometry patch owner set incomplete"};
     for(const auto& replacement:patch.replacements) {
@@ -325,10 +320,10 @@ void applyGeometryPatch(ProjectDocument& d,const TerritorialMutationPlan& plan,c
         auto unit=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==input;});
         if(unit==d.units.end()) throw Rejection{CommandError::InvalidArguments,"geometry patch owner missing"};
         require(replacement.geometry.type=="Polygon"||replacement.geometry.type=="MultiPolygon",CommandError::InvalidArguments,"polygon required");
-        if(sameGeometry(*d.geometries.get(unit->geometry),replacement.geometry))continue;
-        GeometryRef next=unit->geometry;
+        if(sameGeometry(*d.geometries.get(staticGeometryBinding(d,unit->id).geometryRef),replacement.geometry))continue;
+        auto& binding=staticGeometryBinding(d,unit->id); GeometryRef next=binding.geometryRef;
         do {require(next.version<std::numeric_limits<std::uint32_t>::max(),CommandError::RevisionOverflow,"geometry version overflow");++next.version;}while(d.geometries.get(next));
-        d.geometries.insert(next,replacement.geometry); unit->geometry=next;
+        d.geometries.insert(next,replacement.geometry); binding.geometryRef=next;
     }
     for(const auto& ref:patch.removedGeometryOwners) {
         d.presentation.membership.erase(ref);d.presentation.objectStyles.erase(ref);
@@ -338,110 +333,74 @@ void applyGeometryPatch(ProjectDocument& d,const TerritorialMutationPlan& plan,c
 void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action) {
     const auto& plan=action.plan;
     const auto contentBefore=d;
-    auto relationId=[&](const std::string& id){std::string value="relation-"+id;unsigned n=1;auto exists=[&](const std::string& key){return std::any_of(d.relations.begin(),d.relations.end(),[&](const auto& r){return r.id==key;});};while(exists(value))value="relation-"+id+"-"+std::to_string(n++);return value;};
+    auto shape=[&](const std::string& id){return d.geometries.get(staticGeometryBinding(d,id).geometryRef);};
+    auto patch=[&](){require(action.geometry.has_value(),CommandError::InvalidArguments,"geometry patch required");applyGeometryPatch(d,plan,*action.geometry);};
     std::visit([&](const auto& in) {
         using T=std::decay_t<decltype(in)>;
         if constexpr(std::is_same_v<T,ChangeParentIntent>) {
-            auto* relation=baseRelation(d,in.target);if(!relation)throw Rejection{CommandError::ValidationFailed,"missing base relation"};relation->parent=in.parent;
+            staticParentRelation(d,in.target.id).parentId=in.parent.id;
         } else if constexpr(std::is_same_v<T,ChangeRegionSovereignIntent>) {
-            auto* relation=baseRelation(d,in.target);if(!relation){if(!in.sovereign)return;d.relations.push_back({relationId(in.target.id),in.target,{},{in.sovereign},false,{}});}
-            else {relation->sovereign=in.sovereign;if(!relation->parent&&!relation->sovereign)d.relations.erase(std::remove_if(d.relations.begin(),d.relations.end(),[&](const auto& r){return !r.dated&&r.unit==in.target;}),d.relations.end());}
+            throw Rejection{CommandError::InvalidArguments,"UNSUPPORTED_POLITICAL_RELATION: sovereignty is not an administrative parent"};
         } else if constexpr(std::is_same_v<T,CreateTerritorialIntent>) {
+            require(!in.sovereign,CommandError::InvalidArguments,"UNSUPPORTED_POLITICAL_RELATION");
+            require(!in.validity.from&&!in.validity.to,CommandError::InvalidArguments,"TIMELINE_ACTIVATION: dated creation requires T4");
             GeometryRef geometry{"geometry-"+in.id,1};unsigned n=1;while(d.geometries.get(geometry))geometry={"geometry-"+in.id+"-"+std::to_string(n++),1};d.geometries.insert(geometry,in.geometry);
-            TerritorialUnit unit;unit.id=in.id;unit.name=in.name;unit.baseName=in.kind==UnitKind::Country?in.name:"";unit.nameExplicit=true;unit.notes=in.notes;unit.kind=in.kind;unit.geometry=geometry;unit.coverageMode=in.coverageMode.empty()?(in.kind==UnitKind::Subunit?"partition":"explicit"):in.coverageMode;unit.validity=in.validity;d.units.push_back(unit);
+            TerritorialUnit unit;unit.id=in.id;unit.name=in.name;unit.baseName=in.kind==UnitKind::General?in.name:"";unit.nameExplicit=true;unit.notes=in.notes;unit.kind=in.kind;d.units.push_back(unit);
+            addStaticTerritorialRecords(d,in.id,geometry,in.parent?in.parent->id:"",in.coverageMode.empty()?"explicit":in.coverageMode);
             const auto ref=territorialRef(in.id);if(!d.presentation.userLayers.empty())d.presentation.membership.emplace(ref,d.presentation.userLayers.front().id);d.presentation.objectStyles.emplace(ref,ObjectStyle{in.explicitColor.value_or(0),1,in.explicitColor.has_value()});
-            if(in.kind!=UnitKind::Country)d.relations.push_back({relationId(in.id),ref,in.parent,in.sovereign,false,{}});
         } else if constexpr(std::is_same_v<T,DeleteTerritorialIntent>) {
-            std::set<ObjectRef> removed(in.targets.begin(),in.targets.end());
-            d.relations.erase(std::remove_if(d.relations.begin(),d.relations.end(),[&](const auto& r){return removed.count(r.unit)||(r.parent&&removed.count(*r.parent))||(r.sovereign&&removed.count(*r.sovereign));}),d.relations.end());
-            for(const auto& ref:removed){d.presentation.membership.erase(ref);d.presentation.objectStyles.erase(ref);}d.units.erase(std::remove_if(d.units.begin(),d.units.end(),[&](const auto& u){return removed.count(territorialRef(u.id));}),d.units.end());
+            std::set<ObjectRef> removed(in.targets.begin(),in.targets.end());std::vector<std::string> ids;
+            for(const auto& ref:removed){ids.push_back(ref.id);d.presentation.membership.erase(ref);d.presentation.objectStyles.erase(ref);}
+            removeTerritorialRecords(d,ids);d.units.erase(std::remove_if(d.units.begin(),d.units.end(),[&](const auto& u){return removed.count(territorialRef(u.id));}),d.units.end());
         } else if constexpr(std::is_same_v<T,TransferSubunitIntent>) {
-            if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"M4 geometry patch required"};
-            applyGeometryPatch(d,plan,*action.geometry);
-            std::set<ObjectRef> moved{in.target};
-            for(std::size_t pass=0;pass<d.units.size();++pass)for(const auto& r:d.relations)
-                if(!r.dated&&r.parent&&moved.count(*r.parent))moved.insert(r.unit);
-            for(auto& r:d.relations)if(moved.count(r.unit)) {
-                r.sovereign=in.destinationCountry;
-                if(r.unit==in.target)r.parent=in.destinationCountry;
-            }
+            patch();staticParentRelation(d,in.target.id).parentId=in.destinationCountry.id;
         } else if constexpr(std::is_same_v<T,ConvertTerritorialTypeIntent>) {
-            if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"M4 geometry patch required"};
-            applyGeometryPatch(d,plan,*action.geometry);
+            require(!in.sovereign,CommandError::InvalidArguments,"UNSUPPORTED_POLITICAL_RELATION");
             auto unit=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==in.source;});
-            if(unit==d.units.end())throw Rejection{CommandError::ValidationFailed,"conversion source missing"};
-            const auto fromGroup=territorialGroup(unit->kind),toGroup=territorialGroup(in.targetKind);
-            const auto toId=in.targetKind==UnitKind::Country?in.source.id:in.generatedId;
-            auto& web=d.presentation.webPresentation;
-            if(web.hiddenItems[fromGroup].erase(in.source.id))web.hiddenItems[toGroup].insert(toId);
-            const auto fromKey=territorialPresentationKey(unit->kind,in.source.id),toKey=territorialPresentationKey(in.targetKind,toId);
-            auto webStyle=web.objectStyles.extract(fromKey);
-            if(!webStyle.empty()){webStyle.key()=toKey;web.objectStyles.insert(std::move(webStyle));}
-            for(auto& key:web.objectOrder)if(key==fromKey)key=toKey;
-            if(unit->kind==UnitKind::Subunit) {
-                std::set<ObjectRef> moved{in.source};
-                for(std::size_t pass=0;pass<d.units.size();++pass)for(const auto& r:d.relations)
-                    if(!r.dated&&r.parent&&moved.count(*r.parent))moved.insert(r.unit);
-                unit->kind=UnitKind::Country;unit->coverageMode="explicit";unit->baseName=unit->name;unit->nameExplicit=true;
-                d.relations.erase(std::remove_if(d.relations.begin(),d.relations.end(),[&](const auto& r){return r.unit==in.source&&!r.dated;}),d.relations.end());
-                for(auto& r:d.relations)if(moved.count(r.unit)&&!(r.unit==in.source))r.sovereign=in.source;
-            } else {
-                const auto old=in.source,newRef=territorialRef(in.generatedId);const auto oldId=unit->id;
-                unit->id=in.generatedId;unit->kind=UnitKind::Subunit;unit->coverageMode="partition";unit->baseName.clear();
-                auto membership=d.presentation.membership.extract(old);if(!membership.empty()){membership.key()=newRef;d.presentation.membership.insert(std::move(membership));}
-                auto style=d.presentation.objectStyles.extract(old);style.key()=newRef;d.presentation.objectStyles.insert(std::move(style));
-                for(auto& relation:d.relations) {if(relation.unit==old)relation.unit=newRef;if(relation.parent&&*relation.parent==old)relation.parent=newRef;if(relation.sovereign&&*relation.sovereign==old)relation.sovereign=in.sovereign;}
-                d.relations.push_back({relationId(in.generatedId),newRef,in.parent,in.sovereign,false,{}});
-                (void)oldId;
-            }
-        } else if constexpr(std::is_same_v<T,ReplaceGeometryIntent>) {
-            if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"geometry patch required"};
-            applyGeometryPatch(d,plan,*action.geometry);
+            require(unit!=d.units.end()&&unit->kind==in.targetKind,CommandError::InvalidArguments,"kind changes require a new entity identity");
+            const auto fromGroup=territorialGroup(d,unit->id);
+            if(action.geometry)patch();
+            auto& parent=staticParentRelation(d,in.source.id);parent.parentId=in.parent?in.parent->id:"";parent.coverageMode="explicit";
+            const auto toGroup=territorialGroup(d,in.source.id);auto& web=d.presentation.webPresentation;
+            if(web.hiddenItems[fromGroup].erase(in.source.id))web.hiddenItems[toGroup].insert(in.source.id);
+        } else if constexpr(std::is_same_v<T,ReplaceGeometryIntent>||std::is_same_v<T,CoastlineIntent>) {
+            patch();
         } else if constexpr(std::is_same_v<T,MergeTerritorialIntent>) {
-            if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"geometry patch required"};
-            applyGeometryPatch(d,plan,*action.geometry);
-            const std::set<ObjectRef> donors(in.donors.begin(),in.donors.end());
-            for(auto& relation:d.relations) {
-                if(relation.parent&&donors.count(*relation.parent))relation.parent=in.target;
-                if(relation.sovereign&&donors.count(*relation.sovereign))relation.sovereign=in.target;
-            }
+            patch();const std::set<ObjectRef> donors(in.donors.begin(),in.donors.end());
+            for(auto& relation:d.timelineRecords.parentRelations)if(donors.count(territorialRef(relation.parentId)))relation.parentId=in.target.id;
             auto& web=d.presentation.webPresentation;
             for(const auto& donor:in.donors) {
                 for(auto& [group,hidden]:web.hiddenItems)hidden.erase(donor.id);
-                for(auto it=web.objectStyles.begin();it!=web.objectStyles.end();)it=it->first.find(":"+donor.id)!=std::string::npos?web.objectStyles.erase(it):std::next(it);
-                web.objectOrder.erase(std::remove_if(web.objectOrder.begin(),web.objectOrder.end(),[&](const auto& key){return key.find(":"+donor.id)!=std::string::npos;}),web.objectOrder.end());
+                web.objectStyles.erase(territorialPresentationKey(donor.id));
+                web.objectOrder.erase(std::remove(web.objectOrder.begin(),web.objectOrder.end(),territorialPresentationKey(donor.id)),web.objectOrder.end());
             }
         } else if constexpr(std::is_same_v<T,AnnexTerritoryIntent>) {
-            if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"geometry patch required"};
-            applyGeometryPatch(d,plan,*action.geometry);const std::set<ObjectRef> donors(in.donors.begin(),in.donors.end());
-            const auto target=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==in.target;});
-            require(target!=d.units.end(),CommandError::ValidationFailed,"annex target missing");const auto targetGeometry=d.geometries.get(target->geometry);
-            for(auto& relation:d.relations)if(relation.parent&&donors.count(*relation.parent)) {
-                const auto child=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==relation.unit;});
-                if(child!=d.units.end()&&geometryContains(*targetGeometry,*d.geometries.get(child->geometry)))relation.parent=in.target;
+            patch();const std::set<ObjectRef> donors(in.donors.begin(),in.donors.end());
+            for(auto& relation:d.timelineRecords.parentRelations)if(donors.count(territorialRef(relation.parentId))) {
+                const auto child=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return u.id==relation.entityId;});
+                if(child!=d.units.end()&&geometryContains(*shape(in.target.id),*shape(child->id)))relation.parentId=in.target.id;
             }
         } else if constexpr(std::is_same_v<T,SplitTerritorialIntent>) {
-            if(!action.geometry||action.geometry->creations.size()!=1)throw Rejection{CommandError::InvalidArguments,"split geometry patch required"};
-            auto source=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==in.source;});if(source==d.units.end())throw Rejection{CommandError::ValidationFailed,"split source missing"};
-            const auto templateUnit=*source;auto sourceRelation=baseRelation(d,in.source)?std::optional<TerritorialRelation>(*baseRelation(d,in.source)):std::nullopt;
-            applyGeometryPatch(d,plan,*action.geometry);const auto& creation=action.geometry->creations.front();GeometryRef geometry{"geometry-"+in.createdId,1};unsigned suffix=1;while(d.geometries.get(geometry))geometry={"geometry-"+in.createdId+"-"+std::to_string(suffix++),1};d.geometries.insert(geometry,creation.geometry);
-            auto createdUnit=templateUnit;createdUnit.id=in.createdId;createdUnit.name=in.createdName;createdUnit.nameExplicit=true;createdUnit.geometry=geometry;d.units.push_back(createdUnit);const auto createdRef=territorialRef(in.createdId);
+            require(action.geometry&&action.geometry->creations.size()==1,CommandError::InvalidArguments,"split geometry patch required");
+            const auto source=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==in.source;});
+            require(source!=d.units.end(),CommandError::ValidationFailed,"split source missing");
+            auto createdUnit=*source;const auto parent=staticParentRelation(d,in.source.id);
+            patch();GeometryRef geometry{"geometry-"+in.createdId,1};unsigned suffix=1;while(d.geometries.get(geometry))geometry={"geometry-"+in.createdId+"-"+std::to_string(suffix++),1};d.geometries.insert(geometry,action.geometry->creations.front().geometry);
+            createdUnit.id=in.createdId;createdUnit.name=in.createdName;createdUnit.nameExplicit=true;d.units.push_back(createdUnit);
+            addStaticTerritorialRecords(d,in.createdId,geometry,parent.parentId,parent.coverageMode);const auto createdRef=territorialRef(in.createdId);
             if(auto membership=d.presentation.membership.find(in.source);membership!=d.presentation.membership.end())d.presentation.membership[createdRef]=membership->second;
             if(auto style=d.presentation.objectStyles.find(in.source);style!=d.presentation.objectStyles.end())d.presentation.objectStyles[createdRef]=style->second;
-            if(sourceRelation){sourceRelation->id=relationId(in.createdId);sourceRelation->unit=createdRef;d.relations.push_back(*sourceRelation);}
         } else if constexpr(std::is_same_v<T,SharedBoundaryIntent>) {
-            if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"boundary geometry patch required"};
-            applyGeometryPatch(d,plan,*action.geometry);std::set<ObjectRef> owners;for(const auto& draft:in.drafts)owners.insert(draft.owner);
-            for(auto& relation:d.relations)if(!relation.dated&&relation.parent&&owners.count(*relation.parent)){
-                const auto child=std::find_if(d.units.begin(),d.units.end(),[&](const auto& value){return territorialRef(value.id)==relation.unit;});if(child==d.units.end())continue;const auto shape=d.geometries.get(child->geometry);for(const auto& owner:owners){const auto parent=std::find_if(d.units.begin(),d.units.end(),[&](const auto& value){return territorialRef(value.id)==owner;});if(parent!=d.units.end()&&geometryContains(*d.geometries.get(parent->geometry),*shape)){relation.parent=owner;if(parent->kind==UnitKind::Country)relation.sovereign=owner;break;}}
+            patch();std::set<std::string> owners;for(const auto& draft:in.drafts)owners.insert(draft.owner.id);
+            for(auto& relation:d.timelineRecords.parentRelations)if(owners.count(relation.parentId)){
+                const auto child=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return u.id==relation.entityId;});if(child==d.units.end())continue;
+                for(const auto& owner:owners)if(geometryContains(*shape(owner),*shape(child->id))){relation.parentId=owner;break;}
             }
-        } else if constexpr(std::is_same_v<T,CoastlineIntent>) {
-            if(!action.geometry)throw Rejection{CommandError::InvalidArguments,"coast geometry patch required"};applyGeometryPatch(d,plan,*action.geometry);
         }
     },plan.intent);
     std::map<ObjectRef,ObjectRef> redirected;
     if(const auto merge=std::get_if<MergeTerritorialIntent>(&plan.intent))for(const auto& ref:merge->donors)redirected[ref]=merge->target;
-    if(const auto conversion=std::get_if<ConvertTerritorialTypeIntent>(&plan.intent))if(conversion->targetKind==UnitKind::Subunit)redirected[conversion->source]=territorialRef(conversion->generatedId);
+
     auto survives=[&](const ObjectRef& ref){return std::any_of(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==ref;});};
     for(auto& label:d.labels)if(label.territory&&!survives(*label.territory)) {
         require(effectAllowed(contentBefore,{"label",label.id},"relation"),CommandError::UnsupportedDependency,"label territorial dependency");
@@ -466,20 +425,17 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
         it=d.symbols.erase(it);
     }
     for(auto it=d.countryDetails.begin();it!=d.countryDetails.end();) {
-        const auto unit=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==it->first&&u.kind==UnitKind::Country;});
+        const auto unit=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==it->first;});
         if(unit!=d.units.end()){++it;continue;}
         require(it->second.capital.empty()||!redirected.count(it->first),CommandError::UnsupportedDependency,"capital requires explicit resolution before merge/conversion");
         it=d.countryDetails.erase(it);
     }
-    // Reparent the moved hierarchy before removing relationships to a vanished
-    // former parent; otherwise the target loses its base relation mid-command.
-    if(action.geometry)for(const auto& ref:action.geometry->removedGeometryOwners)
-        d.relations.erase(std::remove_if(d.relations.begin(),d.relations.end(),[&](const auto& r){return r.unit==ref||(r.parent&&*r.parent==ref)||(r.sovereign&&*r.sovereign==ref);}),d.relations.end());
-    if(action.geometry)for(const auto& r:d.relations)if(!r.dated&&r.parent) {
-        const auto child=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==r.unit;});
-        const auto parent=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return territorialRef(u.id)==*r.parent;});
-        if(child!=d.units.end()&&parent!=d.units.end()&&child->kind==UnitKind::Subunit)
-            require(geometryContains(*d.geometries.get(parent->geometry),*d.geometries.get(child->geometry)),CommandError::ValidationFailed,"final geometry outside parent");
+    if(action.geometry){std::vector<std::string> removed;for(const auto& ref:action.geometry->removedGeometryOwners)removed.push_back(ref.id);removeTerritorialRecords(d,removed);}
+    if(action.geometry)for(const auto& r:d.timelineRecords.parentRelations)if(!r.parentId.empty()) {
+        const auto child=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return u.id==r.entityId;});
+        const auto parent=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return u.id==r.parentId;});
+        if(child!=d.units.end()&&parent!=d.units.end()&&child->kind==UnitKind::General)
+            require(geometryContains(*shape(parent->id),*shape(child->id)),CommandError::ValidationFailed,"final geometry outside parent");
     }
 }
 template<class Rows,class Value> void replaceContentRow(Rows& rows,const Value& value) {
@@ -824,7 +780,7 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
         const auto& source=nativeLayerId(before,ref);
         const auto& destination=nativeLayerId(after,ref);
         const bool colorChanged=oldStyle.explicitColor!=nextStyle.explicitColor || (oldStyle.explicitColor&&oldStyle.color!=nextStyle.color);
-        const bool dateChanged=old.validity.from!=next.validity.from || old.validity.to!=next.validity.to;
+        const bool dateChanged=!sameValidity(staticLifetime(before,old.id).validity,staticLifetime(after,next.id).validity);
         bool changed=old.name!=next.name || old.nameExplicit!=next.nameExplicit || old.notes!=next.notes || colorChanged || dateChanged ||
                      oldStyle.opacity!=nextStyle.opacity || source!=destination;
         // Check pre-transaction locks; a compound unlock cannot bypass protection.
@@ -910,6 +866,7 @@ PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const Com
 {
     PrepareResult result;
     try {
+        requireStaticTimeline(project.document());
         validateRequest(project,request);
         const auto structural=std::get_if<ApplyTerritorialMutation>(&request.args.action);
         if(structural) {
@@ -984,7 +941,7 @@ PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const Com
             const auto& unit=project.document().units.at(project.index().objects.at(field->target));
             // Clearing a displayed fallback name again invokes the pinned web's
             // country-metadata command even when the stored empty override agrees.
-            checkpoint=unit.kind==UnitKind::Country && field->field==TerritorialField::Name &&
+            checkpoint=unit.kind==UnitKind::General && field->field==TerritorialField::Name &&
                 unit.nameExplicit && unit.name.empty() && trimWebText(field->value).empty();
         }
         if(!checkpoint && semanticallyEqual(project.document(),after->document)) {
@@ -1097,14 +1054,15 @@ CommandResult CommandProcessor::confirm(Project& project,CommandPreview& preview
 bool semanticallyEqual(const ProjectDocument& a,const ProjectDocument& b)
 {
     if(&a==&b) return true;
-    return a.documentId==b.documentId && sameContent(a,b) &&
+    return a.documentId==b.documentId && a.exchangeMetadata==b.exchangeMetadata && sameContent(a,b) &&
         same(a.units,b.units,[](const auto& x,const auto& y) {
             return x.id==y.id && x.name==y.name && x.baseName==y.baseName && x.nameExplicit==y.nameExplicit && x.notes==y.notes && x.kind==y.kind &&
-                x.geometry==y.geometry && x.locked==y.locked && sameValidity(x.validity,y.validity) && x.coverageMode==y.coverageMode && x.libraryOrigin==y.libraryOrigin;
-        }) && same(a.relations,b.relations,[](const auto& x,const auto& y) {
-            return x.id==y.id && x.unit==y.unit && x.parent==y.parent && x.sovereign==y.sovereign &&
-                x.dated==y.dated && sameValidity(x.validity,y.validity);
-        }) && same(a.geometries.versions(),b.geometries.versions(),[](const auto& x,const auto& y) {
+                x.locked==y.locked && x.libraryOrigin==y.libraryOrigin && x.metadata==y.metadata &&
+                x.sourceFolderId==y.sourceFolderId && x.sourceLibraryId==y.sourceLibraryId && x.sourceGeometryVersion==y.sourceGeometryVersion;
+        }) && a.timelineRecords.schemaVersion==b.timelineRecords.schemaVersion &&
+        same(a.timelineRecords.lifetimes,b.timelineRecords.lifetimes,[](const auto& x,const auto& y){return x.id==y.id&&x.entityId==y.entityId&&sameValidity(x.validity,y.validity);}) &&
+        same(a.timelineRecords.geometryBindings,b.timelineRecords.geometryBindings,[](const auto& x,const auto& y){return x.id==y.id&&x.entityId==y.entityId&&sameValidity(x.validity,y.validity)&&x.geometryRef==y.geometryRef;}) &&
+        same(a.timelineRecords.parentRelations,b.timelineRecords.parentRelations,[](const auto& x,const auto& y){return x.id==y.id&&x.entityId==y.entityId&&sameValidity(x.validity,y.validity)&&x.parentId==y.parentId&&x.coverageMode==y.coverageMode;}) && same(a.geometries.versions(),b.geometries.versions(),[](const auto& x,const auto& y) {
             return x.first==y.first && (x.second==y.second || sameGeometry(*x.second,*y.second));
         }) && same(a.presentation.userLayers,b.presentation.userLayers,[](const Layer& x,const Layer& y) {
             return x.id==y.id && x.name==y.name && x.visible==y.visible && x.locked==y.locked && x.opacity==y.opacity;

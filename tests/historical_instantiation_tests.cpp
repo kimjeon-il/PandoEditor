@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include <pandoeditor/historicalinstantiation.h>
 #include <pandoeditor/project.h>
 #include <cassert>
@@ -23,9 +24,9 @@ Project project() {
 int main() {
     WorldSnapshot snapshot;snapshot.id="snapshot:1945";snapshot.referenceDate="1945";
     snapshot.entityRefs={"historical-country:H","historical-country:I"};
-    const HistoricalLibrary catalog(2,{entity("historical-country:H",UnitKind::Country,square(20)),
-                                       entity("historical-country:I",UnitKind::Country,square(30)),
-                                       entity("historical-subunit:S",UnitKind::Subunit,square(2))},{snapshot});
+    const HistoricalLibrary catalog(2,{entity("historical-country:H",UnitKind::General,square(20)),
+                                       entity("historical-country:I",UnitKind::General,square(30)),
+                                       entity("historical-subunit:S",UnitKind::General,square(2))},{snapshot});
     auto p=project();
     auto plan=planIndependentHistorical(p.snapshot(),catalog,{{"historical-country:H","1945"},
                                                              {"historical-country:I","1945"}});
@@ -60,13 +61,13 @@ int main() {
     catch(const std::invalid_argument&){absentSnapshot=true;}
     assert(absentSnapshot);
     snapshot.entityRefs.push_back("historical-country:missing");
-    HistoricalLibrary partial(2,{entity("historical-country:H",UnitKind::Country,square(20)),
-                                 entity("historical-country:I",UnitKind::Country,square(30))},{snapshot});
+    HistoricalLibrary partial(2,{entity("historical-country:H",UnitKind::General,square(20)),
+                                 entity("historical-country:I",UnitKind::General,square(30))},{snapshot});
     bool missingEntity=false;
     try { (void)planIndependentHistoricalSnapshot(snapshotProject.snapshot(),partial,"snapshot:1945"); }
     catch(const std::invalid_argument&){missingEntity=true;}
     assert(missingEntity&&snapshotProject.document().units.size()==1);
-    auto partialEntity=entity("historical-country:partial",UnitKind::Country,square(40));
+    auto partialEntity=entity("historical-country:partial",UnitKind::General,square(40));
     partialEntity.geometryVersions.front().partial=true;
     partialEntity.geometryVersions.front().missingSourceIds={"current-country:missing"};
     HistoricalLibrary partialCatalog(2,{partialEntity},{});
@@ -87,20 +88,22 @@ int main() {
     const auto& partialOrigin=*snapshotProject.document().units.back().libraryOrigin;
     assert(partialOrigin.partial&&partialOrigin.missingLibraryRefs.front()=="current-country:missing");
     assert(snapshotProject.undo());
-    auto missingOwnership=false;
-    try { (void)planIndependentHistorical(p.snapshot(),catalog,{{"historical-subunit:S","1945"}}); }
-    catch(const std::invalid_argument&){missingOwnership=true;}
-    assert(missingOwnership);
+    auto independent=planIndependentHistorical(p.snapshot(),catalog,{{"historical-subunit:S","1945"}});
+    assert(!independent.additions.front().parent);
+    bool politicalRelationRejected=false;
+    try { (void)planIndependentHistorical(p.snapshot(),catalog,{{"historical-subunit:S","1945","",territorialRef("A"),territorialRef("A")}}); }
+    catch(const std::invalid_argument&){politicalRelationRejected=true;}
+    assert(politicalRelationRejected);
     auto fresh=project();
     auto sub=planIndependentHistorical(fresh.snapshot(),catalog,
-        {{"historical-subunit:S","1945","",territorialRef("A"),territorialRef("A")}});
+        {{"historical-subunit:S","1945","",territorialRef("A"),{}}});
     args.action=sub;auto subPreview=CommandProcessor::prepare(fresh,CommandProcessor::makeRequest(fresh,"historical.instantiate",args));
     assert(subPreview.ok()&&subPreview.preview);
     assert(CommandProcessor::confirm(fresh,*subPreview.preview).changed());
-    assert(effectiveRelation(fresh.document(),"historical-subunit:S",19450101)->parent==territorialRef("A"));
+    assert(staticParentRelation(fresh.document(),"historical-subunit:S").parentId=="A");
     assert(fresh.undo()&&!fresh.index().objects.count(territorialRef("historical-subunit:S")));
     sub=planIndependentHistorical(fresh.snapshot(),catalog,
-        {{"historical-subunit:S","1945","",territorialRef("A"),territorialRef("A")}});
+        {{"historical-subunit:S","1945","",territorialRef("A"),{}}});
     args.action=sub;
     auto cancelled=CommandProcessor::prepare(fresh,CommandProcessor::makeRequest(fresh,"historical.instantiate",args));
     assert(cancelled.preview);CommandProcessor::cancel(*cancelled.preview);
@@ -111,7 +114,7 @@ int main() {
     auto other=project();args.action=plan;
     assert(CommandProcessor::prepare(other,CommandProcessor::makeRequest(other,"historical.instantiate",args)).error==CommandError::ProjectMismatch);
 
-    auto replacement=entity("historical-country:R",UnitKind::Country,square(0,4));
+    auto replacement=entity("historical-country:R",UnitKind::General,square(0,4));
     replacement.instantiation.mode="territory-replacement";
     replacement.instantiation.countryNameUpdates={{"A","Renamed Alpha"}};
     const HistoricalLibrary replacementCatalog(2,{replacement},{});
@@ -127,10 +130,10 @@ int main() {
     assert(CommandProcessor::confirm(replacing,*replacementPreview.preview).changed());
     assert(replacing.document().units.size()==2);
     assert(replacing.document().units.front().name=="Renamed Alpha");
-    assert(replacing.document().geometries.get(replacing.document().units.front().geometry)->polygons.front().front().front().x==4);
+    assert(replacing.document().geometries.get(staticGeometryBinding(replacing.document(),replacing.document().units.front().id).geometryRef)->polygons.front().front().front().x==4);
     assert(replacing.undo()&&replacing.document().units.size()==1);
     assert(replacing.document().units.front().name=="Alpha");
-    assert(replacing.document().geometries.get(replacing.document().units.front().geometry)->polygons.front().front().front().x==0);
+    assert(replacing.document().geometries.get(staticGeometryBinding(replacing.document(),replacing.document().units.front().id).geometryRef)->polygons.front().front().front().x==0);
 
     auto countryChoice=project();
     auto newCountry=planHistorical(countryChoice.snapshot(),catalog,
@@ -141,11 +144,11 @@ int main() {
         CommandProcessor::makeRequest(countryChoice,"historical.instantiate",args));
     assert(choicePreview.ok()&&choicePreview.preview);
     assert(CommandProcessor::confirm(countryChoice,*choicePreview.preview).changed());
-    assert(countryChoice.document().units.back().kind==UnitKind::Country);
+    assert(countryChoice.document().units.back().kind==UnitKind::General);
     assert(countryChoice.document().units.back().libraryOrigin->libraryId=="historical-subunit:S");
     assert(countryChoice.undo()&&countryChoice.document().units.size()==1);
 
-    auto absorber=entity("historical-country:absorber",UnitKind::Country,square(0,10));
+    auto absorber=entity("historical-country:absorber",UnitKind::General,square(0,10));
     absorber.instantiation.mode="territory-replacement";
     HistoricalLibrary absorption(2,{absorber},{});
     auto transferProject=project();

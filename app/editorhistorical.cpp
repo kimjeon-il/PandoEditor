@@ -17,10 +17,8 @@ QString label(const pandoeditor::HistoricalEntity& entity) {
     const auto ko=entity.displayNames.find("ko");
     return qs(ko==entity.displayNames.end()?entity.canonicalName:ko->second);
 }
-QString kindName(pandoeditor::UnitKind type) {
-    switch(type){case pandoeditor::UnitKind::Country:return QStringLiteral("국가");
-        case pandoeditor::UnitKind::Subunit:return QStringLiteral("하위 단위");
-        default:return QStringLiteral("지방");}
+QString kindName(const std::string& catalogKind) {
+    return catalogKind=="country"?QStringLiteral("국가"):catalogKind=="subunit"?QStringLiteral("하위단위"):QStringLiteral("지방");
 }
 QString opt(const std::optional<std::string>& value){return value?qs(*value):QString();}
 }
@@ -30,9 +28,9 @@ QVariantList EditorController::historicalResults() const {
     if(!historicalLibrary_)return rows;
     for(const auto* entity:historicalLibrary_->search(historicalFilter_)) {
         rows.push_back(QVariantMap{{"id",qs(entity->libraryId)},{"name",label(*entity)},
-            {"canonicalName",qs(entity->canonicalName)},{"type",kindName(entity->type)},
+            {"canonicalName",qs(entity->canonicalName)},{"type",kindName(entity->catalogKind)},
             {"validFrom",opt(entity->validity.from)},{"validTo",opt(entity->validity.to)},
-            {"region",qs(entity->geographicRegion)},{"kind",entity->type==pandoeditor::UnitKind::Country?QStringLiteral("country"):entity->type==pandoeditor::UnitKind::Subunit?QStringLiteral("subunit"):QStringLiteral("region")},{"parentId",qs(entity->parentLibraryId)},
+            {"region",qs(entity->geographicRegion)},{"kind",qs(entity->catalogKind)},{"parentId",qs(entity->parentLibraryId)},
             {"flagSource",QJsonDocument::fromJson(qs(entity->metadata).toUtf8()).object().value("defaultFlagDataUrl").toString()}});
     }
     return rows;
@@ -53,7 +51,7 @@ QVariantList EditorController::historicalSnapshots() const {
 }
 QVariantList EditorController::historicalCountries() const {
     QVariantList result;
-    for(const auto& unit:project_.document().units)if(unit.kind==pandoeditor::UnitKind::Country)
+    for(const auto& unit:project_.document().units)if(pandoeditor::isRootGeneral(project_.document(),unit))
         result.push_back(QVariantMap{{"id",qs(unit.id)},{"name",qs(unit.name)}});
     return result;
 }
@@ -61,15 +59,10 @@ QVariantList EditorController::historicalParents(const QString& countryId) const
     QVariantList result;
     if(countryId.isEmpty())return result;
     for(const auto& unit:project_.document().units) {
-        if(unit.id==countryId.toStdString()&&unit.kind==pandoeditor::UnitKind::Country)
+        if(unit.id==countryId.toStdString()&&unit.kind==pandoeditor::UnitKind::General)
             result.push_back(QVariantMap{{"id",qs(unit.id)},{"name",qs(unit.name)}});
-        else if(unit.kind==pandoeditor::UnitKind::Subunit) {
-            for(const auto& relation:project_.document().relations)
-                if(!relation.dated&&relation.unit==pandoeditor::territorialRef(unit.id)&&relation.sovereign&&
-                   relation.sovereign->id==countryId.toStdString()) {
-                    result.push_back(QVariantMap{{"id",qs(unit.id)},{"name",qs(unit.name)}});break;
-                }
-        }
+        else if(unit.kind==pandoeditor::UnitKind::General&&pandoeditor::staticParentRelation(project_.document(),unit.id).parentId==countryId.toStdString())
+            result.push_back(QVariantMap{{"id",qs(unit.id)},{"name",qs(unit.name)}});
     }
     return result;
 }
@@ -85,7 +78,7 @@ QVariantMap EditorController::historicalPreview() const {
             {"certainty",qs(version.certainty)},{"datePrecision",qs(version.datePrecision)},
             {"sourceId",qs(version.sourceId)}});
     QVariantMap result{{"id",historicalSelectedId_},{"name",label(*entity)},
-        {"canonicalName",qs(entity->canonicalName)},{"type",kindName(entity->type)},
+        {"canonicalName",qs(entity->canonicalName)},{"type",kindName(entity->catalogKind)},
         {"validFrom",opt(entity->validity.from)},{"validTo",opt(entity->validity.to)},
         {"region",qs(entity->geographicRegion)},{"versions",versions},{"hasChildren",hasChildren},
         {"selectedVersionId",historicalVersionId_},{"mode",qs(entity->instantiation.mode)},
@@ -149,8 +142,8 @@ bool EditorController::refreshHistoricalCatalog() {
                 const auto it=project_.index().objects.find(pandoeditor::territorialRef(id));
                 if(it==project_.index().objects.end())return std::nullopt;
                 const auto& unit=project_.document().units.at(it->second);
-                if(unit.kind!=pandoeditor::UnitKind::Country)return std::nullopt;
-                return *project_.document().geometries.get(unit.geometry);
+                if(unit.kind!=pandoeditor::UnitKind::General)return std::nullopt;
+                return *project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit.id).geometryRef);
             },pandoeditor::calculateGeometry);
         historicalLibrary_=std::make_shared<pandoeditor::HistoricalLibrary>(std::move(materialized.library));
         historicalSelectedId_.clear();historicalVersionId_.clear();
@@ -220,23 +213,19 @@ bool EditorController::prepareHistoricalAdd(const QVariantMap& options) {
             request.approvePartial=choice.value("approvePartial",options.value("approvePartial")).toBool();
             request.asIndependentCountry=choice.value("mode").toString()==QStringLiteral("country");
             request.countryName=choice.value("name").toString().toStdString();
-            auto sovereign=choice.value("countryId").toString().toStdString();
+            if(!choice.value("countryId").toString().isEmpty())throw std::invalid_argument("UNSUPPORTED_POLITICAL_RELATION");
             auto parent=choice.value("parentId").toString().toStdString();
-            if(entity->type==pandoeditor::UnitKind::Subunit&&!request.asIndependentCountry) {
-                if(sovereign.empty() && !entity->sovereignLibraryId.empty() &&
-                   std::find(ids.begin(),ids.end(),entity->sovereignLibraryId)!=ids.end())
-                    sovereign=entity->sovereignLibraryId;
+            if(entity->type==pandoeditor::UnitKind::General&&!request.asIndependentCountry) {
                 if(parent.empty() && !entity->parentLibraryId.empty() &&
                    std::find(ids.begin(),ids.end(),entity->parentLibraryId)!=ids.end())
                     parent=entity->parentLibraryId;
-                if(sovereign.empty()||parent.empty()) {
+                if(parent.empty()&&!entity->parentLibraryId.empty()) {
                     historicalOwnershipNeeded_.push_back(QVariantMap{{"id",qs(id)},
-                        {"name",label(*entity)},{"countryId",qs(sovereign)},
+                        {"name",label(*entity)},
                         {"parentId",qs(parent)}});
                     continue;
                 }
-                request.sovereign=pandoeditor::territorialRef(sovereign);
-                request.parent=pandoeditor::territorialRef(parent);
+                if(!parent.empty())request.parent=pandoeditor::territorialRef(parent);
             }
             requests.push_back(std::move(request));
         }

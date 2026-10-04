@@ -39,10 +39,10 @@ bool geometryBindingsChanged(const pandoeditor::ProjectDocument& before,
 {
     if(before.units.size()!=after.units.size()) return true;
     std::map<std::string,pandoeditor::GeometryRef> bindings;
-    for(const auto& unit:before.units) bindings.emplace(unit.id,unit.geometry);
+    for(const auto& unit:before.units) bindings.emplace(unit.id,pandoeditor::staticGeometryBinding(before,unit.id).geometryRef);
     for(const auto& unit:after.units) {
         const auto found=bindings.find(unit.id);
-        if(found==bindings.end() || !(found->second==unit.geometry)) return true;
+        if(found==bindings.end() || !(found->second==pandoeditor::staticGeometryBinding(after,unit.id).geometryRef)) return true;
     }
     return false;
 }
@@ -305,8 +305,8 @@ QString EditorController::labelSourceId(const std::string& ownerId) const {
 void EditorController::scheduleDerivedLabelAnchor(const pandoeditor::ObjectRef& owner) {
     if(!labelAnchors_||owner.domain!="territorial")return;
     const auto object=project_.index().objects.find(owner);if(object==project_.index().objects.end())return;
-    const auto& unit=project_.document().units.at(object->second);const auto geometry=project_.document().geometries.get(unit.geometry);
-    if(geometry)labelAnchors_->recompute(text(owner.id),*geometry,unit.geometry.version);
+    const auto& unit=project_.document().units.at(object->second);const auto geometry=project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit.id).geometryRef);
+    if(geometry)labelAnchors_->recompute(text(owner.id),*geometry,pandoeditor::staticGeometryBinding(project_.document(),unit.id).geometryRef.version);
 }
 QVariantMap EditorController::renderQuality() const {
     const auto profile=quality_.profile();
@@ -518,7 +518,7 @@ QVariantMap EditorController::countryVisuals() const
             {"name",text(project_.propertyView(ref)->displayName)},{"nameVisible",resolved.nameVisible},{"flagVisible",resolved.flagVisible},{"flagSource",flag},{"flagAvailable",flagAvailable},{"flagReason",flagReason},
             {"boundary",pandoeditor::resolvedTerritorialPresentation(project_.document(),ref).boundaryVisible},
             {"blendMode",text(resolved.blendMode)},
-            {"kind",unit.kind==pandoeditor::UnitKind::Country?QStringLiteral("country"):unit.kind==pandoeditor::UnitKind::Subunit?QStringLiteral("subunit"):QStringLiteral("region")},
+            {"kind",pandoeditor::isRootGeneral(project_.document(),unit)?QStringLiteral("country"):unit.kind==pandoeditor::UnitKind::General?QStringLiteral("subunit"):QStringLiteral("region")},
             {"layerId",text(nativeLayer)},{"layerOpacity",nativeOpacity},{"layerOrder",nativeOrder},
             {"drawFillPass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).pass},
             {"drawLinePass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Line).pass},
@@ -627,9 +627,8 @@ bool EditorController::canDeleteLayer() const
 QString EditorController::fileName() const {return filePath_.isEmpty()?QStringLiteral("새 프로젝트"):QFileInfo(filePath_).fileName();}
 QString EditorController::documentNotice() const
 {
-    QString notice=QStringLiteral("저장 형식: Qt v8 · 이전 앱에서는 열 수 없습니다. 열기만으로 원본 파일은 변경되지 않습니다.");
+    QString notice=QStringLiteral("저장 형식: Qt v9 · 이전 앱에서는 열 수 없습니다. 열기만으로 원본 파일은 변경되지 않습니다.");
     const auto& d=project_.document();
-    if(d.nativeSourceVersion<4)notice+=QStringLiteral(" 이전 Qt 파일의 색은 명시값으로 보존했습니다. 과거 상속 의도와 최초 국명은 복원할 수 없으며 현재 값을 우선합니다.");
     if(d.units.size()>project_.countries().size())
         notice+=QStringLiteral(" 하위단위·지방 %1개: 정보·편집·관계 메뉴에서 편집할 수 있습니다.").arg(d.units.size()-project_.countries().size());
     if(!d.extensions.empty())
@@ -645,9 +644,9 @@ bool EditorController::hasPendingEdits() const
     if(geometryEdit_||(contentSession_&&(contentSession_->edit.create||contentSession_->preview||!contentSession_->pendingFields.empty()))) return true;
     if(!parkedCountryDrafts_.empty()||!parkedLayerDrafts_.empty()) return true;
     const auto u=selectedUnit();
-    if(u && (nameDraft_!=QString::fromStdString(u->kind==pandoeditor::UnitKind::Country?pandoeditor::objectDisplayName(*u):u->name)
+    if(u && (nameDraft_!=QString::fromStdString(u->kind==pandoeditor::UnitKind::General?pandoeditor::objectDisplayName(*u):u->name)
        || memoDraft_!=text(u->notes) || colorDraft_!=rgb(pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(u->id)))
-       || validFromDraft_!=text(u->validity.from.value_or("")) || validToDraft_!=text(u->validity.to.value_or(""))
+       || validFromDraft_!=text(pandoeditor::staticLifetime(project_.document(),u->id).validity.from.value_or("")) || validToDraft_!=text(pandoeditor::staticLifetime(project_.document(),u->id).validity.to.value_or(""))
        || (opacityPreview_&&*opacityPreview_!=project_.document().presentation.objectStyles.at(pandoeditor::territorialRef(u->id)).opacity)))return true;
     const auto l=project_.layer(selectedLayer_.toStdString());
     return l&&(layerNameDraft_!=text(l->name)||(layerOpacityPreview_&&*layerOpacityPreview_!=l->opacity));
@@ -659,11 +658,11 @@ void EditorController::setLayerNameDraft(const QString& value) {cancelPreview();
 void EditorController::reloadDrafts()
 {
     const auto u=selectedUnit();
-    nameDraft_=u?text(u->kind==pandoeditor::UnitKind::Country?pandoeditor::objectDisplayName(*u):u->name):QString();
+    nameDraft_=u?text(u->kind==pandoeditor::UnitKind::General?pandoeditor::objectDisplayName(*u):u->name):QString();
     memoDraft_=u?text(u->notes):QString();
     colorDraft_=u?rgb(pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(u->id))):QString();
-    validFromDraft_=u?text(u->validity.from.value_or("")):QString();
-    validToDraft_=u?text(u->validity.to.value_or("")):QString();
+    validFromDraft_=u?text(pandoeditor::staticLifetime(project_.document(),u->id).validity.from.value_or("")):QString();
+    validToDraft_=u?text(pandoeditor::staticLifetime(project_.document(),u->id).validity.to.value_or("")):QString();
     const auto l=project_.layer(selectedLayer_.toStdString());layerNameDraft_=l?text(l->name):QString();
     opacityPreview_.reset();layerOpacityPreview_.reset();
     restoreParkedDrafts();
@@ -778,7 +777,8 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
 {
     if(startupBusy_)return false;
     if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 도형 편집을 확인하거나 취소한 뒤 프로젝트를 바꾸세요."));return false;}
-    pandoeditor::Project candidate;candidate.replace(projectcodec::decode(bytes));
+    auto document=projectcodec::decode(bytes);pandoeditor::requireStaticTimeline(document);
+    pandoeditor::Project candidate;candidate.replace(std::move(document));
     MapProjection nextProjection;nextProjection.rebuild(candidate.document());
     cancelWorldBootstrap();
     cancelPreview();cancelStructureMutation();project_=std::move(candidate);projection_=std::move(nextProjection);
@@ -788,7 +788,7 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
     // A saved built-in world keeps canonical document geometry. Attach its
     // optional render meshes on a worker after validating actual coordinates.
     if(bootstrapWorldEnabled_&&std::any_of(project_.document().units.begin(),project_.document().units.end(),
-            [](const auto& unit){return unit.geometry.id.rfind("world-country-",0)==0;})) {
+            [this](const auto& unit){return pandoeditor::staticGeometryBinding(project_.document(),unit.id).geometryRef.id.rfind("world-country-",0)==0;})) {
         using DetailFrames=std::pair<std::shared_ptr<const WorldBaseFrame>,std::shared_ptr<const WorldBaseFrame>>;
         const auto initial=project_.snapshot();const auto generation=worldGeneration_;
         auto* watcher=new QFutureWatcher<DetailFrames>(this);

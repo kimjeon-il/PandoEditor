@@ -121,24 +121,23 @@ private slots:
             QVERIFY(editor.colors()!=colors); editor.redo(); QCOMPARE(editor.colors(),colors);
         }
     }
-    void openLegacyDoesNotRewriteUntilSaveAndBlockedDraftIsKept()
+    void currentOpenDoesNotRewriteAndInvalidCandidateKeepsDraft()
     {
         QTemporaryDir dir; QVERIFY(dir.isValid());
         const auto path=dir.filePath("legacy.json"); const auto original=sampleProject();
         QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(original); file.close();
         EditorController editor; QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
         QCOMPARE(readFile(path),original); QVERIFY(!editor.dirty());
-        QVERIFY(editor.documentNotice().contains("Qt v8"));
+        QVERIFY(editor.documentNotice().contains("Qt v9"));
         QVERIFY(editor.saveFile(QUrl::fromLocalFile(path)));
-        QCOMPARE(QJsonDocument::fromJson(readFile(path)).object()["version"].toInt(),8);
+        QCOMPARE(QJsonDocument::fromJson(readFile(path)).object()["version"].toInt(),9);
         auto extended=original; extended.insert(extended.indexOf('{')+1,"\"future\":{\"x\":true},");
         QVERIFY(file.open(QIODevice::WriteOnly)); file.write(extended); file.close();
-        QVERIFY(editor.openFile(QUrl::fromLocalFile(path))); editor.selectCountry("DEU");
-        editor.setNameDraft("safe name"); editor.setColorDraft("#123456");
+        editor.selectCountry("DEU");editor.setNameDraft("safe name");editor.setColorDraft("#123456");
         const auto colors=editor.colors();
-        QVERIFY(!editor.commitPendingEdits()); QCOMPARE(editor.colors(),colors);
+        QVERIFY(!editor.openFile(QUrl::fromLocalFile(path))); QCOMPARE(editor.colors(),colors);
         QCOMPARE(editor.nameDraft(),QString("safe name")); QVERIFY(!editor.canUndo());
-        editor.setColorDraft(colors["DEU"].toString()); QVERIFY(editor.commitPendingEdits());
+        QVERIFY(editor.commitPendingEdits());
         QVERIFY(editor.saveFile(QUrl::fromLocalFile(path))); QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
         editor.selectCountry("DEU"); QCOMPARE(editor.selectedName(),QString("safe name"));
     }

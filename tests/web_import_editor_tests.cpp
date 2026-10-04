@@ -7,7 +7,7 @@
 namespace {
 QByteArray bytes(const QString& path) {QFile f(path);if(!f.open(QIODevice::ReadOnly))return {};return f.readAll();}
 void write(const QString& path,const QByteArray& data) {QFile f(path);if(!f.open(QIODevice::WriteOnly)||f.write(data)!=data.size())throw std::runtime_error("fixture write");}
-QByteArray source() {return bytes(QStringLiteral(WEB_IMPORT_FIXTURES)+"/v5.input.json");}
+QByteArray source() {return bytes(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../timeline-exchange/static.json");}
 QString first(EditorController& c) {return c.countryRows().first().toMap()["id"].toString();}
 }
 class WebImportEditorTests:public QObject {
@@ -56,7 +56,7 @@ private slots:
  }
  void malformedDeltaAndSourceOverwriteAreRejected() {
     QTemporaryDir d;auto path=d.filePath("source.json");write(path,source());EditorController c;c.selectCountry(first(c));c.setNameDraft("keep");
-    auto delta=d.filePath("delta.json");write(delta,R"({"format":"pandolab-autosave-delta","schemaVersion":5})");
+    auto delta=d.filePath("delta.json");write(delta,R"({"format":"pandolab-autosave-delta","schemaVersion":9})");
     QVERIFY(c.prepareWebImport(QUrl::fromLocalFile(delta)));QTRY_VERIFY(!c.webImportBusy());QVERIFY(!c.hasWebImportPreview());QVERIFY(c.webImportError().contains("BASE_DATA_REQUIRED"));
     QCOMPARE(c.nameDraft(),QString("keep"));QVERIFY(c.prepareWebImport(QUrl::fromLocalFile(path)));QTRY_VERIFY(c.hasWebImportPreview());
     QVERIFY(!c.confirmWebImport(c.webImportHash(),"save",QUrl::fromLocalFile(path)));QCOMPARE(bytes(path),source());
@@ -69,7 +69,7 @@ private slots:
     QVERIFY(c.prepareWebImport(QUrl::fromLocalFile(d.filePath("missing.json"))));QTRY_VERIFY(!c.webImportBusy());
     QVERIFY(c.hasPreparedPreview());QVERIFY(!c.hasWebImportPreview());QCOMPARE(c.nameDraft(),QString("pending preview"));
     QVERIFY(c.confirmPreview());QCOMPARE(c.selectedName(),QString("pending preview"));
-    auto changed=source();changed.replace("Override","Latest");
+    auto changed=source();changed.replace(QStringLiteral("A 영토").toUtf8(),"Latest");
     auto second=d.filePath("second.json");write(second,changed);
     QVERIFY(c.prepareWebImport(QUrl::fromLocalFile(path)));QVERIFY(c.prepareWebImport(QUrl::fromLocalFile(second)));
     QTRY_VERIFY(c.hasWebImportPreview());auto hash=c.webImportHash();

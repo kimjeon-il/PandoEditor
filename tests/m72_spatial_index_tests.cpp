@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include <pandoeditor/spatialindex.h>
 #include <pandoeditor/presentation.h>
 #include <algorithm>
@@ -15,7 +16,7 @@ Corpus makeCorpus() {
     auto add=[&](std::string id,Geometry geometry) {
         auto i=c.document.units.size();GeometryRef ref{id,1};
         c.document.geometries.insert(ref,std::move(geometry));
-        c.document.units.push_back({id,id,{},UnitKind::Country,ref});
+        appendTerritory(c.document,{id,id,{},UnitKind::General,false},ref);
         c.index.objects[{"territorial",id}]=i;
     };
     add("DEU",square(10,12,50,52));
@@ -54,7 +55,7 @@ void viewMoveDoesNotRebuildButGeometryDoes() {
     index.query({{0,0,5,5}});index.rebuild(c.document,c.index);
     require(index.geometryRevision()==revision,"same geometry and view move do not rebuild");
     c.document.geometries.insert({"DEU",2},square(30,31,50,52));
-    c.document.units[0].geometry={"DEU",2};index.rebuild(c.document,c.index);
+    staticGeometryBinding(c.document,c.document.units[0].id).geometryRef={"DEU",2};index.rebuild(c.document,c.index);
     require(index.geometryRevision()==revision+1,"changed geometry version rebuilds");
     require(!has(index.query({{9,49,13,53}}),"DEU")&&
         has(index.query({{29,49,32,53}}),"DEU"),"new location replaces old cells");

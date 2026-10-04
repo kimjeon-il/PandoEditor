@@ -77,7 +77,7 @@ inline std::vector<ProjectionDiagnostic> diagnoseCurrentProjection(const pandoed
         result.push_back(std::move(row));
     };
     for(const auto& unit:document.units) {
-        const auto shape=document.geometries.get(unit.geometry);
+        const auto shape=document.geometries.get(pandoeditor::staticGeometryBinding(document,unit.id).geometryRef);
         if(shape) diagnose(unit.id,*shape,QString::fromStdString(unit.id));
     }
     for(const auto& item:document.genericFeatures) if(item.id=="DATELINE"||item.id=="POLAR") {

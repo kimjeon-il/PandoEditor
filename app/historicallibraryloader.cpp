@@ -73,7 +73,7 @@ HistoricalSource parseHistoricalLibrarySource(const QByteArray& bytes) {
         entity.libraryId=text(at(raw,"libraryId"));
         require(!entity.libraryId.empty()&&ids.insert(entity.libraryId).second,
                 "INVALID_LIBRARY: duplicate or empty entity");
-        entity.type=historicalUnitKind(text(at(raw,"type")));
+        entity.catalogKind=text(at(raw,"type"));entity.type=historicalUnitKind(entity.catalogKind);
         entity.canonicalName=text(at(raw,"canonicalName"));
         const auto& names=at(raw,"displayNames");
         if(names.kind==V::Object)for(const auto& [key,value]:names.object)

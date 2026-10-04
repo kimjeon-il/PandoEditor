@@ -9,8 +9,13 @@ bool LabelSettings::operator==(const LabelSettings& b) const {
     const auto point=[](const std::optional<Point>& p){return p?std::make_tuple(true,p->x,p->y):std::make_tuple(false,0.,0.);};
     return priority==b.priority&&minZoom==b.minZoom&&maxZoom==b.maxZoom&&point(manualPosition)==point(b.manualPosition)&&pinned==b.pinned&&collisionGroup==b.collisionGroup;
 }
-std::string territorialGroup(UnitKind k) { return k==UnitKind::Country?"countries":k==UnitKind::Subunit?"subunits":"regions"; }
-std::string territorialPresentationKey(UnitKind k,const std::string& id) { return "territorial:"+std::string(k==UnitKind::Country?"country":k==UnitKind::Subunit?"subunit":"region")+":"+id; }
+std::string territorialGroup(const ProjectDocument& d,const std::string& id) {
+    requireStaticTimeline(d);
+    const auto unit=std::find_if(d.units.begin(),d.units.end(),[&](const auto& row){return row.id==id;});
+    if(unit==d.units.end())throw std::invalid_argument("INVALID_TARGETS");
+    return unit->kind==UnitKind::Regional?"regions":staticParentRelation(d,id).parentId.empty()?"countries":"subunits";
+}
+std::string territorialPresentationKey(const std::string& id) { return "territorial:entity:"+id; }
 bool groupVisible(const WebPresentation& p,const std::string& g) { auto i=p.visibility.find(g);return i==p.visibility.end()||i->second; }
 bool itemVisible(const WebPresentation& p,const std::string& g,const std::string& id) { auto i=p.hiddenItems.find(g);return i==p.hiddenItems.end()||!i->second.count(id); }
 namespace {
@@ -24,7 +29,7 @@ std::vector<ObjectRef> contentRefs(const ProjectDocument& d) {
 }
 bool effectiveMapVisibility(const ProjectDocument& d,const ObjectRef& ref) {
     auto u=unit(d,ref);
-    auto g=u?territorialGroup(u->kind):contentGroup(d,ref);const auto& p=d.presentation.webPresentation;
+    auto g=u?territorialGroup(d,u->id):contentGroup(d,ref);const auto& p=d.presentation.webPresentation;
     if(g.empty()||!groupVisible(p,g)||!itemVisible(p,g,ref.id))return false;
     if(ref.domain=="hydro"&&std::find(d.physicalData.hiddenHydroIds.begin(),d.physicalData.hiddenHydroIds.end(),ref.id)!=d.physicalData.hiddenHydroIds.end())for(const auto& h:d.hydro)if(h.id==ref.id&&h.source.kind=="builtin")return false;
     if(ref.domain=="distributionEntry") for(const auto& e:d.distributionEntries) if(e.id==ref.id && !itemVisible(p,g,e.layerId)) return false;
@@ -36,20 +41,23 @@ ResolvedTerritorialPresentation resolvedTerritorialPresentation(const ProjectDoc
     const auto& p=d.presentation.webPresentation;std::set<std::string> visiting;
     std::function<ResolvedTerritorialPresentation(const TerritorialUnit&)> resolve=[&](const TerritorialUnit& u) {
         ResolvedTerritorialPresentation r;auto country=style(p.styles,"countries");r.opacity=country.opacity.value_or(1);r.blendMode=country.blendMode.value_or("normal");
-        auto group=territorialGroup(u.kind);auto gs=style(p.styles,group);auto os=style(p.objectStyles,territorialPresentationKey(u.kind,u.id));
-        if(u.kind!=UnitKind::Country) {
+        auto group=territorialGroup(d,u.id);auto gs=style(p.styles,group);auto os=style(p.objectStyles,territorialPresentationKey(u.id));
+        if(!isRootGeneral(d,u)) {
             if(!visiting.insert(u.id).second)throw std::invalid_argument("PRESENTATION_CYCLE");
-            for(const auto& rel:d.relations)if(rel.unit==territorialRef(u.id)&&!rel.dated&&rel.parent) {
-                auto parent=unit(d,*rel.parent);if(parent&&parent->kind==UnitKind::Subunit)r=resolve(*parent);break;
+            const auto& relation=staticParentRelation(d,u.id);
+            if(!relation.parentId.empty()) {
+                const auto parent=unit(d,territorialRef(relation.parentId));
+                if(parent&&!isRootGeneral(d,*parent))r=resolve(*parent);
             }
             visiting.erase(u.id);
             if(os.opacity)r.opacity=*os.opacity;else if(gs.opacity&&*gs.opacity!=1)r.opacity=*gs.opacity;
             if(os.blendMode)r.blendMode=*os.blendMode;else if(gs.blendMode==std::optional<std::string>("multiply"))r.blendMode="multiply";
         }
+        else {if(os.opacity)r.opacity=*os.opacity;if(os.blendMode)r.blendMode=*os.blendMode;}
         r.boundaryVisible=os.boundaryVisible.value_or(gs.boundaryVisible.value_or(true));
         r.colorVisible=os.colorVisible.value_or(gs.colorVisible.value_or(true));
-        const std::string name=u.kind==UnitKind::Country?"basemapLabels":u.kind==UnitKind::Subunit?"subunitLabels":"regionLabels";
-        const std::string flag=u.kind==UnitKind::Country?"countryFlags":u.kind==UnitKind::Subunit?"subunitFlags":"regionFlags";
+        const std::string name=group=="countries"?"basemapLabels":group=="subunits"?"subunitLabels":"regionLabels";
+        const std::string flag=group=="countries"?"countryFlags":group=="subunits"?"subunitFlags":"regionFlags";
         const bool visible=effectiveMapVisibility(d,territorialRef(u.id));
         r.nameVisible=visible&&groupVisible(p,name);r.flagVisible=visible&&groupVisible(p,flag);
         r.effectiveAlpha=r.opacity*terrainAlpha;
@@ -63,19 +71,19 @@ ResolvedTerritorialPresentation resolvedTerritorialPresentation(const ProjectDoc
 double territorialRenderOrder(const ProjectDocument& d,const ObjectRef& ref,double offset) {
     auto u=unit(d,ref);if(!u)return 0;
     const auto& order=d.presentation.webPresentation.objectOrder;
-    double rank=0;if(u->kind!=UnitKind::Country&&!order.empty()) {auto i=std::find(order.begin(),order.end(),territorialPresentationKey(u->kind,u->id));rank=double(i-order.begin())/double(order.size()+1);}
-    return (u->kind==UnitKind::Country?-1000:u->kind==UnitKind::Subunit?3000:4000)+offset+rank;
+    double rank=0;if(!order.empty()) {auto i=std::find(order.begin(),order.end(),territorialPresentationKey(u->id));rank=double(i-order.begin())/double(order.size()+1);}
+    return (isRootGeneral(d,*u)?-1000:u->kind==UnitKind::General?3000:4000)+offset+rank;
 }
 void normalizePresentation(ProjectDocument& d) {
     auto& p=d.presentation.webPresentation;std::set<std::string> keys;std::map<std::string,std::set<std::string>> ids;
-    for(const auto& u:d.units){ids[territorialGroup(u.kind)].insert(u.id);if(u.kind!=UnitKind::Country)keys.insert(territorialPresentationKey(u.kind,u.id));}
+    for(const auto& u:d.units){ids[territorialGroup(d,u.id)].insert(u.id);keys.insert(territorialPresentationKey(u.id));}
     for(const auto& ref:contentRefs(d))ids[contentGroup(d,ref)].insert(ref.id);
     for(auto& [g,hidden]:p.hiddenItems)for(auto i=hidden.begin();i!=hidden.end();)if(!ids[g].count(*i))i=hidden.erase(i);else ++i;
     for(auto i=p.hiddenItems.begin();i!=p.hiddenItems.end();)if(i->second.empty())i=p.hiddenItems.erase(i);else ++i;
     for(auto i=p.objectStyles.begin();i!=p.objectStyles.end();)if(!keys.count(i->first))i=p.objectStyles.erase(i);else ++i;
     std::set<std::string> seen;p.objectOrder.erase(std::remove_if(p.objectOrder.begin(),p.objectOrder.end(),[&](const auto& k){return !keys.count(k)||!seen.insert(k).second;}),p.objectOrder.end());
     for(auto i=p.labelSettings.begin();i!=p.labelSettings.end();) {
-        if(!d.units.empty()&&!std::any_of(d.units.begin(),d.units.end(),[&](const auto& u){return i->first==territorialRef(u.id);})&&
+        if(!std::any_of(d.units.begin(),d.units.end(),[&](const auto& u){return i->first==territorialRef(u.id);})&&
            !std::any_of(d.labels.begin(),d.labels.end(),[&](const auto& v){return i->first==ObjectRef{"label",v.id};})) i=p.labelSettings.erase(i);
         else {if(i->second.collisionGroup.empty())i->second.collisionGroup="map";++i;}
     }
@@ -83,10 +91,16 @@ void normalizePresentation(ProjectDocument& d) {
 }
 void validatePresentation(const ProjectDocument& d) {
     const auto& p=d.presentation.webPresentation;
+    std::set<std::string> keys;for(const auto& unit:d.units)keys.insert(territorialPresentationKey(unit.id));
+    for(const auto& [key,style]:p.objectStyles)if(!keys.count(key))throw std::invalid_argument("DANGLING_REF: object presentation");
+    std::set<std::string> order;for(const auto& key:p.objectOrder)if(!keys.count(key)||!order.insert(key).second)throw std::invalid_argument("INVALID_PRESENTATION_ORDER");
+    std::set<std::string> overlays;for(const auto& group:p.overlayOrder)if((group!="genericFeatures"&&group!="distributions"&&group!="subunits"&&group!="regions")||!overlays.insert(group).second)throw std::invalid_argument("INVALID_OVERLAY_ORDER");
     for(const auto* styles:{&p.styles,&p.objectStyles})for(const auto& [key,s]:*styles) {
         if((s.opacity&&(!std::isfinite(*s.opacity)||*s.opacity<0||*s.opacity>1))||(s.boundaryWidth&&*s.boundaryWidth!=1)||(s.blendMode&&*s.blendMode!="normal"&&*s.blendMode!="multiply"))throw std::invalid_argument("INVALID_PRESENTATION_STYLE");
     }
     for(const auto& [ref,s]:p.labelSettings) {
+        const bool owner=ref.domain=="territorial"?std::any_of(d.units.begin(),d.units.end(),[&](const auto& u){return u.id==ref.id;}):ref.domain=="label"&&std::any_of(d.labels.begin(),d.labels.end(),[&](const auto& label){return label.id==ref.id;});
+        if(!owner)throw std::invalid_argument("DANGLING_REF: label settings");
         auto finite=[](const auto& v){return !v||std::isfinite(*v);};
         if((ref.domain!="territorial"&&ref.domain!="label")||!finite(s.priority)||!finite(s.minZoom)||!finite(s.maxZoom)||
            (s.minZoom&&s.maxZoom&&*s.minZoom>*s.maxZoom)||s.collisionGroup.empty()||
@@ -159,8 +173,8 @@ WebPresentation rebasePresentation(const ProjectDocument& current,const ProjectD
         if(auto settings=to.presentation.webPresentation.labelSettings.find(ref);settings!=to.presentation.webPresentation.labelSettings.end())out.labelSettings[ref]=settings->second;
     }
     for(const auto& u:to.units) {
-        const auto prior=unit(from,territorialRef(u.id));if(prior&&prior->kind==u.kind)continue;
-        const auto group=territorialGroup(u.kind),key=territorialPresentationKey(u.kind,u.id);
+        const auto prior=unit(from,territorialRef(u.id));if(prior&&prior->kind==u.kind&&territorialGroup(from,prior->id)==territorialGroup(to,u.id))continue;
+        const auto group=territorialGroup(to,u.id),key=territorialPresentationKey(u.id);
         const auto& restore=to.presentation.webPresentation;
         if(!itemVisible(restore,group,u.id))out.hiddenItems[group].insert(u.id);else out.hiddenItems[group].erase(u.id);
         if(auto settings=restore.labelSettings.find(territorialRef(u.id));settings!=restore.labelSettings.end())out.labelSettings[territorialRef(u.id)]=settings->second;

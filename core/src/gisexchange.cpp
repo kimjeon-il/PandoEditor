@@ -71,15 +71,15 @@ GisTerritorialImportPlan planTerritorialGisImport(const ProjectSnapshot& project
     if(units.empty())throw std::invalid_argument("INVALID_GIS_PLAN: empty territorial import");
     std::vector<std::string> ids;
     std::set<std::string> unique;
-    const auto kind=target==GisExchangeTarget::Country?UnitKind::Country:
-        target==GisExchangeTarget::Subunit?UnitKind::Subunit:UnitKind::Region;
+    const auto kind=target==GisExchangeTarget::Country?UnitKind::General:
+        target==GisExchangeTarget::Subunit?UnitKind::General:UnitKind::Regional;
     for(const auto& row:units) {
         if(row.id.empty()||row.name.empty()||row.kind!=kind||!unique.insert(row.id).second||
            (row.color&&*row.color>0xffffff))
             throw std::invalid_argument("INVALID_GIS_PLAN: territorial row");
         const auto found=project.index().objects.find(territorialRef(row.id));
         if(row.replaceExisting != (found!=project.index().objects.end()) ||
-           (row.replaceExisting && project.document().units.at(found->second).kind!=UnitKind::Country))
+           (row.replaceExisting && project.document().units.at(found->second).kind!=UnitKind::General))
             throw std::invalid_argument("DUPLICATE_ID: territorial import");
         ids.push_back(row.id);
     }
@@ -87,20 +87,20 @@ GisTerritorialImportPlan planTerritorialGisImport(const ProjectSnapshot& project
     for(const auto& patch:replacements) {
         const auto found=project.index().objects.find(patch.owner);
         if(patch.owner.domain!="territorial"||found==project.index().objects.end()||
-           project.document().units.at(found->second).kind!=UnitKind::Country||
+           project.document().units.at(found->second).kind!=UnitKind::General||
            !patched.insert(patch.owner).second||unique.count(patch.owner.id))
             throw std::invalid_argument("INVALID_GIS_PLAN: country patch owner");
     }
     GisTerritorialImportPlan plan{createGisImportPlan(project,std::move(planId),
-        kind==UnitKind::Country?GisImportKind::CountryMerge:GisImportKind::Territorial,
+        target==GisExchangeTarget::Country?GisImportKind::CountryMerge:GisImportKind::Territorial,
         std::move(source),target,std::move(ids)),std::move(units),std::move(replacements)};
     auto candidate=project.document();
     applyTerritorialGisImport(candidate,plan);
     validateDocument(candidate);
-    for(std::size_t i=0;i<candidate.units.size();++i)if(candidate.units[i].kind==UnitKind::Country)
-        for(std::size_t j=i+1;j<candidate.units.size();++j)if(candidate.units[j].kind==UnitKind::Country) {
-            const auto& left=*candidate.geometries.get(candidate.units[i].geometry);
-            const auto& right=*candidate.geometries.get(candidate.units[j].geometry);
+    for(std::size_t i=0;i<candidate.units.size();++i)if(isRootGeneral(candidate,candidate.units[i]))
+        for(std::size_t j=i+1;j<candidate.units.size();++j)if(isRootGeneral(candidate,candidate.units[j])) {
+            const auto& left=*candidate.geometries.get(staticGeometryBinding(candidate,candidate.units[i].id).geometryRef);
+            const auto& right=*candidate.geometries.get(staticGeometryBinding(candidate,candidate.units[j].id).geometryRef);
             if(geometrySignificantOverlap(left,right))
                 throw std::invalid_argument("GIS_COUNTRY_OVERLAP");
         }
@@ -116,27 +116,29 @@ void applyTerritorialGisImport(ProjectDocument& document,const GisTerritorialImp
     std::set<std::string> seen;
     std::set<ObjectRef> patched;
     auto replace=[&](TerritorialUnit& unit,const Geometry& geometry) {
-        GeometryRef ref=unit.geometry;
+        auto& binding=staticGeometryBinding(document,unit.id);GeometryRef ref=binding.geometryRef;
         do {
             if(ref.version==std::numeric_limits<std::uint32_t>::max())
                 throw std::invalid_argument("INVALID_GIS_PLAN: geometry version overflow");
             ++ref.version;
         }while(document.geometries.get(ref));
         document.geometries.insert(ref,geometry);
-        unit.geometry=ref;
+        binding.geometryRef=ref;
     };
     for(const auto& patch:plan.countryReplacements) {
         auto unit=std::find_if(document.units.begin(),document.units.end(),
             [&](const auto& row){return territorialRef(row.id)==patch.owner;});
         if(patch.owner.domain!="territorial"||!patched.insert(patch.owner).second||
-           unit==document.units.end()||unit->kind!=UnitKind::Country)
+           unit==document.units.end()||unit->kind!=UnitKind::General)
             throw std::invalid_argument("INVALID_GIS_PLAN: country patch");
         replace(*unit,patch.geometry);
     }
     for(std::size_t i=0;i<plan.units.size();++i) {
         const auto& input=plan.units[i];
-        const auto kind=plan.info.target==GisExchangeTarget::Country?UnitKind::Country:
-            plan.info.target==GisExchangeTarget::Subunit?UnitKind::Subunit:UnitKind::Region;
+        if(input.sovereign)throw std::invalid_argument("UNSUPPORTED_POLITICAL_RELATION");
+        if(input.validity.from||input.validity.to)throw std::invalid_argument("TIMELINE_ACTIVATION: dated import requires T4");
+        const auto kind=plan.info.target==GisExchangeTarget::Country?UnitKind::General:
+            plan.info.target==GisExchangeTarget::Subunit?UnitKind::General:UnitKind::Regional;
         if(input.id.empty()||input.name.empty()||plan.info.affectedIds[i]!=input.id||
            input.kind!=kind||!seen.insert(input.id).second||
            (input.color&&*input.color>0xffffff))
@@ -144,34 +146,28 @@ void applyTerritorialGisImport(ProjectDocument& document,const GisTerritorialImp
         auto unit=std::find_if(document.units.begin(),document.units.end(),
             [&](const auto& row){return row.id==input.id;});
         if(input.replaceExisting) {
-            if(kind!=UnitKind::Country||unit==document.units.end()||unit->kind!=kind||
+            if(kind!=UnitKind::General||unit==document.units.end()||unit->kind!=kind||
                patched.count(territorialRef(input.id)))
                 throw std::invalid_argument("INVALID_GIS_PLAN: country replacement");
             replace(*unit,input.geometry);
             unit->name=input.name;unit->nameExplicit=true;unit->notes=input.notes;
-            unit->validity=input.validity;
+            if(input.validity.from||input.validity.to)throw std::invalid_argument("TIMELINE_ACTIVATION: dated import requires T4");
         } else {
             if(unit!=document.units.end())throw std::invalid_argument("DUPLICATE_ID: territorial import");
             GeometryRef ref{"gis-territorial:"+input.id,1};
             if(document.geometries.get(ref))throw std::invalid_argument("DUPLICATE_ID: GIS geometry");
             document.geometries.insert(ref,input.geometry);
             TerritorialUnit created;created.id=input.id;created.name=input.name;
-            created.nameExplicit=true;created.baseName=kind==UnitKind::Country?input.name:"";
-            created.notes=input.notes;created.kind=kind;created.geometry=ref;
-            created.validity=input.validity;
-            created.coverageMode=kind==UnitKind::Subunit?"partition":"explicit";
+            created.nameExplicit=true;created.baseName=kind==UnitKind::General?input.name:"";
+            created.notes=input.notes;created.kind=kind;
+            if(input.validity.from||input.validity.to)throw std::invalid_argument("TIMELINE_ACTIVATION: dated import requires T4");
             document.units.push_back(std::move(created));
             const auto owner=territorialRef(input.id);
             document.presentation.objectStyles.emplace(owner,ObjectStyle{});
             if(!document.presentation.userLayers.empty())
                 document.presentation.membership.emplace(owner,document.presentation.userLayers.front().id);
-            if(kind!=UnitKind::Country) {
-                const auto relationId="gis-relation:"+input.id;
-                if(std::any_of(document.relations.begin(),document.relations.end(),
-                    [&](const auto& relation){return relation.id==relationId;}))
-                    throw std::invalid_argument("DUPLICATE_ID: GIS relation");
-                document.relations.push_back({relationId,owner,input.parent,input.sovereign,false,{}});
-            }
+            if(input.sovereign)throw std::invalid_argument("UNSUPPORTED_POLITICAL_RELATION");
+            addStaticTerritorialRecords(document,input.id,ref,input.parent?input.parent->id:"","explicit");
         }
         if(input.color) {
             auto& style=document.presentation.objectStyles[territorialRef(input.id)];

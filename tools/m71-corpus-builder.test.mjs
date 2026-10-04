@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {test} from 'node:test';
 import {geometryStats, selectRiverFeature, selectLakeFeature} from './build-m71-world-corpus.mjs';
@@ -42,7 +43,7 @@ test('wrong source checkout or blob cannot change an existing output', () => {
     for(const [commit, expected] of [['wrong', /source commit mismatch/],
       ['c0bd31d13dc8495593d78cf51f7cc195de7c9469', /source blob mismatch/]]) {
       writeFileSync(join(root, '.world-map-commit'), commit+'\n');
-      const run = spawnSync(process.execPath, [new URL('./build-m71-world-corpus.mjs', import.meta.url).pathname,
+      const run = spawnSync(process.execPath, [fileURLToPath(new URL('./build-m71-world-corpus.mjs', import.meta.url)),
         '--world-map-root', root, '--out', out], {encoding: 'utf8'});
       assert.notEqual(run.status, 0);
       assert.match(run.stderr, expected);

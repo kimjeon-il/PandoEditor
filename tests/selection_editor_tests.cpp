@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include "editorcontroller.h"
 #include <QtTest>
 #include <QGuiApplication>
@@ -6,7 +7,7 @@
 #include <cmath>
 using namespace pandoeditor;
 namespace {
-QVariantMap ref(const QString& id,const QString& type="country") {
+QVariantMap ref(const QString& id,const QString& type="general") {
     return {{"domain","territorial"},{"type",type},{"id",id}};
 }
 QStringList ids(const QVariantList& values) {
@@ -23,14 +24,14 @@ ProjectDocument fixture() {
     auto add=[&](std::string id,UnitKind kind,const std::string& layer,double left,double right,bool locked){
         Geometry g;g.type="Polygon";g.polygons={{{{left,2},{right,2},{right,4},{left,4},{left,2}}}};
         GeometryRef gr{"selection-"+id,1};d.geometries.insert(gr,std::move(g));
-        d.units.push_back({id,id,"note",kind,gr,locked});
+        appendTerritory(d,{id,id,"note",kind,locked},gr);
         d.presentation.membership[territorialRef(id)]=layer;
         d.presentation.objectStyles[territorialRef(id)]={0xabcdef,0.75};
     };
-    add("S",UnitKind::Subunit,"other",1,4,true);
-    add("R",UnitKind::Region,"other",6,8,false);
-    add("H",UnitKind::Region,"hidden",40,42,false);
-    d.relations.push_back({"base-s",territorialRef("S"),territorialRef("A"),territorialRef("A")});
+    add("S",UnitKind::General,"other",1,4,true);
+    add("R",UnitKind::Regional,"other",6,8,false);
+    add("H",UnitKind::Regional,"hidden",40,42,false);
+    setFixtureParent(d,territorialRef("S"),territorialRef("A"));
     validateDocument(d);return d;
 }
 QUrl writeFixture(const QString& directory) {
@@ -53,14 +54,16 @@ private slots:
     void chooserNamesIgnoreObjectOrder() {
         QTemporaryDir dir;
         auto document=fixture();
-        auto other=document.units.at(2);other.id="T";other.name="가나다";
+        auto other=document.units.at(2);
+        const auto geometry=staticGeometryBinding(document,other.id).geometryRef;
+        other.id="T";other.name="가나다";
         document.units.at(2).name="하하";
-        document.units.push_back(other);
-        document.relations.push_back({"base-t",territorialRef("T"),territorialRef("A"),territorialRef("A")});
+        appendTerritory(document,other,geometry,"A");
+        setFixtureParent(document,territorialRef("T"),territorialRef("A"));
         document.presentation.membership[territorialRef("T")]="other";
         document.presentation.objectStyles[territorialRef("T")]=ObjectStyle{};
         // S is topmost by object order, but T must be first by display name.
-        document.presentation.webPresentation.objectOrder={"territorial:subunit:T","territorial:subunit:S"};
+        document.presentation.webPresentation.objectOrder={"territorial:entity:T","territorial:entity:S"};
         Project project;project.replace(std::move(document));
         QFile file(dir.filePath("chooser.json"));QVERIFY(file.open(QIODevice::WriteOnly));
         file.write(projectcodec::encode(project));file.close();
@@ -92,10 +95,10 @@ private slots:
         const auto bytes=editor.documentBytes(),instance=editor.projectInstanceId().toUtf8();const auto revision=editor.revision();
         const bool dirty=editor.dirty();QSignalSpy dirtySignals(&editor,&EditorController::dirtyChanged);
         QVERIFY(editor.selectObject(ref("B"),"toggle","objects"));
-        QVERIFY(editor.selectObject(ref("S","subunit"),"range","objects",{ref("A"),ref("B"),ref("S","subunit")}));
+        QVERIFY(editor.selectObject(ref("S","general"),"range","objects",{ref("A"),ref("B"),ref("S","general")}));
         editor.setSearchQuery("하위단위");QCOMPARE(ids(editor.searchResults()),QStringList{"S"});
-        QVERIFY(editor.setHoverObject(ref("R","region"),"map"));
-        QSignalSpy focused(&editor,&EditorController::focusRequested);QVERIFY(editor.focusObject(ref("H","region")));QCOMPARE(focused.count(),1);
+        QVERIFY(editor.setHoverObject(ref("R","regional"),"map"));
+        QSignalSpy focused(&editor,&EditorController::focusRequested);QVERIFY(editor.focusObject(ref("H","regional")));QCOMPARE(focused.count(),1);
         QCOMPARE(focused.front().at(4).toDouble(),mobile?12.0:10.0);
         QVERIFY(editor.setHoverObject({},"map"));editor.clearSelection();editor.selectLayer("other");
         QCOMPARE(editor.documentBytes(),bytes);QCOMPARE(editor.revision(),revision);QCOMPARE(editor.projectInstanceId().toUtf8(),instance);
@@ -104,18 +107,18 @@ private slots:
     }
     void scopesPrimaryAndInvalidReferences(){
         QTemporaryDir dir;EditorController editor;QVERIFY(editor.openFile(writeFixture(dir.path())));
-        const QVariantList ordered={ref("A"),ref("B"),ref("S","subunit"),ref("R","region")};
+        const QVariantList ordered={ref("A"),ref("B"),ref("S","general"),ref("R","regional")};
         QVERIFY(editor.selectObject(ref("A"),"replace","left"));
         QVERIFY(editor.selectObject(ref("B"),"toggle","left"));
-        QVERIFY(editor.selectObject(ref("S","subunit"),"toggle","left"));
-        QVERIFY(editor.selectObject(ref("S","subunit"),"toggle","left"));QCOMPARE(editor.primaryObject()["id"].toString(),QString("B"));
-        QVERIFY(editor.selectObject(ref("R","region"),"range","right",ordered));QCOMPARE(ids(editor.selectionItems()),QStringList{"R"});
+        QVERIFY(editor.selectObject(ref("S","general"),"toggle","left"));
+        QVERIFY(editor.selectObject(ref("S","general"),"toggle","left"));QCOMPARE(editor.primaryObject()["id"].toString(),QString("B"));
+        QVERIFY(editor.selectObject(ref("R","regional"),"range","right",ordered));QCOMPARE(ids(editor.selectionItems()),QStringList{"R"});
         QVERIFY(editor.selectObject(ref("B"),"range","right",ordered));QCOMPARE(ids(editor.selectionItems()),QStringList({"B","S","R"}));
         QCOMPARE(editor.rangeAnchor("right")["id"].toString(),QString("B"));QCOMPARE(editor.rangeAnchor("left")["id"].toString(),QString("S"));
         QVERIFY(editor.selectObject(ref("A"),"range","right",ordered));QCOMPARE(ids(editor.selectionItems()),QStringList({"A","B"}));
         const auto before=editor.selectionItems();const auto revision=editor.selectionRevision();
-        QVERIFY(!editor.selectObject(ref("missing")));QVERIFY(!editor.selectObject(ref("S","country")));
-        QVERIFY(editor.selectObject(ref("R","region"),"range","right",{ref("A"),ref("B")}));
+        QVERIFY(!editor.selectObject(ref("missing")));QVERIFY(!editor.selectObject(ref("S","general")));
+        QVERIFY(editor.selectObject(ref("R","regional"),"range","right",{ref("A"),ref("B")}));
         QCOMPARE(editor.selectionItems(),before);QCOMPARE(editor.selectionRevision(),revision);
         QVERIFY(editor.setSelection({ref("A"),ref("B"),ref("A")}));QCOMPARE(ids(editor.selectionItems()),QStringList({"A","B"}));QCOMPARE(editor.selectedId(),QString("A"));
     }
@@ -124,10 +127,10 @@ private slots:
         QCOMPARE(editor.objectRows().size(),5);QCOMPARE(editor.paths().size(),5);
         const auto bytes=editor.documentBytes();
         editor.setSearchQuery("H");QCOMPARE(ids(editor.searchResults()),QStringList{"H"});
-        QVERIFY(editor.selectObject(ref("H","region")));QCOMPARE(editor.selectedId(),QString("H"));
+        QVERIFY(editor.selectObject(ref("H","regional")));QCOMPARE(editor.selectedId(),QString("H"));
         const auto hidden=center(editor,"H");QVERIFY(editor.pickObject(hidden.x(),hidden.y()).isEmpty());
         const auto locked=center(editor,"S");QCOMPARE(editor.pickObject(locked.x(),locked.y(),10)["id"].toString(),QString("S"));
-        QVERIFY(editor.selectObject(ref("S","subunit")));QVERIFY(!editor.selectedEditable());
+        QVERIFY(editor.selectObject(ref("S","general")));QVERIFY(!editor.selectedEditable());
         QVERIFY(!editor.selectObject({{"domain","label"},{"type","city"},{"id","A"}}));
         QCOMPARE(editor.documentBytes(),bytes);QCOMPARE(editor.revision(),qulonglong(0));QVERIFY(!editor.dirty());
     }
@@ -166,7 +169,7 @@ private slots:
     void sameFileReopenResetsOnlySessionAfterSuccess(){
         QTemporaryDir dir;EditorController editor;const auto file=writeFixture(dir.path());QVERIFY(editor.openFile(file));
         const auto bytes=editor.documentBytes();const auto instance=editor.projectInstanceId();
-        editor.selectObject(ref("A"),"replace","left");editor.setNameDraft("Uncommitted");editor.setSearchQuery("R");editor.setHoverObject(ref("R","region"),"search");
+        editor.selectObject(ref("A"),"replace","left");editor.setNameDraft("Uncommitted");editor.setSearchQuery("R");editor.setHoverObject(ref("R","regional"),"search");
         QVERIFY(!editor.openFile(QUrl::fromLocalFile(dir.path()+"/missing.json")));QCOMPARE(editor.selectedId(),QString("A"));QVERIFY(editor.hasPendingEdits());
         QVERIFY(editor.openFile(file));QVERIFY(editor.projectInstanceId()!=instance);QVERIFY(editor.selectionItems().isEmpty());QVERIFY(editor.rangeAnchor("left").isEmpty());
         QVERIFY(editor.hoverObject().isEmpty());QVERIFY(editor.searchQuery().isEmpty());QVERIFY(!editor.hasPendingEdits());QCOMPARE(editor.selectionRevision(),qulonglong(0));

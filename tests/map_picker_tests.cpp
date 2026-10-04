@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include <pandoeditor/map/mappicker.h>
 #include <pandoeditor/objectproperties.h>
 #include <cmath>
@@ -19,19 +20,18 @@ ProjectDocument fixture() {
         Geometry g;g.type="Polygon";
         g.polygons={{{{left,2},{right,2},{right,4},{left,4},{left,2}}}};
         GeometryRef gr{"picker-"+id,1};d.geometries.insert(gr,std::move(g));
-        TerritorialUnit unit;unit.id=id;unit.name=name;unit.kind=kind;unit.geometry=gr;
-        d.units.push_back(std::move(unit));
+        TerritorialUnit unit;unit.id=id;unit.name=name;unit.kind=kind;
+        appendTerritory(d,std::move(unit),gr);
         d.presentation.membership[territorialRef(id)]=layer;
         d.presentation.objectStyles[territorialRef(id)]=ObjectStyle{};
     };
-    add("S","하하",UnitKind::Subunit,"other",1,4);
-    add("T","가나다",UnitKind::Subunit,"other",1,4);
-    add("H","숨김",UnitKind::Region,"hidden",40,42);
+    add("S","하하",UnitKind::General,"other",1,4);
+    add("T","가나다",UnitKind::General,"other",1,4);
+    add("H","숨김",UnitKind::Regional,"hidden",40,42);
     d.presentation.webPresentation.objectOrder={
-        "territorial:subunit:T","territorial:subunit:S"};
-    d.relations.push_back({"s",territorialRef("S"),territorialRef("A"),territorialRef("A")});
-    d.relations.push_back({"t",territorialRef("T"),territorialRef("A"),territorialRef("A")});
-    d.relations.push_back({"h",territorialRef("H"),territorialRef("A"),territorialRef("A")});
+        "territorial:entity:T","territorial:entity:S"};
+    setFixtureParent(d,territorialRef("S"),territorialRef("A"));
+    setFixtureParent(d,territorialRef("T"),territorialRef("A"));
     validateDocument(d);
     return d;
 }

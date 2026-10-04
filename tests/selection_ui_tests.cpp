@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include "editorcontroller.h"
 #include "ui_navigation.h"
 #include "windowsframe.h"
@@ -16,7 +17,7 @@
 using namespace pandoeditor;
 
 namespace {
-QVariantMap ref(QString id,QString type="country") {return {{"domain","territorial"},{"type",type},{"id",id}};}
+QVariantMap ref(QString id,QString type="general") {return {{"domain","territorial"},{"type",type},{"id",id}};}
 QStringList ids(const QVariantList& rows) {QStringList out;for(auto row:rows)out<<row.toMap()["id"].toString();return out;}
 QQuickItem* item(QQuickItem* root,const QString& name) {
     if(root->objectName()==name)return root;
@@ -33,13 +34,13 @@ ProjectDocument fixture() {
     auto add=[&](std::string id,UnitKind kind,std::string layer,double left,double right,bool locked) {
         Geometry g;g.type="Polygon";g.polygons={{{{left,2},{right,2},{right,4},{left,4},{left,2}}}};
         GeometryRef geometry{"ui-"+id,1};d.geometries.insert(geometry,std::move(g));
-        d.units.push_back({id,id,"",kind,geometry,locked});
+        appendTerritory(d,{id,id,"",kind,locked},geometry);
         d.presentation.membership[territorialRef(id)]=layer;d.presentation.objectStyles[territorialRef(id)]={0xabcdef,.8};
     };
-    add("S",UnitKind::Subunit,"other",1,4,true);
-    add("R",UnitKind::Region,"other",6,8,false);
-    add("H",UnitKind::Region,"hidden",40,42,false);
-    d.relations.push_back({"base-s",territorialRef("S"),territorialRef("A"),territorialRef("A")});
+    add("S",UnitKind::General,"other",1,4,true);
+    add("R",UnitKind::Regional,"other",6,8,false);
+    add("H",UnitKind::Regional,"hidden",40,42,false);
+    setFixtureParent(d,territorialRef("S"),territorialRef("A"));
     validateDocument(d);return d;
 }
 struct Harness {
@@ -153,7 +154,7 @@ private slots:
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
         auto document=fixture();document.units[2].locked=false;
         Project p;p.replace(document);QFile f(h.path.toLocalFile());QVERIFY(f.open(QIODevice::WriteOnly));f.write(projectcodec::encode(p));f.close();
-        QVERIFY(h.editor.openFile(h.path));QVERIFY(h.editor.selectObject(ref("S","subunit"),"replace","test"));
+        QVERIFY(h.editor.openFile(h.path));QVERIFY(h.editor.selectObject(ref("S","general"),"replace","test"));
         const auto before=h.editor.documentBytes();QVERIFY(h.editor.transferSelectedSubunit("B"));
         QTRY_VERIFY_WITH_TIMEOUT(!h.editor.structureState()["calculating"].toBool(),10000);
         QVERIFY2(!h.editor.structureState()["geometryRequired"].toBool(),qPrintable(h.editor.structureState()["detail"].toString()));
@@ -181,8 +182,8 @@ private slots:
     void searchAndModifiers(){
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY2(h.window,qPrintable(h.warnings.join('\n')));
         const auto bytes=h.editor.documentBytes();const auto rev=h.editor.revision();
-        QVERIFY2(h.search(QStringLiteral("국가")),"search tab and field must be reachable");
-        QCOMPARE(ids(h.editor.searchResults()),QStringList({"A","B"}));
+        QVERIFY2(h.search(QStringLiteral("일반객체")),"search tab and field must be reachable");
+        QCOMPARE(ids(h.editor.searchResults()),QStringList({"A","B","S"}));
         QVERIFY(h.click("searchSelect_A",Qt::ControlModifier));
         QVERIFY(h.click("searchSelect_B",Qt::ControlModifier));
         QCOMPARE(ids(h.editor.selectionItems()),QStringList({"A","B"}));
@@ -285,7 +286,7 @@ private slots:
     void keyboardSelectionAndHiddenSearch(){
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
         const auto bytes=h.editor.documentBytes();
-        h.editor.selectCountry("A");QVERIFY(h.search(QStringLiteral("국가")));
+        h.editor.selectCountry("A");QVERIFY(h.search(QStringLiteral("일반객체")));
         auto results=h.control("objectSearchResults");QVERIFY(results);
         results->setProperty("currentIndex",1);results->forceActiveFocus();
         QTest::keyClick(h.window,Qt::Key_Return,Qt::ControlModifier);

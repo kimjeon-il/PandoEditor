@@ -14,7 +14,7 @@ QVariantMap EditorController::structureState() const {
         out["kind"]=static_cast<int>(TerritorialMutationKind::ConvertCountryToSubunit);
         out["conversionSetup"]=true;
         out["generatedId"]=text(conversionDraft_->intent.generatedId);
-        out["detail"]=QStringLiteral("새 하위단위의 소속 국가와 상위 영역을 선택하세요. 아직 프로젝트는 변경되지 않았습니다.");
+        out["detail"]=QStringLiteral("상위 일반객체를 선택하세요. 객체 ID와 메타데이터는 유지됩니다.");
         return out;
     }
     if(!structureSession_)return out;const auto& plan=structureSession_->plan;
@@ -33,8 +33,8 @@ QVariantMap EditorController::structureState() const {
     }
     QVariantList impacts;for(const auto& item:plan.impacts)impacts.append(QVariantMap{{"kind",text(item.kind)},{"id",text(item.target.id)},{"messageKey",text(item.messageKey)}});out["impacts"]=impacts;return out;
 }
-QVariantList EditorController::relationCountryOptions() const {QVariantList result;for(const auto& u:project_.document().units)if(u.kind==UnitKind::Country)result.append(QVariantMap{{"id",text(u.id)},{"name",text(objectDisplayName(u))},{"locked",u.locked}});return result;}
-QVariantList EditorController::relationParentOptions() const {QVariantList result;const auto current=selectedUnit();for(const auto& u:project_.document().units)if(u.kind==UnitKind::Country||u.kind==UnitKind::Subunit)if(createDraft_||!current||u.id!=current->id)result.append(QVariantMap{{"id",text(u.id)},{"name",text(objectDisplayName(u))},{"type",u.kind==UnitKind::Country?"country":"subunit"},{"locked",u.locked}});return result;}
+QVariantList EditorController::relationCountryOptions() const {QVariantList result;for(const auto& u:project_.document().units)if(isRootGeneral(project_.document(),u))result.append(QVariantMap{{"id",text(u.id)},{"name",text(objectDisplayName(u))},{"locked",u.locked}});return result;}
+QVariantList EditorController::relationParentOptions() const {QVariantList result;const auto current=selectedUnit();for(const auto& u:project_.document().units)if(u.kind==UnitKind::General)if(createDraft_||!current||u.id!=current->id)result.append(QVariantMap{{"id",text(u.id)},{"name",text(objectDisplayName(u))},{"type","general"},{"locked",u.locked}});return result;}
 bool EditorController::setStructurePlan(const TerritorialMutationIntent& intent) {
     auto result=CommandProcessor::planTerritorial(project_,intent);
     if(!result.ok()||!result.plan){commandError(result.error,text(result.detail));return false;}
@@ -64,15 +64,14 @@ bool EditorController::setStructurePlan(const TerritorialMutationIntent& intent)
 }
 bool EditorController::transferSelectedSubunit(const QString& countryId) {
     const auto u=selectedUnit();
-    return u&&u->kind==UnitKind::Subunit&&setStructurePlan(TransferSubunitIntent{territorialRef(u->id),territorialRef(countryId.toStdString())});
+    return u&&u->kind==UnitKind::General&&setStructurePlan(TransferSubunitIntent{territorialRef(u->id),territorialRef(countryId.toStdString())});
 }
-bool EditorController::changeSelectedParent(const QString& parentId){const auto u=selectedUnit();return u&&u->kind==UnitKind::Subunit&&setStructurePlan(ChangeParentIntent{territorialRef(u->id),territorialRef(parentId.toStdString())});}
-bool EditorController::changeSelectedRegionSovereign(const QString& countryId){const auto u=selectedUnit();if(!u||u->kind!=UnitKind::Region)return false;std::optional<ObjectRef> sovereign;if(!countryId.isEmpty())sovereign=territorialRef(countryId.toStdString());return setStructurePlan(ChangeRegionSovereignIntent{territorialRef(u->id),sovereign});}
+bool EditorController::changeSelectedParent(const QString& parentId){const auto u=selectedUnit();return u&&u->kind==UnitKind::General&&setStructurePlan(ChangeParentIntent{territorialRef(u->id),territorialRef(parentId.toStdString())});}
 bool EditorController::beginDeleteSelection(){return !selection_.items().empty()&&setStructurePlan(DeleteTerritorialIntent{selection_.items()});}
 bool EditorController::beginMergeSelection(){
     const auto primary=selection_.primary();const auto unit=selectedUnit();
     if(!primary||!unit||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
-    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(unit->geometry),{},{},0,0,-1,QStringLiteral("merge"),{}};
+    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit->id).geometryRef),{},{},0,0,-1,QStringLiteral("merge"),{}};
     geometryEdit_->mergeIntent=MergeTerritorialIntent{*primary,{}};
     geometryEdit_->choosingProviders=true;emit geometryEditChanged();emit visualChanged();return true;
 }
@@ -82,12 +81,12 @@ bool EditorController::beginAnnexGeometry(){
 }
 bool EditorController::beginSplitGeometry(){
     const auto primary=selection_.primary();const auto unit=selectedUnit();if(!primary||!unit||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
-    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(unit->geometry),{},{},0,0,-1,QStringLiteral("split"),{}};
+    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit->id).geometryRef),{},{},0,0,-1,QStringLiteral("split"),{}};
     geometryEdit_->splitIntent=SplitTerritorialIntent{*primary,{},-1,QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString(),objectDisplayName(*unit)+" 분할"};emit geometryEditChanged();return true;
 }
 bool EditorController::beginSharedBoundaryGeometry(){
     for(const auto& ref:selection_.items())if(ref.domain!="territorial")return false;
-    if(geometryEdit_||selection_.items().size()!=2||structureDialogOpen()||hasPendingEdits())return false;const auto primary=selection_.primary();if(!primary)return false;const auto found=project_.index().objects.find(*primary);if(found==project_.index().objects.end())return false;const auto& unit=project_.document().units.at(found->second);const auto geometry=project_.document().geometries.get(unit.geometry);if(!geometry)return false;geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*geometry,{},{},0,0,-1,QStringLiteral("boundary"),{}};geometryEdit_->boundaryOwners=selection_.items();emit geometryEditChanged();return true;
+    if(geometryEdit_||selection_.items().size()!=2||structureDialogOpen()||hasPendingEdits())return false;const auto primary=selection_.primary();if(!primary)return false;const auto found=project_.index().objects.find(*primary);if(found==project_.index().objects.end())return false;const auto& unit=project_.document().units.at(found->second);const auto geometry=project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit.id).geometryRef);if(!geometry)return false;geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*geometry,{},{},0,0,-1,QStringLiteral("boundary"),{}};geometryEdit_->boundaryOwners=selection_.items();emit geometryEditChanged();return true;
 }
 bool EditorController::beginCoastlineGeometry(const QString& authority){
     if(!beginGeometryEdit(QStringLiteral("coast")))return false;auto mode=CoastlineAuthority::Country;if(authority=="subunit")mode=CoastlineAuthority::Subunit;else if(authority=="independent")mode=CoastlineAuthority::Independent;geometryEdit_->coastIntent=CoastlineIntent{geometryEdit_->target,geometryEdit_->draft,mode};emit geometryEditChanged();return true;
@@ -101,7 +100,7 @@ bool EditorController::confirmStructureMutation() {
         CommandArguments args;args.action=ApplyTerritorialMutation{plan,{}};
         const auto id=plan.kind==TerritorialMutationKind::CreateCountry||plan.kind==TerritorialMutationKind::CreateSubunit||plan.kind==TerritorialMutationKind::CreateRegion?"territorial.create":
             plan.kind==TerritorialMutationKind::DeleteCountry||plan.kind==TerritorialMutationKind::DeleteUnits?"territorial.delete":
-            plan.kind==TerritorialMutationKind::ChangeParent?"territorial.relation.parent":"territorial.relation.sovereign";
+            "territorial.relation.parent";
         auto request=CommandProcessor::makeRequest(project_,id,args);
         auto prepared=CommandProcessor::prepare(project_,request,[](const ProjectDocument& before,const TerritorialMutationPlan& mutation,std::vector<PreservedExtension>& candidate){
             auto result=retainedrefs::rewrite(before,mutation,candidate);return ExtensionRewriteResult{result.ok,result.detail,result.handledExtensionIds};
@@ -129,16 +128,16 @@ bool EditorController::confirmStructureMutation() {
     publish(false);emit geometryChanged();emit structureChanged();return true;
 }
 void EditorController::cancelStructureMutation(){if(structureSession_||conversionDraft_||createDraft_){if(structureSession_&&structureSession_->job)jobs_->cancel(structureSession_->job->id());structureSession_.reset();conversionDraft_.reset();createDraft_.reset();emit structureChanged();}}
-bool EditorController::beginTypeConversion(){const auto u=selectedUnit();if(!u||!(u->kind==UnitKind::Country||u->kind==UnitKind::Subunit))return false;cancelStructureMutation();ConvertTerritorialTypeIntent intent;intent.source=territorialRef(u->id);intent.targetKind=u->kind==UnitKind::Country?UnitKind::Subunit:UnitKind::Country;if(intent.targetKind==UnitKind::Subunit){intent.generatedId=QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();conversionDraft_=ConversionDraft{project_.snapshot(),std::move(intent)};emit structureChanged();return true;}return setStructurePlan(intent);}
-bool EditorController::updateTypeConversionTarget(const QString& sovereignId,const QString& parentId){
+bool EditorController::beginTypeConversion(){const auto u=selectedUnit();if(!u||u->kind!=UnitKind::General)return false;cancelStructureMutation();ConvertTerritorialTypeIntent intent;intent.source=territorialRef(u->id);intent.targetKind=UnitKind::General;intent.generatedId=u->id;if(staticParentRelation(project_.document(),u->id).parentId.empty()){conversionDraft_=ConversionDraft{project_.snapshot(),std::move(intent)};emit structureChanged();return true;}return setStructurePlan(intent);}
+bool EditorController::updateTypeConversionTarget(const QString& parentId){
     if(conversionDraft_) {
         if(!conversionDraft_->base.matches(project_)){cancelStructureMutation();emit errorOccurred("STALE_STRUCTURE_SESSION");return false;}
-        if(sovereignId.isEmpty()||parentId.isEmpty())return false;
-        auto intent=conversionDraft_->intent;intent.sovereign=territorialRef(sovereignId.toStdString());intent.parent=territorialRef(parentId.toStdString());
+        if(parentId.isEmpty())return false;
+        auto intent=conversionDraft_->intent;intent.parent=territorialRef(parentId.toStdString());
         return setStructurePlan(intent);
     }
-    if(!structureSession_)return false;auto conversion=std::get_if<ConvertTerritorialTypeIntent>(&structureSession_->plan.intent);if(!conversion)return false;if(!sovereignId.isEmpty())conversion->sovereign=territorialRef(sovereignId.toStdString());if(!parentId.isEmpty())conversion->parent=territorialRef(parentId.toStdString());return setStructurePlan(*conversion);
+    if(!structureSession_)return false;const auto conversion=std::get_if<ConvertTerritorialTypeIntent>(&structureSession_->plan.intent);if(!conversion)return false;auto intent=*conversion;intent.parent=parentId.isEmpty()?std::optional<ObjectRef>{}:territorialRef(parentId.toStdString());return setStructurePlan(intent);
 }
-bool EditorController::beginTerritorialCreate(const QString& type){cancelStructureMutation();CreateTerritorialIntent intent;intent.kind=type=="country"?UnitKind::Country:type=="subunit"?UnitKind::Subunit:UnitKind::Region;intent.id=QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();createDraft_=CreateDraft{project_.snapshot(),std::move(intent)};emit structureChanged();return true;}
-bool EditorController::updateTerritorialCreateSetup(const QString& name,const QString& sovereignId,const QString& parentId,const QString& sourceId){if(!createDraft_||!createDraft_->base.matches(project_)){cancelStructureMutation();emit errorOccurred("STALE_STRUCTURE_SESSION");return false;}auto& create=createDraft_->intent;create.name=name.toStdString();create.sovereign=sovereignId.isEmpty()?std::optional<ObjectRef>{}:territorialRef(sovereignId.toStdString());create.parent=parentId.isEmpty()?std::optional<ObjectRef>{}:territorialRef(parentId.toStdString());if(!sourceId.isEmpty())create.id=sourceId.toStdString();emit structureChanged();return true;}
+bool EditorController::beginTerritorialCreate(const QString& type){if(type!="general"&&type!="regional"){emit errorOccurred("INVALID_ENTITY_KIND");return false;}cancelStructureMutation();CreateTerritorialIntent intent;intent.kind=type=="general"?UnitKind::General:UnitKind::Regional;intent.id=QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();createDraft_=CreateDraft{project_.snapshot(),std::move(intent)};emit structureChanged();return true;}
+bool EditorController::updateTerritorialCreateSetup(const QString& name,const QString& parentId,const QString& sourceId){if(!createDraft_||!createDraft_->base.matches(project_)){cancelStructureMutation();emit errorOccurred("STALE_STRUCTURE_SESSION");return false;}auto& create=createDraft_->intent;create.name=name.toStdString();create.parent=parentId.isEmpty()?std::optional<ObjectRef>{}:territorialRef(parentId.toStdString());if(!sourceId.isEmpty())create.id=sourceId.toStdString();emit structureChanged();return true;}
 bool EditorController::beginTerritorialCreatePrepared(const CreateTerritorialIntent& intent){if(structureDialogOpen())cancelStructureMutation();return setStructurePlan(intent);}

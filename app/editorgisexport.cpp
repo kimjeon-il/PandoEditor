@@ -11,8 +11,8 @@ QVariantList EditorController::gisExportLayers() const {
     const auto& document=project_.document();
     qsizetype countries=0,subunits=0,regions=0;
     for(const auto& unit:document.units) {
-        if(unit.kind==pandoeditor::UnitKind::Country)++countries;
-        else if(unit.kind==pandoeditor::UnitKind::Subunit)++subunits;
+        if(pandoeditor::isRootGeneral(document,unit))++countries;
+        else if(unit.kind==pandoeditor::UnitKind::General)++subunits;
         else ++regions;
     }
     return {QVariantMap{{"category","countries"},{"name","국가"},{"count",countries}},

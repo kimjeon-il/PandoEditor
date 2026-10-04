@@ -15,12 +15,12 @@ struct ReferenceRewrite { std::string sourcePath; ReferenceRewriteOperation oper
 };
 struct TerritorialImpact { std::string kind; ObjectRef target; std::string messageKey; };
 struct ExtensionGuard { std::string id,payload; bool operator==(const ExtensionGuard& b) const {return id==b.id&&payload==b.payload;} };
-struct CreateTerritorialIntent { UnitKind kind=UnitKind::Region; std::string id,name; Geometry geometry; std::optional<ObjectRef> parent,sovereign; std::string coverageMode; std::optional<std::uint32_t> explicitColor; Validity validity; std::string notes; };
+struct CreateTerritorialIntent { UnitKind kind=UnitKind::Regional; std::string id,name; Geometry geometry; std::optional<ObjectRef> parent,sovereign; std::string coverageMode; std::optional<std::uint32_t> explicitColor; Validity validity; std::string notes; };
 struct ChangeParentIntent { ObjectRef target,parent; };
 struct ChangeRegionSovereignIntent { ObjectRef target; std::optional<ObjectRef> sovereign; };
 struct DeleteTerritorialIntent { std::vector<ObjectRef> targets; };
 struct TransferSubunitIntent { ObjectRef target,destinationCountry; };
-struct ConvertTerritorialTypeIntent { ObjectRef source; UnitKind targetKind=UnitKind::Subunit; std::optional<ObjectRef> sovereign,parent; std::string generatedId; };
+struct ConvertTerritorialTypeIntent { ObjectRef source; UnitKind targetKind=UnitKind::General; std::optional<ObjectRef> sovereign,parent; std::string generatedId; };
 // The edit session supplies the replacement geometry separately as a checked
 // GeometryPatch.  Keeping the intent geometry-free makes stale preview checks
 // independent from pointer-event traffic.

@@ -16,10 +16,12 @@ struct DocumentState {
 
     DocumentState() = default; // unloaded Project only
     explicit DocumentState(ProjectDocument candidate)
-        : document(std::move(candidate)), index(validateDocument(document)),
-          properties(objectPropertyViews(document)), countries(countryViews(document))
+        : document(std::move(candidate)), index(validateDocument(document))
     {
-        for(const auto& u:document.units)if(u.kind==UnitKind::Country &&
+        if(!isStaticTimeline(document))return;
+        properties=objectPropertyViews(document);
+        countries=countryViews(document);
+        for(const auto& u:document.units)if(u.kind==UnitKind::General &&
             (trimWebText(u.notes)!=u.notes || (u.name.empty() && u.nameExplicit)))needsHistoryPruning=true;
         for (std::size_t i = 0; i < countries.size(); ++i)
             countryIndex.emplace(countries[i].id, i);

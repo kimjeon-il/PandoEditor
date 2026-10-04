@@ -346,7 +346,6 @@ public:
     bool structureDialogOpen() const { return structureSession_.has_value() || conversionDraft_.has_value() || createDraft_.has_value(); }
     Q_INVOKABLE bool changeSelectedParent(const QString& parentId);
     Q_INVOKABLE bool transferSelectedSubunit(const QString& countryId);
-    Q_INVOKABLE bool changeSelectedRegionSovereign(const QString& countryId);
     Q_INVOKABLE bool beginDeleteSelection();
     Q_INVOKABLE bool beginMergeSelection();
     Q_INVOKABLE bool beginAnnexGeometry();
@@ -356,9 +355,9 @@ public:
     Q_INVOKABLE bool confirmStructureMutation();
     Q_INVOKABLE void cancelStructureMutation();
     Q_INVOKABLE bool beginTypeConversion();
-    Q_INVOKABLE bool updateTypeConversionTarget(const QString& sovereignId,const QString& parentId);
+    Q_INVOKABLE bool updateTypeConversionTarget(const QString& parentId);
     Q_INVOKABLE bool beginTerritorialCreate(const QString& type);
-    Q_INVOKABLE bool updateTerritorialCreateSetup(const QString& name,const QString& sovereignId,const QString& parentId,const QString& sourceId);
+    Q_INVOKABLE bool updateTerritorialCreateSetup(const QString& name,const QString& parentId,const QString& sourceId);
     bool beginTerritorialCreatePrepared(const pandoeditor::CreateTerritorialIntent& intent);
     QVariantMap geometryEditState() const;
     QVariantList geometryDraftPaths() const;

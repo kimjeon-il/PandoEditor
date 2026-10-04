@@ -23,7 +23,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     model: ["기존 국가의 하위단위로 추가", "독립 국가로 추가"]
                     onCurrentIndexChanged: root.choiceChanged(group.modelData.id,
-                        {mode: currentIndex===1 ? "country" : "subunit",countryId: country.currentValue,
+                        {mode: currentIndex===1 ? "country" : "subunit",
                          parentId: parentUnit.currentValue,name: countryName.text})
                 }
                 UiComboBox {
@@ -31,11 +31,11 @@ ColumnLayout {
                     Layout.fillWidth: true
                     visible: mode.currentIndex===0
                     textRole: "name"; valueRole: "id"
-                    model: [{id:"",name:"소속 국가 선택"}].concat(root.countries)
+                    model: [{id:"",name:"행정 root 선택"}].concat(root.countries)
                     onActivated: {
                         parentUnit.currentIndex=0
                         root.choiceChanged(group.modelData.id,
-                            {mode:"subunit",countryId:currentValue,parentId:"",name:countryName.text})
+                            {mode:"subunit",parentId:"",name:countryName.text})
                     }
                 }
                 UiComboBox {
@@ -45,7 +45,7 @@ ColumnLayout {
                     textRole: "name"; valueRole: "id"
                     model: [{id:"",name:"상위 단위 선택"}].concat(editor.historicalParents(country.currentValue))
                     onActivated: root.choiceChanged(group.modelData.id,
-                        {mode:"subunit",countryId:country.currentValue,parentId:currentValue,name:countryName.text})
+                        {mode:"subunit",parentId:currentValue,name:countryName.text})
                 }
                 UiTextField {
                     id: countryName
@@ -54,7 +54,7 @@ ColumnLayout {
                     text: modelData.name
                     placeholderText: "새 국가 이름"
                     onTextChanged: root.choiceChanged(group.modelData.id,
-                        {mode:"country",countryId:"",parentId:"",name:text})
+                        {mode:"country",parentId:"",name:text})
                 }
             }
         }

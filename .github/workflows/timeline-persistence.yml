@@ -1,0 +1,68 @@
+name: Timeline persistence validation
+on:
+  push:
+    branches: [feat/timeline-app]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux-debug:
+    runs-on: ubuntu-24.04
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools'
+          cache: true
+      - name: Configure Qt Debug and build persistence targets
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+          cmake --build build --parallel 2 --target pandoeditor temporal_tests timeline_records_tests timeline_storage_tests command_tests storage_tests timeline_project_tests timeline_editor_persistence_tests project_geopackage_tests project_geopackage_controller_tests web_import_ui_tests
+      - name: Run focused persistence tests without skips
+        run: |
+          ctest --test-dir build --output-on-failure -R '^(temporal_tests|timeline_records_tests|timeline_storage_tests|command_tests|storage_tests|timeline_project_tests|timeline_editor_persistence_tests|project_geopackage_tests|project_geopackage_controller_tests|web_import_ui_tests)$' --output-junit "$GITHUB_WORKSPACE/build/results.xml"
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          root = ET.parse('build/results.xml').getroot()
+          cases = list(root.iter('testcase'))
+          skipped = [case.attrib.get('name') for case in cases if case.find('skipped') is not None]
+          failures = [case.attrib.get('name') for case in cases if case.find('failure') is not None or case.find('error') is not None]
+          print(f'CTest: {len(cases)} cases, {len(failures)} failures, {len(skipped)} skips')
+          expected = {'temporal_tests', 'timeline_records_tests', 'timeline_storage_tests', 'command_tests', 'storage_tests', 'timeline_project_tests', 'timeline_editor_persistence_tests', 'project_geopackage_tests', 'project_geopackage_controller_tests', 'web_import_ui_tests'}
+          assert {case.attrib.get('name') for case in cases} == expected and len(cases) == 10 and not failures and not skipped
+          assert 'SKIP' not in Path('build/Testing/Temporary/LastTest.log').read_text()
+          PY
+      - name: Verify saved sample assets
+        run: |
+          node tools/verify-release-assets.mjs --root . --out build/source-assets.json
+      - uses: actions/checkout@v4
+        with:
+          repository: kimjeon-il/world-map
+          ref: 788f43fd27062851bdadf7fa6964819d43534685
+          path: web-reference
+          persist-credentials: false
+      - name: Exercise actual web and native file exchange
+        run: node tools/timeline-exchange-oracle.mjs build/app/timeline_project_tests web-reference build/exchange-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: timeline-linux-debug-${{ github.sha }}
+          path: |
+            build/results.xml
+            build/Testing/Temporary/LastTest.log
+            build/source-assets.json
+            build/exchange-evidence
+          retention-days: 14

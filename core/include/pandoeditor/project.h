@@ -31,6 +31,9 @@ private:
 
 class Project {
 public:
+    const std::string& timelineCursor() const noexcept { return timelineCursor_; }
+    // Session month only: no content revision, dirty bit or history entry.
+    bool setTimelineCursor(const std::string& month);
     std::uint64_t presentationRevision() const noexcept { return presentationRevision_; }
     Project();
     ProjectSnapshot snapshot() const { return {state_,instanceId_,revision_}; }
@@ -88,5 +91,6 @@ private:
     std::uint64_t presentationRevision_ = 0;
     std::uint64_t checkpoint_=0, savedCheckpoint_=0, checkpointSequence_=0;
     std::size_t cursor_ = 0;
+    std::string timelineCursor_;
 };
 } // namespace pandoeditor

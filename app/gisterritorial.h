@@ -6,7 +6,7 @@
 
 namespace pandoeditor {
 // Every mapping is explicit. A common owner overrides source fields, including
-// a stale historical sovereign ID. No geography is inferred from names.
+// a canonical administrative parent. Political relation inputs are rejected.
 struct GisTerritorialMapping {
     GisExchangeTarget target=GisExchangeTarget::Region;
     std::string idField="__fid__",nameField="name",sovereignField="sovereign_id",

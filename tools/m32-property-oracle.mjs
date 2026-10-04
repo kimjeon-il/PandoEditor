@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import * as math from '../tests/fixtures/web-properties/source/custom-color-control.js';
-import {normalizeTemporalInterval} from '../tests/fixtures/web-properties/source/temporal.js';
+import {normalizeTemporalInterval} from '../tests/fixtures/timeline-temporal-reference.mjs';
 import {createObjectCommands} from '../tests/fixtures/web-properties/source/app-object-commands.js';
 import {createObjectMetadata} from '../tests/fixtures/web-properties/source/app-object-metadata.js';
 import {createHistoryService} from '../tests/fixtures/web-properties/source/history-service.js';
@@ -21,9 +21,14 @@ const manifest=JSON.parse(fs.readFileSync(new URL('tests/fixtures/web-properties
 for(const [name,sha] of Object.entries(manifest.blobs)){
  const bytes=fs.readFileSync(new URL(name,source));assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`),bytes])).digest('hex'),sha,`pinned source modified: ${name}`);
 }
+const temporalBytes=fs.readFileSync(new URL('tests/fixtures/timeline-temporal-reference.mjs',root));
+assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${temporalBytes.length}\0`),temporalBytes])).digest('hex'),'34ef7a8bc1cba4cf9c550dc93be8882f5c9b6aa7','T0 month contract source modified');
 function originalScenario(ops){
  const geometry={type:'Polygon',coordinates:[[[0,0],[8,0],[8,8],[0,8],[0,0]]]};
- const state={countriesData:{features:[{type:'Feature',id:'A',geometry,properties:{name:'Alpha'}}]},countryOverrides:{},territorialUnits:territory.normalizeTerritorialUnits(['S','R'].map(id=>({type:'Feature',id,geometry,properties:{schemaVersion:2,unitType:id==='S'?'subunit':'region',name:id,notes:'',parentId:id==='S'?'A':'S',sovereignId:'A',coverageMode:'explicit',style:{},locked:false}})),{countryExists:id=>id==='A'}),stateRevision:0};
+ // General A and General child S share the same metadata contract. The pinned
+ // metadata handlers still provide the independent reference for that contract;
+ // R is a standalone Regional. No source blobs or math/date cases are changed.
+ const state={countriesData:{features:['A','S'].map(id=>({type:'Feature',id,geometry,properties:{name:id==='A'?'Alpha':'S'}}))},countryOverrides:{},territorialUnits:territory.normalizeTerritorialUnits([{type:'Feature',id:'R',geometry,properties:{schemaVersion:2,unitType:'region',name:'R',notes:'',parentId:'',sovereignId:'',coverageMode:'explicit',style:{},locked:false}}],{countryExists:id=>id==='A'||id==='S'}),stateRevision:0};
  let refs=[],error=false;
  const countryById=id=>state.countriesData.features.find(x=>x.id===id);
  const unitById=id=>state.territorialUnits.find(x=>x.id===id);
@@ -35,39 +40,42 @@ function originalScenario(ops){
  const repository=territory.createTerritorialRepository({getCountries:()=>state.countriesData,getUnits:()=>state.territorialUnits,getCountryOverride:id=>state.countryOverrides[id]||{}});
  const scope=createTerritorialScopeResolver({read:()=>({revision:state.stateRevision,units:state.territorialUnits}),countryById,countryColor:f=>colors.readDomainColor('country',{feature:f,override:state.countryOverrides[f.id]},{fallback:'#cccccc'}).value,clipper:()=>null});
  const colorPorts={...colors,normalizeEditorColor:colors.normalizeColorValue,defaultCountryColor:()=> '#cccccc',DEFAULT_GENERIC_FEATURE_COLOR:'#8c68d8'};
- const locked=id=>id==='A'?state.countryOverrides[id]?.locked===true:unitById(id)?.properties.locked===true;
+ const locked=id=>id!=='R'?state.countryOverrides[id]?.locked===true:unitById(id)?.properties.locked===true;
  const setLocked=(id,value)=>{const o={...(state.countryOverrides[id]||{})};if(value)o.locked=true;else delete o.locked;if(Object.keys(o).length)state.countryOverrides[id]=o;else delete state.countryOverrides[id]};
  const pipeline=createProjectCommandPipeline({captureSnapshot:snapshot,restoreSnapshot:restore,recordHistory:(m,s)=>history.commitSnapshot(s,m),discardHistory:history.discardLast,advanceRevision:()=>++state.stateRevision});
  const service=createTerritorialApplicationService({repository,commandPipeline:pipeline,countryCommands:{isLocked:locked,setLocked,hasField:(id,f)=>Object.hasOwn(state.countryOverrides[id]||{},f),setField:(id,f,v)=>{state.countryOverrides[id]||={};if(f==='color')colors.writeDomainColor('country',{override:state.countryOverrides[id]},v);else state.countryOverrides[id][f]=v;}},unitCommands:{setField:(id,f,v)=>{const u=unitById(id);if(f==='color')colors.writeDomainColor('territorial',{feature:u},v,{clear:!v});else u.properties[f]=v},replaceAll:units=>{state.territorialUnits=units}}});
  const commands=createObjectCommands();
  const ports={projectState:{state},territorialModel:territory,selectionServices:{normalizeObjectRef:v=>v},objectPresentation:{territorialUnitById:unitById,territorialUnitName:f=>f.properties.name},countries:{countryFeatureById:countryById},colorModel:colorPorts,
+   geometryOperations:{boundaryEditSelectionAnalysis:()=>({valid:false})}, // UI availability only; no geometry operation in these metadata scenarios.
    domains:{projectDomain,selectionDomain:{snapshot:()=>({selection:{items:refs}}),primary:()=>refs.at(-1)},selectionUiController:{presentPrimary(){}},layerTreeController:{syncLocks(){}},renderingDomain:{invalidateCountryPatch(){},invalidateBaseScene(){},invalidateSelection(){}}},
    layerPresentation:{isLayerItemVisible:()=>true},layers:{markLayerTreeDirty(){}},rendering:{gpuMapRenderer:{invalidateCountryPalette(){}}},platform:{$:()=>null,deepClone:structuredClone},domainControllers:{},presentation:{countryName:f=>countryDisplayName(f,state.countryOverrides[f?.id])},objectModelA:{},territorialServicesB:{},distributionPresentation:{}};
  commands.connect(ports);
  const metadata=createObjectMetadata();metadata.connect({...ports,objectModelB:{territorialApplicationService:service,setTerritorialStyleColor:(f,c)=>colors.writeDomainColor('territorial',{feature:f},c,{clear:!c})},
   propertyEditingA:{applyCountrySelectionIntent(){},applyTerritorialUnitSelectionIntent(){}},feedback:{setActionStatus:(_m,tone)=>{if(tone==='error')error=true}},readiness:{compactNotificationMessage:v=>v},territorialServicesB:{validateSubunitParentChanges},applicationServicesA:territory});
  const result=[];
- for(const op of ops){error=false;let ok=true;refs=(op.ids||[]).map(id=>({domain:'territorial',type:id==='A'?'country':id==='S'?'subunit':'region',id,key:`territorial:${id}`}));state.selected=refs[0];
+ for(const op of ops){error=false;let ok=true;refs=(op.ids||[]).map(id=>({domain:'territorial',type:id!=='R'?'country':'region',id,key:`territorial:${id}`}));state.selected=refs[0];
   if(op.op==='undo')ok=history.undo();else if(op.op==='redo')ok=history.redo();
   else if(op.op==='lock'){
    if(refs.length>1){const all=refs.every(r=>locked(r.id));if(all!==op.value||refs.some(r=>locked(r.id)!==op.value))commands.batchToggleLocked();}
    else service.setLocked(refs[0].type,refs[0].id,op.value);
   }else if(op.op==='field'){
    if(locked(refs[0].id)){ok=false;}
-   else if(refs[0].id==='A')metadata.commitCountryEdit(op.field,op.field==='name'?op.value.trim():op.value);
+   else if((op.field==='validFrom'||op.field==='validTo')&&op.value.trim())ok=false;
+   else if(refs[0].id!=='R')metadata.commitCountryEdit(op.field,op.field==='name'?op.value.trim():op.value);
    else metadata.commitTerritorialUnitMeta(op.field,op.field==='notes'?op.value:op.value.trim());
   }else if(refs.length>1)commands.batchSetColor(op.value);
   else if(locked(refs[0].id))ok=false;
   else if(op.value===null){
-   if(refs[0].id==='A'){
-    if(state.countryOverrides.A?.color){history.record();delete state.countryOverrides.A.color;if(!Object.keys(state.countryOverrides.A).length)delete state.countryOverrides.A;}
+   if(refs[0].id!=='R'){
+    const id=refs[0].id;if(state.countryOverrides[id]?.color){history.record();delete state.countryOverrides[id].color;if(!Object.keys(state.countryOverrides[id]).length)delete state.countryOverrides[id];}
    }else metadata.commitTerritorialUnitMeta('color','');
-  }else if(refs[0].id==='A')metadata.commitCountryEdit('color',op.value);
+  }else if(refs[0].id!=='R')metadata.commitCountryEdit('color',op.value);
   else metadata.commitTerritorialUnitMeta('color',op.value);
   const rows=['A','S','R'].map(id=>{
-   const isCountry=id==='A',u=isCountry?countryById(id):unitById(id),p=u.properties,o=isCountry?(state.countryOverrides[id]||{}):p;
-   const c=colors.readDomainColor(isCountry?'country':'territorial',isCountry?{feature:u,override:o}:{feature:u},{fallback:isCountry?'#cccccc':'#8c68d8',inherited:isCountry?'':scope.color(u,'#8c68d8')});
-   return {id,name:isCountry?countryDisplayName(u,o):p.name||(id==='S'?'이름 없는 하위단위':'이름 없는 지방'),rawName:o.name||'',notes:o.notes||'',hasName:isCountry?Object.hasOwn(o,'name'):true,color:c.value,explicit:!c.isDefault,locked:locked(id),from:p.validFrom||null,to:p.validTo||null};
+   const isGeneral=id!=='R',u=isGeneral?countryById(id):unitById(id),p=u.properties,o=isGeneral?(state.countryOverrides[id]||{}):p;
+   const parentColor=id==='S'?colors.readDomainColor('country',{feature:countryById('A'),override:state.countryOverrides.A||{}},{fallback:'#cccccc'}).value:'';
+   const c=colors.readDomainColor(isGeneral?'country':'territorial',isGeneral?{feature:u,override:o}:{feature:u},{fallback:id==='S'?parentColor:isGeneral?'#cccccc':'#8c68d8',inherited:''});
+   return {id,name:isGeneral?countryDisplayName(u,o):p.name||'이름 없는 권역',rawName:o.name||(id==='S'?p.name:''),notes:o.notes||'',hasName:isGeneral?Object.hasOwn(o,'name')||id==='S':true,color:c.value,explicit:!c.isDefault,locked:locked(id),from:p.validFrom||null,to:p.validTo||null};
   });result.push({units:rows,undo:history.canUndo(),redo:history.canRedo(),ok:ok&&!error});
  }return result;
 }
@@ -94,4 +102,4 @@ if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify({cases,expect
 assert.equal(actual.length,cases.length);const failures=[];
 for(let i=0;i<cases.length;++i){try{assert.deepEqual(actual[i],expected[i]);}catch(e){failures.push(i);console.error('MISMATCH',i,JSON.stringify(cases[i]),e.message.slice(0,450));}}
 assert.equal(failures.length,0,`Source/native differences: ${failures.join(',')}`);
-console.log(`Pinned source ${manifest.commit}: ${Object.keys(manifest.blobs).length} blob hashes verified; ${cases.length} comparisons passed (math, whitespace, temporal intervals, real metadata/batch/history handlers).`);
+console.log(`Pinned source ${manifest.commit}: ${Object.keys(manifest.blobs).length} blob hashes verified; ${cases.length} comparisons passed (unchanged math/temporal, General metadata/batch/history, static date guard).`);

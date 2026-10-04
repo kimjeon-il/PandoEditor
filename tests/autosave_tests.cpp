@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include "autosavecoordinator.h"
 #include "editorcontroller.h"
 #include "worlddatasetloader.h"
@@ -182,12 +183,10 @@ private slots:
         config.autosaveProjectPath=dir.filePath("autosave-project.json");
         config.autosaveViewPath=dir.filePath("autosave-view.json");
         if(fixture.isEmpty()) {
-            // CI must exercise the legacy producer defect without private user data.
+            // Old development saves are refused without rewriting the recovery copy.
             pandoeditor::Project world;
             world.replace(*WorldDatasetLoader::canonical(config.worldDataRoot).document);
             auto legacy=losslessjson::parse(projectcodec::encode(world));
-            // The defective builtin-subunits-2 producer wrote native v7, not v8.
-            // Keep the regression pinned to that bounded recovery contract.
             legacy.object.at("version")=losslessjson::Value::num(7);
             auto& distributionSettings=legacy.object.at("presentation").object.at("webPresentation")
                 .object.at("distributionSettings");
@@ -195,7 +194,7 @@ private slots:
             distributionSettings.object.erase("activeLayerId");
             int affected=0;
             for(auto& unit:legacy.object.at("units").array) {
-                if(unit.object.at("kind").string!="subunit")continue;
+                if(pandoeditor::staticParentRelation(world.document(),unit.object.at("id").string).parentId.empty())continue;
                 unit.object.at("baseName")=unit.object.at("name");++affected;
             }
             QCOMPARE(affected,47);
@@ -233,7 +232,7 @@ private slots:
     void canonicalIdsDoNotReplaceEditedCoordinates() {
         const auto root=QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR);
         auto document=*WorldDatasetLoader::canonical(root).document;
-        const auto ref=document.units.front().geometry;
+        const auto ref=staticGeometryBinding(document,document.units.front().id).geometryRef;
         auto changed=*document.geometries.get(ref);
         changed.polygons.front().front().front().x+=0.000001;
         changed.polygons.front().front().back()=changed.polygons.front().front().front();
@@ -243,7 +242,7 @@ private slots:
         document.geometries=std::move(replacement);
         QVERIFY(!WorldDatasetLoader::matchingBaseFrame(document,root));
     }
-    void ordinaryInvalidSubunitNamesRemainRejected() {
+    void obsoleteEntityKindRemainsRejected() {
         QFile sample(":/assets/sample.pando.json");QVERIFY(sample.open(QIODevice::ReadOnly));
         pandoeditor::Project project;project.replace(projectcodec::decode(sample.readAll()));
         auto encoded=losslessjson::parse(projectcodec::encode(project));
@@ -252,9 +251,9 @@ private slots:
         unit.object.at("baseName")=losslessjson::Value::str("invalid country-only field");
         try {
             projectcodec::decode(encoded.encode());
-            QFAIL("Unrelated invalid subunit name state must be rejected");
+            QFAIL("Obsolete entity kind must be rejected");
         } catch(const std::invalid_argument& error) {
-            QCOMPARE(QByteArray(error.what()),QByteArray("INVALID_JSON: country-only name state"));
+            QCOMPARE(QByteArray(error.what()),QByteArray("INVALID_ENTITY_KIND"));
         }
     }
     void failedRecoveryDoesNotOverwriteAutosave() {

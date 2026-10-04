@@ -33,11 +33,13 @@ with tempfile.TemporaryDirectory() as temporary:
         ).fetchall()
         assert len(rows) == 1
         assert rows[0] == ("C", "image/svg+xml",
-                           b'<svg xmlns="http://www.w3.org/2000/svg"/>')
+                           b'<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><rect width="2" height="2" fill="red"/></svg>')
         state = json.loads(database.execute(
             "select json_value from pandolab_project_settings where setting_key='project_state'"
         ).fetchone()[0])
-        assert state["format"] == "pandoeditor-project" and state["version"] == 8
+        assert state["format"] == "pandoeditor-project" and state["version"] == 9
+        assert state["timelineRecords"]["schemaVersion"] == 1
+        assert len(state["timelineRecords"]["lifetimes"]) == 3
         assert {unit["id"] for unit in state["units"]} == {"A", "B", "C"}
         assert next(unit for unit in state["units"] if unit["id"] == "A")\
             ["libraryOrigin"]["libraryId"] == "history:A"

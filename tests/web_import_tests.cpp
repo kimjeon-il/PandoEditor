@@ -3,190 +3,43 @@
 #include "projectcodec.h"
 #include <QtTest>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 using namespace pandoeditor;
 namespace {
-QByteArray full(int schema=5, const char* format="pandolab-project-state") {
-    return QString(R"({"format":"%1","schemaVersion":%2,"version":"0.33.0","landObjectModel":{"schemaVersion":2,"purpose":"lossless-fallback","directCreation":false,"sourceProvenanceSchemaVersion":1},"territorialModel":{"schemaVersion":2},"distributionModel":{"schemaVersion":2},"layerPresentation":{"schemaVersion":3},"countriesData":{"type":"FeatureCollection","features":[{"type":"Feature","id":"A","properties":{"name":"Alpha"},"geometry":{"type":"Polygon","coordinates":[[[0,0],[4,0],[4,4],[0,4],[0,0]]]}}]},"countryOverrides":{"A":{"name":"Renamed","notes":"notes","color":"#112233","flagDataUrl":null}},"territorialUnits":[],"territorialRelations":[]})").arg(format).arg(schema).toUtf8();
+QByteArray full(int schema=9,const char* format="pandolab-project-state") {
+    QFile file(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../timeline-exchange/static.json");if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("v9 fixture unavailable");
+    auto root=QJsonDocument::fromJson(file.readAll()).object();root["schemaVersion"]=schema;root["format"]=format;return QJsonDocument(root).toJson(QJsonDocument::Compact);
 }
-QString errorFor(const std::function<void()>& f) { try { f(); } catch(const std::exception& e) { return e.what(); } return {}; }
+QString errorFor(const std::function<void()>& f){try{f();}catch(const std::exception& e){return e.what();}return {};}
+QJsonObject object(){return QJsonDocument::fromJson(full()).object();}
+QByteArray bytes(const QJsonObject& root){return QJsonDocument(root).toJson(QJsonDocument::Compact);}
+QJsonObject distributionLayer(){return {{"id","00000000-0000-4000-8000-000000000011"},{"schemaVersion",3},{"name","Population"},{"unit","people"},{"valueScale",QJsonObject{{"mode","manual"},{"min",-100},{"max",2000}}},{"color","#507090"},{"locked",false},{"parentId",""},{"groups",QJsonArray{}},{"validFrom",QJsonValue::Null},{"validTo",QJsonValue::Null},{"metadata",QJsonObject{}}};}
+QJsonObject distributionEntry(){return {{"id","00000000-0000-4000-8000-000000000012"},{"schemaVersion",3},{"layerId","00000000-0000-4000-8000-000000000011"},{"mode","territorial"},{"territorialUnitId","A"},{"geometry",QJsonValue::Null},{"value",1500},{"certainty","medium"},{"validFrom",QJsonValue::Null},{"validTo",QJsonValue::Null},{"metadata",QJsonObject{}}};}
 }
-class WebImportTests : public QObject {
-    Q_OBJECT
+class WebImportTests:public QObject {
+ Q_OBJECT
 private slots:
-    void currentSchema6ValuesAndManualScale() {
-        auto root=losslessjson::parse(full(6));
-        root.object["distributionModel"]=losslessjson::parse(R"({"schemaVersion":3,"sourceModes":["territorial","geometry"],"valueKind":"finite-number"})");
-        root.object["layerPresentation"]=losslessjson::parse(R"({"schemaVersion":4,"styles":{"countries":{"colorVisible":false}}})");
-        root.object["distributionLayers"]=losslessjson::parse(R"([{"id":"00000000-0000-4000-8000-000000000011","schemaVersion":3,"name":"Population","unit":"people","valueScale":{"mode":"manual","min":"-100","max":"2000"}}])");
-        root.object["distributionEntries"]=losslessjson::parse(R"([{"id":"00000000-0000-4000-8000-000000000012","schemaVersion":3,"layerId":"00000000-0000-4000-8000-000000000011","mode":"territorial","territorialUnitId":"A","value":"1500"}])");
-        root.object["distributionSettings"]=losslessjson::parse(R"({"renderMode":"single","activeLayerId":"00000000-0000-4000-8000-000000000011","boundaryVisible":true})");
-        const auto candidate=webimport::prepare(root.encode());QCOMPARE(candidate.document.distributionEntries.front().value,1500.);
-        QCOMPARE(candidate.document.distributionLayers.front().unit,std::string("people"));QVERIFY(candidate.document.distributionLayers.front().valueScale.manual);
-        Project project;project.replace(candidate.document);const auto reopened=projectcodec::decode(projectcodec::encode(project));QVERIFY(sameContent(candidate.document,reopened));
-        QCOMPARE(reopened.presentation.webPresentation.distributionSettings.renderMode,DistributionRenderMode::Single);
-        QVERIFY(!resolvedTerritorialPresentation(candidate.document,territorialRef("A")).colorVisible);
-        QVERIFY(!resolvedTerritorialPresentation(reopened,territorialRef("A")).colorVisible);
-        root.object["distributionEntries"].array.front().object["value"]=losslessjson::Value::boolean(false);
-        QVERIFY(errorFor([&]{webimport::prepare(root.encode());}).contains("INVALID_DISTRIBUTION"));
-    }
-    void formats() {
-        QCOMPARE(webimport::classify(full()),webimport::FileKind::WebFull);
-        QCOMPARE(webimport::classify(full(5,"pandolab-autosave-full")),webimport::FileKind::WebFull);
-        QCOMPARE(webimport::classify(R"({"format":"pandoeditor-project","version":3})"),webimport::FileKind::QtProject);
-    }
-    void rejectAmbiguousOrUnsupported() {
-        QVERIFY(errorFor([]{webimport::classify(full(5,"pandolab-autosave-delta"));}).startsWith("BASE_DATA_REQUIRED"));
-        QVERIFY(errorFor([]{webimport::classify(full(7));}).startsWith("UNSUPPORTED_VERSION"));
-        QVERIFY(errorFor([]{webimport::classify(full(2));}).startsWith("UNSUPPORTED_VERSION"));
-        QVERIFY(errorFor([]{webimport::classify(full(5,"random"));}).startsWith("UNSUPPORTED_FORMAT"));
-        QVERIFY(errorFor([]{webimport::classify(R"({"format":"pandolab-project-state","schemaVersion":5,"schemaVersion":4})");}).startsWith("DUPLICATE_KEY"));
-    }
-    void schema5MigratesToCurrent() {
-        auto b=full(); auto m=webimport::migrate(b);
-        QCOMPARE(m.sourceSchema,5);
-        QCOMPARE(losslessjson::parse(m.normalized).object.at("schemaVersion").raw,QByteArray("6"));
-    }
-    void originalJsGoldenMigration() {
-        for(const char* version:{"v3","v4","v5","scalars"}) {
-            QFile input(QStringLiteral(WEB_IMPORT_FIXTURES)+"/"+version+".input.json");
-            QFile expected(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../web-current/"+version+".expected.json");
-            QVERIFY(input.open(QIODevice::ReadOnly)); QVERIFY(expected.open(QIODevice::ReadOnly));
-            QCOMPARE(webimport::migrate(input.readAll()).normalized,losslessjson::parse(expected.readAll()).encode());
-        }
-    }
-    void allSupportedSchemasMapAndReopen() {
-        for(const char* version:{"v3","v4","v5"}) {
-            QFile input(QStringLiteral(WEB_IMPORT_FIXTURES)+"/"+version+".input.json");QVERIFY(input.open(QIODevice::ReadOnly));
-            auto c=webimport::prepare(input.readAll());QCOMPARE(c.countries,2);
-            Project p;p.replace(c.document);QVERIFY(p.renameCountry("A","after migration"));
-            Project q;q.replace(projectcodec::decode(projectcodec::encode(p)));
-            QVERIFY(semanticallyEqual(p.document(),q.document()));QCOMPARE(q.country("A")->name,std::string("after migration"));
-        }
-    }
-    void sourceAndExpandedOutputRespectStorageLimit() {
-        QVERIFY(errorFor([]{webimport::prepare(QByteArray(64ll*1024*1024+1,' '));}).contains("LIMIT_EXCEEDED"));
-        auto b=full();b.chop(1);b+=",\"future\":\""+QByteArray(33ll*1024*1024,'x')+"\"}";
-        auto error=errorFor([&]{webimport::prepare(b);});
-        QVERIFY2(error.contains("LIMIT_EXCEEDED")&&error.contains("output"),qPrintable(error));
-    }
-    void mapsEffectiveCountryAndRoundtrip() {
-        auto c=webimport::prepare(full()); QVERIFY2(!c.document.documentId.empty(),"prepared candidate must contain a validated document"); Project p; p.replace(c.document);
-        QCOMPARE(c.countries,1); QCOMPARE(p.country("A")->name,std::string("Renamed"));
-        QCOMPARE(p.country("A")->memo,std::string("notes")); QCOMPARE(p.country("A")->color,0x112233u);
-        auto saved=projectcodec::encode(p); Project q; q.replace(projectcodec::decode(saved));
-        QVERIFY(semanticallyEqual(p.document(),q.document()));
-        QVERIFY(!c.candidateHash.isEmpty()); QVERIFY(!c.report.isEmpty());
-    }
-    void rejectsBrokenReferencesAndCoordinates() {
-        auto b=full(); b.replace("[4,4]","[181,4]");
-        QVERIFY(errorFor([&]{webimport::prepare(b);}).contains("INVALID_GEOMETRY"));
-        b=full(); b.replace("\"territorialUnits\":[]",R"("territorialUnits":[{"type":"Feature","id":"00000000-0000-4000-8000-000000000011","properties":{"schemaVersion":2,"coverageMode":"explicit","unitType":"subunit","name":"Sub","parentId":"missing","sovereignId":"A"},"geometry":{"type":"Polygon","coordinates":[[[0,0],[1,0],[1,1],[0,1],[0,0]]]}}])");
-        QVERIFY(errorFor([&]{webimport::prepare(b);}).contains("DANGLING_REF"));
-    }
-    void losslessUnknownAndGuard() {
-        auto b=full(); b.chop(1); b+=R"(,"future":{"large":900719925474099312345,"null":null,"list":[1,null,"x"]}})";
-        auto c=webimport::prepare(b); QVERIFY(!c.document.documentId.empty()); Project p; p.replace(c.document);
-        QVERIFY(p.renameCountry("A","safe")); QVERIFY(!p.setColor("A",0));
-        auto output=projectcodec::encode(p);
-        QVERIFY(output.contains("900719925474099312345"));
-        Project q; q.replace(projectcodec::decode(output));
-        QCOMPARE(q.country("A")->name,std::string("safe"));
-        QVERIFY(semanticallyEqual(p.document(),q.document()));
-    }
-    void flagsAndRootClassification() {
-        for(const auto& mode:{QByteArray("null"),QByteArray("\"data:image/png;base64,AAAA\"")}) {
-            auto b=full(); b.replace("\"flagDataUrl\":null", "\"flagDataUrl\":"+mode);
-            auto c=webimport::prepare(b); bool found=false;
-            for(const auto& row:c.report) if(row.toMap().value("flagState")== (mode=="null"?"None":"Embedded"))found=true;
-            QVERIFY(found);
-        }
-        auto b=full();b.replace(",\"flagDataUrl\":null","");auto c=webimport::prepare(b);bool defaultFlag=false;
-        for(const auto& row:c.report)if(row.toMap().value("flagState")=="Default")defaultFlag=true;
-        QVERIFY(defaultFlag);
-        auto root=losslessjson::parse(b);
-        for(const auto& [key,value]:root.object) {
-            bool present=false;for(const auto& r:c.report)if(r.toMap().value("path").toString()==QString::fromStdString("/"+key))present=true;
-            QVERIFY2(present,key.c_str());
-        }
-    }
-    void nestedAndRetained() {
-        QFile input(QStringLiteral(WEB_IMPORT_FIXTURES)+"/v5.input.json");QVERIFY(input.open(QIODevice::ReadOnly));
-        auto c=webimport::prepare(input.readAll());QCOMPARE(c.countries,2);QCOMPARE(c.subunits,3);QCOMPARE(c.regions,1);
-        Project p;p.replace(c.document);QCOMPARE(p.document().relations.size(),std::size_t(5));
-        bool generic=false;for(const auto& e:p.document().extensions)if(e.jsonPointer=="/genericFeatures")generic=true;
-        QVERIFY(generic);QVERIFY(p.renameCountry("A","edited"));auto bytes=projectcodec::encode(p);
-        Project q;q.replace(projectcodec::decode(bytes));QVERIFY(semanticallyEqual(p.document(),q.document()));
-    }
-    void malformedKnownContainersAreRejected() {
-        for(const char* field:{"countryOverrides","layerVisibility","itemVisibility","labelSettings","distributionSettings"}) {
-            auto doc=losslessjson::parse(webimport::migrate(full()).normalized);doc.object[field]=losslessjson::Value::num(42);
-            QVERIFY2(errorFor([&]{webimport::prepare(doc.encode());}).contains("INVALID"),field);
-        }
-        auto b=full();b.replace("\"name\":\"Alpha\"","\"name\":\"\"");
-        QVERIFY(errorFor([&]{webimport::prepare(b);}).contains("INVALID_UNIT"));
-        b=full();b.replace("\"notes\":\"notes\"","\"notes\":null");
-        QVERIFY(errorFor([&]{webimport::prepare(b);}).contains("INVALID_OVERRIDE"));
-    }
-    void unknownModelFieldsReceivePreservationBarrier() {
-        auto doc=losslessjson::parse(full());doc.object["landObjectModel"].object["futureDependency"]=losslessjson::parse(R"({"unit":"A","number":90071992547409931234})");
-        auto c=webimport::prepare(doc.encode());bool found=false;
-        for(const auto& e:c.document.extensions)if(e.jsonPointer=="/landObjectModel/futureDependency" && e.status=="unsupported" && e.dependencyKnowledge=="unknown")found=true;
-        QVERIFY(found);
-    }
-    void distributionIndependentSharesAndReferences() {
-        auto doc=losslessjson::parse(full());
-        doc.object["distributionLayers"]=losslessjson::parse(R"([{"id":"00000000-0000-4000-8000-000000000011","schemaVersion":2,"type":"religion","name":"R"}])");
-        doc.object["distributionEntries"]=losslessjson::parse(R"([{"id":"00000000-0000-4000-8000-000000000012","schemaVersion":2,"layerId":"00000000-0000-4000-8000-000000000011","mode":"territorial","territorialUnitId":"A","share":60},{"id":"00000000-0000-4000-8000-000000000013","schemaVersion":2,"layerId":"00000000-0000-4000-8000-000000000011","mode":"territorial","territorialUnitId":"A","share":70}])");
-        auto c=webimport::prepare(doc.encode());bool archived=false,sourceArchived=false;
-        auto migratedEntries=doc.object["distributionEntries"];
-        for(auto& row:migratedEntries.array){row.object["schemaVersion"]=losslessjson::Value::num(3);row.object["value"]=row.object.at("share");row.object.erase("share");}
-        for(const auto& e:c.document.extensions)if(e.jsonPointer=="/distributionEntries") {
-            QCOMPARE(e.payload,migratedEntries.encode().toStdString());
-            archived=e.status=="migrationArchive";
-        }
-        QVERIFY(archived);
-        for(const auto& e:c.document.extensions)if(e.jsonPointer.empty()&&e.status=="migrationArchive") {
-            QCOMPARE(e.payload,doc.encode().toStdString());sourceArchived=true;
-        }
-        QVERIFY(sourceArchived);
-        QCOMPARE(c.document.distributionEntries.size(),std::size_t(2));
-        for(const auto& entry:c.document.distributionEntries) {
-            QVERIFY(entry.territory.has_value());
-            QCOMPARE(*entry.territory,territorialRef("A"));
-        }
-        QCOMPARE(c.document.distributionEntries[0].value,60.);
-        QCOMPARE(c.document.distributionEntries[1].value,70.);
-        doc.object["distributionEntries"].array[0].object["territorialUnitId"]=losslessjson::Value::str("missing");
-        QVERIFY(errorFor([&]{webimport::prepare(doc.encode());}).contains("DANGLING_REF"));
-    }
-    void escapedDuplicatesDepthAndExtraOrdinates() {
-        QVERIFY(errorFor([]{webimport::classify(R"({"format":"pandolab-project-state","schemaVersion":5,"\u0073chemaVersion":4})");}).contains("DUPLICATE_KEY"));
-        auto doc=full();doc.chop(1);doc+=",\"future\":"+QByteArray(130,'[')+"0"+QByteArray(130,']')+"}";
-        QVERIFY(errorFor([&]{webimport::prepare(doc);}).contains("LIMIT_EXCEEDED"));
-        auto b=full();b.replace("[4,4]","[4,4,123]");
-        QVERIFY(errorFor([&]{webimport::prepare(b);}).contains("UNSUPPORTED_GEOMETRY"));
-    }
-    void holesAndMultiPolygonCoordinatesAreUnchanged() {
-        auto doc=losslessjson::parse(full());
-        auto geometry=losslessjson::parse(R"({"type":"MultiPolygon","coordinates":[[[[0,0],[10,0],[10,10],[0,10],[0,0]],[[2,2],[3,2],[3,3],[2,3],[2,2]]],[[[20,0],[21,0],[21,1],[20,1],[20,0]]]]})");
-        doc.object["countriesData"].object["features"].array[0].object["geometry"]=geometry;
-        auto c=webimport::prepare(doc.encode());Project p;p.replace(c.document);auto g=p.document().geometries.get(p.document().units[0].geometry);
-        QCOMPARE(g->type,std::string("MultiPolygon"));QCOMPARE(g->polygons.size(),std::size_t(2));QCOMPARE(g->polygons[0].size(),std::size_t(2));
-        QCOMPARE(g->polygons[0][1][2].x,3.);QCOMPARE(g->polygons[1][0][2].y,1.);
-        QVERIFY(p.pick({2.5,2.5}).empty());QCOMPARE(p.pick({20.5,0.5}),std::string("A"));
-        auto old=g.get();QVERIFY(p.renameCountry("A","safe geometry"));
-        QCOMPARE(p.document().geometries.get(p.document().units[0].geometry).get(),old);
-        Project q;q.replace(projectcodec::decode(projectcodec::encode(p)));QVERIFY(semanticallyEqual(p.document(),q.document()));
-    }
-    void invalidRetainedSourceContractIsRejected() {
-        QFile f(QStringLiteral(WEB_IMPORT_FIXTURES)+"/v5.input.json");QVERIFY(f.open(QIODevice::ReadOnly));auto doc=losslessjson::parse(f.readAll());
-        QVERIFY(!doc.object["genericFeatures"].array.empty());
-        doc.object["genericFeatures"].array[0].object["properties"].object["source"].object["schemaVersion"]=losslessjson::Value::num(2);
-        QVERIFY(errorFor([&]{webimport::prepare(doc.encode());}).contains("INVALID_SOURCE"));
-    }
-    void cancelled() {
-        QVERIFY(errorFor([]{webimport::prepare(full(),[]{return true;});}).startsWith("CANCELLED"));
-    }
+ void currentSchema6ValuesAndManualScale(){auto root=object();root["distributionLayers"]=QJsonArray{distributionLayer()};root["distributionEntries"]=QJsonArray{distributionEntry()};auto candidate=webimport::prepare(bytes(root));QCOMPARE(candidate.document.distributionEntries.front().value,1500.);QCOMPARE(candidate.document.distributionLayers.front().valueScale.min,-100.);Project p;p.replace(candidate.document);Project reopened;reopened.replace(projectcodec::decode(projectcodec::encode(p)));QCOMPARE(projectcodec::encode(reopened),projectcodec::encode(p));}
+ void formats(){QCOMPARE(webimport::classify(full()),webimport::FileKind::WebFull);QCOMPARE(webimport::classify(full(9,"pandolab-autosave-full")),webimport::FileKind::WebFull);QCOMPARE(webimport::classify(full(9,"pandolab-autosave-delta")),webimport::FileKind::WebDelta);Project p;p.replace(webimport::prepare(full()).document);QCOMPARE(webimport::classify(projectcodec::encode(p)),webimport::FileKind::QtProject);}
+ void rejectAmbiguousOrUnsupported(){for(const auto* format:{"pandolab-project","unknown","FeatureCollection"})QVERIFY_EXCEPTION_THROWN(webimport::prepare(full(9,format)),std::invalid_argument);auto root=object();root["schemaVersion"]="9";QVERIFY_EXCEPTION_THROWN(webimport::prepare(bytes(root)),std::invalid_argument);}
+ void oldDevelopmentVersionsReject(){for(int version=1;version<9;++version)QVERIFY_EXCEPTION_THROWN(webimport::prepare(full(version)),std::invalid_argument);}
+ void originalJsGoldenMigration(){for(const auto* name:{"static","complex"}){QFile file(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../timeline-exchange/"+name+".json");QVERIFY(file.open(QIODevice::ReadOnly));const auto input=file.readAll();Project p;p.replace(webimport::prepare(input).document);const auto exported=QJsonDocument::fromJson(projectcodec::encodeWeb(p.snapshot())).object(),source=QJsonDocument::fromJson(input).object();QCOMPARE(exported["territorialEntities"],source["territorialEntities"]);QCOMPARE(exported["timelineRecords"],source["timelineRecords"]);QCOMPARE(exported["geometries"],source["geometries"]);}}
+ void allSupportedSchemasMapAndReopen(){for(const auto* format:{"pandolab-project-state","pandolab-autosave-full"}){Project p;p.replace(webimport::prepare(full(9,format)).document);const auto saved=projectcodec::encode(p);Project reopened;reopened.replace(projectcodec::decode(saved));QCOMPARE(projectcodec::encode(reopened),saved);}}
+ void sourceAndExpandedOutputRespectStorageLimit(){QVERIFY(errorFor([]{webimport::prepare(QByteArray(64*1024*1024+1,' '));}).contains("LIMIT_EXCEEDED"));}
+ void mapsEffectiveCountryAndRoundtrip(){auto candidate=webimport::prepare(full());QCOMPARE(candidate.document.units.size(),std::size_t(4));QCOMPARE(candidate.document.countryDetails.at(territorialRef("A")).capital,std::string("서울"));Project p;p.replace(candidate.document);const auto before=projectcodec::encode(p);QVERIFY(p.renameCountry("A","Edited"));QVERIFY(p.undo());QCOMPARE(projectcodec::encode(p),before);QVERIFY(p.redo());QCOMPARE(p.document().countryDetails.at(territorialRef("A")).capital,std::string("서울"));}
+ void rejectsBrokenReferencesAndCoordinates(){auto root=object();root["geometries"]=QJsonArray{};QVERIFY_EXCEPTION_THROWN(webimport::prepare(bytes(root)),std::invalid_argument);root=object();auto records=root["timelineRecords"].toObject();auto parents=records["parentRelations"].toArray();auto parent=parents[0].toObject();parent["parentId"]="missing";parents[0]=parent;records["parentRelations"]=parents;root["timelineRecords"]=records;QVERIFY_EXCEPTION_THROWN(webimport::prepare(bytes(root)),std::invalid_argument);}
+ void losslessUnknownAndGuard(){auto root=object();root["future"]=QJsonObject{{"number",42}};QVERIFY_EXCEPTION_THROWN(webimport::prepare(bytes(root)),std::invalid_argument);auto wire=full();wire.replace("\"originalName\":",R"("exact":9007199254740993123456789,"originalName":)");Project p;p.replace(webimport::prepare(wire).document);const auto exported=projectcodec::encodeWeb(p.snapshot());QVERIFY(exported.contains("9007199254740993123456789"));}
+ void flagsAndRootClassification(){auto root=object();auto entities=root["territorialEntities"].toArray();auto row=entities[0].toObject(),properties=row["properties"].toObject(),metadata=properties["metadata"].toObject();metadata["flagDataUrl"]=QJsonValue::Null;properties["metadata"]=metadata;row["properties"]=properties;entities[0]=row;root["territorialEntities"]=entities;auto candidate=webimport::prepare(bytes(root));QCOMPARE(candidate.countries,2);QCOMPARE(candidate.subunits,1);QCOMPARE(candidate.regions,1);QVERIFY(candidate.document.symbols.at(territorialRef("A")).policy==FlagPolicy::None);}
+ void nestedAndRetained(){auto candidate=webimport::prepare(full());QCOMPARE(staticParentRelation(candidate.document,"B").parentId,std::string("A"));QVERIFY(staticParentRelation(candidate.document,"R").parentId.empty());QCOMPARE(candidate.document.timelineRecords.parentRelations.size(),std::size_t(4));}
+ void malformedKnownContainersAreRejected(){for(const auto* key:{"territorialEntities","timelineRecords","geometries","labels","hydroEdits","genericFeatures","distributionLayers","distributionEntries","labelSettings","distributionSettings","layerVisibility","itemVisibility","layerPresentation"}){auto root=object();root[key]=42;QVERIFY_EXCEPTION_THROWN(webimport::prepare(bytes(root)),std::invalid_argument);}}
+ void unknownModelFieldsReceivePreservationBarrier(){auto root=object();auto model=root["territorialModel"].toObject();model["future"]=true;root["territorialModel"]=model;QVERIFY_EXCEPTION_THROWN(webimport::prepare(bytes(root)),std::invalid_argument);root=object();auto entities=root["territorialEntities"].toArray();auto row=entities[0].toObject(),p=row["properties"].toObject();p["sovereignId"]="C";row["properties"]=p;entities[0]=row;root["territorialEntities"]=entities;QVERIFY_EXCEPTION_THROWN(webimport::prepare(bytes(root)),std::invalid_argument);}
+ void distributionIndependentSharesAndReferences(){auto root=object();root["distributionLayers"]=QJsonArray{distributionLayer()};auto first=distributionEntry(),second=first;first["value"]=-50;second["id"]="00000000-0000-4000-8000-000000000013";second["value"]=3000;root["distributionEntries"]=QJsonArray{first,second};auto candidate=webimport::prepare(bytes(root));QCOMPARE(candidate.document.distributionEntries.size(),std::size_t(2));QCOMPARE(candidate.document.distributionEntries[0].value,-50.);second["territorialUnitId"]="missing";root["distributionEntries"]=QJsonArray{second};QVERIFY_EXCEPTION_THROWN(webimport::prepare(bytes(root)),std::invalid_argument);}
+ void escapedDuplicatesDepthAndExtraOrdinates(){QVERIFY(errorFor([]{webimport::prepare(R"({"x":1,"\u0078":2})");}).contains("DUPLICATE_KEY"));QByteArray nested(130,'[');nested+="null";nested+=QByteArray(130,']');QVERIFY_EXCEPTION_THROWN(webimport::prepare(nested),std::invalid_argument);}
+ void holesAndMultiPolygonCoordinatesAreUnchanged(){auto candidate=webimport::prepare(full());const auto shape=candidate.document.geometries.get(staticGeometryBinding(candidate.document,"A").geometryRef);QCOMPARE(shape->polygons.size(),std::size_t(3));QCOMPARE(shape->polygons.front().size(),std::size_t(2));QCOMPARE(shape->polygons[2][0][1].x,-179.);}
+ void invalidRetainedSourceContractIsRejected(){auto root=object();root["labels"]=QJsonArray{QJsonObject{{"id","00000000-0000-4000-8000-000000000020"},{"name","City"},{"kind","city"},{"notes",""},{"coordinates",QJsonArray{1,2}},{"territorialUnitId","A"},{"source",QJsonObject{{"schemaVersion",2}}}}};QVERIFY_EXCEPTION_THROWN(webimport::prepare(bytes(root)),std::invalid_argument);}
+ void cancelled(){QVERIFY(errorFor([]{webimport::prepare(full(),[]{return true;});}).startsWith("CANCELLED"));}
 };
 QTEST_GUILESS_MAIN(WebImportTests)
 #include "web_import_tests.moc"

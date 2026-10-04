@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include <pandoeditor/presentationcommands.h>
 #include <iostream>
 #include <stdexcept>
@@ -5,7 +6,7 @@ using namespace pandoeditor;
 void check(bool b,const char* message){if(!b)throw std::runtime_error(message);}
 ProjectDocument fixture(){
     ProjectDocument d({{"A","A",{{{{0,0},{10,0},{10,10},{0,10},{0,0}}}},0x112233}},{{"countries","Countries"}});
-    for(auto id:{"S","T","R"}){auto u=d.units.front();u.id=id;u.kind=std::string(id)=="R"?UnitKind::Region:UnitKind::Subunit;d.units.push_back(u);auto ref=territorialRef(id);d.presentation.membership[ref]="countries";d.presentation.objectStyles[ref]={};d.relations.push_back({std::string("rel-")+id,ref,territorialRef("A"),territorialRef("A")});}
+    for(auto id:{"S","T","R"}){auto u=d.units.front();u.id=id;u.kind=std::string(id)=="R"?UnitKind::Regional:UnitKind::General;appendTerritory(d,u,staticGeometryBinding(d,d.units.front().id).geometryRef,u.kind==UnitKind::General?"A":"");auto ref=territorialRef(id);d.presentation.membership[ref]="countries";d.presentation.objectStyles[ref]={};if(u.kind==UnitKind::General)setFixtureParent(d,ref,territorialRef("A"));}
     return d;
 }
 int main(){try{
@@ -34,7 +35,7 @@ int main(){try{
     CommandArguments args;args.action=SetCountryColor{"A",0xff0000};auto prepared=CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"country.color",args));check(bool(prepared.preview),"prepared");
     apply(SetPresentationVisibility{"countryFlags",true});check(CommandProcessor::confirm(p,*prepared.preview).changed(),"prepared survives presentation");
     check(groupVisible(p.document().presentation.webPresentation,"countryFlags"),"prepared keeps latest presentation");
-    auto d=fixture();d.presentation.webPresentation.objectStyles["territorial:subunit:S"].opacity=.3;d.presentation.webPresentation.objectStyles["territorial:region:R"].opacity=.3;p.replace(d);
+    auto d=fixture();d.presentation.webPresentation.objectStyles["territorial:entity:S"].opacity=.3;d.presentation.webPresentation.objectStyles["territorial:entity:R"].opacity=.3;p.replace(d);
     s.opacity=.7;apply(PatchGroupPresentation{"subunits",s});apply(PatchGroupPresentation{"regions",s});
     check(resolvedTerritorialPresentation(p.document(),territorialRef("S")).opacity==.7,"V14 subunit propagation");
     check(resolvedTerritorialPresentation(p.document(),territorialRef("R")).opacity==.3,"V15 region keeps override");

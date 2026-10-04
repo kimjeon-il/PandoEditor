@@ -52,7 +52,7 @@ add_library(pandoeditor_editor STATIC
     geometrycalculator.cpp geometrycalculator.h
     territorialgeometry.cpp territorialgeometry.h
     editorpresentation.cpp
-    webimport.cpp webmigration.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
+    webimport.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
     editorgeometry.cpp
     editorhistorical.cpp
     editorprojectgeopackage.cpp
@@ -390,6 +390,18 @@ if(BUILD_TESTING)
     qt_add_resources(storage_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME storage_tests COMMAND storage_tests -o -,txt)
+    add_executable(timeline_project_tests ../tests/timeline_project_tests.cpp)
+    target_link_libraries(timeline_project_tests PRIVATE pandoeditor_editor)
+    target_compile_definitions(timeline_project_tests PRIVATE
+        PANDOEDITOR_TIMELINE_PROJECT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-project-v9.json")
+    add_test(NAME timeline_project_tests COMMAND timeline_project_tests)
+    add_executable(timeline_editor_persistence_tests ../tests/timeline_editor_persistence_tests.cpp)
+    target_link_libraries(timeline_editor_persistence_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(timeline_editor_persistence_tests PRIVATE
+        PANDOEDITOR_EXCHANGE_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-exchange")
+    qt_add_resources(timeline_editor_persistence_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME timeline_editor_persistence_tests COMMAND timeline_editor_persistence_tests -o -,txt)
     add_executable(editor_tests ../tests/editor_tests.cpp)
     target_link_libraries(editor_tests PRIVATE pandoeditor_editor)
     qt_add_resources(editor_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"

@@ -74,7 +74,7 @@ private slots:
         for(const auto& value:records) {
             const auto record=value.toObject();const auto id=record.value("id").toString();
             const auto* country=unit(d,id.toStdString());QVERIFY(country);
-            const auto geometry=d.geometries.get(country->geometry);QVERIFY(geometry);
+            const auto geometry=d.geometries.get(pandoeditor::staticGeometryBinding(d,country->id).geometryRef);QVERIFY(geometry);
             const auto s=m71fixture::geometryStats(*geometry);
             QCOMPARE(QString::fromStdString(geometry->type),record.value("geometryType").toString());
             QCOMPARE(s.polygonCount,std::size_t(record.value("polygonCount").toInt()));
@@ -110,8 +110,8 @@ private slots:
     void southAfricaRetainsHoleAndLesothoRemainsIndependent() {
         const auto d=m71fixture::loadWorldCorpusProject(root);const auto* zaf=unit(d,"ZAF");const auto* lso=unit(d,"LSO");
         QVERIFY(zaf);QVERIFY(lso);QVERIFY(zaf!=lso);
-        QVERIFY(m71fixture::geometryStats(*d.geometries.get(zaf->geometry)).holeCount>=1);
-        QCOMPARE(m71fixture::geometryStats(*d.geometries.get(lso->geometry)).polygonCount,std::size_t(1));
+        QVERIFY(m71fixture::geometryStats(*d.geometries.get(pandoeditor::staticGeometryBinding(d,zaf->id).geometryRef)).holeCount>=1);
+        QCOMPARE(m71fixture::geometryStats(*d.geometries.get(pandoeditor::staticGeometryBinding(d,lso->id).geometryRef)).polygonCount,std::size_t(1));
     }
     void mixedCompositionValidatesAsProjectDocument() {
         const auto d=m71fixture::loadWorldCorpusProject(root);
@@ -128,7 +128,7 @@ private slots:
     }
     void fixtureLoadDoesNotRequireNativeProjectCodec() {
         auto d=m71fixture::loadWorldCorpusProject(root);
-        d.nativeSourceVersion=-1; // Deliberately unrelated to the native wire format.
+        // The corpus loader constructs a canonical document without a wire-format marker.
         QCOMPARE(d.documentId,std::string("m71-world-rendering"));
         QVERIFY(!pandoeditor::validateDocument(d).objects.empty());
     }

@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include "editorcontroller.h"
 #include "ui_navigation.h"
 #include "windowsframe.h"
@@ -18,7 +19,7 @@
 using namespace pandoeditor;
 
 namespace {
-QVariantMap ref(QString id,QString type="country") {return {{"domain","territorial"},{"type",type},{"id",id}};}
+QVariantMap ref(QString id,QString type="general") {return {{"domain","territorial"},{"type",type},{"id",id}};}
 QStringList ids(const QVariantList& rows) {QStringList out;for(auto row:rows)out<<row.toMap()["id"].toString();return out;}
 QQuickItem* item(QQuickItem* root,const QString& name) {
     if(root->objectName()==name)return root;
@@ -35,13 +36,13 @@ ProjectDocument fixture() {
     auto add=[&](std::string id,UnitKind kind,std::string layer,double left,double right,bool locked) {
         Geometry g;g.type="Polygon";g.polygons={{{{left,2},{right,2},{right,4},{left,4},{left,2}}}};
         GeometryRef geometry{"ui-"+id,1};d.geometries.insert(geometry,std::move(g));
-        d.units.push_back({id,id,"",kind,geometry,locked});
+        appendTerritory(d,{id,id,"",kind,locked},geometry);
         d.presentation.membership[territorialRef(id)]=layer;d.presentation.objectStyles[territorialRef(id)]={0xabcdef,.8};
     };
-    add("S",UnitKind::Subunit,"other",1,4,true);
-    add("R",UnitKind::Region,"other",6,8,false);
-    add("H",UnitKind::Region,"hidden",40,42,false);
-    d.relations.push_back({"base-s",territorialRef("S"),territorialRef("A"),territorialRef("A")});
+    add("S",UnitKind::General,"other",1,4,true);
+    add("R",UnitKind::Regional,"other",6,8,false);
+    add("H",UnitKind::Regional,"hidden",40,42,false);
+    setFixtureParent(d,territorialRef("S"),territorialRef("A"));
     validateDocument(d);return d;
 }
 struct Harness {
@@ -234,7 +235,7 @@ private slots:
             QTest::mousePress(h.window,Qt::LeftButton,Qt::NoModifier,pos);QTest::mouseMove(h.window,pos+QPoint(0,10),30);QTest::mouseMove(h.window,pos+QPoint(0,180),50);QTest::mouseRelease(h.window,Qt::LeftButton,Qt::NoModifier,pos+QPoint(0,180));
             QTRY_COMPARE(h.control("desktopWorkspace")->property("sheetLevel").toInt(),1);
         }
-        h.editor.selectObject(ref("S","subunit"));QVERIFY(h.click("objectRelationsTab"));QCOMPARE(h.control("relationSovereign")->property("text").toString(),QStringLiteral("소속 국가: Alpha"));
+        h.editor.selectObject(ref("S","general"));QVERIFY(h.click("objectRelationsTab"));auto parent=h.control("relationParent");QVERIFY(parent);QCOMPARE(parent->property("text").toString(),QStringLiteral("상위 단위: Alpha"));
         QVERIFY(h.click("toggleObjectEditor"));QVERIFY(h.click("preferencesButton"));
         auto preferences=h.window->findChild<QObject*>("appearancePreferencesDialog");QVERIFY(preferences);QTRY_VERIFY(preferences->property("visible").toBool());
         const auto theme=h.editor.appearancePreferences()["theme"];
@@ -254,7 +255,7 @@ private slots:
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
         QFile file(h.dir.filePath("test.geojson"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(R"({"type":"FeatureCollection","features":[{"type":"Feature","id":"Imported","properties":{"name":"Imported country"},"geometry":{"type":"Polygon","coordinates":[[[70,0],[72,0],[72,2],[70,2],[70,0]]]}}]})");file.close();
         const auto before=h.editor.documentBytes();QVERIFY(h.click("gisImportButton"));QVERIFY(h.editor.loadGisSource(QUrl::fromLocalFile(file.fileName())));QTRY_COMPARE(h.editor.gisImportState()["stage"].toString(),QString("mapping"));
-        auto choice=h.control("gisTargetChoice");QVERIFY(choice);choice->setProperty("currentIndex",0);QTest::qWait(60);QCOMPARE(choice->property("currentText").toString(),QStringLiteral("국가"));
+        auto choice=h.control("gisTargetChoice");QVERIFY(choice);choice->setProperty("currentIndex",0);QTest::qWait(60);QCOMPARE(choice->property("currentText").toString(),QStringLiteral("일반 객체 · 독립"));
         QVERIFY(h.click("gisPrepare"));QTRY_COMPARE(h.editor.gisImportState()["stage"].toString(),QString("impact"));QCOMPARE(h.control("gisImportStep")->property("text").toString(),QStringLiteral("3 · 결과 검토"));QCOMPARE(h.editor.documentBytes(),before);
         const auto captures=qEnvironmentVariable("PANDOEDITOR_UI_CAPTURE_DIR");if(!captures.isEmpty()){QVERIFY(QDir().mkpath(captures));QVERIFY(h.window->grabWindow().save(captures+(mobile?"/step4-gis-mobile.png":"/step4-gis-desktop.png")));}
         const auto oldSession=h.editor.gisImportState()["session"].toULongLong();QVERIFY(h.click("gisReviewBack"));QCOMPARE(h.editor.gisImportState()["stage"].toString(),QString("mapping"));QVERIFY(!h.editor.confirmGisImport(oldSession));QCOMPARE(h.editor.documentBytes(),before);QVERIFY(h.click("gisPrepare"));QTRY_COMPARE(h.editor.gisImportState()["stage"].toString(),QString("impact"));
@@ -437,7 +438,7 @@ private slots:
         auto d=fixture();Geometry point;point.type="Point";point.points={{1,1}};
         d.geometries.insert({"city-geometry",1},point);
         PlaceLabel city;city.id="city";city.name="City";city.geometry={"city-geometry",1};d.labels.push_back(city);
-        HydroFeature lake;lake.id="lake";lake.name="Lake";lake.kind="lake";lake.geometry=d.units.front().geometry;d.hydro.push_back(lake);
+        HydroFeature lake;lake.id="lake";lake.name="Lake";lake.kind="lake";lake.geometry=staticGeometryBinding(d,d.units.front().id).geometryRef;d.hydro.push_back(lake);
         DistributionLayer layer;layer.id="population";layer.name="Population";layer.unit="people";d.distributionLayers.push_back(layer);
         DistributionEntry entry;entry.id="population-A";entry.layerId=layer.id;entry.territory=territorialRef("A");entry.value=10;d.distributionEntries.push_back(entry);
         Project source;source.replace(d);QFile file(h.dir.filePath("kinds.json"));
@@ -550,11 +551,11 @@ private slots:
    QVERIFY(h.control("objectPropertyPanel")->isVisible());
    QVERIFY(h.enter("detailObjectName","  Renamed A  "));QCOMPARE(h.editor.selectedName(),QString("Renamed A"));QCOMPARE(h.editor.revision(),qulonglong(1));
    QVERIFY(h.enter("detailObjectName",""));QCOMPARE(h.editor.selectedName(),QString("Alpha"));QCOMPARE(h.editor.revision(),qulonglong(2));
-   h.editor.selectObject(ref("R","region"));QVERIFY(h.enter("detailObjectName",QStringLiteral("지방 수정")));QCOMPARE(h.editor.selectedName(),QStringLiteral("지방 수정"));
-   QVERIFY(h.control("objectPropertyPanel")->isVisible());QVERIFY(h.control("regionValidFrom")->isVisible());
+   h.editor.selectObject(ref("R","regional"));QVERIFY(h.enter("detailObjectName",QStringLiteral("지방 수정")));QCOMPARE(h.editor.selectedName(),QStringLiteral("지방 수정"));
+   QVERIFY(h.control("objectPropertyPanel")->isVisible());QVERIFY(!h.control("regionValidFrom")->isVisible());
    h.window->grabWindow().save(mobile?"properties-mobile-360.png":"properties-desktop.png");
-   h.editor.selectObject(ref("S","subunit"));QVERIFY(!h.control("regionValidFrom")->isVisible());QVERIFY(!h.control("detailObjectName")->isEnabled());
-   QVERIFY(h.click("objectLockButton"));QVERIFY(h.control("detailObjectName")->isEnabled());QVERIFY(h.enter("detailObjectName","  "));QCOMPARE(h.editor.selectedName(),QStringLiteral("이름 없는 하위단위"));
+   h.editor.selectObject(ref("S","general"));QVERIFY(!h.control("regionValidFrom")->isVisible());QVERIFY(!h.control("detailObjectName")->isEnabled());
+   QVERIFY(h.click("objectLockButton"));QVERIFY(h.control("detailObjectName")->isEnabled());QVERIFY(h.enter("detailObjectName","  "));QCOMPARE(h.editor.selectedName(),QStringLiteral("이름 없는 일반객체"));
    QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join('\n')));
  }
  void customColorIsPresentationOnlyUntilApply_data(){modes();}
@@ -599,27 +600,28 @@ private slots:
    QVERIFY(h.click("objectActionsTab"));QCOMPARE(h.editor.revision(),qulonglong(2));QCOMPARE(h.editor.memoDraft(),QStringLiteral("  메모\n둘째  "));
    QVERIFY(h.click("objectLockButton"));QVERIFY(h.click("objectInfoTab"));QVERIFY(!h.control("detailObjectName")->isEnabled());
    QVERIFY(h.control("detailObjectNotes")->property("readOnly").toBool());
-   h.editor.selectObject(ref("R","region"));QVERIFY(h.enter("detailObjectNotes",QStringLiteral("  지방\n메모  "),false));QVERIFY(h.click("objectActionsTab"));QCOMPARE(h.editor.selectedId(),QString("R"));QCOMPARE(h.editor.memoDraft(),QStringLiteral("지방\n메모"));
+   h.editor.selectObject(ref("R","regional"));QVERIFY(h.enter("detailObjectNotes",QStringLiteral("  지방\n메모  "),false));QVERIFY(h.click("objectActionsTab"));QCOMPARE(h.editor.selectedId(),QString("R"));QCOMPARE(h.editor.memoDraft(),QStringLiteral("지방\n메모"));
    QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join('\n')));
  }
  void regionDatesRejectWithoutChangingOtherDrafts_data(){modes();}
  void regionDatesRejectWithoutChangingOtherDrafts(){
-   QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);h.editor.selectObject(ref("R","region"));QVERIFY(h.click("openObjectEditor"));
-   QVERIFY(h.enter("regionValidFrom","-0001"));QCOMPARE(h.editor.validFromDraft(),QString("-0001"));
-   QVERIFY(h.enter("regionValidTo","0001-01-01"));QCOMPARE(h.editor.validToDraft(),QString("0001-01-01"));
+   QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);h.editor.selectObject(ref("R","regional"));QVERIFY(h.click("openObjectEditor"));
+   QVERIFY(!h.control("regionValidFrom")->isVisible());QVERIFY(!h.control("regionValidTo")->isVisible());
+   h.editor.setMemoDraft("keep notes");
    const auto bytes=h.editor.documentBytes();const auto rev=h.editor.revision();
-   QVERIFY(h.enter("regionValidFrom","0000"));QCOMPARE(h.editor.revision(),rev);QCOMPARE(h.editor.documentBytes(),bytes);QCOMPARE(h.editor.validFromDraft(),QString("-0001"));
+   h.editor.setValidFromDraft("-0001");QVERIFY(!h.editor.commitObjectField("validFrom"));QCOMPARE(h.editor.revision(),rev);QCOMPARE(h.editor.documentBytes(),bytes);QCOMPARE(h.editor.validFromDraft(),QString());QCOMPARE(h.editor.memoDraft(),QString("keep notes"));
    auto error=h.window->findChild<QObject*>("errorDialog");QVERIFY(error);QTRY_VERIFY(error->property("visible").toBool());
    QVERIFY(QMetaObject::invokeMethod(error,"close"));QTest::qWait(200);
-   QVERIFY(h.enter("regionValidFrom","0002"));QCOMPARE(h.editor.revision(),rev);QCOMPARE(h.editor.documentBytes(),bytes);
+   h.editor.setValidFromDraft("0000");QVERIFY(!h.editor.commitObjectField("validFrom"));QCOMPARE(h.editor.revision(),rev);QCOMPARE(h.editor.documentBytes(),bytes);
    QVERIFY(QMetaObject::invokeMethod(error,"close"));QTest::qWait(200);
-   QVERIFY(h.enter("regionValidTo",""));QCOMPARE(h.editor.validToDraft(),QString());
+   h.editor.setValidToDraft("0001-01-01");QVERIFY(!h.editor.commitObjectField("validTo"));QCOMPARE(h.editor.revision(),rev);QCOMPARE(h.editor.documentBytes(),bytes);QCOMPARE(h.editor.validToDraft(),QString());QCOMPARE(h.editor.memoDraft(),QString("keep notes"));
+   QVERIFY(QMetaObject::invokeMethod(error,"close"));h.editor.discardPendingEdits();QTest::qWait(50);
    QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join('\n')));
  }
  void multiLockAndSameColorCheckpoint_data(){modes();}
  void multiLockAndSameColorCheckpoint(){
    QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
-   QVERIFY(h.editor.setSelection({ref("A"),ref("S","subunit")}));QVERIFY(h.editor.objectProperties()["someLocked"].toBool());
+   QVERIFY(h.editor.setSelection({ref("A"),ref("S","general")}));QVERIFY(h.editor.objectProperties()["someLocked"].toBool());
    QVERIFY(h.click("openObjectEditor"));QVERIFY(h.click("objectLockButton"));QVERIFY(h.editor.objectProperties()["allLocked"].toBool());
    QVERIFY(h.control("multiObjectColorTrigger")->isEnabled());
    QVERIFY(h.click("multiObjectColorTrigger"));QVERIFY(h.click("customColorButton"));QVERIFY(h.enter("customColorHex","#123456",false));QVERIFY(h.click("customColorApply"));

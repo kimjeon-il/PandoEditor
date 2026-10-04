@@ -41,8 +41,7 @@ void indexContent(const ProjectDocument& d,DocumentIndex& idx) {
         idx.dependents[ref].push_back(owner);
     };
     for(const auto& [ref,details]:d.countryDetails) {
-        require(ref.domain=="territorial" && idx.objects.count(ref) &&
-            d.units.at(idx.objects.at(ref)).kind==UnitKind::Country,"INVALID_COUNTRY_DETAILS");
+        require(ref.domain=="territorial" && idx.objects.count(ref),"INVALID_COUNTRY_DETAILS");
     }
     for(const auto& [ref,s]:d.symbols) {
         require(ref.domain=="territorial" && idx.objects.count(ref),"DANGLING_REF: symbol owner");
@@ -113,7 +112,7 @@ bool sameContent(const ProjectDocument& a,const ProjectDocument& b) {
 std::optional<GeometryRef> objectGeometry(const ProjectDocument& d,const DocumentIndex& index,const ObjectRef& ref) {
     const auto found=index.objects.find(ref); if(found==index.objects.end()) return {};
     const auto i=found->second;
-    if(ref.domain=="territorial") return d.units.at(i).geometry;
+    if(ref.domain=="territorial") return staticGeometryBinding(d,d.units.at(i).id).geometryRef;
     if(ref.domain=="label") return d.labels.at(i).geometry;
     if(ref.domain=="hydro") return d.hydro.at(i).geometry;
     if(ref.domain=="generic") return d.genericFeatures.at(i).geometry;

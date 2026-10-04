@@ -27,7 +27,7 @@ DefaultFlagResult resolveDefaultFlag(const ProjectDocument& document,const Objec
     if(unit==document.units.end())return {{},QStringLiteral("대상 없음"),false};
     const auto id=QString::fromStdString(unit->id).toUpper();
     if(id=="CYN"||id=="SOL")return {QStringLiteral("qrc:/defaults/flags/political/")+id.toLower()+".svg",{},true};
-    if(unit->kind!=UnitKind::Country)return {{},QStringLiteral("기본 국기 자료 없음"),false};
+    if(unit->kind!=UnitKind::General)return {{},QStringLiteral("기본 국기 자료 없음"),false};
     const auto code=codes().find(id);if(code==codes().end())return {{},QStringLiteral("기본 국기 자료 없음"),false};
     static const std::set<QString> legacy={"cd","sm","ga","pg"};
     return {QStringLiteral("qrc:/defaults/flags/")+(legacy.count(code->second)?"legacy/":"native/")+code->second+".svg",{},true};

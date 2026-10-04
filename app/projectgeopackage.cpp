@@ -114,10 +114,13 @@ void attributeTable(QSqlDatabase& db,const char* name,const char* columns) {
 
 QByteArray exportProjectGeoPackage(const Project& project) {
     auto root=losslessjson::parse(projectcodec::encode(project));
+    Project persisted;persisted.replace(projectcodec::decode(root.encode()));
     auto assets=stripAssets(root);
     const auto state=root.encode();
-    const auto vectors=exportGisGeoPackage(project.document(),
-        {"countries","subunits","regions","genericFeatures","distributions","labels"});
+    const auto& document=persisted.document();
+    const bool metadataOnly=!isStaticTimeline(document)||(document.units.empty()&&document.labels.empty()&&document.genericFeatures.empty()&&document.distributionEntries.empty());
+    const auto vectors=exportGisGeoPackage(document,metadataOnly?std::vector<std::string>{}:
+        std::vector<std::string>{"countries","subunits","regions","genericFeatures","distributions","labels"},metadataOnly);
     QTemporaryDir directory;require(directory.isValid(),"PROJECT_GPKG_TEMP_FAILED");
     const auto path=directory.filePath("project.gpkg");
     {
@@ -141,7 +144,7 @@ QByteArray exportProjectGeoPackage(const Project& project) {
         QSqlQuery source(db);
         require(source.prepare("INSERT INTO pandolab_source_info VALUES ('source',?)"),
                 "PROJECT_GPKG_WRITE_FAILED");
-        source.addBindValue(QStringLiteral("{\"format\":\"pandoeditor-project\",\"version\":8}"));
+        source.addBindValue(QStringLiteral("{\"format\":\"pandoeditor-project\",\"version\":9}"));
         require(source.exec(),"PROJECT_GPKG_WRITE_FAILED");
         QSqlQuery asset(db);
         require(asset.prepare("INSERT INTO pandolab_country_assets VALUES (?,?,?)"),
@@ -164,6 +167,23 @@ QByteArray readProjectGeoPackage(const QString& filePath) {
     const auto vectors=readGisGeoPackage(filePath);
     require(vectors.projectPackage,"GIS_ONLY_GPKG_NOT_PROJECT");
     Database connection(filePath,true);auto& db=connection.db;
+    {
+        QSqlQuery contents(db);require(contents.exec("SELECT table_name,data_type FROM gpkg_contents"),"INVALID_PROJECT_GPKG_SCHEMA");
+        while(contents.next()) {
+            const auto type=contents.value(1).toString(),name=contents.value(0).toString();
+            require(type=="features"||(type=="attributes"&&(name=="pandolab_project_settings"||name=="pandolab_country_assets"||name=="pandolab_source_info")),"UNSUPPORTED_PROJECT_GPKG_TABLE");
+        }
+        for(const auto& contract:std::map<QString,std::set<QString>>{
+            {"pandolab_project_settings",{"setting_key","json_value"}},
+            {"pandolab_country_assets",{"country_id","mime_type","image_data"}},
+            {"pandolab_source_info",{"info_key","json_value"}}}) {
+            QSqlQuery columns(db);require(columns.exec("PRAGMA table_info("+contract.first+")"),"INVALID_PROJECT_GPKG_SCHEMA");std::set<QString> actual;
+            while(columns.next())actual.insert(columns.value(1).toString());require(actual==contract.second,"UNSUPPORTED_PROJECT_GPKG_COLUMN");
+        }
+        QSqlQuery rows(db);require(rows.exec("SELECT COUNT(*) FROM pandolab_project_settings")&&rows.next()&&rows.value(0).toInt()==1,"UNSUPPORTED_PROJECT_GPKG_SETTINGS");
+        require(rows.exec("SELECT COUNT(*) FROM pandolab_source_info WHERE info_key='source'")&&rows.next()&&rows.value(0).toInt()==1,"UNSUPPORTED_PROJECT_GPKG_SOURCE");
+        require(rows.exec("SELECT COUNT(*) FROM pandolab_source_info")&&rows.next()&&rows.value(0).toInt()==1,"UNSUPPORTED_PROJECT_GPKG_SOURCE");
+    }
     QSqlQuery state(db);
     require(state.exec("SELECT json_value FROM pandolab_project_settings WHERE setting_key='project_state' LIMIT 1")&&
             state.next()&&!state.value(0).isNull(),"MISSING_PROJECT_GPKG_STATE");
@@ -171,7 +191,7 @@ QByteArray readProjectGeoPackage(const QString& filePath) {
     require(root.kind==V::Object,"UNSUPPORTED_PROJECT_GPKG_STATE");
     const auto native=root.object.count("format")&&
         root.object.at("format").kind==V::String&&root.object.at("format").string=="pandoeditor-project";
-    if(native)require(member(root,"version").kind==V::Number&&(member(root,"version").raw=="7"||member(root,"version").raw=="8"),
+    if(native)require(member(root,"version").kind==V::Number&&member(root,"version").raw=="9",
                       "UNSUPPORTED_PROJECT_GPKG_STATE");
     std::map<std::string,Asset> assets;
     QSqlQuery rows(db);
@@ -191,19 +211,32 @@ QByteArray readProjectGeoPackage(const QString& filePath) {
                 source.next()&&!source.value(0).isNull(),"MISSING_WEB_GPKG_SOURCE");
         const auto recorded=losslessjson::parse(source.value(0).toString().toUtf8());
         const auto found=root.object.find("sourceInfo");
-        require(found!=root.object.end()&&recorded.encode()==found->second.encode(),
+        require(found!=root.object.end()&&recorded.encode()==(found->second.kind==V::Null?QByteArray("{}"):found->second.encode()),
                 "WEB_GPKG_SOURCE_MISMATCH");
         return convertWebProjectGeoPackage(vectors,std::move(root),assets);
     }
     restoreAssets(root,assets);
+    {
+        QSqlQuery source(db);require(source.exec("SELECT json_value FROM pandolab_source_info WHERE info_key='source'")&&source.next(),"MISSING_PROJECT_GPKG_SOURCE");
+        const auto marker=losslessjson::parse(source.value(0).toString().toUtf8());
+        require(marker.encode()==QByteArray("{\"format\":\"pandoeditor-project\",\"version\":9}"),"PROJECT_GPKG_SOURCE_MISMATCH");
+    }
     Project candidate;candidate.replace(projectcodec::decode(root.encode()));
-    std::set<std::string> countries;
-    for(const auto& unit:candidate.document().units)
-        if(unit.kind==UnitKind::Country)countries.insert(unit.id);
-    std::set<std::string> tableCountries;
-    for(const auto& layer:vectors.layers)if(layer.tableName=="countries")
-        for(const auto& feature:layer.collection.features)tableCountries.insert(feature.id);
-    require(!countries.empty()&&countries==tableCountries,"PROJECT_GPKG_COUNTRY_MISMATCH");
+    if(!isStaticTimeline(candidate.document()))require(vectors.layers.empty(),"PROJECT_GPKG_TIMELINE_VECTORS");
+    else {
+        const auto& document=candidate.document();
+        if(document.units.empty()&&document.labels.empty()&&document.genericFeatures.empty()&&document.distributionEntries.empty())
+            require(vectors.layers.empty(),"PROJECT_VECTOR_ROW_MISMATCH");
+        else {
+            // Derive through the existing production GIS writer, including its
+            // SQL scalar/geometry normalization; no alternate project writer.
+            const auto bytes=exportGisGeoPackage(document,{"countries","subunits","regions","genericFeatures","distributions","labels"});
+            QTemporaryDir directory;require(directory.isValid(),"PROJECT_GPKG_TEMP_FAILED");
+            const auto path=directory.filePath("expected.gpkg");QFile file(path);
+            require(file.open(QIODevice::WriteOnly)&&file.write(bytes)==bytes.size(),"PROJECT_GPKG_TEMP_FAILED");file.close();
+            validateProjectGeoPackageVectors(vectors,readGisGeoPackage(path).layers);
+        }
+    }
     return projectcodec::encode(candidate);
 }
 }
