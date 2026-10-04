@@ -1,0 +1,67 @@
+name: M9.7 editing parity foundation
+on:
+  push:
+    branches: [codex/m97-web-editing-parity]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux-regression:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify offline pinned production oracle and comparator
+        run: |
+          mkdir -p evidence
+          node --test tools/m97/*.test.mjs | tee evidence/node-tests.txt
+      - name: Install native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - name: Build unchanged native production and regression probes
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
+      - name: Fetch pinned full regression datasets
+        uses: actions/checkout@v4
+        with:
+          repository: kimjeon-il/Pando
+          ref: c0bd31d13dc8495593d78cf51f7cc195de7c9469
+          path: full-hydro-web
+          persist-credentials: false
+          sparse-checkout: |
+            assets/data/historical-library-pilot.json
+            assets/data/hydro/v0.13.0
+            assets/data/hydro/v0.13.1
+      - name: Full native regression with skip audit
+        env:
+          PANDOEDITOR_HYDRO_FULL_MANIFEST: ${{ github.workspace }}/full-hydro-web/assets/data/hydro/v0.13.1/manifest.json
+          PANDOEDITOR_HISTORICAL_FULL_PILOT: ${{ github.workspace }}/full-hydro-web/assets/data/historical-library-pilot.json
+        run: |
+          ctest --test-dir build --output-on-failure --output-junit results.xml
+          python tools/m6-regression-audit.py build/results.xml build/Testing/Temporary/LastTest.log
+      - name: Record real native calculation differences (not a parity pass)
+        if: always()
+        run: node tools/m97/native-baseline.mjs build/app/m4_geometry_probe evidence/native-baseline.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m971-evidence-${{ github.sha }}
+          path: |
+            evidence
+            build/results.xml
+            build/Testing/Temporary/LastTest.log
+          retention-days: 14

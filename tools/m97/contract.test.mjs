@@ -1,0 +1,28 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync, writeFileSync, rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {verifySources, compareObservations, checkBaseline} from './contract.mjs';
+const sha=b=>createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${Buffer.byteLength(b)}\0`),Buffer.from(b)])).digest('hex');
+const box={type:'Polygon',coordinates:[[[0,0],[1,0],[1,1],[0,1],[0,0]]]};
+const snapshot=()=>({objects:[{ref:{domain:'territorial',id:'A'},parentId:'',geometry:structuredClone(box),properties:{name:'A'}}],retainedRefs:[{domain:'territorial',id:'A'}],selection:[{domain:'territorial',id:'A'}],history:{undo:0,redo:0}});
+const observation=()=>({case:'annex',stages:Object.fromEntries(['before','preview','cancel','confirm','undo','redo'].map(stage=>[stage,{observed:true,state:snapshot()}]))});
+test('matching complete observations pass',()=>assert.deepEqual(compareObservations(observation(),observation()),[]));
+test('missing lifecycle evidence never passes',()=>{const a=observation();delete a.stages.undo;assert.ok(compareObservations(observation(),a).some(d=>d.path.includes('/undo')));});
+test('explicit unobserved lifecycle evidence never passes',()=>{const a=observation();a.stages.preview={observed:false,reason:'not connected'};assert.ok(compareObservations(observation(),a).length);});
+test('same geometry cannot conceal changed object identity',()=>{const a=observation();a.stages.confirm.state.objects[0].ref.id='B';assert.ok(compareObservations(observation(),a).some(d=>d.path.includes('/objects')));});
+test('retained reference rewrite and selection ordering stay exact',()=>{const a=observation();a.stages.redo.state.retainedRefs[0].id='B';assert.ok(compareObservations(observation(),a).some(d=>d.path.includes('/retainedRefs')));});
+test('geometry coordinate changes are detected',()=>{const a=observation();a.stages.preview.state.objects[0].geometry.coordinates[0][1][0]=2;assert.ok(compareObservations(observation(),a).some(d=>d.path.includes('/geometry')));});
+test('known mismatch must match exact difference including values',()=>{const e=observation(),a=observation();a.stages.confirm.state.objects[0].parentId='B';const diffs=compareObservations(e,a);assert.ok(diffs.length);assert.equal(checkBaseline(e,a,diffs).status,'known-mismatch');a.stages.confirm.state.objects[0].parentId='C';assert.equal(checkBaseline(e,a,diffs).status,'unexpected-mismatch');});
+test('unexpected success cannot silently keep stale baseline',()=>assert.equal(checkBaseline(observation(),observation(),[{path:'/stages/confirm',expected:1,actual:2}]).status,'unexpected-match'));
+test('source verification rejects altered bytes and path escape',()=>{const root=mkdtempSync(join(tmpdir(),'m97-source-'));try{writeFileSync(join(root,'a.js'),'export const a=1;');const manifest={sources:[{path:'a.js',blob:sha('export const a=1;')}]};assert.deepEqual(verifySources(root,manifest),[]);writeFileSync(join(root,'a.js'),'export const a=2;');assert.ok(verifySources(root,manifest).length);assert.ok(verifySources(root,{sources:[{path:'../a.js',blob:'0'.repeat(40)}]}).length);}finally{rmSync(root,{recursive:true});}});
+test('unobserved stages cannot be whitelisted as a known matching baseline',()=>{const e=observation(),a=observation();a.stages.preview={observed:false};assert.equal(checkBaseline(e,a,compareObservations(e,a)).status,'incomplete');});
+test('outcome distinguishes rejected command from no-op success',()=>{const e=observation(),a=observation();e.stages.confirm.outcome={ok:true};a.stages.confirm.outcome={ok:false};assert.ok(compareObservations(e,a).some(d=>d.path.includes('/outcome')));});
+test('source imports cannot escape the hash-pinned manifest',()=>{const root=mkdtempSync(join(tmpdir(),'m97-imports-'));try{const source="import './unlisted.js';";writeFileSync(join(root,'a.js'),source);writeFileSync(join(root,'unlisted.js'),'export const secret=1;');assert.ok(verifySources(root,{sources:[{path:'a.js',blob:sha(source)}]}).some(x=>x.includes('Unpinned dependency')));}finally{rmSync(root,{recursive:true});}});
+
+test('empty or non-record observations are incomplete even on both sides',()=>{for(const state of [{},true,[]]){const a=observation();for(const stage of Object.values(a.stages))stage.state=state;assert.equal(checkBaseline(a,a).status,'incomplete');}});
+test('normalized state requires reference, selection and history evidence',()=>{for(const field of ['objects','retainedRefs','selection','history']){const a=observation();for(const stage of Object.values(a.stages))delete stage.state[field];assert.equal(checkBaseline(a,a).status,'incomplete');}});
+test('invalid history counts cannot pass as complete observations',()=>{const a=observation();a.stages.confirm.state.history.undo=-1;assert.equal(checkBaseline(a,a).status,'incomplete');});
+test('web v9 profile requires geometry versions and timeline reference tables',async()=>{const {readFileSync}=await import('node:fs');const original=JSON.parse(readFileSync(new URL('../../tests/fixtures/web-m97/lifecycle-observations.json',import.meta.url))).cases.find(row=>row.case==='sibling-merge');assert.equal(checkBaseline(original,original).status,'matched');for(const mutate of [state=>state.document.geometryVersions=true,state=>delete state.document.timelineRecords.geometryBindings]){const row=structuredClone(original);mutate(row.stages.confirm.state);assert.equal(checkBaseline(row,row).status,'incomplete');}});

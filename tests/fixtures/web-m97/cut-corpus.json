@@ -1,0 +1,1304 @@
+[
+  {
+    "id": "two-crossing",
+    "payload": {
+      "source": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              10
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              10,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      },
+      "sourceKey": "two-crossing",
+      "coords": [
+        [
+          -1,
+          5
+        ],
+        [
+          11,
+          5
+        ]
+      ],
+      "view": {
+        "kind": "flat",
+        "scale": 500,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          5,
+          5
+        ],
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false,
+        "size": {
+          "width": 1024,
+          "height": 768
+        }
+      },
+      "buildPreview": true
+    },
+    "result": {
+      "line": [
+        [
+          0,
+          5.0000000000000036
+        ],
+        [
+          10,
+          5.0000000000000036
+        ]
+      ],
+      "snaps": {
+        "start": {
+          "coordinate": [
+            0,
+            5.0000000000000036
+          ],
+          "distance": 8.72664625997163,
+          "polygonIndex": 0,
+          "segmentIndex": 0
+        },
+        "end": {
+          "coordinate": [
+            10,
+            5.0000000000000036
+          ],
+          "distance": 8.726646259971744,
+          "polygonIndex": 0,
+          "segmentIndex": 2
+        }
+      },
+      "status": "valid",
+      "valid": true,
+      "message": "",
+      "issues": [],
+      "split": {
+        "line": [
+          [
+            0,
+            5.0000000000000036
+          ],
+          [
+            10,
+            5.0000000000000036
+          ]
+        ],
+        "candidates": [
+          {
+            "id": "cut:0:0",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0,
+                    5.0000000000000036
+                  ],
+                  [
+                    10,
+                    5.0000000000000036
+                  ],
+                  [
+                    10,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5.0000000000000036
+                  ]
+                ]
+              ]
+            },
+            "area": 50.000000000000036
+          },
+          {
+            "id": "cut:0:1",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0,
+                    10
+                  ],
+                  [
+                    10,
+                    10
+                  ],
+                  [
+                    10,
+                    5.0000000000000036
+                  ],
+                  [
+                    0,
+                    5.0000000000000036
+                  ],
+                  [
+                    0,
+                    10
+                  ]
+                ]
+              ]
+            },
+            "area": 49.99999999999997
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "six-crossing",
+    "payload": {
+      "source": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              10
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              10,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      },
+      "sourceKey": "six-crossing",
+      "coords": [
+        [
+          -1,
+          2
+        ],
+        [
+          11,
+          2
+        ],
+        [
+          -1,
+          8
+        ],
+        [
+          11,
+          8
+        ]
+      ],
+      "view": {
+        "kind": "flat",
+        "scale": 500,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          5,
+          5
+        ],
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false,
+        "size": {
+          "width": 1024,
+          "height": 768
+        }
+      },
+      "buildPreview": true
+    },
+    "result": {
+      "line": [
+        [
+          0,
+          2.0000000000000027
+        ],
+        [
+          11,
+          2
+        ],
+        [
+          -1,
+          8
+        ],
+        [
+          10,
+          7.999999999999997
+        ]
+      ],
+      "snaps": {
+        "start": {
+          "coordinate": [
+            0,
+            2.0000000000000027
+          ],
+          "distance": 8.72664625997163,
+          "polygonIndex": 0,
+          "segmentIndex": 0
+        },
+        "end": {
+          "coordinate": [
+            10,
+            7.999999999999997
+          ],
+          "distance": 8.726646259971744,
+          "polygonIndex": 0,
+          "segmentIndex": 2
+        }
+      },
+      "status": "valid",
+      "valid": true,
+      "message": "",
+      "issues": [],
+      "split": {
+        "line": [
+          [
+            0,
+            2.0000000000000027
+          ],
+          [
+            11,
+            2
+          ],
+          [
+            -1,
+            8
+          ],
+          [
+            10,
+            7.999999999999997
+          ]
+        ],
+        "candidates": [
+          {
+            "id": "cut:0:0",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0,
+                    2.0000000000000027
+                  ],
+                  [
+                    10,
+                    2.0000000000000004
+                  ],
+                  [
+                    10,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    2.0000000000000027
+                  ]
+                ]
+              ]
+            },
+            "area": 20.000000000000014
+          },
+          {
+            "id": "cut:0:1",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0,
+                    7.5
+                  ],
+                  [
+                    10,
+                    2.5
+                  ],
+                  [
+                    10,
+                    2.0000000000000004
+                  ],
+                  [
+                    0,
+                    2.0000000000000027
+                  ],
+                  [
+                    0,
+                    7.5
+                  ]
+                ]
+              ]
+            },
+            "area": 29.999999999999986
+          },
+          {
+            "id": "cut:0:2",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0,
+                    8
+                  ],
+                  [
+                    10,
+                    7.999999999999997
+                  ],
+                  [
+                    10,
+                    2.5
+                  ],
+                  [
+                    0,
+                    7.5
+                  ],
+                  [
+                    0,
+                    8
+                  ]
+                ]
+              ]
+            },
+            "area": 29.999999999999986
+          },
+          {
+            "id": "cut:0:3",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0,
+                    10
+                  ],
+                  [
+                    10,
+                    10
+                  ],
+                  [
+                    10,
+                    7.999999999999997
+                  ],
+                  [
+                    0,
+                    8
+                  ],
+                  [
+                    0,
+                    10
+                  ]
+                ]
+              ]
+            },
+            "area": 20.000000000000014
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "hole",
+    "payload": {
+      "source": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              10
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              10,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              3
+            ],
+            [
+              7,
+              3
+            ],
+            [
+              7,
+              7
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              3,
+              3
+            ]
+          ]
+        ]
+      },
+      "sourceKey": "hole",
+      "coords": [
+        [
+          -1,
+          5
+        ],
+        [
+          11,
+          5
+        ]
+      ],
+      "view": {
+        "kind": "flat",
+        "scale": 500,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          5,
+          5
+        ],
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false,
+        "size": {
+          "width": 1024,
+          "height": 768
+        }
+      },
+      "buildPreview": true
+    },
+    "result": {
+      "line": [
+        [
+          0,
+          5.0000000000000036
+        ],
+        [
+          10,
+          5.0000000000000036
+        ]
+      ],
+      "snaps": {
+        "start": {
+          "coordinate": [
+            0,
+            5.0000000000000036
+          ],
+          "distance": 8.72664625997163,
+          "polygonIndex": 0,
+          "segmentIndex": 0
+        },
+        "end": {
+          "coordinate": [
+            10,
+            5.0000000000000036
+          ],
+          "distance": 8.726646259971744,
+          "polygonIndex": 0,
+          "segmentIndex": 2
+        }
+      },
+      "status": "valid",
+      "valid": true,
+      "message": "",
+      "issues": [],
+      "split": {
+        "line": [
+          [
+            0,
+            5.0000000000000036
+          ],
+          [
+            10,
+            5.0000000000000036
+          ]
+        ],
+        "candidates": [
+          {
+            "id": "cut:0:0",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0,
+                    5.0000000000000036
+                  ],
+                  [
+                    3,
+                    5.0000000000000036
+                  ],
+                  [
+                    3,
+                    3
+                  ],
+                  [
+                    7,
+                    3
+                  ],
+                  [
+                    7,
+                    5.0000000000000036
+                  ],
+                  [
+                    10,
+                    5.0000000000000036
+                  ],
+                  [
+                    10,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5.0000000000000036
+                  ]
+                ]
+              ]
+            },
+            "area": 42.000000000000014
+          },
+          {
+            "id": "cut:0:1",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0,
+                    10
+                  ],
+                  [
+                    10,
+                    10
+                  ],
+                  [
+                    10,
+                    5.0000000000000036
+                  ],
+                  [
+                    7,
+                    5.0000000000000036
+                  ],
+                  [
+                    7,
+                    7
+                  ],
+                  [
+                    3,
+                    7
+                  ],
+                  [
+                    3,
+                    5.0000000000000036
+                  ],
+                  [
+                    0,
+                    5.0000000000000036
+                  ],
+                  [
+                    0,
+                    10
+                  ]
+                ]
+              ]
+            },
+            "area": 41.999999999999986
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "multi",
+    "payload": {
+      "source": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                4,
+                4
+              ],
+              [
+                4,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                6,
+                0
+              ],
+              [
+                6,
+                4
+              ],
+              [
+                10,
+                4
+              ],
+              [
+                10,
+                0
+              ],
+              [
+                6,
+                0
+              ]
+            ]
+          ]
+        ]
+      },
+      "sourceKey": "multi",
+      "coords": [
+        [
+          -1,
+          2
+        ],
+        [
+          11,
+          2
+        ]
+      ],
+      "view": {
+        "kind": "flat",
+        "scale": 500,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          5,
+          5
+        ],
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false,
+        "size": {
+          "width": 1024,
+          "height": 768
+        }
+      },
+      "buildPreview": true
+    },
+    "result": {
+      "line": [
+        [
+          0,
+          2.000000000000003
+        ],
+        [
+          10,
+          2.0000000000000036
+        ]
+      ],
+      "snaps": {
+        "start": {
+          "coordinate": [
+            0,
+            2.000000000000003
+          ],
+          "distance": 8.72664625997163,
+          "polygonIndex": 0,
+          "segmentIndex": 0
+        },
+        "end": {
+          "coordinate": [
+            10,
+            2.0000000000000036
+          ],
+          "distance": 8.726646259971744,
+          "polygonIndex": 1,
+          "segmentIndex": 2
+        }
+      },
+      "status": "valid",
+      "valid": true,
+      "message": "",
+      "issues": [],
+      "split": {
+        "line": [
+          [
+            0,
+            2.000000000000003
+          ],
+          [
+            10,
+            2.0000000000000036
+          ]
+        ],
+        "candidates": [
+          {
+            "id": "cut:0:0",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0,
+                    2.000000000000003
+                  ],
+                  [
+                    4,
+                    2.000000000000003
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    2.000000000000003
+                  ]
+                ]
+              ]
+            },
+            "area": 8.000000000000012
+          },
+          {
+            "id": "cut:0:1",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    2.000000000000003
+                  ],
+                  [
+                    0,
+                    2.000000000000003
+                  ],
+                  [
+                    0,
+                    4
+                  ]
+                ]
+              ]
+            },
+            "area": 7.999999999999987
+          },
+          {
+            "id": "cut:1:0",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    6,
+                    2.0000000000000036
+                  ],
+                  [
+                    10,
+                    2.0000000000000036
+                  ],
+                  [
+                    10,
+                    0
+                  ],
+                  [
+                    6,
+                    0
+                  ],
+                  [
+                    6,
+                    2.0000000000000036
+                  ]
+                ]
+              ]
+            },
+            "area": 8.000000000000014
+          },
+          {
+            "id": "cut:1:1",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    6,
+                    4
+                  ],
+                  [
+                    10,
+                    4
+                  ],
+                  [
+                    10,
+                    2.0000000000000036
+                  ],
+                  [
+                    6,
+                    2.0000000000000036
+                  ],
+                  [
+                    6,
+                    4
+                  ]
+                ]
+              ]
+            },
+            "area": 7.999999999999986
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "date-line",
+    "payload": {
+      "source": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              179,
+              -2
+            ],
+            [
+              179,
+              2
+            ],
+            [
+              -179,
+              2
+            ],
+            [
+              -179,
+              -2
+            ],
+            [
+              179,
+              -2
+            ]
+          ]
+        ]
+      },
+      "sourceKey": "date-line",
+      "coords": [
+        [
+          178,
+          0
+        ],
+        [
+          -178,
+          0
+        ]
+      ],
+      "view": {
+        "kind": "flat",
+        "scale": 500,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          180,
+          0
+        ],
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false,
+        "size": {
+          "width": 1024,
+          "height": 768
+        }
+      },
+      "buildPreview": true
+    },
+    "result": {
+      "line": [
+        [
+          179,
+          0
+        ],
+        [
+          -178,
+          0
+        ]
+      ],
+      "snaps": {
+        "start": {
+          "coordinate": [
+            179,
+            0
+          ],
+          "distance": 8.726646259971858,
+          "polygonIndex": 0,
+          "segmentIndex": 0
+        },
+        "end": null
+      },
+      "status": "valid",
+      "valid": true,
+      "message": "",
+      "issues": [],
+      "split": {
+        "line": [
+          [
+            179,
+            0
+          ],
+          [
+            -178,
+            0
+          ]
+        ],
+        "candidates": [
+          {
+            "id": "cut:0:0",
+            "geometry": {
+              "type": "MultiPolygon",
+              "coordinates": [
+                [
+                  [
+                    [
+                      179,
+                      0
+                    ],
+                    [
+                      180,
+                      0
+                    ],
+                    [
+                      180,
+                      -2
+                    ],
+                    [
+                      179,
+                      -2
+                    ],
+                    [
+                      179,
+                      0
+                    ]
+                  ]
+                ],
+                [
+                  [
+                    [
+                      -180,
+                      0
+                    ],
+                    [
+                      -179,
+                      0
+                    ],
+                    [
+                      -179,
+                      -2
+                    ],
+                    [
+                      -180,
+                      -2
+                    ],
+                    [
+                      -180,
+                      0
+                    ]
+                  ]
+                ]
+              ]
+            },
+            "area": 4
+          },
+          {
+            "id": "cut:0:1",
+            "geometry": {
+              "type": "MultiPolygon",
+              "coordinates": [
+                [
+                  [
+                    [
+                      179,
+                      2
+                    ],
+                    [
+                      180,
+                      2
+                    ],
+                    [
+                      180,
+                      0
+                    ],
+                    [
+                      179,
+                      0
+                    ],
+                    [
+                      179,
+                      2
+                    ]
+                  ]
+                ],
+                [
+                  [
+                    [
+                      -180,
+                      2
+                    ],
+                    [
+                      -179,
+                      2
+                    ],
+                    [
+                      -179,
+                      0
+                    ],
+                    [
+                      -180,
+                      0
+                    ],
+                    [
+                      -180,
+                      2
+                    ]
+                  ]
+                ]
+              ]
+            },
+            "area": 4
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "outer-hole-bridge",
+    "payload": {
+      "source": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              10
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              10,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              3
+            ],
+            [
+              7,
+              3
+            ],
+            [
+              7,
+              7
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              3,
+              3
+            ]
+          ]
+        ]
+      },
+      "sourceKey": "outer-hole-bridge",
+      "coords": [
+        [
+          -1,
+          5
+        ],
+        [
+          5,
+          5
+        ]
+      ],
+      "view": {
+        "kind": "flat",
+        "scale": 500,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          5,
+          5
+        ],
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false,
+        "size": {
+          "width": 1024,
+          "height": 768
+        }
+      },
+      "buildPreview": true
+    },
+    "result": {
+      "line": [
+        [
+          0,
+          5.0000000000000036
+        ],
+        [
+          5,
+          5
+        ]
+      ],
+      "snaps": {
+        "start": {
+          "coordinate": [
+            0,
+            5.0000000000000036
+          ],
+          "distance": 8.72664625997163,
+          "polygonIndex": 0,
+          "segmentIndex": 0
+        },
+        "end": null
+      },
+      "status": "invalid",
+      "valid": false,
+      "message": "영역을 나누지 않습니다. 선을 양쪽 경계까지 연결하세요.",
+      "issues": []
+    }
+  }
+]

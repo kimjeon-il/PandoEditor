@@ -1,0 +1,3 @@
+Licenses for the unmodified polygon-clipping v0.15.7 bundle and its dependencies. Original license headers remain in the vendored JavaScript. Full licenses were read from the matching official npm package archives (polygon-clipping 0.15.7, splaytree 3.1.2, robust-predicates 3.0.2). The bundle also retains its Microsoft Apache-2.0 helper notice and URL; the full license from https://www.apache.org/licenses/LICENSE-2.0.txt is included as Apache-2.0.txt. Application module provenance is recorded in the source manifests; these are copies between the same owner’s Pando and PandoEditor repositories.
+
+The lifecycle Worker additionally uses unmodified D3 3.5.6. Its BSD-3-Clause notice is included as d3-BSD.txt from the official npm d3@3.5.6 archive.

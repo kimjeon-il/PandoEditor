@@ -1,0 +1,386 @@
+{
+  "schema": "pando-web-lifecycle-sources",
+  "version": 1,
+  "repository": "kimjeon-il/Pando",
+  "behavioralCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+  "sourceRoot": "lifecycle-source",
+  "sources": [
+    {
+      "path": "assets/js/modules/app-country-validation.js",
+      "blob": "161391f4f4166632f258eb78346b517afa56f6bd"
+    },
+    {
+      "path": "assets/js/modules/app-cut-geometry.js",
+      "blob": "d325cb72580b8be8ba7f2af0bd6aa4bc6e9a4943"
+    },
+    {
+      "path": "assets/js/modules/app-geometry-preview.js",
+      "blob": "9acdb996768a5c55e56029dd904cad8efbfa5295"
+    },
+    {
+      "path": "assets/js/modules/app-hydro-settings.js",
+      "blob": "5903449960a1fa585488dbc412f065f5e72327bb"
+    },
+    {
+      "path": "assets/js/modules/app-land-relations.js",
+      "blob": "6a98266dd4edb1d177fb6f1388b0821092f39ec5"
+    },
+    {
+      "path": "assets/js/modules/app-layer-list.js",
+      "blob": "343a74f132718cf5a44c81f873fa8400fd602aab"
+    },
+    {
+      "path": "assets/js/modules/app-object-metadata.js",
+      "blob": "d517da45c8d6ce0b9d9c8c5fe000539c4e5cc457"
+    },
+    {
+      "path": "assets/js/modules/app-object-presentation.js",
+      "blob": "5204cd17fd2f2d61826e325ae017c11172964efb"
+    },
+    {
+      "path": "assets/js/modules/app-project-snapshots.js",
+      "blob": "8dcab022c3832aa6b99159dc34121debddcb5d86"
+    },
+    {
+      "path": "assets/js/modules/app-territorial-drafts.js",
+      "blob": "0947b0e320724bc7d740474bf8c0c561ed4906b4"
+    },
+    {
+      "path": "assets/js/modules/app-territory-components.js",
+      "blob": "f0f7ddc549f5bcf169415f2cf7fc52b218740ef3"
+    },
+    {
+      "path": "assets/js/modules/boundary-display.js",
+      "blob": "833b8bc4957c0b53851d8996d561d5c71ad3e8cc"
+    },
+    {
+      "path": "assets/js/modules/boundary-lines.js",
+      "blob": "460451311a47795d94eb80bcc79e2eb8451f2284"
+    },
+    {
+      "path": "assets/js/modules/boundary-preparation.js",
+      "blob": "fbcbaeedd53f6b6552babdd5f713ffb5555f8c54"
+    },
+    {
+      "path": "assets/js/modules/boundary-spatial-index.js",
+      "blob": "c4557e5358ba3e2d3b05fd1a08ee982f21a59a7c"
+    },
+    {
+      "path": "assets/js/modules/boundary-topology.js",
+      "blob": "1a6eb5ba8d509af0672bc18d5c4d939b87fda279"
+    },
+    {
+      "path": "assets/js/modules/builtin-subunits.js",
+      "blob": "e6701fe111751d070dda11a9e3b32b3a716f6df7"
+    },
+    {
+      "path": "assets/js/modules/builtin-territory-policy.js",
+      "blob": "060b493a91de49a68e88222d2b91fe83d6959b68"
+    },
+    {
+      "path": "assets/js/modules/coast-reconciliation.js",
+      "blob": "5b1d480136491c036ed34bd61e33edbcee72a26a"
+    },
+    {
+      "path": "assets/js/modules/color-adapter.js",
+      "blob": "74ac942e2854025bedb11c172ca0d6cbe1da0315"
+    },
+    {
+      "path": "assets/js/modules/coordinate-bounds.js",
+      "blob": "c276945af12c75ffd5faebfc6aafaa370cc5ad68"
+    },
+    {
+      "path": "assets/js/modules/country-default-colors.js",
+      "blob": "b335acc32f99534f67630bc4678e1d5f6a0494ff"
+    },
+    {
+      "path": "assets/js/modules/country-flags.js",
+      "blob": "50b8e943b41c378b186a9dc38713ab0ca6159d7b"
+    },
+    {
+      "path": "assets/js/modules/cut-preparation-cache.js",
+      "blob": "d02d07ced5d5f2bd1429032d3df82c4bd065ffaf"
+    },
+    {
+      "path": "assets/js/modules/cut-worker-preparation.js",
+      "blob": "5a8c5e35fcf1e3c78c97c193b706655edf31331e"
+    },
+    {
+      "path": "assets/js/modules/distribution-model.js",
+      "blob": "78b8a02e75dd48633eb41d69cb65b12418d2adcb"
+    },
+    {
+      "path": "assets/js/modules/document-mutation-runner.js",
+      "blob": "7c5756b43c9819234d8101043d33cef28dc5397e"
+    },
+    {
+      "path": "assets/js/modules/edit-display-preparation.js",
+      "blob": "de8b2c780c22e6d27a5b66dd017755d5c8cc3904"
+    },
+    {
+      "path": "assets/js/modules/edit-source-tracker.js",
+      "blob": "9d5de5ae99db164f170b65eb584fd85a593bdd53"
+    },
+    {
+      "path": "assets/js/modules/editing-render-packet.js",
+      "blob": "2ac8cb4bb343c34bcb75324d001b20ed129d034e"
+    },
+    {
+      "path": "assets/js/modules/exchange-adapter-registry.js",
+      "blob": "f4f6ee6352fd79059fdeaf3e7077993c119204d0"
+    },
+    {
+      "path": "assets/js/modules/generic-feature-service.js",
+      "blob": "4415bcbb35a25788c71da02a14f1a4a543eea656"
+    },
+    {
+      "path": "assets/js/modules/geographic-boundary.js",
+      "blob": "37cac30e70fd905b8fecaac2cb26532ef390ff79"
+    },
+    {
+      "path": "assets/js/modules/geometry-metrics.js",
+      "blob": "438927287535be682962f70c5f4eb9d2771eb07f"
+    },
+    {
+      "path": "assets/js/modules/geometry-preview.js",
+      "blob": "832d545ed32a03c69ab1ae8081a2735fdbbe523e"
+    },
+    {
+      "path": "assets/js/modules/geometry-segment-index.js",
+      "blob": "97e045d0388ef64205b2c88a1b04beea3ac01168"
+    },
+    {
+      "path": "assets/js/modules/geometry-validation.js",
+      "blob": "316ffd159447ec07f08664825d2e42ba668c84a3"
+    },
+    {
+      "path": "assets/js/modules/geometry-version-store.js",
+      "blob": "72de730052a0a76e9096c412349af04428b50ba1"
+    },
+    {
+      "path": "assets/js/modules/geometry-versions.js",
+      "blob": "cc4d3c2954dae1e93b5326aee96f59d2daeac649"
+    },
+    {
+      "path": "assets/js/modules/gis-geometry-validation.js",
+      "blob": "758ec0b7c62040ad99ea661f7f21c41788b6ca94"
+    },
+    {
+      "path": "assets/js/modules/gis-import-plan.js",
+      "blob": "963c5f6458c600044cc3651c77e979413013176a"
+    },
+    {
+      "path": "assets/js/modules/history-service.js",
+      "blob": "c3bd031412cff2c56ebdbf6f37e2fd1f49c317db"
+    },
+    {
+      "path": "assets/js/modules/import-service.js",
+      "blob": "6965d79e920c7b5a6586231674c0293ebed40bbc"
+    },
+    {
+      "path": "assets/js/modules/layer-presentation.js",
+      "blob": "fab813c6dbb385259a0983921dd18bd494e3229d"
+    },
+    {
+      "path": "assets/js/modules/map-edit-country-commands.js",
+      "blob": "8c7d1286333f1ce55529ee040107faecc9e0804f"
+    },
+    {
+      "path": "assets/js/modules/map-edit-geometry.js",
+      "blob": "8467a302c428503b553fc9ff50cb7af18a9a7c8f"
+    },
+    {
+      "path": "assets/js/modules/map-edit-library-calculation.js",
+      "blob": "01acf1b5bf6b91769bb29d4fc4c6f6ae3a026f3f"
+    },
+    {
+      "path": "assets/js/modules/map-edit-preparation-operations.js",
+      "blob": "ebbf6032227250b508fa569b49e817ca034925dd"
+    },
+    {
+      "path": "assets/js/modules/map-edit-preview-calculations.js",
+      "blob": "136b05685310bf234f000b8eeeae2a71ac86dd48"
+    },
+    {
+      "path": "assets/js/modules/map-edit-query-calculations.js",
+      "blob": "c58c453222ef632c356c91b86bcb0afe5e6eeefc"
+    },
+    {
+      "path": "assets/js/modules/map-edit-snap-calculation.js",
+      "blob": "0c8529c7f7bc9fb6f8886047ca5ed1538196c1c2"
+    },
+    {
+      "path": "assets/js/modules/map-edit-territorial-commands.js",
+      "blob": "11e2da9ba588bf69e289c353ad9ead66891962eb"
+    },
+    {
+      "path": "assets/js/modules/map-edit-worker-client.js",
+      "blob": "1f7bfd0a077f49b47dffb773707bca10f143d21b"
+    },
+    {
+      "path": "assets/js/modules/map-object-categories.js",
+      "blob": "ad68c968d3a850306643c7aac2b73ddf290e2bc7"
+    },
+    {
+      "path": "assets/js/modules/planar-graph-faces.js",
+      "blob": "af8a3b873d98778544357bf0bff0f97c166c08b2"
+    },
+    {
+      "path": "assets/js/modules/polygon-clipping-calculation.js",
+      "blob": "bb08caa903fe03f7263335a035fd4692bf375d03"
+    },
+    {
+      "path": "assets/js/modules/polygon-geometry.js",
+      "blob": "af7f296e867c51e764c86d55f9dcae678f1cbb89"
+    },
+    {
+      "path": "assets/js/modules/project-command-pipeline.js",
+      "blob": "64611e104eabed53d505d95bfe603959f111e117"
+    },
+    {
+      "path": "assets/js/modules/project-invariants.js",
+      "blob": "881b3f7330360d4b377205967983c3b799da45c0"
+    },
+    {
+      "path": "assets/js/modules/project-serializer.js",
+      "blob": "7a2afe953d7446eac20b2ff34a8c0e1e267f4e6a"
+    },
+    {
+      "path": "assets/js/modules/project-state.js",
+      "blob": "735bef2ad8cfa6d5af5a60567fd5386f3318b8be"
+    },
+    {
+      "path": "assets/js/modules/ring-hit-test.js",
+      "blob": "4d2e762b906ba484f795651c53003bd912fb38a6"
+    },
+    {
+      "path": "assets/js/modules/runtime-performance-metrics.js",
+      "blob": "e36aeb3f068aa121ad24dd5728bfd74e25a3d9ae"
+    },
+    {
+      "path": "assets/js/modules/select-option-policy.js",
+      "blob": "dde6b5d3e1376e87bbed6a97c6bd16f957d78a5a"
+    },
+    {
+      "path": "assets/js/modules/source-provenance.js",
+      "blob": "ff47ef958294b8a2286a38e083dc0810d8a89fa3"
+    },
+    {
+      "path": "assets/js/modules/temporal.js",
+      "blob": "34ef7a8bc1cba4cf9c550dc93be8882f5c9b6aa7"
+    },
+    {
+      "path": "assets/js/modules/terrain-manifest.js",
+      "blob": "419ca1b7e155eb2cd7c81f0ef57a5732084b9416"
+    },
+    {
+      "path": "assets/js/modules/territorial-edit-plan.js",
+      "blob": "3d77920a7b84fa8df8d5c4ef1410aec421d1ebe7"
+    },
+    {
+      "path": "assets/js/modules/territorial-entity-repository.js",
+      "blob": "54126c0905bd57ed8825907894bbd3eb1f2002cf"
+    },
+    {
+      "path": "assets/js/modules/territorial-entity-store.js",
+      "blob": "f93b94f63ff74d8a052c827f1061917de6bd2427"
+    },
+    {
+      "path": "assets/js/modules/territorial-geometry.js",
+      "blob": "2f0aef10b2501ffb317bfe2aab4eb97225aa12cf"
+    },
+    {
+      "path": "assets/js/modules/territorial-highlight-boundary.js",
+      "blob": "46341eebcb4dae3f9af6d87d35791f9939e00e2c"
+    },
+    {
+      "path": "assets/js/modules/territorial-service.js",
+      "blob": "91418c3e0d593bd62af543c5eaed889051622713"
+    },
+    {
+      "path": "assets/js/modules/territorial-units.js",
+      "blob": "fc1773be96eabc981d569307ba91e2a715b32282"
+    },
+    {
+      "path": "assets/js/modules/territory-component-plan.js",
+      "blob": "34a79cee4adce74f9a06ed7e7977c3e8572fc1b8"
+    },
+    {
+      "path": "assets/js/modules/timeline-records.js",
+      "blob": "f1353d9fb7d5f0a8d323452d63126d887577cc3f"
+    },
+    {
+      "path": "assets/js/modules/timeline-static-view.js",
+      "blob": "ed75e50ebeb71af7a94533cbcc9988451a70c1ae"
+    },
+    {
+      "path": "assets/js/modules/timeline-storage.js",
+      "blob": "e9691031f9ba2e7b7e4c72633c9066a9c8412b4b"
+    },
+    {
+      "path": "assets/js/modules/version-contract.js",
+      "blob": "98355311cba7039575e373d2c7ef4c5987fac78d"
+    },
+    {
+      "path": "assets/js/modules/worker-job-scheduler.js",
+      "blob": "c07aea54ff105bf97f4986239f13e392585a9394"
+    },
+    {
+      "path": "assets/js/modules/worker-rpc.js",
+      "blob": "0c87b6b92992ab3a75b57b003cc2b78d3fb25aa7"
+    },
+    {
+      "path": "assets/js/vendor/d3.min.js",
+      "blob": "6733ae4c8bfa093fdd9a4630f986018e0a893a01"
+    },
+    {
+      "path": "assets/js/vendor/polygon-clipping.min.js",
+      "blob": "66a4e7bb45fb37353ba86e1114f7e9166ef1efad"
+    },
+    {
+      "path": "assets/js/workers/map-edit-worker.js",
+      "blob": "0fca51dde206da6cf858d46584749e45455e0164"
+    }
+  ],
+  "hostOnlyFiles": [
+    "package.json"
+  ],
+  "roots": [
+    "map-edit-worker-client",
+    "app-project-snapshots",
+    "territorial-service",
+    "territorial-entity-store",
+    "territorial-entity-repository",
+    "project-command-pipeline",
+    "project-state",
+    "history-service",
+    "distribution-model",
+    "app-geometry-preview",
+    "app-territorial-drafts",
+    "geometry-preview",
+    "project-invariants",
+    "app-hydro-settings",
+    "app-layer-list",
+    "generic-feature-service",
+    "layer-presentation",
+    "app-object-presentation",
+    "map-object-categories",
+    "app-object-metadata"
+  ],
+  "workerDynamicModules": [
+    "coordinate-bounds",
+    "polygon-clipping-calculation",
+    "map-edit-preparation-operations",
+    "map-edit-library-calculation",
+    "map-edit-preview-calculations",
+    "map-edit-territorial-commands",
+    "map-edit-snap-calculation",
+    "cut-worker-preparation",
+    "edit-display-preparation",
+    "map-edit-query-calculations",
+    "boundary-topology",
+    "map-edit-country-commands",
+    "polygon-geometry",
+    "territorial-edit-plan"
+  ]
+}

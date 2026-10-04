@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {nativeInput,compareCalculation,collectBaseline} from './native-baseline.mjs';
+import {loadOracle} from './calculations.mjs';
+const box=(x)=>({type:'MultiPolygon',coordinates:[[[[x,0],[x,1],[x+1,1],[x+1,0],[x,0]]]]});
+const feature=(id,x=0)=>({id,geometry:box(x),properties:{parentId:''}});
+test('native adapter preserves raw selection rather than pre-clipping away known app difference',()=>{const row={id:'oversized',operation:'drawn-annex',targetId:'A',donorIds:['B'],features:[],drawnGeometry:box(0)};assert.deepEqual(nativeInput(row)?.draft,row.drawnGeometry);});
+test('unsupported multi-donor does not become a single-donor command',()=>assert.equal(nativeInput({operation:'drawn-annex',donorIds:['A','B']}),null));
+test('same shape with missing object still fails identity comparison',async()=>{const o=await loadOracle();assert.ok(compareCalculation({ok:true,afterFeatures:[feature('A')]},{ok:true,features:[feature('B')]},o.clipper).some(d=>d.field==='object'));});
+test('exact geometry difference is reported',async()=>{const o=await loadOracle();assert.ok(compareCalculation({ok:true,afterFeatures:[feature('A')]},{ok:true,features:[feature('A',0.00000001)]},o.clipper).some(d=>d.field==='geometry'));});
+test('ring winding differences are not geometry mismatches',async()=>{const o=await loadOracle(),a=feature('A'),b=structuredClone(a);b.geometry.coordinates[0][0].reverse();assert.deepEqual(compareCalculation({ok:true,afterFeatures:[a]},{ok:true,features:[b]},o.clipper),[]);});
+test('success versus rejection always differs',async()=>{const o=await loadOracle();assert.equal(compareCalculation({ok:true,afterFeatures:[]},{ok:false,error:'outside'},o.clipper)[0]?.field,'outcome');});
+test('missing native executable fails instead of empty passing report',async()=>await assert.rejects(()=>collectBaseline('/no/such/m971-probe'),/Native probe failed/));
+test('duplicate native identities cannot be collapsed into a matching map',async()=>{const o=await loadOracle();assert.throws(()=>compareCalculation({ok:true,afterFeatures:[feature('A')]},{ok:true,features:[feature('A',2),feature('A')]},o.clipper),/Duplicate/);});
+test('malformed native geometry type and coordinates fail closed',async()=>{const o=await loadOracle();for(const mutate of [f=>f.geometry.type='LineString',f=>f.geometry.coordinates[0][0][0][0]=Infinity,f=>f.geometry.coordinates[0][0].pop()]){const a=feature('A');mutate(a);assert.throws(()=>compareCalculation({ok:true,afterFeatures:[feature('A')]},{ok:true,features:[a]},o.clipper),/geometry|coordinate|ring/);}});
+test('missing or nonstring identity and parent relation fail closed',async()=>{const o=await loadOracle();for(const mutate of [f=>delete f.properties.parentId,f=>f.id=12,f=>f.id='',f=>f.properties.parentId=null]){const a=feature('A');mutate(a);assert.throws(()=>compareCalculation({ok:true,afterFeatures:[feature('A')]},{ok:true,features:[a]},o.clipper),/identity|parent/);}});
+test('a preparation rejection does not claim an observed confirmation',async()=>{const module=await import('./native-baseline.mjs');assert.equal(typeof module.nativeCoverage,'function');const scope=module.nativeCoverage({ok:false},{ok:true});assert.equal(scope.stages.confirm,false);assert.equal(scope.errorSemantics,'unobserved');assert.equal(scope.stages.before,false);});
+test('successful malformed output is invalid even when the opposite side rejects',async()=>{const o=await loadOracle();assert.throws(()=>compareCalculation({ok:false},{ok:true,features:[{id:'A'}]},o.clipper),/parent|geometry/);});

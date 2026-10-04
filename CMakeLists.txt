@@ -23,3 +23,21 @@ if(PANDOEDITOR_BUILD_APP)
     add_subdirectory(app)
     include(app/selection.cmake)
 endif()
+
+# The editing oracle is independent of the native renderer and runs offline.
+# Dedicated CI supplies Node 24 and fails separately if this contract cannot run.
+if(BUILD_TESTING)
+    find_program(PANDOEDITOR_M97_NODE_EXECUTABLE NAMES node)
+    if(PANDOEDITOR_M97_NODE_EXECUTABLE)
+        add_test(NAME m971_editing_oracle_contract
+            COMMAND "${PANDOEDITOR_M97_NODE_EXECUTABLE}" --test
+                "${PROJECT_SOURCE_DIR}/tools/m97/contract.test.mjs"
+                "${PROJECT_SOURCE_DIR}/tools/m97/calculations.test.mjs"
+                "${PROJECT_SOURCE_DIR}/tools/m97/corpus.test.mjs"
+                "${PROJECT_SOURCE_DIR}/tools/m97/cut-corpus.test.mjs"
+                "${PROJECT_SOURCE_DIR}/tools/m97/native-baseline.test.mjs"
+                "${PROJECT_SOURCE_DIR}/tools/m97/web-lifecycle.test.mjs"
+                "${PROJECT_SOURCE_DIR}/tools/m97/registration.test.mjs")
+        set_tests_properties(m971_editing_oracle_contract PROPERTIES TIMEOUT 60)
+    endif()
+endif()

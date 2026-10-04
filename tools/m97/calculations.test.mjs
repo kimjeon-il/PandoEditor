@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {loadOracle} from './calculations.mjs';
+const rectangle=(x,y,w,h)=>({type:'MultiPolygon',coordinates:[[[[x,y],[x,y+h],[x+w,y+h],[x+w,y],[x,y]]]]});
+const f=(id,g)=>({type:'Feature',id,properties:{name:id,entityKind:'general',parentId:'',coverageMode:'explicit'},geometry:g});
+const row=()=>({id:'drawn-annex-outside-donor',operation:'drawn-annex',targetId:'A',donorIds:['B'],features:[f('A',rectangle(-3,0,2,4)),f('B',rectangle(0,0,4,4))],drawnGeometry:rectangle(-1,-1,3,6)});
+test('real annex preprocessor and country calculator preserve input and return donor-clipped transfer',async()=>{const oracle=await loadOracle(),input=row(),before=structuredClone(input);const result=oracle.calculate(input);assert.equal(result?.ok,true);assert.equal(result.result.transferredArea,8);assert.deepEqual(input,before);assert.deepEqual(result.afterFeatures.map(f=>f.id),['A','B']);});
+test('raw country command outside donor is rejected rather than silently clamped',async()=>{const oracle=await loadOracle(),input=row();input.operation='annex';input.transferredGeometry=input.drawnGeometry;assert.equal(oracle.calculate(input)?.ok,false);});
+test('actual snap compares edge against vertex in screen space',async()=>{const oracle=await loadOracle();const result=oracle.calculate({id:'near-edge',operation:'snap',coordinate:[0,0],screenPoint:[0,0],projection:[1,1,0,0],candidates:[{kind:'vertex',coordinate:[5,0]},{kind:'edge',a:[1,-5],b:[1,5]}]});assert.equal(result?.result?.kind,'edge');assert.deepEqual(result.result.coordinate,[1,0]);});
+test('unknown operation is rejected before oracle default-annex fallback',async()=>{const oracle=await loadOracle();assert.throws(()=>oracle.calculate({...row(),operation:'typo'}),/Unsupported/);});

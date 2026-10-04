@@ -1,0 +1,80 @@
+{
+  "schema": "pandoeditor-editing-oracle-sources",
+  "version": 1,
+  "repository": {
+    "id": 1335531825,
+    "name": "kimjeon-il/Pando",
+    "previousName": "kimjeon-il/world-map"
+  },
+  "behavioralCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+  "nativeBaseline": "54aa51d11e38bf17b89f83919bf8443aba32f783",
+  "historicalCommit": "b2c7bb991bb793a06d5cbdc44e8ae0b56a208122",
+  "historicalRole": "Only unchanged source comparisons; no historical identity or lifecycle expectations.",
+  "sources": [
+    {
+      "path": "assets/js/modules/annex-geometry.js",
+      "blob": "bc69c505638599e2063fe6f99c1ed04deff5b1ee",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/map-edit-country-commands.js",
+      "blob": "8c7d1286333f1ce55529ee040107faecc9e0804f",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/map-edit-geometry.js",
+      "blob": "8467a302c428503b553fc9ff50cb7af18a9a7c8f",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/polygon-geometry.js",
+      "blob": "af7f296e867c51e764c86d55f9dcae678f1cbb89",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/coordinate-bounds.js",
+      "blob": "c276945af12c75ffd5faebfc6aafaa370cc5ad68",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/geometry-snap.js",
+      "blob": "da638bf69772209dcea9772042df8f7fc3020e17",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/history-service.js",
+      "blob": "c3bd031412cff2c56ebdbf6f37e2fd1f49c317db",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/project-transaction.js",
+      "blob": "0c8e03e84af5e93efc72c311f3d9e45b849fb608",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/map-edit-transaction.js",
+      "blob": "a6dfc9ca9187ffcc367a0807247af4faac75c055",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/polygon-clipping-calculation.js",
+      "blob": "bb08caa903fe03f7263335a035fd4692bf375d03",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/reliability-core.js",
+      "blob": "c14793bbd00f630e8ffd7335205876b6142131be",
+      "unchangedSinceHistorical": true
+    },
+    {
+      "path": "assets/js/modules/runtime-performance-metrics.js",
+      "blob": "e36aeb3f068aa121ad24dd5728bfd74e25a3d9ae",
+      "unchangedSinceHistorical": false
+    },
+    {
+      "path": "assets/js/vendor/polygon-clipping.min.js",
+      "blob": "66a4e7bb45fb37353ba86e1114f7e9166ef1efad",
+      "unchangedSinceHistorical": true
+    }
+  ]
+}

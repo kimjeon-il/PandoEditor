@@ -1,0 +1,1785 @@
+{
+  "schema": "pandoeditor-editing-calculation-corpus",
+  "version": 1,
+  "scope": "Production calculation entrypoints; not UI/session/history parity.",
+  "cases": [
+    {
+      "id": "annex-contained",
+      "stage": "M9.7.2",
+      "operation": "drawn-annex",
+      "targetId": "A",
+      "donorIds": [
+        "B"
+      ],
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "drawnGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                2,
+                4
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "annex-outside-donor",
+      "stage": "M9.7.2",
+      "operation": "drawn-annex",
+      "targetId": "A",
+      "donorIds": [
+        "B"
+      ],
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "drawnGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                -1,
+                -1
+              ],
+              [
+                -1,
+                5
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                2,
+                -1
+              ],
+              [
+                -1,
+                -1
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "annex-target-and-donor",
+      "stage": "M9.7.2",
+      "operation": "drawn-annex",
+      "targetId": "A",
+      "donorIds": [
+        "B"
+      ],
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "drawnGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                -4,
+                -1
+              ],
+              [
+                -4,
+                5
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                2,
+                -1
+              ],
+              [
+                -4,
+                -1
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "annex-no-overlap",
+      "stage": "M9.7.2",
+      "operation": "drawn-annex",
+      "targetId": "A",
+      "donorIds": [
+        "B"
+      ],
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "drawnGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                10,
+                10
+              ],
+              [
+                10,
+                12
+              ],
+              [
+                12,
+                12
+              ],
+              [
+                12,
+                10
+              ],
+              [
+                10,
+                10
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "annex-complete-donor",
+      "stage": "M9.7.2",
+      "operation": "drawn-annex",
+      "targetId": "A",
+      "donorIds": [
+        "B"
+      ],
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "drawnGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                -1,
+                -1
+              ],
+              [
+                -1,
+                5
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                5,
+                -1
+              ],
+              [
+                -1,
+                -1
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "annex-hole",
+      "stage": "M9.7.2",
+      "operation": "drawn-annex",
+      "targetId": "A",
+      "donorIds": [
+        "B"
+      ],
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    3,
+                    1
+                  ],
+                  [
+                    3,
+                    3
+                  ],
+                  [
+                    1,
+                    3
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "drawnGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                2,
+                4
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "annex-multipolygon",
+      "stage": "M9.7.2",
+      "operation": "drawn-annex",
+      "targetId": "A",
+      "donorIds": [
+        "B"
+      ],
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    2,
+                    4
+                  ],
+                  [
+                    2,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ],
+              [
+                [
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    6,
+                    4
+                  ],
+                  [
+                    6,
+                    0
+                  ],
+                  [
+                    4,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "drawnGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                1,
+                -1
+              ],
+              [
+                1,
+                5
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                5,
+                -1
+              ],
+              [
+                1,
+                -1
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "annex-multiple-donors",
+      "stage": "M9.7.2",
+      "operation": "drawn-annex",
+      "targetId": "A",
+      "donorIds": [
+        "B",
+        "C"
+      ],
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    3,
+                    4
+                  ],
+                  [
+                    3,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "name": "C",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    3,
+                    0
+                  ],
+                  [
+                    3,
+                    4
+                  ],
+                  [
+                    6,
+                    4
+                  ],
+                  [
+                    6,
+                    0
+                  ],
+                  [
+                    3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "drawnGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                1,
+                -1
+              ],
+              [
+                1,
+                5
+              ],
+              [
+                5,
+                5
+              ],
+              [
+                5,
+                -1
+              ],
+              [
+                1,
+                -1
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "annex-raw-outside-rejected",
+      "stage": "M9.7.2",
+      "operation": "annex",
+      "targetId": "A",
+      "donorIds": [
+        "B"
+      ],
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "drawnGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                -1,
+                -1
+              ],
+              [
+                -1,
+                5
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                2,
+                -1
+              ],
+              [
+                -1,
+                -1
+              ]
+            ]
+          ]
+        ]
+      },
+      "transferredGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                -1,
+                -1
+              ],
+              [
+                -1,
+                5
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                2,
+                -1
+              ],
+              [
+                -1,
+                -1
+              ]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "snap-mouse-11px",
+      "stage": "M9.7.4",
+      "operation": "snap",
+      "pointerType": "mouse",
+      "coordinate": [
+        0,
+        0
+      ],
+      "screenPoint": [
+        0,
+        0
+      ],
+      "projection": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "candidates": [
+        {
+          "kind": "vertex",
+          "coordinate": [
+            11,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snap-touch-11px",
+      "stage": "M9.7.4",
+      "operation": "snap",
+      "pointerType": "touch",
+      "coordinate": [
+        0,
+        0
+      ],
+      "screenPoint": [
+        0,
+        0
+      ],
+      "projection": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "candidates": [
+        {
+          "kind": "vertex",
+          "coordinate": [
+            11,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snap-touch-19px",
+      "stage": "M9.7.4",
+      "operation": "snap",
+      "pointerType": "touch",
+      "coordinate": [
+        0,
+        0
+      ],
+      "screenPoint": [
+        0,
+        0
+      ],
+      "projection": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "candidates": [
+        {
+          "kind": "vertex",
+          "coordinate": [
+            19,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snap-near-edge",
+      "stage": "M9.7.4",
+      "operation": "snap",
+      "coordinate": [
+        0,
+        0
+      ],
+      "screenPoint": [
+        0,
+        0
+      ],
+      "projection": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "candidates": [
+        {
+          "kind": "vertex",
+          "coordinate": [
+            5,
+            0
+          ]
+        },
+        {
+          "kind": "edge",
+          "a": [
+            1,
+            -5
+          ],
+          "b": [
+            1,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snap-near-intersection",
+      "stage": "M9.7.4",
+      "operation": "snap",
+      "coordinate": [
+        0,
+        0
+      ],
+      "screenPoint": [
+        0,
+        0
+      ],
+      "projection": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "candidates": [
+        {
+          "kind": "vertex",
+          "coordinate": [
+            5,
+            0
+          ]
+        },
+        {
+          "kind": "intersection",
+          "coordinate": [
+            1,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snap-tie-vertex",
+      "stage": "M9.7.4",
+      "operation": "snap",
+      "coordinate": [
+        0,
+        0
+      ],
+      "screenPoint": [
+        0,
+        0
+      ],
+      "projection": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "candidates": [
+        {
+          "kind": "edge",
+          "a": [
+            1,
+            -5
+          ],
+          "b": [
+            1,
+            5
+          ]
+        },
+        {
+          "kind": "vertex",
+          "coordinate": [
+            1,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "merge-delete-donor",
+      "stage": "M9.7.7",
+      "operation": "merge",
+      "sourceId": "A",
+      "targetIds": [
+        "B"
+      ],
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "new-country-partial-donor",
+      "stage": "M9.7.3",
+      "operation": "new-country",
+      "sourceIds": [
+        "B"
+      ],
+      "newFeature": {
+        "type": "Feature",
+        "id": "N",
+        "properties": {
+          "name": "N",
+          "entityKind": "general",
+          "parentId": "",
+          "coverageMode": "explicit"
+        },
+        "geometry": {
+          "type": "MultiPolygon",
+          "coordinates": [
+            [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4
+                ],
+                [
+                  2,
+                  4
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          ]
+        }
+      },
+      "transferredGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                2,
+                4
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        ]
+      },
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "new-country-complete-donor",
+      "stage": "M9.7.3",
+      "operation": "new-country",
+      "sourceIds": [
+        "B"
+      ],
+      "newFeature": {
+        "type": "Feature",
+        "id": "N",
+        "properties": {
+          "name": "N",
+          "entityKind": "general",
+          "parentId": "",
+          "coverageMode": "explicit"
+        },
+        "geometry": {
+          "type": "MultiPolygon",
+          "coordinates": [
+            [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  4
+                ],
+                [
+                  4,
+                  4
+                ],
+                [
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          ]
+        }
+      },
+      "transferredGeometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                4,
+                4
+              ],
+              [
+                4,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        ]
+      },
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "name": "A",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -3,
+                    4
+                  ],
+                  [
+                    -1,
+                    4
+                  ],
+                  [
+                    -1,
+                    0
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "name": "B",
+            "entityKind": "general",
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    4,
+                    4
+                  ],
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
