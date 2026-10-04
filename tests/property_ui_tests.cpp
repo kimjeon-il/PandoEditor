@@ -16,6 +16,8 @@
 #include <QInputMethodEvent>
 #include <memory>
 #include <QJSValue>
+#include <QVector2D>
+#include <QTouchEvent>
 using namespace pandoeditor;
 
 namespace {
@@ -154,9 +156,232 @@ struct Harness {
     }
 };
 }
+namespace {
+QVariantMap labelData(QQuickItem* label) {
+    const auto data=label->property("modelData");
+    return data.metaType()==QMetaType::fromType<QJSValue>()?data.value<QJSValue>().toVariant().toMap():data.toMap();
+}
+QQuickItem* placedLabel(QQuickItem* root,const QString& id) {
+    if(root->objectName()=="mapPlacedLabel"&&labelData(root).value("ref").toMap().value("id")==id)return root;
+    for(auto child:root->childItems())if(auto found=placedLabel(child,id))return found;
+    return nullptr;
+}
+QObject* labelDragHandler(QQuickItem* label) {
+    for(auto* child:label->children())
+        if(QString::fromLatin1(child->metaObject()->className()).startsWith("QQuickDragHandler"))return child;
+    return nullptr;
+}
+LabelSettings settings(const EditorController& editor,const ObjectRef& owner=territorialRef("A")) {
+    const auto all=projectcodec::decode(editor.documentBytes()).presentation.webPresentation.labelSettings;
+    const auto it=all.find(owner);return it==all.end()?LabelSettings{}:it->second;
+}
+}
 class PropertyUiTests:public QObject {
  Q_OBJECT
 private slots:
+    void labelDragPinsPositionAndResets_data(){modes();}
+    void labelDragPinsPositionAndResets(){
+        QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
+        QVERIFY(h.editor.setProjectionMode("flat"));h.editor.clearSelection();
+        QTRY_VERIFY(placedLabel(h.window->contentItem(),"A"));
+        auto* label=placedLabel(h.window->contentItem(),"A");
+        QPointer<QObject> drag=labelDragHandler(label);QVERIFY(drag);
+        auto* map=h.control("mapView");QVERIFY(map);
+        const auto camera=h.editor.mapViewState();
+        const auto originalDocument=projectcodec::decode(h.editor.documentBytes());
+        const auto contentRevision=h.editor.revision();
+        QVERIFY(!settings(h.editor).pinned);QVERIFY(!settings(h.editor).manualPosition);
+        static auto* device=QTest::createTouchDevice();
+        QSignalSpy presentation(&h.editor,&EditorController::presentationChanged);
+        for(const QPoint delta:{QPoint(60,40),QPoint(-35,-25)}) {
+            QTRY_VERIFY(placedLabel(h.window->contentItem(),"A"));
+            label=placedLabel(h.window->contentItem(),"A");drag=labelDragHandler(label);QVERIFY(drag);
+            const double startX=label->property("labelX").toDouble(),startY=label->property("labelY").toDouble();
+            const auto pos=label->mapToScene(QPointF(label->width()/2,label->height()/2)).toPoint();
+            const int signalsBefore=presentation.count();
+            if(mobile) {
+                QTest::touchEvent(h.window,device).press(0,pos,h.window).commit();
+                QTest::touchEvent(h.window,device).move(0,pos+delta/2,h.window).commit();QTest::qWait(20);
+                QTest::touchEvent(h.window,device).move(0,pos+delta,h.window).commit();QTest::qWait(20);
+            } else {
+                QTest::mousePress(h.window,Qt::LeftButton,Qt::NoModifier,pos);
+                QTest::mouseMove(h.window,pos+delta/2,20);
+                QTest::mouseMove(h.window,pos+delta,20);
+            }
+            QTRY_VERIFY(drag->property("active").toBool());
+            const auto translation=drag->property("activeTranslation").value<QVector2D>();
+            QVERIFY(translation.lengthSquared()>4);
+            QCOMPARE(presentation.count(),signalsBefore); // One command on release, never during the gesture.
+            const auto projection=h.editor.hydroProjection();
+            const double x=(startX+translation.x()-map->property("originX").toDouble())/map->property("mapScale").toDouble();
+            const double y=(startY+translation.y()-map->property("originY").toDouble())/map->property("mapScale").toDouble();
+            const Point expected{(x+projection.value("minX").toDouble())/projection.value("cosLatitude").toDouble(),
+                projection.value("maxLatitude").toDouble()-y};
+            if(mobile)QTest::touchEvent(h.window,device).release(0,pos+delta,h.window).commit();
+            else QTest::mouseRelease(h.window,Qt::LeftButton,Qt::NoModifier,pos+delta,20);
+            QTRY_VERIFY(!drag || !drag->property("active").toBool());
+            QTRY_VERIFY_WITH_TIMEOUT(settings(h.editor).pinned,1000);
+            const auto pinned=settings(h.editor);QVERIFY(pinned.manualPosition);
+            QVERIFY(std::abs(pinned.manualPosition->x-expected.x)<1e-6);
+            QVERIFY(std::abs(pinned.manualPosition->y-expected.y)<1e-6);
+            QCOMPARE(presentation.count(),signalsBefore+1);
+            QCOMPARE(h.editor.mapViewState(),camera);
+            // Presentation publication intentionally rebuilds label delegates.
+            QTRY_VERIFY(placedLabel(h.window->contentItem(),"A"));
+            label=placedLabel(h.window->contentItem(),"A");
+            QTRY_VERIFY(labelData(label).value("pinned").toBool());
+            // A tap after a completed drag must not reuse the previous delta.
+            QTest::qWait(ViewportResourceScheduler::SettleDelayMs*2);
+            const auto afterDrag=h.editor.documentBytes();
+            const auto tap=label->mapToScene(QPointF(label->width()/2,label->height()/2)).toPoint();
+            if(mobile){QTest::touchEvent(h.window,device).press(0,tap,h.window).commit();QTest::touchEvent(h.window,device).release(0,tap,h.window).commit();}
+            else QTest::mouseClick(h.window,Qt::LeftButton,Qt::NoModifier,tap);
+            QCOMPARE(h.editor.documentBytes(),afterDrag);QCOMPARE(presentation.count(),signalsBefore+1);
+            h.editor.clearSelection();
+        }
+        const auto pinned=settings(h.editor);QVERIFY(pinned.manualPosition);
+        // Presentation-only label edits intentionally do not enter content undo
+        // history. Keep that contract; adding presentation history is separate.
+        QVERIFY(!h.editor.canUndo());QVERIFY(!h.editor.canRedo());
+        QVERIFY(h.editor.resetLabelPosition(ref("A")));
+        QVERIFY(!settings(h.editor).pinned);QVERIFY(!settings(h.editor).manualPosition);
+        QVERIFY(!h.editor.canUndo());QVERIFY(!h.editor.canRedo());
+        const auto finalDocument=projectcodec::decode(h.editor.documentBytes());
+        QCOMPARE(finalDocument.units.size(),originalDocument.units.size());
+        QCOMPARE(h.editor.revision(),contentRevision);
+        QCOMPARE(finalDocument.presentation.webPresentation.labelSettings.size(),std::size_t(1));
+        QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
+    }
+    void independentPendingLabelReleases_data(){
+        QTest::addColumn<bool>("replaceBetweenCommits");
+        QTest::newRow("both-commands")<<false;QTest::newRow("replace-between-commands")<<true;
+    }
+    void independentPendingLabelReleases(){
+        QFETCH(bool,replaceBetweenCommits);Harness h(false);QVERIFY(h.window);
+        QVERIFY(h.editor.setProjectionMode("flat"));
+        QTRY_VERIFY(placedLabel(h.window->contentItem(),"A"));
+        QTRY_VERIFY(placedLabel(h.window->contentItem(),"B"));
+        QSignalSpy presentation(&h.editor,&EditorController::presentationChanged);
+        bool replaced=false,reopened=false,firstWasA=false;QByteArray replacement;
+        if(replaceBetweenCommits)QObject::connect(&h.editor,&EditorController::presentationChanged,&h.editor,[&] {
+            if(replaced)return;
+            replaced=true;firstWasA=settings(h.editor).pinned;
+            reopened=h.editor.openFile(h.path);replacement=h.editor.documentBytes();
+        });
+        std::map<std::string,Point> expected;
+        ulong timestamp=1000;
+        // Deliver two real mouse gesture sequences synchronously, before the
+        // event loop flushes either successful release's deferred command.
+        const auto mouse=[&](QEvent::Type type,QPoint pos,Qt::MouseButton button,Qt::MouseButtons buttons) {
+            QMouseEvent event(type,QPointF(pos),QPointF(h.window->mapToGlobal(pos)),button,buttons,Qt::NoModifier);
+            event.setTimestamp(timestamp+=20);QCoreApplication::sendEvent(h.window,&event);
+        };
+        for(const QString id:{QString("A"),QString("B")}) {
+            auto* label=placedLabel(h.window->contentItem(),id);QVERIFY(label);
+            auto* drag=labelDragHandler(label);QVERIFY(drag);
+            const auto pos=label->mapToScene(QPointF(label->width()/2,label->height()/2)).toPoint();
+            mouse(QEvent::MouseButtonPress,pos,Qt::LeftButton,Qt::LeftButton);
+            mouse(QEvent::MouseMove,pos+QPoint(25,20),Qt::NoButton,Qt::LeftButton);
+            mouse(QEvent::MouseMove,pos+QPoint(60,40),Qt::NoButton,Qt::LeftButton);
+            QVERIFY(drag->property("active").toBool());
+            const auto delta=drag->property("activeTranslation").value<QVector2D>();QVERIFY(delta.lengthSquared()>4);
+            const auto camera=h.editor.mapViewState(),projection=h.editor.hydroProjection();
+            const double x=(label->property("labelX").toDouble()+delta.x()-camera["originX"].toDouble())/camera["mapScale"].toDouble();
+            const double y=(label->property("labelY").toDouble()+delta.y()-camera["originY"].toDouble())/camera["mapScale"].toDouble();
+            expected[id.toStdString()]={(x+projection["minX"].toDouble())/projection["cosLatitude"].toDouble(),projection["maxLatitude"].toDouble()-y};
+            mouse(QEvent::MouseButtonRelease,pos+QPoint(60,40),Qt::LeftButton,Qt::NoButton);
+            QVERIFY(!drag->property("active").toBool());QCOMPARE(presentation.count(),0);
+        }
+        QCoreApplication::processEvents();QTest::qWait(50);
+        if(replaceBetweenCommits) {
+            QVERIFY(replaced);QVERIFY(reopened);QVERIFY(firstWasA);
+            QCOMPARE(h.editor.documentBytes(),replacement);
+            QVERIFY(!settings(h.editor).pinned);QVERIFY(!settings(h.editor,territorialRef("B")).pinned);
+        } else {
+            QCOMPARE(presentation.count(),2);
+            for(const auto& [id,point]:expected) {
+                const auto pinned=settings(h.editor,territorialRef(id));QVERIFY(pinned.pinned);QVERIFY(pinned.manualPosition);
+                QVERIFY(std::abs(pinned.manualPosition->x-point.x)<1e-6);
+                QVERIFY(std::abs(pinned.manualPosition->y-point.y)<1e-6);
+            }
+        }
+        QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
+    }
+    void labelReleasedBeforeProjectReplacementCannotPinReusedId(){
+        Harness h(false);QVERIFY(h.window);QVERIFY(h.editor.setProjectionMode("flat"));
+        QTRY_VERIFY(placedLabel(h.window->contentItem(),"A"));
+        auto* label=placedLabel(h.window->contentItem(),"A");auto* drag=labelDragHandler(label);QVERIFY(drag);
+        const auto pos=label->mapToScene(QPointF(label->width()/2,label->height()/2)).toPoint();
+        QTest::mousePress(h.window,Qt::LeftButton,Qt::NoModifier,pos);
+        QTest::mouseMove(h.window,pos+QPoint(25,20),20);
+        QTest::mouseMove(h.window,pos+QPoint(60,40),20);
+        QVERIFY(drag->property("active").toBool());
+        QVERIFY(drag->property("activeTranslation").value<QVector2D>().lengthSquared()>4);
+        // Send release synchronously so the queued presentation command has not
+        // run yet. QTest::mouseRelease itself would process that queue for us.
+        const auto releasePos=pos+QPoint(60,40);
+        QMouseEvent release(QEvent::MouseButtonRelease,QPointF(releasePos),
+            QPointF(h.window->mapToGlobal(releasePos)),Qt::LeftButton,Qt::NoButton,Qt::NoModifier);
+        QCoreApplication::sendEvent(h.window,&release);
+        QVERIFY(!drag->property("active").toBool());
+        QVERIFY(!settings(h.editor).pinned);
+        const auto previousInstance=h.editor.projectInstanceId();
+        QVERIFY(h.editor.openFile(h.path));
+        QVERIFY(h.editor.projectInstanceId()!=previousInstance);
+        const auto replacement=h.editor.documentBytes();
+        // Also clears QTest's mouse-button state before the next test case.
+        QTest::mouseRelease(h.window,Qt::LeftButton,Qt::NoModifier,releasePos);
+        QTest::qWait(50);
+        QCOMPARE(h.editor.documentBytes(),replacement);
+        QVERIFY(!settings(h.editor).pinned);QVERIFY(!settings(h.editor).manualPosition);
+        QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
+    }
+    void labelCanceledAndDisabledDragsDoNotCommit_data(){
+        QTest::addColumn<int>("ending");QTest::newRow("touch-cancel")<<0;QTest::newRow("disable-during-drag")<<1;QTest::newRow("return-to-origin")<<2;
+    }
+    void labelCanceledAndDisabledDragsDoNotCommit(){
+        QFETCH(int,ending);Harness h(true);QVERIFY(h.window);QVERIFY(h.editor.setProjectionMode("flat"));
+        QTRY_VERIFY(placedLabel(h.window->contentItem(),"A"));
+        auto* label=placedLabel(h.window->contentItem(),"A");auto* drag=labelDragHandler(label);QVERIFY(drag);
+        static auto* device=QTest::createTouchDevice();
+        const auto pos=label->mapToScene(QPointF(label->width()/2,label->height()/2)).toPoint();
+        const auto before=h.editor.documentBytes();QSignalSpy presentation(&h.editor,&EditorController::presentationChanged);
+        QTest::touchEvent(h.window,device).press(0,pos,h.window).commit();
+        QTest::touchEvent(h.window,device).move(0,pos+QPoint(25,20),h.window).commit();QTest::qWait(20);
+        QTest::touchEvent(h.window,device).move(0,pos+QPoint(60,40),h.window).commit();QTest::qWait(20);
+        QTRY_VERIFY(drag->property("active").toBool());
+        QVERIFY(drag->property("activeTranslation").value<QVector2D>().lengthSquared()>4);
+        if(ending==1){
+            QVERIFY(drag->setProperty("enabled",false));
+            QTest::touchEvent(h.window,device).release(0,pos+QPoint(60,40),h.window).commit();
+            QVERIFY(drag->setProperty("enabled",true));
+        } else if(ending==2) {
+            QTest::touchEvent(h.window,device).move(0,pos,h.window).commit();QTest::qWait(20);
+            QVERIFY(drag->property("activeTranslation").value<QVector2D>().isNull());
+            QTest::touchEvent(h.window,device).release(0,pos,h.window).commit();
+        } else {
+            QTouchEvent cancel(QEvent::TouchCancel,device);
+            QGuiApplication::sendEvent(h.window,&cancel);
+            QTest::touchEvent(h.window,device).release(0,pos+QPoint(60,40),h.window).commit();
+        }
+        QTRY_VERIFY(!drag->property("active").toBool());
+        QCOMPARE(h.editor.documentBytes(),before);QCOMPARE(presentation.count(),0);
+        QTest::touchEvent(h.window,device).press(0,pos,h.window).commit();
+        QTest::touchEvent(h.window,device).release(0,pos,h.window).commit();
+        QCOMPARE(h.editor.documentBytes(),before);QCOMPARE(presentation.count(),0);
+        h.editor.clearSelection();
+        // A fresh gesture after each interrupted/no-op path must still work.
+        QTRY_VERIFY(placedLabel(h.window->contentItem(),"A"));
+        label=placedLabel(h.window->contentItem(),"A");
+        const auto nextPos=label->mapToScene(QPointF(label->width()/2,label->height()/2)).toPoint();
+        QTest::touchEvent(h.window,device).press(0,nextPos,h.window).commit();
+        QTest::touchEvent(h.window,device).move(0,nextPos+QPoint(20,-15),h.window).commit();QTest::qWait(20);
+        QTest::touchEvent(h.window,device).move(0,nextPos+QPoint(35,-25),h.window).commit();QTest::qWait(20);
+        QTest::touchEvent(h.window,device).release(0,nextPos+QPoint(35,-25),h.window).commit();
+        QTRY_VERIFY_WITH_TIMEOUT(settings(h.editor).pinned,1000);
+        QVERIFY(settings(h.editor).manualPosition);QCOMPARE(presentation.count(),1);
+        QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
+    }
     void latestSelectionEntry_data(){modes();}
     void latestSelectionEntry(){
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);h.editor.clearSelection();

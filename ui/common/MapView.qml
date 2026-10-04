@@ -302,6 +302,21 @@ Rectangle {
     }
     Repeater {
         model: editor.placedLabelModel
+        id: placedLabelRepeater
+        property var pendingDrags: []
+        function enqueueDrag(instanceId, ref, x, y) {
+            pendingDrags.push({"instanceId":instanceId,"ref":Object.assign({},ref),"x":x,"y":y})
+            Qt.callLater(flushDrags)
+        }
+        function flushDrags() {
+            // callLater coalesces calls. Keep every release, and detach the batch
+            // before publication destroys delegates or reenters this queue.
+            const commands=pendingDrags
+            pendingDrags=[]
+            for(const command of commands)
+                if(editor.projectInstanceId===command.instanceId)
+                    editor.setLabelMapPosition(command.ref,command.x,command.y)
+        }
         delegate: Item {
             id:placedLabel
             objectName: "mapPlacedLabel"
@@ -309,6 +324,11 @@ Rectangle {
             required property var modelData
             required property real labelX
             required property real labelY
+            // Keep gesture state on the delegate: adding properties to DragHandler
+            // changes its QML type and hence Qt's default grab-takeover rules.
+            property point finalLabelTranslation: Qt.point(0,0)
+            property bool pendingLabelDrag: false
+            function discardLabelDrag() { pendingLabelDrag=false; finalLabelTranslation=Qt.point(0,0) }
             width:(placedFlag.visible?placedFlag.width+(placedText.visible?modelData.flagGap:0):0)+(placedText.visible?placedText.implicitWidth:0)
             height:Math.max(placedFlag.visible?placedFlag.height:0,placedText.visible?placedText.implicitHeight:0)
             x: labelX-width/2
@@ -339,10 +359,24 @@ Rectangle {
             DragHandler {
                 enabled: !view.geometryEditing
                 target: null
-                onActiveChanged: if(!active && activeTranslation.x*activeTranslation.x+activeTranslation.y*activeTranslation.y>4)
-                    editor.setLabelMapPosition(parent.modelData.ref,
-                        (parent.labelX+activeTranslation.x-view.originX)/view.mapScale,
-                        (parent.labelY+activeTranslation.y-view.originY)/view.mapScale)
+                onActiveChanged: if(active) { placedLabel.discardLabelDrag(); placedLabel.pendingLabelDrag=true }
+                // Qt clears activeTranslation before activeChanged(false).
+                onActiveTranslationChanged: if(active && placedLabel.pendingLabelDrag)
+                    placedLabel.finalLabelTranslation=Qt.point(activeTranslation.x,activeTranslation.y)
+                onCanceled: placedLabel.discardLabelDrag()
+                onEnabledChanged: if(!enabled) placedLabel.discardLabelDrag()
+                onGrabChanged: function(transition, point) {
+                    if(transition!==PointerDevice.UngrabExclusive) return
+                    const delta=Qt.point(placedLabel.finalLabelTranslation.x,placedLabel.finalLabelTranslation.y)
+                    const commit=placedLabel.pendingLabelDrag && enabled && point.state===EventPoint.Released
+                    placedLabel.discardLabelDrag()
+                    // Publishing presentation rebuilds these delegates. Finish
+                    // Qt's pointer delivery before allowing this handler to die.
+                    if(commit && delta.x*delta.x+delta.y*delta.y>4)
+                        placedLabelRepeater.enqueueDrag(editor.projectInstanceId,parent.modelData.ref,
+                            (parent.labelX+delta.x-view.originX)/view.mapScale,
+                            (parent.labelY+delta.y-view.originY)/view.mapScale)
+                }
             }
         }
     }
