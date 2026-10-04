@@ -55,7 +55,7 @@ const TemporalKey& boundary(const TemporalValue& point,TemporalBoundary which) {
 }
 }
 TemporalValue parseTemporal(const std::string& input) {
-    static const std::regex pattern("^([+-]?)([0-9]{4,6})(?:-([0-9]{2})-([0-9]{2}))?$");
+    static const std::regex pattern("^([+-]?)([0-9]{4,6})(?:-([0-9]{2})(?:-([0-9]{2}))?)?$");
     const auto source=trim(input);
     std::smatch match;
     if(!std::regex_match(source,match,pattern))
@@ -66,23 +66,25 @@ TemporalValue parseTemporal(const std::string& input) {
     const auto magnitude=std::stoi(digits);
     const auto year=sign=="-"?-magnitude:magnitude;
     if(year==0)throw std::invalid_argument("INVALID_DATE: year zero");
-    const auto dated=match[3].matched;
-    const int month=dated?std::stoi(match[3].str()):1;
+    const auto monthly=match[3].matched;
+    const auto dated=match[4].matched;
+    const int month=monthly?std::stoi(match[3].str()):1;
     const int day=dated?std::stoi(match[4].str()):1;
     if(month<1||month>12)throw std::invalid_argument("INVALID_DATE: month");
     if(day<1||day>monthDays(year,month))throw std::invalid_argument("INVALID_DATE: day");
     const auto yearKey=static_cast<std::int64_t>(year)*10000;
     TemporalValue point;
     point.text=source;
-    point.precision=dated?"date":"year";
+    point.precision=dated?"date":monthly?"month":"year";
     point.canonical=(year<0?"-":sign=="+"?"+":"")+digits+
-                    (dated?"-"+match[3].str()+"-"+match[4].str():"");
+                    (monthly?"-"+match[3].str():"")+(dated?"-"+match[4].str():"");
     point.year=year;
-    if(dated){point.month=month;point.day=day;}
+    if(monthly)point.month=month;
+    if(dated)point.day=day;
     point.startKey={year,month,day};
-    point.endKey=dated?point.startKey:TemporalKey{year,12,31};
+    point.endKey=dated?point.startKey:monthly?TemporalKey{year,month,monthDays(year,month)}:TemporalKey{year,12,31};
     point.start=yearKey+month*100+day;
-    point.end=dated?point.start:yearKey+1231;
+    point.end=yearKey+point.endKey.month*100+point.endKey.day;
     return point;
 }
 std::optional<std::string> normalizeTemporal(const std::optional<std::string>& input) {
