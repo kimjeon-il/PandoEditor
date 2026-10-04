@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import * as math from '../tests/fixtures/web-properties/source/custom-color-control.js';
-import {normalizeTemporalInterval} from '../tests/fixtures/web-properties/source/temporal.js';
+import {normalizeTemporalInterval} from '../tests/fixtures/web-timeline/temporal.mjs';
 import {createObjectCommands} from '../tests/fixtures/web-properties/source/app-object-commands.js';
 import {createObjectMetadata} from '../tests/fixtures/web-properties/source/app-object-metadata.js';
 import {createHistoryService} from '../tests/fixtures/web-properties/source/history-service.js';
@@ -21,6 +21,10 @@ const manifest=JSON.parse(fs.readFileSync(new URL('tests/fixtures/web-properties
 for(const [name,sha] of Object.entries(manifest.blobs)){
  const bytes=fs.readFileSync(new URL(name,source));assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`),bytes])).digest('hex'),sha,`pinned source modified: ${name}`);
 }
+const temporalManifest=JSON.parse(fs.readFileSync(new URL('tests/fixtures/web-timeline/manifest.json',root)));
+const temporalBytes=fs.readFileSync(new URL(`tests/fixtures/web-timeline/${temporalManifest.localPath}`,root));
+assert.equal(crypto.createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${temporalBytes.length}\0`),temporalBytes])).digest('hex'),
+ temporalManifest.blob,'pinned timeline temporal source modified');
 function originalScenario(ops){
  const geometry={type:'Polygon',coordinates:[[[0,0],[8,0],[8,8],[0,8],[0,0]]]};
  const state={countriesData:{features:[{type:'Feature',id:'A',geometry,properties:{name:'Alpha'}}]},countryOverrides:{},territorialUnits:territory.normalizeTerritorialUnits(['S','R'].map(id=>({type:'Feature',id,geometry,properties:{schemaVersion:2,unitType:id==='S'?'subunit':'region',name:id,notes:'',parentId:id==='S'?'A':'S',sovereignId:'A',coverageMode:'explicit',style:{},locked:false}})),{countryExists:id=>id==='A'}),stateRevision:0};
@@ -78,7 +82,7 @@ for(let i=0;i<400;++i){const rgb=[0,0,0].map(()=>Math.floor(random()*256)),h=360
  for(const [fn,args] of [['rgbToHex',[rgb]],['rgbToHsv',[rgb,h]],['rgbToHsl',[rgb]],['hslToRgb',[[Math.floor(h),Math.floor(random()*101),Math.floor(random()*101)]]],['hsvToRgb',[[h,random(),random()]]]])add({kind:'math',fn,args},math[fn](...args));
 }
 for(const value of ['',' x ','\n\tHello\nworld \r','\ufeffx\u3000','\u0085x\u200b','  한글  ',...Array.from({length:20},(_,i)=>String.fromCharCode(0x2000+i)+'x'+String.fromCharCode(0x2000+i))])add({kind:'trim',value},value.trim());
-const dates=['','0000','0001','-0001','1900','1900-02-29','2000-02-29','2000-02-30','2026-09-19','+010000','10000','-999999-12-31','+0000','-0004-02-29','2026-09',' 2000 ','2000-13-01'];
+const dates=['','0000','0001','-0001','1900','1900-02-29','2000-02-29','2000-02-30','2026-09-19','+010000','10000','-999999-12-31','+0000','-0004-02-29','2026-09',' 2000 ','2000-13-01','1900-02','2000-02','2000-13','-0001-12','0001-01'];
 for(const from of dates)for(const to of dates){try{const v=normalizeTemporalInterval(from,to);add({kind:'temporal',from,to},{ok:true,from:v.validFrom,to:v.validTo})}catch{add({kind:'temporal',from,to},{ok:false})}}
 const scenarios=[
  [{op:'field',ids:['A'],field:'name',value:''},{op:'field',ids:['A'],field:'name',value:''},{op:'undo'},{op:'undo'},{op:'redo'},{op:'redo'}],
@@ -94,4 +98,4 @@ if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify({cases,expect
 assert.equal(actual.length,cases.length);const failures=[];
 for(let i=0;i<cases.length;++i){try{assert.deepEqual(actual[i],expected[i]);}catch(e){failures.push(i);console.error('MISMATCH',i,JSON.stringify(cases[i]),e.message.slice(0,450));}}
 assert.equal(failures.length,0,`Source/native differences: ${failures.join(',')}`);
-console.log(`Pinned source ${manifest.commit}: ${Object.keys(manifest.blobs).length} blob hashes verified; ${cases.length} comparisons passed (math, whitespace, temporal intervals, real metadata/batch/history handlers).`);
+console.log(`Pinned property source ${manifest.commit}: ${Object.keys(manifest.blobs).length} blob hashes verified; temporal source ${temporalManifest.commit}: ${temporalManifest.blob} verified; ${cases.length} comparisons passed (math, whitespace, temporal intervals, real metadata/batch/history handlers).`);
