@@ -36,7 +36,7 @@ private slots:
         }
         Project project;project.replace(document);
         auto planned=CommandProcessor::planTerritorial(project,ConvertTerritorialTypeIntent{
-            territorialRef("DEU"),UnitKind::General,territorialRef("FRA"),{},""});
+            territorialRef("DEU"),UnitKind::General,{},territorialRef("FRA"),""});
         QVERIFY(planned.ok()&&planned.plan);
         CommandArguments args;args.action=ApplyTerritorialMutation{*planned.plan,std::nullopt};
         auto prepared=CommandProcessor::prepare(project,CommandProcessor::makeRequest(project,"territorial.geometry.commit",args));

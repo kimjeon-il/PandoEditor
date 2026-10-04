@@ -24,15 +24,15 @@ jobs:
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
-          modules: 'qtshadertools'
+          modules: 'qtshadertools qtimageformats'
           cache: true
       - name: Configure Qt Debug and build persistence targets
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
-          cmake --build build --parallel 2 --target pandoeditor temporal_tests timeline_records_tests timeline_storage_tests command_tests storage_tests timeline_project_tests timeline_editor_persistence_tests project_geopackage_tests project_geopackage_controller_tests web_import_ui_tests
+          cmake --build build --parallel 2 --target pandoeditor temporal_tests timeline_records_tests timeline_storage_tests command_tests storage_tests timeline_project_tests timeline_editor_persistence_tests project_geopackage_tests project_geopackage_controller_tests web_import_ui_tests label_engine_tests map_picker_tests resource_cache_diagnostics_tests presentation_editor_tests flag_layout_probe property_probe
       - name: Run focused persistence tests without skips
         run: |
-          ctest --test-dir build --output-on-failure -R '^(temporal_tests|timeline_records_tests|timeline_storage_tests|command_tests|storage_tests|timeline_project_tests|timeline_editor_persistence_tests|project_geopackage_tests|project_geopackage_controller_tests|web_import_ui_tests)$' --output-junit "$GITHUB_WORKSPACE/build/results.xml"
+          ctest --test-dir build --output-on-failure -R '^(temporal_tests|timeline_records_tests|timeline_storage_tests|command_tests|storage_tests|timeline_project_tests|timeline_editor_persistence_tests|project_geopackage_tests|project_geopackage_controller_tests|web_import_ui_tests|label_engine_tests|map_picker_tests|resource_cache_diagnostics_tests)$' --output-junit "$GITHUB_WORKSPACE/build/results.xml"
           python3 - <<'PY'
           import xml.etree.ElementTree as ET
           from pathlib import Path
@@ -41,10 +41,17 @@ jobs:
           skipped = [case.attrib.get('name') for case in cases if case.find('skipped') is not None]
           failures = [case.attrib.get('name') for case in cases if case.find('failure') is not None or case.find('error') is not None]
           print(f'CTest: {len(cases)} cases, {len(failures)} failures, {len(skipped)} skips')
-          expected = {'temporal_tests', 'timeline_records_tests', 'timeline_storage_tests', 'command_tests', 'storage_tests', 'timeline_project_tests', 'timeline_editor_persistence_tests', 'project_geopackage_tests', 'project_geopackage_controller_tests', 'web_import_ui_tests'}
-          assert {case.attrib.get('name') for case in cases} == expected and len(cases) == 10 and not failures and not skipped
+          expected = {'temporal_tests', 'timeline_records_tests', 'timeline_storage_tests', 'command_tests', 'storage_tests', 'timeline_project_tests', 'timeline_editor_persistence_tests', 'project_geopackage_tests', 'project_geopackage_controller_tests', 'web_import_ui_tests', 'label_engine_tests', 'map_picker_tests', 'resource_cache_diagnostics_tests'}
+          assert {case.attrib.get('name') for case in cases} == expected and len(cases) == 13 and not failures and not skipped
           assert 'SKIP' not in Path('build/Testing/Temporary/LastTest.log').read_text()
           PY
+      - name: Verify merged flag and object contracts
+        run: |
+          ./build/app/presentation_editor_tests administrativeMoveRetainsFlagPolicyAcrossSaveAndReset flagLibraryUsesTheSameDefaultAssetsAsWeb flagLibraryPreservesOriginalSvgBytes uploadedRasterPreservesBytesAcrossSaveAndReopen territorialFlagMetadataUsesWebPrecedence countryFlagRemainsWhenNameChannelIsHidden -o build/flags.txt,txt
+          cat build/flags.txt
+          if grep -q SKIP build/flags.txt; then exit 1; fi
+          node tools/flag-layout-web-oracle.mjs ./build/engine/flag_layout_probe | tee build/flag-layout.txt
+          node tools/m32-property-oracle.mjs ./build/app/property_probe | tee build/property-oracle.txt
       - name: Verify saved sample assets
         run: |
           node tools/verify-release-assets.mjs --root . --out build/source-assets.json
@@ -65,4 +72,7 @@ jobs:
             build/Testing/Temporary/LastTest.log
             build/source-assets.json
             build/exchange-evidence
+            build/flags.txt
+            build/flag-layout.txt
+            build/property-oracle.txt
           retention-days: 14

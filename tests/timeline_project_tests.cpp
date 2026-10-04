@@ -94,6 +94,15 @@ int main(int argc,char** argv) {
         pandoeditor::Project project;project.replace(document);
         try{(void)projectcodec::encodeWeb(project.snapshot());}catch(const std::exception& e){++failures;std::cerr<<"FAIL representable numeric export "<<token<<": "<<e.what()<<'\n';}
     }
-    std::cout << cases.size() << " storage cases + 9 numeric boundary cases, " << failures << " failures, 0 skipped\n";
+    for(bool payload:{false,true}) {
+        auto document=numericFixture;auto& symbol=document.symbols.begin()->second;
+        if(payload)symbol.defaultFlagDataUrl=symbol.embeddedDataUrl;else symbol.defaultCountryId="DEU";
+        pandoeditor::Project project;project.replace(document);const auto bytes=projectcodec::encode(project);
+        pandoeditor::Project reopened;reopened.replace(projectcodec::decode(fileRoundTrip(bytes,"flag-default.pando.json")));
+        if(projectcodec::encode(reopened)!=bytes){++failures;std::cerr<<"FAIL native flag default preservation\n";}
+        bool refused=false;try{(void)projectcodec::encodeWeb(reopened.snapshot());}catch(const std::invalid_argument&){refused=true;}
+        if(!refused){++failures;std::cerr<<"FAIL web native flag default loss guard\n";}
+    }
+    std::cout << cases.size() << " storage cases + 9 numeric boundary cases + 2 flag default boundary cases, " << failures << " failures, 0 skipped\n";
     return failures?1:0;
 }
