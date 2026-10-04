@@ -7,6 +7,9 @@ Both remote heads were rechecked before publication. Existing integration
 checkout and its ignored build/deployment artifacts are preserved. No merge,
 deployment, T3/T4 resolver, dated editing or timeline UI is included.
 
+Implementation commit and exact tested native source:
+`d2af1d518aba3b55e7b7c09db049a94ca607497f`, pushed nonforce to the feature ref.
+
 The user narrowed final verification to necessary checks. The final candidate
 uses the ten focused tests listed below and actual production exchange; this
 report does not claim a completed full regression run.
@@ -56,6 +59,7 @@ Linux keeps ordinary Debug flags and its default GNU toolchain.
 | project_geopackage_tests | Pass, including 10 vector/state corruption cases |
 | project_geopackage_controller_tests | Pass |
 | web_import_ui_tests | Pass, real QML/Qt import/file paths |
+| Desktop/360px canonical creation routes | 2 substantive Qt slots, 0 failure/skip |
 | Selected CTest total | 10/10, 0 failure/skip, 13.18 seconds |
 | Actual web owner/serializer → native QFile → native web codec → web owner | 16/16, 0 failure/skip |
 | Saved sample/source asset consistency | 17/17 |
@@ -144,7 +148,48 @@ callers after current v9 readers replaced obsolete development-format handling.
 No substitute engine, compatibility wrapper, test deletion or skip was added.
 Existing MapProjection, CPU/GPU Qt backends, adapters and geometry kernels remain.
 
+## Decision ledger, in execution order
+
+| Decision | Reason and cost of the choice |
+| --- | --- |
+| Use the existing tracking feature worktrees; initial web checkout at an external ASCII path | Native worktree tooling targets the current repository. Original checkout stays intact; the separate path must remain available for exchange evidence. |
+| Repair the task-local cached Ninja path | The cached executable no longer existed. This is environment setup, not a product baseline failure. |
+| Split generated record-fixture construction into functions | MinGW could not compile the aggregate even serially. All 60 fixtures remain; generated source layout changes. |
+| Use T2-2a UTF8 ID/version archive ordering | It is the existing canonical contract. Original input array order is not preserved; all version keys and values are. |
+| Reuse validated equal immutable geometry during label-only history | This avoids invalidating unchanged shapes; the object must remain immutable. This early web decision is subsequently owned by the companion chat. |
+| Transfer all web implementation/commit responsibility to the other chat | Explicit user assignment. Native exchange evidence depends on the pinned, separately owned web commit. |
+| General administrative moves keep identity and metadata | Canonical parent records own placement. Previous sovereign-operation intents reject rather than infer political data. |
+| Treat GeoPackage project JSON as authoritative | Actual Worker stores null sourceInfo as {} in its spool. Derived spatial state must agree; independent GIS edits require GIS import. |
+| Preserve historical catalogKind as source metadata | Project kinds are General/Regional; original country/subunit classification stays inspectable. Unsupported political instantiation rejects. |
+| Restore original tracked line endings and content-identical files | Keep the diff scoped. Pinned byte-sensitive source assets explicitly use LF. |
+| Reject old development formats | User excludes migration and parallel readers. Old v7 saves are not recoverable through current v9 readers; files remain intact. |
+| Retain M4 math kernels and pinned blob hashes | Administrative tests assert current identity/parent semantics. Pre-v9 political transition parity is not claimed. |
+| Use task-local Debug -g1 on Windows | GNU debug archives/links stalled for minutes. Assertions stay enabled; symbols provide less detail. |
+| Fix Windows URL.pathname and LF source-asset defects | Baseline Node/asset failures reproduced. Runtime paths and line-ending attributes change; data and pinned hash content do not. |
+| Pin the current T0 source for M32 and normalize General history metadata | Existing oracle predated accepted month precision. All 2330 cases remain; stale pre-T0 date rejection is not retained. |
+| Keep default Project as unloaded | Empty loaded tests use the existing ProjectDocument constructor. Callers must initialize a document before encoding it. |
+| Move only this task build to D: through a junction | C: disk exhausted. Original artifacts remain; local build depends on D:. |
+| Use task-local LLD 20.1.8 for Windows links | Measured GNU ld stalls. Compiler/assertions unchanged; separate Linux GNU evidence is required. |
+| Use ReplaceGeometryIntent for geometry allocation stress | General promotion now changes only parent records. Allocation loops remain, but geometry work is tested through its actual owner command. |
+| Compare opaque JSON semantically through losslessjson | Object key byte order is not guaranteed. Number tokens and array order remain exact. Matching optional flag spool rows are inserted before corruption tests, because the actual Worker fixture has none. |
+| Accept numeric, vector-consistency and staged-sample review findings | RED cases reproduced before fixes; lossless native storage remains and unsafe/inconsistent exchange rejects. Exact tested sample/provenance is committed. |
+| Follow the final user request for necessary checks only | Final ten CTests and real exchange run; the incomplete full regression is not a pass or final claim. |
+| Change actual coordinates in shared-shape corruption fixtures | A/B/C/R share one immutable shape, so swapping rows did not change geometry. The replacement now changes valid ring/envelope coordinates. |
+| Resolve test fixture parents through QFileInfo | Linux rejects a file.json/../child path that Windows normalizes. Only the fixture lookup changes; all production and test cases remain. |
+
+Deferred Minor findings: none. Final review scope rulings retain T3/T4 UI exclusion,
+current-only formats, missing-baseline delta rejection, separately owned web work
+and unjudged unrelated performance/rendering behavior; the corresponding costs
+and activation limits are stated above.
+
 ## Linux and activation limits
+
+The first focused Linux run on d2af1d5 built successfully and passed 9/10
+selected CTests. The new numeric fixture failed to open because its path used
+file.json/../child; it returned 2 after all 31 storage cases. QFileInfo now
+resolves the real parent directory before joining the child. This is a test
+path defect, and that failed run is not a validation pass. Remaining CI steps
+were unexecuted in that run.
 
 The feature push starts `.github/workflows/timeline-persistence.yml`: Ubuntu
 24.04, Qt 6.8.3, ordinary Debug, the same ten selected CTests, sample assets and

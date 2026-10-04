@@ -4,6 +4,8 @@
 #include <pandoeditor/project.h>
 #include <QCoreApplication>
 #include <QFile>
+#include <QFileInfo>
+#include <QDir>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -73,7 +75,7 @@ int main(int argc,char** argv) {
             } else std::cout << "PASS rejection " << name.toStdString() << '\n';
         }
     }
-    QFile content(QStringLiteral(PANDOEDITOR_TIMELINE_PROJECT_FIXTURES)+"/../timeline-exchange/content.json");
+    QFile content(QFileInfo(QStringLiteral(PANDOEDITOR_TIMELINE_PROJECT_FIXTURES)).dir().filePath("timeline-exchange/content.json"));
     if(!content.open(QIODevice::ReadOnly))return 2;
     const auto numericFixture=webimport::prepare(content.readAll()).document;
     for(const auto* token:{"9007199254740993","1e400","0.123456789012345678901"})for(bool source:{false,true}) {
