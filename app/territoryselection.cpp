@@ -31,21 +31,29 @@ void validate(const Geometry& geometry) {
         throw std::invalid_argument("TERRITORY_SELECTION_POLYGON_REQUIRED");
     GeometryStore validator;validator.insert({"selection",1},geometry);
 }
-MaybeGeometry calculate(GeometryOperation operation,std::vector<Geometry> operands) {
+struct CalculationCancelled {};
+void checkpoint(const GeometryCancellation& cancelled) {
+    if(cancelled&&cancelled())throw CalculationCancelled{};
+}
+MaybeGeometry calculate(GeometryOperation operation,std::vector<Geometry> operands,const GeometryCancellation& cancelled) {
+    checkpoint(cancelled);
     if(operands.empty())return {};
     if(operands.size()==1)return std::move(operands.front());
     GeometryOperationRequest request{operation,{},{}};request.operands=std::move(operands);
-    auto result=calculateGeometry(request);
+    auto result=calculateGeometry(request,cancelled);
+    if(result.status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};
+    checkpoint(cancelled);
     if(!result.succeeded())throw std::runtime_error(result.detail.empty()?"TERRITORY_SELECTION_CALCULATION_FAILED":result.detail);
     if(result.status==GeometryOperationStatus::Empty)return {};
     return std::move(result.geometry);
 }
-MaybeGeometry unite(std::vector<Geometry> geometries) {
-    return calculate(GeometryOperation::Union,std::move(geometries));
+MaybeGeometry unite(std::vector<Geometry> geometries,const GeometryCancellation& cancelled) {
+    return calculate(GeometryOperation::Union,std::move(geometries),cancelled);
 }
-MaybeGeometry difference(const MaybeGeometry& base,const MaybeGeometry& removed) {
+MaybeGeometry difference(const MaybeGeometry& base,const MaybeGeometry& removed,const GeometryCancellation& cancelled) {
+    checkpoint(cancelled);
     if(!base||!removed)return base;
-    return calculate(GeometryOperation::Difference,{*base,*removed});
+    return calculate(GeometryOperation::Difference,{*base,*removed},cancelled);
 }
 const std::vector<TerritorySelectionComponent>& activeItems(const State& state) {
     static const std::vector<TerritorySelectionComponent> empty;
@@ -64,25 +72,29 @@ std::vector<Geometry> operands(const State& state) {
     }
     return result;
 }
-void prepare(State& state) {
+void prepare(State& state,const GeometryCancellation& cancelled) {
+    checkpoint(cancelled);
     std::vector<Geometry> archived;
-    for(const auto& part:state.parts)archived.push_back(part.geometry);
-    state.archivedGeometry=unite(std::move(archived));
+    for(const auto& part:state.parts){checkpoint(cancelled);archived.push_back(part.geometry);}
+    state.archivedGeometry=unite(std::move(archived),cancelled);
     if(!state.baseSourceGeometry) {
         std::vector<Geometry> source;
-        for(const auto& feature:state.sources)source.push_back(feature.geometry);
-        state.baseSourceGeometry=unite(std::move(source));
+        for(const auto& feature:state.sources){checkpoint(cancelled);source.push_back(feature.geometry);}
+        state.baseSourceGeometry=unite(std::move(source),cancelled);
     }
-    state.workingSourceGeometry=difference(state.baseSourceGeometry,state.archivedGeometry);
+    state.workingSourceGeometry=difference(state.baseSourceGeometry,state.archivedGeometry,cancelled);
     state.components.clear();state.componentFeatures.clear();
     for(const auto& source:state.sources) {
+        checkpoint(cancelled);
         TerritorySelectionComponentFeature feature;feature.source=source;
         feature.source.geometry={};feature.source.geometry.type="MultiPolygon";
         for(std::size_t originalIndex=0;originalIndex<source.geometry.polygons.size();++originalIndex) {
+            checkpoint(cancelled);
             Geometry original;original.type="Polygon";original.polygons={source.geometry.polygons[originalIndex]};
-            const auto remainder=difference(original,state.archivedGeometry);
+            const auto remainder=difference(original,state.archivedGeometry,cancelled);
             if(!remainder)continue;
             for(std::size_t fragment=0;fragment<remainder->polygons.size();++fragment) {
+                checkpoint(cancelled);
                 TerritorySelectionComponent item;
                 item.countryId=source.ref.id;item.countryName=source.name;
                 item.polygonIndex=feature.source.geometry.polygons.size();item.sourcePolygonIndex=originalIndex;
@@ -97,15 +109,15 @@ void prepare(State& state) {
         if(!feature.source.geometry.polygons.empty())state.componentFeatures.push_back(std::move(feature));
     }
     if(state.activePhase==Phase::Candidate||state.activePhase==Phase::Components)
-        state.currentGeometry=unite(operands(state));
+        state.currentGeometry=unite(operands(state),cancelled);
     std::vector<Geometry> combined;
     if(state.archivedGeometry)combined.push_back(*state.archivedGeometry);
     if(state.currentGeometry)combined.push_back(*state.currentGeometry);
-    state.combinedGeometry=unite(std::move(combined));
+    state.combinedGeometry=unite(std::move(combined),cancelled);
     // Deliberate web rule: live component selection does not consume the working
     // remainder. Components change workingSourceGeometry only once archived.
     state.remainingGeometry=state.activePhase==Phase::Components?state.workingSourceGeometry
-        :difference(state.workingSourceGeometry,state.currentGeometry);
+        :difference(state.workingSourceGeometry,state.currentGeometry,cancelled);
 }
 void clear(State& state) {
     state.currentGeometry.reset();state.candidates.clear();state.selectedCandidateIds.clear();
@@ -132,9 +144,28 @@ std::string uid(std::uint64_t& sequence,const char* prefix) {return std::string(
 }
 
 TerritorySelection::TerritorySelection(TerritorySelectionKind kind) {state_.kind=kind;}
-bool TerritorySelection::commit(State next,std::uint64_t nextId) {
-    try {prepare(next);state_=std::move(next);nextId_=nextId;lastError_.clear();return true;}
-    catch(const std::exception& error){lastError_=error.what();return false;}
+bool TerritorySelection::touch(bool rebuildSources) {
+    ++state_.revision;state_.derivedRevision.reset();
+    state_.currentGeometry.reset();state_.combinedGeometry.reset();state_.remainingGeometry.reset();
+    state_.derivedRiverSliverContext.clear();
+    if(rebuildSources) {
+        state_.archivedGeometry.reset();state_.workingSourceGeometry.reset();
+        state_.components.clear();state_.componentFeatures.clear();
+    }
+    lastError_.clear();return true;
+}
+bool TerritorySelection::installDerived(TerritorySelectionDerivedResult result) {
+    if(result.inputRevision!=state_.revision)return false;
+    if(!result.succeeded()) {
+        if(result.status==GeometryOperationStatus::Failed)lastError_=std::move(result.detail);
+        return false;
+    }
+    state_.componentFeatures=std::move(result.componentFeatures);state_.components=std::move(result.components);
+    state_.baseSourceGeometry=std::move(result.baseSourceGeometry);state_.workingSourceGeometry=std::move(result.workingSourceGeometry);
+    state_.archivedGeometry=std::move(result.archivedGeometry);state_.currentGeometry=std::move(result.currentGeometry);
+    state_.combinedGeometry=std::move(result.combinedGeometry);state_.remainingGeometry=std::move(result.remainingGeometry);
+    state_.derivedRiverSliverContext=std::move(result.riverSliverContext);state_.derivedRevision=state_.revision;
+    lastError_.clear();return true;
 }
 bool TerritorySelection::resetSources(std::vector<TerritorySelectionSource> sources) {
     State next;next.kind=state_.kind;std::set<std::string> seen;
@@ -145,35 +176,38 @@ bool TerritorySelection::resetSources(std::vector<TerritorySelectionSource> sour
             validate(source.geometry);next.sources.push_back(std::move(source));
         }
     } catch(const std::exception& error){lastError_=error.what();return false;}
-    return commit(std::move(next),nextId_);
+    next.revision=state_.revision;state_=std::move(next);return touch();
 }
 TerritoryMethodChange TerritorySelection::requestMethod(Method method,bool draftHasWork) {
     if(method==Method::None||state_.sources.empty())return TerritoryMethodChange::Rejected;
     if(state_.activeMethod==method&&state_.activePhase!=Phase::None)return TerritoryMethodChange::Activated;
-    auto next=state_;next.requestedMethod=method;
-    if(next.activePhase==Phase::Components&&!next.selectedComponentKeys.empty()&&next.activeMethod!=method) {
-        state_=std::move(next);lastError_.clear();return TerritoryMethodChange::AwaitingComponentArchive;
+    state_.requestedMethod=method;
+    if(state_.activePhase==Phase::Components&&!state_.selectedComponentKeys.empty()&&state_.activeMethod!=method) {
+        lastError_.clear();return TerritoryMethodChange::AwaitingComponentArchive;
     }
-    const bool currentWork=next.currentGeometry||!next.candidates.empty()||!next.selectedComponentKeys.empty()||draftHasWork;
-    if(next.activeMethod!=Method::None&&next.activeMethod!=method&&currentWork) {
-        next.methodChangeConfirmation=method;state_=std::move(next);lastError_.clear();
-        return TerritoryMethodChange::NeedsConfirmation;
+    const bool currentWork=state_.currentGeometry||!state_.candidates.empty()||!state_.selectedComponentKeys.empty()||draftHasWork;
+    if(state_.activeMethod!=Method::None&&state_.activeMethod!=method&&currentWork) {
+        state_.methodChangeConfirmation=method;lastError_.clear();return TerritoryMethodChange::NeedsConfirmation;
     }
-    activate(next,method);
-    return commit(std::move(next),nextId_)?TerritoryMethodChange::Activated:TerritoryMethodChange::Rejected;
+    activate(state_,method);touch();return TerritoryMethodChange::Activated;
 }
 bool TerritorySelection::confirmMethodChange() {
     if(!state_.methodChangeConfirmation)return false;
-    auto next=state_;activate(next,*state_.methodChangeConfirmation);return commit(std::move(next),nextId_);
+    const auto method=*state_.methodChangeConfirmation;activate(state_,method);return touch();
 }
 bool TerritorySelection::cancelMethodChange() {
     if(!state_.methodChangeConfirmation)return false;
     state_.methodChangeConfirmation.reset();state_.requestedMethod=state_.activeMethod;lastError_.clear();return true;
 }
-bool TerritorySelection::clearCurrent() {auto next=state_;clear(next);return commit(std::move(next),nextId_);}
+void TerritorySelection::cancelRequestedMethod() noexcept {if(!state_.methodChangeConfirmation)state_.requestedMethod=state_.activeMethod;}
+bool TerritorySelection::finishArchivedDraft() {
+    if(state_.activePhase!=Phase::Drawing||state_.parts.empty())return false;
+    state_.activePhase=Phase::Result;state_.candidates.clear();state_.selectedCandidateIds.clear();return touch();
+}
+bool TerritorySelection::clearCurrent() {clear(state_);return touch();}
 bool TerritorySelection::setCandidates(std::vector<TerritorySelectionCandidate> candidates) {
     if(state_.activeMethod!=Method::Line&&state_.activeMethod!=Method::Polygon)return false;
-    auto next=state_;auto sequence=nextId_;
+    auto sequence=nextId_;
     const auto calculationId=uid(sequence,"territory-candidates");std::size_t minimum=0;
     try {
         for(std::size_t index=0;index<candidates.size();++index) {
@@ -183,38 +217,39 @@ bool TerritorySelection::setCandidates(std::vector<TerritorySelectionCandidate> 
             if(candidates[index].area&&candidates[minimum].area&&*candidates[index].area<*candidates[minimum].area)minimum=index;
         }
     } catch(const std::exception& error){lastError_=error.what();return false;}
-    next.candidates=std::move(candidates);next.selectedCandidateIds.clear();next.selectedComponentKeys.clear();
-    if(!next.candidates.empty())next.selectedCandidateIds.push_back(next.candidates[minimum].id);
-    next.currentGeometry.reset();next.activePhase=Phase::Candidate;
-    return commit(std::move(next),sequence);
+    state_.candidates=std::move(candidates);state_.selectedCandidateIds.clear();state_.selectedComponentKeys.clear();
+    if(!state_.candidates.empty())state_.selectedCandidateIds.push_back(state_.candidates[minimum].id);
+    state_.activePhase=Phase::Candidate;nextId_=sequence;return touch();
 }
-bool TerritorySelection::setDrawnPolygon(const Geometry& drawn,const Geometry& target) {
-    if(state_.activeMethod!=Method::Polygon||!state_.workingSourceGeometry)return false;
+TerritorySelectionDraftResult prepareTerritoryPolygonCandidates(const Geometry& drawn,
+    const Geometry& workingSource,const Geometry& target,const GeometryCancellation& cancelled) {
+    TerritorySelectionDraftResult result;
     try {
-        validate(drawn);validate(target);
-        auto transfer=calculate(GeometryOperation::Intersection,{drawn,*state_.workingSourceGeometry});
-        transfer=difference(transfer,target);
-        std::vector<TerritorySelectionCandidate> candidates;
-        if(transfer)candidates.push_back({{},std::move(*transfer),{}});
-        return setCandidates(std::move(candidates));
-    } catch(const std::exception& error){lastError_=error.what();return false;}
+        checkpoint(cancelled);validate(drawn);validate(workingSource);validate(target);
+        auto transfer=calculate(GeometryOperation::Intersection,{drawn,workingSource},cancelled);
+        transfer=difference(transfer,target,cancelled);checkpoint(cancelled);
+        result.status=transfer?GeometryOperationStatus::Completed:GeometryOperationStatus::Empty;
+        if(transfer)result.candidates.push_back({{},std::move(*transfer),{}});
+    } catch(const CalculationCancelled&) {result.status=GeometryOperationStatus::Cancelled;}
+    catch(const std::exception& error) {result.status=GeometryOperationStatus::Failed;result.detail=error.what();}
+    return result;
 }
 bool TerritorySelection::toggleCandidate(const std::string& id) {
     if(state_.activePhase!=Phase::Candidate||std::none_of(state_.candidates.begin(),state_.candidates.end(),
         [&](const auto& item){return item.id==id;}))return false;
-    auto next=state_;toggle(next.selectedCandidateIds,id);next.currentGeometry.reset();return commit(std::move(next),nextId_);
+    toggle(state_.selectedCandidateIds,id);return touch();
 }
 bool TerritorySelection::toggleComponent(const std::string& key) {
     const auto& items=activeItems(state_);
     if(state_.activePhase!=Phase::Components||std::none_of(items.begin(),items.end(),[&](const auto& item){return item.key==key;}))return false;
-    auto next=state_;toggle(next.selectedComponentKeys,key);next.currentGeometry.reset();return commit(std::move(next),nextId_);
+    toggle(state_.selectedComponentKeys,key);return touch();
 }
 bool TerritorySelection::toggleRiverBoundaries(bool enabled) {
     if(state_.activePhase!=Phase::Components)return false;
     if(state_.useRiverBoundaries==enabled)return true;
-    auto next=state_;next.useRiverBoundaries=enabled;next.selectedComponentKeys.clear();next.currentGeometry.reset();
-    next.riverStatus=enabled?TerritoryRiverStatus::Pending:TerritoryRiverStatus::Idle;
-    next.riverComponents.clear();next.riverPreparationKey.clear();return commit(std::move(next),nextId_);
+    state_.useRiverBoundaries=enabled;state_.selectedComponentKeys.clear();
+    state_.riverStatus=enabled?TerritoryRiverStatus::Pending:TerritoryRiverStatus::Idle;
+    state_.riverComponents.clear();state_.riverPreparationKey.clear();return touch();
 }
 bool TerritorySelection::installRiverComponents(std::vector<TerritorySelectionComponent> items,std::string preparationKey) {
     if(state_.activePhase!=Phase::Components||!state_.useRiverBoundaries||preparationKey.empty())return false;
@@ -229,14 +264,15 @@ bool TerritorySelection::installRiverComponents(std::vector<TerritorySelectionCo
             validate(item.geometry);item.usesRiverBoundary=item.partitionKind=="river";item.snapshotId.clear();
         }
     } catch(const std::exception& error){lastError_=error.what();return false;}
-    auto next=state_;next.riverComponents=std::move(items);next.riverPreparationKey=std::move(preparationKey);
-    next.riverStatus=TerritoryRiverStatus::Ready;return commit(std::move(next),nextId_);
+    state_.riverComponents=std::move(items);state_.riverPreparationKey=std::move(preparationKey);
+    state_.riverStatus=TerritoryRiverStatus::Ready;return touch();
 }
 const std::vector<TerritorySelectionComponent>& TerritorySelection::activeComponents() const noexcept {return activeItems(state_);}
 std::vector<Geometry> TerritorySelection::currentOperands() const {return operands(state_);}
 TerritoryArchiveReadiness TerritorySelection::archiveReadiness() const noexcept {
     if(state_.activePhase==Phase::Components&&state_.useRiverBoundaries&&state_.riverStatus!=TerritoryRiverStatus::Ready)
         return TerritoryArchiveReadiness::RiverComponentsPending;
+    if(!derivedReady())return TerritoryArchiveReadiness::CalculationPending;
     if(!state_.currentGeometry)return TerritoryArchiveReadiness::NoCurrentGeometry;
     if(state_.activePhase!=Phase::Candidate&&state_.activePhase!=Phase::Components)return TerritoryArchiveReadiness::InvalidPhase;
     // User-approved web correction: annex can absorb all remaining source.
@@ -244,40 +280,39 @@ TerritoryArchiveReadiness TerritorySelection::archiveReadiness() const noexcept 
     if(state_.kind!=TerritorySelectionKind::Annex&&!state_.remainingGeometry)return TerritoryArchiveReadiness::BoundedSourceExhausted;
     return TerritoryArchiveReadiness::Ready;
 }
-bool TerritorySelection::candidateRequiresArchival() const noexcept {return state_.activePhase==Phase::Candidate&&bool(state_.currentGeometry);}
+bool TerritorySelection::candidateRequiresArchival() const noexcept {return state_.activePhase==Phase::Candidate&&!state_.selectedCandidateIds.empty();}
 bool TerritorySelection::addPart() {
     if(archiveReadiness()!=TerritoryArchiveReadiness::Ready)return false;
-    auto next=state_;auto sequence=nextId_;
-    if(next.activePhase==Phase::Components) {
-        const auto items=activeItems(next);const auto snapshotId=uid(sequence,"territory-component-snapshot");
-        next.componentSnapshots.push_back({snapshotId,items});
-        for(auto item:items)if(contains(next.selectedComponentKeys,item.key)) {
-            item.snapshotId=snapshotId;
-            next.parts.push_back({uid(sequence,"territory-part"),Method::Components,item.geometry,std::move(item)});
+    auto sequence=nextId_;
+    if(state_.activePhase==Phase::Components) {
+        const auto& items=activeItems(state_);const auto snapshotId=uid(sequence,"territory-component-snapshot");
+        state_.componentSnapshots.push_back({snapshotId,items});
+        for(const auto& item:items)if(contains(state_.selectedComponentKeys,item.key)) {
+            auto archived=item;archived.snapshotId=snapshotId;
+            state_.parts.push_back({uid(sequence,"territory-part"),Method::Components,item.geometry,std::move(archived)});
         }
-    } else next.parts.push_back({uid(sequence,"territory-part"),next.activeMethod,*next.currentGeometry,{}});
-    clear(next);return commit(std::move(next),sequence);
+    } else state_.parts.push_back({uid(sequence,"territory-part"),state_.activeMethod,*state_.currentGeometry,{}});
+    nextId_=sequence;clear(state_);return touch(true);
 }
 bool TerritorySelection::removePart(const std::string& id) {
-    auto next=state_;const auto found=std::find_if(next.parts.begin(),next.parts.end(),[&](const auto& part){return part.id==id;});
-    if(found==next.parts.end())return false;
-    next.parts.erase(found);pruneSnapshots(next);invalidateRiverPreparation(next);return commit(std::move(next),nextId_);
+    const auto found=std::find_if(state_.parts.begin(),state_.parts.end(),[&](const auto& part){return part.id==id;});
+    if(found==state_.parts.end())return false;
+    state_.parts.erase(found);pruneSnapshots(state_);invalidateRiverPreparation(state_);return touch(true);
 }
 bool TerritorySelection::undoPart(bool draftHasWork) {
     if(draftHasWork)return false;
     if(!state_.currentGeometry&&state_.parts.empty()&&state_.selectedComponentKeys.empty()&&state_.selectedCandidateIds.empty())return false;
-    auto next=state_;
-    if(next.activePhase==Phase::Candidate&&!next.selectedCandidateIds.empty()) {
-        next.selectedCandidateIds.pop_back();next.currentGeometry.reset();return commit(std::move(next),nextId_);
+    bool rebuildSources=false;
+    if(state_.activePhase==Phase::Candidate&&!state_.selectedCandidateIds.empty()) {
+        state_.selectedCandidateIds.pop_back();return touch();
     }
-    if(next.activePhase==Phase::Components&&!next.selectedComponentKeys.empty()) {
-        next.selectedComponentKeys.pop_back();next.currentGeometry.reset();
-    } else if(next.currentGeometry)next.currentGeometry.reset();
-    else if(!next.parts.empty()){next.parts.pop_back();pruneSnapshots(next);invalidateRiverPreparation(next);}
-    next.candidates.clear();next.selectedCandidateIds.clear();return commit(std::move(next),nextId_);
+    if(state_.activePhase==Phase::Components&&!state_.selectedComponentKeys.empty())state_.selectedComponentKeys.pop_back();
+    else if(state_.currentGeometry)state_.currentGeometry.reset();
+    else if(!state_.parts.empty()){state_.parts.pop_back();pruneSnapshots(state_);invalidateRiverPreparation(state_);rebuildSources=true;}
+    state_.candidates.clear();state_.selectedCandidateIds.clear();return touch(rebuildSources);
 }
 std::size_t TerritorySelection::partCount() const noexcept {
-    return state_.parts.size()+(state_.activePhase==Phase::Components?state_.selectedComponentKeys.size():state_.currentGeometry?1:0);
+    return state_.parts.size()+(state_.activePhase==Phase::Components?state_.selectedComponentKeys.size():state_.activePhase==Phase::Candidate&&!state_.selectedCandidateIds.empty()?1:0);
 }
 std::vector<std::string> TerritorySelection::donorIds() const {
     std::vector<std::string> result;
@@ -287,21 +322,23 @@ std::vector<std::string> TerritorySelection::donorIds() const {
     for(const auto& item:activeItems(state_))if(contains(state_.selectedComponentKeys,item.key))append(item.countryId);
     return result;
 }
-std::vector<TerritorySelectionRiverSliverContext> TerritorySelection::riverSliverContext() const {
+namespace {
+std::vector<TerritorySelectionRiverSliverContext> sliverContext(const State& state,const GeometryCancellation& cancelled) {
     struct Group {TerritorySelectionRiverSliverContext context;std::set<std::pair<std::string,std::string>> seen;std::vector<Geometry> cells;};
     std::vector<Group> groups;
     std::vector<TerritorySelectionComponent> selected;
-    for(const auto& part:state_.parts)if(part.component)selected.push_back(*part.component);
-    for(const auto& item:activeItems(state_))if(contains(state_.selectedComponentKeys,item.key))selected.push_back(item);
+    for(const auto& part:state.parts)if(part.component)selected.push_back(*part.component);
+    for(const auto& item:activeItems(state))if(contains(state.selectedComponentKeys,item.key))selected.push_back(item);
     for(const auto& item:selected) {
+        checkpoint(cancelled);
         if(!item.usesRiverBoundary)continue;
         auto group=std::find_if(groups.begin(),groups.end(),[&](const auto& value){
             return value.context.donorId==item.countryId&&value.context.polygonIndex==item.sourcePolygonIndex;});
         if(group==groups.end()) {groups.push_back({{item.countryId,item.sourcePolygonIndex,{}},{},{}});group=std::prev(groups.end());}
-        const auto* items=&activeItems(state_);
+        const auto* items=&activeItems(state);
         if(!item.snapshotId.empty()) {
-            const auto snapshot=std::find_if(state_.componentSnapshots.begin(),state_.componentSnapshots.end(),[&](const auto& value){return value.id==item.snapshotId;});
-            if(snapshot==state_.componentSnapshots.end())continue;
+            const auto snapshot=std::find_if(state.componentSnapshots.begin(),state.componentSnapshots.end(),[&](const auto& value){return value.id==item.snapshotId;});
+            if(snapshot==state.componentSnapshots.end())continue;
             items=&snapshot->items;
         }
         for(const auto& other:*items)if(other.countryId==item.countryId&&other.sourcePolygonIndex==item.sourcePolygonIndex
@@ -310,11 +347,31 @@ std::vector<TerritorySelectionRiverSliverContext> TerritorySelection::riverSlive
     std::vector<TerritorySelectionRiverSliverContext> result;
     for(auto& group:groups) {
         for(const auto& cell:group.cells) {
-            auto remaining=difference(cell,state_.combinedGeometry);
+            auto remaining=difference(cell,state.combinedGeometry,cancelled);
             if(remaining)group.context.unselectedGeometries.push_back(std::move(*remaining));
         }
         result.push_back(std::move(group.context));
     }
     return result;
+}
+}
+TerritorySelectionDerivedResult rebuildTerritorySelection(const TerritorySelectionState& input,
+    const GeometryCancellation& cancelled) {
+    TerritorySelectionDerivedResult result;result.inputRevision=input.revision;
+    try {
+        checkpoint(cancelled);auto next=input;prepare(next,cancelled);
+        auto context=sliverContext(next,cancelled);checkpoint(cancelled);
+        result.componentFeatures=std::move(next.componentFeatures);result.components=std::move(next.components);
+        result.baseSourceGeometry=std::move(next.baseSourceGeometry);result.workingSourceGeometry=std::move(next.workingSourceGeometry);
+        result.archivedGeometry=std::move(next.archivedGeometry);result.currentGeometry=std::move(next.currentGeometry);
+        result.combinedGeometry=std::move(next.combinedGeometry);result.remainingGeometry=std::move(next.remainingGeometry);
+        result.riverSliverContext=std::move(context);result.status=GeometryOperationStatus::Completed;
+    } catch(const CalculationCancelled&) {result.status=GeometryOperationStatus::Cancelled;}
+    catch(const std::exception& error) {result.status=GeometryOperationStatus::Failed;result.detail=error.what();}
+    return result;
+}
+std::vector<TerritorySelectionRiverSliverContext> TerritorySelection::riverSliverContext() const {
+    if(!derivedReady())throw std::logic_error("TERRITORY_SELECTION_CALCULATION_PENDING");
+    return state_.derivedRiverSliverContext;
 }
 }

@@ -194,6 +194,7 @@ void EditorController::refreshTypedScene() {
             interaction.editTarget=geometryEdit_->target;
             if(geometryEdit_->mergeIntent)interaction.selected=geometryEdit_->mergeIntent->donors;
             if(geometryEdit_->annexIntent)interaction.selected=geometryEdit_->annexIntent->donors;
+            if(geometryEdit_->territorySelection){interaction.selected.clear();for(const auto& source:geometryEdit_->territorySelection->state().sources)interaction.selected.push_back(source.ref);}
         }
         const auto* dirty=pendingSceneImpact_&&pendingSceneImpactRevision_==project_.revision()?
             &pendingSceneImpact_->sceneDirty:nullptr;

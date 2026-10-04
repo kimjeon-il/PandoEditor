@@ -56,7 +56,7 @@ add_library(pandoeditor_editor STATIC
     territoryselection.cpp territoryselection.h
     editorpresentation.cpp
     webimport.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
-    editorgeometry.cpp
+    editorgeometry.cpp editorterritoryselection.cpp
     editorhistorical.cpp
     editorprojectgeopackage.cpp
     editorgis.cpp
@@ -387,6 +387,24 @@ if(BUILD_TESTING)
     target_link_libraries(territory_selection_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME territory_selection_tests COMMAND territory_selection_tests -o -,txt)
     set_tests_properties(territory_selection_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(m972_selection_probe ../tests/m972_selection_probe.cpp)
+    target_link_libraries(m972_selection_probe PRIVATE pandoeditor_editor)
+    qt_add_resources(m972_selection_probe sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    find_program(PANDOEDITOR_M972_NODE_EXECUTABLE NAMES node)
+    if(PANDOEDITOR_M972_NODE_EXECUTABLE)
+        add_test(NAME m972_controller_web_differential
+            COMMAND "${CMAKE_COMMAND}" -E env
+                "PANDO_M972_SELECTION_PROBE=$<TARGET_FILE:m972_selection_probe>"
+                "${PANDOEDITOR_M972_NODE_EXECUTABLE}" --test
+                "${PROJECT_SOURCE_DIR}/tools/m97/native-selection.test.mjs")
+        set_tests_properties(m972_controller_web_differential PROPERTIES
+            TIMEOUT 180 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    endif()
+    add_executable(territorial_geometry_preview_tests ../tests/territorial_geometry_preview_tests.cpp)
+    target_link_libraries(territorial_geometry_preview_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME territorial_geometry_preview_tests COMMAND territorial_geometry_preview_tests -o -,txt)
+    set_tests_properties(territorial_geometry_preview_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(territorial_geometry_tests ../tests/territorial_geometry_tests.cpp)
     add_executable(m4_geometry_probe ../tests/m4_geometry_probe.cpp)
     target_link_libraries(m4_geometry_probe PRIVATE pandoeditor_editor)

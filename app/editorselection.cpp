@@ -235,7 +235,8 @@ QVariantMap EditorController::pickObjectScreen(double x,double y,double zoom) co
         candidates.erase(std::remove_if(candidates.begin(),candidates.end(),[&](const auto& ref){
             const auto found=index.objects.find(ref);
             return ref.domain!="territorial"||ref==geometryEdit_->target||found==index.objects.end()||
-                document.units.at(found->second).kind!=kind||objectLocked(document,index,ref);
+                document.units.at(found->second).kind!=kind||
+                (geometryEdit_->territorySelection&&!isRootGeneral(document,document.units.at(found->second)))||objectLocked(document,index,ref);
         }),candidates.end());
     }
     return pickObjectFromCandidates(candidates);

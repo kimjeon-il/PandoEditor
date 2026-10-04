@@ -25,7 +25,8 @@ jobs:
       - name: Verify offline pinned production oracle and comparator
         run: |
           mkdir -p evidence
-          node --test tools/m97/*.test.mjs | tee evidence/node-tests.txt
+          mapfile -t oracle_tests < <(find tools/m97 -maxdepth 1 -name '*.test.mjs' ! -name 'native-selection.test.mjs' | sort)
+          node --test "${oracle_tests[@]}" | tee evidence/node-tests.txt
       - name: Install native build dependencies
         run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
       - uses: jurplel/install-qt-action@v4

@@ -45,13 +45,21 @@ Rectangle {
     property point chooserPoint: Qt.point(0,0)
     property string mapHoverKey: ""
     readonly property bool geometryEditing: editor.geometryEditState.active === true
+    readonly property bool territorySelectionEditing: geometryEditing && editor.geometryEditState.territorySelection === true
+    readonly property bool territoryDrawing: territorySelectionEditing && editor.geometryEditState.stage === "selection" && editor.geometryEditState.selectionPhase === "drawing" && !editor.geometryEditState.confirmationKind && !editor.geometryEditState.applying
     focus: true
     Keys.onPressed: function(event) {
         if (!geometryEditing) return
         if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace) {
-            if (taskPanel.vertices && editor.geometryDeleteSelectedVertex()) event.accepted = true
+            if (territoryDrawing && editor.geometryUndoDraft()) event.accepted = true
+            else if (taskPanel.vertices && editor.geometryDeleteSelectedVertex()) event.accepted = true
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            if (editor.requestGeometryPreview()) event.accepted = true
+            if (territorySelectionEditing) {
+                const state=editor.geometryEditState
+                if (state.canFinishDraft) event.accepted=editor.geometryFinishTerritoryDraft()
+                else if (state.canAddPart) event.accepted=editor.geometryAddTerritoryPart()
+                else if (state.canAdvance) event.accepted=editor.geometryAdvanceStage()
+            } else if (editor.requestGeometryPreview()) event.accepted = true
         } else if (event.key === Qt.Key_Escape) {
             editor.geometryBack()
             event.accepted = true
@@ -406,8 +414,22 @@ Rectangle {
         acceptedButtons: Qt.LeftButton
         onTapped: function(eventPoint) {
             view.forceActiveFocus()
-            if (editor.geometryEditState.stage === "setup" || editor.geometryEditState.previewReady) return
-            if (editor.geometryEditState.choosingProviders) {
+            const state=editor.geometryEditState
+            if (view.territorySelectionEditing) {
+                if (state.applying || state.confirmationKind || state.stage === "review") return
+                if (state.choosingProviders) {
+                    editor.geometryToggleProvider(editor.pickObjectScreen(eventPoint.position.x,eventPoint.position.y,view.globeMode?view.globeZoom:view.zoom))
+                    return
+                }
+                if (state.stage !== "selection") return
+                const x=(eventPoint.position.x-view.originX)/view.mapScale
+                const y=(eventPoint.position.y-view.originY)/view.mapScale
+                if (state.selectionPhase === "drawing") editor.geometryAddPoint(x,y,(editor.mobileMode?18:10)/view.mapScale)
+                else if (state.selectionPhase === "candidates" || state.selectionPhase === "components") editor.geometryPickTerritorySelection(x,y)
+                return
+            }
+            if (state.stage === "setup" || state.previewReady) return
+            if (state.choosingProviders) {
                 editor.geometryToggleProvider(editor.pickObjectScreen(eventPoint.position.x,eventPoint.position.y,view.globeMode?view.globeZoom:view.zoom))
                 return
             }
@@ -417,7 +439,7 @@ Rectangle {
             else if (editor.geometryEditState.tool !== "move") editor.geometrySelectNearest(x,y,(editor.mobileMode?18:10)/view.mapScale)
         }
         onDoubleTapped: function(eventPoint) {
-            if (editor.geometryEditState.stage !== "setup" && !editor.geometryEditState.choosingProviders && editor.geometryEditState.tool !== "draw" && editor.geometryEditState.tool !== "move")
+            if (!view.territorySelectionEditing && editor.geometryEditState.stage !== "setup" && !editor.geometryEditState.previewReady && !editor.geometryEditState.choosingProviders && editor.geometryEditState.tool !== "draw" && editor.geometryEditState.tool !== "move")
                 editor.geometryInsertNearest((eventPoint.position.x-view.originX)/view.mapScale,
                                              (eventPoint.position.y-view.originY)/view.mapScale,
                                              (editor.mobileMode?18:10)/view.mapScale)
@@ -451,7 +473,7 @@ Rectangle {
     }
     DragHandler {
         id: geometryDrag
-        enabled: view.geometryEditing && editor.geometryEditState.tool !== "move" && editor.geometryEditState.selectedVertex >= 0 && !objectChooser.visible
+        enabled: view.geometryEditing && (!view.territorySelectionEditing || view.territoryDrawing) && editor.geometryEditState.tool !== "move" && editor.geometryEditState.selectedVertex >= 0 && !objectChooser.visible
         target: null
         maximumPointCount: 1
         onActiveChanged: {
@@ -531,19 +553,24 @@ Rectangle {
             required property var modelData
             anchors.fill: parent
             z: editor.layers.length + 5
+            readonly property string selectionKind: modelData.selectionKind || ""
+            readonly property string selectionId: modelData.id || modelData.key || ""
+            readonly property bool selectionPicked: modelData.selected === true
+            objectName: selectionId ? "geometrySelectionOverlay_"+selectionKind+"_"+selectionId : "geometryDraftOverlay"
             Shape {
                 x: view.originX; y: view.originY
                 width: editor.mapWidth; height: editor.mapHeight
                 transform: Scale { xScale: view.mapScale; yScale: view.mapScale }
                 ShapePath {
-                    strokeColor: modelData.created ? "#059669" : "#d97706"; strokeWidth: 2 / view.mapScale
-                    fillColor: modelData.hole || modelData.line ? "#00000000" : modelData.created ? "#6010b981" : "#60f59e0b"
+                    strokeColor: modelData.selectionKind === "part" ? "#7c3aed" : modelData.selectionKind === "candidate" || modelData.selectionKind === "component" ? (modelData.selected ? "#059669" : "#2563eb") : modelData.created ? "#059669" : "#d97706"
+                    strokeWidth: (modelData.selected ? 3 : 2) / view.mapScale
+                    fillColor: modelData.hole || modelData.line ? "#00000000" : modelData.selectionKind === "part" ? "#407c3aed" : modelData.selectionKind === "candidate" || modelData.selectionKind === "component" ? (modelData.selected ? "#7010b981" : "#202563eb") : modelData.created ? "#6010b981" : "#60f59e0b"
                     fillRule: ShapePath.OddEvenFill; joinStyle: ShapePath.RoundJoin
                     PathSvg { path: modelData.path }
                 }
             }
             Repeater {
-                model: editor.geometryEditState.choosingProviders || editor.geometryEditState.stage === "setup" || editor.geometryEditState.previewReady ? [] : modelData.vertices
+                model: view.territorySelectionEditing ? (view.territoryDrawing ? (modelData.vertices || []) : []) : editor.geometryEditState.choosingProviders || editor.geometryEditState.stage === "setup" || editor.geometryEditState.previewReady ? [] : modelData.vertices
                 delegate: Rectangle {
                     required property var modelData
                     x: view.originX + modelData.x * view.mapScale - width / 2
@@ -595,14 +622,18 @@ Rectangle {
         readonly property bool collapsed:view.width<800&&sheetLevel===0
         Behavior on height {enabled:!geometryHandle.dragging;NumberAnimation {duration:170;easing.type:Easing.BezierSpline;easing.bezierCurve:[.25,.1,.25,1,1,1]}}
         readonly property bool busy: taskState.calculating === true
-        readonly property bool review: taskState.previewReady === true
+        readonly property bool rootSelection: taskState.territorySelection === true
+        readonly property bool confirmation: rootSelection && !!taskState.confirmationKind
+        readonly property bool review: taskState.stage === "review"
         readonly property bool setup: taskState.stage === "setup"
         readonly property bool picking: taskState.choosingProviders === true
-        readonly property bool editable: taskState.active === true && !busy && !review && !setup && !picking
-        readonly property bool vertices: editable && ["edit","draw","annex","boundary","coast"].indexOf(taskState.tool)>=0
+        readonly property bool editable: taskState.active === true && !busy && !review && !setup && !picking && !confirmation
+        readonly property bool drawing: rootSelection && !setup && !review && taskState.selectionPhase === "drawing"
+        readonly property bool selectionControls: rootSelection && !setup && !review && !confirmation && !taskState.applying
+        readonly property bool vertices: !rootSelection && editable && ["edit","draw","annex","boundary","coast"].indexOf(taskState.tool)>=0
         readonly property string taskName: taskState.creating === true ? "새 객체 그리기" : ({edit:"모양 편집",draw:"다시 그리기",move:"객체 이동",merge:"영역 병합",annex:"영역 편입",split:"영역 분할",boundary:"공유 경계 편집",coast:"해안선 편집"})[taskState.tool] || "지도 편집"
-        readonly property string stageName: busy ? "계산 중" : review ? "3단계 · 결과 검토" : setup ? "1단계 · 작업 준비" : picking ? "2단계 · 제공 영역 선택" : "2단계 · 지도 편집"
-        readonly property string instruction: busy ? "결과를 계산하고 있습니다. 이전을 누르면 계산을 중단하고 초안으로 돌아갑니다." : review ? "지도에 표시된 결과를 검토한 뒤 확정하세요. 이전을 누르면 초안을 이어서 편집합니다." : setup ? "대상과 작업을 확인한 뒤 다음 단계로 진행하세요." : picking ? "대상은 고정됩니다. 지도에서 같은 종류의 제공 영역을 선택하거나 목록에서 제외하세요." : taskState.tool === "split" ? "영역을 가로지르는 절단선을 지도에서 그리세요. 새 객체로 남길 결과를 선택할 수 있습니다." : taskState.tool === "move" ? "지도에서 객체를 끌어 위치를 옮기세요." : taskState.tool === "draw" || taskState.tool === "annex" ? "지도에 점을 추가해 영역을 그린 뒤 미리보기를 누르세요." : taskState.tool === "merge" ? "선택한 제공 영역과 대상의 병합 결과를 미리보기로 확인하세요." : "지도에서 점을 끌어 편집하세요. 변을 두 번 누르면 점을 추가합니다."
+        readonly property string stageName: rootSelection ? (review ? "3단계 · 결과 검토" : setup ? "1단계 · 제공 영역 선택" : "2단계 · 영역 선택") : busy ? "계산 중" : review ? "3단계 · 결과 검토" : setup ? "1단계 · 작업 준비" : picking ? "2단계 · 제공 영역 선택" : "2단계 · 지도 편집"
+        readonly property string instruction: rootSelection ? (setup ? "지도에서 가져올 제공 영역을 선택한 뒤 다음을 누르세요." : review ? "편입 결과를 검토한 뒤 확정하세요. 이전을 누르면 선택을 이어갑니다." : !taskState.activeMethod ? "절단선, 다각형, 구성 영역 중 선택 방법을 고르세요." : taskState.selectionPhase === "drawing" ? (taskState.activeMethod === "line" ? "제공 영역을 가로지르는 선을 그린 뒤 그리기 완료를 누르세요." : "지도에 다각형을 그린 뒤 그리기 완료를 누르세요.") : taskState.selectionPhase === "candidates" ? "지도나 목록에서 편입할 영역을 선택하세요. 미리보기가 준비되면 선택을 보관하세요." : "지도나 목록에서 구성 영역을 선택하세요. 선택을 보관하거나 결과를 검토할 수 있습니다.") : busy ? "결과를 계산하고 있습니다. 이전을 누르면 계산을 중단하고 초안으로 돌아갑니다." : review ? "지도에 표시된 결과를 검토한 뒤 확정하세요. 이전을 누르면 초안을 이어서 편집합니다." : setup ? "대상과 작업을 확인한 뒤 다음 단계로 진행하세요." : picking ? "대상은 고정됩니다. 지도에서 같은 종류의 제공 영역을 선택하거나 목록에서 제외하세요." : taskState.tool === "split" ? "영역을 가로지르는 절단선을 지도에서 그리세요. 새 객체로 남길 결과를 선택할 수 있습니다." : taskState.tool === "move" ? "지도에서 객체를 끌어 위치를 옮기세요." : taskState.tool === "draw" || taskState.tool === "annex" ? "지도에 점을 추가해 영역을 그린 뒤 미리보기를 누르세요." : taskState.tool === "merge" ? "선택한 제공 영역과 대상의 병합 결과를 미리보기로 확인하세요." : "지도에서 점을 끌어 편집하세요. 변을 두 번 누르면 점을 추가합니다."
         onVisibleChanged: if (!visible) minimized=false
         MouseArea { anchors.fill: parent; onWheel: wheel => wheel.accepted=true }
         ColumnLayout {
@@ -636,19 +667,93 @@ Rectangle {
                             required property var modelData
                             Layout.fillWidth:true
                             Label { Layout.fillWidth:true; text:modelData.name; textFormat:Text.PlainText; color:taskPanel.palette.text; wrapMode:Text.Wrap }
-                            UiButton {outlined:true; objectName:"geometryRemoveProvider_"+modelData.id; text:"제외"; visible:taskPanel.picking && !taskPanel.busy && !taskPanel.review; onClicked:editor.geometryToggleProvider(modelData) }
+                            UiButton {outlined:true; objectName:"geometryRemoveProvider_"+modelData.id; text:"제외"; visible:taskPanel.picking && !taskPanel.review; enabled:!taskPanel.confirmation && !taskPanel.taskState.applying && (taskPanel.rootSelection || !taskPanel.busy); onClicked:editor.geometryToggleProvider(modelData) }
                         }
                     }
                     Label { objectName:"geometryTaskInstruction"; Layout.fillWidth:true; text:taskPanel.instruction; color:taskPanel.palette.text; wrapMode:Text.Wrap }
                     Label { objectName:"geometryTaskError"; visible:!!taskPanel.taskState.error; Layout.fillWidth:true; text:taskPanel.taskState.error || ""; textFormat:Text.PlainText; color:"#d44848"; wrapMode:Text.Wrap }
                     BusyIndicator { visible:taskPanel.busy; running:visible; Layout.alignment:Qt.AlignHCenter }
+                    Label {
+                        objectName:"geometrySelectionStatus"; visible:taskPanel.rootSelection; Layout.fillWidth:true
+                        text:taskPanel.taskState.applying ? "결과를 적용하고 있습니다." : taskPanel.taskState.selectionPending ? "선택 영역을 계산하고 있습니다." : taskPanel.taskState.previewPending ? "편입 미리보기를 계산하고 있습니다." : taskPanel.taskState.previewBlocking ? "미리보기에 해결할 문제가 있습니다." : taskPanel.taskState.previewReady ? "미리보기가 준비되었습니다." : ""
+                        color:taskPanel.palette.muted; wrapMode:Text.Wrap
+                    }
+                    Flow {
+                        visible:taskPanel.rootSelection && !taskPanel.setup && !taskPanel.review
+                        Layout.fillWidth:true; spacing:4
+                        Repeater {
+                            model:[{id:"line",label:"절단선"},{id:"polygon",label:"다각형"},{id:"components",label:"구성 영역"}]
+                            UiButton {
+                                required property var modelData
+                                objectName:"geometryMethod_"+modelData.id; outlined:true
+                                text:modelData.label; selected:taskPanel.taskState.activeMethod===modelData.id
+                                enabled:!taskPanel.confirmation && !taskPanel.taskState.applying
+                                onClicked:editor.geometrySelectTerritoryMethod(modelData.id)
+                            }
+                        }
+                    }
+                    ColumnLayout {
+                        visible:taskPanel.confirmation; Layout.fillWidth:true
+                        Label {objectName:"geometryTerritoryChangeMessage";Layout.fillWidth:true;wrapMode:Text.Wrap;color:taskPanel.palette.text;text:taskPanel.taskState.confirmationKind==="settings"?"제공 영역을 바꾸면 현재 그리기와 보관한 선택이 모두 초기화됩니다. 변경할까요?":"선택 방법을 바꾸면 현재 그리기와 선택이 사라집니다. 보관한 영역은 유지됩니다. 변경할까요?"}
+                        Flow {
+                            Layout.fillWidth:true;spacing:4
+                            UiButton {objectName:"geometryCancelTerritoryChange";outlined:true;text:"유지";onClicked:editor.geometryCancelTerritoryChange()}
+                            UiButton {objectName:"geometryConfirmTerritoryChange";outlined:true;text:"변경";onClicked:editor.geometryConfirmTerritoryChange()}
+                        }
+                    }
+                    ColumnLayout {
+                        visible:taskPanel.rootSelection && !taskPanel.setup && !taskPanel.review && taskPanel.taskState.selectionPhase==="candidates"
+                        Layout.fillWidth:true
+                        Label {text:"선택 가능한 영역";color:taskPanel.palette.muted}
+                        Repeater {
+                            model:taskPanel.taskState.candidates || []
+                            UiButton {
+                                required property var modelData
+                                objectName:"geometryCandidate_"+modelData.id;Layout.fillWidth:true;outlined:true
+                                text:(modelData.selected ? "✓ " : "")+(modelData.label || modelData.name || modelData.id)
+                                selected:modelData.selected===true;enabled:taskPanel.selectionControls
+                                onClicked:editor.geometryToggleTerritoryCandidate(modelData.id)
+                            }
+                        }
+                    }
+                    ColumnLayout {
+                        visible:taskPanel.rootSelection && !taskPanel.setup && !taskPanel.review && taskPanel.taskState.selectionPhase==="components"
+                        Layout.fillWidth:true
+                        Label {text:"구성 영역";color:taskPanel.palette.muted}
+                        Repeater {
+                            model:taskPanel.taskState.components || []
+                            UiButton {
+                                required property var modelData
+                                objectName:"geometryComponent_"+modelData.key;Layout.fillWidth:true;outlined:true
+                                text:(modelData.selected ? "✓ " : "")+(modelData.label || modelData.name || modelData.key)
+                                selected:modelData.selected===true;enabled:taskPanel.selectionControls
+                                onClicked:editor.geometryToggleTerritoryComponent(modelData.key)
+                            }
+                        }
+                        Label {objectName:"geometryRiverStatus";Layout.fillWidth:true;wrapMode:Text.Wrap;text:taskPanel.taskState.riverError || "하천 경계 선택은 준비 중입니다.";color:taskPanel.palette.muted}
+                    }
+                    ColumnLayout {
+                        visible:taskPanel.rootSelection && (taskPanel.taskState.parts || []).length>0
+                        Layout.fillWidth:true
+                        Label {text:"보관한 영역 · "+(taskPanel.taskState.parts || []).length;color:taskPanel.palette.muted}
+                        Repeater {
+                            model:taskPanel.taskState.parts || []
+                            RowLayout {
+                                required property var modelData
+                                objectName:"geometryPart_"+modelData.id;Layout.fillWidth:true
+                                Label {Layout.fillWidth:true;text:modelData.label || modelData.name || modelData.id;textFormat:Text.PlainText;wrapMode:Text.Wrap;color:taskPanel.palette.text}
+                                UiButton {objectName:"geometryRemovePart_"+modelData.id;outlined:true;text:"제외";visible:!taskPanel.setup&&!taskPanel.review;enabled:taskPanel.selectionControls;onClicked:editor.geometryRemoveTerritoryPart(modelData.id)}
+                            }
+                        }
+                    }
                     ComboBox { objectName:"splitResultChoice"; Layout.fillWidth:true; visible:taskPanel.taskState.tool==="split"; model:["작은 부분을 새 객체로","결과 1을 새 객체로","결과 2를 새 객체로"]; currentIndex:taskPanel.taskState.splitChoice===undefined || taskPanel.taskState.splitChoice<0 ? 0 : 2-taskPanel.taskState.splitChoice; enabled:!taskPanel.busy; onActivated:editor.geometryChooseSplitResult(currentIndex-1) }
                     Flow {
                         Layout.fillWidth:true; spacing:4
                         UiButton {outlined:true; objectName:"geometryMoveObject"; visible:taskPanel.editable && taskPanel.taskState.target && taskPanel.taskState.target.domain!=="territorial" && taskPanel.taskState.tool!=="draw"; text:taskPanel.taskState.tool==="move"?"점 편집":"객체 이동"; onClicked:editor.geometrySetMoveMode(taskPanel.taskState.tool!=="move") }
                         UiButton {outlined:true; objectName:"geometryDeleteVertex"; visible:taskPanel.vertices; text:"점 삭제"; enabled:taskPanel.taskState.selectedVertex>=0; onClicked:editor.geometryDeleteSelectedVertex() }
-                        UiButton {outlined:true; objectName:"geometryUndoDraft"; visible:taskPanel.editable && taskPanel.taskState.tool!=="merge"; text:"초안 되돌리기"; enabled:taskPanel.taskState.canUndo===true; onClicked:editor.geometryUndoDraft() }
-                        UiButton {outlined:true; objectName:"geometryRedoDraft"; visible:taskPanel.editable && taskPanel.taskState.canRedo===true; text:"다시 실행"; onClicked:editor.geometryRedoDraft() }
+                        UiButton {outlined:true; objectName:"geometryUndoDraft"; visible:taskPanel.rootSelection ? taskPanel.drawing && !taskPanel.confirmation : taskPanel.editable && taskPanel.taskState.tool!=="merge"; text:"초안 되돌리기"; enabled:taskPanel.rootSelection ? taskPanel.taskState.canUndoDraft===true : taskPanel.taskState.canUndo===true; onClicked:editor.geometryUndoDraft() }
+                        UiButton {outlined:true; objectName:"geometryUndoTerritoryPart";visible:taskPanel.selectionControls && (!taskPanel.drawing || taskPanel.taskState.canUndoDraft!==true);text:"선택 되돌리기";enabled:taskPanel.taskState.canUndo===true;onClicked:editor.geometryUndoTerritoryPart()}
+                        UiButton {outlined:true; objectName:"geometryRedoDraft"; visible:(taskPanel.rootSelection ? taskPanel.drawing && !taskPanel.confirmation : taskPanel.editable) && taskPanel.taskState.canRedo===true; text:"다시 실행"; onClicked:editor.geometryRedoDraft() }
                     }
                 }
             }
@@ -658,9 +763,12 @@ Rectangle {
                 Layout.fillWidth:true; spacing:4
                 UiButton {outlined:true; objectName:"geometryBack"; text:"이전"; onClicked:editor.geometryBack() }
                 UiButton {outlined:true; objectName:"geometryCancel"; text:"취소"; onClicked:editor.cancelGeometryEdit() }
-                UiButton {outlined:true; objectName:"geometryAdvance"; visible:taskPanel.setup || (taskPanel.taskState.tool==="annex" && taskPanel.picking); enabled:!taskPanel.busy && (taskPanel.setup || (taskPanel.taskState.providers || []).length>0); text:"다음"; onClicked:editor.geometryAdvanceStage() }
-                UiButton {outlined:true; objectName:"geometryPreview"; visible:!taskPanel.review && !taskPanel.setup && !(taskPanel.taskState.tool==="annex" && taskPanel.picking); text:taskPanel.busy?"계산 중":"미리보기"; enabled:!taskPanel.busy && (taskPanel.taskState.tool!=="merge" || (taskPanel.taskState.providers || []).length>0); onClicked:editor.requestGeometryPreview() }
-                UiButton {outlined:true; objectName:"geometryConfirm"; visible:taskPanel.review; text:"확정"; enabled:taskPanel.review && !taskPanel.busy; onClicked:editor.confirmGeometryEdit() }
+                UiButton {outlined:true; objectName:"geometryAdvance"; visible:taskPanel.setup || (!taskPanel.rootSelection && taskPanel.taskState.tool==="annex" && taskPanel.picking); enabled:taskPanel.rootSelection ? taskPanel.taskState.canAdvance===true : !taskPanel.busy && (taskPanel.setup || (taskPanel.taskState.providers || []).length>0); text:"다음"; onClicked:editor.geometryAdvanceStage() }
+                UiButton {outlined:true; objectName:"geometryFinishDraft";visible:taskPanel.drawing && !taskPanel.confirmation;text:"그리기 완료";enabled:taskPanel.taskState.canFinishDraft===true;onClicked:editor.geometryFinishTerritoryDraft()}
+                UiButton {outlined:true; objectName:"geometryArchivePart";visible:taskPanel.selectionControls && ["candidates","components"].indexOf(taskPanel.taskState.selectionPhase)>=0;text:"선택 보관";enabled:taskPanel.taskState.canAddPart===true;onClicked:editor.geometryAddTerritoryPart()}
+                UiButton {outlined:true; objectName:"geometryReview";visible:taskPanel.selectionControls;text:"결과 검토";enabled:taskPanel.taskState.canAdvance===true;onClicked:editor.geometryAdvanceStage()}
+                UiButton {outlined:true; objectName:"geometryPreview"; visible:!taskPanel.rootSelection && !taskPanel.review && !taskPanel.setup && !(taskPanel.taskState.tool==="annex" && taskPanel.picking); text:taskPanel.busy?"계산 중":"미리보기"; enabled:!taskPanel.busy && (taskPanel.taskState.tool!=="merge" || (taskPanel.taskState.providers || []).length>0); onClicked:editor.requestGeometryPreview() }
+                UiButton {outlined:true; objectName:"geometryConfirm"; visible:taskPanel.review; text:"확정"; enabled:taskPanel.rootSelection ? taskPanel.taskState.canApply===true : taskPanel.review && !taskPanel.busy; onClicked:editor.confirmGeometryEdit() }
             }
         }
     }

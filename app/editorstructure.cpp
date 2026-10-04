@@ -77,7 +77,14 @@ bool EditorController::beginMergeSelection(){
 }
 bool EditorController::beginAnnexGeometry(){
     const auto primary=selection_.primary();if(!primary||!selectedUnit()||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
-    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,{"Polygon",{}, {}, {}},{},{},0,0,-1,QStringLiteral("annex"),{}};geometryEdit_->annexIntent=AnnexTerritoryIntent{*primary,{}, {}};geometryEdit_->choosingProviders=true;emit geometryEditChanged();emit visualChanged();return true;
+    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,{"Polygon",{}, {}, {}},{},{},0,0,-1,QStringLiteral("annex"),{}};geometryEdit_->annexIntent=AnnexTerritoryIntent{*primary,{}, {}};
+    if(isRootGeneral(project_.document(),*selectedUnit())) {
+        geometryEdit_->territorySelection.emplace(TerritorySelectionKind::Annex);
+        geometryEdit_->annexIntent.reset();
+        geometryEdit_->generation=++nextGeometrySession_;
+        geometryEdit_->stage="setup";
+    }
+    geometryEdit_->choosingProviders=true;emit geometryEditChanged();emit visualChanged();return true;
 }
 bool EditorController::beginSplitGeometry(){
     const auto primary=selection_.primary();const auto unit=selectedUnit();if(!primary||!unit||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;

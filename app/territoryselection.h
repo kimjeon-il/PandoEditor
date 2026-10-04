@@ -1,5 +1,6 @@
 #pragma once
-#include <pandoeditor/document.h>
+#include <pandoeditor/geometryoperations.h>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -7,9 +8,9 @@
 namespace pandoeditor {
 enum class TerritorySelectionKind { Annex, BoundedCreation };
 enum class TerritorySelectionMethod { None, Line, Polygon, Components };
-enum class TerritorySelectionPhase { None, Drawing, Candidate, Components };
+enum class TerritorySelectionPhase { None, Drawing, Candidate, Components, Result };
 enum class TerritoryMethodChange { Activated, NeedsConfirmation, AwaitingComponentArchive, Rejected };
-enum class TerritoryArchiveReadiness { Ready, NoCurrentGeometry, InvalidPhase, RiverComponentsPending, BoundedSourceExhausted };
+enum class TerritoryArchiveReadiness { Ready, CalculationPending, NoCurrentGeometry, InvalidPhase, RiverComponentsPending, BoundedSourceExhausted };
 enum class TerritoryRiverStatus { Idle, Pending, Ready };
 struct TerritorySelectionSource {
     ObjectRef ref;
@@ -51,6 +52,10 @@ struct TerritorySelectionRiverSliverContext {
     std::vector<Geometry> unselectedGeometries;
 };
 struct TerritorySelectionState {
+    // Monotonic for this selection value, including source resets. The owner
+    // additionally checks its session/project identity before installing results.
+    std::uint64_t revision=0;
+    std::optional<std::uint64_t> derivedRevision;
     TerritorySelectionKind kind=TerritorySelectionKind::Annex;
     TerritorySelectionMethod activeMethod=TerritorySelectionMethod::None;
     TerritorySelectionMethod requestedMethod=TerritorySelectionMethod::None;
@@ -68,7 +73,36 @@ struct TerritorySelectionState {
     bool useRiverBoundaries=false;
     TerritoryRiverStatus riverStatus=TerritoryRiverStatus::Idle;
     std::string riverPreparationKey;
+    std::vector<TerritorySelectionRiverSliverContext> derivedRiverSliverContext;
 };
+// Calculation-only values. Semantic IDs, selections, parts and confirmations
+// never travel back from the worker, so installing a result cannot lose input.
+struct TerritorySelectionDerivedResult {
+    std::uint64_t inputRevision=0;
+    GeometryOperationStatus status=GeometryOperationStatus::Failed;
+    std::string detail;
+    std::vector<TerritorySelectionComponentFeature> componentFeatures;
+    std::vector<TerritorySelectionComponent> components;
+    std::optional<Geometry> baseSourceGeometry,workingSourceGeometry,archivedGeometry;
+    std::optional<Geometry> currentGeometry,combinedGeometry,remainingGeometry;
+    std::vector<TerritorySelectionRiverSliverContext> riverSliverContext;
+    bool succeeded() const noexcept {return status==GeometryOperationStatus::Completed;}
+};
+struct TerritorySelectionDraftResult {
+    GeometryOperationStatus status=GeometryOperationStatus::Failed;
+    std::string detail;
+    std::vector<TerritorySelectionCandidate> candidates;
+    bool succeeded() const noexcept {
+        return status==GeometryOperationStatus::Completed||status==GeometryOperationStatus::Empty;
+    }
+};
+// Run in the calculation worker. Cancellation is cooperative between polygons
+// and clipping operations, not interruption of a synchronous clipper call.
+TerritorySelectionDerivedResult rebuildTerritorySelection(const TerritorySelectionState&,
+    const GeometryCancellation& cancelled={});
+// Produces exactly one drawn candidate, even for disconnected transfer.
+TerritorySelectionDraftResult prepareTerritoryPolygonCandidates(const Geometry& drawn,
+    const Geometry& workingSource,const Geometry& target,const GeometryCancellation& cancelled={});
 // A value for integration into the existing GeometryEditSession. It owns no project,
 // history, stages, worker identity, preview or UI. Inputs/outputs are copied
 // geometry snapshots; const access prevents mutation of the original source.
@@ -79,14 +113,18 @@ public:
     explicit TerritorySelection(TerritorySelectionKind kind=TerritorySelectionKind::Annex);
     const TerritorySelectionState& state() const noexcept {return state_;}
     const std::string& lastError() const noexcept {return lastError_;}
+    bool derivedReady() const noexcept {return state_.derivedRevision==state_.revision;}
+    bool installDerived(TerritorySelectionDerivedResult);
+    // Mutations change only intent and invalidate caches; call rebuild/install
+    // asynchronously before consuming derived geometry or archiving.
     bool resetSources(std::vector<TerritorySelectionSource>);
     TerritoryMethodChange requestMethod(TerritorySelectionMethod,bool draftHasWork=false);
     bool confirmMethodChange();
     bool cancelMethodChange();
+    void cancelRequestedMethod() noexcept;
     bool clearCurrent();
+    bool finishArchivedDraft();
     bool setCandidates(std::vector<TerritorySelectionCandidate>);
-    // Produces exactly one drawn candidate, even for disconnected transfer.
-    bool setDrawnPolygon(const Geometry& drawn,const Geometry& target);
     bool toggleCandidate(const std::string& id);
     bool toggleComponent(const std::string& key);
     bool toggleRiverBoundaries(bool enabled);
@@ -103,13 +141,13 @@ public:
     bool undoPart(bool draftHasWork=false);
     std::size_t partCount() const noexcept;
     std::vector<std::string> donorIds() const;
-    // Throws on kernel failure, so a caller must reject the preview rather than
-    // silently interpreting a failed provenance calculation as an empty list.
+    // Reads the installed worker result; throws while derived data is pending.
+    // No clipping is performed on the owner thread.
     std::vector<TerritorySelectionRiverSliverContext> riverSliverContext() const;
 private:
     TerritorySelectionState state_;
     std::uint64_t nextId_=0;
     std::string lastError_;
-    bool commit(TerritorySelectionState next,std::uint64_t nextId);
+    bool touch(bool rebuildSources=false);
 };
 }

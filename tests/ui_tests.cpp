@@ -1,6 +1,7 @@
 #include "ui_navigation.h"
 #include "editorcontroller.h"
 #include "windowsframe.h"
+#include <pandoeditor/geometrypredicates.h>
 #include "gpumapitem.h"
 #include "maprenderitem.h"
 #include <QGuiApplication>
@@ -95,6 +96,273 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void annexSelectionPointerFlow_data() {
+        QTest::addColumn<int>("width");
+        QTest::newRow("desktop") << 1100;
+        QTest::newRow("mobile-360") << 360;
+    }
+    void annexSelectionPointerFlow() {
+        QFETCH(int,width);
+        using namespace pandoeditor;
+        QTemporaryDir dir;
+        ProjectDocument document({
+            {"A","Target",{{{{0,0},{10,0},{10,10},{0,10},{0,0}}}},0x112233},
+            {"B","Donor",{{{{10,0},{20,0},{20,10},{10,10},{10,0}}}},0x445566}},
+            {{"countries","Countries"}});
+        Project project;project.replace(document);
+        QFile file(dir.filePath("annex-selection.json"));QVERIFY(file.open(QIODevice::WriteOnly));
+        QVERIFY(file.write(projectcodec::encode(project))>0);file.close();
+        EditorControllerConfig config;config.mobileMode=width==360;config.bootstrapWorld=false;config.autosaveEnabled=false;
+        EditorController editor(config);QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
+        editor.selectCountry("A");QVERIFY(editor.setProjectionMode("flat"));
+        QQmlApplicationEngine engine;QStringList warnings;
+        connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& error:errors)warnings<<error.toString();});
+        engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+        window->resize(width,760);exposeForTest(window);
+        auto* map=visualItem(window->contentItem(),"mapView");QVERIFY(map);
+        MapProjection projection;projection.rebuild(document);
+        // Place the donor in the uncovered map area, above the mobile sheet.
+        const auto left=projection.project({10,5}),right=projection.project({20,5});
+        const double desiredWidth=width==360?200:300;
+        QVERIFY(editor.zoomMapCameraAt(desiredWidth/(std::abs(right.x-left.x)*editor.mapViewState().value("mapScale").toDouble()),map->width()/2,map->height()/2));
+        const auto center=projection.project({15,5});auto camera=editor.mapViewState();
+        editor.beginMapCameraPan();
+        QVERIFY(editor.updateMapCameraPan((width==360?180:300)-(camera.value("originX").toDouble()+center.x*camera.value("mapScale").toDouble()),
+                                          (width==360?190:300)-(camera.value("originY").toDouble()+center.y*camera.value("mapScale").toDouble())));
+        editor.endMapCameraPan();
+        const auto before=editor.documentBytes();const auto revision=editor.revision();
+        auto unchanged=[&]{return editor.documentBytes()==before&&editor.revision()==revision&&!editor.canUndo();};
+        auto click=[&](const QString& name){return clickControl(window,name)&&(name=="geometryConfirm"||unchanged());};
+        auto tap=[&](Point geographic){
+            const auto projected=projection.project(geographic);const auto state=editor.mapViewState();
+            const QPointF local(state.value("originX").toDouble()+projected.x*state.value("mapScale").toDouble(),
+                                state.value("originY").toDouble()+projected.y*state.value("mapScale").toDouble());
+            QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,map->mapToScene(local).toPoint());QTest::qWait(80);
+            QVERIFY(unchanged());
+        };
+        QVERIFY(click("editorAnnexAction"));
+        QVERIFY(unchanged());
+        tap({15,5});
+        QTRY_COMPARE(editor.geometryEditState().value("providers").toList().size(),1);
+        QVERIFY(click("geometryAdvance"));QVERIFY(unchanged());
+        auto* line=visualItem(window->contentItem(),"geometryMethod_line");
+        QVERIFY2(line&&line->isVisible(),"Root annex must expose line/polygon/components method controls");
+        QVERIFY(click("geometryMethod_line"));
+        QCOMPARE(editor.geometryEditState().value("activeMethod").toString(),QString("line"));
+        tap({9,5});tap({21,5});QVERIFY(unchanged());
+        QVERIFY(click("geometryFinishDraft"));
+        QTRY_COMPARE_WITH_TIMEOUT(editor.geometryEditState().value("candidates").toList().size(),2,10000);
+        QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("previewReady").toBool(),10000);
+        QCOMPARE(editor.geometryEditState().value("stage").toString(),QString("selection"));
+        QVERIFY(!visualItem(window->contentItem(),"geometryConfirm")->isVisible());
+        for(const auto& candidate:editor.geometryEditState().value("candidates").toList()) {
+            const auto row=candidate.toMap();
+            auto* overlay=visualItem(map,"geometrySelectionOverlay_candidate_"+row.value("id").toString());
+            QVERIFY(overlay&&overlay->isVisible());
+            QCOMPARE(overlay->property("selectionPicked").toBool(),row.value("selected").toBool());
+        }
+        QVERIFY(capture(window).save(QDir::tempPath()+"/m972-ui-"+QString::number(width)+"-candidates.png"));
+        auto candidates=editor.geometryEditState().value("candidates").toList();
+        QCOMPARE(editor.geometryEditState().value("selectedCandidateIds").toList().size(),1);
+        // A ready preview must not swallow candidate taps. Both halves can be selected.
+        tap({15,2});tap({15,8});
+        QCOMPARE(editor.geometryEditState().value("selectedCandidateIds").toList().size(),1);
+        candidates=editor.geometryEditState().value("candidates").toList();
+        const auto selected=editor.geometryEditState().value("selectedCandidateIds").toList().front().toString();
+        QString other;for(const auto& candidate:candidates)if(candidate.toMap().value("id").toString()!=selected)other=candidate.toMap().value("id").toString();
+        QVERIFY(click("geometryCandidate_"+other));
+        QCOMPARE(editor.geometryEditState().value("selectedCandidateIds").toList().size(),2);
+        QVERIFY(click("geometryCandidate_"+other));
+        QCOMPARE(editor.geometryEditState().value("selectedCandidateIds").toList().size(),1);
+        // Fix the archived half by an actual map pick, independent of equal-area candidate order.
+        for(const auto& id:editor.geometryEditState().value("selectedCandidateIds").toList())
+            QVERIFY(click("geometryCandidate_"+id.toString()));
+        tap({15,2});
+        QCOMPARE(editor.geometryEditState().value("selectedCandidateIds").toList().size(),1);
+        QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("canAddPart").toBool(),10000);
+        QVERIFY(click("geometryArchivePart"));
+        QTRY_COMPARE(editor.geometryEditState().value("parts").toList().size(),1);
+        QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("canAdvance").toBool(),10000);
+        QVERIFY(unchanged());
+        // Changing a method with a live drawing asks before discarding it, while
+        // the archived first part remains independently owned by the session.
+        QVERIFY(click("geometryMethod_polygon"));
+        tap({11,1});tap({12,1});
+        const auto draftBeforeSameMethod=editor.geometryDraftPaths();
+        QVERIFY(click("geometryMethod_polygon"));
+        QCOMPARE(editor.geometryDraftPaths(),draftBeforeSameMethod);QVERIFY(unchanged());
+        QVERIFY(click("geometryMethod_line"));
+        QCOMPARE(editor.geometryEditState().value("confirmationKind").toString(),QString("method"));
+        QVERIFY(click("geometryCancelTerritoryChange"));
+        QCOMPARE(editor.geometryEditState().value("activeMethod").toString(),QString("polygon"));
+        QCOMPARE(editor.geometryEditState().value("parts").toList().size(),1);QVERIFY(unchanged());
+        QVERIFY(click("geometryMethod_line"));
+        QVERIFY(click("geometryConfirmTerritoryChange"));
+        QCOMPARE(editor.geometryEditState().value("activeMethod").toString(),QString("line"));
+        QCOMPARE(editor.geometryEditState().value("parts").toList().size(),1);QVERIFY(unchanged());
+        QVERIFY(click("geometryMethod_polygon"));
+        // Two further drawings accumulate on the actual remainder. Removing the
+        // middle one must preserve the first and newest stable part IDs.
+        for(const double x:{12.,16.}) {
+            QVERIFY(click("geometryMethod_polygon"));
+            QTRY_VERIFY_WITH_TIMEOUT(!editor.geometryEditState().value("selectionPending").toBool(),10000);
+            for(const auto point:{Point{x,6},Point{x+2,6},Point{x+2,8},Point{x,8}})tap(point);
+            QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("canFinishDraft").toBool(),10000);
+            QVERIFY(click("geometryFinishDraft"));
+            QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("canAddPart").toBool(),10000);
+            QVERIFY(click("geometryArchivePart"));QVERIFY(unchanged());
+        }
+        QCOMPARE(editor.geometryEditState().value("parts").toList().size(),3);
+        const auto parts=editor.geometryEditState().value("parts").toList();
+        QVERIFY(click("geometryRemovePart_"+parts[1].toMap().value("id").toString()));
+        QCOMPARE(editor.geometryEditState().value("parts").toList().size(),2);
+        QCOMPARE(editor.geometryEditState().value("parts").toList()[0].toMap().value("id"),parts[0].toMap().value("id"));
+        QCOMPARE(editor.geometryEditState().value("parts").toList()[1].toMap().value("id"),parts[2].toMap().value("id"));
+        QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("canAdvance").toBool(),10000);
+        QVERIFY(click("geometryReview"));
+        QCOMPARE(editor.geometryEditState().value("stage").toString(),QString("review"));
+        QVERIFY(visualItem(window->contentItem(),"geometryConfirm")->isVisible());
+        QVERIFY(click("geometryBack"));
+        QCOMPARE(editor.geometryEditState().value("stage").toString(),QString("selection"));
+        QVERIFY(editor.geometryEditState().value("previewReady").toBool());QVERIFY(unchanged());
+        QVERIFY(click("geometryBack"));
+        QCOMPARE(editor.geometryEditState().value("stage").toString(),QString("setup"));
+        QVERIFY(editor.geometryEditState().value("previewReady").toBool());
+        QVERIFY(!visualItem(window->contentItem(),"geometryConfirm")->isVisible());
+        QVERIFY(click("geometryRemoveProvider_B"));
+        QCOMPARE(editor.geometryEditState().value("confirmationKind").toString(),QString("settings"));
+        QVERIFY(click("geometryCancelTerritoryChange"));
+        QCOMPARE(editor.geometryEditState().value("parts").toList().size(),2);
+        QCOMPARE(editor.geometryEditState().value("providers").toList().size(),1);QVERIFY(unchanged());
+        QVERIFY(click("geometryAdvance"));
+        QVERIFY(editor.geometryEditState().value("previewReady").toBool());
+        QVERIFY(click("geometryReview"));
+        QVERIFY(click("geometryConfirm"));
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.geometryEditState().value("active").toBool(),10000);
+        QCOMPARE(editor.revision(),revision+1);QVERIFY(editor.canUndo());
+        const auto after=editor.documentBytes();QVERIFY(after!=before);
+        QVERIFY(clickControl(window,"undoButton"));QCOMPARE(editor.documentBytes(),before);
+        QVERIFY(clickControl(window,"redoButton"));QCOMPARE(editor.documentBytes(),after);
+        QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+        window->setProperty("allowClose",true);window->close();
+    }
+    void annexFullDonorPointerFlow_data() {
+        QTest::addColumn<int>("width");QTest::addColumn<QString>("method");
+        for(const auto width:{1100,360})for(const auto& method:{QString("line"),QString("polygon"),QString("components")})
+            QTest::newRow(qPrintable(QString::number(width)+"-"+method)) << width << method;
+    }
+    void annexFullDonorPointerFlow() {
+        QFETCH(int,width);QFETCH(QString,method);
+        using namespace pandoeditor;
+        QTemporaryDir dir;
+        ProjectDocument document({
+            {"A","Target",{{{{0,0},{10,0},{10,10},{0,10},{0,0}}}},0x112233},
+            {"B","Donor",{{{{10,0},{20,0},{20,10},{10,10},{10,0}}}},0x445566}},
+            {{"countries","Countries"}});
+        Project source;source.replace(document);QFile file(dir.filePath("full-donor.json"));
+        QVERIFY(file.open(QIODevice::WriteOnly));QVERIFY(file.write(projectcodec::encode(source))>0);file.close();
+        EditorControllerConfig config;config.mobileMode=width==360;config.bootstrapWorld=false;config.autosaveEnabled=false;
+        EditorController editor(config);QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
+        editor.selectCountry("A");QVERIFY(editor.setProjectionMode("flat"));
+        QQmlApplicationEngine engine;QStringList warnings;
+        connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){for(const auto& error:errors)warnings<<error.toString();});
+        engine.rootContext()->setContextProperty("editor",&editor);engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+        window->resize(width,760);exposeForTest(window);
+        auto* map=visualItem(window->contentItem(),"mapView");QVERIFY(map);
+        MapProjection projection;projection.rebuild(document);
+        const auto left=projection.project({10,5}),right=projection.project({20,5});
+        QVERIFY(editor.zoomMapCameraAt((width==360?200:300)/(std::abs(right.x-left.x)*editor.mapViewState().value("mapScale").toDouble()),map->width()/2,map->height()/2));
+        const auto center=projection.project({15,5});const auto camera=editor.mapViewState();
+        editor.beginMapCameraPan();
+        QVERIFY(editor.updateMapCameraPan((width==360?180:300)-(camera.value("originX").toDouble()+center.x*camera.value("mapScale").toDouble()),
+                                          (width==360?190:300)-(camera.value("originY").toDouble()+center.y*camera.value("mapScale").toDouble())));
+        editor.endMapCameraPan();
+        const auto before=editor.documentBytes();const auto revision=editor.revision();
+        auto unchanged=[&]{return editor.documentBytes()==before&&editor.revision()==revision&&!editor.canUndo();};
+        auto click=[&](const QString& name){return clickControl(window,name)&&(name=="geometryConfirm"||unchanged());};
+        auto tap=[&](Point geographic){
+            const auto projected=projection.project(geographic);const auto state=editor.mapViewState();
+            const QPointF local(state.value("originX").toDouble()+projected.x*state.value("mapScale").toDouble(),
+                                state.value("originY").toDouble()+projected.y*state.value("mapScale").toDouble());
+            QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,map->mapToScene(local).toPoint());QTest::qWait(80);
+            QVERIFY(unchanged());
+        };
+        QVERIFY(click("editorAnnexAction"));tap({15,5});
+        QTRY_COMPARE(editor.geometryEditState().value("providers").toList().size(),1);QVERIFY(unchanged());
+        QVERIFY(click("geometryAdvance"));
+        QVERIFY(click("geometryMethod_"+method));
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.geometryEditState().value("selectionPending").toBool(),10000);
+        if(method=="components") {
+            QTRY_COMPARE_WITH_TIMEOUT(editor.geometryEditState().value("components").toList().size(),1,10000);
+            tap({15,5});
+            QCOMPARE(editor.geometryEditState().value("selectedComponentKeys").toList().size(),1);
+            QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("canAdvance").toBool(),10000);
+            const auto component=editor.geometryEditState().value("components").toList().front().toMap().value("key").toString();
+            QVERIFY(visualItem(map,"geometrySelectionOverlay_component_"+component));
+            QVERIFY(click("geometryComponent_"+component));
+            QCOMPARE(editor.geometryEditState().value("selectedComponentKeys").toList().size(),0);
+            QVERIFY(!editor.geometryEditState().value("previewReady").toBool());QVERIFY(unchanged());
+            QVERIFY(click("geometryComponent_"+component));
+            QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("canAddPart").toBool(),10000);
+            QVERIFY(click("geometryArchivePart"));
+            QCOMPARE(editor.geometryEditState().value("parts").toList().size(),1);
+            QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("canAdvance").toBool(),10000);
+            QVERIFY(click("geometryBack"));
+            QVERIFY(click("geometryRemoveProvider_B"));
+            QCOMPARE(editor.geometryEditState().value("confirmationKind").toString(),QString("settings"));
+            QVERIFY(click("geometryConfirmTerritoryChange"));
+            QCOMPARE(editor.geometryEditState().value("providers").toList().size(),0);
+            QCOMPARE(editor.geometryEditState().value("parts").toList().size(),0);
+            QVERIFY(!editor.geometryEditState().value("previewReady").toBool());QVERIFY(unchanged());
+            tap({15,5});
+            QTRY_COMPARE(editor.geometryEditState().value("providers").toList().size(),1);
+            QVERIFY(click("geometryAdvance"));
+            QVERIFY(click("geometryMethod_components"));
+            QTRY_COMPARE_WITH_TIMEOUT(editor.geometryEditState().value("components").toList().size(),1,10000);
+            tap({15,5});
+            QCOMPARE(editor.geometryEditState().value("selectedComponentKeys").toList().size(),1);
+        } else {
+            if(method=="line") {tap({9,5});tap({21,5});}
+            else for(const auto point:{Point{9,-1},Point{21,-1},Point{21,11},Point{9,11}})tap(point);
+            QVERIFY(unchanged());QVERIFY(click("geometryFinishDraft"));
+            QTRY_COMPARE_WITH_TIMEOUT(editor.geometryEditState().value("candidates").toList().size(),method=="line"?2:1,10000);
+            if(method=="line") {
+                const auto selected=editor.geometryEditState().value("selectedCandidateIds").toList();
+                for(const auto& candidate:editor.geometryEditState().value("candidates").toList()) {
+                    const auto id=candidate.toMap().value("id").toString();
+                    if(!selected.contains(id))QVERIFY(click("geometryCandidate_"+id));
+                }
+                QCOMPARE(editor.geometryEditState().value("selectedCandidateIds").toList().size(),2);
+            }
+            QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("canAddPart").toBool(),10000);
+            QVERIFY(!editor.geometryEditState().value("canAdvance").toBool());
+            QVERIFY(!visualItem(window->contentItem(),"geometryConfirm")->isVisible());
+            QVERIFY(click("geometryArchivePart"));
+            QCOMPARE(editor.geometryEditState().value("parts").toList().size(),1);
+        }
+        QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("previewReady").toBool(),10000);
+        QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("canAdvance").toBool(),10000);
+        QCOMPARE(editor.geometryEditState().value("stage").toString(),QString("selection"));
+        QVERIFY(unchanged());
+        auto* river=visualItem(window->contentItem(),"geometryRiverBoundaries");
+        QVERIFY(!river||!river->isEnabled());
+        QVERIFY(click("geometryReview"));QVERIFY(unchanged());
+        QVERIFY(click("geometryConfirm"));
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.geometryEditState().value("active").toBool(),10000);
+        QCOMPARE(editor.revision(),revision+1);
+        const auto after=editor.documentBytes();const auto result=projectcodec::decode(after);
+        QCOMPARE(result.units.size(),std::size_t(1));
+        QCOMPARE(result.units.front().id,std::string("A"));
+        QVERIFY(std::abs(planarArea(*result.geometries.get(staticGeometryBinding(result,"A").geometryRef))-200.)<1e-6);
+        QVERIFY(clickControl(window,"undoButton"));QCOMPARE(editor.documentBytes(),before);
+        QVERIFY(clickControl(window,"redoButton"));QCOMPARE(editor.documentBytes(),after);
+        QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+        window->setProperty("allowClose",true);window->close();
+    }
     void softwareWindowRecreationDropsOldWindowCallbacks() {
         EditorControllerConfig config;config.bootstrapWorld=false;config.autosaveEnabled=false;
         EditorController editor(config);QVERIFY(editor.resizeMapCamera(360,300));

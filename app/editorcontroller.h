@@ -6,6 +6,8 @@
 #include "projectcodec.h"
 #include "../platform/screencolorpicker.h"
 #include "commandjobrunner.h"
+#include "territoryselection.h"
+#include "territorialgeometry.h"
 #include "platformstorage.h"
 #include "autosavecoordinator.h"
 #include "projectpreviewcache.h"
@@ -399,6 +401,17 @@ public:
     Q_INVOKABLE bool geometryAdvanceStage();
     Q_INVOKABLE bool geometryBack();
     Q_INVOKABLE bool geometryChooseSplitResult(int createdCandidate);
+    Q_INVOKABLE bool geometrySelectTerritoryMethod(const QString& method);
+    Q_INVOKABLE bool geometryFinishTerritoryDraft();
+    Q_INVOKABLE bool geometryToggleTerritoryCandidate(const QString& id);
+    Q_INVOKABLE bool geometryToggleTerritoryComponent(const QString& key);
+    Q_INVOKABLE bool geometryAddTerritoryPart();
+    Q_INVOKABLE bool geometryRemoveTerritoryPart(const QString& id);
+    Q_INVOKABLE bool geometryUndoTerritoryPart();
+    Q_INVOKABLE bool geometryConfirmTerritoryChange();
+    Q_INVOKABLE bool geometryCancelTerritoryChange();
+    Q_INVOKABLE bool geometryPickTerritorySelection(double x,double y);
+
     Q_INVOKABLE bool confirmGeometryEdit();
     Q_INVOKABLE void cancelGeometryEdit();
     Q_INVOKABLE void selectAt(double x,double y);
@@ -668,8 +681,26 @@ private:
         QString stage=QStringLiteral("selection");
         bool choosingProviders=false;
         std::optional<pandoeditor::MergeTerritorialIntent> mergeIntent;
+        std::optional<pandoeditor::TerritorySelection> territorySelection;
+        std::optional<AnnexGeometryPreviewResult> territoryPreview;
+        std::optional<pandoeditor::ObjectRef> sourceChange;
+        std::uint64_t generation=0, computationEpoch=0, previewEpoch=0;
+        std::uint64_t previewSelectionRevision=0;
+        bool selectionPending=false, previewPending=false, applying=false;
+
     };
     std::optional<GeometryEditSession> geometryEdit_;
+    std::uint64_t nextGeometrySession_=0;
+    QVariantMap territorySelectionState() const;
+    QVariantList territorySelectionPaths() const;
+    void scheduleTerritorySelection(bool requestPreview=true);
+    void scheduleTerritoryPreview();
+    void cancelTerritoryCalculation(bool discardPreview=true);
+    bool toggleTerritorySource(const pandoeditor::ObjectRef&,bool confirmed=false);
+    bool advanceTerritoryStage();
+    bool backTerritoryStage();
+    bool applyTerritorySelection();
+
     bool setStructurePlan(const pandoeditor::TerritorialMutationIntent&);
     MapProjection projection_;
     GeometryPacketCache packetCache_;

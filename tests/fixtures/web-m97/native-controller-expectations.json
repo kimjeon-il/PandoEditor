@@ -1,0 +1,609 @@
+{
+  "schema": "pando-m972-controller-expectations",
+  "version": 1,
+  "behavioralCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+  "correctionCommit": "12cd8c8ec47c83cfb8c650e8f44c81cdfac10043",
+  "cases": [
+    {
+      "case": "line-equal-forward",
+      "stages": [
+        "before",
+        "candidate",
+        "both",
+        "secondOnly",
+        "reselectedOrder",
+        "undoSelection",
+        "empty",
+        "cancel"
+      ]
+    },
+    {
+      "case": "line-equal-reversed",
+      "stages": [
+        "before",
+        "candidate",
+        "both",
+        "secondOnly",
+        "reselectedOrder",
+        "undoSelection",
+        "empty",
+        "cancel"
+      ]
+    },
+    {
+      "case": "line-minimum-area",
+      "stages": [
+        "before",
+        "candidate",
+        "cancel"
+      ]
+    },
+    {
+      "case": "line-source-reversed-winding",
+      "stages": [
+        "before",
+        "candidate",
+        "cancel"
+      ]
+    },
+    {
+      "case": "line-source-reversed-winding-reversed-gesture",
+      "stages": [
+        "before",
+        "candidate",
+        "cancel"
+      ]
+    },
+    {
+      "case": "line-source-rotated-start",
+      "stages": [
+        "before",
+        "candidate",
+        "cancel"
+      ]
+    },
+    {
+      "case": "line-source-rotated-start-reversed-gesture",
+      "stages": [
+        "before",
+        "candidate",
+        "cancel"
+      ]
+    },
+    {
+      "case": "line-minimum-rotated-source-start",
+      "stages": [
+        "before",
+        "candidate",
+        "cancel"
+      ]
+    },
+    {
+      "case": "line-one-point-rejected",
+      "stages": [
+        "before",
+        "rejected",
+        "cancel"
+      ]
+    },
+    {
+      "case": "polygon-partial-lifecycle",
+      "stages": [
+        "before",
+        "candidate",
+        "archived",
+        "review",
+        "back",
+        "cancel",
+        "candidateAgain",
+        "archivedAgain",
+        "reviewAgain",
+        "apply",
+        "undo",
+        "redo"
+      ]
+    },
+    {
+      "case": "corrected-full-polygon-lifecycle",
+      "stages": [
+        "before",
+        "candidate",
+        "archived",
+        "review",
+        "back",
+        "cancel",
+        "candidateAgain",
+        "archivedAgain",
+        "reviewAgain",
+        "apply",
+        "undo",
+        "redo"
+      ]
+    },
+    {
+      "case": "corrected-full-line-lifecycle",
+      "stages": [
+        "before",
+        "candidate",
+        "fullCandidate",
+        "archived",
+        "review",
+        "back",
+        "cancel",
+        "candidateAgain",
+        "archivedAgain",
+        "reviewAgain",
+        "apply",
+        "undo",
+        "redo"
+      ]
+    },
+    {
+      "case": "components-autoarchive-mixed-parts",
+      "stages": [
+        "before",
+        "selected",
+        "automaticallyArchived",
+        "candidate",
+        "mixedParts",
+        "componentPartRemoved",
+        "empty",
+        "cancel"
+      ]
+    },
+    {
+      "case": "components-autoarchive-empty-finish-lifecycle",
+      "stages": [
+        "before",
+        "selected",
+        "automaticallyArchived",
+        "finishedArchivedDraft",
+        "review",
+        "apply",
+        "undo",
+        "redo"
+      ]
+    },
+    {
+      "case": "dangling-distribution-apply-rejected",
+      "stages": [
+        "before",
+        "preview",
+        "archived",
+        "review",
+        "apply",
+        "cancel"
+      ]
+    },
+    {
+      "case": "dangling-label-apply-rejected",
+      "stages": [
+        "before",
+        "preview",
+        "archived",
+        "review",
+        "apply",
+        "cancel"
+      ]
+    },
+    {
+      "case": "dangling-label-settings-apply-rejected",
+      "stages": [
+        "before",
+        "preview",
+        "archived",
+        "review",
+        "apply",
+        "cancel"
+      ]
+    }
+  ],
+  "knownDifferenceReason": "Only the approved 12cd8c8 full-source candidate archive correction intentionally differs from the original 53dbd3c workflow. No geometry, ordered identity, document or history difference is waived.",
+  "knownDifferences": {
+    "line-equal-forward": [
+      {
+        "stage": "both",
+        "field": "canAddPart",
+        "web": false,
+        "native": true
+      },
+      {
+        "stage": "reselectedOrder",
+        "field": "canAddPart",
+        "web": false,
+        "native": true
+      }
+    ],
+    "line-equal-reversed": [
+      {
+        "stage": "both",
+        "field": "canAddPart",
+        "web": false,
+        "native": true
+      },
+      {
+        "stage": "reselectedOrder",
+        "field": "canAddPart",
+        "web": false,
+        "native": true
+      }
+    ],
+    "line-minimum-area": [],
+    "line-source-reversed-winding": [],
+    "line-source-reversed-winding-reversed-gesture": [],
+    "line-source-rotated-start": [],
+    "line-source-rotated-start-reversed-gesture": [],
+    "line-minimum-rotated-source-start": [],
+    "line-one-point-rejected": [],
+    "polygon-partial-lifecycle": [],
+    "corrected-full-polygon-lifecycle": [],
+    "corrected-full-line-lifecycle": [],
+    "components-autoarchive-mixed-parts": [],
+    "components-autoarchive-empty-finish-lifecycle": [],
+    "dangling-distribution-apply-rejected": [],
+    "dangling-label-apply-rejected": [],
+    "dangling-label-settings-apply-rejected": []
+  },
+  "webCacheMismatches": [
+    {
+      "case": "line-equal-forward",
+      "stage": "empty",
+      "field": "remainingGeometry",
+      "web": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              10,
+              0
+            ],
+            [
+              10,
+              -5
+            ],
+            [
+              0,
+              -5
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      },
+      "emptySelectionExpected": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              -5
+            ],
+            [
+              0,
+              5
+            ],
+            [
+              10,
+              5
+            ],
+            [
+              10,
+              -5
+            ],
+            [
+              0,
+              -5
+            ]
+          ]
+        ]
+      },
+      "native": "unobserved-internal-cache"
+    },
+    {
+      "case": "line-equal-reversed",
+      "stage": "empty",
+      "field": "remainingGeometry",
+      "web": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              10,
+              0
+            ],
+            [
+              10,
+              -5
+            ],
+            [
+              0,
+              -5
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      },
+      "emptySelectionExpected": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              -5
+            ],
+            [
+              0,
+              5
+            ],
+            [
+              10,
+              5
+            ],
+            [
+              10,
+              -5
+            ],
+            [
+              0,
+              -5
+            ]
+          ]
+        ]
+      },
+      "native": "unobserved-internal-cache"
+    },
+    {
+      "case": "components-autoarchive-mixed-parts",
+      "stage": "empty",
+      "field": "remainingGeometry",
+      "web": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                5
+              ],
+              [
+                10,
+                5
+              ],
+              [
+                10,
+                -5
+              ],
+              [
+                2,
+                -5
+              ],
+              [
+                2,
+                -3
+              ],
+              [
+                0,
+                -3
+              ],
+              [
+                0,
+                5
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                12,
+                -3
+              ],
+              [
+                14,
+                -3
+              ],
+              [
+                14,
+                -5
+              ],
+              [
+                12,
+                -5
+              ],
+              [
+                12,
+                -3
+              ]
+            ]
+          ]
+        ]
+      },
+      "emptySelectionExpected": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                -5
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                10,
+                5
+              ],
+              [
+                10,
+                -5
+              ],
+              [
+                0,
+                -5
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                12,
+                -5
+              ],
+              [
+                12,
+                -3
+              ],
+              [
+                14,
+                -3
+              ],
+              [
+                14,
+                -5
+              ],
+              [
+                12,
+                -5
+              ]
+            ]
+          ]
+        ]
+      },
+      "native": "unobserved-internal-cache"
+    },
+    {
+      "case": "components-autoarchive-mixed-parts",
+      "stage": "empty",
+      "field": "workingSourceGeometry",
+      "web": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                5
+              ],
+              [
+                10,
+                5
+              ],
+              [
+                10,
+                -5
+              ],
+              [
+                2,
+                -5
+              ],
+              [
+                2,
+                -3
+              ],
+              [
+                0,
+                -3
+              ],
+              [
+                0,
+                5
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                12,
+                -3
+              ],
+              [
+                14,
+                -3
+              ],
+              [
+                14,
+                -5
+              ],
+              [
+                12,
+                -5
+              ],
+              [
+                12,
+                -3
+              ]
+            ]
+          ]
+        ]
+      },
+      "emptySelectionExpected": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                -5
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                10,
+                5
+              ],
+              [
+                10,
+                -5
+              ],
+              [
+                0,
+                -5
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                12,
+                -5
+              ],
+              [
+                12,
+                -3
+              ],
+              [
+                14,
+                -3
+              ],
+              [
+                14,
+                -5
+              ],
+              [
+                12,
+                -5
+              ]
+            ]
+          ]
+        ]
+      },
+      "native": "unobserved-internal-cache"
+    }
+  ]
+}
