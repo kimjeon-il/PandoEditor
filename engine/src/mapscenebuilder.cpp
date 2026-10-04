@@ -229,14 +229,14 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     std::set<std::string> baseCountries;
     if(worldBase_&&worldBase_->mesh) {
         if(worldBase_->ranges.size()!=258)throw std::invalid_argument("world base needs 258 ranges");
-        if(worldBase_->mesh->preview)
+        if(worldBase_->startupPreview())
             for(const auto& range:worldBase_->ranges)baseCountries.insert(range.ownerId);
         scene->worldCountries.reserve(258);
         for(const auto& range:worldBase_->ranges) {
             WorldCountryDraw base;base.id=range.ownerId;
             base.fill.color=0xa8c7db;base.boundary.color=0x61778a;
             base.boundary.width=1.2f;
-            if(!worldBase_->mesh->preview) {
+            if(!worldBase_->startupPreview()) {
                 const auto unit=std::find_if(doc.units.begin(),doc.units.end(),
                     [&](const auto& value){return value.id==range.ownerId;});
                 if(unit==doc.units.end()||!(unit->geometry==GeometryRef{range.geometryId,1})) {

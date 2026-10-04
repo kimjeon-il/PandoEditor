@@ -286,6 +286,7 @@ public:
     Q_INVOKABLE void endMapCameraPan();
     Q_INVOKABLE bool fitMapCamera();
     Q_INVOKABLE bool focusMapCameraRect(double left,double top,double width,double height,double maxZoom);
+    Q_INVOKABLE void setMapEditorActive(bool active);
     QString terrainMode() const;
     Q_INVOKABLE bool setTerrainMode(const QString& mode);
     QVariantMap appearancePreferences() const;
@@ -575,6 +576,7 @@ private:
     void commandError(pandoeditor::CommandError error,const QString& detail={});
     void publish(bool pruneSelection=true);
     void refreshTypedScene();
+    void updateWorldDetail();
     MapCameraMetrics mapCameraMetrics() const;
     void syncMapCameraMetrics(bool publishCurrent=true);
     bool publishCameraView();
@@ -684,6 +686,10 @@ private:
     bool appearancePreviewOpen_=false;
     QString terrainMode_=QStringLiteral("gray");
     std::shared_ptr<const WorldBaseFrame> worldBase_;
+    std::shared_ptr<const WorldBaseFrame> worldPreviewBase_,worldCanonicalBase_;
+    bool worldDetailCanonical_=false;
+    bool worldFocusDetail_=false;
+    bool mapEditorActive_=false;
     std::unique_ptr<PhysicalDataStore> physicalStore_;
     QHash<QString,PhysicalAssetSpec> physicalAssets_;
     QString physicalRoot_,physicalError_;

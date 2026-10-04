@@ -93,6 +93,49 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void objectEditorForcesWorldDetailUntilPanelCloses() {
+        for(bool mobile:{false,true}) {
+            EditorControllerConfig config;config.mobileMode=mobile;
+            config.bootstrapWorld=false;config.autosaveEnabled=false;
+            EditorController editor(config);QQmlApplicationEngine engine;QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){
+                for(const auto& error:errors)warnings<<error.toString();
+            });
+            engine.rootContext()->setContextProperty("editor",&editor);
+            engine.load(QUrl("qrc:/common/Main.qml"));
+            QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+            auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+            window->resize(mobile?360:1100,760);exposeForTest(window);
+            QVERIFY(editor.setProjectionMode("flat"));QVERIFY(editor.fitMapCamera());
+            auto requested=[&]{return editor.renderQuality().value("worldDetailRequested").toString();};
+            QCOMPARE(requested(),QString("preview"));
+            const auto document=editor.documentBytes();const auto revision=editor.revision();
+            // Ordinary territorial metadata panels do not create a geometry or content session.
+            editor.selectCountry("DEU");
+            auto* panel=visualItem(window->contentItem(),"objectPropertyPanel");QVERIFY(panel);
+            QTRY_VERIFY(panel->isVisible());
+            QVERIFY(!editor.geometryEditState().value("active").toBool());
+            QVERIFY(!editor.contentEditState().value("active").toBool());
+            QCOMPARE(requested(),QString("canonical"));
+            QVERIFY(editor.zoomMapCameraAt(.8,180,180));
+            QVERIFY(editor.fitMapCamera());
+            QCOMPARE(requested(),QString("canonical"));
+            QVERIFY(clickControl(window,"toggleObjectEditor"));
+            QTRY_VERIFY(!panel->isVisible());
+            QTRY_COMPARE(requested(),QString("preview"));
+            QVERIFY(clickControl(window,"openObjectEditor"));
+            QTRY_VERIFY(panel->isVisible());
+            QTRY_COMPARE(requested(),QString("canonical"));
+            window->resize(mobile?390:1150,760);QCoreApplication::processEvents();
+            QCOMPARE(requested(),QString("canonical"));
+            QVERIFY(clickControl(window,"toggleObjectEditor"));
+            QTRY_VERIFY(!panel->isVisible());
+            QTRY_COMPARE(requested(),QString("preview"));
+            QCOMPARE(editor.documentBytes(),document);QCOMPARE(editor.revision(),revision);
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+            window->setProperty("allowClose",true);window->close();
+        }
+    }
     void labelReprojectionPreservesModelRows() {
         LabelPlacementModel model;
         QVariantMap row{{"ref",QVariantMap{{"type","territorial"},{"id","DEU"}}},{"x",10.},{"y",20.}};

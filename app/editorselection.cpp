@@ -174,7 +174,11 @@ void EditorController::restoreParkedDrafts() {
         layerNameDraft_=draft.name;layerOpacityPreview_=draft.opacity;
     }
 }
-void EditorController::clearParkedDrafts() { parkedCountryDrafts_.clear();parkedLayerDrafts_.clear();fieldSessions_.clear(); }
+void EditorController::clearParkedDrafts() {
+    parkedCountryDrafts_.clear();parkedLayerDrafts_.clear();
+    const bool editing=!fieldSessions_.empty();fieldSessions_.clear();
+    if(editing)refreshTypedScene();
+}
 void EditorController::applySelection(SelectionState next) {
     const bool changed=selection_.revision()!=next.revision();
     if(!changed) {selection_=std::move(next);return;} // anchor-only changes are silent in the web reducer

@@ -1,5 +1,6 @@
 #include "maprenderitem.h"
 #include "scenegraph/mapscenenode.h"
+#include "scenegraph/mapmaterial.h"
 #include <QSGGeometryNode>
 #include <pandoeditor/map/renderpacket.h>
 #include <QtTest>
@@ -106,9 +107,87 @@ std::shared_ptr<RenderScene> scene() {
 }
 }
 
+std::shared_ptr<RenderScene> readyPreviewScene() {
+    auto mesh=std::make_shared<CountryBaseMesh>();mesh->preview=true;
+    // Two bounded rectangles, projected one geographic degree per pixel.
+    mesh->positionsMicrodegrees={5000000,43000000,20000000,43000000,
+        20000000,28000000,5000000,28000000,25000000,43000000,
+        40000000,43000000,40000000,28000000,25000000,28000000};
+    mesh->countryIndices={0,0,0,0,1,1,1,1};
+    mesh->triangleIndices={0,1,2,0,2,3,4,5,6,4,6,7};
+    mesh->lineIndices={0,1,1,2,2,3,3,0,4,5,5,6,6,7,7,4};
+    mesh->countryTriangleRanges={0,6,6,6};mesh->countryBoundaryRanges={0,8,8,8};
+    auto base=std::make_shared<WorldBaseFrame>();base->mesh=mesh;base->documentReady=true;
+    base->ranges={{"source-visible","visible","world-country-visible"},
+                  {"source-hidden","hidden","world-country-hidden"}};
+    auto prepared=scene();prepared->worldBase=base;prepared->worldCountries.resize(2);
+    prepared->worldCountries[0].id="visible";prepared->worldCountries[0].fill.color=0xff0000;
+    prepared->worldCountries[0].boundary.color=0x00ff00;
+    prepared->worldCountries[0].boundary.width=4;
+    prepared->worldCountries[1].id="hidden";prepared->worldCountries[1].visible=false;
+    prepared->worldCountries[1].fill.color=0x00ff00;
+    prepared->worldPlan.fills.visible={true,true};prepared->worldPlan.strokes.visible={true,true};
+    prepared->polygons={polygonDraw("overlay",rectangle(10,8,15,17,48),0x0000ff)};
+    // Intentional interleaving: the later world fill must cover the overlay.
+    prepared->drawSequence={{PrimitiveKind::Polygon,0,{},-1},
+                            {PrimitiveKind::WorldFill,0,{},-1}};
+    return prepared;
+}
+
 class MapRenderTests:public QObject {
     Q_OBJECT
 private slots:
+    void readyPreviewUsesOrderedDrawsAndKeepsHiddenBoundariesHidden() {
+        const auto view=viewFor(48,48);auto prepared=readyPreviewScene();
+        QVERIFY(prepared->worldBase->mesh->preview);QVERIFY(!prepared->worldBase->startupPreview());
+        MapRenderItem item;item.setWidth(48);item.setHeight(48);item.setSmoothLines(false);
+        item.setSceneSnapshot(prepared,view);const auto image=paint(item,48,48);
+        QCOMPARE(image.pixelColor(12,12),QColor("#ff0000")); // ordered world fill covers overlay
+        QCOMPARE(image.pixelColor(4,12),QColor(Qt::white)); // no unrequested boundary stroke
+        QCOMPARE(image.pixelColor(30,12),QColor(Qt::white)); // hidden source slot
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;
+        node.sync(prepared,view,flat,stats,1024*1024);
+        QCOMPARE(node.childCount(),2);QVERIFY(!stats.uploadsPending);
+        auto* first=static_cast<QSGGeometryNode*>(node.firstChild());
+        auto* second=static_cast<QSGGeometryNode*>(first->nextSibling());
+        QCOMPARE(static_cast<MapMaterial*>(first->material())->color,QVector4D(0,0,1,1));
+        QCOMPARE(static_cast<MapMaterial*>(second->material())->color,QVector4D(1,0,0,1));
+        QCOMPARE(static_cast<MapMaterial*>(first->material())->primitive,MapPrimitive::Fill);
+        QCOMPARE(static_cast<MapMaterial*>(second->material())->primitive,MapPrimitive::Fill);
+        // An explicit boundary command exposes the same green stroke in both adapters.
+        auto boundaries=std::make_shared<RenderScene>(*prepared);++boundaries->revision;
+        boundaries->drawSequence.push_back({PrimitiveKind::WorldStroke,0,{},-1});
+        item.setSceneSnapshot(boundaries,view);
+        QCOMPARE(paint(item,48,48).pixelColor(4,12),QColor("#00ff00"));
+        node.sync(boundaries,view,flat,stats,1024*1024);QCOMPARE(node.childCount(),3);
+        auto* last=static_cast<QSGGeometryNode*>(node.lastChild());
+        QCOMPARE(static_cast<MapMaterial*>(last->material())->primitive,MapPrimitive::Stroke);
+        QCOMPARE(static_cast<MapMaterial*>(last->material())->color,QVector4D(0,1,0,1));
+    }
+    void readyPreviewHoverOutlineAndVisibilityAgreeAcrossAdapters() {
+        const auto view=viewFor(48,48);auto prepared=readyPreviewScene();
+        prepared->interaction.hover=pandoeditor::territorialRef("visible");
+        MapRenderItem item;item.setWidth(48);item.setHeight(48);item.setSmoothLines(false);
+        item.setSceneSnapshot(prepared,view);
+        QCOMPARE(paint(item,48,48).pixelColor(5,12),QColor("#4083bc"));
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;
+        node.sync(prepared,view,flat,stats,1024*1024);QCOMPARE(node.childCount(),3);
+        auto* highlight=static_cast<QSGGeometryNode*>(node.lastChild());
+        auto* material=static_cast<MapMaterial*>(highlight->material());
+        MapMaterial expected(MapPrimitive::Stroke,BlendMode::Normal);
+        RenderStyle style;style.color=0x4083bc;style.alpha=1;style.width=2;expected.setStyle(style);
+        QCOMPARE(material->primitive,MapPrimitive::Stroke);QCOMPARE(material->color,expected.color);
+        QCOMPARE(material->effects.x(),2.f);
+        auto hidden=std::make_shared<RenderScene>(*prepared);++hidden->revision;
+        hidden->worldCountries[0].visible=false;
+        item.setSceneSnapshot(hidden,view);const auto image=paint(item,48,48);
+        QCOMPARE(image.pixelColor(5,12),QColor(Qt::white));
+        QCOMPARE(image.pixelColor(8,12),QColor(Qt::white));
+        QCOMPARE(image.pixelColor(12,12),QColor("#0000ff"));
+        node.sync(hidden,view,flat,stats,1024*1024);QCOMPARE(node.childCount(),1);
+        material=static_cast<MapMaterial*>(static_cast<QSGGeometryNode*>(node.firstChild())->material());
+        QCOMPARE(material->primitive,MapPrimitive::Fill);QCOMPARE(material->color,QVector4D(0,0,1,1));
+    }
     void worldMeshSlotsWithOneOwnerNeverAliasOrUploadForever() {
         auto mesh=std::make_shared<CountryBaseMesh>();
         mesh->positionsMicrodegrees={0,0,1000000,0,0,1000000,10000000,0,11000000,0,10000000,1000000};

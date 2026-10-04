@@ -94,7 +94,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             if(kind==PrimitiveKind::WorldStroke&&(batchBase||(i<strokes.visible.size()&&strokes.visible[i])))
                 stats.drawIndexCount+=mesh.countryBoundaryRanges[i*2+1]*worldOffsets.size();
         };
-        if(mesh.preview)for(std::size_t i=0;i<scene->worldCountries.size();++i) {
+        if(scene->worldBase->startupPreview())for(std::size_t i=0;i<scene->worldCountries.size();++i) {
             submit(PrimitiveKind::WorldFill,i);submit(PrimitiveKind::WorldStroke,i);
         }
         else for(const auto& command:scene->drawSequence)
@@ -371,7 +371,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             }
         });
     };
-    if(scene->worldBase&&scene->worldBase->mesh&&scene->worldBase->mesh->preview)
+    if(scene->worldBase&&scene->worldBase->startupPreview())
         for(double offset:worldOffsets)for(std::size_t i=0;i<scene->worldCountries.size();++i) {
             worldFill(i,int(offset));
             worldStroke(i,int(offset),scene->worldCountries[i].boundary);
@@ -485,7 +485,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
     };
     for(double offset:worldOffsets) {
         const int world=int(offset);
-        if(scene->worldBase&&scene->worldBase->mesh&&!scene->worldBase->mesh->preview) {
+        if(scene->worldBase&&scene->worldBase->mesh&&!scene->worldBase->startupPreview()) {
             const auto baseHighlight=[&](const pandoeditor::ObjectRef& ref,
                                          const std::string& channel,std::uint32_t color,float width) {
                 if(ref.domain!="territorial")return;

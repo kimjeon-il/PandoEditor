@@ -233,7 +233,7 @@ void MapRenderItem::paint(QPainter* painter) {
 
     // The immutable preview world base predates canonical document packets and
     // is intentionally submitted outside drawSequence in both backends.
-    if(scene_->worldBase&&scene_->worldBase->mesh&&scene_->worldBase->mesh->preview)
+    if(scene_->worldBase&&scene_->worldBase->startupPreview())
         for(const double offset:copies)
             for(std::size_t i=0;i<scene_->worldCountries.size();++i) {
                 drawWorld(PrimitiveKind::WorldFill,i,offset);
@@ -325,7 +325,7 @@ void MapRenderItem::paint(QPainter* painter) {
         const auto worldOutline=[&](const pandoeditor::ObjectRef& ref,
                                     std::uint32_t color,float width) {
             if(ref.domain!="territorial"||!scene_->worldBase||
-               !scene_->worldBase->mesh||scene_->worldBase->mesh->preview)return;
+               !scene_->worldBase->mesh||scene_->worldBase->startupPreview())return;
             RenderStyle style;style.color=color;style.alpha=1;style.width=width;
             for(const auto index:worldRangeIndicesForOwner(*scene_->worldBase,ref.id))
                 drawWorld(PrimitiveKind::WorldStroke,index,offset,&style);

@@ -55,7 +55,7 @@ WorldPreviewResult WorldDatasetLoader::preview(const QString& root) {
         // while the render-only mesh remains the only visible preview source.
         CanonicalCountryStore packet(source.decompress("countryCanonical",12*1024*1024));
         const auto classified=materializeBuiltinWorld(packet);
-        auto frame=std::make_shared<WorldBaseFrame>();
+        auto frame=std::make_shared<WorldBaseFrame>();frame->documentReady=false;
         frame->mesh=std::move(mesh);frame->ranges=renderRanges(classified);
         auto projection=std::make_shared<MapProjection>();projection->setWorldExtent();
         return {std::move(frame),std::move(projection)};
@@ -68,7 +68,7 @@ WorldPreviewResult WorldDatasetLoader::preview(const QString& root) {
     require(features.size()==258,"Preview must contain 258 countries");
     std::vector<pandoeditor::Country> countries;countries.reserve(258);
     std::set<std::string> unique;
-    auto frame=std::make_shared<WorldBaseFrame>();frame->mesh=std::move(mesh);
+    auto frame=std::make_shared<WorldBaseFrame>();frame->mesh=std::move(mesh);frame->documentReady=false;
     for(const auto& value:features) {
         const auto object=value.toObject();
         pandoeditor::Country country;

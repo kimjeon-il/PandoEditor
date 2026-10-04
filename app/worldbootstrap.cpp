@@ -11,9 +11,25 @@ struct RecoveredStartup {
     MapProjection projection;
     GeometryPacketCache packets;
     std::shared_ptr<const WorldBaseFrame> base;
+    std::shared_ptr<const WorldBaseFrame> preview;
     std::optional<MapViewState> view;
     QString error;
 };
+}
+
+void EditorController::updateWorldDetail() {
+    const auto display=camera_.display();
+    const bool globe=camera_.mode()==ProjectionMode::Globe;
+    auto& canonical=worldDetailCanonical_;
+    const bool before=canonical;
+    if(worldFocusDetail_||mapEditorActive_||geometryEdit_||contentSession_||colorSession_||
+       !fieldSessions_.empty()||structureDialogOpen())canonical=true;
+    else if(display.zoom<=(globe?1.8:2.2))canonical=false;
+    else if(display.zoom>=(globe?2.2:2.8))canonical=true;
+    // Never drop the currently visible mesh while the requested one loads.
+    const auto requested=canonical?worldCanonicalBase_:worldPreviewBase_;
+    if(requested)worldBase_=requested;
+    if(before!=canonical)emit renderQualityChanged();
 }
 
 void EditorController::startAutosaveRecovery(bool useWorldBase) {
@@ -38,7 +54,8 @@ void EditorController::startAutosaveRecovery(bool useWorldBase) {
         project_=std::move(result->project);
         projection_=std::move(result->projection);
         packetCache_=std::move(result->packets);sceneInstance_=project_.instanceId();
-        worldBase_=std::move(result->base);
+        worldBase_=std::move(result->base);worldCanonicalBase_=worldBase_;
+        worldPreviewBase_=std::move(result->preview);
         if(worldBase_)worldRanges_=worldBase_->ranges;
         worldStatus_=worldBase_?QStringLiteral("canonical"):QStringLiteral("disabled");
         camera_.setMetrics(mapCameraMetrics());
@@ -63,6 +80,14 @@ void EditorController::startAutosaveRecovery(bool useWorldBase) {
             result->projection.rebuild(result->project.document());
             if(useWorldBase)try {
                 result->base=WorldDatasetLoader::matchingBaseFrame(result->project.document(),root);
+                if(result->base)try {
+                    auto preview=std::make_shared<WorldBaseFrame>(*WorldDatasetLoader::preview(root).frame);
+                    if(preview->ranges==result->base->ranges) {
+                        preview->documentReady=true;result->preview=std::move(preview);
+                    }
+                }catch(const std::exception&) {
+                    // Preview is optional; retain the matching precise base.
+                }
             }catch(const std::exception&) {
                 // A missing optional base mesh must not discard a valid saved document.
             }
@@ -90,7 +115,7 @@ void EditorController::startWorldBootstrap() {
         try {
             auto prepared=watcher->result();
             if(project_.revision()!=0) {cancelWorldBootstrap();return;}
-            worldBase_=std::move(prepared.frame);
+            worldBase_=std::move(prepared.frame);worldPreviewBase_=worldBase_;
             worldRanges_=worldBase_->ranges;
             projection_=*prepared.projection;
             try {
@@ -133,6 +158,9 @@ void EditorController::startCanonicalWorld(std::uint64_t generation) {
             cancelPreview();cancelStructureMutation();
             project_=std::move(candidate);
             projection_=*prepared.projection;
+            auto preview=std::make_shared<WorldBaseFrame>(*worldPreviewBase_);
+            preview->documentReady=true;worldPreviewBase_=std::move(preview);
+            worldBase_=worldPreviewBase_;
             worldHydroNotice_=prepared.hydroAvailability;
             filePath_.clear();importedDirty_=false;
             refreshHistoricalCatalog();
@@ -161,9 +189,9 @@ void EditorController::startCanonicalWorldMesh(std::uint64_t generation) {
             frame->mesh=watcher->result();frame->ranges=worldRanges_;
             if(!frame->mesh||frame->mesh->preview||frame->ranges.size()!=258)
                 throw std::runtime_error("Wrong canonical world mesh");
-            // One immutable scene publication replaces preview base and adds
-            // every country edit already committed to the canonical document.
-            worldBase_=std::move(frame);
+            // Select against the latest view, including edits committed while loading.
+            worldCanonicalBase_=std::move(frame);
+            updateWorldDetail();
             worldStatus_=QStringLiteral("canonical");emit worldStatusChanged();
             refreshTypedScene();emit geometryChanged();
         } catch(const std::exception& error) {
@@ -177,7 +205,8 @@ void EditorController::startCanonicalWorldMesh(std::uint64_t generation) {
 
 void EditorController::cancelWorldBootstrap() {
     ++worldGeneration_;
-    worldBase_.reset();worldRanges_.clear();
+    worldBase_.reset();worldPreviewBase_.reset();worldCanonicalBase_.reset();worldRanges_.clear();
+    worldFocusDetail_=false;worldDetailCanonical_=false;
     terrainTiles_.clear();terrainProvider_.reset();worldHydroNotice_.clear();
     emit terrainChanged();
     worldStatus_=QStringLiteral("disabled");emit worldStatusChanged();

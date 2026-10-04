@@ -1,5 +1,8 @@
 #include "editorcontroller.h"
 #include "defaultflagresolver.h"
+#include "worlddatasetloader.h"
+#include <QFutureWatcher>
+#include <QtConcurrent>
 #include <pandoeditor/maprenderorder.h>
 #include <QFile>
 #include <QFileInfo>
@@ -130,6 +133,9 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::hoverChanged,this,refresh);
     connect(this,&EditorController::objectChooserChanged,this,refresh);
     connect(this,&EditorController::geometryEditChanged,this,refresh);
+    connect(this,&EditorController::contentEditChanged,this,refresh);
+    connect(this,&EditorController::colorEditChanged,this,refresh);
+    connect(this,&EditorController::structureChanged,this,refresh);
     connect(this,&EditorController::presentationChanged,this,refresh);
     connect(this,&EditorController::presentationChanged,this,[this] {
         labelSourcesDirty_=true;
@@ -167,10 +173,13 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     if(startupBusy_)QTimer::singleShot(0,this,[this,useWorldBase=config.bootstrapWorld] {
         startAutosaveRecovery(useWorldBase);
     });
-    else if(config.bootstrapWorld)QTimer::singleShot(0,this,&EditorController::startWorldBootstrap);
+    else if(config.bootstrapWorld)QTimer::singleShot(0,this,[this,initial=project_.snapshot()] {
+        if(initial.matches(project_))startWorldBootstrap();
+    });
 }
 void EditorController::refreshTypedScene() {
     if(startupBusy_)return;
+    updateWorldDetail();
     try {
         std::shared_ptr<const RenderScene> previous=sceneBridge_.sceneSnapshot();
         if(sceneInstance_!=project_.instanceId()) {
@@ -305,6 +314,8 @@ QVariantMap EditorController::renderQuality() const {
     const auto tier=profile.tier==RenderQualityTier::Coarse?"coarse":
         profile.tier==RenderQualityTier::Medium?"medium":"high";
     return {{"tier",tier},{"revision",qulonglong(profile.revision)},
+        {"worldDetailRequested",worldDetailCanonical_?"canonical":"preview"},
+        {"worldDetailDisplayed",worldBase_&&worldBase_->mesh?(worldBase_->mesh->preview?"preview":"canonical"):"none"},
         {"interaction",profile.interaction},{"dprCap",profile.dprCap},
         {"labelDensity",profile.labelDensity},
         {"uploadBudgetBytes",qulonglong(profile.uploadBudgetBytes)},
@@ -773,7 +784,39 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
     cancelPreview();cancelStructureMutation();project_=std::move(candidate);projection_=std::move(nextProjection);
     filePath_=path;importedDirty_=imported;selected_.clear();selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
     refreshHistoricalCatalog();
-    emit geometryChanged();publish(false);syncHydroData();return true;
+    emit geometryChanged();publish(false);syncHydroData();
+    // A saved built-in world keeps canonical document geometry. Attach its
+    // optional render meshes on a worker after validating actual coordinates.
+    if(bootstrapWorldEnabled_&&std::any_of(project_.document().units.begin(),project_.document().units.end(),
+            [](const auto& unit){return unit.geometry.id.rfind("world-country-",0)==0;})) {
+        using DetailFrames=std::pair<std::shared_ptr<const WorldBaseFrame>,std::shared_ptr<const WorldBaseFrame>>;
+        const auto initial=project_.snapshot();const auto generation=worldGeneration_;
+        auto* watcher=new QFutureWatcher<DetailFrames>(this);
+        connect(watcher,&QFutureWatcher<DetailFrames>::finished,this,[this,watcher,initial,generation] {
+            watcher->deleteLater();
+            if(generation!=worldGeneration_||!initial.matches(project_))return;
+            try {
+                auto frames=watcher->result();if(!frames.first)return;
+                worldCanonicalBase_=std::move(frames.first);worldPreviewBase_=std::move(frames.second);
+                worldBase_=worldCanonicalBase_;worldRanges_=worldBase_->ranges;
+                updateWorldDetail();worldStatus_=QStringLiteral("canonical");
+                refreshTypedScene();emit worldStatusChanged();
+            }catch(const std::exception&) {
+                // Missing or mismatched optional assets retain exact document packets.
+            }
+        });
+        watcher->setFuture(QtConcurrent::run([initial,root=worldDataRoot_] {
+            DetailFrames frames;frames.first=WorldDatasetLoader::matchingBaseFrame(initial.document(),root);
+            if(frames.first)try {
+                auto preview=std::make_shared<WorldBaseFrame>(*WorldDatasetLoader::preview(root).frame);
+                if(preview->ranges==frames.first->ranges) {
+                    preview->documentReady=true;frames.second=std::move(preview);
+                }
+            }catch(const std::exception&) {}
+            return frames;
+        }));
+    }
+    return true;
 }
 bool EditorController::restorePrivateProject()
 {

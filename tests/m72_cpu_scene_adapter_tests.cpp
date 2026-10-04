@@ -24,7 +24,7 @@ int main(int argc,char** argv) {
     if(image.pixelColor(50,50).red()<200||image.pixelColor(0,0).alpha()!=0)
         throw std::runtime_error("CPU typed scene adapter paint");
 
-    // Preview world meshes are submitted outside drawSequence by both backends.
+    // Startup preview has no canonical document yet and uses a dedicated pass.
     auto mesh=std::make_shared<CountryBaseMesh>();
     mesh->preview=true;
     mesh->positionsMicrodegrees={
@@ -39,6 +39,7 @@ int main(int argc,char** argv) {
     mesh->countryTriangleRanges={0,6};
     mesh->countryBoundaryRanges={0,8};
     auto base=std::make_shared<WorldBaseFrame>();
+    base->documentReady=false;
     base->mesh=mesh;base->ranges.push_back({"TEST","TEST","world-country-TEST"});
     auto preview=std::make_shared<RenderScene>();
     preview->revision=2;preview->worldBase=base;

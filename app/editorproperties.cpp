@@ -114,7 +114,7 @@ QString EditorController::beginPropertyEdit(const QString& field) {
  const auto u=selectedUnit();if(!u||selection_.items().size()!=1||!fieldKind(field))return {};
  if((field=="validFrom"||field=="validTo")&&u->kind!=UnitKind::Region)return {};
  const auto token=QUuid::createUuid().toString(QUuid::WithoutBraces);
- fieldSessions_.emplace(token,FieldSession{project_.snapshot(),territorialRef(u->id),field});return token;
+ fieldSessions_.emplace(token,FieldSession{project_.snapshot(),territorialRef(u->id),field});refreshTypedScene();return token;
 }
 bool EditorController::updatePropertyEdit(const QString& token,const QString& value) {
  auto it=fieldSessions_.find(token);if(it==fieldSessions_.end()||!it->second.base.matches(project_)||it->second.ref.id!=selected_.toStdString())return false;
@@ -125,10 +125,11 @@ bool EditorController::updatePropertyEdit(const QString& token,const QString& va
 bool EditorController::confirmPropertyEdit(const QString& token) {
  auto it=fieldSessions_.find(token);if(it==fieldSessions_.end())return false;
  const auto session=it->second;fieldSessions_.erase(it);
+ refreshTypedScene();
  if(!session.base.matches(project_) || session.ref.id!=selected_.toStdString())return false;
  return commitObjectField(session.field);
 }
-void EditorController::endPropertyEdit(const QString& token){fieldSessions_.erase(token);}
+void EditorController::endPropertyEdit(const QString& token){if(fieldSessions_.erase(token))refreshTypedScene();}
 bool EditorController::beginColorEdit() {
  if(!objectProperties()["colorEnabled"].toBool())return false;
  colorSession_=project_.snapshot();colorTargets_=selection_.items();emit colorEditChanged();return true;

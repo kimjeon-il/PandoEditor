@@ -35,6 +35,9 @@ struct WorldBaseRange {
 
 struct WorldBaseFrame {
     std::shared_ptr<const CountryBaseMesh> mesh;
+    // Render precision is independent of canonical document readiness.
+    bool documentReady=true;
+    bool startupPreview() const noexcept {return mesh&&mesh->preview&&!documentReady;}
     // One entry per immutable GPU mesh slot. Several slots may belong to the
     // same logical document object after built-in territory classification.
     std::vector<WorldBaseRange> ranges;

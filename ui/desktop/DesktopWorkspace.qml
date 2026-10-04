@@ -33,6 +33,8 @@ Item {
     readonly property var hoverData:{const key=hoverLabel.ref?hoverLabel.ref.key:"";const rows=editor.objectRows;for(let i=0;i<rows.length;i++)if(rows[i].key===key)return rows[i];return ({})}
     property bool legacyOpen:false
     readonly property bool sideOpen:editorOpen||legacyOpen
+    onSideOpenChanged:editor.setMapEditorActive(sideOpen)
+    Component.onDestruction:editor.setMapEditorActive(false)
     property bool pointerNavigation:false
     function navigationStarted(){
         if(pointerNavigation)return

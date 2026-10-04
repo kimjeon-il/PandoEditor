@@ -89,6 +89,113 @@ void worldRangesKeepSourceSlotsAndLogicalOwnersSeparate() {
     require(owned==std::vector<std::size_t>({0,1}),
             "selection highlight covers all ranges of a merged owner");
 }
+std::shared_ptr<WorldBaseFrame> zoomPreviewFrame(bool documentReady) {
+    auto mesh=std::make_shared<CountryBaseMesh>();mesh->preview=true;
+    auto frame=std::make_shared<WorldBaseFrame>();frame->mesh=mesh;
+    frame->documentReady=documentReady;
+    for(const auto& id:{"A","A","B","C","DELETED"})
+        frame->ranges.push_back({"SOURCE-"+std::to_string(frame->ranges.size()),id,
+                                 "world-country-"+std::string(id)});
+    while(frame->ranges.size()<258) {
+        const auto id="MISSING-"+std::to_string(frame->ranges.size());
+        frame->ranges.push_back({id,id,"world-country-"+id});
+    }
+    return frame;
+}
+pandoeditor::ProjectDocument zoomPreviewDocument() {
+    using namespace pandoeditor;
+    ProjectDocument doc({},{{"countries","Countries"}});
+    for(const auto& id:{"A","B","C"}) {
+        const GeometryRef ref{"world-country-"+std::string(id),1};
+        doc.units.push_back({id,id,{},UnitKind::Country,ref});
+        doc.geometries.insert(ref,square(id[0]-'A'));
+        doc.presentation.membership[territorialRef(id)]="countries";
+        doc.presentation.objectStyles[territorialRef(id)]={0x123456,.5};
+    }
+    return doc;
+}
+void startupPreviewRemainsVisibleBeforeDocumentMaterialization() {
+    GeometryPacketCache cache;MapSceneBuilder builder(cache);MapViewState view;
+    auto frame=zoomPreviewFrame(false);builder.setWorldBase(frame);
+    const auto scene=builder.buildDocument({},0,view,{},{});
+    require(frame->startupPreview(),"unmaterialized preview has bootstrap lifetime");
+    require(scene->worldCountries.size()==258&&
+            std::all_of(scene->worldCountries.begin(),scene->worldCountries.end(),
+                        [](const auto& range){return range.visible;}),
+            "bootstrap preview retains all world ranges without document owners");
+    require(scene->drawSequence.empty()&&scene->polygons.empty(),
+            "bootstrap preview uses its dedicated base submission only");
+}
+void documentReadyPreviewHonorsStylesVisibilityAndEditedShapes() {
+    using namespace pandoeditor;
+    auto doc=zoomPreviewDocument();
+    doc.presentation.webPresentation.hiddenItems["countries"].insert("B");
+    doc.presentation.webPresentation.objectStyles["territorial:country:A"].boundaryVisible=false;
+    doc.geometries.insert({"world-country-C",2},square(30));doc.units[2].geometry.version=2;
+    const auto originalA=doc.geometries.get({"world-country-A",1});
+    const auto editedC=doc.geometries.get({"world-country-C",2});
+    GeometryPacketCache cache;MapSceneBuilder builder(cache);MapViewState view;
+    auto frame=zoomPreviewFrame(true);builder.setWorldBase(frame);
+    InteractionRenderPacket interaction;interaction.hover=territorialRef("A");
+    const auto scene=builder.buildDocument(doc,1,view,interaction,{});
+    require(!frame->startupPreview()&&scene->worldBase->mesh->preview,
+            "ready preview remains the single preview mesh with document semantics");
+    require(scene->worldCountries[0].visible&&scene->worldCountries[1].visible,
+            "ready preview preserves every source range of a merged owner");
+    for(const auto slot:{0,1})require(scene->worldCountries[slot].fill.color==0x123456&&
+            std::abs(scene->worldCountries[slot].fill.alpha-.5)<1e-6,
+            "ready preview preserves document color and opacity");
+    require(!scene->worldCountries[2].visible&&!scene->worldCountries[3].visible&&
+            !scene->worldCountries[4].visible,
+            "hidden deleted and edited owners never expose stale preview geometry");
+    require(std::count_if(scene->drawSequence.begin(),scene->drawSequence.end(),[](const auto& draw) {
+                return draw.primitive==PrimitiveKind::WorldFill;
+            })==2,"ready preview contributes ordered fills only for visible unchanged owner slots");
+    require(std::none_of(scene->drawSequence.begin(),scene->drawSequence.end(),[](const auto& draw) {
+                return draw.primitive==PrimitiveKind::WorldStroke;
+            }),"hidden document boundary is excluded from base draws");
+    const auto edited=std::find_if(scene->polygons.begin(),scene->polygons.end(),[](const auto& draw) {
+        return draw.object==territorialRef("C");
+    });
+    require(edited!=scene->polygons.end()&&edited->geometry==GeometryRef{"world-country-C",2},
+            "edited canonical geometry remains a precise fallback over preview");
+    require(scene->polygons.size()==1&&scene->interaction.hover==territorialRef("A")&&
+            worldRangeIndicesForOwner(*frame,"A")==std::vector<std::size_t>({0,1}),
+            "ready preview preserves owner highlight mapping without duplicate canonical fills");
+    require(doc.geometries.get({"world-country-A",1})==originalA&&
+            doc.geometries.get({"world-country-C",2})==editedC&&editedC->polygons[0][0][0].x==30,
+            "preview rendering never changes canonical document geometry");
+    doc.presentation.userLayers[0].visible=false;
+    const auto hidden=builder.buildDocument(doc,2,view,{},scene);
+    require(hidden->drawSequence.empty()&&hidden->polygons.empty()&&
+            std::none_of(hidden->worldCountries.begin(),hidden->worldCountries.end(),
+                         [](const auto& range){return range.visible;}),
+            "ready preview respects layer hiding for base ranges and edited fallback");
+}
+void canonicalPreviewSwitchPublishesCorrectResourceAndDocumentState() {
+    auto doc=zoomPreviewDocument();GeometryPacketCache cache;MapSceneBuilder builder(cache);
+    MapViewState view;auto preview=zoomPreviewFrame(true);
+    auto canonical=std::make_shared<WorldBaseFrame>(*preview);
+    auto mesh=std::make_shared<CountryBaseMesh>();canonical->mesh=mesh;
+    builder.setWorldBase(canonical);auto scene=builder.buildDocument(doc,1,view,{},{});
+    const auto canonicalScene=scene;
+    for(int i=0;i<4;++i) {
+        builder.setWorldBase(preview);scene=builder.buildDocument(doc,1,view,{},scene);
+        require(scene->worldBase==preview&&scene->worldCountries[0].fill.color==0x123456,
+                "canonical to preview uses the requested resource and latest style");
+        builder.setWorldBase(canonical);scene=builder.buildDocument(doc,1,view,{},scene);
+        require(scene->worldBase==canonical&&scene->polygons.empty(),
+                "preview to canonical preserves base owner handling without duplicate packets");
+    }
+    require(scene!=canonicalScene&&scene->revisions.dataset>canonicalScene->revisions.dataset,
+            "resource switches publish new immutable scene dataset revisions");
+    doc.units.clear();
+    builder.setWorldBase(preview);const auto replaced=builder.buildDocument(doc,2,view,{},scene);
+    require(replaced->drawSequence.empty()&&
+            std::none_of(replaced->worldCountries.begin(),replaced->worldCountries.end(),
+                         [](const auto& range){return range.visible;}),
+            "replacement document cannot resurrect old preview owners");
+}
 void immutableSnapshotsReusePreparationButRespectInvalidation() {
     using namespace pandoeditor;
     ProjectDocument doc({},{{"countries","Countries"}});
@@ -138,4 +245,4 @@ void immutableSnapshotsReusePreparationButRespectInvalidation() {
     require(builder.preparationCount()==count+6,"undo revision invalidates preparation");
 }
 }
-int main(){builderPreservesM5DrawOrderAndCache();worldRangesKeepSourceSlotsAndLogicalOwnersSeparate();distributionRangeRestylesUnchangedPeersInPatch();disabledTerritorialColorPreservesFillAndBoundary();immutableSnapshotsReusePreparationButRespectInvalidation();}
+int main(){startupPreviewRemainsVisibleBeforeDocumentMaterialization();documentReadyPreviewHonorsStylesVisibilityAndEditedShapes();canonicalPreviewSwitchPublishesCorrectResourceAndDocumentState();builderPreservesM5DrawOrderAndCache();worldRangesKeepSourceSlotsAndLogicalOwnersSeparate();distributionRangeRestylesUnchangedPeersInPatch();disabledTerritorialColorPreservesFillAndBoundary();immutableSnapshotsReusePreparationButRespectInvalidation();}

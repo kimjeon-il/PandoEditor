@@ -175,7 +175,8 @@ bool EditorController::setProjectionMode(const QString& value)
     if(value.compare(QStringLiteral("globe"),Qt::CaseInsensitive)==0)mode=ProjectionMode::Globe;
     else if(value.compare(QStringLiteral("flat"),Qt::CaseInsensitive)==0)mode=ProjectionMode::Flat;
     else return false;
-    if(!camera_.setProjectionMode(mode))return true;
+    worldFocusDetail_=false;
+    if(!camera_.setProjectionMode(mode)){refreshTypedScene();return true;}
     return publishCameraView();
 }
 
@@ -188,12 +189,15 @@ bool EditorController::resizeMapCamera(double width,double height,double deviceP
 
 bool EditorController::zoomMapCameraAt(double factor,double x,double y)
 {
-    if(!camera_.zoomAt(factor,x,y))return false;
+    if(!std::isfinite(factor)||factor<=0||!std::isfinite(x)||!std::isfinite(y))return false;
+    worldFocusDetail_=false;
+    if(!camera_.zoomAt(factor,x,y)){refreshTypedScene();return false;}
     return publishCameraView();
 }
 
 void EditorController::beginMapCameraPan()
 {
+    worldFocusDetail_=false;refreshTypedScene();
     camera_.beginPan();
 }
 
@@ -210,15 +214,27 @@ void EditorController::endMapCameraPan()
 
 bool EditorController::fitMapCamera()
 {
-    if(!camera_.fit())return true;
+    worldFocusDetail_=false;
+    if(!camera_.fit()){refreshTypedScene();return true;}
     return publishCameraView();
 }
 
 bool EditorController::focusMapCameraRect(double left,double top,double width,double height,double maxZoom)
 {
     closeObjectChooser();
-    if(!camera_.focusRect(left,top,width,height,maxZoom))return false;
+    if(!std::isfinite(left)||!std::isfinite(top)||!std::isfinite(width)||width<=0||
+       !std::isfinite(height)||height<=0||!std::isfinite(maxZoom)||maxZoom<=0)return false;
+    camera_.focusRect(left,top,width,height,maxZoom);
+    // Focus is synchronous today. Keep detail through resize/publication until
+    // the next explicit navigation, rather than tying it to a timer.
+    worldFocusDetail_=true;refreshTypedScene();
     if(camera_.mode()==ProjectionMode::Flat)return publishCameraView();
     emit viewStateChanged();
     return true;
+}
+
+void EditorController::setMapEditorActive(bool active)
+{
+    if(mapEditorActive_==active)return;
+    mapEditorActive_=active;refreshTypedScene();
 }
