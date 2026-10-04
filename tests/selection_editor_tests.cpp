@@ -96,7 +96,8 @@ private slots:
         const bool dirty=editor.dirty();QSignalSpy dirtySignals(&editor,&EditorController::dirtyChanged);
         QVERIFY(editor.selectObject(ref("B"),"toggle","objects"));
         QVERIFY(editor.selectObject(ref("S","general"),"range","objects",{ref("A"),ref("B"),ref("S","general")}));
-        editor.setSearchQuery("하위단위");QCOMPARE(ids(editor.searchResults()),QStringList{"S"});
+        editor.setSearchQuery("일반객체");auto matches=ids(editor.searchResults());matches.sort();
+        QCOMPARE(matches,QStringList({"A","B","S"}));
         QVERIFY(editor.setHoverObject(ref("R","regional"),"map"));
         QSignalSpy focused(&editor,&EditorController::focusRequested);QVERIFY(editor.focusObject(ref("H","regional")));QCOMPARE(focused.count(),1);
         QCOMPARE(focused.front().at(4).toDouble(),mobile?12.0:10.0);
@@ -117,7 +118,7 @@ private slots:
         QCOMPARE(editor.rangeAnchor("right")["id"].toString(),QString("B"));QCOMPARE(editor.rangeAnchor("left")["id"].toString(),QString("S"));
         QVERIFY(editor.selectObject(ref("A"),"range","right",ordered));QCOMPARE(ids(editor.selectionItems()),QStringList({"A","B"}));
         const auto before=editor.selectionItems();const auto revision=editor.selectionRevision();
-        QVERIFY(!editor.selectObject(ref("missing")));QVERIFY(!editor.selectObject(ref("S","general")));
+        QVERIFY(!editor.selectObject(ref("missing")));QVERIFY(!editor.selectObject(ref("S","regional")));
         QVERIFY(editor.selectObject(ref("R","regional"),"range","right",{ref("A"),ref("B")}));
         QCOMPARE(editor.selectionItems(),before);QCOMPARE(editor.selectionRevision(),revision);
         QVERIFY(editor.setSelection({ref("A"),ref("B"),ref("A")}));QCOMPARE(ids(editor.selectionItems()),QStringList({"A","B"}));QCOMPARE(editor.selectedId(),QString("A"));
@@ -177,7 +178,7 @@ private slots:
     }
     void webImportPreviewUnaffectedBySelection(){
         QTemporaryDir dir;EditorController editor;
-        QVERIFY(editor.prepareWebImport(QUrl::fromLocalFile(QString(WEB_IMPORT_FIXTURES)+"/v5.input.json")));
+        QVERIFY(editor.prepareWebImport(QUrl::fromLocalFile(QString(WEB_IMPORT_FIXTURES)+"/../timeline-exchange/static.json")));
         QTRY_VERIFY_WITH_TIMEOUT(editor.hasWebImportPreview(),10000);
         const auto hash=editor.webImportHash();editor.selectCountry(editor.countryRows().front().toMap()["id"].toString());
         editor.setSearchQuery("국가");QVERIFY(editor.hasWebImportPreview());QCOMPARE(editor.webImportHash(),hash);

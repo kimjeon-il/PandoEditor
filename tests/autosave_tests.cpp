@@ -212,10 +212,25 @@ private slots:
         QTimer pulse;pulse.setInterval(5);
         connect(&pulse,&QTimer::timeout,this,[&]{const auto now=clock.elapsed();maxGap=std::max(maxGap,now-lastBeat);lastBeat=now;++beats;});pulse.start();
         EditorController restored(config);const auto constructorMs=clock.elapsed();
+        const auto initialDocument=restored.documentBytes();const auto initialInstance=restored.projectInstanceId();
         QSignalSpy errors(&restored,&EditorController::errorOccurred);
         QVERIFY(restored.startupBusy());
         QTRY_VERIFY_WITH_TIMEOUT(!restored.startupBusy(),60000);
         pulse.stop();
+        if(fixture.isEmpty()) {
+            QCOMPARE(restored.worldStatus(),QStringLiteral("recovery-failed"));
+            QCOMPARE(errors.count(),1);
+            const auto message=errors.first().first().toString();
+            QVERIFY2(message.contains("UNSUPPORTED_VERSION")&&message.contains("Qt v9"),qPrintable(message));
+            QCOMPARE(restored.documentBytes(),initialDocument);
+            QCOMPARE(restored.projectInstanceId(),initialInstance);
+            // Observe beyond the configured debounce to catch an accidental rewrite.
+            QTest::qWait(ProjectAutosave::SaveDelayMs+100);
+            QCOMPARE(errors.count(),1);
+            QCOMPARE(fingerprint(config.autosaveProjectPath),before);
+            QCOMPARE(fingerprint(config.autosaveViewPath),viewBefore);
+            return;
+        }
         QVERIFY2(restored.worldStatus()==QStringLiteral("canonical"),
             errors.isEmpty()?qPrintable(restored.worldStatus()):qPrintable(errors.first().first().toString()));
         QVERIFY(beats>0);
