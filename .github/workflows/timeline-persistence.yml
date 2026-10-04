@@ -3,6 +3,11 @@ on:
   push:
     branches: [feat/timeline-app]
   workflow_dispatch:
+    inputs:
+      probe_only:
+        description: Run only the object comparison probe; retain prior production-test evidence
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -29,8 +34,13 @@ jobs:
       - name: Configure Qt Debug and build persistence targets
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
-          cmake --build build --parallel 2 --target pandoeditor temporal_tests timeline_records_tests timeline_storage_tests command_tests storage_tests timeline_project_tests timeline_editor_persistence_tests project_geopackage_tests project_geopackage_controller_tests web_import_ui_tests label_engine_tests map_picker_tests resource_cache_diagnostics_tests presentation_editor_tests flag_layout_probe property_probe
+          if [ '${{ inputs.probe_only }}' = 'true' ]; then
+            cmake --build build --parallel 2 --target property_probe
+          else
+            cmake --build build --parallel 2 --target pandoeditor temporal_tests timeline_records_tests timeline_storage_tests command_tests storage_tests timeline_project_tests timeline_editor_persistence_tests project_geopackage_tests project_geopackage_controller_tests web_import_ui_tests label_engine_tests map_picker_tests resource_cache_diagnostics_tests presentation_editor_tests flag_layout_probe property_probe
+          fi
       - name: Run focused persistence tests without skips
+        if: ${{ inputs.probe_only != true }}
         run: |
           ctest --test-dir build --output-on-failure -R '^(temporal_tests|timeline_records_tests|timeline_storage_tests|command_tests|storage_tests|timeline_project_tests|timeline_editor_persistence_tests|project_geopackage_tests|project_geopackage_controller_tests|web_import_ui_tests|label_engine_tests|map_picker_tests|resource_cache_diagnostics_tests)$' --output-junit "$GITHUB_WORKSPACE/build/results.xml"
           python3 - <<'PY'
@@ -46,22 +56,28 @@ jobs:
           assert 'SKIP' not in Path('build/Testing/Temporary/LastTest.log').read_text()
           PY
       - name: Verify merged flag and object contracts
+        shell: bash
         run: |
-          ./build/app/presentation_editor_tests administrativeMoveRetainsFlagPolicyAcrossSaveAndReset flagLibraryUsesTheSameDefaultAssetsAsWeb flagLibraryPreservesOriginalSvgBytes uploadedRasterPreservesBytesAcrossSaveAndReopen territorialFlagMetadataUsesWebPrecedence countryFlagRemainsWhenNameChannelIsHidden -o build/flags.txt,txt
-          cat build/flags.txt
-          if grep -q SKIP build/flags.txt; then exit 1; fi
-          node tools/flag-layout-web-oracle.mjs ./build/engine/flag_layout_probe | tee build/flag-layout.txt
-          node tools/m32-property-oracle.mjs ./build/app/property_probe | tee build/property-oracle.txt
+          if [ '${{ inputs.probe_only }}' != 'true' ]; then
+            ./build/app/presentation_editor_tests administrativeMoveRetainsFlagPolicyAcrossSaveAndReset flagLibraryUsesTheSameDefaultAssetsAsWeb flagLibraryPreservesOriginalSvgBytes uploadedRasterPreservesBytesAcrossSaveAndReopen territorialFlagMetadataUsesWebPrecedence countryFlagRemainsWhenNameChannelIsHidden -o build/flags.txt,txt
+            cat build/flags.txt
+            if grep -q SKIP build/flags.txt; then exit 1; fi
+            node tools/flag-layout-web-oracle.mjs ./build/engine/flag_layout_probe | tee build/flag-layout.txt
+          fi
+          node tools/m32-property-oracle.mjs ./build/property_probe | tee build/property-oracle.txt
       - name: Verify saved sample assets
+        if: ${{ inputs.probe_only != true }}
         run: |
           node tools/verify-release-assets.mjs --root . --out build/source-assets.json
       - uses: actions/checkout@v4
+        if: ${{ inputs.probe_only != true }}
         with:
           repository: kimjeon-il/world-map
           ref: 788f43fd27062851bdadf7fa6964819d43534685
           path: web-reference
           persist-credentials: false
       - name: Exercise actual web and native file exchange
+        if: ${{ inputs.probe_only != true }}
         run: node tools/timeline-exchange-oracle.mjs build/app/timeline_project_tests web-reference build/exchange-evidence
       - uses: actions/upload-artifact@v4
         if: always()
