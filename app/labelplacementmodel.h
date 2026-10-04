@@ -21,20 +21,28 @@ public:
     QHash<int,QByteArray> roleNames() const override {return {{Content,"modelData"},{LabelX,"labelX"},{LabelY,"labelY"}};}
     void setRows(const QVariantList& rows) {
         const auto identity=[](const QVariant& row){return row.toMap().value("ref");};
-        for(qsizetype i=rows_.size();i>0;--i) {
-            const auto key=identity(rows_[i-1]);
-            if(std::none_of(rows.cbegin(),rows.cend(),[&](const auto& row){return identity(row)==key;})) {
-                beginRemoveRows({},int(i-1),int(i-1));rows_.removeAt(i-1);endRemoveRows();
+        // Camera reprojection normally changes only coordinates. Comparing the
+        // complete refs once avoids the quadratic membership scan while keeping
+        // exactly the same identity contract (including non-map/duplicate refs).
+        const bool sameOrder=rows.size()==rows_.size()&&
+            std::equal(rows.cbegin(),rows.cend(),rows_.cbegin(),
+                [&](const auto& a,const auto& b){return identity(a)==identity(b);});
+        if(!sameOrder) {
+            for(qsizetype i=rows_.size();i>0;--i) {
+                const auto key=identity(rows_[i-1]);
+                if(std::none_of(rows.cbegin(),rows.cend(),[&](const auto& row){return identity(row)==key;})) {
+                    beginRemoveRows({},int(i-1),int(i-1));rows_.removeAt(i-1);endRemoveRows();
+                }
             }
-        }
-        for(qsizetype i=0;i<rows.size();++i) {
-            const auto key=identity(rows[i]);
-            qsizetype existing=i;
-            while(existing<rows_.size()&&identity(rows_[existing])!=key)++existing;
-            if(existing==rows_.size()) {
-                beginInsertRows({},int(i),int(i));rows_.insert(i,rows[i]);endInsertRows();
-            } else if(existing!=i) {
-                beginMoveRows({},int(existing),int(existing),{},int(i));rows_.move(existing,i);endMoveRows();
+            for(qsizetype i=0;i<rows.size();++i) {
+                const auto key=identity(rows[i]);
+                qsizetype existing=i;
+                while(existing<rows_.size()&&identity(rows_[existing])!=key)++existing;
+                if(existing==rows_.size()) {
+                    beginInsertRows({},int(i),int(i));rows_.insert(i,rows[i]);endInsertRows();
+                } else if(existing!=i) {
+                    beginMoveRows({},int(existing),int(existing),{},int(i));rows_.move(existing,i);endMoveRows();
+                }
             }
         }
         for(qsizetype i=0;i<rows.size();++i)if(rows[i]!=rows_[i]) {

@@ -237,6 +237,11 @@ if(BUILD_TESTING)
     add_test(NAME historical_editor_tests COMMAND historical_editor_tests -o -,txt)
     set_tests_properties(historical_editor_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     find_package(Qt6 REQUIRED COMPONENTS Test)
+    add_executable(label_placement_model_tests ../tests/label_placement_model_tests.cpp labelplacementmodel.h)
+    target_include_directories(label_placement_model_tests PRIVATE .)
+    target_link_libraries(label_placement_model_tests PRIVATE Qt6::Core Qt6::Gui Qt6::Test)
+    add_test(NAME label_placement_model_tests COMMAND label_placement_model_tests -o -,txt)
+    set_tests_properties(label_placement_model_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     add_executable(hydro_manifest_tests ../tests/hydro_manifest_tests.cpp)
     target_link_libraries(hydro_manifest_tests PRIVATE pandoeditor_editor Qt6::Test)
     target_compile_definitions(hydro_manifest_tests PRIVATE WEB_HYDRO_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-hydro")
@@ -457,7 +462,9 @@ if(BUILD_TESTING)
             FILES ${DEFAULT_FLAG_FILES})
     endforeach()
     add_test(NAME ui_tests COMMAND ui_tests -o -,txt)
-    set_tests_properties(ui_tests PROPERTIES TIMEOUT 120 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    # Aggregate software-rendered UI suite budget; individual waits and performance gates are unchanged.
+    # The expanded suite exceeded 120 s on CI after 31 passing cases.
+    set_tests_properties(ui_tests PROPERTIES TIMEOUT 180 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()
 
 set_target_properties(pandoeditor PROPERTIES
