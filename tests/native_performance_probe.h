@@ -78,18 +78,17 @@ static void runNativePerformanceProbe()
     auto* cpuRenderer=window->findChild<MapRenderItem*>("canonicalMapRenderer");QVERIFY(cpuRenderer);
     if(qEnvironmentVariable("PANDOEDITOR_NATIVE_PERF_ABLATION")=="no-cull") {
         auto* source=qobject_cast<MapSceneBridge*>(editor.mapSceneBridge());
-        auto* diagnostic=new MapSceneBridge(&engine);
+        auto* diagnostic=new MapSceneBridge(&engine,false);
         const auto copy=[source,diagnostic] {
             if(const auto original=source->sceneSnapshot()) {
-                auto scene=std::make_shared<RenderScene>(*original);
-                std::fill(scene->worldPlan.fills.visible.begin(),scene->worldPlan.fills.visible.end(),true);
-                std::fill(scene->worldPlan.strokes.visible.begin(),scene->worldPlan.strokes.visible.end(),true);
-                diagnostic->publishScene(scene);
+                diagnostic->publishScene(original);
             }
             diagnostic->publishView(source->viewState());
         };
         QObject::connect(source,&MapSceneBridge::sceneChanged,diagnostic,copy);
-        QObject::connect(source,&MapSceneBridge::viewChanged,diagnostic,copy);
+        QObject::connect(source,&MapSceneBridge::viewChanged,diagnostic,[source,diagnostic] {
+            diagnostic->publishView(source->viewState());
+        });
         copy();gpu->setSceneBridge(diagnostic);
     }
     std::atomic<quint64> presents{0};

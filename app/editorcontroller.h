@@ -1,4 +1,8 @@
 #pragma once
+#include "worldresourcecache.h"
+#include "resourcecachecoordinator.h"
+#include "terrainimageprovider.h"
+#include "terraindisplaystate.h"
 #include "projectcodec.h"
 #include "../platform/screencolorpicker.h"
 #include "commandjobrunner.h"
@@ -59,6 +63,7 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantMap distributionDisplay READ distributionDisplay NOTIFY visualChanged)
     Q_PROPERTY(QVariantMap hydroDataStatus READ hydroDataStatus NOTIFY stateChanged)
     Q_PROPERTY(QVariantMap terrainDataStatus READ terrainDataStatus NOTIFY terrainChanged)
+    Q_PROPERTY(QObject* terrainResourceBridge READ terrainResourceBridge CONSTANT)
     Q_PROPERTY(QVariantList terrainTiles READ terrainTiles NOTIFY terrainChanged)
     Q_PROPERTY(bool hydroViewportLoaded READ hydroViewportLoaded NOTIFY hydroFrameChanged)
     Q_PROPERTY(QObject* hydroSource READ hydroSource CONSTANT)
@@ -297,10 +302,13 @@ public:
     Q_INVOKABLE void cancelAppearancePreview();
     Q_INVOKABLE bool applyAppearancePreview();
     QVariantMap renderQuality() const;
+    QObject* terrainResourceBridge() const;
     std::shared_ptr<TerrainTileProvider> terrainProviderSnapshot() const {return terrainProvider_;}
     Q_INVOKABLE void recordMapFrame(double milliseconds);
     Q_INVOKABLE void beginMapInteraction();
     Q_INVOKABLE void endMapInteraction();
+    void setWorldResourceBudget(std::size_t bytes);
+    Q_INVOKABLE void recordGpuResourceStats(QObject* source);
     QString worldStatus() const {return worldStatus_;}
     bool startupBusy() const {return startupBusy_;}
     double mapWidth() const { return projection_.width; }
@@ -686,7 +694,12 @@ private:
     bool appearancePreviewOpen_=false;
     QString terrainMode_=QStringLiteral("gray");
     std::shared_ptr<const WorldBaseFrame> worldBase_;
-    std::shared_ptr<const WorldBaseFrame> worldPreviewBase_,worldCanonicalBase_;
+    WorldResourceCache worldResources_;
+    mutable ResourceCacheCoordinator resourceCoordinator_;
+    QPointer<QObject> gpuResourceSource_;
+    bool worldReloading_[2]={false,false},worldReloadFailed_[2]={false,false};
+    void cacheWorldFrame(std::shared_ptr<const WorldBaseFrame>);
+    void reloadWorldDetail(WorldDetail);
     bool worldDetailCanonical_=false;
     bool worldFocusDetail_=false;
     bool mapEditorActive_=false;
@@ -695,6 +708,10 @@ private:
     QString physicalRoot_,physicalError_;
     int physicalActive_=0,physicalQueued_=0;
     std::shared_ptr<TerrainTileProvider> terrainProvider_;
+    std::unique_ptr<TerrainImageBridge> terrainResourceBridge_;
+    TerrainDisplayState terrainDisplay_;
+    std::weak_ptr<TerrainTileProvider> terrainDisplaySource_;
+    int terrainAssetPending_=0;
     QVariantList terrainTiles_;
     int terrainMissingTiles_=0;
     QString worldHydroNotice_;
@@ -707,7 +724,6 @@ private:
     mutable MapPicker mapPicker_;
     std::optional<pandoeditor::ChangeImpact> pendingSceneImpact_;
     std::uint64_t pendingSceneImpactRevision_=0;
-    std::uint64_t sceneQualityRevision_=0;
     std::uint64_t scenePatchCount_=0,sceneFullBuildCount_=0;
     std::size_t lastEditAffectedObjects_=0,lastEditRetainedGeometries_=0,lastEditNewGeometryBytes_=0;
     std::string sceneInstance_;

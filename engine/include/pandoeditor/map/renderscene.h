@@ -35,7 +35,8 @@ struct WorldBaseRange {
 
 struct WorldBaseFrame {
     std::shared_ptr<const CountryBaseMesh> mesh;
-    // Render precision is independent of canonical document readiness.
+    // Precision and document readiness are independent: a render-only preview
+    // can be bound to a fully materialized canonical document.
     bool documentReady=true;
     bool startupPreview() const noexcept {return mesh&&mesh->preview&&!documentReady;}
     // One entry per immutable GPU mesh slot. Several slots may belong to the
@@ -50,7 +51,8 @@ struct WorldCountryDraw {
 };
 
 struct RenderScene {
-    // Shared only by transient view/interaction copies of one preparation.
+    // Shared by interaction copies of one preparation. Current view/culling
+    // live in MapFrame, which retains this exact snapshot on camera changes.
     // Revisions alone can collide when another project replaces the scene.
     struct PreparationIdentity {};
     std::shared_ptr<const PreparationIdentity> preparationIdentity;

@@ -37,6 +37,8 @@ add_library(pandoeditor_editor STATIC
     worlddataset.cpp worlddataset.h
     worlddatasetloader.cpp worlddatasetloader.h
     terrainimageprovider.cpp terrainimageprovider.h
+    resourcecachecoordinator.cpp resourcecachecoordinator.h
+    worldresourcecache.cpp worldresourcecache.h
     worldbootstrap.cpp
     webprojectgeopackage.cpp webprojectgeopackage.h
     giscontentimport.cpp giscontentimport.h
@@ -248,6 +250,18 @@ if(BUILD_TESTING)
     add_executable(hydro_full_dataset_tests ../tests/hydro_full_dataset_tests.cpp)
     target_link_libraries(hydro_full_dataset_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME hydro_full_dataset_tests COMMAND hydro_full_dataset_tests -o -,txt)
+    add_executable(terrain_resource_cache_tests ../tests/terrain_resource_cache_tests.cpp)
+    target_link_libraries(terrain_resource_cache_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME terrain_resource_cache_tests COMMAND terrain_resource_cache_tests)
+    add_executable(resource_cache_diagnostics_tests ../tests/resource_cache_diagnostics_tests.cpp)
+    target_link_libraries(resource_cache_diagnostics_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME resource_cache_diagnostics_tests COMMAND resource_cache_diagnostics_tests)
+    add_executable(world_resource_cache_tests ../tests/world_resource_cache_tests.cpp)
+    target_link_libraries(world_resource_cache_tests PRIVATE pandoeditor_editor)
+    add_test(NAME world_resource_cache_tests COMMAND world_resource_cache_tests)
+    add_executable(hydro_scheduler_resource_tests ../tests/hydro_scheduler_resource_tests.cpp)
+    target_link_libraries(hydro_scheduler_resource_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME hydro_scheduler_resource_tests COMMAND hydro_scheduler_resource_tests)
     add_executable(hydro_cache_tests ../tests/hydro_cache_tests.cpp)
     target_link_libraries(hydro_cache_tests PRIVATE pandoeditor_editor)
     add_test(NAME hydro_cache_tests COMMAND hydro_cache_tests)
@@ -289,6 +303,9 @@ if(BUILD_TESTING)
     add_test(NAME physical_data_store_tests COMMAND physical_data_store_tests -o -,txt)
     add_executable(view_navigation_tests ../tests/view_navigation_tests.cpp)
     target_link_libraries(view_navigation_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(view_navigation_tests world_metadata
+        PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
+        FILES "${PROJECT_SOURCE_DIR}/assets/world/country-label-anchors-v0.10.1.json")
     qt_add_resources(view_navigation_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME view_navigation_tests COMMAND view_navigation_tests -o -,txt)

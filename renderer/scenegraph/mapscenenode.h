@@ -10,6 +10,10 @@
 
 struct MapGpuStats {
     std::uint64_t sceneRevision=0,geometryUploadCount=0;
+    // Counts CPU QSGGeometry allocations, not driver/RHI buffer allocations.
+    std::uint64_t baseGeometryUploadCount=0,interactionGeometryUploadCount=0;
+    std::uint64_t resourceCreationCount=0,resourceRetirementCount=0;
+    std::size_t liveResourceCount=0,liveResourceBytes=0;
     std::uint64_t materialUpdateCount=0,viewUniformUpdateCount=0;
     std::size_t geometryBytes=0;
     std::size_t visibleCountryCount=0,drawIndexCount=0,fullIndexCount=0;
@@ -29,7 +33,8 @@ struct MapFlatViewport {
 class MapSceneNode final : public QSGNode {
 public:
     void sync(const std::shared_ptr<const RenderScene>& scene,const MapViewState& view,
-              const MapFlatViewport& flat,MapGpuStats& stats,std::size_t uploadBudgetBytes);
+              const MapFlatViewport& flat,MapGpuStats& stats,std::size_t uploadBudgetBytes,
+              const WorldRenderPlan* framePlan=nullptr);
 private:
     std::shared_ptr<const RenderScene> lastScene_;
     std::vector<double> lastOffsets_;

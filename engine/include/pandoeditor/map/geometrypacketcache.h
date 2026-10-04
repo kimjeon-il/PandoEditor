@@ -1,12 +1,13 @@
 #pragma once
 #include <pandoeditor/map/renderpacket.h>
+#include <pandoeditor/map/resourcecachepolicy.h>
 #include <pandoeditor/map/renderlod.h>
 #include <map>
 #include <set>
 #include <tuple>
 #include <variant>
 
-enum class ProjectionPreparationPolicy { Geographic, GlobeReady };
+struct RenderScene;
 
 struct GeometryPacketCacheKey {
     pandoeditor::ObjectRef object;
@@ -36,16 +37,22 @@ public:
     GeometryPacketCacheStats stats() const noexcept {return stats_;}
     void setBudget(std::size_t bytes);
     void protect(std::set<pandoeditor::ObjectRef> objects);
+    void protectReasons(std::set<pandoeditor::ObjectRef> selected,std::set<pandoeditor::ObjectRef> editing);
     std::size_t budget() const noexcept {return budget_;}
-    void clear() {packets_.clear();stats_.residentBytes=0;}
+    void clear() {policy_.resetScope();packets_.clear();stats_.residentBytes=0;}
+    pandoeditor::ResourceCacheSnapshot resourceCacheSnapshot() const;
+    void setActiveScene(const std::shared_ptr<const RenderScene>&);
 private:
     using Packet=std::variant<PolygonGeometryPacket,StrokeGeometryPacket,PointGeometryPacket>;
-    struct Entry {Packet packet;std::size_t bytes=0;std::uint64_t used=0;};
+    struct Entry {Packet packet;std::size_t bytes=0;};
+    void admit(const GeometryPacketCacheKey&,Packet,std::size_t);
     void trim();
     void discardOldVersions(const GeometryPacketCacheKey& key);
     std::map<GeometryPacketCacheKey,Entry> packets_;
     GeometryPacketCacheStats stats_;
-    std::set<pandoeditor::ObjectRef> protected_;
+    std::set<pandoeditor::ObjectRef> protected_,editing_;
     std::size_t budget_=192ull*1024*1024;
-    std::uint64_t clock_=0;
+    std::weak_ptr<const RenderScene> activeScene_;
+    std::map<GeometryPacketCacheKey,const void*> activePackets_;
+    pandoeditor::ResourceCachePolicy<GeometryPacketCacheKey> policy_{192ull*1024*1024};
 };

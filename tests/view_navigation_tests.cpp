@@ -4,16 +4,56 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
-#include <cmath>
 #include <QDir>
 #include <QFileInfo>
 #include <QFile>
 #include <QThreadPool>
+#include <cmath>
 #include <algorithm>
 
 class ViewNavigationTests final : public QObject {
     Q_OBJECT
 private slots:
+    void unifiedResourceDiagnosticsExposeEveryDomain() {
+        EditorControllerConfig config;config.bootstrapWorld=false;config.autosaveEnabled=false;
+        EditorController editor(config);
+        const auto quality=editor.renderQuality();const auto caches=quality.value("resourceCaches").toMap();
+        for(const auto* domain:{"terrain","hydro","world","label","geometry","qsg"})QVERIFY2(caches.contains(domain),domain);
+        const auto geometry=caches.value("geometry").toMap();
+        QCOMPARE(geometry.value("residentBytes").toULongLong(),quality.value("packetCacheBytes").toULongLong());
+        QVERIFY(!geometry.value("retiredBytesAvailable").toBool());
+        QVERIFY(caches.value("cacheOwnedCpuBytesAvailable").toBool());
+        QVERIFY(geometry.value("activeBytes").toULongLong()>0);
+        const auto labels=caches.value("label").toMap();
+        QVERIFY(labels.contains("anchorFixedBytes")&&labels.contains("anchorDerivedBytes")&&labels.contains("anchorPending"));
+        QVERIFY(labels.value("anchorFixedBytes").toULongLong()>0);
+        QVERIFY(caches.value("terrain").toMap().contains("assetPending"));
+        QVERIFY(caches.value("hydro").toMap().value("frameBytesAvailable").toBool());
+    }
+
+    void worldCacheEvictionReloadDoesNotChangeDocument() {
+        EditorControllerConfig config;config.bootstrapWorld=true;config.autosaveEnabled=false;
+        config.worldDataRoot=QDir(QFileInfo(QString::fromUtf8(__FILE__)).absolutePath()).filePath("../assets/world");
+        EditorController editor(config);QVERIFY(editor.resizeMapCamera(800,600));
+        QTRY_COMPARE_WITH_TIMEOUT(editor.worldStatus(),QString("canonical"),30000);
+        QVERIFY(editor.fitMapCamera());
+        const auto bytes=editor.documentBytes();const auto instance=editor.projectInstanceId();const auto undo=editor.canUndo();
+        editor.setWorldResourceBudget(0);
+        auto* bridge=qobject_cast<MapSceneBridge*>(editor.mapSceneBridge());QVERIFY(bridge);
+        auto before=bridge->sceneSnapshot()->worldBase;QVERIFY(before&&before->mesh->preview);
+        QVERIFY(editor.zoomMapCameraAt(3.,400,300));
+        QCOMPARE(bridge->sceneSnapshot()->worldBase,before);
+        QVERIFY(editor.zoomMapCameraAt(2./editor.mapViewState().value("zoom").toDouble(),400,300));
+        QTRY_COMPARE_WITH_TIMEOUT(QThreadPool::globalInstance()->activeThreadCount(),0,30000);
+        QCoreApplication::processEvents();
+        QVERIFY(bridge->sceneSnapshot()->worldBase->mesh->preview); // Band keeps the actual fallback, not an unmet request.
+        QVERIFY(editor.zoomMapCameraAt(3./editor.mapViewState().value("zoom").toDouble(),400,300));
+        QTRY_VERIFY_WITH_TIMEOUT(bridge->sceneSnapshot()->worldBase&&!bridge->sceneSnapshot()->worldBase->mesh->preview,30000);
+        QVERIFY(editor.fitMapCamera());
+        QTRY_VERIFY_WITH_TIMEOUT(bridge->sceneSnapshot()->worldBase&&bridge->sceneSnapshot()->worldBase->mesh->preview,30000);
+        QCOMPARE(editor.documentBytes(),bytes);QCOMPARE(editor.projectInstanceId(),instance);QCOMPARE(editor.canUndo(),undo);
+    }
+
     void colorEditingForcesDetailUntilCancelled() {
         EditorController editor;QVERIFY(editor.resizeMapCamera(800,600));editor.selectCountry("DEU");
         QVERIFY(editor.beginColorEdit());
@@ -91,7 +131,9 @@ private slots:
         const auto zoom=[&](double target){return editor.zoomMapCameraAt(target/editor.mapViewState().value("zoom").toDouble(),400,300);};
         QVERIFY(zoom(2.21));auto canonical=bridge->sceneSnapshot()->worldBase;
         QVERIFY(canonical&&!canonical->mesh->preview);
+        const auto publications=bridge->scenePublicationCount();
         for(int i=0;i<4;++i){QVERIFY(zoom(i%2?2.1:1.9));QVERIFY(bridge->sceneSnapshot()->worldBase==canonical);}
+        QCOMPARE(bridge->scenePublicationCount(),publications);
         QVERIFY(zoom(1.79));QVERIFY(bridge->sceneSnapshot()->worldBase==preview);
         QCOMPARE(editor.documentBytes(),document);
         editor.selectCountry("DEU");QVERIFY(editor.beginGeometryEdit());
@@ -195,6 +237,128 @@ private slots:
         editor.cancelContentEdit();QCOMPARE(detail(),QString("preview"));
         QVERIFY(editor.focusMapCameraRect(0,0,10000,10000,10));
         QVERIFY(editor.newProject());QCOMPARE(detail(),QString("preview"));
+    }
+    void presentationApplyUndoRedoRetainGeometryPreparation() {
+        EditorControllerConfig config;config.bootstrapWorld=false;config.autosaveEnabled=false;
+        EditorController editor(config);
+        editor.selectCountry("DEU");
+        auto* bridge=qobject_cast<MapSceneBridge*>(editor.mapSceneBridge());QVERIFY(bridge);
+        const auto before=bridge->sceneSnapshot();QVERIFY(before);
+        const auto baseline=editor.renderQuality();
+        for(const char* key:{"sceneDeltaUpdateCount","scenePresentationUpdateCount","scenePreparationCount","packetCacheBuilds","sceneFullBuildCount","scenePatchCount"})
+            QVERIFY(baseline.contains(key));
+        const auto patches=baseline.value("scenePatchCount").toULongLong();
+        QSignalSpy geometry(&editor,&EditorController::geometryChanged);
+        editor.setColor("#123456");
+        QVERIFY(bridge->sceneSnapshot()->revisions.presentation>before->revisions.presentation);
+        QCOMPARE(editor.renderQuality().value("scenePatchCount").toULongLong(),patches+1);
+        editor.undo();
+        QCOMPARE(editor.renderQuality().value("scenePatchCount").toULongLong(),patches+2);
+        editor.redo();
+        QCOMPARE(editor.renderQuality().value("scenePatchCount").toULongLong(),patches+3);
+        QCOMPARE(geometry.count(),0);
+        for(const char* key:{"scenePreparationCount","packetCacheBuilds","sceneFullBuildCount"})
+            QCOMPARE(editor.renderQuality().value(key),baseline.value(key));
+        const auto afterStyle=editor.renderQuality();
+        QCOMPARE(afterStyle.value("sceneDeltaUpdateCount").toULongLong(),baseline.value("sceneDeltaUpdateCount").toULongLong()+3);
+        qInfo()<<"M93_CONTROLLER_DELTA"<<"style apply/undo/redo delta"
+               <<afterStyle.value("sceneDeltaUpdateCount").toULongLong()-baseline.value("sceneDeltaUpdateCount").toULongLong()
+               <<"preparation delta"<<afterStyle.value("scenePreparationCount").toULongLong()-baseline.value("scenePreparationCount").toULongLong()
+               <<"cache build delta"<<afterStyle.value("packetCacheBuilds").toULongLong()-baseline.value("packetCacheBuilds").toULongLong();
+        editor.clearSelection();
+        QVERIFY(editor.selectionItems().isEmpty());
+        editor.selectCountry("DEU");
+        QCOMPARE(editor.selectedId(),QString("DEU"));
+        for(const char* key:{"scenePreparationCount","packetCacheBuilds","scenePatchCount"})
+            QCOMPARE(editor.renderQuality().value(key),afterStyle.value(key));
+        QVERIFY(bridge->frameSnapshot()->path==FrameUpdatePath::InteractionOnly);
+    }
+    void presentationProcessorOpacityRetainsGeometryPreparation() {
+        EditorControllerConfig config;config.bootstrapWorld=false;config.autosaveEnabled=false;
+        EditorController editor(config);
+        auto* bridge=qobject_cast<MapSceneBridge*>(editor.mapSceneBridge());QVERIFY(bridge);
+        const auto before=bridge->sceneSnapshot();QVERIFY(before);
+        const auto baseline=editor.renderQuality();
+        for(const char* key:{"sceneDeltaUpdateCount","scenePresentationUpdateCount","scenePreparationCount","packetCacheBuilds","sceneFullBuildCount","scenePatchCount"})
+            QVERIFY(baseline.contains(key));
+        QVERIFY(editor.setPresentationOpacity("countries",0.5));
+        QVERIFY(bridge->sceneSnapshot()->revisions.presentation>before->revisions.presentation);
+        QCOMPARE(editor.renderQuality().value("scenePatchCount").toULongLong(),
+                 baseline.value("scenePatchCount").toULongLong()+1);
+        for(const char* key:{"scenePreparationCount","packetCacheBuilds","sceneFullBuildCount"})
+            QCOMPARE(editor.renderQuality().value(key),baseline.value(key));
+        const auto after=editor.renderQuality();
+        QCOMPARE(after.value("sceneDeltaUpdateCount").toULongLong(),baseline.value("sceneDeltaUpdateCount").toULongLong()+1);
+        qInfo()<<"M93_CONTROLLER_DELTA"<<"presentation processor delta"
+               <<after.value("sceneDeltaUpdateCount").toULongLong()-baseline.value("sceneDeltaUpdateCount").toULongLong()
+               <<"preparation delta"<<after.value("scenePreparationCount").toULongLong()-baseline.value("scenePreparationCount").toULongLong()
+               <<"cache build delta"<<after.value("packetCacheBuilds").toULongLong()-baseline.value("packetCacheBuilds").toULongLong();
+    }
+    void cameraFramesDoNotPublishOrCopyPreparedScene() {
+        EditorControllerConfig config;config.bootstrapWorld=false;config.autosaveEnabled=false;
+        EditorController editor(config);
+        QVERIFY(editor.resizeMapCamera(800,600));
+        auto* bridge=qobject_cast<MapSceneBridge*>(editor.mapSceneBridge());QVERIFY(bridge);
+        const auto prepared=bridge->sceneSnapshot();QVERIFY(prepared);
+        QSignalSpy scenes(bridge,&MapSceneBridge::sceneChanged);
+        QSignalSpy views(bridge,&MapSceneBridge::viewChanged);
+        const auto baseline=editor.renderQuality();
+        for(const char* key:{"scenePreparationCount","sceneTransientUpdateCount","packetCacheBuilds","scenePublicationCount","viewFrameCount","interactionFrameCount"})QVERIFY(baseline.contains(key));
+        for(int i=0;i<8;++i) {
+            QVERIFY(editor.zoomMapCameraAt(1.01,400,300));
+            QVERIFY(editor.publishMapView({{"rotationLongitude",double(i+1)}}));
+            QVERIFY(editor.resizeMapCamera(800+i,600+i));
+        }
+        QVERIFY(views.count()>0);QCOMPARE(scenes.count(),0);
+        QVERIFY(bridge->sceneSnapshot()==prepared);
+        QVERIFY(bridge->frameSnapshot()->scene==prepared);
+        QCOMPARE(bridge->frameSnapshot()->view.revision,bridge->viewState().revision);
+        QCOMPARE(editor.renderQuality().value("scenePublicationCount"),baseline.value("scenePublicationCount"));
+        QVERIFY(editor.renderQuality().value("viewFrameCount").toULongLong()>baseline.value("viewFrameCount").toULongLong());
+        for(const char* key:{"scenePreparationCount","sceneTransientUpdateCount","packetCacheBuilds"})QCOMPARE(editor.renderQuality().value(key),baseline.value(key));
+        qInfo()<<"M92_CONTROLLER_VIEW"<<"view publications"<<views.count()
+               <<"scene publications"<<scenes.count()
+               <<"preparation delta"<<(editor.renderQuality().value("scenePreparationCount").toULongLong()-baseline.value("scenePreparationCount").toULongLong())
+               <<"scene-copy delta"<<(editor.renderQuality().value("sceneTransientUpdateCount").toULongLong()-baseline.value("sceneTransientUpdateCount").toULongLong());
+        QVERIFY(editor.setProjectionMode("flat"));QVERIFY(bridge->sceneSnapshot()!=prepared);
+        const auto flat=bridge->sceneSnapshot();scenes.clear();
+        editor.beginMapCameraPan();
+        QVERIFY(editor.updateMapCameraPan(20,10));editor.endMapCameraPan();
+        QVERIFY(editor.zoomMapCameraAt(1.02,400,300));
+        QCOMPARE(scenes.count(),0);QVERIFY(bridge->sceneSnapshot()==flat);
+        const auto preparations=editor.renderQuality().value("scenePreparationCount");
+        editor.selectCountry("DEU");QCOMPARE(editor.selectedId(),QString("DEU"));
+        QCOMPARE(editor.renderQuality().value("scenePreparationCount"),preparations);
+        QVERIFY(bridge->frameSnapshot()->path==FrameUpdatePath::InteractionOnly);
+        QVERIFY(bridge->sceneSnapshot()->preparationIdentity==flat->preparationIdentity);
+        const auto beforeStyle=bridge->sceneSnapshot();
+        QVERIFY(editor.zoomMapCameraAt(1.02,400,300));
+        editor.setColor("#123456");
+        QVERIFY(bridge->sceneSnapshot()->revisions.presentation>beforeStyle->revisions.presentation);
+        QVERIFY(editor.newProject());
+        const auto replacement=bridge->sceneSnapshot();
+        QVERIFY(replacement->preparationIdentity!=beforeStyle->preparationIdentity);
+        scenes.clear();
+        const auto replacementCount=editor.renderQuality().value("scenePreparationCount");
+        QVERIFY(editor.zoomMapCameraAt(1.02,400,300));
+        QCOMPARE(scenes.count(),0);QVERIFY(bridge->sceneSnapshot()==replacement);
+        QCOMPARE(editor.renderQuality().value("scenePreparationCount"),replacementCount);
+    }
+    void geometryPatchRemainsEligibleAfterCameraChange() {
+        EditorController editor;editor.selectCountry("DEU");
+        QVERIFY(editor.setProjectionMode("flat"));
+        QVERIFY(editor.beginGeometryEdit());
+        const auto paths=editor.geometryDraftPaths();QVERIFY(!paths.isEmpty());
+        const auto vertices=paths.front().toMap().value("vertices").toList();QVERIFY(!vertices.isEmpty());
+        const auto vertex=vertices.front().toMap();const auto x=vertex.value("x").toDouble(),y=vertex.value("y").toDouble();
+        QVERIFY(editor.geometrySelectNearest(x,y,0.01));
+        QVERIFY(editor.geometryMoveSelectedVertex(x+0.1,y+0.1));
+        const auto patches=editor.renderQuality().value("scenePatchCount").toULongLong();
+        QVERIFY(editor.zoomMapCameraAt(1.02,400,300));
+        QVERIFY(editor.requestGeometryPreview());
+        QTRY_VERIFY_WITH_TIMEOUT(editor.geometryEditState().value("previewReady").toBool(),5000);
+        QVERIFY(editor.confirmGeometryEdit());
+        QCOMPARE(editor.renderQuality().value("scenePatchCount").toULongLong(),patches+1);
     }
     void firstRunIsGlobeAndProjectionCamerasRemainIndependent() {
         EditorController editor;QCOMPARE(editor.projectionMode(),QStringLiteral("globe"));

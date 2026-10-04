@@ -8,6 +8,7 @@
 #include <cmath>
 #include <limits>
 #include <queue>
+#include <stdexcept>
 
 namespace {
 using Ring=std::vector<pandoeditor::Point>;
@@ -91,13 +92,15 @@ CountryLabelAnchors::CountryLabelAnchors(QByteArray pinnedJson,QObject* parent):
     for(auto it=anchors.begin();it!=anchors.end();++it) {
         const auto point=it.value().toArray();if(point.size()!=2||!point[0].isDouble()||!point[1].isDouble())continue;
         fixed_.insert(it.key(),{point[0].toDouble(),point[1].toDouble()});
+        fixedBytes_+=sizeof(pandoeditor::Point)+sizeof(QString)+std::size_t(it.key().capacity())*sizeof(QChar);
     }
 }
 std::optional<pandoeditor::Point> CountryLabelAnchors::fixed(const QString& sourceId) const {
     const auto found=fixed_.constFind(sourceId);if(found==fixed_.cend())return std::nullopt;return found.value();
 }
 std::optional<pandoeditor::Point> CountryLabelAnchors::anchor(const QString& ownerId,const QString& sourceId) const {
-    const auto derived=derived_.constFind(ownerId);if(derived!=derived_.cend())return derived.value();return fixed(sourceId);
+    const auto derived=derived_.constFind(ownerId);if(derived!=derived_.cend())return derived->point;
+    return invalidated_.contains(ownerId)?std::nullopt:fixed(sourceId);
 }
 std::optional<pandoeditor::Point> CountryLabelAnchors::derive(const pandoeditor::Geometry& geometry) {
     if(geometry.type!="Polygon"&&geometry.type!="MultiPolygon")return std::nullopt;
@@ -114,18 +117,62 @@ std::optional<pandoeditor::Point> CountryLabelAnchors::derive(const pandoeditor:
     for(auto& ring:polygon)for(auto& point:ring)point.x=(point.x-reference)*xScale;
     auto result=polylabel(polygon);result.x=normalizeLongitude(result.x/xScale+reference);result.y=std::max(-90.,std::min(90.,result.y));return result;
 }
-quint64 CountryLabelAnchors::recompute(QString ownerId,pandoeditor::Geometry geometry,std::uint32_t geometryVersion) {
-    const auto token=++generation_;requests_[ownerId]={token,geometryVersion};
+void CountryLabelAnchors::setProjectScope(QString projectInstance) {
+    if(projectInstance_==projectInstance)return;
+    if(scopeEpoch_==std::numeric_limits<std::uint64_t>::max())throw std::overflow_error("anchor scope exhausted");
+    ++scopeEpoch_;projectInstance_=std::move(projectInstance);
+    requests_.clear();derived_.clear();invalidated_.clear();invalidations_=failures_=stale_=0;
+}
+void CountryLabelAnchors::invalidateOwner(const QString& ownerId) {
+    const bool hadRequest=requests_.remove(ownerId)>0;const bool hadDerived=derived_.remove(ownerId)>0;
+    invalidated_.remove(ownerId);
+    if((hadRequest||hadDerived)&&invalidations_!=std::numeric_limits<std::uint64_t>::max())++invalidations_;
+}
+quint64 CountryLabelAnchors::recompute(QString ownerId,pandoeditor::Geometry geometry,std::uint32_t version) {
+    pandoeditor::GeometryRef ref{ownerId.toStdString(),version};
+    return recompute(std::move(ownerId),std::move(geometry),std::move(ref));
+}
+quint64 CountryLabelAnchors::recompute(QString ownerId,pandoeditor::Geometry geometry,pandoeditor::GeometryRef ref) {
+    if(generation_==std::numeric_limits<quint64>::max())throw std::overflow_error("label anchor token exhausted");
+    invalidateOwner(ownerId);invalidated_.insert(ownerId);
+    const auto token=++generation_;requests_[ownerId]={token,ref};
     auto* watcher=new QFutureWatcher<std::optional<pandoeditor::Point>>(this);
-    connect(watcher,&QFutureWatcher<std::optional<pandoeditor::Point>>::finished,this,[this,watcher,token,ownerId,geometryVersion] {
-        const auto result=watcher->result();watcher->deleteLater();
-        if(!commitDerived(token,ownerId,geometryVersion,result)&&requests_.value(ownerId).token==token)emit recomputeFailed(ownerId);
+    connect(watcher,&QFutureWatcher<std::optional<pandoeditor::Point>>::finished,this,[this,watcher,token,ownerId,ref] {
+        watcher->deleteLater();
+        try{commitDerived(token,ownerId,ref,watcher->result());}
+        catch(...){commitDerived(token,ownerId,ref,std::nullopt);}
     });
     watcher->setFuture(QtConcurrent::run([geometry=std::move(geometry)]{return derive(geometry);}));return token;
 }
-bool CountryLabelAnchors::commitDerived(quint64 token,const QString& ownerId,std::uint32_t geometryVersion,
+bool CountryLabelAnchors::commitDerived(quint64 token,const QString& ownerId,std::uint32_t version,
                                         std::optional<pandoeditor::Point> value) {
     const auto request=requests_.constFind(ownerId);
-    if(request==requests_.cend()||request->token!=token||request->version!=geometryVersion||!value)return false;
-    derived_[ownerId]=*value;emit changed();return true;
+    if(request==requests_.cend()||request->ref.version!=version)return false;
+    const auto ref=request->ref;return commitDerived(token,ownerId,ref,value);
+}
+bool CountryLabelAnchors::commitDerived(quint64 token,const QString& ownerId,const pandoeditor::GeometryRef& ref,
+                                        std::optional<pandoeditor::Point> value) {
+    const auto request=requests_.constFind(ownerId);
+    if(request==requests_.cend()||request->token!=token||!(request->ref==ref)) {
+        if(stale_!=std::numeric_limits<std::uint64_t>::max())++stale_;return false;
+    }
+    requests_.erase(request);
+    if(!value){if(failures_!=std::numeric_limits<std::uint64_t>::max())++failures_;emit recomputeFailed(ownerId);return false;}
+    derived_[ownerId]={ref,*value};emit changed();return true;
+}
+std::size_t CountryLabelAnchors::derivedStorageBytes() const {
+    std::size_t bytes=0;
+    for(auto it=derived_.cbegin();it!=derived_.cend();++it)
+        bytes+=sizeof(Derived)+sizeof(QString)+std::size_t(it.key().capacity())*sizeof(QChar)+it->ref.id.capacity();
+    return bytes;
+}
+pandoeditor::ResourceCacheSnapshot CountryLabelAnchors::resourceCacheSnapshot() const {
+    pandoeditor::ResourceCacheSnapshot result;result.scopeEpoch=scopeEpoch_;
+    result.residentCount=std::size_t(fixed_.size()+derived_.size());
+    result.residentBytes=fixedBytes_+derivedStorageBytes();result.budgetBytes=result.residentBytes;
+    result.protectedBytes=result.residentBytes;result.activeBytes=derivedStorageBytes();
+    result.pendingCount=std::size_t(requests_.size());result.pendingUnknownCount=result.pendingCount;
+    result.invalidationCount=invalidations_;result.failureCount=failures_;result.staleCompletionCount=stale_;
+    result.protectionCounts[static_cast<std::size_t>(pandoeditor::ResourceProtection::Visible)]=result.residentCount;
+    return result;
 }

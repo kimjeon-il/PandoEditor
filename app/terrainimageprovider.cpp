@@ -18,3 +18,11 @@ QImage TerrainImageProvider::requestImage(const QString& id,QSize* size,const QS
     if(size)*size=image.size();
     return image;
 }
+
+void TerrainImageBridge::setSource(std::shared_ptr<TerrainTileProvider> source) {
+    source_=std::move(source);emit sourceChanged();
+}
+QImage TerrainImageBridge::acquire(int level,int column,int row,bool gray) const {
+    const auto source=source_;
+    return source?source->loadTile(level,column,row,gray):QImage{};
+}

@@ -38,6 +38,7 @@ private:
     void syncSceneBridge();
 
     std::shared_ptr<const RenderScene> scene_;
+    std::shared_ptr<const MapFrame> frame_;
     MapViewState view_;
     QPointer<MapSceneBridge> sceneBridge_;
     bool smoothLines_=true;

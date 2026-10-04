@@ -1,5 +1,6 @@
 #include <pandoeditor/project.h>
 #include <pandoeditor/commands.h>
+#include <algorithm>
 #include <functional>
 #include <iostream>
 #include <limits>
@@ -185,6 +186,23 @@ void semanticEqualityIncludesAllPreservedFields() {
     for(const auto& pair:a.geometries.versions()) copied.insert(pair.first,*pair.second);
     b.geometries=std::move(copied); CHECK(semanticallyEqual(a,b));
 }
+void defaultFlagChangesInvalidatePresentationWithoutGeometry() {
+    const auto owner=territorialRef("A");
+    auto before=fixture();
+    before.symbols[owner].defaultCountryId="DEU";
+    before.symbols[owner].defaultFlagDataUrl="data:image/svg+xml;base64,Zmlyc3Q=";
+    for(bool countryId:{false,true}) {
+        auto after=before;
+        if(countryId)after.symbols[owner].defaultCountryId="FRA";
+        else after.symbols[owner].defaultFlagDataUrl="data:image/svg+xml;base64,c2Vjb25k";
+        for(const auto& dirty:{calculateChangeImpact(before,after).sceneDirty,
+                              calculateChangeImpact(after,before).sceneDirty}) {
+            CHECK(dirty.presentation && !dirty.geometry && !dirty.fullRebuild);
+            CHECK(dirty.geometryObjects.empty());
+            CHECK(std::find(dirty.affectedObjects.begin(),dirty.affectedObjects.end(),owner)!=dirty.affectedObjects.end());
+        }
+    }
+}
 int main() {
     const std::pair<const char*,std::function<void()>> tests[]={
         {"prepare pure / compound Undo",preparedIsPureAndCompoundIsOneUndo},
@@ -196,7 +214,8 @@ int main() {
         {"saved baseline / revision",savedBaselineIsIndependentOfRevision},
         {"compound immediate actions",compoundImmediateActionsAreAtomic},
         {"layer compatibility",layerActionsAndCompatibilityUseSameHistory},
-        {"semantic equality",semanticEqualityIncludesAllPreservedFields}};
+        {"semantic equality",semanticEqualityIncludesAllPreservedFields},
+        {"default flag presentation delta",defaultFlagChangesInvalidatePresentationWithoutGeometry}};
     int failed=0;
     for(const auto& test:tests) { try { test.second(); std::cout<<"PASS "<<test.first<<'\n'; }
         catch(const std::exception& e) { ++failed; std::cerr<<"FAIL "<<test.first<<": "<<e.what()<<'\n'; } }

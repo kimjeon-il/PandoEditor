@@ -61,25 +61,29 @@ QVariantMap EditorController::terrainDataStatus() const {
 void EditorController::executeTerrainResources(const ViewportResourceRequest& request) {
     if(terrainMode_=="none") {
         if(terrainProvider_)terrainProvider_->protectVisible({});
+        terrainDisplay_.reset();terrainAssetPending_=0;
         if(!terrainTiles_.isEmpty()){terrainTiles_.clear();emit terrainChanged();}
         return;
     }
     if(!terrainProvider_||!terrainProvider_->available()||!validMapViewState(request.view))return;
+    if(terrainDisplaySource_.lock()!=terrainProvider_){terrainDisplay_.reset();terrainDisplaySource_=terrainProvider_;}
     QVariantList visible;
-    int missing=0;
+    int missing=0;terrainAssetPending_=0;
     const auto tileSpecs=terrainProvider_->tilesForView(request.view);
-    terrainProvider_->protectVisible(tileSpecs);
+    terrainProvider_->protectVisible(tileSpecs,terrainMode_=="gray");
     for(const auto& tile:tileSpecs) {
         const auto relative=QString("terrain/v0.12.6/%1/%2-%3.webp")
             .arg(tile.level).arg(tile.column).arg(tile.row);
         if(!physicalAssetReady(relative)){
-            ++missing;requestPhysicalAsset(relative);continue;
+            ++missing;++terrainAssetPending_;requestPhysicalAsset(relative);continue;
         }
+        if(terrainProvider_->loadTile(tile,terrainMode_=="gray").isNull()){++missing;continue;}
         const auto source=QUrl::fromLocalFile(physicalAssetPath(relative));
-        visible.push_back(QVariantMap{{"source",source},
+        visible.push_back(QVariantMap{{"source",source},{"level",tile.level},{"column",tile.column},{"row",tile.row},
             {"west",tile.west+tile.worldOffsetDegrees},{"east",tile.east+tile.worldOffsetDegrees},
             {"south",tile.south},{"north",tile.north}});
     }
+    visible=terrainDisplay_.publish(std::move(visible),missing==0);
     if(visible!=terrainTiles_||missing!=terrainMissingTiles_) {
         terrainTiles_=std::move(visible);terrainMissingTiles_=missing;emit terrainChanged();
     }
@@ -134,9 +138,10 @@ void EditorController::syncHydroData() {
         emit errorOccurred(error);
     else {
         hydroRuntime_.setCacheBudget(quality_.profile().hydroCacheBudgetBytes);
-        if(const auto selected=selection_.primary();selected&&selected->domain=="hydroBuiltin")
-            if(const auto record=hydroRuntime_.recordById(displayText(selected->id)))
-                hydroRuntime_.setSelectedLogical(record->logicalFid);
+        std::set<quint32> logical;
+        for(const auto& selected:selection_.items())if(selected.domain=="hydroBuiltin")
+            if(const auto record=hydroRuntime_.recordById(displayText(selected.id)))logical.insert(record->logicalFid);
+        hydroRuntime_.setSelectedLogicals(logical);
         invalidateViewportResources(ViewportResourceKind::Hydro);
     }
 }
@@ -293,7 +298,11 @@ void EditorController::executeLabelResources(const ViewportResourceRequest& requ
     options.maxCandidates=mobileMode_?4096:8192;
     options.maxPlaced=mobileMode_?1024:2048;
     const auto selectedItems=selection_.items();
-    const std::set<ObjectRef> selected(selectedItems.begin(),selectedItems.end());
+    std::set<ObjectRef> selected(selectedItems.begin(),selectedItems.end());
+    if(geometryEdit_)selected.insert(geometryEdit_->target);
+    if(contentSession_)selected.insert(contentSession_->edit.target);
+    selected.insert(colorTargets_.begin(),colorTargets_.end());
+    for(const auto& session:fieldSessions_)selected.insert(session.second.ref);
     labelEngine_.layout(request.view,options,selected);
     refreshPlacedLabelRows();
 }

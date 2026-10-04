@@ -1,5 +1,6 @@
 #include "mapscenenode.h"
 #include "mapmaterial.h"
+#include "resourceidentity.h"
 #include <QSGGeometryNode>
 #include <QSGGeometry>
 #include <QElapsedTimer>
@@ -30,8 +31,7 @@ const QSGGeometry::AttributeSet& attributes(MapPrimitive primitive) {
 }
 struct Entry final : QSGGeometryNode {
     std::string key;
-    const void* source=nullptr;
-    const void* indices=nullptr;
+    MapResourceIdentity resource;
     std::size_t bytes=0;
     RenderStyle style;
     MapPrimitive kind;
@@ -64,12 +64,13 @@ bool contains(const std::vector<pandoeditor::ObjectRef>& refs,const pandoeditor:
 
 void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                         const MapViewState& view,const MapFlatViewport& flat,
-                        MapGpuStats& stats,std::size_t uploadBudgetBytes) {
+                        MapGpuStats& stats,std::size_t uploadBudgetBytes,
+                        const WorldRenderPlan* framePlan) {
     QElapsedTimer syncClock;syncClock.start();++stats.syncCount;
     struct Timing {MapGpuStats& stats;QElapsedTimer& clock;
         ~Timing(){stats.syncMilliseconds=clock.nsecsElapsed()/1.e6;}} timing{stats,syncClock};
     const WorldRenderPlan emptyPlan;
-    const auto& worldPlan=scene?scene->worldPlan:emptyPlan;
+    const auto& worldPlan=framePlan?*framePlan:(scene?scene->worldPlan:emptyPlan);
     const auto& worldOffsets=worldPlan.worldOffsets;
     const auto& fills=worldPlan.fills;
     const auto& strokes=worldPlan.strokes;
@@ -132,8 +133,14 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         return;
     }
     std::map<std::string,Entry*> old;
+    const auto retire=[&](Entry* node) {
+        if(node->geometry())++stats.resourceRetirementCount;
+        delete node;
+    };
     ++stats.treeRebuildCount;stats.drawNodes=0;stats.strokeBytes=0;
-    const auto previousScene=lastScene_; // Retain packet allocations while comparing raw identities.
+    // Entry identities own the actual source buffers. Also retain the previous
+    // preparation until reconciliation finishes, including entries retired here.
+    const auto previousScene=lastScene_;
     (void)previousScene;
     for(auto* child=firstChild();child;child=child->nextSibling()) {
         auto* entry=static_cast<Entry*>(child);
@@ -145,22 +152,23 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
     lastScene_=scene;lastOffsets_=worldOffsets;lastMode_=view.mode;
     lastFillVisibility_=fills.visible;lastStrokeVisibility_=strokes.visible;
     if(!scene) {
-        for(auto& [name,node]:old)delete node;
+        for(auto& [name,node]:old)retire(node);
+        stats.liveResourceCount=0;stats.liveResourceBytes=0;
+        stats.sceneRevision=0;
         return;
     }
     stats.sceneRevision=scene->revision;
     scheduler_.beginFrame(scene->revision,uploadBudgetBytes);
     auto install=[&](const std::string& id,MapPrimitive kind,BlendMode blend,
-                     const RenderStyle& style,const void* source,const void* indexSource,
+                     const RenderStyle& style,const MapResourceIdentity& resource,
                      int world,bool interaction,std::size_t estimatedBytes,
                      bool protectedGeometry,auto upload) {
         const std::string identity=key(id,kind,world,interaction);
         Entry* node=nullptr;
         if(auto it=old.find(identity);it!=old.end()) {
             node=it->second;old.erase(it);
-            if(node->kind!=kind||node->blend!=blend||node->source!=source||
-               node->indices!=indexSource) {
-                delete node;node=nullptr;
+            if(node->kind!=kind||node->resource!=resource) {
+                retire(node);node=nullptr;
             }
         }
         if(!node) {
@@ -168,8 +176,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             for(auto it=old.lower_bound(prefix);it!=old.end()&&
                 it->first.compare(0,prefix.size(),prefix)==0;++it) {
                 auto* candidate=it->second;
-                if(candidate->kind!=kind||candidate->blend!=blend||
-                   candidate->source!=source||candidate->indices!=indexSource||
+                if(candidate->kind!=kind||candidate->resource!=resource||
                    (it->first.find("/interaction")!=std::string::npos)!=interaction)continue;
                 node=candidate;old.erase(it);node->key=identity;break;
             }
@@ -185,8 +192,20 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             stats.uploadMilliseconds+=ms;
             if(kind==MapPrimitive::Stroke)stats.strokeUploadMilliseconds+=ms;
             stats.uploadedBytes+=node->bytes;
-            node->source=source;node->indices=indexSource;
+            node->resource=resource;
             ++stats.geometryUploadCount;
+            ++stats.resourceCreationCount;
+            if(interaction)++stats.interactionGeometryUploadCount;
+            else ++stats.baseGeometryUploadCount;
+        }
+        if(node->blend!=blend) {
+            auto* replacement=new MapMaterial(kind,blend);
+            auto* oldMaterial=node->material();
+            node->setFlag(QSGGeometryNode::OwnsMaterial,false);
+            node->setMaterial(replacement);delete oldMaterial;
+            node->setFlag(QSGGeometryNode::OwnsMaterial,true);node->blend=blend;
+            node->markDirty(QSGNode::DirtyMaterial);
+            ++stats.materialUpdateCount;
         }
         node->world=world;
         auto* material=node->mapMaterial();
@@ -214,9 +233,11 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         if(!packet.positions||!packet.indices)return;
         const auto& index=*(view.mode==ProjectionMode::Globe?packet.globeIndices:packet.indices);
         if(packet.vertexCount>INT_MAX||index.size()>INT_MAX||index.empty())return;
+        auto resource=mapDrawResourceIdentity(draw);
+        resource.buffers={packet.positions,view.mode==ProjectionMode::Globe?packet.globeIndices:packet.indices,{}};
+        resource.counts={packet.vertexCount,index.size(),packet.positions->size()};
         install(draw.key,MapPrimitive::Fill,draw.style.blendMode,draw.style,
-                packet.positions.get(),(view.mode==ProjectionMode::Globe?
-                packet.globeIndices:packet.indices).get(),world,false,
+                resource,world,false,
                 packet.vertexCount*sizeof(FillVertex)+index.size()*sizeof(std::uint32_t),
                 contains(scene->interaction.selected,draw.object)||
                     (scene->interaction.editTarget&&*scene->interaction.editTarget==draw.object),
@@ -243,10 +264,15 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         const auto vertices=std::size_t(last-first);
         if(vertices>INT_MAX||count>INT_MAX)return;
         const auto& countryDraw=scene->worldCountries[country];
+        MapResourceIdentity resource;resource.buffers[0]=scene->worldBase->mesh;
+        resource.object={"territorial",countryDraw.id};
+        if(country<scene->worldBase->ranges.size())resource.geometry={scene->worldBase->ranges[country].geometryId,1};
+        resource.slice="fill/"+std::to_string(country)+"/"+std::to_string(begin)+"/"+std::to_string(start);
+        resource.counts={vertices,count,mesh.triangleIndices.size()};
         // Several immutable mesh slots can belong to one logical country.
         // The owner alone is not a geometry identity (e.g. overseas islands).
         install("world/"+std::to_string(country)+"/"+countryDraw.id,MapPrimitive::Fill,countryDraw.fill.blendMode,
-                countryDraw.fill,&mesh,&mesh.triangleIndices,world,false,
+                countryDraw.fill,resource,world,false,
                 vertices*sizeof(FillVertex)+count*sizeof(std::uint32_t),false,[&](Entry& node) {
             node.allocate(int(vertices),int(count));
             auto* output=static_cast<FillVertex*>(node.geometry()->vertexData());
@@ -266,9 +292,14 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         const auto start=mesh.countryBoundaryRanges.at(country*2);
         const auto count=mesh.countryBoundaryRanges.at(country*2+1);
         if(!count||count/2>std::size_t(INT_MAX/4))return;
+        MapResourceIdentity resource;resource.buffers[0]=scene->worldBase->mesh;
+        resource.object={"territorial",scene->worldCountries[country].id};
+        if(country<scene->worldBase->ranges.size())resource.geometry={scene->worldBase->ranges[country].geometryId,1};
+        resource.slice="stroke/"+std::to_string(country)+"/"+std::to_string(start);
+        resource.counts={count/2,count,mesh.lineIndices.size()};
         install("world/"+std::to_string(country)+"/"+scene->worldCountries[country].id+
                 (channel.empty()?"":"/"+channel),MapPrimitive::Stroke,style.blendMode,
-                style,&mesh,&mesh.lineIndices,world,!channel.empty(),
+                style,resource,world,!channel.empty(),
                 (count/2)*(4*sizeof(StrokeVertex)+6*sizeof(std::uint32_t)),
                 !channel.empty(),[&](Entry& node) {
             const auto segments=count/2;
@@ -294,8 +325,11 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                     RenderStyle style,const std::string& channel="") {
         const auto& packet=draw.geometryPacket;
         if(!packet.startsEnds||packet.segmentCount>INT_MAX/4||!packet.segmentCount)return;
+        auto resource=mapDrawResourceIdentity(draw);
+        resource.buffers={packet.startsEnds,packet.endpointWidths,{}};
+        resource.counts={packet.segmentCount,packet.startsEnds->size(),packet.endpointWidths?packet.endpointWidths->size():0};
         install(draw.key+(interaction?"/"+channel:""),MapPrimitive::Stroke,style.blendMode,style,
-                packet.startsEnds.get(),nullptr,world,interaction,
+                resource,world,interaction,
                 packet.segmentCount*(4*sizeof(StrokeVertex)+6*sizeof(std::uint32_t)),
                 interaction||contains(scene->interaction.selected,draw.object)||
                     (scene->interaction.editTarget&&*scene->interaction.editTarget==draw.object),
@@ -329,9 +363,14 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             draw.key+"/"+std::to_string(draw.manualPosition->x)+"/"+
             std::to_string(draw.manualPosition->y):draw.key;
         const auto& style=interaction?highlight:draw.style;
+        auto resource=mapDrawResourceIdentity(draw);resource.buffers[0]=packet.positions;
+        resource.counts={packet.pointCount,packet.positions->size(),0};
+        resource.slice=markerKey;
+        resource.manualPosition=bool(draw.manualPosition);
+        if(draw.manualPosition)resource.position={draw.manualPosition->x,draw.manualPosition->y};
         install(markerKey+(interaction?"/"+channel:""),MapPrimitive::Point,
                 style.blendMode,style,
-                packet.positions.get(),nullptr,world,false,
+                resource,world,interaction,
                 packet.pointCount*(4*sizeof(PointVertex)+6*sizeof(std::uint32_t)),
                 interaction||contains(scene->interaction.selected,draw.object)||
                     (scene->interaction.editTarget&&*scene->interaction.editTarget==draw.object),
@@ -354,8 +393,10 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         const auto& packet=draw.geometryPacket;
         if(!packet.startsEnds||packet.segmentCount>INT_MAX/8||!packet.segmentCount)return;
         RenderStyle style;style.color=0x163e64;style.alpha=1;
+        auto resource=mapDrawResourceIdentity(draw);resource.buffers[0]=packet.startsEnds;
+        resource.counts={packet.segmentCount,packet.startsEnds->size(),0};
         install(draw.key+"/vertices/"+channel,MapPrimitive::Point,BlendMode::Normal,style,
-                packet.startsEnds.get(),nullptr,world,true,
+                resource,world,true,
                 packet.segmentCount*2*(4*sizeof(PointVertex)+6*sizeof(std::uint32_t)),true,
                 [&](Entry& node) {
             const auto count=packet.segmentCount*2;
@@ -392,8 +433,13 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             id+="/"+std::to_string(part.slot);
             vertices+=part.vertices;indices+=part.indices;
         }
-        install(id,batchKind,batchStyle.blendMode,batchStyle,&mesh,
-                batchKind==MapPrimitive::Fill?static_cast<const void*>(&mesh.triangleIndices):&mesh.lineIndices,
+        MapResourceIdentity resource;resource.buffers[0]=scene->worldBase->mesh;
+        resource.counts={vertices,indices,batch.size()};
+        resource.slice=std::to_string(int(batchKind));
+        for(const auto& part:batch)resource.slice+="/"+std::to_string(part.slot)+":"+
+            std::to_string(part.first)+":"+std::to_string(part.vertices)+":"+
+            std::to_string(part.indexFirst)+":"+std::to_string(part.indices);
+        install(id,batchKind,batchStyle.blendMode,batchStyle,resource,
                 0,false,batchBytes,false,[&](Entry& node) {
             node.allocate(int(vertices),int(indices));
             auto* outputIndices=node.geometry()->indexDataAsUInt();
@@ -524,7 +570,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
     // Removing/re-adding unchanged nodes invalidates Qt's RHI batches, even
     // when our QSGGeometry allocations were retained. Reconcile only actual
     // additions/order changes so camera culling and hover preserve GPU buffers.
-    for(auto& [name,node]:old)delete node;
+    for(auto& [name,node]:old)retire(node);
     auto* cursor=firstChild();
     for(auto* node:ordered) {
         if(node==cursor) {cursor=cursor->nextSibling();continue;}
@@ -534,4 +580,5 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
     }
     stats.uploadBytesThisFrame=scheduler_.frameBytes();
     stats.uploadsPending=pending_;
+    stats.liveResourceCount=stats.drawNodes;stats.liveResourceBytes=stats.geometryBytes;
 }

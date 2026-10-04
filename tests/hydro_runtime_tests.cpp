@@ -8,6 +8,29 @@
 class HydroRuntimeTests:public QObject {
     Q_OBJECT
 private slots:
+    void allSelectedLogicalObjectsStayProtected() {
+        HydroRuntimeProvider provider;QString error;
+        QVERIFY2(provider.open(QStringLiteral(WEB_HYDRO_FIXTURE)+"/v0.13.1/manifest.json","selection",false,error),qPrintable(error));
+        provider.requestViewport({7.5,800,500,1500,20,1});QTRY_VERIFY(provider.frame()!=nullptr&&provider.frame()->packIds.size()==6);
+        provider.setSelectedLogicals({1,5});provider.setCacheBudget(0);provider.clearPinned();
+        provider.requestViewport({1.,800,500,1500,20,1});QTRY_VERIFY(provider.frame()!=nullptr&&provider.frame()->packIds.empty());
+        const auto snapshot=provider.resourceCacheSnapshot();
+        QVERIFY(snapshot.protectionCounts[static_cast<std::size_t>(pandoeditor::ResourceProtection::Selected)]>=2);
+        provider.setSelectedLogicals({});QCOMPARE(provider.cachedPackCount(),std::size_t(0));
+    }
+
+    void oldDisplayedPacksRemainProtectedUntilReplacementAccepted() {
+        HydroRuntimeProvider provider;QString error;
+        QVERIFY2(provider.open(QStringLiteral(WEB_HYDRO_FIXTURE)+"/v0.13.1/manifest.json","fallback",false,error),qPrintable(error));
+        provider.requestViewport({7.5,800,500,1500,20,1});
+        QTRY_VERIFY(provider.frame()!=nullptr&&provider.frame()->packIds.size()==6);
+        provider.setCacheBudget(0);QCOMPARE(provider.cachedPackCount(),std::size_t(6));
+        provider.requestViewport({1.,800,500,1500,20,1});
+        QCOMPARE(provider.cachedPackCount(),std::size_t(6));
+        QTRY_VERIFY(provider.frame()!=nullptr&&provider.frame()->packIds.empty());
+        QCOMPARE(provider.cachedPackCount(),std::size_t(0));
+    }
+
     void loadsAdditionalStagesOnlyAfterManifestThreshold(){
         HydroRuntimeProvider provider;QString error;
         QVERIFY2(provider.open(QStringLiteral(WEB_HYDRO_FIXTURE)+"/v0.13.1/manifest.json",
@@ -27,6 +50,7 @@ private slots:
         provider.requestViewport({7.5,800,500,1500,20,1});
         QTRY_VERIFY_WITH_TIMEOUT(accepted.count()>=1 && provider.frame()!=nullptr,5000);
         QCOMPARE(provider.frame()->features.size(),std::size_t(6));
+        QVERIFY(provider.activeFrameBytes()>0);
         std::vector<pandoeditor::HydroPhysicalFeature> fragments;
         for(const auto& feature:provider.frame()->features)if(feature.logicalFid==5)fragments.push_back(feature);
         const auto merged=pandoeditor::mergeHydroLogicalFragments(std::move(fragments));

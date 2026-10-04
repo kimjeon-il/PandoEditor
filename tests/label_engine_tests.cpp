@@ -121,9 +121,24 @@ void territorialFlagsFollowWebZoomAndNeverEvictNames() {
     options.zoom=1.8;
     require(engine.layout(flatView(),options).size()==1,"flag-only labels appear at the flag zoom threshold");
 }
+void workingSetBudgetDoesNotEvictActiveLabels() {
+    MapLabelEngine engine;
+    engine.setSources({label("one",0,0,1)},1);
+    engine.setResourceBudget(0);
+    auto snapshot=engine.resourceCacheSnapshot();
+    require(snapshot.residentBytes>0&&snapshot.protectedBytes==snapshot.residentBytes,"active label working set protected");
+    require(snapshot.protectedOverBudgetBytes==snapshot.residentBytes,"small budget reports overage");
+    MapLabelLayoutOptions options;engine.layout(flatView(),options);
+    const auto before=engine.stats();engine.reproject(flatView(),options.zoom);
+    require(engine.stats().sourceRebuilds==before.sourceRebuilds&&engine.stats().layouts==before.layouts,"accounting does not rebuild");
+    const auto epoch=engine.resourceCacheSnapshot().scopeEpoch;engine.clear();
+    require(engine.resourceCacheSnapshot().residentBytes==0&&engine.resourceCacheSnapshot().scopeEpoch>epoch,"clear releases working set");
+}
+
 }
 
 int main() {
+    workingSetBudgetDoesNotEvictActiveLabels();
     spatialQueryAndCollisionAreEngineOwned();
     selectedAndPinnedBypassOrdinaryCollisionAndBounds();
     interactionReprojectionDoesNotQueryOrRelayout();

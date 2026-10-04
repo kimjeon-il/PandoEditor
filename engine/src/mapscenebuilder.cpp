@@ -127,8 +127,22 @@ std::uint64_t interactionSignature(const InteractionRenderPacket& interaction) {
 
 void MapSceneBuilder::remember(const ProjectSnapshot& snapshot,const MapViewState& view,
                               const std::shared_ptr<const RenderScene>& scene) {
+    cache_.setActiveScene(scene);
     preparedSnapshot_=snapshot;preparedScene_=scene;preparedHydro_=builtinHydro_;
     preparedMode_=view.mode;preparedLod_=quality_.backgroundLod;
+}
+bool MapSceneBuilder::canReusePreparation(const ProjectSnapshot& snapshot,const MapViewState& view,
+                                         const std::shared_ptr<const RenderScene>& previous) const {
+    return preparationMatchesView(view,previous)&&preparedSnapshot_&&
+        &preparedSnapshot_->document()==&snapshot.document()&&
+        preparedSnapshot_->instanceId()==snapshot.instanceId()&&
+        preparedSnapshot_->revision()==snapshot.revision();
+}
+bool MapSceneBuilder::preparationMatchesView(const MapViewState& view,
+                                           const std::shared_ptr<const RenderScene>& previous) const {
+    return previous&&previous==preparedScene_.lock()&&
+        previous->worldBase==worldBase_&&preparedHydro_==builtinHydro_&&
+        preparedMode_==view.mode&&preparedLod_==quality_.backgroundLod;
 }
 std::shared_ptr<const RenderScene> MapSceneBuilder::build(
     const ProjectSnapshot& snapshot,const MapViewState& view,
@@ -142,20 +156,20 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::build(
         scene->revision=nextSceneRevision(previous);
         remember(snapshot,view,scene);return scene;
     }
-    bool reusable=previous&&previous==preparedScene_.lock()&&preparedSnapshot_&&
-        &preparedSnapshot_->document()==&snapshot.document()&&
-        preparedSnapshot_->instanceId()==snapshot.instanceId()&&
-        preparedSnapshot_->revision()==snapshot.revision()&&
-        previous->worldBase==worldBase_&&preparedHydro_==builtinHydro_&&
-        preparedMode_==view.mode&&preparedLod_==quality_.backgroundLod;
+    bool reusable=canReusePreparation(snapshot,view,previous);
     const bool unchangedInteraction=previous&&sameInteraction(previous->interaction,interaction);
     if(reusable&&!unchangedInteraction) {
         // Selection/editing can promote background fallback geometry to high
         // LOD. Hidden boundaries may also need their first stroke packet.
-        if((previous->interaction.selected!=interaction.selected||
-            previous->interaction.editTarget!=interaction.editTarget)&&
+        const auto protectedBy=[](const InteractionRenderPacket& state,const ObjectRef& ref) {
+            return std::find(state.selected.begin(),state.selected.end(),ref)!=state.selected.end()||
+                (state.editTarget&&*state.editTarget==ref);
+        };
+        if(quality_.backgroundLod!=RenderLod::High&&
            std::any_of(snapshot.document().genericFeatures.begin(),snapshot.document().genericFeatures.end(),
-                       [](const auto& feature){return feature.fallbackOnly;}))reusable=false;
+                       [&](const auto& feature){const ObjectRef ref{"generic",feature.id};
+                           return feature.fallbackOnly&&protectedBy(previous->interaction,ref)!=protectedBy(interaction,ref);
+                       }))reusable=false;
         std::set<ObjectRef> highlighted(interaction.selected.begin(),interaction.selected.end());
         highlighted.insert(interaction.candidates.begin(),interaction.candidates.end());
         for(const auto* ref:{&interaction.primary,&interaction.hover,&interaction.editTarget})
@@ -165,18 +179,17 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::build(
                 [&](const auto& stroke){return stroke.object==polygon.object;}))reusable=false;
     }
     if(reusable) {
-        if(unchangedInteraction&&previous->revisions.view==view.revision) {
+        if(unchangedInteraction) {
             ++unchanged_;return previous;
         }
         auto scene=std::make_shared<RenderScene>(*previous);
         std::set<ObjectRef> protectedObjects(interaction.selected.begin(),interaction.selected.end());
         if(interaction.editTarget)protectedObjects.insert(*interaction.editTarget);
-        cache_.protect(protectedObjects);
+        cache_.protectReasons(std::set<ObjectRef>(interaction.selected.begin(),interaction.selected.end()),
+            interaction.editTarget?std::set<ObjectRef>{*interaction.editTarget}:std::set<ObjectRef>{});
         scene->revision=nextSceneRevision(previous);
         scene->interaction=interaction;scene->interactionSignature=interactionSignature(interaction);
         if(!unchangedInteraction)scene->revisions.selection=advance(previous->revisions.selection);
-        if(previous->revisions.view!=view.revision&&worldBase_&&worldBase_->mesh)
-            scene->worldPlan=worldRenderPlanForView(*worldBase_->mesh,view);
         scene->revisions.view=view.revision;
         ++transientUpdates_;remember(snapshot,view,scene);return scene;
     }
@@ -191,12 +204,56 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocument(
     return buildDocumentImpl(doc,documentRevision,view,interaction,previous,nullptr);
 }
 
+std::shared_ptr<const RenderScene> MapSceneBuilder::refresh(
+    const ProjectSnapshot& snapshot,const MapViewState& view,
+    const InteractionRenderPacket& interaction,const std::shared_ptr<const RenderScene>& previous,
+    const SceneDirtySet* dirty) {
+    // The retained baseline also covers presentation-only commands and coalesced commits.
+    if(preparedSnapshot_&&preparedSnapshot_->instanceId()==snapshot.instanceId()&&
+       &preparedSnapshot_->document()!=&snapshot.document()) {
+        auto actual=calculateChangeImpact(preparedSnapshot_->document(),snapshot.document()).sceneDirty;
+        if(dirty) {
+            actual.fullRebuild|=dirty->fullRebuild;
+            actual.datasetResource|=dirty->datasetResource;
+            actual.interaction|=dirty->interaction;
+        }
+        return buildDelta(snapshot,view,interaction,previous,actual);
+    }
+    return build(snapshot,view,interaction,previous);
+}
+std::shared_ptr<const RenderScene> MapSceneBuilder::buildDelta(
+    const ProjectSnapshot& snapshot,const MapViewState& view,
+    const InteractionRenderPacket& interaction,const std::shared_ptr<const RenderScene>& previous,
+    const SceneDirtySet& dirty) {
+    const bool compatible=preparedSnapshot_&&preparedSnapshot_->instanceId()==snapshot.instanceId()&&
+        preparationMatchesView(view,previous)&&previous->revisions.document<=snapshot.revision();
+    const auto fallback=[&](const std::optional<ObjectRef>& ref) {
+        if(!ref||ref->domain!="generic"||quality_.backgroundLod==RenderLod::High)return false;
+        return std::any_of(snapshot.document().genericFeatures.begin(),snapshot.document().genericFeatures.end(),
+            [&](const auto& feature){return feature.id==ref->id&&feature.fallbackOnly;});
+    };
+    const bool sameProtected=previous&&previous->interaction.selected==interaction.selected&&
+        (previous->interaction.editTarget==interaction.editTarget||
+         (!interaction.editTarget&&!fallback(previous->interaction.editTarget)));
+    if(!compatible||dirty.fullRebuild||dirty.datasetResource||!sameProtected)
+        return build(snapshot,view,interaction,previous);
+    std::set<ObjectRef> changed(dirty.affectedObjects.begin(),dirty.affectedObjects.end());
+    std::set<ObjectRef> geometryChanged(dirty.geometryObjects.begin(),dirty.geometryObjects.end());
+    // A newly highlighted hidden boundary must still prepare its missing stroke.
+    for(const auto* ref:{&interaction.primary,&interaction.hover})if(*ref)changed.insert(**ref);
+    changed.insert(interaction.candidates.begin(),interaction.candidates.end());
+    auto scene=buildDocumentImpl(snapshot.document(),snapshot.revision(),view,interaction,
+                                 previous,&changed,&geometryChanged);
+    ++deltaUpdates_;remember(snapshot,view,scene);return scene;
+}
 std::shared_ptr<const RenderScene> MapSceneBuilder::buildPatch(
     const ProjectSnapshot& snapshot,const MapViewState& view,
     const InteractionRenderPacket& interaction,const std::shared_ptr<const RenderScene>& previous,
     const std::set<ObjectRef>& changed) {
     if(!previous||changed.empty()||previous->worldBase!=worldBase_)
         return build(snapshot,view,interaction,previous);
+    if(preparedSnapshot_&&(preparedSnapshot_->instanceId()!=snapshot.instanceId()||
+       !preparationMatchesView(view,previous)))return build(snapshot,view,interaction,previous);
     auto expanded=changed;
     // Automatic color scaling is shared by all entries in a layer. A changed
     // extremum (or a removed active layer) can restyle unchanged geometries.
@@ -206,26 +263,43 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildPatch(
         for(const auto& packet:previous->polygons)if(packet.object.domain=="distributionEntry")expanded.insert(packet.object);
         for(const auto& packet:previous->strokes)if(packet.object.domain=="distributionEntry")expanded.insert(packet.object);
     }
-    auto scene=buildDocumentImpl(snapshot.document(),snapshot.revision(),view,interaction,previous,&expanded);
-    remember(snapshot,view,scene);return scene;
+    std::set<ObjectRef> geometryChanged;
+    for(const auto& object:expanded) {
+        const auto current=geometryFor(snapshot.document(),object);
+        if(preparedSnapshot_) {
+            const auto old=geometryFor(preparedSnapshot_->document(),object);
+            if(!(old==current)||(old&&current&&preparedSnapshot_->document().geometries.get(*old)!=
+                snapshot.document().geometries.get(*current)))geometryChanged.insert(object);
+        }else geometryChanged.insert(object);
+    }
+    auto scene=buildDocumentImpl(snapshot.document(),snapshot.revision(),view,interaction,previous,&expanded,&geometryChanged);
+    ++deltaUpdates_;remember(snapshot,view,scene);return scene;
 }
 
 std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     const ProjectDocument& doc,std::uint64_t documentRevision,const MapViewState& view,
     const InteractionRenderPacket& interaction,
     const std::shared_ptr<const RenderScene>& previous,
-    const std::set<ObjectRef>* changed) {
+    const std::set<ObjectRef>* changed,const std::set<ObjectRef>* geometryChanged) {
     if(!validMapViewState(view))throw std::invalid_argument("invalid scene view");
-    ++preparations_;
+    bool geometryWork=!changed||!geometryChanged||!geometryChanged->empty();
+    if(geometryWork)++preparations_;else ++presentationUpdates_;
     auto scene=std::make_shared<RenderScene>();
-    scene->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
+    scene->preparationIdentity=geometryWork?std::make_shared<RenderScene::PreparationIdentity>():previous->preparationIdentity;
+    const auto markGeometryWork=[&] {
+        if(!geometryWork) {
+            geometryWork=true;++preparations_;
+            scene->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
+        }
+    };
     scene->interaction=interaction;
     scene->worldBase=worldBase_;
     if(worldBase_&&worldBase_->mesh)
         scene->worldPlan=worldRenderPlanForView(*worldBase_->mesh,view);
     std::set<ObjectRef> protectedObjects(interaction.selected.begin(),interaction.selected.end());
     if(interaction.editTarget)protectedObjects.insert(*interaction.editTarget);
-    cache_.protect(protectedObjects);
+    cache_.protectReasons(std::set<ObjectRef>(interaction.selected.begin(),interaction.selected.end()),
+            interaction.editTarget?std::set<ObjectRef>{*interaction.editTarget}:std::set<ObjectRef>{});
     std::set<std::string> baseCountries;
     if(worldBase_&&worldBase_->mesh) {
         if(worldBase_->ranges.size()!=258)throw std::invalid_argument("world base needs 258 ranges");
@@ -289,12 +363,21 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
         for(std::size_t i=0;i<doc.presentation.userLayers.size();++i)
             if(doc.presentation.userLayers[i].id==layerId){layerOrder=static_cast<int>(i);break;}
         const float layerOpacity=layerOpacityFor(doc,object);
+        const auto retained=[&](const auto& packets) -> const typename std::decay_t<decltype(packets)>::value_type* {
+            if(!changed||!geometryChanged||geometryChanged->count(object))return nullptr;
+            const auto found=std::find_if(packets.begin(),packets.end(),[&](const auto& packet) {
+                return packet.object==object&&packet.geometry==*ref;
+            });
+            return found==packets.end()?nullptr:&*found;
+        };
         if(polygon(*shape)) {
             PolygonDrawPacket draw;draw.key=key;draw.object=object;draw.geometry=*ref;
+            draw.lod=lod;draw.preparationPolicy=preparation;
             draw.geometryRevision=ref->version;draw.style=style;
             draw.drawOrder=mapRenderOrder(doc,object,RenderPrimitiveRole::Fill);
             draw.order=orderValue(draw.drawOrder);
-            draw.geometryPacket=cache_.polygon(object,*ref,*shape,lod,preparation);
+            if(const auto old=previous?retained(previous->polygons):nullptr)draw.geometryPacket=old->geometryPacket;
+            else {markGeometryWork();draw.geometryPacket=cache_.polygon(object,*ref,*shape,lod,preparation);}
             const auto index=scene->polygons.size();scene->polygons.push_back(std::move(draw));
             scene->drawSequence.push_back({PrimitiveKind::Polygon,index,scene->polygons.back().drawOrder,layerOrder,layerOpacity});
             bool boundary=true;
@@ -309,6 +392,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
                 (interaction.editTarget&&*interaction.editTarget==object);
             if(boundary||highlighted) {
                 StrokeDrawPacket stroke;stroke.key=key;stroke.object=object;stroke.geometry=*ref;
+                stroke.lod=lod;stroke.preparationPolicy=preparation;
                 stroke.geometryRevision=ref->version;stroke.style=style;
                 if(object.domain=="territorial")for(const auto& unit:doc.units)
                     if(unit.id==object.id) {
@@ -321,26 +405,31 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
                     }
                 stroke.drawOrder=mapRenderOrder(doc,object,RenderPrimitiveRole::Boundary);
                 stroke.order=orderValue(stroke.drawOrder);
-                stroke.geometryPacket=cache_.stroke(object,*ref,*shape,lod,preparation);
+                if(const auto old=previous?retained(previous->strokes):nullptr)stroke.geometryPacket=old->geometryPacket;
+                else {markGeometryWork();stroke.geometryPacket=cache_.stroke(object,*ref,*shape,lod,preparation);}
                 const auto strokeIndex=scene->strokes.size();scene->strokes.push_back(std::move(stroke));
                 if(boundary)scene->drawSequence.push_back({PrimitiveKind::Stroke,strokeIndex,
                     scene->strokes.back().drawOrder,layerOrder,layerOpacity});
             }
         } else if(line(*shape)) {
             StrokeDrawPacket draw;draw.key=key;draw.object=object;draw.geometry=*ref;
+            draw.lod=lod;draw.preparationPolicy=preparation;
             draw.geometryRevision=ref->version;draw.style=style;
             draw.drawOrder=mapRenderOrder(doc,object,RenderPrimitiveRole::Line);
             draw.order=orderValue(draw.drawOrder);
-            draw.geometryPacket=cache_.stroke(object,*ref,*shape,lod,preparation);
+            if(const auto old=previous?retained(previous->strokes):nullptr)draw.geometryPacket=old->geometryPacket;
+            else {markGeometryWork();draw.geometryPacket=cache_.stroke(object,*ref,*shape,lod,preparation);}
             const auto index=scene->strokes.size();scene->strokes.push_back(std::move(draw));
             scene->drawSequence.push_back({PrimitiveKind::Stroke,index,scene->strokes.back().drawOrder,layerOrder,layerOpacity});
         } else if(shape->type=="Point"||shape->type=="MultiPoint") {
             PointDrawPacket draw;draw.key=key;draw.object=object;draw.geometry=*ref;
+            draw.lod=lod;draw.preparationPolicy=preparation;
             draw.geometryRevision=ref->version;draw.style=style;
             draw.drawOrder=mapRenderOrder(doc,object,
                 object.domain=="label"?RenderPrimitiveRole::Label:RenderPrimitiveRole::Point);
             draw.order=orderValue(draw.drawOrder);
-            draw.geometryPacket=cache_.point(object,*ref,*shape,lod,preparation);
+            if(const auto old=previous?retained(previous->points):nullptr)draw.geometryPacket=old->geometryPacket;
+            else {markGeometryWork();draw.geometryPacket=cache_.point(object,*ref,*shape,lod,preparation);}
             if(object.domain=="label") {
                 for(const auto& label:doc.labels)if(label.id==object.id){draw.labelText=label.name;break;}
                 if(const auto it=doc.presentation.webPresentation.labelSettings.find(object);
@@ -452,6 +541,10 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
         });
     std::uint64_t geometry=basis,presentation=basis,selection=basis,dataset=basis;
     mix(geometry,static_cast<std::uint64_t>(quality_.backgroundLod));
+    mix(geometry,static_cast<std::uint64_t>(view.mode));
+    // Immutable resource identity remains significant when numeric revisions coincide.
+    mix(dataset,std::uint64_t(reinterpret_cast<std::uintptr_t>(worldBase_.get())));
+    mix(dataset,std::uint64_t(reinterpret_cast<std::uintptr_t>(builtinHydro_.get())));
     if(builtinHydro_) {
         mix(geometry,builtinHydro_->revision);
         mix(dataset,builtinHydro_->revision);
@@ -504,7 +597,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     if(previous&&previous->revisions.document==documentRevision&&
        previous->geometrySignature==geometry&&previous->presentationSignature==presentation&&
        previous->interactionSignature==selection&&previous->datasetSignature==dataset&&
-       previous->revisions.view==view.revision)return previous;
+       previous->revisions.view==view.revision){cache_.setActiveScene(previous);return previous;}
     scene->revision=nextSceneRevision(previous);
     scene->revisions.document=documentRevision;
     scene->revisions.geometry=previous?
@@ -516,5 +609,6 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     scene->revisions.dataset=previous?
         (previous->datasetSignature!=dataset?advance(previous->revisions.dataset):previous->revisions.dataset):1;
     scene->revisions.view=view.revision;
+    cache_.setActiveScene(scene);
     return scene;
 }

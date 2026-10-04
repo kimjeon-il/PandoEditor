@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pandoeditor/map/mapviewstate.h>
+#include <pandoeditor/map/resourcecachepolicy.h>
 #include <pandoeditor/presentation.h>
 #include <cstddef>
 #include <cstdint>
@@ -62,6 +63,9 @@ public:
     const std::vector<MapLabelPlacement>& reproject(const MapViewState&,double zoom);
 
     void clear();
+    void setResourceBudget(std::size_t bytes);
+    bool compatibilityResourceBudget() const noexcept {return !resourceBudget_;}
+    pandoeditor::ResourceCacheSnapshot resourceCacheSnapshot() const {return resourcePolicy_.snapshot();}
     const MapLabelEngineStats& stats() const noexcept {return stats_;}
 
 private:
@@ -82,4 +86,9 @@ private:
     std::vector<MapLabelPlacement> placements_;
     std::set<pandoeditor::ObjectRef> placedRefs_;
     MapLabelEngineStats stats_;
+    std::size_t sourceBytes_=0;
+    std::optional<std::size_t> resourceBudget_;
+    pandoeditor::ResourceCachePolicy<int> resourcePolicy_;
+    void accountSources();
+    void accountWorkingSet();
 };
