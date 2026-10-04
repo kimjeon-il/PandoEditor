@@ -1,0 +1,44 @@
+{
+  "schema": "pando-web-root-selection-lifecycle-observations",
+  "version": 1,
+  "behavioralCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+  "observationMode": "Actual production root annex workflow, worker client/RPC/worker, store transaction, dependent transfer, reference validation, cancel, confirm, history Undo/Redo. Headless presentation and deterministic UID ports; hydro/network/browser gestures are not observed.",
+  "caseFiles": [
+    {
+      "case": "root-partial",
+      "path": "root-lifecycle-observations/root-partial.json"
+    },
+    {
+      "case": "root-full",
+      "path": "root-lifecycle-observations/root-full.json"
+    },
+    {
+      "case": "root-with-children-partial",
+      "path": "root-lifecycle-observations/root-with-children-partial.json"
+    },
+    {
+      "case": "root-with-children-full",
+      "path": "root-lifecycle-observations/root-with-children-full.json"
+    },
+    {
+      "case": "root-with-distribution-full",
+      "path": "root-lifecycle-observations/root-with-distribution-full.json"
+    },
+    {
+      "case": "root-with-child-distribution-full",
+      "path": "root-lifecycle-observations/root-with-child-distribution-full.json"
+    },
+    {
+      "case": "root-with-label-full",
+      "path": "root-lifecycle-observations/root-with-label-full.json"
+    },
+    {
+      "case": "root-with-label-settings-full",
+      "path": "root-lifecycle-observations/root-with-label-settings-full.json"
+    },
+    {
+      "case": "root-selected-remote-donor",
+      "path": "root-lifecycle-observations/root-selected-remote-donor.json"
+    }
+  ]
+}

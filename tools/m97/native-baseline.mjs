@@ -5,8 +5,8 @@ import {loadOracle} from './calculations.mjs';
 
 export function nativeInput(row) {
   const common={case:row.id,countries:row.features,units:[]};
-  if(['drawn-annex','annex'].includes(row.operation)&&row.donorIds?.length===1)
-    return {...common,operation:'annex',targetId:row.targetId,sourceId:row.donorIds[0],draft:row.drawnGeometry??row.transferredGeometry};
+  if(['drawn-annex','annex'].includes(row.operation)&&row.donorIds?.length)
+    return {...common,operation:row.operation,targetId:row.targetId,sourceIds:[...row.donorIds],sourceId:row.donorIds[0],draft:row.drawnGeometry??row.transferredGeometry};
   if(row.operation==='merge')return {...common,operation:'merge',targetId:row.sourceId,sourceIds:row.targetIds};
   return null;
 }

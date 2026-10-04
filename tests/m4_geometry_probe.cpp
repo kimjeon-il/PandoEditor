@@ -39,14 +39,20 @@ int main(int argc,char** argv) {
             if(row["operation"]=="promote")intent=ConvertTerritorialTypeIntent{target,UnitKind::General,{},{},{}};
             if(row["operation"]=="convert")intent=ConvertTerritorialTypeIntent{target,UnitKind::General,{},territorialRef("B"),target.id};
             if(row["operation"]=="merge") {std::vector<ObjectRef> donors;for(const auto& id:row["sourceIds"].toArray())donors.push_back(territorialRef(id.toString().toStdString()));intent=MergeTerritorialIntent{target,std::move(donors)};}
-            if(row["operation"]=="annex")intent=AnnexTerritoryIntent{target,{territorialRef(row["sourceId"].toString().toStdString())},decode(row["draft"].toObject())};
+            if(row["operation"]=="annex"||row["operation"]=="drawn-annex") {
+                std::vector<ObjectRef> donors;
+                for(const auto& id:row["sourceIds"].toArray())donors.push_back(territorialRef(id.toString().toStdString()));
+                if(donors.empty())donors.push_back(territorialRef(row["sourceId"].toString().toStdString()));
+                intent=AnnexTerritoryIntent{target,std::move(donors),decode(row["draft"].toObject())};
+            }
             if(row["operation"]=="country-boundary") {SharedBoundaryIntent boundary;for(const auto& value:row["featurePatches"].toArray()){const auto feature=value.toObject();boundary.drafts.push_back({territorialRef(feature["id"].toString().toStdString()),decode(feature["geometry"].toObject())});}intent=std::move(boundary);}
             if(row["operation"]=="coast")intent=CoastlineIntent{target,decode(row["draft"].toObject()),CoastlineAuthority::Country};
             const auto plan=CommandProcessor::planTerritorial(p,intent);
-            if(!plan.ok())throw std::runtime_error(plan.detail);
+            if(!plan.ok()&&row["operation"]!="drawn-annex")throw std::runtime_error(plan.detail);
             JobScheduler jobs;auto job=jobs.enqueue(p.snapshot(),"oracle");jobs.takeNext();
             PrepareResult prepared;
-            if(plan.plan->geometry.kind==GeometryRequirementKind::WorkerPatch)prepared=prepareTerritorialGeometry(p.snapshot(),*plan.plan,job.token());
+            if(row["operation"]=="drawn-annex")prepared=prepareDrawnTerritoryAnnex(p.snapshot(),std::get<AnnexTerritoryIntent>(intent),job.token());
+            else if(plan.plan->geometry.kind==GeometryRequirementKind::WorkerPatch)prepared=prepareTerritorialGeometry(p.snapshot(),*plan.plan,job.token());
             else {CommandArguments args;args.action=ApplyTerritorialMutation{*plan.plan,{}};prepared=CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"territorial.relation.parent",args));}
             if(!prepared.ok()||!prepared.preview)throw std::runtime_error(prepared.detail);
             const auto applied=CommandProcessor::confirm(p,*prepared.preview);if(!applied.ok())throw std::runtime_error(applied.detail);

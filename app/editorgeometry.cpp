@@ -350,6 +350,8 @@ bool EditorController::requestGeometryPreview()
     }
     if(edit.mergeIntent||edit.annexIntent||edit.splitIntent||edit.coastIntent) {
         return schedule([intent](const ProjectSnapshot& snapshot,const JobToken& token){
+            if(const auto annex=std::get_if<AnnexTerritoryIntent>(&intent))
+                return prepareDrawnTerritoryAnnex(snapshot,*annex,token);
             auto planned=CommandProcessor::planTerritorial(snapshot,intent);
             if(!planned.ok()||!planned.plan){PrepareResult failed;failed.error=planned.error;failed.detail=planned.detail;return failed;}
             return prepareTerritorialGeometry(snapshot,*planned.plan,token);

@@ -37,6 +37,7 @@ if(BUILD_TESTING)
                 "${PROJECT_SOURCE_DIR}/tools/m97/cut-corpus.test.mjs"
                 "${PROJECT_SOURCE_DIR}/tools/m97/native-baseline.test.mjs"
                 "${PROJECT_SOURCE_DIR}/tools/m97/web-lifecycle.test.mjs"
+                "${PROJECT_SOURCE_DIR}/tools/m97/web-selection.test.mjs"
                 "${PROJECT_SOURCE_DIR}/tools/m97/registration.test.mjs")
         set_tests_properties(m971_editing_oracle_contract PROPERTIES TIMEOUT 60)
     endif()

@@ -6,6 +6,18 @@
   "sourceRoot": "lifecycle-source",
   "sources": [
     {
+      "path": "assets/js/modules/annex-geometry.js",
+      "blob": "bc69c505638599e2063fe6f99c1ed04deff5b1ee"
+    },
+    {
+      "path": "assets/js/modules/app-country-commits.js",
+      "blob": "a3a9b3a763c9850cb895a109c7daa9deb239e518"
+    },
+    {
+      "path": "assets/js/modules/app-country-modes.js",
+      "blob": "8d93b3edb6b3d488daba9ed3e05af0e78f7ee088"
+    },
+    {
       "path": "assets/js/modules/app-country-validation.js",
       "blob": "161391f4f4166632f258eb78346b517afa56f6bd"
     },
@@ -42,12 +54,20 @@
       "blob": "8dcab022c3832aa6b99159dc34121debddcb5d86"
     },
     {
+      "path": "assets/js/modules/app-river-candidates.js",
+      "blob": "d0cba5bf6f408f16fde82b29988273d54dbd7b4f"
+    },
+    {
       "path": "assets/js/modules/app-territorial-drafts.js",
       "blob": "0947b0e320724bc7d740474bf8c0c561ed4906b4"
     },
     {
       "path": "assets/js/modules/app-territory-components.js",
       "blob": "f0f7ddc549f5bcf169415f2cf7fc52b218740ef3"
+    },
+    {
+      "path": "assets/js/modules/app-territory-selection-workflow.js",
+      "blob": "e99033f1402a6c1e55cfe2a32e8398026aff86fc"
     },
     {
       "path": "assets/js/modules/boundary-display.js",
@@ -254,6 +274,10 @@
       "blob": "4d2e762b906ba484f795651c53003bd912fb38a6"
     },
     {
+      "path": "assets/js/modules/river-territory-partition.js",
+      "blob": "99def0a2fc9769e542869fe78cf4fdb091c3e802"
+    },
+    {
       "path": "assets/js/modules/runtime-performance-metrics.js",
       "blob": "e36aeb3f068aa121ad24dd5728bfd74e25a3d9ae"
     },
@@ -292,6 +316,10 @@
     {
       "path": "assets/js/modules/territorial-highlight-boundary.js",
       "blob": "46341eebcb4dae3f9af6d87d35791f9939e00e2c"
+    },
+    {
+      "path": "assets/js/modules/territorial-interaction-policy.js",
+      "blob": "99923f7cde8f9ed29095d04ab6b50c435db6e405"
     },
     {
       "path": "assets/js/modules/territorial-service.js",

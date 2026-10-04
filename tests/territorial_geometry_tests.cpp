@@ -70,6 +70,118 @@ private slots:
         QVERIFY(c.requestGeometryPreview());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);QVERIFY(c.confirmGeometryEdit());
         Project after;after.replace(projectcodec::decode(c.documentBytes()));QCOMPARE(area(after,"A"),104.);QCOMPARE(area(after,"B"),96.);c.undo();QCOMPARE(c.documentBytes(),before);
     }
+    void oversizedDrawnAnnexPreprocessesBeforePreview_data() {
+        QTest::addColumn<bool>("multiDonor");
+        QTest::addColumn<bool>("remoteDonor");
+        QTest::newRow("single donor") << false << false;
+        QTest::newRow("multiple donors") << true << false;
+        QTest::newRow("selected remote donor") << true << true;
+    }
+    void oversizedDrawnAnnexPreprocessesBeforePreview() {
+        QFETCH(bool,multiDonor);QFETCH(bool,remoteDonor);
+        QTemporaryDir dir;
+        ProjectDocument document({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}});
+        if(multiDonor) {
+            const GeometryRef ref{"C",1};document.geometries.insert(ref,square(remoteDonor?40:20,0,10));
+            appendTerritory(document,{"C","C","",UnitKind::General,false},ref);document.presentation.objectStyles[territorialRef("C")]={};
+        }
+        Project source;source.replace(document);
+        QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();
+        EditorController c({false,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(file.fileName())));c.selectCountry("A");
+        const auto before=c.documentBytes();
+        QVERIFY(c.beginAnnexGeometry());QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","B"}}));
+        if(multiDonor)QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","C"}}));
+        QVERIFY(c.geometryAdvanceStage());MapProjection projection;projection.rebuild(document);
+        const double right=multiDonor&&!remoteDonor?35.:25.;
+        for(const auto point:{Point{5,-5},Point{right,-5},Point{right,5},Point{5,5}}) {
+            const auto xy=projection.project(point);QVERIFY(c.geometryAddPoint(xy.x,xy.y,0));
+        }
+        QVERIFY(c.requestGeometryPreview());
+        c.cancelGeometryEdit();QCOMPARE(c.documentBytes(),before);
+        QVERIFY(c.beginAnnexGeometry());QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","B"}}));
+        if(multiDonor)QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","C"}}));
+        QVERIFY(c.geometryAdvanceStage());
+        for(const auto point:{Point{5,-5},Point{right,-5},Point{right,5},Point{5,5}}) {
+            const auto xy=projection.project(point);QVERIFY(c.geometryAddPoint(xy.x,xy.y,0));
+        }
+        QVERIFY(c.requestGeometryPreview());
+        QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);
+        QVERIFY2(c.geometryEditState().value("previewReady").toBool(),qPrintable(c.geometryEditState().value("error").toString()));
+        QCOMPARE(c.documentBytes(),before);
+        c.cancelGeometryEdit();QCOMPARE(c.documentBytes(),before);
+        // The same oversized drawing is usable after cancellation; no stale job is committed.
+        QVERIFY(c.beginAnnexGeometry());QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","B"}}));
+        if(multiDonor)QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","C"}}));
+        QVERIFY(c.geometryAdvanceStage());
+        for(const auto point:{Point{5,-5},Point{right,-5},Point{right,5},Point{5,5}}) {
+            const auto xy=projection.project(point);QVERIFY(c.geometryAddPoint(xy.x,xy.y,0));
+        }
+        QVERIFY(c.requestGeometryPreview());QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);
+        QVERIFY2(c.geometryEditState().value("previewReady").toBool(),qPrintable(c.geometryEditState().value("error").toString()));
+        QVERIFY(c.confirmGeometryEdit());Project after;after.replace(projectcodec::decode(c.documentBytes()));
+        QCOMPARE(area(after,"A"),multiDonor&&!remoteDonor?200.:150.);QCOMPARE(area(after,"B"),50.);
+        if(multiDonor)QCOMPARE(area(after,"C"),remoteDonor?100.:50.);
+        const auto committed=c.documentBytes();c.undo();QCOMPARE(c.documentBytes(),before);c.redo();QCOMPARE(c.documentBytes(),committed);
+    }
+    void cancelledDrawnPreprocessingNeverProducesPreview() {
+        Project p;p.replace(ProjectDocument({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}}));
+        const auto before=projectcodec::encode(p);JobScheduler jobs;const auto job=jobs.enqueue(p.snapshot(),"drawn-annex");jobs.takeNext();jobs.cancel(job.id());
+        const auto result=prepareDrawnTerritoryAnnex(p.snapshot(),{territorialRef("A"),{territorialRef("B")},square(5,-5,20)},job.token());
+        QVERIFY(!result.ok());QVERIFY(!result.preview);QCOMPARE(result.detail,std::string("CANCELLED"));QCOMPARE(projectcodec::encode(p),before);
+    }
+    void rootAnnexClipsDependentsInsteadOfReparenting() {
+        ProjectDocument d({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}});
+        d.geometries.insert({"child",1},square(11,1,2));
+        appendTerritory(d,{"child","child","",UnitKind::General,false},{"child",1});d.presentation.objectStyles[territorialRef("child")]={};setFixtureParent(d,territorialRef("child"),territorialRef("B"));
+        Project p;p.replace(d);const auto before=projectcodec::encode(p);
+        auto prepared=prepare(p,AnnexTerritoryIntent{territorialRef("A"),{territorialRef("B")},square(10,0,5)});
+        QVERIFY2(prepared.ok(),prepared.detail.c_str());QCOMPARE(projectcodec::encode(p),before);
+        QVERIFY(CommandProcessor::confirm(p,*prepared.preview).ok());
+        QVERIFY(!p.index().objects.count(territorialRef("child")));
+        QCOMPARE(area(p,"A"),125.);QCOMPARE(area(p,"B"),75.);
+        const auto after=projectcodec::encode(p);QVERIFY(p.undo());QCOMPARE(projectcodec::encode(p),before);QVERIFY(p.redo());QCOMPARE(projectcodec::encode(p),after);
+    }
+    void rootAnnexClipsPartialAndNestedDependents() {
+        ProjectDocument d({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}});
+        const auto add=[&](const std::string& id,const std::string& parent,Geometry geometry) {
+            const GeometryRef ref{id,1};d.geometries.insert(ref,geometry);appendTerritory(d,{id,id,"",UnitKind::General,false},ref);
+            setFixtureParent(d,territorialRef(id),territorialRef(parent));d.presentation.objectStyles[territorialRef(id)]={};
+        };
+        add("child","B",square(11,1,5));add("removed-grandchild","child",square(12,2,1));add("retained-grandchild","child",square(15,5,1));
+        Project p;p.replace(d);const auto before=projectcodec::encode(p);
+        auto prepared=prepare(p,AnnexTerritoryIntent{territorialRef("A"),{territorialRef("B")},square(10,0,5)});
+        QVERIFY2(prepared.ok(),prepared.detail.c_str());QVERIFY(CommandProcessor::confirm(p,*prepared.preview).ok());
+        QCOMPARE(area(p,"child"),9.);QCOMPARE(staticParentRelation(p.document(),"child").parentId,std::string("B"));
+        QVERIFY(!p.index().objects.count(territorialRef("removed-grandchild")));QCOMPARE(area(p,"retained-grandchild"),1.);
+        QCOMPARE(staticParentRelation(p.document(),"retained-grandchild").parentId,std::string("child"));
+        const auto after=projectcodec::encode(p);QVERIFY(p.undo());QCOMPARE(projectcodec::encode(p),before);QVERIFY(p.redo());QCOMPARE(projectcodec::encode(p),after);
+    }
+    void rootAnnexRejectsDanglingDistributionReference_data() {
+        QTest::addColumn<QString>("referenceKind");
+        QTest::newRow("distribution") << QString("distribution");
+        QTest::newRow("removed-child-distribution") << QString("child-distribution");
+        QTest::newRow("label") << QString("label");
+        QTest::newRow("label-settings") << QString("label-settings");
+    }
+    void rootAnnexRejectsDanglingDistributionReference() {
+        QFETCH(QString,referenceKind);
+        ProjectDocument d({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}});
+        if(referenceKind=="child-distribution") {
+            d.geometries.insert({"child",1},square(11,1,2));appendTerritory(d,{"child","child","",UnitKind::General,false},{"child",1});
+            setFixtureParent(d,territorialRef("child"),territorialRef("B"));d.presentation.objectStyles[territorialRef("child")]={};
+        }
+        if(referenceKind=="distribution"||referenceKind=="child-distribution") {
+            DistributionLayer layer;layer.id="statistics";layer.name="Statistics";d.distributionLayers.push_back(layer);
+            DistributionEntry entry;entry.id="entry-b";entry.layerId=layer.id;entry.territory=territorialRef(referenceKind=="child-distribution"?"child":"B");entry.value=1;d.distributionEntries.push_back(entry);
+        } else if(referenceKind=="label") {
+            Geometry point;point.type="Point";point.points={{15,5}};d.geometries.insert({"label-b",1},point);
+            PlaceLabel label;label.id="label-b";label.name="B label";label.geometry={"label-b",1};label.territory=territorialRef("B");d.labels.push_back(label);
+        } else d.presentation.webPresentation.labelSettings[territorialRef("B")]={};
+        Project p;p.replace(d);const auto before=projectcodec::encode(p);
+        auto prepared=prepare(p,AnnexTerritoryIntent{territorialRef("A"),{territorialRef("B")},square(10,0,10)});
+        QVERIFY(!prepared.ok());QCOMPARE(projectcodec::encode(p),before);
+        QVERIFY(!p.undo());
+    }
     void providerPickingIgnoresCoveringContent() {
         QTemporaryDir dir;ProjectDocument document({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}});
         Geometry point;point.type="Point";point.points={{15,5}};document.geometries.insert({"label",1},point);

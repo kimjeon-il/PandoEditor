@@ -375,8 +375,21 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
                 web.objectOrder.erase(std::remove(web.objectOrder.begin(),web.objectOrder.end(),territorialPresentationKey(donor.id)),web.objectOrder.end());
             }
         } else if constexpr(std::is_same_v<T,AnnexTerritoryIntent>) {
+            const auto targetUnit=std::find_if(d.units.begin(),d.units.end(),[&](const auto& unit){return territorialRef(unit.id)==in.target;});
+            const bool rootAnnex=targetUnit!=d.units.end()&&isRootGeneral(d,*targetUnit);
+            if(rootAnnex&&action.geometry)for(const auto& removed:action.geometry->removedGeometryOwners) {
+                // The root web workflow asserts reference integrity before its
+                // commit. Unlike sibling annex it does not auto-clean these
+                // references. Reject transactionally instead of silently
+                // deleting a distribution row or detaching a label.
+                for(const auto& entry:d.distributionEntries)
+                    require(!entry.territory||!(*entry.territory==removed),CommandError::ValidationFailed,"DANGLING_REF: distribution territory");
+                for(const auto& label:d.labels)
+                    require(!label.territory||!(*label.territory==removed),CommandError::ValidationFailed,"DANGLING_REF: label territory");
+                require(!d.presentation.webPresentation.labelSettings.count(removed),CommandError::ValidationFailed,"DANGLING_REF: territorial label settings");
+            }
             patch();const std::set<ObjectRef> donors(in.donors.begin(),in.donors.end());
-            for(auto& relation:d.timelineRecords.parentRelations)if(donors.count(territorialRef(relation.parentId))) {
+            for(auto& relation:d.timelineRecords.parentRelations)if(!rootAnnex&&donors.count(territorialRef(relation.parentId))) {
                 const auto child=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return u.id==relation.entityId;});
                 if(child!=d.units.end()&&geometryContains(*shape(in.target.id),*shape(child->id)))relation.parentId=in.target.id;
             }

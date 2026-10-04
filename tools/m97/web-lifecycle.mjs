@@ -275,3 +275,5 @@ export async function runLifecycleCorpus(options) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   process.stdout.write(`${JSON.stringify(await runLifecycleCorpus(), null, 2)}\n`);
 }
+
+export { productionModules, createRuntime, observe, workerFactory, referenceEffects };

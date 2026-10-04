@@ -1,0 +1,16 @@
+{
+  "schema": "pando-web-selection-source-correction",
+  "version": 1,
+  "repository": "kimjeon-il/Pando",
+  "baseBehavioralCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+  "behavioralCommit": "12cd8c8ec47c83cfb8c650e8f44c81cdfac10043",
+  "publishedTree": "2ec7e0badab8804de7a5fc457a4e5e6f8ba3732d",
+  "sourceRoot": "selection-correction-source",
+  "changes": [
+    {
+      "path": "assets/js/modules/app-territory-selection-workflow.js",
+      "baseBlob": "e99033f1402a6c1e55cfe2a32e8398026aff86fc",
+      "blob": "8f04dc31c77de0e7168074d92195040fee3d0f7a"
+    }
+  ]
+}

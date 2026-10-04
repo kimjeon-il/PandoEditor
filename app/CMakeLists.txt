@@ -53,6 +53,7 @@ add_library(pandoeditor_editor STATIC
     hydroruntimecache.cpp hydroruntimecache.h
     geometrycalculator.cpp geometrycalculator.h
     territorialgeometry.cpp territorialgeometry.h
+    territoryselection.cpp territoryselection.h
     editorpresentation.cpp
     webimport.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
     editorgeometry.cpp
@@ -382,6 +383,10 @@ if(BUILD_TESTING)
     add_executable(reference_image_tests ../tests/reference_image_tests.cpp)
     target_link_libraries(reference_image_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME reference_image_tests COMMAND reference_image_tests -o -,txt)
+    add_executable(territory_selection_tests ../tests/territory_selection_tests.cpp)
+    target_link_libraries(territory_selection_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME territory_selection_tests COMMAND territory_selection_tests -o -,txt)
+    set_tests_properties(territory_selection_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(territorial_geometry_tests ../tests/territorial_geometry_tests.cpp)
     add_executable(m4_geometry_probe ../tests/m4_geometry_probe.cpp)
     target_link_libraries(m4_geometry_probe PRIVATE pandoeditor_editor)

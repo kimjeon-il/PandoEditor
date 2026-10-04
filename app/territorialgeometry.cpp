@@ -1,5 +1,6 @@
 #include "territorialgeometry.h"
 #include "geometrycalculator.h"
+#include "territoryselection.h"
 #include "retainedreferencerewriter.h"
 #include <pandoeditor/project.h>
 #include <pandoeditor/geometrypredicates.h>
@@ -64,10 +65,15 @@ PrepareResult prepareTerritorialGeometry(const ProjectSnapshot& snapshot,
         }
         if(requirement.operation=="annex") {
             const auto& annex=std::get<AnnexTerritoryIntent>(plan.intent);GeometryPatch patch;patch.sourceRevision=snapshot.revision();
+            // Root-country commits use transferLandDependents in the web: a
+            // wholly transferred child is removed, not reparented. Sibling
+            // territorial annex deliberately retains its separate contract.
+            const auto& targetUnit=snapshot.document().units.at(snapshot.index().objects.at(annex.target));
+            const bool rootAnnex=isRootGeneral(snapshot.document(),targetUnit);
             Geometry donorCoverage=geometry(annex.donors.front());if(annex.donors.size()>1){GeometryOperationRequest unionRequest;unionRequest.operation=GeometryOperation::Union;for(const auto& donor:annex.donors)unionRequest.operands.push_back(geometry(donor));auto donorUnion=calculateGeometry(unionRequest,[&]{return token.cancelled();});if(!donorUnion.succeeded())throw std::runtime_error(donorUnion.detail);donorCoverage=std::move(donorUnion.geometry);}if(!geometryContains(donorCoverage,annex.selection))throw std::runtime_error("SELECTION_OUTSIDE_DONOR");
             auto target=calculateGeometry({GeometryOperation::Union,geometry(annex.target),annex.selection},[&]{return token.cancelled();});if(!target.succeeded())throw std::runtime_error(target.detail);patch.replacements.push_back({annex.target,std::move(target.geometry)});
             for(std::size_t i=1;i<requirement.readOwners.size();++i){const auto& owner=requirement.readOwners[i];const auto& original=geometry(owner);
-                if(std::find(annex.donors.begin(),annex.donors.end(),owner)==annex.donors.end()&&geometryContains(annex.selection,original)){patch.replacements.push_back({owner,original});continue;}
+                if(!rootAnnex&&std::find(annex.donors.begin(),annex.donors.end(),owner)==annex.donors.end()&&geometryContains(annex.selection,original)){patch.replacements.push_back({owner,original});continue;}
                 auto remaining=calculateGeometry({GeometryOperation::Difference,original,annex.selection},[&]{return token.cancelled();});if(remaining.status==GeometryOperationStatus::Cancelled){failure.detail="CANCELLED";return failure;}if(remaining.status==GeometryOperationStatus::Empty)patch.removedGeometryOwners.push_back(owner);else if(!remaining.succeeded())throw std::runtime_error(remaining.detail);else patch.replacements.push_back({owner,std::move(remaining.geometry)});
             }
             CommandArguments args;args.action=ApplyTerritorialMutation{plan,std::move(patch)};CommandRequest requestCommand{"territorial.geometry.commit",snapshot.instanceId(),snapshot.document().documentId,snapshot.revision(),plan.affectedObjects,std::move(args)};
@@ -113,4 +119,36 @@ PrepareResult prepareTerritorialGeometry(const ProjectSnapshot& snapshot,
         if(token.cancelled()){failure.detail="CANCELLED";return failure;}
         token.reportProgress(100);return prepared;
     }catch(const std::exception& error){failure.error=CommandError::PrepareFailed;failure.detail=error.what();return failure;}
+}
+
+PrepareResult prepareDrawnTerritoryAnnex(const ProjectSnapshot& snapshot,
+    const AnnexTerritoryIntent& input,const JobToken& token) {
+    PrepareResult failure;failure.error=CommandError::PrepareFailed;
+    try {
+        if(token.cancelled()){failure.detail="CANCELLED";return failure;}
+        const auto geometry=[&](const ObjectRef& ref)->const Geometry& {
+            const auto& unit=snapshot.document().units.at(snapshot.index().objects.at(ref));
+            return *snapshot.document().geometries.get(staticGeometryBinding(snapshot.document(),unit.id).geometryRef);
+        };
+        std::vector<TerritorySelectionSource> sources;
+        for(const auto& donor:input.donors)sources.push_back({donor,geometry(donor),staticGeometryBinding(snapshot.document(),donor.id).geometryRef});
+        TerritorySelection selection;
+        if(!selection.resetSources(std::move(sources))||
+           selection.requestMethod(TerritorySelectionMethod::Polygon)!=TerritoryMethodChange::Activated||
+           !selection.setDrawnPolygon(input.selection,geometry(input.target)))
+            throw std::runtime_error(selection.lastError());
+        if(!selection.state().currentGeometry)throw std::runtime_error("NO_TRANSFERABLE_SELECTION");
+        auto annex=input;annex.selection=*selection.state().currentGeometry;annex.donors.clear();
+        // Source selection can include remote, untouched donors. The actual
+        // command patch/affected refs contain only donors with positive area.
+        for(const auto& donor:input.donors) {
+            const auto overlap=calculateGeometry({GeometryOperation::Intersection,geometry(donor),annex.selection},[&]{return token.cancelled();});
+            if(!overlap.succeeded())throw std::runtime_error(overlap.detail);
+            if(overlap.status!=GeometryOperationStatus::Empty)annex.donors.push_back(donor);
+        }
+        if(token.cancelled()){failure.detail="CANCELLED";return failure;}
+        auto plan=CommandProcessor::planTerritorial(snapshot,annex);
+        if(!plan.ok()||!plan.plan){failure.error=plan.error;failure.detail=plan.detail;return failure;}
+        return prepareTerritorialGeometry(snapshot,*plan.plan,token);
+    }catch(const std::exception& error){failure.detail=error.what();return failure;}
 }
