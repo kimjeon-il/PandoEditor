@@ -9,6 +9,9 @@ deployment, T3/T4 resolver, dated editing or timeline UI is included.
 
 Implementation commit and exact tested native source:
 `d2af1d518aba3b55e7b7c09db049a94ca607497f`, pushed nonforce to the feature ref.
+Final tested candidate, including the portable fixture path correction:
+`286602b3757efccab6c8b198ea5e5dfdf3ab983a`. The subsequent report commit changes
+documentation only and deliberately does not schedule another CI build.
 
 The user narrowed final verification to necessary checks. The final candidate
 uses the ten focused tests listed below and actual production exchange; this
@@ -60,7 +63,7 @@ Linux keeps ordinary Debug flags and its default GNU toolchain.
 | project_geopackage_controller_tests | Pass |
 | web_import_ui_tests | Pass, real QML/Qt import/file paths |
 | Desktop/360px canonical creation routes | 2 substantive Qt slots, 0 failure/skip |
-| Selected CTest total | 10/10, 0 failure/skip, 13.18 seconds |
+| Selected CTest total after path fix | 10/10, 0 failure/skip, 12.51 seconds |
 | Actual web owner/serializer → native QFile → native web codec → web owner | 16/16, 0 failure/skip |
 | Saved sample/source asset consistency | 17/17 |
 
@@ -191,11 +194,23 @@ resolves the real parent directory before joining the child. This is a test
 path defect, and that failed run is not a validation pass. Remaining CI steps
 were unexecuted in that run.
 
-The feature push starts `.github/workflows/timeline-persistence.yml`: Ubuntu
-24.04, Qt 6.8.3, ordinary Debug, the same ten selected CTests, sample assets and
-the same actual 16-case exchange at pinned web 788f43fd. Its result must be read
-from the published run; scheduling/building is not a passing result. No full
-CTest, full hydro fixture fetch or full regression audit is scheduled.
+Final [Linux CI run 37195223402](https://github.com/kimjeon-il/PandoEditor/actions/runs/37195223402)
+on exact candidate `286602b3757efccab6c8b198ea5e5dfdf3ab983a` passed. Ubuntu
+24.04, Qt 6.8.3, ordinary Debug/default GNU toolchain, offscreen/software QML:
+
+| Linux focused check | Result |
+| --- | --- |
+| App plus selected targets configure/build | Pass |
+| Same ten CTests | 10/10, 0 failure/skip, 5.85 seconds |
+| Production storage/numeric suite inside CTest | 31 + 9, 0 failure/skip |
+| Actual web/native file exchange at pinned web 788f43fd | 16/16, 0 failure/skip |
+| Saved sample/source assets | 17/17, 0 failure |
+| XML and Qt log skip audit | 0 failed/skipped CTest entries and no Qt SKIP |
+
+Published XML, Qt LastTest.log, source-asset report and actual exchange artifacts
+were downloaded and checked, rather than inferring pass from job scheduling.
+Windows and Linux evidence is preserved under `D:/Codex/evidence/timeline-app-t22`.
+No full CTest, full hydro fixture fetch or full regression audit was scheduled.
 
 This work supports storage/exchange of rich timelines, but before T3/T4 only
 one unbounded lifetime, binding and parent record per territorial object may
