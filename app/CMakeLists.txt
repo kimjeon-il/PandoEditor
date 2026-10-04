@@ -462,7 +462,9 @@ if(BUILD_TESTING)
             FILES ${DEFAULT_FLAG_FILES})
     endforeach()
     add_test(NAME ui_tests COMMAND ui_tests -o -,txt)
-    set_tests_properties(ui_tests PROPERTIES TIMEOUT 120 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    # Aggregate software-rendered UI suite budget; individual waits and performance gates are unchanged.
+    # The expanded suite exceeded 120 s on CI after 31 passing cases.
+    set_tests_properties(ui_tests PROPERTIES TIMEOUT 180 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()
 
 set_target_properties(pandoeditor PROPERTIES
