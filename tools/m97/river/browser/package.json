@@ -1,0 +1,9 @@
+{
+  "name": "pandoeditor-pinned-river-chromium-oracle",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "1.62.1"
+  }
+}

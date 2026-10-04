@@ -1,6 +1,7 @@
 #include <pandoeditor/hydroformat.h>
 #include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iterator>
 #include <map>
@@ -49,6 +50,24 @@ bool rejected(const std::vector<std::uint8_t>& bytes) {
 }
 }
 int main() {
+    // Exact IEEE-754 output of the pinned worker's integer / 1e6 decode.
+    // Node 24.19.0 DataView.getBigUint64; positive/negative, antimeridian,
+    // near-polar, and microdegree values. A reciprocal multiply differs by ULPs.
+    const std::vector<std::pair<std::int32_t,std::uint64_t>> coordinateBits{
+        {15566667,0x402f22222d5171e3ULL},{-15566667,0xc02f22222d5171e3ULL},
+        {179999999,0x40667ffffde7210cULL},{-179999999,0xc0667ffffde7210cULL},
+        {180000000,0x4066800000000000ULL},{-180000000,0xc066800000000000ULL},
+        {89999999,0x40567ffffbce4218ULL},{-89999999,0xc0567ffffbce4218ULL},
+        {1,0x3eb0c6f7a0b5ed8dULL},{-1,0xbeb0c6f7a0b5ed8dULL},
+        {44856250,0x40466d999999999aULL},{-44856250,0xc0466d999999999aULL}};
+    const auto bits=[](double value){std::uint64_t result;static_assert(sizeof(result)==sizeof(value));std::memcpy(&result,&value,sizeof(value));return result;};
+    pandoeditor::HydroPhysicalFeature exact;exact.kind=1;exact.fragmentCount=1;exact.geometry.lines.emplace_back();
+    for(const auto& row:coordinateBits)exact.geometry.lines[0].push_back({row.first,row.first});
+    const auto exactLine=pandoeditor::mergeHydroLogicalFragments({exact});
+    for(std::size_t i=0;i<coordinateBits.size();++i){assert(bits(exactLine.lines[0][i].x)==coordinateBits[i].second);assert(bits(exactLine.lines[0][i].y)==coordinateBits[i].second);}
+    exact.kind=2;exact.geometry.polygons={{exact.geometry.lines[0]}};exact.geometry.lines.clear();
+    const auto exactPolygon=pandoeditor::mergeHydroLogicalFragments({exact});
+    for(std::size_t i=0;i<coordinateBits.size();++i){assert(bits(exactPolygon.polygons[0][0][i].x)==coordinateBits[i].second);assert(bits(exactPolygon.polygons[0][0][i].y)==coordinateBits[i].second);}
     auto bytes=fixture();
     auto index=decode(bytes);
     assert(index.tilePacks.size()==5);

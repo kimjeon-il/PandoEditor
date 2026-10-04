@@ -1,0 +1,2178 @@
+[
+  {
+    "name": "crossing",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "vertical",
+          "properties": {
+            "pandolab_id": "vertical",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -1
+              ],
+              [
+                0.5,
+                2
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 2,
+    "includeIdentity": true
+  },
+  {
+    "name": "crossing-pair",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "vertical",
+          "properties": {
+            "pandolab_id": "vertical",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -1
+              ],
+              [
+                0.5,
+                2
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "horizontal",
+          "properties": {
+            "pandolab_id": "horizontal",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -1,
+                0.5
+              ],
+              [
+                2,
+                0.5
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 4,
+    "includeIdentity": true
+  },
+  {
+    "name": "crossing-pair-reversed",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "horizontal",
+          "properties": {
+            "pandolab_id": "horizontal",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -1,
+                0.5
+              ],
+              [
+                2,
+                0.5
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "vertical",
+          "properties": {
+            "pandolab_id": "vertical",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -1
+              ],
+              [
+                0.5,
+                2
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 4,
+    "includeIdentity": true
+  },
+  {
+    "name": "branch-with-dangling",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "trunk",
+          "properties": {
+            "pandolab_id": "trunk",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -1
+              ],
+              [
+                0.5,
+                2
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "branch",
+          "properties": {
+            "pandolab_id": "branch",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                0.5
+              ],
+              [
+                2,
+                0.5
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "dangling",
+          "properties": {
+            "pandolab_id": "dangling",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                0.7
+              ],
+              [
+                0.8,
+                0.8
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 3,
+    "includeIdentity": true
+  },
+  {
+    "name": "boundary-gap-0.03",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "near-boundary",
+          "properties": {
+            "pandolab_id": "near-boundary",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                2.697961091173614e-07
+              ],
+              [
+                0.5,
+                0.9999997302038909
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 2,
+    "includeIdentity": true
+  },
+  {
+    "name": "boundary-gap-0.6",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "near-boundary",
+          "properties": {
+            "pandolab_id": "near-boundary",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                5.395922182347228e-06
+              ],
+              [
+                0.5,
+                0.9999946040778177
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 0,
+    "includeIdentity": true
+  },
+  {
+    "name": "internal",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "internal",
+          "properties": {
+            "pandolab_id": "internal",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.2,
+                0.2
+              ],
+              [
+                0.8,
+                0.8
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 0,
+    "includeIdentity": true
+  },
+  {
+    "name": "boundary-following",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "boundary",
+          "properties": {
+            "pandolab_id": "boundary",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 0,
+    "includeIdentity": true
+  },
+  {
+    "name": "one-boundary",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "dangling",
+          "properties": {
+            "pandolab_id": "dangling",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -1
+              ],
+              [
+                0.5,
+                0.5
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 0,
+    "includeIdentity": true
+  },
+  {
+    "name": "multipolygon-retains-original",
+    "request": {
+      "donors": [
+        {
+          "countryId": "multi",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ],
+              [
+                [
+                  [
+                    10,
+                    10
+                  ],
+                  [
+                    11,
+                    10
+                  ],
+                  [
+                    11,
+                    11
+                  ],
+                  [
+                    10,
+                    11
+                  ],
+                  [
+                    10,
+                    10
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "vertical",
+          "properties": {
+            "pandolab_id": "vertical",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -1
+              ],
+              [
+                0.5,
+                2
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:multi:0",
+        "countryId": "multi",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "multi:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "key": "component:multi:1",
+        "countryId": "multi",
+        "polygonIndex": 1,
+        "sourcePolygonIndex": 9,
+        "componentKey": "multi:1",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                10,
+                10
+              ],
+              [
+                11,
+                10
+              ],
+              [
+                11,
+                11
+              ],
+              [
+                10,
+                11
+              ],
+              [
+                10,
+                10
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 2,
+    "includeIdentity": true
+  },
+  {
+    "name": "multiple-donors",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "countryId": "east",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  2,
+                  0
+                ],
+                [
+                  3,
+                  0
+                ],
+                [
+                  3,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "vertical",
+          "properties": {
+            "pandolab_id": "vertical",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -1
+              ],
+              [
+                0.5,
+                2
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "east-river",
+          "properties": {
+            "pandolab_id": "east-river",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                2.5,
+                -1
+              ],
+              [
+                2.5,
+                2
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "key": "component:east:0",
+        "countryId": "east",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "east:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                2,
+                0
+              ],
+              [
+                3,
+                0
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                2,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 4,
+    "includeIdentity": true
+  },
+  {
+    "name": "donor-wide-invalidation",
+    "request": {
+      "donors": [
+        {
+          "countryId": "invalid",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              ],
+              [
+                [
+                  [
+                    2,
+                    0
+                  ],
+                  [
+                    2.001,
+                    0
+                  ],
+                  [
+                    2.001,
+                    0.001
+                  ],
+                  [
+                    2,
+                    0.001
+                  ],
+                  [
+                    2,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "countryId": "unsplit",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  4,
+                  0
+                ],
+                [
+                  5,
+                  0
+                ],
+                [
+                  5,
+                  1
+                ],
+                [
+                  4,
+                  1
+                ],
+                [
+                  4,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "vertical",
+          "properties": {
+            "pandolab_id": "vertical",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -1
+              ],
+              [
+                0.5,
+                2
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "narrow",
+          "properties": {
+            "pandolab_id": "narrow",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                2.00005,
+                -1
+              ],
+              [
+                2.00005,
+                2
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:invalid:0",
+        "countryId": "invalid",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "invalid:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "key": "component:invalid:1",
+        "countryId": "invalid",
+        "polygonIndex": 1,
+        "sourcePolygonIndex": 9,
+        "componentKey": "invalid:1",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                2,
+                0
+              ],
+              [
+                2.001,
+                0
+              ],
+              [
+                2.001,
+                0.001
+              ],
+              [
+                2,
+                0.001
+              ],
+              [
+                2,
+                0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "key": "component:unsplit:0",
+        "countryId": "unsplit",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "unsplit:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                4,
+                0
+              ],
+              [
+                5,
+                0
+              ],
+              [
+                5,
+                1
+              ],
+              [
+                4,
+                1
+              ],
+              [
+                4,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 0,
+    "includeIdentity": true
+  },
+  {
+    "name": "utf16-identity",
+    "request": {
+      "donors": [
+        {
+          "countryId": "대한민국🌊",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "강🌊",
+          "properties": {
+            "pandolab_id": "강🌊",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -1
+              ],
+              [
+                0.5,
+                2
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:대한민국🌊:0",
+        "countryId": "대한민국🌊",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "대한민국🌊:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 2,
+    "includeIdentity": true
+  },
+  {
+    "name": "coordinator-raw-geometry-revision",
+    "request": {
+      "donors": [
+        {
+          "countryId": "square",
+          "geometryRevision": "square:[[[0,0],[1,0],[1,1],[0,1],[0,0]]]",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "vertical",
+          "properties": {
+            "pandolab_id": "vertical",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -1
+              ],
+              [
+                0.5,
+                2
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:square:0",
+        "countryId": "square",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "square:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 2,
+    "includeIdentity": true
+  },
+  {
+    "name": "date-line",
+    "request": {
+      "donors": [
+        {
+          "countryId": "dateline",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  179.5,
+                  0
+                ],
+                [
+                  -179.5,
+                  0
+                ],
+                [
+                  -179.5,
+                  1
+                ],
+                [
+                  179.5,
+                  1
+                ],
+                [
+                  179.5,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "crossing-date-line",
+          "properties": {
+            "pandolab_id": "crossing-date-line",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                180,
+                -1
+              ],
+              [
+                180,
+                2
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:dateline:0",
+        "countryId": "dateline",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "dateline:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                179.5,
+                0
+              ],
+              [
+                -179.5,
+                0
+              ],
+              [
+                -179.5,
+                1
+              ],
+              [
+                179.5,
+                1
+              ],
+              [
+                179.5,
+                0
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": null,
+    "includeIdentity": true
+  },
+  {
+    "name": "north-polar",
+    "request": {
+      "donors": [
+        {
+          "countryId": "north",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  89
+                ],
+                [
+                  1,
+                  89
+                ],
+                [
+                  1,
+                  90
+                ],
+                [
+                  0,
+                  90
+                ],
+                [
+                  0,
+                  89
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "polar-north",
+          "properties": {
+            "pandolab_id": "polar-north",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                88.5
+              ],
+              [
+                0.5,
+                90
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:north:0",
+        "countryId": "north",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "north:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                89
+              ],
+              [
+                1,
+                89
+              ],
+              [
+                1,
+                90
+              ],
+              [
+                0,
+                90
+              ],
+              [
+                0,
+                89
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 2,
+    "includeIdentity": true
+  },
+  {
+    "name": "south-polar",
+    "request": {
+      "donors": [
+        {
+          "countryId": "south",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  -90
+                ],
+                [
+                  1,
+                  -90
+                ],
+                [
+                  1,
+                  -89
+                ],
+                [
+                  0,
+                  -89
+                ],
+                [
+                  0,
+                  -90
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "polar-south",
+          "properties": {
+            "pandolab_id": "polar-south",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                -90
+              ],
+              [
+                0.5,
+                -88.5
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:south:0",
+        "countryId": "south",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "south:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                -90
+              ],
+              [
+                1,
+                -90
+              ],
+              [
+                1,
+                -89
+              ],
+              [
+                0,
+                -89
+              ],
+              [
+                0,
+                -90
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 2,
+    "includeIdentity": true
+  },
+  {
+    "name": "near-north-pole",
+    "request": {
+      "donors": [
+        {
+          "countryId": "near-pole",
+          "geometryRevision": 1,
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  89.99
+                ],
+                [
+                  1,
+                  89.99
+                ],
+                [
+                  1,
+                  89.999
+                ],
+                [
+                  0,
+                  89.999
+                ],
+                [
+                  0,
+                  89.99
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "riverFeatures": [
+        {
+          "type": "Feature",
+          "id": "near-polar",
+          "properties": {
+            "pandolab_id": "near-polar",
+            "category": "river"
+          },
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.5,
+                89.98
+              ],
+              [
+                0.5,
+                89.9999
+              ]
+            ]
+          }
+        }
+      ],
+      "hydroRevision": "v0.13.1:fixed-probe"
+    },
+    "components": [
+      {
+        "key": "component:near-pole:0",
+        "countryId": "near-pole",
+        "polygonIndex": 0,
+        "sourcePolygonIndex": 7,
+        "componentKey": "near-pole:0",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0,
+                89.99
+              ],
+              [
+                1,
+                89.99
+              ],
+              [
+                1,
+                89.999
+              ],
+              [
+                0,
+                89.999
+              ],
+              [
+                0,
+                89.99
+              ]
+            ]
+          ]
+        }
+      }
+    ],
+    "expectedCount": 2,
+    "includeIdentity": true
+  }
+]

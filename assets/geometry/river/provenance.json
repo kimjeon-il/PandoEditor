@@ -1,0 +1,46 @@
+{
+  "webCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+  "originalSha256": {
+    "river-territory-partition.js": "18b32eb7db238beaed99bce8bac980e547a48c785a7bd2071fa56fa63f51db24",
+    "planar-graph-faces.js": "283da7701c21cb80e4fd9ef97e8f68e69a8d6f0ec9fc611ee8c23cab45d6c804"
+  },
+  "syntaxReplacements": [
+    {
+      "before": "items.push({\n        ...candidate,\n        countryId,\n        polygonIndex,\n        sourcePolygonIndex,\n        componentKey,\n        partitionKind: 'river',\n      })",
+      "after": "items.push(__riverOwnDataMerge({}, candidate, {\n        countryId,\n        polygonIndex,\n        sourcePolygonIndex,\n        componentKey,\n        partitionKind: 'river',\n      }))"
+    },
+    {
+      "before": "{ ...component, countryId, polygonIndex, sourcePolygonIndex, componentKey, partitionKind: 'original' }",
+      "after": "__riverOwnDataMerge({}, component, { countryId, polygonIndex, sourcePolygonIndex, componentKey, partitionKind: 'original' })"
+    },
+    {
+      "before": "{ ...segment, a, b, bounds: null }",
+      "after": "__riverOwnDataMerge({}, segment, { a, b, bounds: null })"
+    },
+    {
+      "before": "{ ...face, riverEdges: face.edgeIds.filter(id => activeRiverEdges.has(id)) }",
+      "after": "__riverOwnDataMerge({}, face, { riverEdges: face.edgeIds.filter(id => activeRiverEdges.has(id)) })"
+    },
+    {
+      "before": "{ ...row, geometryKey, areaM2: metricGeometryArea(row.geometry, workspace) }",
+      "after": "__riverOwnDataMerge({}, row, { geometryKey, areaM2: metricGeometryArea(row.geometry, workspace) })"
+    },
+    {
+      "before": "{ ...RIVER_TERRITORY_PARTITION_CONFIG, ...(config || {}) }",
+      "after": "__riverOwnDataMerge({}, RIVER_TERRITORY_PARTITION_CONFIG, (config || {}))"
+    }
+  ],
+  "generatedSha256": {
+    "assets/geometry/river/adapted/river-territory-partition.js": "b27fd1e62bb3fbee977089686eeb5713d9bde60c49230b3e2453c2200b4b773a",
+    "assets/geometry/river/adapted/planar-graph-faces.js": "283da7701c21cb80e4fd9ef97e8f68e69a8d6f0ec9fc611ee8c23cab45d6c804",
+    "app/river/v8-cosine.cpp": "c8b1f9c3fe021225c4d9ea49ef57b2d39a672bf0b81df1f8c1118f42ebce2eba"
+  },
+  "cosine": {
+    "source": "https://raw.githubusercontent.com/nodejs/node/v24.19.0/deps/v8/src/base/ieee754.cc",
+    "sourceSha256": "1bf999809d4c4c1d31ad5ff3578d32614796f159e08b9e7782560d017721a0c2",
+    "license": "https://raw.githubusercontent.com/nodejs/node/v24.19.0/deps/v8/LICENSE",
+    "licenseSha256": "6ab33af8774a0f396ee3aeeb761e3229057682d6f9fa7f572e390c2cb3a6e509",
+    "extraction": "Unchanged helper and cosine bodies; standard C++20 bit_cast and macro scaffolding only.",
+    "compiler": "Source-isolated no-fast-math and no FP contraction (MSVC /fp:strict)."
+  }
+}

@@ -1,4 +1,5 @@
 #include "geometrycalculator.h"
+#include "geometryruntime_p.h"
 #include <pandoeditor/geometrypredicates.h>
 #include <QFile>
 #include <QCryptographicHash>
@@ -62,6 +63,23 @@ void validatePolygon(const Geometry& geometry) {
     GeometryStore validator;validator.insert({"calculation",1},geometry);
 }
 }
+void loadPinnedPolygonClipping(QJSEngine& engine) {
+    initializeGeometryResource();
+    QFile source(":/geometry/polygon-clipping-0.15.7.js");
+    if(!source.open(QIODevice::ReadOnly))throw std::runtime_error("GEOMETRY_KERNEL_UNAVAILABLE");
+    const auto original=source.readAll();
+    if(QCryptographicHash::hash(original,QCryptographicHash::Sha256).toHex()!=
+       "8c1ed56df8b1f97b047f82d91b910aacdaff67d8d9a55f2495eb26e8369186f7")
+        throw std::runtime_error("GEOMETRY_KERNEL_HASH_MISMATCH");
+    auto script=QString::fromUtf8(original);
+    // Qt 6.8.3 loses the _root assignment in this comma-return expression.
+    // Preserve the pinned upstream resource and expand only this statement.
+    const QString compressed=QStringLiteral("return this._size++,this._root=i(t,e,this._root,this._comparator)");
+    if(script.count(compressed)!=1)throw std::runtime_error("GEOMETRY_KERNEL_COMPAT_MISMATCH");
+    script.replace(compressed,QStringLiteral("this._size++;var inserted=i(t,e,this._root,this._comparator);this._root=inserted;return inserted"));
+    const auto loaded=engine.evaluate(script,source.fileName());
+    if(loaded.isError())throw std::runtime_error(loaded.toString().toStdString());
+}
 GeometryOperationResult calculateGeometry(const GeometryOperationRequest& request,
                                          const GeometryCancellation& cancelled) {
     const auto isCancelled=[&]{return cancelled && cancelled();};
@@ -70,22 +88,8 @@ GeometryOperationResult calculateGeometry(const GeometryOperationRequest& reques
         const auto operands=request.operands.empty()?std::vector<Geometry>{request.left,request.right}:request.operands;
         if(operands.size()<2)throw std::invalid_argument("INVALID_GEOMETRY_OPERATION: at least two operands required");
         for(const auto& operand:operands)validatePolygon(operand);
-        initializeGeometryResource();
-        QFile source(":/geometry/polygon-clipping-0.15.7.js");
-        if(!source.open(QIODevice::ReadOnly))throw std::runtime_error("GEOMETRY_KERNEL_UNAVAILABLE");
-        const auto original=source.readAll();
-        if(QCryptographicHash::hash(original,QCryptographicHash::Sha256).toHex()!=
-           "8c1ed56df8b1f97b047f82d91b910aacdaff67d8d9a55f2495eb26e8369186f7")
-            throw std::runtime_error("GEOMETRY_KERNEL_HASH_MISMATCH");
-        auto script=QString::fromUtf8(original);
-        // Qt 6.8.3 loses the _root assignment in this comma-return expression.
-        // Preserve the pinned upstream resource and expand only this statement.
-        const QString compressed=QStringLiteral("return this._size++,this._root=i(t,e,this._root,this._comparator)");
-        if(script.count(compressed)!=1)throw std::runtime_error("GEOMETRY_KERNEL_COMPAT_MISMATCH");
-        script.replace(compressed,QStringLiteral("this._size++;var inserted=i(t,e,this._root,this._comparator);this._root=inserted;return inserted"));
         QJSEngine engine;
-        const auto loaded=engine.evaluate(script,source.fileName());
-        if(loaded.isError())throw std::runtime_error(loaded.toString().toStdString());
+        loadPinnedPolygonClipping(engine);
         const char* operation=nullptr;
         switch(request.operation) {
         case GeometryOperation::Union:operation="union";break;

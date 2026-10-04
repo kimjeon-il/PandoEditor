@@ -1,0 +1,58 @@
+{
+  "webCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+  "currentDatasetCommit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+  "sources": [
+    {
+      "path": "assets/js/workers/hydro-tile-worker.js",
+      "sha256": "14399a8454fb980fb2adc78b7c52bcd32ea5e1b1f313dcfba301886a6b9ddfec",
+      "localPath": "tests/fixtures/web-hydro/source/hydro-tile-worker.js"
+    },
+    {
+      "path": "assets/js/workers/geographic-boundary-core.js",
+      "sha256": "b9017382fcc828924608c8a32ddbf2831800475a725b432cad9e6445d33bc8ea",
+      "localPath": "tests/fixtures/web-hydro/source/geographic-boundary-core.js"
+    },
+    {
+      "path": "assets/js/vendor/earcut.min.js",
+      "sha256": "1444195270d4358ef8dd1a448074f555d7ac3c83c850f5648b611ea1d2090ff3",
+      "localPath": "tests/fixtures/web-hydro/source/earcut.min.js"
+    },
+    {
+      "path": "assets/js/modules/app-river-candidates.js",
+      "sha256": "fb72bb24a6407881eadbb75ee47bcb6bc7abda578791bdceceaa248f5345b7d5",
+      "localPath": "tests/fixtures/web-m972-river/source/assets/js/modules/app-river-candidates.js"
+    },
+    {
+      "path": "assets/js/modules/polygon-geometry.js",
+      "localPath": "tests/fixtures/web-m97/source/assets/js/modules/polygon-geometry.js",
+      "sha256": "cc987c4076861a02a5d60720ebf536908175a9f1a605a86701ae4cf50c3a3fb5"
+    }
+  ],
+  "countrySource": {
+    "path": "assets/data/countries-ne-5.1.1.geojson",
+    "sha256": "6d29c349478cb2a7899573544ba580da70bd902c12ee86a4a93662ca6e94ad72",
+    "gitBlob": "563cb4b45da28eb9367abf23bf111b1636b85c97",
+    "selectedIds": [
+      "SRB",
+      "HRV",
+      "MDA"
+    ],
+    "subsetSha256": "0e1004df101547b5a671934495dfc8b1ab4d06c38b783ae3ca38e82a9cc79e88"
+  },
+  "datasets": {
+    "v0.13.0": {
+      "manifestSha256": "396f3ba3bdeef2620fd562c8bc573d40af82533976856418393e9e65ae53ef36",
+      "version": "0.13.0",
+      "indexSha256": "a68aff611d2be202dbf31ef1fbce476386e1d49b1619b68e9219279be7896906",
+      "coreSha256": "796ab937222bfa4d123d6fda210f9e96bb90ce9e251c73274dcb0342decc1828",
+      "role": "untouched upstream regression corpus"
+    },
+    "v0.13.1": {
+      "manifestSha256": "427f7ec841b977034acc3e6509e9202397549aa4bcbf536e03a9808f702be203",
+      "version": "0.13.1",
+      "indexSha256": "a68aff611d2be202dbf31ef1fbce476386e1d49b1619b68e9219279be7896906",
+      "coreSha256": "5d1b1ad8d04ee405d313fc394033560fca8ee086de46f47998feb07f963f065b",
+      "role": "current native provider same-input geometry/identity differential; enriched names differ from original pin"
+    }
+  }
+}

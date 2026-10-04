@@ -231,7 +231,9 @@ Geometry mergeHydroLogicalFragments(std::vector<HydroPhysicalFeature> fragments)
     if(count!=fragments.size())throw std::runtime_error("incomplete hydro logical feature");
     Geometry merged;
     const auto kind=fragments.front().kind;
-    auto point=[](HydroPoint p){return Point{p.longitude*1e-6,p.latitude*1e-6};};
+    // Match the web decoder operation, not reciprocal multiplication: the latter
+    // differs by an ULP for many microdegrees and changes river graph identities.
+    auto point=[](HydroPoint p){return Point{p.longitude/1000000.0,p.latitude/1000000.0};};
     for(std::size_t i=0;i<fragments.size();i++){
         const auto& fragment=fragments[i];
         if(fragment.logicalFid!=logical||fragment.fragmentCount!=count||fragment.fragmentIndex!=i||fragment.kind!=kind)
