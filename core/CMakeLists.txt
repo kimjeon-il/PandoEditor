@@ -12,6 +12,8 @@ add_library(pandoeditor_core STATIC
     src/presentationcommands.cpp
     src/document.cpp
     src/temporal.cpp
+    src/timeline-records.cpp
+    src/timeline-storage.cpp
     src/historicallibrary.cpp
     src/historicalinstantiation.cpp
     src/gisexchange.cpp
@@ -87,6 +89,30 @@ if(BUILD_TESTING)
     target_link_libraries(temporal_probe PRIVATE Pandoeditor::Core)
     find_program(PANDOEDITOR_M6_NODE_EXECUTABLE NAMES node)
     if(PANDOEDITOR_M6_NODE_EXECUTABLE)
+        set(PANDOEDITOR_TIMELINE_FIXTURES "${CMAKE_CURRENT_BINARY_DIR}/generated/timeline-records-fixtures.h")
+        add_custom_command(OUTPUT "${PANDOEDITOR_TIMELINE_FIXTURES}"
+            COMMAND "${PANDOEDITOR_M6_NODE_EXECUTABLE}"
+                "${PROJECT_SOURCE_DIR}/tools/generate-timeline-records-tests.mjs" "${PANDOEDITOR_TIMELINE_FIXTURES}"
+            DEPENDS "${PROJECT_SOURCE_DIR}/tools/generate-timeline-records-tests.mjs"
+                "${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-records-cases.mjs"
+                "${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-records.json"
+            VERBATIM)
+        add_executable(timeline_records_tests ../tests/timeline_records_tests.cpp "${PANDOEDITOR_TIMELINE_FIXTURES}")
+        target_include_directories(timeline_records_tests PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+        target_link_libraries(timeline_records_tests PRIVATE Pandoeditor::Core)
+        add_test(NAME timeline_records_tests COMMAND timeline_records_tests)
+        set(PANDOEDITOR_TIMELINE_STORAGE_FIXTURES "${CMAKE_CURRENT_BINARY_DIR}/generated/timeline-storage-fixtures.h")
+        add_custom_command(OUTPUT "${PANDOEDITOR_TIMELINE_STORAGE_FIXTURES}"
+            COMMAND "${PANDOEDITOR_M6_NODE_EXECUTABLE}"
+                "${PROJECT_SOURCE_DIR}/tools/generate-timeline-storage-tests.mjs" "${PANDOEDITOR_TIMELINE_STORAGE_FIXTURES}"
+            DEPENDS "${PROJECT_SOURCE_DIR}/tools/generate-timeline-storage-tests.mjs"
+                "${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-storage-cases.mjs"
+                "${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-storage.json"
+            VERBATIM)
+        add_executable(timeline_storage_tests ../tests/timeline_storage_tests.cpp "${PANDOEDITOR_TIMELINE_STORAGE_FIXTURES}")
+        target_include_directories(timeline_storage_tests PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+        target_link_libraries(timeline_storage_tests PRIVATE Pandoeditor::Core)
+        add_test(NAME timeline_storage_tests COMMAND timeline_storage_tests)
         add_test(NAME m72_geobounds_corpus
             COMMAND "${CMAKE_COMMAND}" -E env
                 "M72_BOUNDS_PROBE=$<TARGET_FILE:m72_geobounds_probe>"

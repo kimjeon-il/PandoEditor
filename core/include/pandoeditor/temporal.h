@@ -15,11 +15,11 @@ struct TemporalKey {
     }
 };
 struct TemporalValue {
-    std::string text, precision;
+    std::string text, precision; // precision: year, month, or date.
     std::int64_t start=0, end=0; // Existing YYYYMMDD public keys.
     std::string canonical;
     int year=0;
-    std::optional<int> month, day;
+    std::optional<int> month, day; // Month precision leaves day unset.
     TemporalKey startKey, endKey;
 };
 enum class TemporalBoundary { Start, End };
@@ -28,6 +28,8 @@ struct TemporalInterval {
     std::optional<TemporalValue> start, end;
 };
 
+// Month values span the whole month. A timeline resolver must explicitly use
+// the end boundary when it needs a month-end reference point.
 TemporalValue parseTemporal(const std::string&);
 std::optional<std::string> normalizeTemporal(const std::optional<std::string>&);
 int compareTemporal(const TemporalValue&,const TemporalValue&,
