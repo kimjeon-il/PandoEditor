@@ -29,9 +29,11 @@ class GpuMapItem : public QQuickItem {
     Q_PROPERTY(qulonglong fullIndexCount READ fullIndexCount NOTIFY statsChanged)
     Q_PROPERTY(qulonglong uploadBytesThisFrame READ uploadBytesThisFrame NOTIFY statsChanged)
     Q_PROPERTY(bool uploadsPending READ uploadsPending NOTIFY statsChanged)
+    Q_PROPERTY(qulonglong resourceGeneration READ resourceGeneration NOTIFY statsChanged)
     Q_PROPERTY(qulonglong uploadBudgetBytes READ uploadBudgetBytes WRITE setUploadBudgetBytes NOTIFY viewportChanged)
 public:
     explicit GpuMapItem(QQuickItem* parent=nullptr);
+    ~GpuMapItem() override;
     QObject* sceneBridge() const{return bridge_;}
     void setSceneBridge(QObject* bridge);
     bool rendererReady() const{return ready_;}
@@ -59,6 +61,7 @@ public:
     qulonglong fullIndexCount() const{return publishedStats_.fullIndexCount;}
     qulonglong uploadBytesThisFrame() const{return publishedStats_.uploadBytesThisFrame;}
     bool uploadsPending() const{return publishedStats_.uploadsPending;}
+    qulonglong resourceGeneration() const{return resourceGeneration_.load();}
     const MapGpuStats& gpuStats() const {return publishedStats_;}
     qulonglong uploadContinuationCount() const {return uploadContinuations_;}
     qulonglong uploadBudgetBytes() const{return uploadBudgetBytes_;}
@@ -86,4 +89,6 @@ private:
     std::atomic<qint64> frameStartNs_{0};
     std::atomic<bool> uploadContinuationQueued_{false};
     qulonglong uploadContinuations_=0;
+    std::atomic<qulonglong> bridgeGeneration_{0},windowGeneration_{0},resourceGeneration_{0};
+    qulonglong renderGeneration_=0; // Render thread only; statistics belong to one resource generation.
 };

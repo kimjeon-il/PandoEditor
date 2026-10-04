@@ -6,8 +6,6 @@
 #include <tuple>
 #include <variant>
 
-enum class ProjectionPreparationPolicy { Geographic, GlobeReady };
-
 struct GeometryPacketCacheKey {
     pandoeditor::ObjectRef object;
     pandoeditor::GeometryRef geometry;

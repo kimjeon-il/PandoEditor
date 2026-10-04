@@ -1,8 +1,6 @@
 #include "editorcontroller.h"
 #include "defaultflagresolver.h"
 #include "worlddatasetloader.h"
-#include <QFutureWatcher>
-#include <QtConcurrent>
 #include <pandoeditor/maprenderorder.h>
 #include <QFile>
 #include <QFileInfo>
@@ -13,6 +11,8 @@
 #include <QUuid>
 #include <QGuiApplication>
 #include <QStyleHints>
+#include <QFutureWatcher>
+#include <QtConcurrent>
 #include <cmath>
 #include <map>
 #include <limits>
@@ -32,19 +32,6 @@ bool validImageDataUrl(const QString& source)
            bytes.startsWith("GIF87a") || bytes.startsWith("GIF89a") ||
            (bytes.startsWith("RIFF") && bytes.mid(8,4)=="WEBP") ||
            bytes.trimmed().startsWith("<svg");
-}
-
-bool geometryBindingsChanged(const pandoeditor::ProjectDocument& before,
-                            const pandoeditor::ProjectDocument& after)
-{
-    if(before.units.size()!=after.units.size()) return true;
-    std::map<std::string,pandoeditor::GeometryRef> bindings;
-    for(const auto& unit:before.units) bindings.emplace(unit.id,unit.geometry);
-    for(const auto& unit:after.units) {
-        const auto found=bindings.find(unit.id);
-        if(found==bindings.end() || !(found->second==unit.geometry)) return true;
-    }
-    return false;
 }
 
 }
@@ -151,7 +138,13 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         syncMapCameraMetrics();
         invalidateViewportResources(ViewportResourceKind::Labels);
     });
-    connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,refresh);
+    connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
+        updateWorldDetail();
+        sceneBuilder_.setWorldBase(worldBase_);
+        sceneBuilder_.setQuality(quality_.profile());
+        if(!sceneBuilder_.canReusePreparation(project_.snapshot(),sceneBridge_.viewState(),
+                                              sceneBridge_.sceneSnapshot()))refreshTypedScene();
+    });
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
         camera_.acceptPublishedView(sceneBridge_.viewState());
         reprojectLabelPlacements();
@@ -183,7 +176,9 @@ void EditorController::refreshTypedScene() {
     try {
         std::shared_ptr<const RenderScene> previous=sceneBridge_.sceneSnapshot();
         if(sceneInstance_!=project_.instanceId()) {
-            packetCache_.clear();sceneInstance_=project_.instanceId();previous.reset();pendingSceneImpact_.reset();
+            // Keep the previous publication solely for monotonic scene revisions.
+            // Builder project identity invalidation still creates fresh preparation.
+            packetCache_.clear();sceneInstance_=project_.instanceId();pendingSceneImpact_.reset();
         }
         sceneBuilder_.setWorldBase(worldBase_);
         sceneBuilder_.setBuiltinHydro(builtinHydroScene_);
@@ -197,31 +192,17 @@ void EditorController::refreshTypedScene() {
             if(geometryEdit_->mergeIntent)interaction.selected=geometryEdit_->mergeIntent->donors;
             if(geometryEdit_->annexIntent)interaction.selected=geometryEdit_->annexIntent->donors;
         }
-        const bool patch=previous&&pendingSceneImpact_&&
-            pendingSceneImpactRevision_==project_.revision()&&
-            previous->revisions.document+1==project_.revision()&&
-            previous->revisions.view==sceneBridge_.viewState().revision&&
-            sceneQualityRevision_==quality_.profile().revision&&
-            (previous->interaction.candidates==interaction.candidates||interaction.candidates.empty())&&
-            previous->interaction.selected==interaction.selected&&
-            previous->interaction.primary==interaction.primary&&
-            (previous->interaction.hover==interaction.hover||!interaction.hover)&&
-            (previous->interaction.editTarget==interaction.editTarget||!interaction.editTarget)&&
-            !pendingSceneImpact_->requiresFullSceneRebuild;
-        const std::set<pandoeditor::ObjectRef> changed=patch?
-            std::set<pandoeditor::ObjectRef>(pendingSceneImpact_->changedObjects.begin(),pendingSceneImpact_->changedObjects.end()):
-            std::set<pandoeditor::ObjectRef>{};
+        const auto* dirty=pendingSceneImpact_&&pendingSceneImpactRevision_==project_.revision()?
+            &pendingSceneImpact_->sceneDirty:nullptr;
         const auto preparationsBefore=sceneBuilder_.preparationCount();
-        auto scene=patch?sceneBuilder_.buildPatch(project_.snapshot(),sceneBridge_.viewState(),
-            interaction,previous,changed):
-            sceneBuilder_.build(project_.snapshot(),sceneBridge_.viewState(),interaction,previous);
+        const auto deltasBefore=sceneBuilder_.deltaUpdateCount();
+        auto scene=sceneBuilder_.refresh(project_.snapshot(),sceneBridge_.viewState(),interaction,previous,dirty);
         if(scene!=sceneBridge_.sceneSnapshot()) {
             sceneBridge_.publishScene(std::move(scene));
-            if(patch)++scenePatchCount_;
+            if(sceneBuilder_.deltaUpdateCount()!=deltasBefore)++scenePatchCount_;
             else if(sceneBuilder_.preparationCount()!=preparationsBefore)++sceneFullBuildCount_;
             emit renderQualityChanged();
         }
-        sceneQualityRevision_=quality_.profile().revision;
         pendingSceneImpact_.reset();
     }catch(const std::exception& error) {
         emit errorOccurred(QStringLiteral("Typed map scene preparation failed: ")+
@@ -232,12 +213,13 @@ void EditorController::noteAppliedImpact(const pandoeditor::ChangeImpact& impact
     lastEditAffectedObjects_=impact.changedObjects.size();
     lastEditRetainedGeometries_=impact.retainedGeometryCount;
     lastEditNewGeometryBytes_=impact.estimatedNewGeometryBytes;
-    mapPicker_.applyImpact(project_.snapshot(),impact.changedObjects);
+    if(impact.sceneDirty.datasetResource)mapPicker_.reset();
+    else mapPicker_.applyImpact(project_.snapshot(),impact.sceneDirty.geometryObjects);
     try {
         pendingSceneImpact_=impact;
         pendingSceneImpactRevision_=project_.revision();
     }catch(...) {pendingSceneImpact_.reset();}
-    for(const auto& owner:impact.changedObjects)if(owner.domain=="territorial")scheduleDerivedLabelAnchor(owner);
+    for(const auto& owner:impact.sceneDirty.geometryObjects)if(owner.domain=="territorial")scheduleDerivedLabelAnchor(owner);
 }
 
 void EditorController::initializePhysicalData() {
@@ -328,8 +310,13 @@ QVariantMap EditorController::renderQuality() const {
         {"scenePatchCount",qulonglong(scenePatchCount_)},
         {"sceneFullBuildCount",qulonglong(sceneFullBuildCount_)},
         {"scenePreparationCount",qulonglong(sceneBuilder_.preparationCount())},
+        {"sceneDeltaUpdateCount",qulonglong(sceneBuilder_.deltaUpdateCount())},
+        {"scenePresentationUpdateCount",qulonglong(sceneBuilder_.presentationUpdateCount())},
         {"sceneTransientUpdateCount",qulonglong(sceneBuilder_.transientUpdateCount())},
         {"sceneUnchangedCount",qulonglong(sceneBuilder_.unchangedCount())},
+        {"scenePublicationCount",qulonglong(sceneBridge_.scenePublicationCount())},
+        {"interactionFrameCount",qulonglong(sceneBridge_.interactionFrameCount())},
+        {"viewFrameCount",qulonglong(sceneBridge_.viewFrameCount())},
         {"spatialIncrementalUpdateCount",qulonglong(mapPicker_.incrementalUpdateCount())},
         {"viewportResourceGeneration",qulonglong(viewportResources_.lastIssuedGeneration())},
         {"viewportResourceUpdates",qulonglong(viewportResources_.stats().viewportUpdates)},
@@ -720,13 +707,33 @@ void EditorController::undo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
     const auto before=project_.document();
-    cancelPreview();if(project_.undo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());const auto hydroChanged=before.physicalData.source!=project_.document().physicalData.source;publish();if(hydroChanged)syncHydroData();if(changed) emit geometryChanged();}
+    cancelPreview();
+    if(project_.undo()) {
+        bool changed=true,hydroChanged=true;
+        try {
+            const auto impact=pandoeditor::calculateChangeImpact(before,project_.document());
+            changed=impact.sceneDirty.geometry;hydroChanged=impact.sceneDirty.datasetResource;
+            noteAppliedImpact(impact);
+        } catch(...) {pendingSceneImpact_.reset();}
+        if(changed)projection_.rebuild(project_.document());
+        publish();if(hydroChanged)syncHydroData();if(changed)emit geometryChanged();
+    }
 }
 void EditorController::redo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
     const auto before=project_.document();
-    cancelPreview();if(project_.redo()){const auto changed=geometryBindingsChanged(before,project_.document());if(changed) projection_.rebuild(project_.document());const auto hydroChanged=before.physicalData.source!=project_.document().physicalData.source;publish();if(hydroChanged)syncHydroData();if(changed) emit geometryChanged();}
+    cancelPreview();
+    if(project_.redo()) {
+        bool changed=true,hydroChanged=true;
+        try {
+            const auto impact=pandoeditor::calculateChangeImpact(before,project_.document());
+            changed=impact.sceneDirty.geometry;hydroChanged=impact.sceneDirty.datasetResource;
+            noteAppliedImpact(impact);
+        } catch(...) {pendingSceneImpact_.reset();}
+        if(changed)projection_.rebuild(project_.document());
+        publish();if(hydroChanged)syncHydroData();if(changed)emit geometryChanged();
+    }
 }
 bool EditorController::openFile(const QUrl& url)
 {

@@ -10,6 +10,7 @@
 
 enum class BlendMode { Normal, Multiply, Screen };
 enum class PrimitiveKind { Polygon, Stroke, Point, WorldFill, WorldStroke };
+enum class ProjectionPreparationPolicy { Geographic, GlobeReady };
 
 struct RenderStyle {
     std::uint32_t color=0;
@@ -56,6 +57,8 @@ struct PolygonDrawPacket {
     pandoeditor::MapRenderOrder drawOrder;
     RenderStyle style;
     PolygonGeometryPacket geometryPacket;
+    int lod=2;
+    ProjectionPreparationPolicy preparationPolicy=ProjectionPreparationPolicy::Geographic;
 };
 
 struct StrokeDrawPacket {
@@ -67,6 +70,8 @@ struct StrokeDrawPacket {
     pandoeditor::MapRenderOrder drawOrder;
     RenderStyle style;
     StrokeGeometryPacket geometryPacket;
+    int lod=2;
+    ProjectionPreparationPolicy preparationPolicy=ProjectionPreparationPolicy::Geographic;
 };
 
 struct PointDrawPacket {
@@ -81,6 +86,8 @@ struct PointDrawPacket {
     std::string labelText;
     bool pinned=false;
     std::optional<pandoeditor::Point> manualPosition;
+    int lod=2;
+    ProjectionPreparationPolicy preparationPolicy=ProjectionPreparationPolicy::Geographic;
 };
 
 PolygonGeometryPacket makePolygonGeometryPacket(const pandoeditor::Geometry& geometry);

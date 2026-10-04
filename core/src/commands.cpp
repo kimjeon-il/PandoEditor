@@ -865,6 +865,111 @@ bool sameGeometry(const Geometry& a,const Geometry& b)
 }
 } // namespace
 
+ChangeImpact calculateChangeImpact(const ProjectDocument& before,const ProjectDocument& after,
+                                   const std::vector<ObjectRef>& targets) {
+    ChangeImpact impact;
+    const auto beforeIndex=validateDocument(before),afterIndex=validateDocument(after);
+    std::set<ObjectRef> objects,affected(targets.begin(),targets.end()),geometryObjects;
+    std::set<GeometryRef> geometries;
+    for(const auto& entry:beforeIndex.objects)objects.insert(entry.first);
+    for(const auto& entry:afterIndex.objects)objects.insert(entry.first);
+    for(const auto& object:objects) {
+        const auto oldRef=objectGeometry(before,beforeIndex,object);
+        const auto newRef=objectGeometry(after,afterIndex,object);
+        const bool lifetime=beforeIndex.objects.count(object)!=afterIndex.objects.count(object);
+        const auto oldShape=oldRef?before.geometries.get(*oldRef):nullptr;
+        const auto newShape=newRef?after.geometries.get(*newRef):nullptr;
+        // Fallback eligibility changes the effective LOD/projection preparation
+        // even when the immutable geographic shape and binding remain identical.
+        const bool fallbackPolicy=object.domain=="generic"&&!lifetime&&
+            before.genericFeatures.at(beforeIndex.objects.at(object)).fallbackOnly!=
+            after.genericFeatures.at(afterIndex.objects.at(object)).fallbackOnly;
+        const bool geometry=!(oldRef==newRef)||oldShape!=newShape||fallbackPolicy;
+        if(lifetime||geometry)affected.insert(object);
+        if(geometry) {
+            geometryObjects.insert(object);
+            // Both endpoints are necessary when deleting or undoing a replacement.
+            if(oldRef)geometries.insert(*oldRef);
+            if(newRef)geometries.insert(*newRef);
+        }
+    }
+    const auto sourceKey=[](const SourceProvenance& s) {
+        return std::tie(s.kind,s.dataset,s.version,s.sourceId,s.sourceFormat,s.sourceType,s.importedAt,s.details);
+    };
+    const auto& a=before.presentation;const auto& b=after.presentation;
+    const bool globalPresentation=!(a.webPresentation==b.webPresentation)||a.membership!=b.membership||
+        !same(a.userLayers,b.userLayers,[](const auto& x,const auto& y) {
+            return std::tie(x.id,x.name,x.visible,x.locked,x.opacity)==std::tie(y.id,y.name,y.visible,y.locked,y.opacity);
+        })||!same(a.objectStyles,b.objectStyles,[](const auto& x,const auto& y) {
+            return x.first==y.first&&std::tie(x.second.color,x.second.opacity,x.second.explicitColor)==
+                std::tie(y.second.color,y.second.opacity,y.second.explicitColor);
+        });
+    const bool relationsChanged=!same(before.relations,after.relations,[](const auto& x,const auto& y) {
+        return std::tie(x.id,x.unit,x.parent,x.sovereign,x.dated,x.validity.from,x.validity.to)==
+            std::tie(y.id,y.unit,y.parent,y.sovereign,y.dated,y.validity.from,y.validity.to);
+    });
+    const bool unitPresentation=!same(before.units,after.units,[](const auto& x,const auto& y) {
+        return std::tie(x.id,x.name,x.notes,x.kind,x.locked,x.validity.from,x.validity.to,x.coverageMode,
+                        x.baseName,x.nameExplicit,x.libraryOrigin)==
+            std::tie(y.id,y.name,y.notes,y.kind,y.locked,y.validity.from,y.validity.to,y.coverageMode,
+                     y.baseName,y.nameExplicit,y.libraryOrigin);
+    });
+    const bool contentPresentation=
+        !same(before.countryDetails,after.countryDetails,[](const auto& x,const auto& y) {
+            return x.first==y.first&&x.second.capital==y.second.capital;
+        })||!same(before.symbols,after.symbols,[](const auto& x,const auto& y) {
+            return x.first==y.first&&std::tie(x.second.policy,x.second.embeddedDataUrl)==std::tie(y.second.policy,y.second.embeddedDataUrl);
+        })||!same(before.labels,after.labels,[&](const auto& x,const auto& y) {
+            return std::tie(x.id,x.name,x.kind,x.notes,x.territory)==std::tie(y.id,y.name,y.kind,y.notes,y.territory)&&sourceKey(x.source)==sourceKey(y.source);
+        })||!same(before.hydro,after.hydro,[&](const auto& x,const auto& y) {
+            return std::tie(x.id,x.name,x.kind,x.notes,x.color,x.locked,x.sourceFeatureId)==
+                std::tie(y.id,y.name,y.kind,y.notes,y.color,y.locked,y.sourceFeatureId)&&sourceKey(x.source)==sourceKey(y.source);
+        })||!same(before.genericFeatures,after.genericFeatures,[&](const auto& x,const auto& y) {
+            return std::tie(x.id,x.name,x.notes,x.color,x.locked,x.fallbackOnly)==
+                std::tie(y.id,y.name,y.notes,y.color,y.locked,y.fallbackOnly)&&sourceKey(x.source)==sourceKey(y.source);
+        })||!same(before.distributionLayers,after.distributionLayers,[](const auto& x,const auto& y) {
+            return std::tie(x.id,x.name,x.unit,x.color,x.locked,x.parentId,x.groups,x.validity.from,x.validity.to,x.metadata,x.valueScale.manual,x.valueScale.min,x.valueScale.max)==
+                std::tie(y.id,y.name,y.unit,y.color,y.locked,y.parentId,y.groups,y.validity.from,y.validity.to,y.metadata,y.valueScale.manual,y.valueScale.min,y.valueScale.max);
+        })||!same(before.distributionEntries,after.distributionEntries,[](const auto& x,const auto& y) {
+            return std::tie(x.id,x.layerId,x.territory,x.value,x.certainty,x.metadata,x.validity.from,x.validity.to)==
+                std::tie(y.id,y.layerId,y.territory,y.value,y.certainty,y.metadata,y.validity.from,y.validity.to);
+        });
+    const bool extensionsChanged=!same(before.extensions,after.extensions,[](const auto& x,const auto& y) {
+        return std::tie(x.id,x.sourceFormat,x.sourceSchema,x.jsonPointer,x.payload,x.status,x.dependencyKnowledge,x.dependencies,x.forbiddenEffects,x.envelopeExtras)==
+            std::tie(y.id,y.sourceFormat,y.sourceSchema,y.jsonPointer,y.payload,y.status,y.dependencyKnowledge,y.dependencies,y.forbiddenEffects,y.envelopeExtras);
+    });
+    auto& dirty=impact.sceneDirty;
+    dirty.geometry=!geometryObjects.empty();
+    dirty.datasetResource=before.documentId!=after.documentId||
+        std::tie(before.physicalData.dataset,before.physicalData.version,before.physicalData.source)!=
+        std::tie(after.physicalData.dataset,after.physicalData.version,after.physicalData.source);
+    dirty.presentation=globalPresentation||relationsChanged||unitPresentation||contentPresentation||extensionsChanged||
+        before.physicalData.hiddenHydroIds!=after.physicalData.hiddenHydroIds;
+    // Broad display and reference changes can affect objects outside command targets.
+    if(dirty.presentation||dirty.datasetResource)affected.insert(objects.begin(),objects.end());
+    dirty.affectedObjects.assign(affected.begin(),affected.end());
+    dirty.geometryObjects.assign(geometryObjects.begin(),geometryObjects.end());
+    // Lifetime and known reference changes are covered by the complete affected
+    // set and effective geometry diff; opaque extension effects remain global.
+    dirty.fullRebuild=dirty.datasetResource||extensionsChanged;
+    impact.changedObjects=dirty.affectedObjects;
+    impact.changedGeometries.assign(geometries.begin(),geometries.end());
+    if(dirty.presentation)impact.presentationInvalidations=dirty.affectedObjects;
+    impact.requiresFullSpatialRebuild=dirty.datasetResource;
+    impact.requiresFullSceneRebuild=dirty.fullRebuild;
+    for(const auto& [ref,shape]:after.geometries.versions()) {
+        const auto old=before.geometries.versions().find(ref);
+        if(old!=before.geometries.versions().end()&&old->second==shape) {
+            ++impact.retainedGeometryCount;continue;
+        }
+        impact.estimatedNewGeometryBytes+=sizeof(Geometry)+shape->points.size()*sizeof(Point);
+        for(const auto& line:shape->lines)impact.estimatedNewGeometryBytes+=line.size()*sizeof(Point);
+        for(const auto& polygon:shape->polygons)for(const auto& ring:polygon)
+            impact.estimatedNewGeometryBytes+=ring.size()*sizeof(Point);
+    }
+    return impact;
+}
+
 bool CountryProperties::operator==(const CountryProperties& b) const
 {
     return name==b.name && memo==b.memo && color==b.color && opacity==b.opacity && layerId==b.layerId;
@@ -991,44 +1096,7 @@ PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const Com
             result.status=CommandStatus::NoOp; return result;
         }
         auto change=std::unique_ptr<ChangeSet>(new ChangeSet(project.state_,std::move(after),request));
-        auto& impact=change->impact_;
-        const auto& beforeIndex=change->before_->index;
-        const auto& afterIndex=change->after_->index;
-        std::set<ObjectRef> objects;
-        for(const auto& entry:beforeIndex.objects)objects.insert(entry.first);
-        for(const auto& entry:afterIndex.objects)objects.insert(entry.first);
-        std::set<GeometryRef> geometries;
-        std::set<ObjectRef> affected(request.targets.begin(),request.targets.end());
-        for(const auto& object:objects) {
-            const auto oldRef=objectGeometry(change->before(),beforeIndex,object);
-            const auto newRef=objectGeometry(change->after(),afterIndex,object);
-            if(oldRef==newRef&&beforeIndex.objects.count(object)==afterIndex.objects.count(object))continue;
-            affected.insert(object);
-            if(newRef)geometries.insert(*newRef);
-        }
-        impact.changedObjects.assign(affected.begin(),affected.end());
-        impact.changedGeometries.assign(geometries.begin(),geometries.end());
-        const auto& beforeVersions=change->before().geometries.versions();
-        for(const auto& [ref,shape]:change->after().geometries.versions()) {
-            const auto old=beforeVersions.find(ref);
-            if(old!=beforeVersions.end()&&old->second==shape) {
-                ++impact.retainedGeometryCount;continue;
-            }
-            impact.estimatedNewGeometryBytes+=sizeof(Geometry)+shape->points.size()*sizeof(Point);
-            for(const auto& line:shape->lines)
-                impact.estimatedNewGeometryBytes+=line.size()*sizeof(Point);
-            for(const auto& polygon:shape->polygons)for(const auto& ring:polygon)
-                impact.estimatedNewGeometryBytes+=ring.size()*sizeof(Point);
-        }
-        impact.presentationInvalidations=request.targets;
-        const auto& oldPhysical=change->before().physicalData;
-        const auto& newPhysical=change->after().physicalData;
-        impact.requiresFullSpatialRebuild=oldPhysical.dataset!=newPhysical.dataset||
-            oldPhysical.version!=newPhysical.version||oldPhysical.source!=newPhysical.source;
-        // A pure replacement keeps layer order, object identity and presentation.
-        // Other commands may change dependencies that the patcher cannot infer.
-        impact.requiresFullSceneRebuild=request.commandId!="territorial.geometry.replace"||
-            impact.changedObjects.empty()||impact.requiresFullSpatialRebuild;
+        change->impact_=calculateChangeImpact(change->before(),change->after(),request.targets);
         change->historyCheckpoint_=checkpoint;
         result.preview=CommandPreview(std::move(change)); result.status=CommandStatus::Prepared;
     } catch(const Rejection& e) {
@@ -1089,9 +1157,24 @@ CommandResult CommandProcessor::confirm(Project& project,CommandPreview& preview
     // not a move. Stage that allocation before mutating the project; otherwise
     // an allocation failure could escape after apply() has already committed.
     ChangeImpact impact;
-    try { impact=change->impact_; project.apply(*change); }
+    try {
+        impact=change->impact_;
+        if(presentationRebased) {
+            // Stage conservative display invalidation before committing, preserving
+            // the existing no-allocation-after-apply failure contract.
+            impact.sceneDirty.presentation=true;
+            impact.sceneDirty.fullRebuild=true;
+            std::set<ObjectRef> affected(impact.sceneDirty.affectedObjects.begin(),impact.sceneDirty.affectedObjects.end());
+            for(const auto& entry:project.index().objects)affected.insert(entry.first);
+            for(const auto& entry:change->after_->index.objects)affected.insert(entry.first);
+            impact.sceneDirty.affectedObjects.assign(affected.begin(),affected.end());
+            impact.changedObjects=impact.sceneDirty.affectedObjects;
+            impact.presentationInvalidations=impact.sceneDirty.affectedObjects;
+            impact.requiresFullSceneRebuild=true;
+        }
+        project.apply(*change);
+    }
     catch(const std::exception&) { return {CommandStatus::Rejected,CommandError::CommitFailed,{}}; }
-    if(presentationRebased)impact.requiresFullSceneRebuild=true;
     return {CommandStatus::Applied,CommandError::None,{},std::move(impact)};
 }
 bool semanticallyEqual(const ProjectDocument& a,const ProjectDocument& b)

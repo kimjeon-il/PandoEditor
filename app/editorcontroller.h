@@ -707,7 +707,6 @@ private:
     mutable MapPicker mapPicker_;
     std::optional<pandoeditor::ChangeImpact> pendingSceneImpact_;
     std::uint64_t pendingSceneImpactRevision_=0;
-    std::uint64_t sceneQualityRevision_=0;
     std::uint64_t scenePatchCount_=0,sceneFullBuildCount_=0;
     std::size_t lastEditAffectedObjects_=0,lastEditRetainedGeometries_=0,lastEditNewGeometryBytes_=0;
     std::string sceneInstance_;

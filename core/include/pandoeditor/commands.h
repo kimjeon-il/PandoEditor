@@ -70,6 +70,11 @@ enum class CommandError {
 const char* commandErrorCode(CommandError error) noexcept;
 // Calculated against validated immutable states during prepare. Candidate consumers
 // may narrow their work; exact hit testing and document validation stay authoritative.
+struct SceneDirtySet {
+    bool geometry=false,presentation=false,interaction=false,datasetResource=false;
+    std::vector<ObjectRef> affectedObjects,geometryObjects;
+    bool fullRebuild=true;
+};
 struct ChangeImpact {
     std::vector<ObjectRef> changedObjects;
     std::vector<GeometryRef> changedGeometries;
@@ -78,7 +83,11 @@ struct ChangeImpact {
     std::size_t estimatedNewGeometryBytes=0;
     bool requiresFullSpatialRebuild=false;
     bool requiresFullSceneRebuild=true;
+    SceneDirtySet sceneDirty;
 };
+// Compare actual immutable states, including reverse history transitions.
+ChangeImpact calculateChangeImpact(const ProjectDocument& before,const ProjectDocument& after,
+                                   const std::vector<ObjectRef>& targets={});
 struct CommandResult {
     CommandStatus status=CommandStatus::Rejected;
     CommandError error=CommandError::None;

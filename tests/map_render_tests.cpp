@@ -3,10 +3,13 @@
 #include "scenegraph/mapmaterial.h"
 #include <QSGGeometryNode>
 #include <pandoeditor/map/renderpacket.h>
+#include <pandoeditor/map/mapscenebuilder.h>
+#include <pandoeditor/map/framepipeline.h>
 #include <QtTest>
 #include <QImage>
 #include <QPainter>
 #include <QQuickWindow>
+#include <QDebug>
 #include <cmath>
 #include <memory>
 #include <vector>
@@ -105,8 +108,14 @@ std::shared_ptr<RenderScene> scene() {
     result->worldPlan.worldOffsets={0};
     return result;
 }
+void logResourceCounters(const char* action,const MapGpuStats& before,const MapGpuStats& after) {
+    qInfo().nospace()<<"M94_RESOURCE_COUNTERS action="<<action
+        <<" base-upload-delta="<<after.baseGeometryUploadCount-before.baseGeometryUploadCount
+        <<" interaction-upload-delta="<<after.interactionGeometryUploadCount-before.interactionGeometryUploadCount
+        <<" create-delta="<<after.resourceCreationCount-before.resourceCreationCount
+        <<" retire-delta="<<after.resourceRetirementCount-before.resourceRetirementCount
+        <<" live="<<after.liveResourceCount<<" live-bytes="<<after.liveResourceBytes;
 }
-
 std::shared_ptr<RenderScene> readyPreviewScene() {
     auto mesh=std::make_shared<CountryBaseMesh>();mesh->preview=true;
     // Two bounded rectangles, projected one geographic degree per pixel.
@@ -132,6 +141,7 @@ std::shared_ptr<RenderScene> readyPreviewScene() {
     prepared->drawSequence={{PrimitiveKind::Polygon,0,{},-1},
                             {PrimitiveKind::WorldFill,0,{},-1}};
     return prepared;
+}
 }
 
 class MapRenderTests:public QObject {
@@ -177,7 +187,7 @@ private slots:
         MapMaterial expected(MapPrimitive::Stroke,BlendMode::Normal);
         RenderStyle style;style.color=0x4083bc;style.alpha=1;style.width=2;expected.setStyle(style);
         QCOMPARE(material->primitive,MapPrimitive::Stroke);QCOMPARE(material->color,expected.color);
-        QCOMPARE(material->effects.x(),2.f);
+        QCOMPARE(material->effects.x(),2.f);QCOMPARE(stats.interactionGeometryUploadCount,std::uint64_t(1));
         auto hidden=std::make_shared<RenderScene>(*prepared);++hidden->revision;
         hidden->worldCountries[0].visible=false;
         item.setSceneSnapshot(hidden,view);const auto image=paint(item,48,48);
@@ -187,6 +197,421 @@ private slots:
         node.sync(hidden,view,flat,stats,1024*1024);QCOMPARE(node.childCount(),1);
         material=static_cast<MapMaterial*>(static_cast<QSGGeometryNode*>(node.firstChild())->material());
         QCOMPARE(material->primitive,MapPrimitive::Fill);QCOMPARE(material->color,QVector4D(0,0,1,1));
+    }
+    void canonicalWorldSamePartitionStyleChangesRetainResources() {
+        auto mesh=std::make_shared<CountryBaseMesh>();
+        mesh->positionsMicrodegrees={0,0,1000000,0,0,1000000,10000000,0,11000000,0,10000000,1000000};
+        mesh->countryIndices={0,0,0,1,1,1};mesh->triangleIndices={0,1,2,3,4,5};
+        mesh->lineIndices={0,1,3,4};mesh->countryTriangleRanges={0,3,3,3};mesh->countryBoundaryRanges={0,2,2,2};
+        auto world=std::make_shared<WorldBaseFrame>();world->mesh=mesh;
+        auto prepared=scene();prepared->worldBase=world;prepared->worldCountries.resize(2);
+        prepared->worldCountries[0].id="a";prepared->worldCountries[1].id="b";
+        prepared->worldPlan.fills.visible={true,true};prepared->worldPlan.strokes.visible={true,true};
+        prepared->drawSequence={{PrimitiveKind::WorldFill,0,{},-1},{PrimitiveKind::WorldFill,1,{},-1},
+                                {PrimitiveKind::WorldStroke,0,{},-1},{PrimitiveKind::WorldStroke,1,{},-1}};
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;auto view=viewFor(40,40);view.mode=ProjectionMode::Globe;
+        node.sync(prepared,view,flat,stats,1024*1024);QCOMPARE(node.childCount(),2);
+        auto* fill=static_cast<QSGGeometryNode*>(node.firstChild());
+        auto* stroke=static_cast<QSGGeometryNode*>(fill->nextSibling());
+        auto* fillBuffer=fill->geometry();auto* strokeBuffer=stroke->geometry();
+        for(int change=0;change<3;++change) {
+            const auto before=stats;auto styled=std::make_shared<RenderScene>(*prepared);
+            ++styled->revision;++styled->revisions.presentation;
+            for(auto& country:styled->worldCountries) {
+                if(change==0){country.fill.alpha=.25f;country.boundary.alpha=.5f;}
+                if(change==1){country.fill.color=0x0000ff;country.boundary.color=0x00ff00;}
+                if(change==2){country.fill.blendMode=BlendMode::Multiply;country.boundary.blendMode=BlendMode::Multiply;}
+            }
+            // All slots keep the same adjacent style partition throughout these changes.
+            node.sync(styled,view,flat,stats,1024*1024);
+            QCOMPARE(node.childCount(),2);QCOMPARE(node.firstChild(),static_cast<QSGNode*>(fill));
+            QCOMPARE(fill->nextSibling(),static_cast<QSGNode*>(stroke));
+            QCOMPARE(fill->geometry(),fillBuffer);QCOMPARE(stroke->geometry(),strokeBuffer);
+            QCOMPARE(stats.baseGeometryUploadCount,before.baseGeometryUploadCount);
+            QCOMPARE(stats.interactionGeometryUploadCount,before.interactionGeometryUploadCount);
+            QCOMPARE(stats.resourceCreationCount,before.resourceCreationCount);QCOMPARE(stats.resourceRetirementCount,before.resourceRetirementCount);
+            QCOMPARE(stats.liveResourceCount,std::size_t(2));QVERIFY(stats.materialUpdateCount>before.materialUpdateCount);
+            MapMaterial expectedFill(MapPrimitive::Fill,styled->worldCountries[0].fill.blendMode);
+            expectedFill.setStyle(styled->worldCountries[0].fill);
+            MapMaterial expectedStroke(MapPrimitive::Stroke,styled->worldCountries[0].boundary.blendMode);
+            expectedStroke.setStyle(styled->worldCountries[0].boundary);
+            const auto* fillMaterial=static_cast<MapMaterial*>(fill->material());
+            const auto* strokeMaterial=static_cast<MapMaterial*>(stroke->material());
+            QCOMPARE(fillMaterial->color,expectedFill.color);QCOMPARE(fillMaterial->blend,expectedFill.blend);
+            QCOMPARE(strokeMaterial->color,expectedStroke.color);QCOMPARE(strokeMaterial->blend,expectedStroke.blend);
+            logResourceCounters(change==0?"world-group-opacity":change==1?"world-group-color":"world-group-blend",before,stats);
+            prepared=styled;
+        }
+        // Splitting or merging slot partitions is covered by the existing world batch test.
+    }
+    void strokeEndpointWidthReplacementUploadsChangedVertexWidths() {
+        auto original=scene();
+        original->strokes={strokeDraw("river",{{0,0},{10,10}},0x123456,0)};
+        original->strokes[0].geometryPacket.endpointWidths=std::make_shared<const std::vector<float>>(std::vector<float>{2,4});
+        original->drawSequence={{PrimitiveKind::Stroke,0,{},-1}};
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;const auto view=viewFor(40,40);
+        node.sync(original,view,flat,stats,1024*1024);
+        const auto beforeWidthChange=stats;
+        const auto checkWidths=[&](float start,float end) {
+            QCOMPARE(node.childCount(),1);
+            const auto* geometry=static_cast<QSGGeometryNode*>(node.firstChild())->geometry();
+            QCOMPARE(geometry->vertexCount(),4);QCOMPARE(geometry->sizeOfVertex(),int(sizeof(float)*7));
+            const auto* vertex=static_cast<const float*>(geometry->vertexData());
+            QCOMPARE(vertex[6],start);QCOMPARE(vertex[13],start);QCOMPARE(vertex[20],end);QCOMPARE(vertex[27],end);
+        };
+        checkWidths(2,4);
+        auto replacement=std::make_shared<RenderScene>(*original);++replacement->revision;++replacement->revisions.geometry;
+        replacement->strokes[0].geometryPacket.endpointWidths=std::make_shared<const std::vector<float>>(std::vector<float>{6,8});
+        QCOMPARE(replacement->strokes[0].geometryPacket.startsEnds,original->strokes[0].geometryPacket.startsEnds);
+        node.sync(replacement,view,flat,stats,1024*1024);
+        QCOMPARE(stats.geometryUploadCount,std::uint64_t(2));checkWidths(6,8);
+        QCOMPARE(stats.baseGeometryUploadCount,std::uint64_t(2));QCOMPARE(stats.interactionGeometryUploadCount,std::uint64_t(0));
+        QCOMPARE(stats.resourceCreationCount,std::uint64_t(2));QCOMPARE(stats.resourceRetirementCount,std::uint64_t(1));
+        QCOMPARE(stats.liveResourceCount,std::size_t(1));
+        logResourceCounters("endpoint-width-replacement",beforeWidthChange,stats);
+    }
+    void geometryRevisionReplacementInvalidatesOnlyChangedResource() {
+        auto original=scene();original->polygons={polygonDraw("a",rectangle(2,2,12,12,40),0xff0000),
+                                                  polygonDraw("b",rectangle(20,20,30,30,40),0x0000ff)};
+        original->drawSequence={{PrimitiveKind::Polygon,0,{},-1},{PrimitiveKind::Polygon,1,{},-1}};
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;const auto view=viewFor(40,40);
+        node.sync(original,view,flat,stats,1024*1024);
+        auto* unchanged=node.firstChild()->nextSibling();
+        auto* unchangedBuffer=static_cast<QSGGeometryNode*>(unchanged)->geometry();
+        auto revised=std::make_shared<RenderScene>(*original);++revised->revision;++revised->revisions.geometry;
+        ++revised->polygons[0].geometryRevision;
+        QCOMPARE(revised->polygons[0].geometryPacket.positions,original->polygons[0].geometryPacket.positions);
+        node.sync(revised,view,flat,stats,1024*1024);
+        QCOMPARE(stats.geometryUploadCount,std::uint64_t(3));
+        QCOMPARE(node.firstChild()->nextSibling(),unchanged);
+        QCOMPARE(static_cast<QSGGeometryNode*>(unchanged)->geometry(),unchangedBuffer);
+        QCOMPARE(stats.resourceCreationCount,std::uint64_t(3));QCOMPARE(stats.resourceRetirementCount,std::uint64_t(1));
+        QCOMPARE(stats.liveResourceCount,std::size_t(2));
+    }
+    void pendingUploadsCompleteAcrossCameraChangesWithoutReplacingWarmBuffers() {
+        auto s=scene();s->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
+        for(int i=0;i<3;++i) {
+            s->polygons.push_back(polygonDraw(std::to_string(i),rectangle(2+i*10,2,8+i*10,8,40),0xff0000));
+            s->drawSequence.push_back({PrimitiveKind::Polygon,std::size_t(i),{},-1});
+        }
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;auto view=viewFor(40,40);
+        node.sync(s,view,flat,stats,1);QVERIFY(stats.uploadsPending);QCOMPARE(node.childCount(),1);
+        auto* warm=node.firstChild();auto* buffer=static_cast<QSGGeometryNode*>(warm)->geometry();
+        for(int attempt=0;attempt<5&&stats.uploadsPending;++attempt) {
+            view.translateX+=3;view.scale*=1.01;++view.revision;flat.originX+=3;flat.mapScale*=1.01f;
+            node.sync(s,view,flat,stats,1);
+            QCOMPARE(node.firstChild(),warm);QCOMPARE(static_cast<QSGGeometryNode*>(warm)->geometry(),buffer);
+        }
+        QVERIFY(!stats.uploadsPending);QCOMPARE(node.childCount(),3);QCOMPARE(stats.geometryUploadCount,std::uint64_t(3));
+        QCOMPARE(stats.baseGeometryUploadCount,std::uint64_t(3));QCOMPARE(stats.interactionGeometryUploadCount,std::uint64_t(0));
+        QCOMPARE(stats.resourceCreationCount,std::uint64_t(3));QCOMPARE(stats.resourceRetirementCount,std::uint64_t(0));
+        for(auto* child=node.firstChild();child;child=child->nextSibling()) {
+            const auto* material=static_cast<MapMaterial*>(static_cast<QSGGeometryNode*>(child)->material());
+            QCOMPARE(material->globe1.x(),float(view.translateX));QCOMPARE(material->globe0.w(),float(view.scale));
+        }
+        const auto complete=stats;view.translateY+=7;++view.revision;
+        node.sync(s,view,flat,stats,1);
+        QCOMPARE(stats.geometryUploadCount,complete.geometryUploadCount);QCOMPARE(stats.treeRebuildCount,complete.treeRebuildCount);
+    }
+    void deletingSceneReleasesPacketStorageAndNodes() {
+        auto s=scene();s->polygons={polygonDraw("a",rectangle(2,2,12,12,40),0xff0000)};
+        s->drawSequence={{PrimitiveKind::Polygon,0,{},-1}};
+        std::weak_ptr<const std::vector<float>> positions=s->polygons[0].geometryPacket.positions;
+        std::weak_ptr<const RenderScene> snapshot=s;
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;const auto view=viewFor(40,40);
+        node.sync(s,view,flat,stats,1024*1024);QCOMPARE(node.childCount(),1);
+        s.reset();QVERIFY(!snapshot.expired());QVERIFY(!positions.expired());
+        const auto beforeDelete=stats;
+        node.sync({},view,flat,stats,1024*1024);
+        QCOMPARE(node.childCount(),0);QCOMPARE(stats.geometryBytes,std::size_t(0));
+        QVERIFY(snapshot.expired());QVERIFY(positions.expired());QVERIFY(!stats.uploadsPending);
+        QCOMPARE(stats.resourceCreationCount,std::uint64_t(1));QCOMPARE(stats.resourceRetirementCount,std::uint64_t(1));
+        QCOMPARE(stats.liveResourceCount,std::size_t(0));QCOMPARE(stats.liveResourceBytes,std::size_t(0));
+        logResourceCounters("delete-scene",beforeDelete,stats);
+        qInfo().nospace()<<"M94_RESOURCE_COUNTERS weak-scene-released="<<snapshot.expired()
+                         <<" weak-positions-released="<<positions.expired();
+    }
+    void recreatedSceneGraphUploadsRetainedCpuSceneAndRecoversUniforms() {
+        auto s=scene();s->polygons={polygonDraw("a",rectangle(2,2,12,12,40),0xff0000)};
+        s->drawSequence={{PrimitiveKind::Polygon,0,{},-1}};
+        std::weak_ptr<const std::vector<float>> positions=s->polygons[0].geometryPacket.positions;
+        MapFlatViewport flat;auto view=viewFor(40,40);MapGpuStats firstStats;
+        {MapSceneNode first;first.sync(s,view,flat,firstStats,1024*1024);QCOMPARE(firstStats.geometryUploadCount,std::uint64_t(1));}
+        QVERIFY(!positions.expired());view.translateX=19;view.viewportWidth=90;++view.revision;
+        MapSceneNode recovered;MapGpuStats recoveredStats;recovered.sync(s,view,flat,recoveredStats,1024*1024);
+        QCOMPARE(recovered.childCount(),1);QCOMPARE(recoveredStats.geometryUploadCount,std::uint64_t(1));
+        const auto* material=static_cast<MapMaterial*>(static_cast<QSGGeometryNode*>(recovered.firstChild())->material());
+        QCOMPARE(material->globe1.x(),19.f);QCOMPARE(material->globe1.z(),90.f);
+        const auto before=recoveredStats;view.translateX=23;++view.revision;
+        recovered.sync(s,view,flat,recoveredStats,1024*1024);
+        QCOMPARE(recoveredStats.geometryUploadCount,before.geometryUploadCount);QCOMPARE(recoveredStats.treeRebuildCount,before.treeRebuildCount);
+        QCOMPARE(recoveredStats.resourceCreationCount,std::uint64_t(1));QCOMPARE(recoveredStats.liveResourceCount,std::size_t(1));
+    }
+    void selectionOverlayUploadsAreSeparateFromStableBaseResources() {
+        auto s=scene();s->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
+        s->points={pointDraw("p",{5,5},0x123456)};s->drawSequence={{PrimitiveKind::Point,0,{},-1}};
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;auto view=viewFor(40,40);
+        node.sync(s,view,flat,stats,1024*1024);
+        auto* base=node.firstChild();auto* baseBuffer=static_cast<QSGGeometryNode*>(base)->geometry();
+        QCOMPARE(stats.baseGeometryUploadCount,std::uint64_t(1));QCOMPARE(stats.interactionGeometryUploadCount,std::uint64_t(0));
+        const auto beforeSelection=stats;
+        auto selected=std::make_shared<RenderScene>(*s);++selected->revision;++selected->revisions.selection;
+        selected->interaction.selected={selected->points[0].object};selected->interaction.primary=selected->points[0].object;
+        node.sync(selected,view,flat,stats,1024*1024);
+        QCOMPARE(node.childCount(),2);QCOMPARE(node.firstChild(),base);
+        QCOMPARE(static_cast<QSGGeometryNode*>(base)->geometry(),baseBuffer);
+        QCOMPARE(stats.baseGeometryUploadCount,std::uint64_t(1));QCOMPARE(stats.interactionGeometryUploadCount,std::uint64_t(1));
+        QCOMPARE(stats.resourceCreationCount,std::uint64_t(2));QCOMPARE(stats.liveResourceCount,std::size_t(2));
+        logResourceCounters("select-overlay",beforeSelection,stats);
+        for(int frame=0;frame<4;++frame) {
+            const auto before=stats;
+            auto styled=std::make_shared<RenderScene>(*selected);++styled->revision;++styled->revisions.presentation;
+            styled->points[0].style.color=frame%2?0xff0000:0x00ff00;
+            view.translateX+=4;++view.revision;
+            node.sync(styled,view,flat,stats,1024*1024);
+            QCOMPARE(stats.baseGeometryUploadCount,before.baseGeometryUploadCount);
+            QCOMPARE(stats.interactionGeometryUploadCount,before.interactionGeometryUploadCount);
+            QCOMPARE(stats.resourceCreationCount,before.resourceCreationCount);QCOMPARE(stats.resourceRetirementCount,before.resourceRetirementCount);
+            QCOMPARE(node.firstChild(),base);QCOMPARE(static_cast<QSGGeometryNode*>(base)->geometry(),baseBuffer);
+            const auto* material=static_cast<MapMaterial*>(static_cast<QSGGeometryNode*>(base)->material());
+            QCOMPARE(material->color,frame%2?QVector4D(1,0,0,1):QVector4D(0,1,0,1));
+            selected=styled;
+        }
+        auto cleared=std::make_shared<RenderScene>(*selected);++cleared->revision;++cleared->revisions.selection;cleared->interaction={};
+        node.sync(cleared,view,flat,stats,1024*1024);
+        QCOMPARE(node.childCount(),1);QCOMPARE(node.firstChild(),base);QCOMPARE(stats.liveResourceCount,std::size_t(1));
+        QCOMPARE(stats.resourceRetirementCount,std::uint64_t(1));
+        QCOMPARE(stats.baseGeometryUploadCount,std::uint64_t(1));QCOMPARE(stats.interactionGeometryUploadCount,std::uint64_t(1));
+    }
+    void typedPreparationMetadataInvalidatesOnlyItsResource_data() {
+        QTest::addColumn<int>("changedField");
+        QTest::newRow("geometry-version")<<0;QTest::newRow("lod")<<1;QTest::newRow("projection-policy")<<2;
+    }
+    void typedPreparationMetadataInvalidatesOnlyItsResource() {
+        QFETCH(int,changedField);
+        auto original=scene();original->polygons={polygonDraw("fill",rectangle(2,2,12,12,40),0xff0000)};
+        original->points={pointDraw("marker",{5,5},0x0000ff)};
+        original->drawSequence={{PrimitiveKind::Polygon,0,{},-1},{PrimitiveKind::Point,0,{},-1}};
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;const auto view=viewFor(40,40);
+        node.sync(original,view,flat,stats,1024*1024);
+        auto* marker=node.firstChild()->nextSibling();auto* markerBuffer=static_cast<QSGGeometryNode*>(marker)->geometry();
+        auto modified=std::make_shared<RenderScene>(*original);++modified->revision;++modified->revisions.geometry;
+        if(changedField==0)++modified->polygons[0].geometry.version;
+        if(changedField==1)--modified->polygons[0].lod;
+        if(changedField==2)modified->polygons[0].preparationPolicy=ProjectionPreparationPolicy::GlobeReady;
+        QCOMPARE(modified->polygons[0].geometryPacket.positions,original->polygons[0].geometryPacket.positions);
+        node.sync(modified,view,flat,stats,1024*1024);
+        QCOMPARE(stats.baseGeometryUploadCount,std::uint64_t(3));QCOMPARE(stats.interactionGeometryUploadCount,std::uint64_t(0));
+        QCOMPARE(stats.resourceCreationCount,std::uint64_t(3));QCOMPARE(stats.resourceRetirementCount,std::uint64_t(1));
+        QCOMPARE(stats.liveResourceCount,std::size_t(2));
+        QCOMPARE(node.firstChild()->nextSibling(),marker);QCOMPARE(static_cast<QSGGeometryNode*>(marker)->geometry(),markerBuffer);
+    }
+    void equalProjectRevisionsCannotAliasReplacementBuffersAndOldStorageRetires() {
+        auto original=scene();original->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
+        original->polygons={polygonDraw("same-id",rectangle(2,2,12,12,40),0xff0000)};
+        original->drawSequence={{PrimitiveKind::Polygon,0,{},-1}};
+        std::weak_ptr<const std::vector<float>> obsolete=original->polygons[0].geometryPacket.positions;
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;const auto view=viewFor(40,40);
+        node.sync(original,view,flat,stats,1024*1024);
+        auto replacement=scene();replacement->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
+        replacement->polygons={polygonDraw("same-id",rectangle(20,20,30,30,40),0x0000ff)};
+        replacement->drawSequence=original->drawSequence;
+        QCOMPARE(replacement->revision,original->revision);QCOMPARE(replacement->polygons[0].geometry,original->polygons[0].geometry);
+        QCOMPARE(replacement->polygons[0].geometryRevision,original->polygons[0].geometryRevision);
+        node.sync(replacement,view,flat,stats,1024*1024);original.reset();
+        QVERIFY(obsolete.expired());QCOMPARE(node.childCount(),1);
+        const auto* geometry=static_cast<QSGGeometryNode*>(node.firstChild())->geometry();
+        QCOMPARE(static_cast<const float*>(geometry->vertexData())[0],20.f);
+        QCOMPARE(stats.baseGeometryUploadCount,std::uint64_t(2));QCOMPARE(stats.resourceCreationCount,std::uint64_t(2));
+        QCOMPARE(stats.resourceRetirementCount,std::uint64_t(1));QCOMPARE(stats.liveResourceCount,std::size_t(1));
+    }
+    void preparedBuilderCameraFramesUseUniformsOnly_data() {
+        QTest::addColumn<bool>("globe");
+        QTest::newRow("flat")<<false;QTest::newRow("globe")<<true;
+    }
+    void preparedBuilderCameraFramesUseUniformsOnly() {
+        QFETCH(bool,globe);
+        pandoeditor::ProjectDocument document;document.documentId="m92-camera-frame-fixture";
+        const auto add=[&](const std::string& id,const pandoeditor::Geometry& geometry) {
+            document.geometries.insert({id,1},geometry);
+            pandoeditor::GenericFeature feature;feature.id=id;feature.name=id;
+            feature.geometry={id,1};
+            document.genericFeatures.push_back(feature);
+        };
+        add("fill",rectangle(2,2,12,12,40));
+        pandoeditor::Geometry line;line.type="LineString";line.lines={{{0,0},{10,10}}};add("line",line);
+        pandoeditor::Geometry point;point.type="Point";point.points={{5,5}};add("point",point);
+        pandoeditor::Project project;project.replace(document);
+        GeometryPacketCache cache;MapSceneBuilder builder(cache);
+        auto view=viewFor(40,40);if(globe)view.mode=ProjectionMode::Globe;
+        const auto prepared=builder.build(project.snapshot(),view,{},{});
+        auto frame=FramePipeline::compose(prepared,view);
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;
+        node.sync(frame->scene,frame->view,flat,stats,1024*1024,frame->worldPlan.get());
+        QVERIFY(node.childCount()>0);QVERIFY(!stats.uploadsPending);
+        const auto baseline=stats;
+        const auto packetStats=cache.stats();
+        const auto preparations=builder.preparationCount(),transients=builder.transientUpdateCount();
+        std::vector<QSGGeometryNode*> nodes;std::vector<QSGGeometry*> buffers;
+        for(auto* child=node.firstChild();child;child=child->nextSibling()) {
+            auto* entry=static_cast<QSGGeometryNode*>(child);nodes.push_back(entry);buffers.push_back(entry->geometry());
+        }
+        for(int step=0;step<4;++step) {
+            if(step==0){view.translateX+=12;view.translateY+=8;flat.originX+=12;flat.originY+=8;}
+            if(step==1){view.scale*=1.25;flat.mapScale*=1.25f;}
+            if(step==2){view.rotationLongitude+=15;view.rotationLatitude+=5;view.rotationRoll+=3;}
+            if(step==3){view.viewportWidth+=80;view.viewportHeight+=60;}
+            ++view.revision;
+            const auto next=builder.build(project.snapshot(),view,{},prepared);
+            QCOMPARE(next.get(),prepared.get());
+            QCOMPARE(builder.preparationCount(),preparations);QCOMPARE(builder.transientUpdateCount(),transients);
+            QCOMPARE(cache.stats().builds,packetStats.builds);QCOMPARE(cache.stats().hits,packetStats.hits);
+            frame=FramePipeline::compose(next,view,frame);
+            QCOMPARE(frame->scene.get(),prepared.get());QCOMPARE(frame->path,FrameUpdatePath::ViewOnly);
+            const auto uniforms=stats.viewUniformUpdateCount;
+            node.sync(frame->scene,frame->view,flat,stats,1024*1024,frame->worldPlan.get());
+            QCOMPARE(stats.geometryUploadCount,baseline.geometryUploadCount);QCOMPARE(stats.uploadedBytes,baseline.uploadedBytes);
+            QCOMPARE(stats.treeRebuildCount,baseline.treeRebuildCount);QCOMPARE(stats.nodeAttachmentCount,baseline.nodeAttachmentCount);
+            QCOMPARE(stats.materialUpdateCount,baseline.materialUpdateCount);QCOMPARE(stats.uploadBytesThisFrame,std::size_t(0));
+            QCOMPARE(stats.viewUniformUpdateCount,uniforms+std::uint64_t(nodes.size()));QVERIFY(!stats.uploadsPending);
+            auto* child=node.firstChild();
+            for(std::size_t i=0;i<nodes.size();++i) {
+                QCOMPARE(child,static_cast<QSGNode*>(nodes[i]));QCOMPARE(nodes[i]->geometry(),buffers[i]);
+                child=child->nextSibling();
+            }
+            QVERIFY(!child);
+        }
+        qInfo()<<"M92_FRAME_COUNTERS"<<(globe?"globe":"flat")
+               <<"preparation delta"<<(builder.preparationCount()-preparations)
+               <<"scene-copy delta"<<(builder.transientUpdateCount()-transients)
+               <<"upload delta"<<(stats.geometryUploadCount-baseline.geometryUploadCount)
+               <<"uploaded-byte delta"<<(stats.uploadedBytes-baseline.uploadedBytes)
+               <<"tree delta"<<(stats.treeRebuildCount-baseline.treeRebuildCount)
+               <<"attachment delta"<<(stats.nodeAttachmentCount-baseline.nodeAttachmentCount)
+               <<"uniform delta"<<(stats.viewUniformUpdateCount-baseline.viewUniformUpdateCount);
+    }
+    void currentFramePlanControlsBoundedMeshCullingAndWrap() {
+        auto mesh=std::make_shared<CountryBaseMesh>();
+        mesh->positionsMicrodegrees={0,0,1000000,0,0,1000000,
+                                     120000000,0,121000000,0,120000000,1000000};
+        mesh->countryIndices={0,0,0,1,1,1};mesh->triangleIndices={0,1,2,3,4,5};
+        mesh->countryTriangleRanges={0,3,3,3};mesh->countryBoundaryRanges={0,0,0,0};
+        mesh->countryBounds={0,0,1000000,1000000,120000000,0,121000000,1000000};
+        mesh->countryBoundsFlags={0,0};
+        auto base=std::make_shared<WorldBaseFrame>();base->mesh=mesh;
+        auto prepared=scene();prepared->worldBase=base;
+        prepared->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
+        prepared->worldCountries.resize(2);prepared->worldCountries[0].id="west";
+        prepared->worldCountries[1].id="east";
+        prepared->drawSequence={{PrimitiveKind::WorldFill,0,{},-1},{PrimitiveKind::WorldFill,1,{},-1}};
+        auto view=viewFor(40,40);view.translateX=20;view.translateY=20;
+        auto frame=FramePipeline::compose(prepared,view);
+        QCOMPARE(frame->worldPlan->fills.visible,std::vector<bool>({true,false}));
+        prepared->worldPlan=*frame->worldPlan; // deliberately retain the initial plan in preparation
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;
+        node.sync(frame->scene,frame->view,flat,stats,1024*1024,frame->worldPlan.get());
+        QCOMPARE(node.childCount(),1);QCOMPARE(stats.visibleCountryCount,std::size_t(1));
+        QCOMPARE(stats.drawIndexCount,std::size_t(3));
+        const auto warm=stats;
+        view.centerLongitude=10;++view.revision;frame=FramePipeline::compose(prepared,view,frame);
+        node.sync(frame->scene,frame->view,flat,stats,1024*1024,frame->worldPlan.get());
+        QCOMPARE(stats.geometryUploadCount,warm.geometryUploadCount);
+        QCOMPARE(stats.treeRebuildCount,warm.treeRebuildCount);QCOMPARE(stats.nodeAttachmentCount,warm.nodeAttachmentCount);
+        QVERIFY(stats.viewUniformUpdateCount>warm.viewUniformUpdateCount);
+        view.centerLongitude=120;++view.revision;frame=FramePipeline::compose(prepared,view,frame);
+        QCOMPARE(frame->scene.get(),prepared.get());QCOMPARE(frame->path,FrameUpdatePath::ViewOnly);
+        QCOMPARE(frame->worldPlan->fills.visible,std::vector<bool>({false,true}));
+        QCOMPARE(prepared->worldPlan.fills.visible,std::vector<bool>({true,false}));
+        node.sync(frame->scene,frame->view,flat,stats,1024*1024,frame->worldPlan.get());
+        QCOMPARE(node.childCount(),1);QCOMPARE(stats.visibleCountryCount,std::size_t(1));
+        QCOMPARE(stats.drawIndexCount,std::size_t(3));
+        auto* data=static_cast<QSGGeometryNode*>(node.firstChild())->geometry();
+        QCOMPARE(static_cast<const float*>(data->vertexData())[0],120.f);
+        const auto beforeWrap=stats.treeRebuildCount;
+        view.centerLongitude=180;++view.revision;frame=FramePipeline::compose(prepared,view,frame);
+        QCOMPARE(frame->worldPlan->worldOffsets,std::vector<double>({0,360}));
+        QCOMPARE(prepared->worldPlan.worldOffsets,std::vector<double>({0}));
+        node.sync(frame->scene,frame->view,flat,stats,1024*1024,frame->worldPlan.get());
+        // A new visible world copy is a topology change, so reconciliation is expected.
+        QVERIFY(stats.treeRebuildCount>beforeWrap);QCOMPARE(node.childCount(),2);
+        QCOMPARE(stats.drawIndexCount,std::size_t(6));QVERIFY(!stats.uploadsPending);
+    }
+    void viewOnlyFramesRetainBuffersAndOnlyUpdateUniforms_data() {
+        QTest::addColumn<bool>("globe");
+        QTest::newRow("flat-pan-zoom-resize")<<false;
+        QTest::newRow("globe-pan-zoom-rotation-resize")<<true;
+    }
+    void viewOnlyFramesRetainBuffersAndOnlyUpdateUniforms() {
+        QFETCH(bool,globe);
+        auto s=scene();s->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
+        s->polygons={polygonDraw("fill",rectangle(2,2,12,12,40),0xff0000)};
+        s->strokes={strokeDraw("line",{{0,0},{10,10}},0x00ff00,2)};
+        s->points={pointDraw("point",{5,5},0x0000ff)};
+        s->drawSequence={{PrimitiveKind::Polygon,0,{},-1},
+                         {PrimitiveKind::Stroke,0,{},-1},{PrimitiveKind::Point,0,{},-1}};
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;
+        auto view=viewFor(40,40);if(globe)view.mode=ProjectionMode::Globe;
+        node.sync(s,view,flat,stats,1024*1024);
+        QCOMPARE(node.childCount(),3);QVERIFY(!stats.uploadsPending);
+        const auto baseline=stats;
+        std::vector<QSGGeometryNode*> nodes;
+        std::vector<QSGGeometry*> buffers;
+        for(auto* child=node.firstChild();child;child=child->nextSibling()) {
+            auto* geometryNode=static_cast<QSGGeometryNode*>(child);
+            nodes.push_back(geometryNode);buffers.push_back(geometryNode->geometry());
+        }
+        for(int frame=0;frame<4;++frame) {
+            if(frame==0){view.translateX+=12;view.translateY+=8;flat.originX+=12;flat.originY+=8;}
+            if(frame==1){view.scale*=1.25;flat.mapScale*=1.25f;}
+            if(frame==2){view.rotationLongitude+=15;view.rotationLatitude+=5;view.rotationRoll+=3;}
+            if(frame==3){view.viewportWidth+=80;view.viewportHeight+=60;}
+            ++view.revision;
+            // Publication may create a new wrapper while retaining the preparation.
+            auto published=std::make_shared<RenderScene>(*s);
+            published->revision+=frame+1;published->revisions.view=view.revision;
+            const auto uniforms=stats.viewUniformUpdateCount;
+            node.sync(published,view,flat,stats,1024*1024);
+            QCOMPARE(stats.geometryUploadCount,baseline.geometryUploadCount);
+            QCOMPARE(stats.uploadedBytes,baseline.uploadedBytes);
+            QCOMPARE(stats.uploadBytesThisFrame,std::size_t(0));
+            QCOMPARE(stats.treeRebuildCount,baseline.treeRebuildCount);
+            QCOMPARE(stats.nodeAttachmentCount,baseline.nodeAttachmentCount);
+            QCOMPARE(stats.materialUpdateCount,baseline.materialUpdateCount);
+            QCOMPARE(stats.viewUniformUpdateCount,uniforms+std::uint64_t(3));
+            QCOMPARE(stats.sceneRevision,published->revision);QVERIFY(!stats.uploadsPending);
+            auto* child=node.firstChild();
+            for(std::size_t i=0;i<nodes.size();++i) {
+                QCOMPARE(child,static_cast<QSGNode*>(nodes[i]));
+                QCOMPARE(nodes[i]->geometry(),buffers[i]);
+                const auto* material=static_cast<MapMaterial*>(nodes[i]->material());
+                QCOMPARE(material->globe1,QVector4D(float(view.translateX),float(view.translateY),
+                                                   float(view.viewportWidth),float(view.viewportHeight)));
+                child=child->nextSibling();
+            }
+            QVERIFY(!child);
+        }
+    }
+    void preparationIdentityDoesNotHideStyleOrProjectReplacement() {
+        auto s=scene();s->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
+        s->polygons={polygonDraw("fill",rectangle(2,2,12,12,40),0xff0000)};
+        s->drawSequence={{PrimitiveKind::Polygon,0,{},-1}};
+        MapSceneNode node;MapGpuStats stats;MapFlatViewport flat;const auto view=viewFor(40,40);
+        node.sync(s,view,flat,stats,1024*1024);
+        const auto uploads=stats.geometryUploadCount,rebuilds=stats.treeRebuildCount;
+        auto styled=std::make_shared<RenderScene>(*s);
+        ++styled->revision;++styled->revisions.presentation;styled->polygons[0].style.color=0x00ff00;
+        node.sync(styled,view,flat,stats,1024*1024);
+        QCOMPARE(stats.treeRebuildCount,rebuilds+1);QCOMPARE(stats.geometryUploadCount,uploads);
+        auto* material=static_cast<MapMaterial*>(static_cast<QSGGeometryNode*>(node.firstChild())->material());
+        QCOMPARE(material->color,QVector4D(0,1,0,1));
+        // A different project can reuse every numeric revision and packet key.
+        auto replacement=std::make_shared<RenderScene>(*styled);
+        replacement->preparationIdentity=std::make_shared<RenderScene::PreparationIdentity>();
+        replacement->polygons[0]=polygonDraw("fill",rectangle(20,20,30,30,40),0x0000ff);
+        node.sync(replacement,view,flat,stats,1024*1024);
+        QCOMPARE(stats.treeRebuildCount,rebuilds+2);QCOMPARE(stats.geometryUploadCount,uploads+1);
+        material=static_cast<MapMaterial*>(static_cast<QSGGeometryNode*>(node.firstChild())->material());
+        QCOMPARE(material->color,QVector4D(0,0,1,1));
     }
     void worldMeshSlotsWithOneOwnerNeverAliasOrUploadForever() {
         auto mesh=std::make_shared<CountryBaseMesh>();

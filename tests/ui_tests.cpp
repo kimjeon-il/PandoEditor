@@ -1,6 +1,8 @@
 #include "ui_navigation.h"
 #include "editorcontroller.h"
 #include "windowsframe.h"
+#include "gpumapitem.h"
+#include "maprenderitem.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -93,48 +95,45 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
-    void objectEditorForcesWorldDetailUntilPanelCloses() {
-        for(bool mobile:{false,true}) {
-            EditorControllerConfig config;config.mobileMode=mobile;
-            config.bootstrapWorld=false;config.autosaveEnabled=false;
-            EditorController editor(config);QQmlApplicationEngine engine;QStringList warnings;
-            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){
-                for(const auto& error:errors)warnings<<error.toString();
-            });
-            engine.rootContext()->setContextProperty("editor",&editor);
-            engine.load(QUrl("qrc:/common/Main.qml"));
-            QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
-            auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
-            window->resize(mobile?360:1100,760);exposeForTest(window);
-            QVERIFY(editor.setProjectionMode("flat"));QVERIFY(editor.fitMapCamera());
-            auto requested=[&]{return editor.renderQuality().value("worldDetailRequested").toString();};
-            QCOMPARE(requested(),QString("preview"));
-            const auto document=editor.documentBytes();const auto revision=editor.revision();
-            // Ordinary territorial metadata panels do not create a geometry or content session.
-            editor.selectCountry("DEU");
-            auto* panel=visualItem(window->contentItem(),"objectPropertyPanel");QVERIFY(panel);
-            QTRY_VERIFY(panel->isVisible());
-            QVERIFY(!editor.geometryEditState().value("active").toBool());
-            QVERIFY(!editor.contentEditState().value("active").toBool());
-            QCOMPARE(requested(),QString("canonical"));
-            QVERIFY(editor.zoomMapCameraAt(.8,180,180));
-            QVERIFY(editor.fitMapCamera());
-            QCOMPARE(requested(),QString("canonical"));
-            QVERIFY(clickControl(window,"toggleObjectEditor"));
-            QTRY_VERIFY(!panel->isVisible());
-            QTRY_COMPARE(requested(),QString("preview"));
-            QVERIFY(clickControl(window,"openObjectEditor"));
-            QTRY_VERIFY(panel->isVisible());
-            QTRY_COMPARE(requested(),QString("canonical"));
-            window->resize(mobile?390:1150,760);QCoreApplication::processEvents();
-            QCOMPARE(requested(),QString("canonical"));
-            QVERIFY(clickControl(window,"toggleObjectEditor"));
-            QTRY_VERIFY(!panel->isVisible());
-            QTRY_COMPARE(requested(),QString("preview"));
-            QCOMPARE(editor.documentBytes(),document);QCOMPARE(editor.revision(),revision);
-            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
-            window->setProperty("allowClose",true);window->close();
-        }
+    void softwareWindowRecreationDropsOldWindowCallbacks() {
+        EditorControllerConfig config;config.bootstrapWorld=false;config.autosaveEnabled=false;
+        EditorController editor(config);QVERIFY(editor.resizeMapCamera(360,300));
+        QQuickWindow first,second;first.resize(360,300);second.resize(360,300);
+        first.setPersistentSceneGraph(false);second.setPersistentSceneGraph(false);
+        first.setPersistentGraphics(false);second.setPersistentGraphics(false);
+        GpuMapItem gpu(first.contentItem());gpu.setSceneBridge(editor.mapSceneBridge());
+        MapRenderItem cpu(first.contentItem());cpu.setWidth(360);cpu.setHeight(300);
+        cpu.setSceneBridge(editor.mapSceneBridge());
+        first.show();exposeForTest(&first);QVERIFY(!capture(&first).isNull());
+        const auto before=cpu.paintCount();QVERIFY(before>0);const auto revision=cpu.sceneRevision();
+        QStringList observedDiagnostics;
+        connect(&gpu,&GpuMapItem::rendererReadyChanged,&gpu,[&]{observedDiagnostics.push_back(gpu.diagnostic());});
+        // A context error already queued before initialization must not affect its replacement.
+        const auto contextGeneration=gpu.resourceGeneration();
+        first.sceneGraphError(QQuickWindow::ContextNotAvailable,QStringLiteral("old context test error"));
+        first.sceneGraphInitialized();QCOMPARE(gpu.resourceGeneration(),contextGeneration+1);
+        QCoreApplication::processEvents();
+        QVERIFY(std::none_of(observedDiagnostics.begin(),observedDiagnostics.end(),[](const auto& diagnostic) {
+            return diagnostic.contains("old context test error");
+        }));
+        // Queue an old-window notification, then move before its delivery.
+        const auto oldGeneration=gpu.resourceGeneration();
+        QVERIFY(QMetaObject::invokeMethod(&first,"sceneGraphInvalidated",Qt::DirectConnection));
+        QCOMPARE(gpu.resourceGeneration(),oldGeneration+1);
+        gpu.setParentItem(second.contentItem());cpu.setParentItem(second.contentItem());
+        const auto currentDiagnostic=gpu.diagnostic();
+        QCoreApplication::processEvents();QCOMPARE(gpu.diagnostic(),currentDiagnostic);
+        first.hide();first.releaseResources();second.show();exposeForTest(&second);
+        QVERIFY(!capture(&second).isNull());QVERIFY(cpu.paintCount()>before);
+        QCOMPARE(cpu.sceneRevision(),revision);QVERIFY(!gpu.rendererReady());
+        const auto movedPaints=cpu.paintCount();second.hide();second.releaseResources();
+        QCoreApplication::processEvents();second.show();
+        QVERIFY(editor.zoomMapCameraAt(1.01,180,150));exposeForTest(&second);
+        QVERIFY(!capture(&second).isNull());QVERIFY(cpu.paintCount()>movedPaints);
+        QCOMPARE(cpu.sceneRevision(),revision);QVERIFY(!gpu.rendererReady());
+        qInfo()<<"M94_SOFTWARE_WINDOW"<<"paint recovery"<<cpu.paintCount()-before
+               <<"retained scene revision"<<revision;
+        first.close();second.close();
     }
     void labelReprojectionPreservesModelRows() {
         LabelPlacementModel model;
@@ -293,6 +292,49 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(window,"handleBack"));
             QVERIFY(!item("importButton")||!item("importButton")->isVisible());
             editor.cancelAppearancePreview();
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+            window->setProperty("allowClose",true);window->close();
+        }
+    }
+    void objectEditorForcesWorldDetailUntilPanelCloses() {
+        for(bool mobile:{false,true}) {
+            EditorControllerConfig config;config.mobileMode=mobile;
+            config.bootstrapWorld=false;config.autosaveEnabled=false;
+            EditorController editor(config);QQmlApplicationEngine engine;QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& errors){
+                for(const auto& error:errors)warnings<<error.toString();
+            });
+            engine.rootContext()->setContextProperty("editor",&editor);
+            engine.load(QUrl("qrc:/common/Main.qml"));
+            QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+            auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+            window->resize(mobile?360:1100,760);exposeForTest(window);
+            QVERIFY(editor.setProjectionMode("flat"));QVERIFY(editor.fitMapCamera());
+            auto requested=[&]{return editor.renderQuality().value("worldDetailRequested").toString();};
+            QCOMPARE(requested(),QString("preview"));
+            const auto document=editor.documentBytes();const auto revision=editor.revision();
+            // Ordinary territorial metadata panels do not create a geometry or content session.
+            editor.selectCountry("DEU");
+            auto* panel=visualItem(window->contentItem(),"objectPropertyPanel");QVERIFY(panel);
+            QTRY_VERIFY(panel->isVisible());
+            QVERIFY(!editor.geometryEditState().value("active").toBool());
+            QVERIFY(!editor.contentEditState().value("active").toBool());
+            QCOMPARE(requested(),QString("canonical"));
+            QVERIFY(editor.zoomMapCameraAt(.8,180,180));
+            QVERIFY(editor.fitMapCamera());
+            QCOMPARE(requested(),QString("canonical"));
+            QVERIFY(clickControl(window,"toggleObjectEditor"));
+            QTRY_VERIFY(!panel->isVisible());
+            QTRY_COMPARE(requested(),QString("preview"));
+            QVERIFY(clickControl(window,"openObjectEditor"));
+            QTRY_VERIFY(panel->isVisible());
+            QTRY_COMPARE(requested(),QString("canonical"));
+            window->resize(mobile?390:1150,760);QCoreApplication::processEvents();
+            QCOMPARE(requested(),QString("canonical"));
+            QVERIFY(clickControl(window,"toggleObjectEditor"));
+            QTRY_VERIFY(!panel->isVisible());
+            QTRY_COMPARE(requested(),QString("preview"));
+            QCOMPARE(editor.documentBytes(),document);QCOMPARE(editor.revision(),revision);
             QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
             window->setProperty("allowClose",true);window->close();
         }

@@ -57,7 +57,7 @@ void MapRenderItem::setSceneBridge(QObject* value) {
         connect(sceneBridge_,&MapSceneBridge::viewChanged,this,[this]{syncSceneBridge();});
         connect(sceneBridge_,&QObject::destroyed,this,[this]{
             sceneBridge_=nullptr;
-            scene_.reset();
+            scene_.reset();frame_.reset();
             emit sceneBridgeChanged();
             if(isVisible())update();
         });
@@ -66,8 +66,10 @@ void MapRenderItem::setSceneBridge(QObject* value) {
 }
 
 void MapRenderItem::syncSceneBridge() {
-    if(sceneBridge_)setSceneSnapshot(sceneBridge_->sceneSnapshot(),sceneBridge_->viewState());
-    else scene_.reset();
+    if(sceneBridge_) {
+        frame_=sceneBridge_->frameSnapshot();scene_=frame_->scene;view_=frame_->view;
+    }
+    else {scene_.reset();frame_.reset();}
     emit sceneBridgeChanged();
     if(isVisible())update();
 }
@@ -75,7 +77,8 @@ void MapRenderItem::syncSceneBridge() {
 void MapRenderItem::setSceneSnapshot(
     std::shared_ptr<const RenderScene> scene,const MapViewState& view) {
     if(!validMapViewState(view))throw std::invalid_argument("invalid typed scene view");
-    scene_=std::move(scene);
+    frame_=FramePipeline::compose(std::move(scene),view,frame_);
+    scene_=frame_->scene;
     view_=view;
     if(isVisible())update();
 }
@@ -87,8 +90,9 @@ void MapRenderItem::paint(QPainter* painter) {
     struct Timing {std::atomic<qint64>& total;QElapsedTimer& clock;
         ~Timing(){total.fetch_add(clock.nsecsElapsed());}} timing{paintNanoseconds_,paintClock};
     painter->setRenderHint(QPainter::Antialiasing,smoothLines_);
-    const auto copies=scene_->worldPlan.worldOffsets.empty()?
-        visibleFlatWorldOffsets(view_):scene_->worldPlan.worldOffsets;
+    const auto& worldPlan=*frame_->worldPlan;
+    const auto copies=worldPlan.worldOffsets.empty()?
+        visibleFlatWorldOffsets(view_):worldPlan.worldOffsets;
 
     const auto drawPolygon=[&](QPainter* target,const PolygonDrawPacket& draw,double offset,
                                const RenderStyle* overrideStyle=nullptr) {
@@ -185,7 +189,7 @@ void MapRenderItem::paint(QPainter* painter) {
         if(!scene_->worldBase||!scene_->worldBase->mesh||
            country>=scene_->worldCountries.size()||!scene_->worldCountries[country].visible)return;
         const auto& mask=primitive==PrimitiveKind::WorldFill?
-            scene_->worldPlan.fills.visible:scene_->worldPlan.strokes.visible;
+            worldPlan.fills.visible:worldPlan.strokes.visible;
         if(!overrideStyle&&!visibleCountry(mask,country))return;
         const auto& mesh=*scene_->worldBase->mesh;
         const auto& ranges=primitive==PrimitiveKind::WorldFill?
@@ -231,8 +235,7 @@ void MapRenderItem::paint(QPainter* painter) {
         painter->restore();
     };
 
-    // The immutable preview world base predates canonical document packets and
-    // is intentionally submitted outside drawSequence in both backends.
+    // Only the startup placeholder predates canonical document draw ordering.
     if(scene_->worldBase&&scene_->worldBase->startupPreview())
         for(const double offset:copies)
             for(std::size_t i=0;i<scene_->worldCountries.size();++i) {

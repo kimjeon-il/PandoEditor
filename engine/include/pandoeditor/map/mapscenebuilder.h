@@ -16,6 +16,19 @@ public:
     std::uint64_t preparationCount() const {return preparations_;}
     std::uint64_t transientUpdateCount() const {return transientUpdates_;}
     std::uint64_t unchangedCount() const {return unchanged_;}
+    std::uint64_t deltaUpdateCount() const {return deltaUpdates_;}
+    std::uint64_t presentationUpdateCount() const {return presentationUpdates_;}
+    std::shared_ptr<const RenderScene> refresh(
+        const pandoeditor::ProjectSnapshot&,const MapViewState&,
+        const InteractionRenderPacket&,const std::shared_ptr<const RenderScene>&,
+        const pandoeditor::SceneDirtySet* dirty=nullptr);
+    std::shared_ptr<const RenderScene> buildDelta(
+        const pandoeditor::ProjectSnapshot&,const MapViewState&,
+        const InteractionRenderPacket&,const std::shared_ptr<const RenderScene>&,
+        const pandoeditor::SceneDirtySet&);
+    bool canReusePreparation(const pandoeditor::ProjectSnapshot&,const MapViewState&,
+                             const std::shared_ptr<const RenderScene>&) const;
+    bool preparationMatchesView(const MapViewState&,const std::shared_ptr<const RenderScene>&) const;
     std::shared_ptr<const RenderScene> build(
         const pandoeditor::ProjectSnapshot& snapshot,const MapViewState& view,
         const InteractionRenderPacket& interaction,
@@ -35,7 +48,8 @@ private:
     std::shared_ptr<const RenderScene> buildDocumentImpl(
         const pandoeditor::ProjectDocument&,std::uint64_t,const MapViewState&,
         const InteractionRenderPacket&,const std::shared_ptr<const RenderScene>&,
-        const std::set<pandoeditor::ObjectRef>* changed);
+        const std::set<pandoeditor::ObjectRef>* changed,
+        const std::set<pandoeditor::ObjectRef>* geometryChanged=nullptr);
     GeometryPacketCache& cache_;
     std::shared_ptr<const WorldBaseFrame> worldBase_;
     std::shared_ptr<const BuiltinHydroRenderFrame> builtinHydro_;
@@ -48,4 +62,5 @@ private:
     ProjectionMode preparedMode_=ProjectionMode::Flat;
     RenderLod preparedLod_=RenderLod::High;
     std::uint64_t preparations_=0,transientUpdates_=0,unchanged_=0;
+    std::uint64_t deltaUpdates_=0,presentationUpdates_=0;
 };
