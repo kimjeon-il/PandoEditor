@@ -63,8 +63,8 @@ GisTerritorialImportPlan prepareGisTerritorialImport(const ProjectSnapshot& snap
     require(mapping.coast!=GisTerritorialMapping::CoastDecision::Cancel,"CANCELLED_GIS_IMPORT");
     std::vector<GisTerritorialInput> units;
     std::set<std::string> ids;
-    const auto kind=mapping.target==GisExchangeTarget::Country?UnitKind::Country:
-        mapping.target==GisExchangeTarget::Subunit?UnitKind::Subunit:UnitKind::Region;
+    const auto kind=mapping.target==GisExchangeTarget::Country?UnitKind::General:
+        mapping.target==GisExchangeTarget::Subunit?UnitKind::General:UnitKind::Regional;
     for(const auto& feature:collection.features) {
         require(!cancelled||!cancelled(),"CANCELLED_GIS_IMPORT");
         require(feature.geometry.type=="Polygon"||feature.geometry.type=="MultiPolygon",
@@ -84,21 +84,13 @@ GisTerritorialImportPlan prepareGisTerritorialImport(const ProjectSnapshot& snap
         if(!to.empty())row.validity.to=to;
         require(!row.id.empty()&&!row.name.empty()&&ids.insert(row.id).second,
                 "INVALID_GIS_MAPPING: ID or name");
-        if(kind!=UnitKind::Country) {
-            const auto sovereign=mapping.commonSovereign?
-                mapping.commonSovereign->id:property(props,mapping.sovereignField);
-            const auto parent=mapping.commonParent?
-                mapping.commonParent->id:property(props,mapping.parentField);
-            if(!sovereign.empty())row.sovereign=territorialRef(sovereign);
-            if(!parent.empty())row.parent=territorialRef(parent);
-            if(kind==UnitKind::Subunit) {
-                require(row.sovereign.has_value(),"GIS_SOVEREIGN_REQUIRED");
-                // A country is an explicit level-one parent, not a guessed one.
-                if(!row.parent)row.parent=row.sovereign;
-            }
-        }
+        if(mapping.commonSovereign||!property(props,mapping.sovereignField).empty())throw std::invalid_argument("UNSUPPORTED_POLITICAL_RELATION");
+        const auto parent=mapping.commonParent?mapping.commonParent->id:property(props,mapping.parentField);
+        if(!parent.empty())row.parent=territorialRef(parent);
+        if(kind==UnitKind::Regional&&row.parent)throw std::invalid_argument("INVALID_PARENT_KIND");
+        if(row.validity.from||row.validity.to)throw std::invalid_argument("TIMELINE_ACTIVATION: dated import requires T4");
         const auto old=existing(snapshot,territorialRef(row.id));
-        require(!old||kind==UnitKind::Country&&old->kind==UnitKind::Country,
+        require(!old||kind==UnitKind::General&&old->kind==UnitKind::General,
                 "DUPLICATE_ID: territorial import");
         row.replaceExisting=old!=nullptr;
         units.push_back(std::move(row));
@@ -107,9 +99,10 @@ GisTerritorialImportPlan prepareGisTerritorialImport(const ProjectSnapshot& snap
     // The M4 calculator processes every donor against a detached draft. Each
     // resulting patch is applied with the imported rows by one ChangeSet.
     std::map<std::string,Geometry> countries;
+    std::map<std::string,Geometry> administrativeReplacements;
     std::set<std::string> touched;
-    for(const auto& row:snapshot.document().units)if(row.kind==UnitKind::Country)
-        countries.emplace(row.id,*snapshot.document().geometries.get(row.geometry));
+    for(const auto& row:snapshot.document().units)if(isRootGeneral(snapshot.document(),row))
+        countries.emplace(row.id,*snapshot.document().geometries.get(staticGeometryBinding(snapshot.document(),row.id).geometryRef));
     auto transfer=[&](const std::string& destination,const Geometry& claimed) {
         for(auto& [id,shape]:countries) {
             if(id==destination)continue;
@@ -126,46 +119,33 @@ GisTerritorialImportPlan prepareGisTerritorialImport(const ProjectSnapshot& snap
     };
     for(auto& row:units) {
         require(!cancelled||!cancelled(),"CANCELLED_GIS_IMPORT");
-        if(kind==UnitKind::Country) {
-            transfer(row.id,row.geometry);
-            countries[row.id]=row.geometry;
-            continue;
-        }
-        if(!row.sovereign)continue; // An unowned explicit region is permitted.
-        auto sovereign=countries.find(row.sovereign->id);
-        require(sovereign!=countries.end(),"GIS_SOVEREIGN_MISSING");
-        if(kind==UnitKind::Subunit) {
-            const auto outside=calculate(calculator,GeometryOperation::Difference,
-                row.geometry,sovereign->second,cancelled);
-            if(populated(outside)&&significantArea(planarArea(outside),planarArea(row.geometry))) {
-                if(mapping.coast==GisTerritorialMapping::CoastDecision::CountryGeometry) {
-                    auto kept=calculate(calculator,GeometryOperation::Intersection,
-                        row.geometry,sovereign->second,cancelled);
-                    require(populated(kept),"GIS_OUTSIDE_SOVEREIGN");
-                    row.geometry=std::move(kept);
-                } else if(mapping.coast==GisTerritorialMapping::CoastDecision::ImportedGeometry) {
-                    transfer(sovereign->first,row.geometry);
-                    sovereign->second=calculate(calculator,GeometryOperation::Union,
-                        sovereign->second,row.geometry,cancelled);
-                    touched.insert(sovereign->first);
-                } else throw std::invalid_argument("GIS_COAST_DECISION_REQUIRED");
+        if(kind==UnitKind::General&&!row.parent){transfer(row.id,row.geometry);countries[row.id]=row.geometry;continue;}
+        if(!row.parent)continue;
+        const auto parent=std::find_if(units.begin(),units.end(),[&](const auto& candidate){return candidate.id==row.parent->id;});
+        const auto old=existing(snapshot,*row.parent);require(parent!=units.end()||old,"GIS_PARENT_MISSING");
+        const auto& parentShape=parent!=units.end()?parent->geometry:*snapshot.document().geometries.get(staticGeometryBinding(snapshot.document(),old->id).geometryRef);
+        const auto outside=calculate(calculator,GeometryOperation::Difference,row.geometry,parentShape,cancelled);
+        if(populated(outside)&&significantArea(planarArea(outside),planarArea(row.geometry))) {
+            if(mapping.coast==GisTerritorialMapping::CoastDecision::ImportedGeometry) {
+                auto ancestor=*row.parent;std::set<std::string> seen;
+                while(true) {
+                    require(seen.insert(ancestor.id).second,"PARENT_CYCLE");
+                    const auto found=existing(snapshot,ancestor);require(found&&found->kind==UnitKind::General,"GIS_PARENT_MISSING");
+                    const auto prior=administrativeReplacements.count(ancestor.id)?administrativeReplacements.at(ancestor.id):*snapshot.document().geometries.get(staticGeometryBinding(snapshot.document(),ancestor.id).geometryRef);
+                    auto expanded=calculate(calculator,GeometryOperation::Union,prior,row.geometry,cancelled);
+                    const auto& relation=staticParentRelation(snapshot.document(),ancestor.id);
+                    if(relation.parentId.empty()){transfer(ancestor.id,row.geometry);countries[ancestor.id]=std::move(expanded);touched.insert(ancestor.id);break;}
+                    administrativeReplacements[ancestor.id]=std::move(expanded);ancestor=territorialRef(relation.parentId);
+                }
+                continue;
             }
-        }
-        if(row.parent&&row.sovereign&&!(*row.parent==*row.sovereign)) {
-            const auto parent=std::find_if(units.begin(),units.end(),[&](const auto& candidate){
-                return candidate.id==row.parent->id;});
-            const auto old=existing(snapshot,*row.parent);
-            require(parent!=units.end()||old,"GIS_PARENT_MISSING");
-            const auto& parentShape=parent!=units.end()?parent->geometry:
-                *snapshot.document().geometries.get(old->geometry);
-            const auto outside=calculate(calculator,GeometryOperation::Difference,
-                row.geometry,parentShape,cancelled);
-            require(!populated(outside)||!significantArea(planarArea(outside),planarArea(row.geometry)),
-                    "GIS_OUTSIDE_PARENT");
+            require(mapping.coast==GisTerritorialMapping::CoastDecision::CountryGeometry,"GIS_OUTSIDE_PARENT");
+            row.geometry=calculate(calculator,GeometryOperation::Intersection,row.geometry,parentShape,cancelled);require(populated(row.geometry),"GIS_OUTSIDE_PARENT");
         }
     }
     std::vector<GeometryReplacement> replacements;
     for(const auto& id:touched)replacements.push_back({territorialRef(id),countries.at(id)});
+    for(const auto& [id,shape]:administrativeReplacements)replacements.push_back({territorialRef(id),shape});
     return planTerritorialGisImport(snapshot,std::move(planId),std::move(source),
         mapping.target,std::move(units),std::move(replacements));
 }

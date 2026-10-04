@@ -15,17 +15,14 @@ const pandoeditor::TerritorialUnit* unit(const pandoeditor::ProjectDocument& doc
         [&](const auto& candidate){return candidate.id==id;});
     return found==document.units.end()?nullptr:&*found;
 }
-const pandoeditor::TerritorialRelation* baseRelation(
+const pandoeditor::TimelineParentRelation* parentRecord(
     const pandoeditor::ProjectDocument& document,const std::string& id) {
-    const auto ref=pandoeditor::territorialRef(id);
-    const auto found=std::find_if(document.relations.begin(),document.relations.end(),
-        [&](const auto& candidate){return !candidate.dated&&candidate.unit==ref;});
-    return found==document.relations.end()?nullptr:&*found;
+    return &pandoeditor::staticParentRelation(document,id);
 }
 std::size_t polygonCount(const pandoeditor::ProjectDocument& document,const std::string& id) {
     const auto* item=unit(document,id);
     if(!item)return 0;
-    const auto geometry=document.geometries.get(item->geometry);
+    const auto geometry=document.geometries.get(pandoeditor::staticGeometryBinding(document,item->id).geometryRef);
     return geometry?geometry->polygons.size():0;
 }
 void check(bool valid,const char* message) {
@@ -38,26 +35,25 @@ int main(int argc,char** argv) {
     try {
         const auto loaded=WorldDatasetLoader::canonical(QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR));
         const auto& document=*loaded.document;
-        check(std::count_if(document.units.begin(),document.units.end(),[](const auto& value){
-            return value.kind==pandoeditor::UnitKind::Country;
+        check(std::count_if(document.units.begin(),document.units.end(),[&](const auto& value){
+            return pandoeditor::isRootGeneral(document,value);
         })==std::ptrdiff_t(207),"fresh default must contain 207 countries");
-        check(std::count_if(document.units.begin(),document.units.end(),[](const auto& value){
-            return value.kind==pandoeditor::UnitKind::Subunit;
+        check(std::count_if(document.units.begin(),document.units.end(),[&](const auto& value){
+            return value.kind==pandoeditor::UnitKind::General&&!pandoeditor::isRootGeneral(document,value);
         })==std::ptrdiff_t(47),"fresh default must contain 47 subunits");
         check(document.units.size()==std::size_t(254),"fresh default must contain 254 logical units");
 
         const std::string greenland="d34b00a1-9b13-8000-8000-00000047524c";
         const auto* item=unit(document,greenland);
         check(item,"Greenland subunit is missing");
-        check(item->kind==pandoeditor::UnitKind::Subunit,"Greenland is not a subunit");
+        check(item->kind==pandoeditor::UnitKind::General,"Greenland is not a subunit");
         check(item->baseName.empty()&&item->nameExplicit,"subunit has country-only name state");
-        check(item->geometry.id=="world-country-GRL","Greenland lost its canonical geometry ID");
-        const auto* relation=baseRelation(document,greenland);
+        check(pandoeditor::staticGeometryBinding(document,item->id).geometryRef.id=="world-country-GRL","Greenland lost its canonical geometry ID");
+        const auto* relation=parentRecord(document,greenland);
         check(relation,"Greenland base relation is missing");
-        check(relation->parent==std::optional<pandoeditor::ObjectRef>(pandoeditor::territorialRef("DNK")),
+        check(relation->parentId=="DNK",
               "Greenland parent must be Denmark");
-        check(relation->sovereign==std::optional<pandoeditor::ObjectRef>(pandoeditor::territorialRef("DNK")),
-              "Greenland sovereign must be Denmark");
+        check(document.timelineRecords.parentRelations.size()==document.units.size(),"one administrative record for every static entity");
 
         const auto policy=std::find_if(document.extensions.begin(),document.extensions.end(),[](const auto& value){
             return value.id=="pandoeditor.builtin-territory-policy";

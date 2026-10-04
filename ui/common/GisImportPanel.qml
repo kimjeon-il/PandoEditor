@@ -29,7 +29,7 @@ Dialog {
     }
     function choices() {
         return {target:targetChoice.currentValue,idField:idField.text,nameField:nameField.text,
-            countryId:countryId.currentValue,parentId:parentId.currentValue,coast:coastChoice.currentValue,
+            parentId:parentId.currentValue,coast:coastChoice.currentValue,
             layerId:layerId.text,
             layerName:layerName.text}
     }
@@ -70,7 +70,7 @@ Dialog {
                 UiComboBox {
                     id:targetChoice;objectName:"gisTargetChoice"
                     Layout.fillWidth:true
-                    model:[{text:"국가",value:"country"},{text:"하위단위",value:"subunit"},{text:"지방",value:"region"},{text:"분포",value:"distribution"},{text:"기타 객체",value:"generic"}];textRole:"text";valueRole:"value"
+                    model:[{text:"일반 객체 · 독립",value:"country"},{text:"일반 객체 · 부모 있음",value:"subunit"},{text:"독립 권역",value:"region"},{text:"분포",value:"distribution"},{text:"기타 객체",value:"generic"}];textRole:"text";valueRole:"value"
                 }
                 RowLayout {
                     Layout.fillWidth:true
@@ -89,13 +89,7 @@ Dialog {
                 }
                 RowLayout {
                     Layout.fillWidth:true
-                    visible:targetChoice.currentValue==="subunit"||targetChoice.currentValue==="region"
-                    Label { text:"소속 국가" }
-                    UiComboBox {id:countryId;objectName:"gisCountryId";Layout.fillWidth:true;textRole:"name";valueRole:"id";model:[{id:"",name:"각 객체의 소속 필드 사용"}].concat(editor.relationCountryOptions)}
-                }
-                RowLayout {
-                    Layout.fillWidth:true
-                    visible:targetChoice.currentValue==="subunit"||targetChoice.currentValue==="region"
+                    visible:targetChoice.currentValue==="subunit"
                     Label { text:"상위 단위" }
                     UiComboBox {id:parentId;objectName:"gisParentId";Layout.fillWidth:true;textRole:"name";valueRole:"id";model:[{id:"",name:"각 객체의 상위 필드 사용"}].concat(editor.relationParentOptions)}
                 }

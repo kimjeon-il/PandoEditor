@@ -33,9 +33,9 @@ std::string mode(std::string requested) {
 }
 UnitKind historicalUnitKind(const std::string& raw) {
     const auto type=lower(trim(raw));
-    if(type=="country")return UnitKind::Country;
-    if(type=="subunit"||type=="territory"||type=="admin")return UnitKind::Subunit;
-    if(type=="region")return UnitKind::Region;
+    if(type=="country")return UnitKind::General;
+    if(type=="subunit"||type=="territory"||type=="admin")return UnitKind::General;
+    if(type=="region")return UnitKind::Regional;
     throw std::invalid_argument("INVALID_LIBRARY: entity type");
 }
 HistoricalLibrary::HistoricalLibrary(int schemaVersion,std::vector<HistoricalEntity> entities,
@@ -45,6 +45,8 @@ HistoricalLibrary::HistoricalLibrary(int schemaVersion,std::vector<HistoricalEnt
         throw std::invalid_argument("UNSUPPORTED_LIBRARY_SCHEMA");
     for(std::size_t i=0;i<entities_.size();++i) {
         auto& entity=entities_[i];
+        if(entity.catalogKind.empty())entity.catalogKind=entity.type==UnitKind::Regional?"region":entity.parentLibraryId.empty()?"country":"subunit";
+        if(historicalUnitKind(entity.catalogKind)!=entity.type)throw std::invalid_argument("INVALID_LIBRARY: catalog kind mismatch");
         entity.libraryId=trim(entity.libraryId);
         if(entity.libraryId.empty()||!entityIds_.emplace(entity.libraryId,i).second)
             throw std::invalid_argument("INVALID_LIBRARY: duplicate or empty entity ID");
@@ -101,7 +103,7 @@ std::vector<const HistoricalEntity*> HistoricalLibrary::search(const HistoricalS
     const auto point=trim(options.referenceDate).empty()
         ?std::optional<TemporalValue>{}:std::optional<TemporalValue>{parseTemporal(options.referenceDate)};
     for(const auto& entity:entities_) {
-        if(!options.type.empty()&&historicalUnitKind(options.type)!=entity.type)continue;
+        if(!options.type.empty()&&(historicalUnitKind(options.type)!=entity.type||(entity.type==UnitKind::General&&(lower(trim(options.type))=="country")!=(entity.catalogKind=="country"))))continue;
         if(options.status==HistoricalStatus::Current&&entity.validity.to)continue;
         if(options.status==HistoricalStatus::Past&&!entity.validity.to)continue;
         if(!options.geographicRegion.empty()&&trim(options.geographicRegion)!=entity.geographicRegion)continue;

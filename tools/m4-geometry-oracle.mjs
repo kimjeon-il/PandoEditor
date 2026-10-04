@@ -31,6 +31,7 @@ const multi=fixture('promote');multi.case='multipolygon';multi.units[1].geometry
 const remove=fixture('transfer');remove.case='empty former parent';remove.units[0].geometry=structuredClone(remove.units[1].geometry);rows.push(remove);
 const full=fixture('transfer');full.case='complete subtraction rejected';full.units[0].geometry=box(0,0,10);full.units[1].geometry=box(0,0,10);rows.push(full);
 const touch=fixture('convert');touch.case='touching countries';touch.countries[1].geometry=box(10,0,10);rows.push(touch);
+const contained=fixture('convert');contained.case='General parent preserves identity and shape';contained.countries[1].geometry=box(-5,-5,40);rows.push(contained);
 const merge=fixture('merge');merge.case='merge siblings';merge.parentId='P';merge.sourceIds=['X'];merge.units.push({type:'Feature',id:'X',geometry:box(4,2,2),properties:{name:'X',schemaVersion:2,unitType:'subunit',parentId:'P',sovereignId:'A',coverageMode:'partition'}});rows.push(merge);
 const annex=fixture('annex');annex.case='annex drawn area';annex.parentId='P';annex.sourceId='X';annex.draft=rectangle(4,2,1,2);annex.units.push({type:'Feature',id:'X',geometry:box(4,2,2),properties:{name:'X',schemaVersion:2,unitType:'subunit',parentId:'P',sovereignId:'A',coverageMode:'partition'}});rows.push(annex);
 const boundary=fixture('country-boundary');boundary.case='shared country boundary';boundary.targetId='A';boundary.countries[1].geometry=box(10,0,10);boundary.featurePatches=[structuredClone(boundary.countries[0]),structuredClone(boundary.countries[1])];boundary.featurePatches[0].geometry=rectangle(0,0,12,10);boundary.featurePatches[1].geometry=rectangle(12,0,8,10);rows.push(boundary);
@@ -43,6 +44,15 @@ function context() {
 }
 async function web(row) {
   const c=context(),data=structuredClone(row);const kernel=c.PandoLabTerritorialEdit.createKernel(c.polygonClipping);
+  // T2-2 General identities do not become a new ID or change shape when their
+  // administrative position changes. Geometry-kernel cases below remain pinned.
+  if(row.operation==='promote'||row.operation==='convert') {
+    const all=[...data.countries,...data.units],target=all.find(f=>f.id===row.targetId);
+    if(row.operation==='promote') {target.properties.parentId='';return {features:all,countries:new Set([...data.countries.map(f=>f.id),target.id]),clipper:c.polygonClipping};}
+    const parent=all.find(f=>f.id==='B');
+    if(!kernel.contains(parent.geometry,target.geometry))throw Error('GEOMETRY_OUTSIDE_PARENT');
+    target.properties.parentId='B';return {features:all,countries:new Set(data.countries.filter(f=>f.id!==target.id).map(f=>f.id)),clipper:c.polygonClipping};
+  }
   if(row.operation!=='convert') {
     const request={...data,newCountry:{...structuredClone(data.units.find(u=>u.id===row.targetId)),properties:{name:row.targetId}}};
     const patch=kernel.plan(request);const byId=new Map([...data.countries,...data.units].map(f=>[f.id,f]));
@@ -90,9 +100,9 @@ for(let i=0;i<rows.length;i++) {
     const a=actual.get(f.id),isCountry=expected.countries.has(f.id);
     assert.equal(a.properties.unitType,isCountry?'country':'subunit',f.id);
     assert.equal(a.properties.parentId,isCountry?'':f.properties.parentId,f.id);
-    assert.equal(a.properties.sovereignId,isCountry?'':f.properties.sovereignId,f.id);
+    assert.equal(Object.hasOwn(a.properties,'sovereignId'),false,'political sovereignty must not be inferred');
     const multi=g=>g.type==='Polygon'?[g.coordinates]:g.coordinates;
     assert.equal(JSON.stringify(expected.clipper.xor(multi(a.geometry),multi(f.geometry))),'[]',`${rows[i].case}: geometry ${f.id}`);
   }
 }
-console.log(`M4 web 17c3dbe: ${rows.length} native transaction comparisons passed (transfer, conversion, merge, annex, shared boundary and coast).`);
+console.log(`M4: ${rows.length} transaction comparisons passed (pinned unchanged geometry kernel; General parent-only identity transitions).`);

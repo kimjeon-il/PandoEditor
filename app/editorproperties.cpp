@@ -53,27 +53,22 @@ QVariantMap EditorController::computeObjectProperties() const {
  result["colorEnabled"]=!propertyBusy()&&!layerLocked&&!selection_.items().empty()&&(selection_.items().size()>1||!anyLocked);
  const auto u=selectedUnit();if(!u||selection_.items().size()!=1)return result;
  const auto ref=territorialRef(u->id);const auto& style=project_.document().presentation.objectStyles.at(ref);
- result["id"]=q(u->id);result["type"]=u->kind==UnitKind::Country?"country":u->kind==UnitKind::Subunit?"subunit":"region";
- result["displayName"]=q(objectDisplayName(*u));result["namePending"]=nameDraft_!=q(u->kind==UnitKind::Country?objectDisplayName(*u):u->name);result["nameDraft"]=nameDraft_;result["notesDraft"]=memoDraft_;
+ result["id"]=q(u->id);result["type"]=u->kind==UnitKind::General?"general":"regional";
+ result["displayName"]=q(objectDisplayName(*u));result["namePending"]=nameDraft_!=q(u->kind==UnitKind::General?objectDisplayName(*u):u->name);result["nameDraft"]=nameDraft_;result["notesDraft"]=memoDraft_;
  result["color"]=hex(effectiveObjectColor(project_.document(),ref));result["colorExplicit"]=style.explicitColor;
  result["defaultColor"]=hex(effectiveObjectColor(project_.document(),ref,0xcccccc,0x8c68d8,true));
- result["colorLabel"]=style.explicitColor?result["color"].toString().toUpper():u->kind==UnitKind::Subunit?QStringLiteral("국가색 상속"):QStringLiteral("기본 색상");
- result["locked"]=u->locked;result["editable"]=selectedEditable()&&!propertyBusy();result["dateFields"]=u->kind==UnitKind::Region;
+ result["colorLabel"]=style.explicitColor?result["color"].toString().toUpper():!staticParentRelation(project_.document(),u->id).parentId.empty()?QStringLiteral("상위 색상 상속"):QStringLiteral("기본 색상");
+ result["locked"]=u->locked;result["editable"]=selectedEditable()&&!propertyBusy();result["dateFields"]=false;
  result["validFrom"]=validFromDraft_;result["validTo"]=validToDraft_;
- const auto r=baseRelation(project_.document(),ref);
- result["parentId"]=r&&r->parent?q(r->parent->id):QString();result["sovereignId"]=r&&r->sovereign?q(r->sovereign->id):QString();
- auto relationName=[&](const std::optional<ObjectRef>& related){if(!related)return QString();const auto view=project_.propertyView(*related);return view?q(view->displayName):QStringLiteral("참조 객체를 찾을 수 없음");};
- result["parentName"]=relationName(r?r->parent:std::optional<ObjectRef>{});result["sovereignName"]=relationName(r?r->sovereign:std::optional<ObjectRef>{});
- bool conflict=false;auto normalized=q(trimWebText(u->name)).toLower();
- if(u->kind!=UnitKind::Country && !normalized.isEmpty())for(const auto& other:project_.document().units){
-  const auto relation=baseRelation(project_.document(),territorialRef(other.id));
-  if(other.id!=u->id && other.kind==u->kind && (r?r->sovereign:std::optional<ObjectRef>{})==(relation?relation->sovereign:std::optional<ObjectRef>{})
-    && q(trimWebText(other.name)).toLower()==normalized){conflict=true;break;}
- }
+ const auto& relation=staticParentRelation(project_.document(),u->id);
+ result["parentId"]=q(relation.parentId);result["parentName"]=QString();
+ if(!relation.parentId.empty()){const auto view=project_.propertyView(territorialRef(relation.parentId));if(view)result["parentName"]=q(view->displayName);}
+ bool conflict=false;const auto normalized=q(trimWebText(u->name)).toLower();
+ for(const auto& other:project_.document().units)if(other.id!=u->id&&other.kind==u->kind&&staticParentRelation(project_.document(),other.id).parentId==relation.parentId&&q(trimWebText(other.name)).toLower()==normalized){conflict=true;break;}
  result["nameConflict"]=conflict;return result;
 }
-void EditorController::setValidFromDraft(const QString& value){if(!selectionTransition_&&selectedUnit()&&selectedUnit()->kind==UnitKind::Region){cancelPreview();validFromDraft_=value;emit draftsChanged();emit dirtyChanged();}}
-void EditorController::setValidToDraft(const QString& value){if(!selectionTransition_&&selectedUnit()&&selectedUnit()->kind==UnitKind::Region){cancelPreview();validToDraft_=value;emit draftsChanged();emit dirtyChanged();}}
+void EditorController::setValidFromDraft(const QString& value){if(!selectionTransition_&&selectedUnit()&&selectedUnit()->kind==UnitKind::Regional){cancelPreview();validFromDraft_=value;emit draftsChanged();emit dirtyChanged();}}
+void EditorController::setValidToDraft(const QString& value){if(!selectionTransition_&&selectedUnit()&&selectedUnit()->kind==UnitKind::Regional){cancelPreview();validToDraft_=value;emit draftsChanged();emit dirtyChanged();}}
 void EditorController::refreshDraftField(const ObjectRef& ref,const QString& field) {
  const auto it=parkedCountryDrafts_.find(q(ref.id));if(it==parkedCountryDrafts_.end())return;
  it->second.fields.erase(field.toStdString());
@@ -100,7 +95,7 @@ bool EditorController::commitObjectField(const QString& field) {
  if(fieldCommitInProgress_ || selectionTransition_ || selection_.items().size()!=1)return false;
  const auto kind=fieldKind(field);const auto u=selectedUnit();if(!kind||!u)return false;
  QScopedValueRollback<bool> guard(fieldCommitInProgress_,true);
- const auto target=territorialRef(u->id);const bool regionOrSubunit=u->kind!=UnitKind::Country;
+ const auto target=territorialRef(u->id);const bool regionOrSubunit=u->kind!=UnitKind::General;
  const auto value=field=="name"?nameDraft_:field=="notes"?memoDraft_:field=="validFrom"?validFromDraft_:validToDraft_;
  const bool ok=runPropertyCommand("territorial.field",TerritorialFieldEdit{target,*kind,value.toStdString()},field);
  if(!ok && regionOrSubunit){
@@ -112,7 +107,7 @@ bool EditorController::commitObjectField(const QString& field) {
 }
 QString EditorController::beginPropertyEdit(const QString& field) {
  const auto u=selectedUnit();if(!u||selection_.items().size()!=1||!fieldKind(field))return {};
- if((field=="validFrom"||field=="validTo")&&u->kind!=UnitKind::Region)return {};
+ if((field=="validFrom"||field=="validTo")&&u->kind!=UnitKind::Regional)return {};
  const auto token=QUuid::createUuid().toString(QUuid::WithoutBraces);
  fieldSessions_.emplace(token,FieldSession{project_.snapshot(),territorialRef(u->id),field});refreshTypedScene();return token;
 }

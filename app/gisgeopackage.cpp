@@ -65,6 +65,7 @@ bool hasTable(QSqlDatabase& db,const QString& name) {
     return row.next();
 }
 std::string target(const std::string& name) {
+    if(name=="entities")return "general";
     if(name=="countries")return "country";
     if(name=="subunits"||name=="territories"||name=="administrative")return "subunit";
     if(name=="regions")return "region";
@@ -76,6 +77,7 @@ std::string target(const std::string& name) {
     return {};
 }
 std::string identityColumn(const std::string& name) {
+    if(name=="entities")return "id";
     if(name=="countries"||name=="places")return "pandolab_id";
     if(name=="subunits"||name=="territories"||name=="administrative"||name=="regions"||
        name=="generic_features_point"||name=="generic_features_line"||
@@ -168,6 +170,7 @@ GisGeoPackage readGisGeoPackage(const QString& filePath) {
             const int geomIndex=record.indexOf(column);
             const auto idKey=identityColumn(layer.tableName);
             const int idIndex=idKey.empty()?-1:record.indexOf(QString::fromStdString(idKey));
+            for(int i=0;i<record.count();++i)if(i!=geomIndex)layer.propertyColumns.push_back(ascii(record.fieldName(i)));
             require(geomIndex>=0&&(idKey.empty()||idIndex>=0),
                     "INVALID_GPKG_GEOMETRY_COLUMN");
             std::set<std::string> ids;
@@ -201,7 +204,38 @@ GisGeoPackage readGisGeoPackage(const QString& filePath) {
     for(const auto& [table,row]:content)
         if(row.dataType=="features")require(geometryTables.count(table)>0,
                                            "MISSING_GPKG_GEOMETRY_COLUMNS");
-    require(!result.layers.empty(),"GPKG_NO_VECTOR_LAYERS");
+    require(result.projectPackage||!result.layers.empty(),"GPKG_NO_VECTOR_LAYERS");
     return result;
+}
+void validateProjectGeoPackageVectors(const GisGeoPackage& actual,const std::vector<GisGeoPackageLayer>& expected) {
+    std::map<std::string,const GisGeoPackageLayer*> tables;
+    for(const auto& layer:expected)require(tables.emplace(layer.tableName,&layer).second,"DUPLICATE_PROJECT_VECTOR_TABLE");
+    std::set<std::string> seen;
+    auto properties=[](const std::string& bytes) {
+        auto value=losslessjson::parse(QByteArray::fromStdString(bytes));value.object.erase("fid");
+        for(auto& [key,child]:value.object)if(key.size()>5&&key.substr(key.size()-5)=="_json"&&child.kind==V::String)
+            child=losslessjson::parse(QByteArray::fromStdString(child.string));
+        return value.encode();
+    };
+    auto geometry=[](const GisGeoJsonFeature& feature) {
+        GisGeoJsonCollection value;value.features.push_back({"",feature.geometry,"{}"});return exportGisGeoJson(value);
+    };
+    for(const auto& layer:actual.layers) {
+        const auto found=tables.find(layer.tableName);
+        require(found!=tables.end()&&seen.insert(layer.tableName).second,"UNSUPPORTED_PROJECT_VECTOR_TABLE");
+        const auto& reference=*found->second;
+        require(layer.geometryType==reference.geometryType,"PROJECT_VECTOR_GEOMETRY_TYPE_MISMATCH");
+        require(std::set<std::string>(layer.propertyColumns.begin(),layer.propertyColumns.end())==
+                std::set<std::string>(reference.propertyColumns.begin(),reference.propertyColumns.end()),"UNSUPPORTED_PROJECT_VECTOR_COLUMN");
+        std::map<std::string,const GisGeoJsonFeature*> rows;
+        for(const auto& row:reference.collection.features)require(rows.emplace(row.id,&row).second,"DUPLICATE_PROJECT_VECTOR_ID");
+        require(layer.collection.features.size()==rows.size(),"PROJECT_VECTOR_ROW_MISMATCH");
+        for(const auto& row:layer.collection.features) {
+            const auto match=rows.find(row.id);require(match!=rows.end(),"PROJECT_VECTOR_ROW_MISMATCH");
+            require(geometry(row)==geometry(*match->second),"PROJECT_VECTOR_SHAPE_MISMATCH");
+            require(properties(row.propertiesJson)==properties(match->second->propertiesJson),"PROJECT_VECTOR_PROPERTY_MISMATCH");
+        }
+    }
+    for(const auto& [name,layer]:tables)require(layer->collection.features.empty()||seen.count(name),"PROJECT_VECTOR_TABLE_MISSING");
 }
 }

@@ -64,7 +64,7 @@ RenderStyle styleFor(const ProjectDocument& doc,const ObjectRef& ref,
         style.color=object->second.color;defaultOpacity*=object->second.opacity;
     }
     const auto group=ref.domain=="territorial"?[&]() {
-        for(const auto& u:doc.units)if(u.id==ref.id)return territorialGroup(u.kind);
+        for(const auto& u:doc.units)if(u.id==ref.id)return territorialGroup(doc,u.id);
         return std::string{};
     }():contentGroup(doc,ref);
     if(ref.domain=="territorial") {
@@ -95,7 +95,7 @@ float layerOpacityFor(const ProjectDocument& doc,const ObjectRef& ref) {
 }
 std::optional<GeometryRef> geometryFor(const ProjectDocument& doc,const ObjectRef& ref) {
     if(ref.domain=="territorial") {
-        for(const auto& unit:doc.units)if(unit.id==ref.id)return unit.geometry;
+        for(const auto& unit:doc.units)if(unit.id==ref.id)return staticGeometryBinding(doc,unit.id).geometryRef;
     } else if(ref.domain=="hydro") {
         for(const auto& feature:doc.hydro)if(feature.id==ref.id)return feature.geometry;
     } else if(ref.domain=="generic") {
@@ -313,7 +313,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             if(!worldBase_->startupPreview()) {
                 const auto unit=std::find_if(doc.units.begin(),doc.units.end(),
                     [&](const auto& value){return value.id==range.ownerId;});
-                if(unit==doc.units.end()||!(unit->geometry==GeometryRef{range.geometryId,1})) {
+                if(unit==doc.units.end()||!(staticGeometryBinding(doc,unit->id).geometryRef==GeometryRef{range.geometryId,1})) {
                     base.visible=false;
                 } else {
                     const auto ref=territorialRef(range.ownerId);
@@ -397,10 +397,10 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
                 if(object.domain=="territorial")for(const auto& unit:doc.units)
                     if(unit.id==object.id) {
                         stroke.style.color=0x61778a;
-                        stroke.style.width=unit.kind==UnitKind::Country?1.2f:
-                            unit.kind==UnitKind::Subunit?.9f:.7f;
-                        if(unit.kind==UnitKind::Subunit){stroke.style.dashOn=4;stroke.style.dashOff=2;}
-                        if(unit.kind==UnitKind::Region){stroke.style.dashOn=1.5f;stroke.style.dashOff=2;}
+                        stroke.style.width=isRootGeneral(doc,unit)?1.2f:
+                            unit.kind==UnitKind::General?.9f:.7f;
+                        if(unit.kind==UnitKind::General&&!isRootGeneral(doc,unit)){stroke.style.dashOn=4;stroke.style.dashOff=2;}
+                        if(unit.kind==UnitKind::Regional){stroke.style.dashOn=1.5f;stroke.style.dashOff=2;}
                         break;
                     }
                 stroke.drawOrder=mapRenderOrder(doc,object,RenderPrimitiveRole::Boundary);

@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #pragma once
 #include <pandoeditor/document.h>
 #include <QJsonObject>
@@ -105,8 +106,8 @@ inline pandoeditor::ProjectDocument loadWorldCorpusProject(const QString& fixtur
         const auto feature=value.toObject();const auto id=feature.value(QStringLiteral("id")).toString().toStdString();
         TerritorialUnit unit;unit.id=id;unit.name=feature.value(QStringLiteral("properties")).toObject()
             .value(QStringLiteral("name")).toString().toStdString();unit.baseName=unit.name;
-        unit.kind=UnitKind::Country;unit.geometry=put("country-"+id,feature.value(QStringLiteral("geometry")).toObject());
-        d.units.push_back(std::move(unit));
+        unit.kind=UnitKind::General;const auto geometry=put("country-"+id,feature.value(QStringLiteral("geometry")).toObject());
+        appendTerritory(d,std::move(unit),geometry);
         d.presentation.membership[territorialRef(id)]="countries";
         d.presentation.objectStyles[territorialRef(id)]={0xa8c7db,1};
     }
@@ -115,12 +116,10 @@ inline pandoeditor::ProjectDocument loadWorldCorpusProject(const QString& fixtur
         const auto entry=composition.value(QString::fromLatin1(key)).toObject();
         const auto id=entry.value(QStringLiteral("id")).toString().toStdString();
         TerritorialUnit unit;unit.id=id;unit.name=entry.value(QStringLiteral("name")).toString().toStdString();
-        unit.kind=QString::fromLatin1(key)==QStringLiteral("subunit")?UnitKind::Subunit:UnitKind::Region;
-        unit.geometry=put("unit-"+id,entry.value(QStringLiteral("geometry")).toObject());
-        d.units.push_back(std::move(unit));
-        d.relations.push_back({"m71-relation-"+id,territorialRef(id),
-            territorialRef(entry.value(QStringLiteral("parent")).toString().toStdString()),
-            territorialRef(entry.value(QStringLiteral("sovereign")).toString().toStdString())});
+        unit.kind=QString::fromLatin1(key)==QStringLiteral("subunit")?UnitKind::General:UnitKind::Regional;
+        const auto geometry=put("unit-"+id,entry.value(QStringLiteral("geometry")).toObject());
+        const auto parent=unit.kind==UnitKind::General?entry.value(QStringLiteral("parent")).toString().toStdString():"";
+        appendTerritory(d,std::move(unit),geometry,parent);
         d.presentation.membership[territorialRef(id)]="composition";
         d.presentation.objectStyles[territorialRef(id)]={0x97b7c8,1};
     }

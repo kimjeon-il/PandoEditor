@@ -4,19 +4,21 @@
 #include <QFile>
 #include <QBuffer>
 #include <QImage>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QtTest>
 #include <algorithm>
 #include <tuple>
 class PresentationEditorTests:public QObject {
     Q_OBJECT
 private slots:
-    void countryConversionRetainsItsDefaultFlagAcrossSaveAndReset_data() {
+    void administrativeMoveRetainsFlagPolicyAcrossSaveAndReset_data() {
         QTest::addColumn<QString>("overridePolicy");
         QTest::newRow("default")<<QString("default");
         QTest::newRow("embedded")<<QString("embedded");
         QTest::newRow("none")<<QString("none");
     }
-    void countryConversionRetainsItsDefaultFlagAcrossSaveAndReset() {
+    void administrativeMoveRetainsFlagPolicyAcrossSaveAndReset() {
         QFETCH(QString,overridePolicy);
         using namespace pandoeditor;
         QTemporaryDir dir;EditorController resources({false,dir.filePath("private.json")});
@@ -34,26 +36,25 @@ private slots:
         }
         Project project;project.replace(document);
         auto planned=CommandProcessor::planTerritorial(project,ConvertTerritorialTypeIntent{
-            territorialRef("DEU"),UnitKind::Subunit,territorialRef("FRA"),territorialRef("FRA"),"deu-subunit"});
+            territorialRef("DEU"),UnitKind::General,territorialRef("FRA"),{},""});
         QVERIFY(planned.ok()&&planned.plan);
-        CommandArguments args;args.action=ApplyTerritorialMutation{*planned.plan,GeometryPatch{
-            project.revision(),{{territorialRef("deu-subunit"),box(0,0,10)},{territorialRef("FRA"),box(-5,-5,40)}},{},{}}};
+        CommandArguments args;args.action=ApplyTerritorialMutation{*planned.plan,std::nullopt};
         auto prepared=CommandProcessor::prepare(project,CommandProcessor::makeRequest(project,"territorial.geometry.commit",args));
         QVERIFY(prepared.ok()&&prepared.preview);QVERIFY(CommandProcessor::confirm(project,*prepared.preview).ok());
-        QCOMPARE(resolveDefaultFlag(project.document(),territorialRef("deu-subunit")).source,expected);
+        QCOMPARE(resolveDefaultFlag(project.document(),territorialRef("DEU")).source,expected);
         QVERIFY(project.undo());QVERIFY(project.redo());
         QFile file(dir.filePath("converted.json"));QVERIFY(file.open(QIODevice::WriteOnly));
         file.write(projectcodec::encode(project));file.close();
         EditorController editor({false,dir.filePath("converted-private.json")});
         QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
-        QVERIFY(editor.selectObject({{"domain","territorial"},{"id","deu-subunit"}},"replace","map"));
+        QVERIFY(editor.selectObject({{"domain","territorial"},{"id","DEU"}},"replace","map"));
         QCOMPARE(editor.selectedFlagSource(),expected);
         QVERIFY(editor.beginContentEdit("territorial","flag"));
         QVERIFY(editor.loadContentFlag(QUrl("qrc:/defaults/flags/native/np.svg")));
         QVERIFY(editor.commitContentField("flagSource"));editor.cancelContentEdit();
         QVERIFY(editor.beginContentEdit("territorial","flag"));
         QVERIFY(editor.updateContentField("flagPolicy","default"));QVERIFY(editor.commitContentField("flagPolicy"));
-        QCOMPARE(editor.selectedFlagSource(),expected);
+        QCOMPARE(editor.selectedFlagSource(),QString("qrc:/defaults/flags/native/de.svg"));
     }
     void flagLibraryUsesTheSameDefaultAssetsAsWeb() {
         QTemporaryDir dir;EditorController editor({false,dir.filePath("private.json")});
@@ -104,18 +105,47 @@ private slots:
         QVERIFY(reopened.openFile(QUrl::fromLocalFile(saved.fileName())));reopened.selectCountry("DEU");
         QCOMPARE(reopened.selectedFlagSource(),expected);
     }
+    void rasterUploadAndPersistenceUseTheSamePixelBoundary_data() {
+        QTest::addColumn<int>("width");QTest::addColumn<bool>("accepted");
+        QTest::newRow("at-limit")<<4096<<true;
+        QTest::newRow("over-limit")<<4097<<false;
+    }
+    void rasterUploadAndPersistenceUseTheSamePixelBoundary() {
+        QFETCH(int,width);QFETCH(bool,accepted);
+        QTemporaryDir dir;QImage image(width,4096,QImage::Format_Grayscale8);image.fill(127);
+        QByteArray bytes;QBuffer buffer(&bytes);QVERIFY(buffer.open(QIODevice::WriteOnly));
+        QVERIFY(image.save(&buffer,"PNG"));buffer.close();
+        QFile upload(dir.filePath("compressed.png"));QVERIFY(upload.open(QIODevice::WriteOnly));upload.write(bytes);upload.close();
+        EditorController editor({false,dir.filePath("private.json")});editor.selectCountry("DEU");
+        QVERIFY(editor.beginContentEdit("territorial","flag"));
+        const auto before=editor.documentBytes();const auto session=editor.contentEditState();
+        QCOMPARE(editor.loadContentFlag(QUrl::fromLocalFile(upload.fileName())),accepted);
+        if(!accepted) {QCOMPARE(editor.contentEditState(),session);QCOMPARE(editor.documentBytes(),before);return;}
+        QVERIFY(editor.commitContentField("flagSource"));editor.cancelContentEdit();
+        const auto saved=editor.documentBytes();
+        const auto reopened=projectcodec::decode(saved);
+        QCOMPARE(reopened.symbols.at(pandoeditor::territorialRef("DEU")).embeddedDataUrl,
+                 QString::fromLatin1("data:image/png;base64,"+bytes.toBase64()).toStdString());
+    }
+    void truncatedRasterIsRejectedBeforeChangingTheFlagSession() {
+        QTemporaryDir dir;QImage image(4,4,QImage::Format_ARGB32);image.fill(Qt::red);
+        QByteArray bytes;QBuffer buffer(&bytes);QVERIFY(buffer.open(QIODevice::WriteOnly));
+        QVERIFY(image.save(&buffer,"PNG"));buffer.close();bytes.truncate(33);
+        QFile upload(dir.filePath("truncated.png"));QVERIFY(upload.open(QIODevice::WriteOnly));upload.write(bytes);upload.close();
+        EditorController editor({false,dir.filePath("private.json")});editor.selectCountry("DEU");
+        QVERIFY(editor.beginContentEdit("territorial","flag"));
+        const auto before=editor.documentBytes();const auto session=editor.contentEditState();
+        QVERIFY(!editor.loadContentFlag(QUrl::fromLocalFile(upload.fileName())));
+        QCOMPARE(editor.contentEditState(),session);QCOMPARE(editor.documentBytes(),before);
+    }
     void territorialFlagMetadataUsesWebPrecedence() {
         using namespace pandoeditor;
         QTemporaryDir dir;EditorController resources({false,dir.filePath("private.json")});
         ProjectDocument document;
-        TerritorialUnit unit;unit.id="child";unit.kind=UnitKind::Subunit;
+        TerritorialUnit unit;unit.id="child";unit.kind=UnitKind::General;
         document.units.push_back(unit);
         auto metadata=[&](const std::string& field,const std::string& json) {
-            document.extensions.clear();
-            PreservedExtension extension;extension.id="flag-metadata";
-            extension.jsonPointer="/territorialEntities/0/properties/metadata/"+field;
-            extension.payload=json;extension.dependencies={territorialRef("child")};
-            document.extensions.push_back(extension);
+            document.units.front().metadata="{\""+field+"\":"+json+"}";
         };
         metadata("defaultFlagDataUrl","\"data:image/svg+xml;base64,PHN2Zy8+\"");
         QCOMPARE(resolveDefaultFlag(document,territorialRef("child")).source,
@@ -131,9 +161,7 @@ private slots:
         metadata("builtinSubunit","{\"sourceCountryId\":\"KOR\"}");
         QCOMPARE(resolveDefaultFlag(document,territorialRef("child")).source,
                  QString("qrc:/defaults/flags/native/kr.svg"));
-        auto empty=document.extensions.front();empty.id="empty-default";
-        empty.jsonPointer="/territorialEntities/0/properties/metadata/defaultFlagDataUrl";empty.payload="\"\"";
-        document.extensions.push_back(empty);
+        document.units.front().metadata="{\"builtinSubunit\":{\"sourceCountryId\":\"KOR\"},\"defaultFlagDataUrl\":\"\"}";
         QCOMPARE(resolveDefaultFlag(document,territorialRef("child")).source,
                  QString("qrc:/defaults/flags/native/kr.svg"));
     }

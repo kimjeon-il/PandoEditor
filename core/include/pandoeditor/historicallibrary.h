@@ -21,7 +21,7 @@ struct HistoricalInstantiationPolicy {
 };
 struct HistoricalEntity {
     std::string libraryId;
-    UnitKind type=UnitKind::Country;
+    UnitKind type=UnitKind::General;
     std::string canonicalName;
     std::map<std::string,std::string> displayNames;
     std::vector<std::string> alternateNames;
@@ -30,6 +30,8 @@ struct HistoricalEntity {
     std::vector<HistoricalGeometryVersion> geometryVersions;
     HistoricalInstantiationPolicy instantiation;
     std::string metadata="{}", sourceInfo="{}", geographicRegion;
+    // Source catalog v2 classification; project identities use General/Regional.
+    std::string catalogKind;
 };
 struct WorldSnapshot {
     std::string id,name;
@@ -39,7 +41,7 @@ struct WorldSnapshot {
 };
 struct HistoricalSelection {
     std::string libraryId,geometryVersionId,name;
-    UnitKind type=UnitKind::Country;
+    UnitKind type=UnitKind::General;
     Geometry geometry; // A copy; editing this never changes the catalog.
     Validity validity;
     std::string parentLibraryId,sovereignLibraryId;

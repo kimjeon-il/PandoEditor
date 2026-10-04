@@ -8,18 +8,21 @@ constexpr std::array<const char*,4> overlayGroups{
     "distributions","subunits","regions","genericFeatures"};
 std::string groupFor(const ProjectDocument& document,const ObjectRef& ref) {
     if(ref.domain=="territorial")for(const auto& unit:document.units)if(unit.id==ref.id)
-        return unit.kind==UnitKind::Country?"countries":unit.kind==UnitKind::Subunit?"subunits":"regions";
+        return territorialGroup(document,unit.id);
     return contentGroup(document,ref);
 }
-int overlayIndex(const std::string& group) {
+int overlayIndex(const ProjectDocument& document,const std::string& group) {
+    const auto& order=document.presentation.webPresentation.overlayOrder;
+    const auto found=std::find(order.begin(),order.end(),group);
+    if(found!=order.end())return static_cast<int>(found-order.begin());
     for(std::size_t i=0;i<overlayGroups.size();i++)if(group==overlayGroups[i])return static_cast<int>(i);
     return -1;
 }
 double territorialObjectOrder(const ProjectDocument& document,const ObjectRef& ref) {
     if(ref.domain!="territorial")return 0;
     const auto& order=document.presentation.webPresentation.objectOrder;
-    for(const auto& unit:document.units)if(unit.id==ref.id&&unit.kind!=UnitKind::Country){
-        const auto key=territorialPresentationKey(unit.kind,unit.id);
+    for(const auto& unit:document.units)if(unit.id==ref.id&&!isRootGeneral(document,unit)){
+        const auto key=territorialPresentationKey(unit.id);
         const auto found=std::find(order.begin(),order.end(),key);
         if(found!=order.end())return double(found-order.begin())/double(order.size()+1);
     }
@@ -38,11 +41,11 @@ MapRenderOrder mapRenderOrder(const ProjectDocument& document,const ObjectRef& r
     // QPainter uses ordinary overpainting, so country must be behind children.
     if(group=="countries")return {role==RenderPrimitiveRole::Boundary?50:0,0,0};
     if(group=="subunits"||group=="regions")
-        return {role==RenderPrimitiveRole::Fill?10:60,overlayIndex(group),territorialObjectOrder(document,ref)};
+        return {role==RenderPrimitiveRole::Fill?10:60,overlayIndex(document,group),territorialObjectOrder(document,ref)};
     if(group=="rivers"||group=="lakes")
         return mapBuiltinHydroRenderOrder(group=="lakes"?"lake":"river",role);
     if(group=="labels")return {role==RenderPrimitiveRole::Label?80:70,0,0};
-    const auto overlay=overlayIndex(group);
+    const auto overlay=overlayIndex(document,group);
     if(overlay>=0) {
         double layerOrder=0;
         if(ref.domain=="distributionEntry")for(const auto& entry:document.distributionEntries)if(entry.id==ref.id)
@@ -54,7 +57,7 @@ MapRenderOrder mapRenderOrder(const ProjectDocument& document,const ObjectRef& r
 }
 int mapPickOrder(const ProjectDocument& document,const ObjectRef& ref) {
     const auto group=groupFor(document,ref);
-    const auto overlay=overlayIndex(group);
+    const auto overlay=overlayIndex(document,group);
     if(overlay>=0)return 1000-overlay;
     if(group=="labels")return 1300;
     if(group=="rivers"||group=="lakes")return 850;

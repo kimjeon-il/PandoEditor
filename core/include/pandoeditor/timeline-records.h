@@ -1,5 +1,5 @@
 #pragma once
-#include <pandoeditor/document.h>
+#include <pandoeditor/geometry-types.h>
 #include <functional>
 #include <stdexcept>
 

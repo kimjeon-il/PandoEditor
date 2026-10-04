@@ -1,6 +1,8 @@
+#include "territorial_fixture.h"
 #include "territorialgeometry.h"
 #include "projectcodec.h"
 #include "editorcontroller.h"
+#include "retainedreferencerewriter.h"
 #include <pandoeditor/geometrypredicates.h>
 #include <pandoeditor/map/projectionengine.h>
 #include <pandoeditor/presentationcommands.h>
@@ -16,17 +18,18 @@ ProjectDocument fixture() {
     ProjectDocument d({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(20,0,10).polygons,0x123456}},{{"countries","Countries"}});
     for(const auto id:{"P","S","C"}) {
         const GeometryRef g{id,1};d.geometries.insert(g,square(id==std::string("P")?1:2,id==std::string("P")?1:2,id==std::string("P")?8:id==std::string("S")?2:1));
-        d.units.push_back({id,id,"",UnitKind::Subunit,g});d.units.back().coverageMode="partition";
+        appendTerritory(d,{id,id,"",UnitKind::General,false},g);staticParentRelation(d,d.units.back().id).coverageMode="partition";
         d.presentation.objectStyles[territorialRef(id)]={};
-        d.relations.push_back({std::string("r-")+id,territorialRef(id),territorialRef(id==std::string("P")?"A":id==std::string("S")?"P":"S"),territorialRef("A")});
+        setFixtureParent(d,territorialRef(id),territorialRef(id==std::string("P")?"A":id==std::string("S")?"P":"S"));
     }
     // No native membership: imported web objects are valid geometry owners.
     d.presentation.membership.clear();validateDocument(d);return d;
 }
-double area(const Project& p,const std::string& id) {return planarArea(*p.document().geometries.get(p.document().units.at(p.index().objects.at(territorialRef(id))).geometry));}
+double area(const Project& p,const std::string& id) {return planarArea(*p.document().geometries.get(staticGeometryBinding(p.document(),p.document().units.at(p.index().objects.at(territorialRef(id))).id).geometryRef));}
 PrepareResult prepare(Project& p,const TerritorialMutationIntent& intent) {
     auto plan=CommandProcessor::planTerritorial(p,intent);
     if(!plan.ok()){PrepareResult error;error.detail=plan.detail;return error;}
+    if(plan.plan->geometry.kind!=GeometryRequirementKind::WorkerPatch){CommandArguments args;args.action=ApplyTerritorialMutation{*plan.plan,{}};return CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"territorial.relation.parent",args),[](const ProjectDocument& before,const TerritorialMutationPlan& mutation,std::vector<PreservedExtension>& candidate){auto result=retainedrefs::rewrite(before,mutation,candidate);return ExtensionRewriteResult{result.ok,result.detail,result.handledExtensionIds};});}
     JobScheduler jobs;const auto ticket=jobs.enqueue(p.snapshot(),"test");jobs.takeNext();
     return prepareTerritorialGeometry(p.snapshot(),*plan.plan,ticket.token());
 }
@@ -72,7 +75,7 @@ private slots:
         Geometry point;point.type="Point";point.points={{15,5}};document.geometries.insert({"label",1},point);
         PlaceLabel label;label.id="label";label.name="covering";label.geometry={"label",1};document.labels.push_back(label);
         DistributionLayer layer;layer.id="covering";layer.name="Covering distribution";document.distributionLayers.push_back(layer);
-        DistributionEntry entry;entry.id="covering-entry";entry.layerId=layer.id;entry.geometry=document.units[1].geometry;entry.value=10;document.distributionEntries.push_back(entry);
+        DistributionEntry entry;entry.id="covering-entry";entry.layerId=layer.id;entry.geometry=staticGeometryBinding(document,document.units[1].id).geometryRef;entry.value=10;document.distributionEntries.push_back(entry);
         document.presentation.membership.clear(); // Current web documents have no legacy native-layer membership.
         Project source;source.replace(document);
         QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();
@@ -96,7 +99,7 @@ private slots:
         QVERIFY(c.geometryChooseSplitResult(-1));QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);
         QVERIFY(c.confirmGeometryEdit());const auto doc=projectcodec::decode(c.documentBytes());
         const auto created=std::find_if(doc.units.begin(),doc.units.end(),[](const auto& u){return u.id!="A";});QVERIFY(created!=doc.units.end());
-        QCOMPARE(planarArea(*doc.geometries.get(created->geometry)),20.);c.undo();QCOMPARE(c.documentBytes(),before);
+        QCOMPARE(planarArea(*doc.geometries.get(staticGeometryBinding(doc,created->id).geometryRef)),20.);c.undo();QCOMPARE(c.documentBytes(),before);
         std::array<double,2> chosenAreas{};
         for(int choice=0;choice<2;++choice) {
             c.selectCountry("A");QVERIFY(c.beginSplitGeometry());
@@ -105,7 +108,7 @@ private slots:
             QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);QVERIFY(c.confirmGeometryEdit());
             const auto chosen=projectcodec::decode(c.documentBytes());
             const auto unit=std::find_if(chosen.units.begin(),chosen.units.end(),[](const auto& u){return u.id!="A";});QVERIFY(unit!=chosen.units.end());
-            chosenAreas[choice]=planarArea(*chosen.geometries.get(unit->geometry));c.undo();QCOMPARE(c.documentBytes(),before);
+            chosenAreas[choice]=planarArea(*chosen.geometries.get(staticGeometryBinding(chosen,unit->id).geometryRef));c.undo();QCOMPARE(c.documentBytes(),before);
         }
         QVERIFY(chosenAreas[0]!=chosenAreas[1]);QCOMPARE(chosenAreas[0]+chosenAreas[1],100.);
     }
@@ -151,14 +154,15 @@ private slots:
         auto d=fixture();PreservedExtension e;e.id="generic";e.jsonPointer="/genericFeatures";
         e.payload=R"([{"properties":{"ownerId":"A","topologyGroup":"land:A"},"number":1e+09,"order":[3,1,2]}])";
         e.dependencyKnowledge="known";e.dependencies={territorialRef("A")};e.forbiddenEffects={"geometry","relation","convert"};d.extensions.push_back(e);
-        Project p;p.replace(d);auto result=prepare(p,ConvertTerritorialTypeIntent{territorialRef("A"),UnitKind::Subunit,territorialRef("B"),territorialRef("B"),"new-A"});
+        auto& binding=staticGeometryBinding(d,"B");auto next=binding.geometryRef;++next.version;d.geometries.insert(next,square(-5,-5,40));binding.geometryRef=next;
+        Project p;p.replace(d);auto result=prepare(p,ConvertTerritorialTypeIntent{territorialRef("A"),UnitKind::General,{},territorialRef("B"),"A"});
         QVERIFY2(result.ok(),result.detail.c_str());QVERIFY(result.preview);
         QVERIFY(PresentationCommandProcessor::apply(p,SetPresentationVisibility{"countryFlags",false})==PresentationResult::Applied);
         QVERIFY(PresentationCommandProcessor::apply(p,SetScopedVisibility{"countries",{territorialRef("A")},false})==PresentationResult::Applied);
         QVERIFY(CommandProcessor::confirm(p,*result.preview).ok());
-        QVERIFY(!itemVisible(p.document().presentation.webPresentation,"subunits","new-A"));
+        QVERIFY(!itemVisible(p.document().presentation.webPresentation,"subunits","A"));
         const auto saved=projectcodec::encode(p);QVERIFY(saved.contains("1e+09"));QVERIFY(saved.contains("[3,1,2]"));
-        const auto payload=QByteArray::fromStdString(p.document().extensions.front().payload);QVERIFY(payload.contains("land:B"));QVERIFY(payload.contains("\"ownerId\":\"B\""));
+        const auto payload=QByteArray::fromStdString(p.document().extensions.front().payload);QVERIFY(payload.contains("land:A"));QVERIFY(payload.contains("\"ownerId\":\"A\""));
         Project reopened;reopened.replace(projectcodec::decode(saved));QCOMPARE(projectcodec::encode(reopened),saved);
         QVERIFY(p.undo());QCOMPARE(p.document().extensions.front().payload,e.payload);QVERIFY(!groupVisible(p.document().presentation.webPresentation,"countryFlags"));
         auto stale=prepare(p,TransferSubunitIntent{territorialRef("S"),territorialRef("B")});QVERIFY2(stale.ok(),stale.detail.c_str());
@@ -169,21 +173,20 @@ private slots:
     }
     void transferAndConversions_data(){QTest::addColumn<int>("operation");QTest::newRow("transfer")<<0;QTest::newRow("promote")<<1;QTest::newRow("convert")<<2;}
     void transferAndConversions(){
-        QFETCH(int,operation);Project p;p.replace(fixture());const auto before=projectcodec::encode(p);
+        QFETCH(int,operation);Project p;auto d=fixture();if(operation==2){auto& binding=staticGeometryBinding(d,"B");auto next=binding.geometryRef;++next.version;d.geometries.insert(next,square(-5,-5,40));binding.geometryRef=next;}p.replace(d);const auto before=projectcodec::encode(p);
         TerritorialMutationIntent intent=TransferSubunitIntent{territorialRef("S"),territorialRef("B")};
-        if(operation==1)intent=ConvertTerritorialTypeIntent{territorialRef("S"),UnitKind::Country,{},{},{}};
-        if(operation==2)intent=ConvertTerritorialTypeIntent{territorialRef("A"),UnitKind::Subunit,territorialRef("B"),territorialRef("B"),"new-A"};
+        if(operation==1)intent=ConvertTerritorialTypeIntent{territorialRef("S"),UnitKind::General,{},{},{}};
+        if(operation==2)intent=ConvertTerritorialTypeIntent{territorialRef("A"),UnitKind::General,{},territorialRef("B"),"A"};
         auto result=prepare(p,intent);QVERIFY2(result.ok(),result.detail.c_str());QVERIFY(result.preview);QCOMPARE(projectcodec::encode(p),before);
         QVERIFY(CommandProcessor::confirm(p,*result.preview).ok());
-        if(operation<2){QCOMPARE(area(p,"A"),96.);QCOMPARE(area(p,"P"),60.);QCOMPARE(area(p,"S"),4.);}
-        if(operation==0){QCOMPARE(area(p,"B"),104.);QVERIFY(effectiveRelation(p.document(),"C",19450101)->sovereign==territorialRef("B"));}
-        if(operation==1){QVERIFY(p.document().units.at(p.index().objects.at(territorialRef("S"))).kind==UnitKind::Country);QVERIFY(effectiveRelation(p.document(),"C",19450101)->sovereign==territorialRef("S"));}
-        if(operation==2){QCOMPARE(area(p,"B"),200.);QVERIFY(!p.index().objects.count(territorialRef("A")));QCOMPARE(area(p,"new-A"),100.);QVERIFY(effectiveRelation(p.document(),"P",19450101)->parent==territorialRef("new-A"));}
+        if(operation==0){QCOMPARE(area(p,"A"),96.);QCOMPARE(area(p,"P"),60.);QCOMPARE(area(p,"S"),4.);QCOMPARE(area(p,"B"),104.);QCOMPARE(staticParentRelation(p.document(),"S").parentId,std::string("B"));QCOMPARE(staticParentRelation(p.document(),"C").parentId,std::string("S"));}
+        if(operation==1){QCOMPARE(area(p,"A"),100.);QCOMPARE(area(p,"P"),64.);QCOMPARE(area(p,"S"),4.);QVERIFY(p.document().units.at(p.index().objects.at(territorialRef("S"))).kind==UnitKind::General);QVERIFY(staticParentRelation(p.document(),"S").parentId.empty());QCOMPARE(staticParentRelation(p.document(),"C").parentId,std::string("S"));}
+        if(operation==2){QCOMPARE(area(p,"B"),1600.);QVERIFY(p.index().objects.count(territorialRef("A")));QCOMPARE(area(p,"A"),100.);QCOMPARE(staticParentRelation(p.document(),"A").parentId,std::string("B"));QCOMPARE(staticParentRelation(p.document(),"P").parentId,std::string("A"));}
         const auto after=projectcodec::encode(p);Project reopened;reopened.replace(projectcodec::decode(after));QCOMPARE(projectcodec::encode(reopened),after);
         QVERIFY(p.undo());QCOMPARE(projectcodec::encode(p),before);QVERIFY(p.redo());QCOMPARE(projectcodec::encode(p),after);
     }
     void completeCountryAndCancelledJobsAreRejected(){
-        Project p;auto d=fixture();d.units[2].geometry=d.units[0].geometry;p.replace(d);const auto before=projectcodec::encode(p);
+        Project p;auto d=fixture();staticGeometryBinding(d,d.units[2].id).geometryRef=staticGeometryBinding(d,d.units[0].id).geometryRef;p.replace(d);const auto before=projectcodec::encode(p);
         auto result=prepare(p,TransferSubunitIntent{territorialRef("P"),territorialRef("B")});QVERIFY(!result.ok());QCOMPARE(projectcodec::encode(p),before);
         const auto plan=CommandProcessor::planTerritorial(p,TransferSubunitIntent{territorialRef("S"),territorialRef("B")});QVERIFY(plan.ok());
         JobScheduler jobs;const auto job=jobs.enqueue(p.snapshot(),"cancel");jobs.takeNext();jobs.cancel(job.id());
@@ -216,8 +219,8 @@ private slots:
     void directGeometryDrawCreatesOneUndoableUnit(){
         QTemporaryDir dir;Project p;p.replace(fixture());QFile f(dir.filePath("map.json"));QVERIFY(f.open(QIODevice::WriteOnly));f.write(projectcodec::encode(p));f.close();
         EditorController c({false,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(f.fileName())));const auto before=c.documentBytes();
-        QVERIFY(c.beginTerritorialCreate("country"));const auto id=c.structureState()["generatedId"].toString();QVERIFY(!id.isEmpty());
-        QVERIFY(c.updateTerritorialCreateSetup("새 국가","","",id));QVERIFY(c.beginGeometryDraw());
+        QVERIFY(c.beginTerritorialCreate("general"));const auto id=c.structureState()["generatedId"].toString();QVERIFY(!id.isEmpty());
+        QVERIFY(c.updateTerritorialCreateSetup("새 국가","",id));QVERIFY(c.beginGeometryDraw());
         MapProjection projection;projection.rebuild(p.document());for(const auto point:std::array<Point,3>{{{12,2},{14,2},{13,4}}}) { const auto view=projection.project(point);QVERIFY(c.geometryAddPoint(view.x,view.y)); }
         QVERIFY2(c.requestGeometryPreview(),qPrintable(c.geometryEditState()["error"].toString()));QVERIFY(c.confirmGeometryEdit());
         QVERIFY(c.documentBytes()!=before);QVERIFY(c.selectObject({{"domain","territorial"},{"id",id}},"replace","test"));
@@ -228,31 +231,31 @@ private slots:
         const GeometryRef xGeometry{"X",1},yGeometry{"Y",1},zGeometry{"Z",1};
         d.geometries.insert(xGeometry,square(2,6,2));d.geometries.insert(yGeometry,square(4,6,2));d.geometries.insert(zGeometry,square(4.25,6.25,.5));
         for(const auto& row:std::array<std::pair<const char*,GeometryRef>,3>{{{"X",xGeometry},{"Y",yGeometry},{"Z",zGeometry}}}) {
-            TerritorialUnit u;u.id=row.first;u.name=row.first;u.kind=UnitKind::Subunit;u.geometry=row.second;u.coverageMode="partition";d.units.push_back(u);d.presentation.objectStyles[territorialRef(row.first)]={};
+            TerritorialUnit u;u.id=row.first;u.name=row.first;u.kind=UnitKind::General;appendTerritory(d,u,row.second,"","partition");d.presentation.objectStyles[territorialRef(row.first)]={};
         }
-        d.relations.push_back({"r-X",territorialRef("X"),territorialRef("P"),territorialRef("A")});
-        d.relations.push_back({"r-Y",territorialRef("Y"),territorialRef("P"),territorialRef("A")});
-        d.relations.push_back({"r-Z",territorialRef("Z"),territorialRef("Y"),territorialRef("A")});
+        setFixtureParent(d,territorialRef("X"),territorialRef("P"));
+        setFixtureParent(d,territorialRef("Y"),territorialRef("P"));
+        setFixtureParent(d,territorialRef("Z"),territorialRef("Y"));
         validateDocument(d);Project p;p.replace(d);const auto before=projectcodec::encode(p);
         auto result=prepare(p,MergeTerritorialIntent{territorialRef("X"),{territorialRef("Y")}});QVERIFY2(result.ok(),result.detail.c_str());QCOMPARE(projectcodec::encode(p),before);
         QVERIFY(CommandProcessor::confirm(p,*result.preview).ok());QVERIFY(!p.index().objects.count(territorialRef("Y")));QCOMPARE(area(p,"X"),8.);
-        const auto* child=effectiveRelation(p.document(),"Z",19450101);QVERIFY(child&&child->parent==territorialRef("X"));
+        QCOMPARE(staticParentRelation(p.document(),"Z").parentId,std::string("X"));
         const auto after=projectcodec::encode(p);QVERIFY(p.undo());QCOMPARE(projectcodec::encode(p),before);QVERIFY(p.redo());QCOMPARE(projectcodec::encode(p),after);
     }
     void drawnAnnexClipsDonorAndMovesContainedChild(){
         auto d=fixture();const GeometryRef xg{"AX",1},yg{"AY",1},zg{"AZ",1};d.geometries.insert(xg,square(2,6,2));d.geometries.insert(yg,square(4,6,2));d.geometries.insert(zg,square(4.2,6.2,.4));
-        for(const auto& row:std::array<std::pair<const char*,GeometryRef>,3>{{{"AX",xg},{"AY",yg},{"AZ",zg}}}){TerritorialUnit u;u.id=row.first;u.name=row.first;u.kind=UnitKind::Subunit;u.geometry=row.second;u.coverageMode="partition";d.units.push_back(u);d.presentation.objectStyles[territorialRef(row.first)]={};}
-        d.relations.push_back({"r-AX",territorialRef("AX"),territorialRef("P"),territorialRef("A")});d.relations.push_back({"r-AY",territorialRef("AY"),territorialRef("P"),territorialRef("A")});d.relations.push_back({"r-AZ",territorialRef("AZ"),territorialRef("AY"),territorialRef("A")});validateDocument(d);
+        for(const auto& row:std::array<std::pair<const char*,GeometryRef>,3>{{{"AX",xg},{"AY",yg},{"AZ",zg}}}){TerritorialUnit u;u.id=row.first;u.name=row.first;u.kind=UnitKind::General;appendTerritory(d,u,row.second,"","partition");d.presentation.objectStyles[territorialRef(row.first)]={};}
+        setFixtureParent(d,territorialRef("AX"),territorialRef("P"));setFixtureParent(d,territorialRef("AY"),territorialRef("P"));setFixtureParent(d,territorialRef("AZ"),territorialRef("AY"));validateDocument(d);
         Project p;p.replace(d);const auto before=projectcodec::encode(p);auto result=prepare(p,AnnexTerritoryIntent{territorialRef("AX"),{territorialRef("AY")},square(4,6,1)});QVERIFY2(result.ok(),result.detail.c_str());QVERIFY(CommandProcessor::confirm(p,*result.preview).ok());
-        QCOMPARE(area(p,"AX"),5.);QCOMPARE(area(p,"AY"),3.);const auto* child=effectiveRelation(p.document(),"AZ",19450101);QVERIFY(child&&child->parent==territorialRef("AX"));QVERIFY(p.undo());QCOMPARE(projectcodec::encode(p),before);
+        QCOMPARE(area(p,"AX"),5.);QCOMPARE(area(p,"AY"),3.);QCOMPARE(staticParentRelation(p.document(),"AZ").parentId,std::string("AX"));QVERIFY(p.undo());QCOMPARE(projectcodec::encode(p),before);
     }
     void cutSplitCreatesOneUndoableSibling(){
         Project p;p.replace(fixture());const auto before=projectcodec::encode(p);auto result=prepare(p,SplitTerritorialIntent{territorialRef("B"),{{25,-2},{25,12}},0,"B-east","B East"});QVERIFY2(result.ok(),result.detail.c_str());QCOMPARE(projectcodec::encode(p),before);
-        QVERIFY(CommandProcessor::confirm(p,*result.preview).ok());QCOMPARE(area(p,"B"),50.);QCOMPARE(area(p,"B-east"),50.);QVERIFY(p.document().units.at(p.index().objects.at(territorialRef("B-east"))).kind==UnitKind::Country);
+        QVERIFY(CommandProcessor::confirm(p,*result.preview).ok());QCOMPARE(area(p,"B"),50.);QCOMPARE(area(p,"B-east"),50.);QVERIFY(p.document().units.at(p.index().objects.at(territorialRef("B-east"))).kind==UnitKind::General);
         const auto after=projectcodec::encode(p);Project reopened;reopened.replace(projectcodec::decode(after));QCOMPARE(projectcodec::encode(reopened),after);QVERIFY(p.undo());QCOMPARE(projectcodec::encode(p),before);QVERIFY(p.redo());QCOMPARE(projectcodec::encode(p),after);
     }
     void sharedBoundaryPreservesOuterUnionAndUpdatesBothOwners(){
-        auto document=fixture();auto b=std::find_if(document.units.begin(),document.units.end(),[](const auto& unit){return unit.id=="B";});QVERIFY(b!=document.units.end());GeometryRef next=b->geometry;++next.version;document.geometries.insert(next,square(10,0,10));b->geometry=next;validateDocument(document);Project project;project.replace(document);const auto before=projectcodec::encode(project);
+        auto document=fixture();auto b=std::find_if(document.units.begin(),document.units.end(),[](const auto& unit){return unit.id=="B";});QVERIFY(b!=document.units.end());auto& binding=staticGeometryBinding(document,b->id);GeometryRef next=binding.geometryRef;++next.version;document.geometries.insert(next,square(10,0,10));binding.geometryRef=next;validateDocument(document);Project project;project.replace(document);const auto before=projectcodec::encode(project);
         SharedBoundaryIntent intent{{{territorialRef("A"),rectangle(0,0,12,10)},{territorialRef("B"),rectangle(12,0,8,10)}}};auto result=prepare(project,intent);QVERIFY2(result.ok(),result.detail.c_str());QCOMPARE(projectcodec::encode(project),before);QVERIFY(CommandProcessor::confirm(project,*result.preview).ok());QCOMPARE(area(project,"A"),120.);QCOMPARE(area(project,"B"),80.);QVERIFY(project.undo());QCOMPARE(projectcodec::encode(project),before);
         auto invalid=prepare(project,SharedBoundaryIntent{{{territorialRef("A"),rectangle(0,0,13,10)},{territorialRef("B"),rectangle(12,0,8,10)}}});QVERIFY(!invalid.ok());QCOMPARE(projectcodec::encode(project),before);
     }

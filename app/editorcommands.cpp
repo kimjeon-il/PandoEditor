@@ -44,10 +44,10 @@ bool EditorController::collectPendingEdits(pandoeditor::CommandArguments& args)
         if(pos==project_.index().objects.end()){commandError(CommandError::InvalidTargets);return false;}
         const auto& u=project_.document().units[pos->second];
         auto active=[&](const char* field){return draft.fields.empty()||draft.fields.count(field);};
-        if(active("name") && draft.name.toStdString()!=(u.kind==UnitKind::Country?objectDisplayName(u):u.name))args.properties.fields.push_back({ref,TerritorialField::Name,draft.name.toStdString()});
+        if(active("name") && draft.name.toStdString()!=(u.kind==UnitKind::General?objectDisplayName(u):u.name))args.properties.fields.push_back({ref,TerritorialField::Name,draft.name.toStdString()});
         if(active("notes") && draft.memo.toStdString()!=u.notes)args.properties.fields.push_back({ref,TerritorialField::Notes,draft.memo.toStdString()});
-        if(active("validFrom") && draft.from.toStdString()!=u.validity.from.value_or(""))args.properties.fields.push_back({ref,TerritorialField::ValidFrom,draft.from.toStdString()});
-        if(active("validTo") && draft.to.toStdString()!=u.validity.to.value_or(""))args.properties.fields.push_back({ref,TerritorialField::ValidTo,draft.to.toStdString()});
+        if(active("validFrom") && draft.from.toStdString()!=pandoeditor::staticLifetime(project_.document(),u.id).validity.from.value_or(""))args.properties.fields.push_back({ref,TerritorialField::ValidFrom,draft.from.toStdString()});
+        if(active("validTo") && draft.to.toStdString()!=pandoeditor::staticLifetime(project_.document(),u.id).validity.to.value_or(""))args.properties.fields.push_back({ref,TerritorialField::ValidTo,draft.to.toStdString()});
         if(!validColor(draft.color)){commandError(CommandError::InvalidArguments);return false;}
         const auto& style=project_.document().presentation.objectStyles.at(ref);
         if((active("color") && draft.color.mid(1).toUInt(nullptr,16)!=effectiveObjectColor(project_.document(),ref)) || (active("opacity") && draft.opacity&&*draft.opacity!=style.opacity)) {

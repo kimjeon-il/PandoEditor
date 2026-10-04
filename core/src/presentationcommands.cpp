@@ -13,7 +13,7 @@ void merge(PresentationStyle& s,const PresentationStyle& p){if(p.opacity)s.opaci
 PresentationResult PresentationCommandProcessor::apply(Project& project,const PresentationAction& action) noexcept {
     try {
         auto d=project.document();auto& p=d.presentation.webPresentation;
-        auto targetGroup=[&](const ObjectRef& ref){auto i=project.index().objects.find(ref);require(i!=project.index().objects.end());return ref.domain=="territorial"?territorialGroup(d.units.at(i->second).kind):contentGroup(d,ref);};
+        auto targetGroup=[&](const ObjectRef& ref){auto i=project.index().objects.find(ref);require(i!=project.index().objects.end());return ref.domain=="territorial"?territorialGroup(d,ref.id):contentGroup(d,ref);};
         auto set=[&](const ObjectRef& ref,bool visible){auto g=targetGroup(ref);if(visible)p.hiddenItems[g].erase(ref.id);else p.hiddenItems[g].insert(ref.id);};
         std::visit([&](const auto& a){using T=std::decay_t<decltype(a)>;
             if constexpr(std::is_same_v<T,SetPresentationVisibility>) {
@@ -28,7 +28,10 @@ PresentationResult PresentationCommandProcessor::apply(Project& project,const Pr
                 const bool visible=a.visible.value_or(!all);for(const auto& r:a.targets)set(r,visible);
             } else if constexpr(std::is_same_v<T,PatchGroupPresentation>) {
                 require(group(a.group));merge(p.styles[a.group],a.patch);
-                if(a.group=="subunits")for(auto& [key,s]:p.objectStyles)if(key.rfind("territorial:subunit:",0)==0)merge(s,a.patch);
+                if(a.group=="subunits")for(const auto& unit:d.units)if(territorialGroup(d,unit.id)=="subunits") {
+                    const auto found=p.objectStyles.find(territorialPresentationKey(unit.id));
+                    if(found!=p.objectStyles.end())merge(found->second,a.patch);
+                }
             } else if constexpr(std::is_same_v<T,SetLabelSettings>) {
                 require(project.index().objects.count(a.ref) && (a.ref.domain=="territorial" || a.ref.domain=="label"));
                 p.labelSettings[a.ref]=a.settings;

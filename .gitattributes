@@ -11,3 +11,8 @@ tests/fixtures/web-content/source/** text eol=lf
 tests/fixtures/web-m6/source/** text eol=lf whitespace=-blank-at-eol
 tests/fixtures/web-m6/*.mjs text eol=lf whitespace=-blank-at-eol
 tests/fixtures/web-m6/*.geojson text eol=lf whitespace=-blank-at-eol
+assets/world/**/*.json text eol=lf
+tests/fixtures/world-rendering/*.json text eol=lf
+tests/fixtures/world-rendering/*.geojson text eol=lf
+tests/fixtures/timeline-temporal-reference.mjs text eol=lf
+tests/fixtures/web-timeline/*.mjs text eol=lf

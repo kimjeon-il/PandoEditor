@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include <pandoeditor/project.h>
 #include <pandoeditor/commands.h>
 #include <algorithm>
@@ -36,7 +37,7 @@ CommandPreview preview(const Project& p,const CommandRequest& r) {
 }
 void preparedIsPureAndCompoundIsOneUndo() {
     Project p; p.replace(fixture()); const auto before=p.document();
-    auto geometry=p.document().geometries.get(p.document().units[0].geometry);
+    auto geometry=p.document().geometries.get(staticGeometryBinding(p.document(),p.document().units[0].id).geometryRef);
     auto args=renamed(p,"  New name  ");
     auto& props=args.properties.countries[0].properties; props.memo="new memo"; props.color=0xff0000; props.opacity=0.4;
     auto layer=*p.layer("countries"); layer.name="Renamed layer"; layer.opacity=0.7; args.properties.layers.push_back(layer);
@@ -46,14 +47,14 @@ void preparedIsPureAndCompoundIsOneUndo() {
     CHECK(v.change().request().revision==0);
     CHECK(v.change().before().units[0].name=="Alpha");
     CHECK(v.change().after().units[0].name=="New name");
-    CHECK(v.change().after().geometries.get(before.units[0].geometry)==geometry);
+    CHECK(v.change().after().geometries.get(staticGeometryBinding(before,before.units[0].id).geometryRef)==geometry);
     CHECK(CommandProcessor::confirm(p,v).changed());
     CHECK(!v.pending() && p.revision()==1 && p.dirty());
     CHECK(p.country("A")->name=="New name" && p.country("A")->memo=="new memo");
     CHECK(p.country("A")->color==0xff0000 && p.country("A")->opacity==0.4);
     CHECK(p.layer("countries")->name=="Renamed layer" && p.layer("countries")->opacity==0.7);
     CHECK(&p.country("A")->name==&p.document().units[0].name);
-    CHECK(p.document().geometries.get(before.units[0].geometry)==geometry);
+    CHECK(p.document().geometries.get(staticGeometryBinding(before,before.units[0].id).geometryRef)==geometry);
     CHECK(p.undo() && p.revision()==2 && !p.canUndo() && !p.dirty());
     CHECK(semanticallyEqual(p.document(),before));
     CHECK(&p.country("A")->name==&p.document().units[0].name);
@@ -174,8 +175,8 @@ void semanticEqualityIncludesAllPreservedFields() {
     auto a=fixture(), b=a; CHECK(semanticallyEqual(a,b));
     b.documentId="different"; CHECK(!semanticallyEqual(a,b)); b=a;
     b.units[0].locked=true; CHECK(!semanticallyEqual(a,b)); b=a;
-    b.units[0].validity.from="1900"; CHECK(!semanticallyEqual(a,b)); b=a;
-    b.units[0].coverageMode="partition"; CHECK(!semanticallyEqual(a,b)); b=a;
+    staticLifetime(b,b.units[0].id).validity.from="1900"; CHECK(!semanticallyEqual(a,b)); b=a;
+    staticParentRelation(b,b.units[0].id).coverageMode="partition"; CHECK(!semanticallyEqual(a,b)); b=a;
     b.presentation.userLayers[0].visible=false; CHECK(!semanticallyEqual(a,b)); b=a;
     b.presentation.membership[territorialRef("A")]="other"; CHECK(!semanticallyEqual(a,b)); b=a;
     PreservedExtension e; e.id="retained"; e.payload="null"; a.extensions.push_back(e); b=a;

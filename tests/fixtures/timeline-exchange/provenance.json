@@ -1,0 +1,7 @@
+{
+  "webCommit": "788f43fd27062851bdadf7fa6964819d43534685",
+  "projectSchemaVersion": 9,
+  "timelineSchemaVersion": 1,
+  "generator": "tools/generate-timeline-project-fixtures.mjs",
+  "fixtureCases": 31
+}

@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include <pandoeditor/jobs.h>
 #include <pandoeditor/project.h>
 #include <future>
@@ -64,13 +65,13 @@ void undoRedoAndReopen() {
 }
 void detachedSnapshotAndGeometry() {
     auto p=sample(); auto snapshot=p.snapshot(); auto request=rename(p,"worker result");
-    auto geometry=snapshot.document().geometries.get(snapshot.document().units[0].geometry);
+    auto geometry=snapshot.document().geometries.get(staticGeometryBinding(snapshot.document(),snapshot.document().units[0].id).geometryRef);
     const auto* oldName=&snapshot.country("A")->name;
     std::promise<void> start; auto gate=start.get_future();
     auto worker=std::async(std::launch::async,[snapshot,request,gate=std::move(gate)]() mutable { gate.wait(); return CommandProcessor::prepare(snapshot,request); });
     p.replace(sample().document()); start.set_value(); auto r=worker.get(); CHECK(r.preview);
     CHECK(snapshot.country("A")->name=="Alpha" && oldName==&snapshot.document().units[0].name);
-    CHECK(r.preview->change().after().geometries.get(snapshot.document().units[0].geometry)==geometry);
+    CHECK(r.preview->change().after().geometries.get(staticGeometryBinding(snapshot.document(),snapshot.document().units[0].id).geometryRef)==geometry);
     CHECK(CommandProcessor::confirm(p,*r.preview).error==CommandError::ProjectMismatch); CHECK(!p.canUndo());
 }
 void acceptedOneUndoAndNoOp() {

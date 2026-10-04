@@ -95,7 +95,7 @@ private slots:
         QCOMPARE(editor.renderQuality().value("worldDetailRequested").toString(),QString("canonical"));
         const auto before=editor.documentBytes();const auto doc=projectcodec::decode(before);
         const auto unit=std::find_if(doc.units.begin(),doc.units.end(),[](const auto& u){return u.id=="DEU";});
-        QVERIFY(unit!=doc.units.end());const auto exact=doc.geometries.get(unit->geometry);QVERIFY(exact);
+        QVERIFY(unit!=doc.units.end());const auto exact=doc.geometries.get(pandoeditor::staticGeometryBinding(doc,unit->id).geometryRef);QVERIFY(exact);
         const auto count=[](const pandoeditor::Geometry& g){std::size_t n=0;for(const auto& p:g.polygons)for(const auto& r:p)n+=r.size();return n;};
         editor.selectCountry("DEU");QVERIFY(editor.beginGeometryEdit());
         std::size_t draftVertices=0;for(const auto& path:editor.geometryDraftPaths())draftVertices+=path.toMap().value("vertices").toList().size();

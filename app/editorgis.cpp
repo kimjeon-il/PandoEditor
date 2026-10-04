@@ -216,7 +216,7 @@ bool EditorController::confirmGisImport(qulonglong token) {
             [&](const auto& unit){
                 auto found=std::find_if(before.units.begin(),before.units.end(),
                     [&](const auto& old){return old.id==unit.id;});
-                return found==before.units.end()||!(found->geometry==unit.geometry);
+                return found==before.units.end()||!(pandoeditor::staticGeometryBinding(before,found->id).geometryRef==pandoeditor::staticGeometryBinding(project_.document(),unit.id).geometryRef);
             });
     if(geographyChanged)projection_.rebuild(project_.document());
     gisImport_.reset();publish(false);

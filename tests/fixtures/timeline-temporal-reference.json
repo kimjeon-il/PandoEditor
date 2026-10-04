@@ -1,0 +1,6 @@
+{
+  "webCommit": "788f43fd27062851bdadf7fa6964819d43534685",
+  "source": "assets/js/modules/temporal.js",
+  "gitBlobSha": "34ef7a8bc1cba4cf9c550dc93be8882f5c9b6aa7",
+  "purpose": "Retain T0 month precision in existing property Oracle; historical pinned source unchanged"
+}

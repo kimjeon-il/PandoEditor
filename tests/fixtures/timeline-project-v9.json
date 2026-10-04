@@ -1,0 +1,7329 @@
+[
+  {
+    "name": "past and present geometry versions plus unbound features",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "empty snapshot",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [],
+        "geometryBindings": [],
+        "parentRelations": []
+      },
+      "geometries": [],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "missing past geometry",
+    "expected": "TIMELINE_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "missing future version",
+    "expected": "TIMELINE_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 99
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "territory cannot bind a point",
+    "expected": "TIMELINE_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "label",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "territory cannot bind a line",
+    "expected": "TIMELINE_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "river",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "duplicate version",
+    "expected": "DUPLICATE_ID",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "unknown snapshot schema",
+    "expected": "TIMELINE_STORAGE_SCHEMA",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 2,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "invalid old geometry coordinate",
+    "expected": "INVALID_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  181,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "open old ring",
+    "expected": "INVALID_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "zero geometry version",
+    "expected": "INVALID_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 0,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "empty geometry ID",
+    "expected": "INVALID_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "overlapping records",
+    "expected": "TIMELINE_OVERLAP",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-06",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "one-day record gap",
+    "expected": "TIMELINE_GAP",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06-29",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "day precision retained",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-07-14",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07-15",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "BCE CE transition retained",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "-0001",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "0001",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "blank endpoint is not null",
+    "expected": "TIMELINE_INTERVAL",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": " ",
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "endpoint normalization retains month precision",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": " 1914-06 ",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": " 1914-07 ",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "maximum geometry version retained",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 4294967295
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 4294967295,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "unbound old version is not pruned",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 3,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "holes islands and dateline retained",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5
+                  ],
+                  [
+                    5,
+                    5
+                  ],
+                  [
+                    5,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    2,
+                    1
+                  ],
+                  [
+                    2,
+                    2
+                  ],
+                  [
+                    1,
+                    2
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              ],
+              [
+                [
+                  [
+                    179,
+                    0
+                  ],
+                  [
+                    179,
+                    1
+                  ],
+                  [
+                    -179,
+                    1
+                  ],
+                  [
+                    -179,
+                    0
+                  ],
+                  [
+                    179,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "all canonical geometry types retained",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        },
+        {
+          "id": "mp",
+          "version": 1,
+          "geojson": {
+            "type": "MultiPoint",
+            "coordinates": [
+              [
+                -180,
+                -90
+              ],
+              [
+                180,
+                90
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ml",
+          "version": 1,
+          "geojson": {
+            "type": "MultiLineString",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ]
+              ],
+              [
+                [
+                  3,
+                  3
+                ],
+                [
+                  4,
+                  4
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "multi",
+          "version": 1,
+          "geojson": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5
+                  ],
+                  [
+                    5,
+                    5
+                  ],
+                  [
+                    5,
+                    0
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    2,
+                    1
+                  ],
+                  [
+                    2,
+                    2
+                  ],
+                  [
+                    1,
+                    2
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              ],
+              [
+                [
+                  [
+                    179,
+                    0
+                  ],
+                  [
+                    179,
+                    1
+                  ],
+                  [
+                    -179,
+                    1
+                  ],
+                  [
+                    -179,
+                    0
+                  ],
+                  [
+                    179,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "UTF8 geometry ID ordering",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        },
+        {
+          "id": "😀",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "형상",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "multiple entities share one immutable version",
+    "expected": "OK",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          },
+          {
+            "id": "life-b",
+            "entityId": "B",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          },
+          {
+            "id": "geo-b",
+            "entityId": "B",
+            "validFrom": null,
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          },
+          {
+            "id": "parent-b",
+            "entityId": "B",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "A",
+            "coverageMode": "partition"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "old record schema rejected",
+    "expected": "TIMELINE_SCHEMA",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 2,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "unknown snapshot field",
+    "expected": "TIMELINE_STORAGE_SCHEMA",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      },
+      "cursor": "1914-07"
+    }
+  },
+  {
+    "name": "missing geometries collection",
+    "expected": "TIMELINE_STORAGE_SCHEMA",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "unknown geometry field",
+    "expected": "INVALID_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ],
+            "bbox": [
+              0,
+              0,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "numeric version string",
+    "expected": "INVALID_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": "1",
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "fractional version",
+    "expected": "INVALID_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1.5,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  },
+  {
+    "name": "extra coordinate is rejected",
+    "expected": "INVALID_GEOMETRY",
+    "project": {
+      "format": "pandolab-project-state",
+      "schemaVersion": 9,
+      "version": "0.34.0",
+      "savedAt": "2026-10-04T00:00:00.000Z",
+      "baseDataset": "external-territorial-entities",
+      "landObjectModel": {
+        "schemaVersion": 2,
+        "coastlineAuthority": "territorialEntities",
+        "purpose": "lossless-fallback",
+        "directCreation": false,
+        "sourceProvenanceSchemaVersion": 1,
+        "canonicalProperties": [
+          "name",
+          "notes",
+          "color",
+          "locked",
+          "source"
+        ]
+      },
+      "territorialModel": {
+        "schemaVersion": 5,
+        "coastlineAuthority": "territorialEntities",
+        "storage": "territorialEntities",
+        "kinds": [
+          "general",
+          "regional"
+        ],
+        "coverageModes": [
+          "partition",
+          "explicit"
+        ]
+      },
+      "distributionModel": {
+        "schemaVersion": 3,
+        "sourceModes": [
+          "territorial",
+          "geometry"
+        ],
+        "valueKind": "finite-number"
+      },
+      "timelineRecords": {
+        "schemaVersion": 1,
+        "lifetimes": [
+          {
+            "id": "life",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null
+          }
+        ],
+        "geometryBindings": [
+          {
+            "id": "old",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": "1914-06",
+            "geometryRef": {
+              "id": "shape",
+              "version": 1
+            }
+          },
+          {
+            "id": "new",
+            "entityId": "A",
+            "validFrom": "1914-07",
+            "validTo": null,
+            "geometryRef": {
+              "id": "shape",
+              "version": 2
+            }
+          }
+        ],
+        "parentRelations": [
+          {
+            "id": "parent",
+            "entityId": "A",
+            "validFrom": null,
+            "validTo": null,
+            "parentId": "",
+            "coverageMode": "explicit"
+          }
+        ]
+      },
+      "geometries": [
+        {
+          "id": "shape",
+          "version": 1,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2,
+                  4
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "shape",
+          "version": 2,
+          "geojson": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1.2345678901234567,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "id": "label",
+          "version": 1,
+          "geojson": {
+            "type": "Point",
+            "coordinates": [
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "id": "river",
+          "version": 1,
+          "geojson": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                179,
+                2
+              ],
+              [
+                -179,
+                3
+              ]
+            ]
+          }
+        }
+      ],
+      "sourceInfo": null,
+      "labels": [],
+      "genericFeatures": [],
+      "hydroEdits": [],
+      "distributionLayers": [],
+      "distributionEntries": [],
+      "labelSettings": {},
+      "distributionSettings": {
+        "renderMode": "overlap",
+        "activeLayerId": "",
+        "boundaryVisible": true
+      },
+      "layerPresentation": {
+        "schemaVersion": 4,
+        "styles": {},
+        "objectStyles": {},
+        "objectOrder": []
+      },
+      "physicalSettings": {},
+      "layerVisibility": {},
+      "itemVisibility": {},
+      "territorialEntities": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "geometry": null,
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "notes": "",
+            "style": {},
+            "locked": false,
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          }
+        }
+      ],
+      "physicalSourceInfo": {
+        "terrain": {
+          "dataset": "terrain",
+          "version": "0.12.6"
+        },
+        "hydro": {
+          "dataset": "hydro",
+          "version": "0.34.0",
+          "coordinatePolicy": "selected source coordinates retained without simplification",
+          "selection": {}
+        }
+      }
+    }
+  }
+]

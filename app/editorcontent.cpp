@@ -3,10 +3,7 @@
 #include <QLocale>
 #include "defaultflagresolver.h"
 #include <QFile>
-#include <QImageReader>
 #include <QMimeDatabase>
-#include <QSvgRenderer>
-#include <QBuffer>
 #include <QColor>
 #include <QUuid>
 #include <QFutureWatcher>
@@ -101,7 +98,7 @@ bool EditorController::beginContentEdit(const QString& domain,const QString& typ
     else if(domain=="distributionEntry") {DistributionEntry v=create?DistributionEntry{}:d.distributionEntries.at(i);v.id=edit.target.id;edit.value=v;}
     else if(domain=="generic"&&!create) edit.value=d.genericFeatures.at(i);
     else if(domain=="territorial"&&!create) {
-        if(type=="capital") {if(d.units.at(i).kind!=UnitKind::Country)return false;auto it=d.countryDetails.find(edit.target);edit.value=it==d.countryDetails.end()?CountryDetails{}:it->second;}
+        if(type=="capital") {if(d.units.at(i).kind!=UnitKind::General)return false;auto it=d.countryDetails.find(edit.target);edit.value=it==d.countryDetails.end()?CountryDetails{}:it->second;}
         else if(type=="flag") {auto it=d.symbols.find(edit.target);edit.value=it==d.symbols.end()?TerritorialSymbolStyle{}:it->second;}
         else return false;
     } else return false;
@@ -219,14 +216,10 @@ bool EditorController::loadContentFlag(const QUrl& url) {
         bytes=QByteArray::fromBase64(data.mid(comma+1));
     }else {QFile file(url.scheme()=="qrc"?":"+url.path():url.isLocalFile()?url.toLocalFile():url.toString());if(!file.open(QIODevice::ReadOnly)||file.size()>16*1024*1024)return false;bytes=file.readAll();}
     const auto mime=QMimeDatabase().mimeTypeForData(bytes).name();
-    if(mime=="image/svg+xml") {
-        // Validate vectors without rasterizing their potentially enormous intrinsic size.
-        QSvgRenderer svg(bytes);if(!svg.isValid())return false;
-    } else {
-        QBuffer buffer(&bytes);buffer.open(QIODevice::ReadOnly);
-        QImageReader image(&buffer);if(!mime.startsWith("image/")||!image.canRead())return false;
-    }
+    if(!mime.startsWith("image/"))return false;
     const auto dataUrl="data:"+mime.toLatin1()+";base64,"+bytes.toBase64();
+    try{projectcodec::validateFlagDataUrl(dataUrl.toStdString());}
+    catch(const std::invalid_argument&){return false;}
     auto& symbol=std::get<TerritorialSymbolStyle>(contentSession_->edit.value);
     symbol.policy=FlagPolicy::Embedded;symbol.embeddedDataUrl=dataUrl.toStdString();
     contentSession_->pendingFields.insert("flagSource");emit contentEditChanged();emit dirtyChanged();return true;

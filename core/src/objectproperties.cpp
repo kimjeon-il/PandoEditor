@@ -20,7 +20,7 @@ std::string trimWebText(const std::string& input) {
     return std::string(value);
 }
 std::string objectDisplayName(const TerritorialUnit& u) {
-    if(u.kind!=UnitKind::Country) return u.name.empty() ? (u.kind==UnitKind::Subunit?"이름 없는 하위단위":"이름 없는 지방") : u.name;
+    if(u.kind==UnitKind::Regional) return u.name.empty()?"이름 없는 권역":u.name;
     if(u.nameExplicit && !u.name.empty()) return u.name;
     static const std::map<std::string,std::pair<std::string,std::string>> known={
       {"TUR",{"터키","튀르키예"}},{"ESP",{"스페인","에스파냐"}},
@@ -31,11 +31,7 @@ std::string objectDisplayName(const TerritorialUnit& u) {
       {"MNP",{"북마리아나 제도","북마리아나제도"}},{"CSI",{"산호해 제도","산호해제도"}}};
     auto name=u.baseName;const auto it=known.find(u.id);
     if(it!=known.end() && name==it->second.first)name=it->second.second;
-    return name.empty()?"국가":name;
-}
-const TerritorialRelation* baseRelation(const ProjectDocument& d,const ObjectRef& ref) {
-    for(const auto& r:d.relations)if(!r.dated && r.unit==ref)return &r;
-    return nullptr;
+    return name.empty()?"이름 없는 일반객체":name;
 }
 namespace {
 template<class Lookup>
@@ -47,15 +43,11 @@ std::uint32_t resolveColor(const ProjectDocument& d,const ObjectRef& ref,
       const auto currentRef=territorialRef(current->id);
       const auto style=d.presentation.objectStyles.find(currentRef);
       if(style!=d.presentation.objectStyles.end() && style->second.explicitColor && !(ignoreOwnExplicit && currentRef==ref))return style->second.color;
-      if(current->kind==UnitKind::Country)return countryDefault;
+      if(current->kind==UnitKind::Regional)return fallback;
       if(!seen.insert(currentRef).second)return fallback;
-      const auto r=baseRelation(d,currentRef);if(!r)return fallback;
-      auto* parent=r->parent?lookup(*r->parent):nullptr;
-      if(parent && parent->kind==UnitKind::Subunit){current=parent;continue;}
-      if(!parent || parent->kind!=UnitKind::Country)parent=r->sovereign?lookup(*r->sovereign):nullptr;
-      if(!parent || parent->kind!=UnitKind::Country)return fallback;
-      const auto s=d.presentation.objectStyles.find(territorialRef(parent->id));
-      return s!=d.presentation.objectStyles.end()&&s->second.explicitColor?s->second.color:countryDefault;
+      const auto& relation=staticParentRelation(d,current->id);
+      if(relation.parentId.empty())return countryDefault;
+      current=lookup(territorialRef(relation.parentId));
     }
     return fallback;
 }

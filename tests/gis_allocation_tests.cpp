@@ -74,7 +74,7 @@ int main() {
     for(long index=0;index<5000;++index) {
         auto p=project();auto snapshot=p.snapshot();
         GisTerritorialInput region;region.id="region:allocation";
-        region.name="Region";region.kind=UnitKind::Region;
+        region.name="Region";region.kind=UnitKind::Regional;
         region.geometry.type="Polygon";
         region.geometry.polygons={Polygon{Ring{{3,0},{4,0},{4,1},{3,1},{3,0}}}};
         const auto* before=&p.document();const auto revision=p.revision();

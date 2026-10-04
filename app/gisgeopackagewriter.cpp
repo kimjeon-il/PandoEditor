@@ -203,8 +203,9 @@ void writeTable(QSqlDatabase& db,const Table& table,
 }
 }
 QByteArray exportGisGeoPackage(const ProjectDocument& document,
-    const std::vector<std::string>& selected) {
-    const auto layers=buildGisExportLayers(document,selected);
+    const std::vector<std::string>& selected,bool metadataOnly) {
+    require(!metadataOnly||selected.empty(),"INVALID_GPKG_VECTOR_SELECTION");
+    const auto layers=metadataOnly?std::vector<GisExportLayer>{}:buildGisExportLayers(document,selected);
     std::map<std::string,std::vector<GisGeoJsonFeature>> rows;
     for(const auto& layer:layers)for(const auto& feature:layer.collection.features)
         rows[tableFor(layer,feature.geometry)].push_back(feature);

@@ -46,11 +46,12 @@ int main(int argc,char** argv)
         reject("broken");
         auto root=QJsonDocument::fromJson(sample).object(); root["version"]=99; reject(QJsonDocument(root).toJson());
         root=QJsonDocument::fromJson(sample).object();
-        auto countries=root["countries"].toArray(); auto c=countries[1].toObject(); c["id"]=countries[0].toObject()["id"]; countries[1]=c; root["countries"]=countries; reject(QJsonDocument(root).toJson());
-        root=QJsonDocument::fromJson(sample).object(); countries=root["countries"].toArray(); c=countries[0].toObject(); c["color"]="#xyzxyz"; countries[0]=c; root["countries"]=countries; reject(QJsonDocument(root).toJson());
-        root=QJsonDocument::fromJson(sample).object(); countries=root["countries"].toArray(); c=countries[0].toObject();
-        c["geometry"]=QJsonObject{{"type","MultiPolygon"},{"coordinates",QJsonArray{QJsonArray{QJsonArray{QJsonArray{181,0},QJsonArray{1,1},QJsonArray{2,0},QJsonArray{181,0}}}}}};
-        countries[0]=c; root["countries"]=countries; reject(QJsonDocument(root).toJson());
+        auto units=root["units"].toArray(); auto c=units[1].toObject(); c["id"]=units[0].toObject()["id"]; units[1]=c; root["units"]=units; reject(QJsonDocument(root).toJson());
+        root=QJsonDocument::fromJson(sample).object();
+        {auto presentation=root["presentation"].toObject();auto styles=presentation["objectStyles"].toObject();auto territorial=styles["territorial"].toObject();c=territorial["DEU"].toObject();c["color"]="#xyzxyz";territorial["DEU"]=c;styles["territorial"]=territorial;presentation["objectStyles"]=styles;root["presentation"]=presentation;reject(QJsonDocument(root).toJson());}
+        root=QJsonDocument::fromJson(sample).object(); auto geometries=root["geometries"].toArray();c=geometries[0].toObject();
+        c["geojson"]=QJsonObject{{"type","MultiPolygon"},{"coordinates",QJsonArray{QJsonArray{QJsonArray{QJsonArray{181,0},QJsonArray{1,1},QJsonArray{2,0},QJsonArray{181,0}}}}}};
+        geometries[0]=c; root["geometries"]=geometries; reject(QJsonDocument(root).toJson());
         check(!editor.saveFile(QUrl::fromLocalFile(dir.path()+"/missing/project.json")) && editor.dirty());
         check(editor.openFile(path));
         check(!editor.dirty() && !editor.canUndo() && editor.selectedId().isEmpty());
@@ -90,7 +91,7 @@ int main(int argc,char** argv)
         check(editor.saveFile(path));
         QFile saved(path.toLocalFile()); check(saved.open(QIODevice::ReadOnly));
         auto v2=QJsonDocument::fromJson(saved.readAll()).object(); saved.close();
-        check(v2["version"].toInt()==8 && v2["presentation"].toObject()["userLayers"].toArray().size()==2);
+        check(v2["version"].toInt()==9 && v2["presentation"].toObject()["userLayers"].toArray().size()==2);
         editor.selectCountry("DEU"); editor.setMemoDraft("changed"); check(editor.commitPendingEdits());
         const auto protectedColors=editor.colors();
         auto rejectV2=[&](QJsonObject obj) {

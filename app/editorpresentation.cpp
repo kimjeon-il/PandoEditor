@@ -21,13 +21,12 @@ using namespace pandoeditor;
 namespace { QString displayText(const std::string& value){return QString::fromStdString(value);} }
 QVariantList EditorController::presentationGroups() const {
     QVariantList rows;const auto& p=project_.document().presentation.webPresentation;
-    for(auto kind:{UnitKind::Country,UnitKind::Subunit,UnitKind::Region}) {
-        const auto group=territorialGroup(kind);
-        const auto name=kind==UnitKind::Country?"basemapLabels":kind==UnitKind::Subunit?"subunitLabels":"regionLabels";
-        const auto flag=kind==UnitKind::Country?"countryFlags":kind==UnitKind::Subunit?"subunitFlags":"regionFlags";
-        const auto found=p.styles.find(group);auto s=found==p.styles.end()?PresentationStyle{}:found->second;
-        rows.append(QVariantMap{{"key",QString::fromStdString(group)},{"title",kind==UnitKind::Country?QStringLiteral("국가"):kind==UnitKind::Subunit?QStringLiteral("하위단위"):QStringLiteral("지방")},
-            {"visible",groupVisible(p,group)},{"nameKey",name},{"flagKey",flag},{"names",groupVisible(p,name)},{"flags",groupVisible(p,flag)},{"opacity",s.opacity.value_or(1)},{"boundary",s.boundaryVisible.value_or(true)},{"colorVisible",s.colorVisible.value_or(true)}});
+    for(const auto& group:std::vector<std::string>{"countries","subunits","regions"}) {
+        const auto name=group=="countries"?"basemapLabels":group=="subunits"?"subunitLabels":"regionLabels";
+        const auto flag=group=="countries"?"countryFlags":group=="subunits"?"subunitFlags":"regionFlags";
+        const auto found=p.styles.find(group);const auto style=found==p.styles.end()?PresentationStyle{}:found->second;
+        rows.append(QVariantMap{{"key",QString::fromStdString(group)},{"title",group=="countries"?QStringLiteral("최상위 일반객체"):group=="subunits"?QStringLiteral("하위 일반객체"):QStringLiteral("독립 권역")},
+            {"visible",groupVisible(p,group)},{"nameKey",name},{"flagKey",flag},{"names",groupVisible(p,name)},{"flags",groupVisible(p,flag)},{"opacity",style.opacity.value_or(1)},{"boundary",style.boundaryVisible.value_or(true)},{"colorVisible",style.colorVisible.value_or(true)}});
     }
     for(const auto& entry:std::vector<std::pair<std::string,QString>>{{"labels",QStringLiteral("지명")},{"rivers",QStringLiteral("강")},{"lakes",QStringLiteral("호수")},{"distributions",QStringLiteral("분포")},{"genericFeatures",QStringLiteral("기타 객체")}}) {
         const auto found=p.styles.find(entry.first);const auto style=found==p.styles.end()?PresentationStyle{}:found->second;
@@ -201,7 +200,7 @@ void EditorController::rebuildLabelSources() {
         const bool nameVisible=resolved.nameVisible;
         const bool flagVisible=resolved.flagVisible&&!flag.isEmpty();
         if(!nameVisible&&!flagVisible)continue;
-        const auto geometry=document.geometries.get(unit.geometry);if(!geometry)continue;
+        const auto geometry=document.geometries.get(pandoeditor::staticGeometryBinding(document,unit.id).geometryRef);if(!geometry)continue;
         auto geographic=geometryCenter(*geometry);
         if(labelAnchors_)if(const auto anchor=labelAnchors_->anchor(
             displayText(ref.id),labelSourceId(ref.id)))geographic=*anchor;
@@ -209,7 +208,7 @@ void EditorController::rebuildLabelSources() {
         LabelSettings stored;
         if(const auto found=document.presentation.webPresentation.labelSettings.find(ref);
            found!=document.presentation.webPresentation.labelSettings.end())stored=found->second;
-        const auto kind=unit.kind==UnitKind::Country?std::string("country"):std::string("region");
+        const auto kind=isRootGeneral(document,unit)?std::string("country"):std::string("region");
         const auto settings=automaticLabelSettings(kind,stored);
         if(settings.pinned&&settings.manualPosition)geographic=*settings.manualPosition;
         const auto name=QString::fromStdString(properties->displayName);

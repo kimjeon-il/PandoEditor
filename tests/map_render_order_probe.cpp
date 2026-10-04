@@ -11,8 +11,9 @@ int main() {
     using namespace pandoeditor;
     ProjectDocument document;
     for(const auto& [id,kind]:std::vector<std::pair<std::string,UnitKind>>{
-        {"country",UnitKind::Country},{"subunit",UnitKind::Subunit},{"region",UnitKind::Region}}){
+        {"country",UnitKind::General},{"subunit",UnitKind::General},{"region",UnitKind::Regional}}){
         TerritorialUnit unit;unit.id=id;unit.kind=kind;document.units.push_back(unit);
+        addStaticTerritorialRecords(document,id,{id,1},id=="subunit"?"country":"");
     }
     for(const auto& type:{"religion","ethnicity","language"}){
         DistributionLayer layer;layer.id=type;layer.unit=type;document.distributionLayers.push_back(layer);

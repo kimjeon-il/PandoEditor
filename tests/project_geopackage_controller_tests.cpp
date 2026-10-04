@@ -35,10 +35,10 @@ private slots:
         QCOMPARE(restored.revision(),restoredRevision);
         QVERIFY(!restored.hasFile());
 
-        const auto web=QString::fromUtf8(WEB_GPKG_FIXTURE)+"/web-project.gpkg";
+        const auto web=QString::fromUtf8(WEB_GPKG_FIXTURE)+"/../timeline-exchange/content.gpkg";
         QVERIFY(restored.openProjectGeoPackage(QUrl::fromLocalFile(web)));
         const auto webDocument=projectcodec::decode(restored.documentBytes());
-        QCOMPARE(webDocument.units.size(),std::size_t(2));
+        QCOMPARE(webDocument.units.size(),std::size_t(4));
         QCOMPARE(webDocument.distributionEntries.size(),std::size_t(1));
         QVERIFY(restored.dirty());
         QVERIFY(!restored.hasFile());

@@ -19,9 +19,12 @@ const fixtures = timelineCases().filter(row => row.native !== false).map(row => 
   return `{${text(row.name)},${text(row.expected)},${data},${entities},${list(row.context.geometryRefs.map(geometry))}}`;
 });
 const content = '// Generated from tests/fixtures/timeline-records.json; do not edit.\n'
-  + 'static std::vector<TimelineFixture> timelineFixtures() {\n  std::vector<TimelineFixture> fixtures;\n'
-  + `  fixtures.reserve(${fixtures.length});\n`
-  + fixtures.map(f => `  fixtures.push_back(TimelineFixture${f});`).join('\n')
-  + '\n  return fixtures;\n}\n';
+  // A single aggregate containing every fixture crashes the Windows MinGW
+  // compiler. Separate construction keeps exactly the same fixture values.
+  + fixtures.map((f, index) => `static TimelineFixture timelineFixture${index}() { return ${f}; }`).join('\n')
+  + '\nstatic std::vector<TimelineFixture> timelineFixtures() {\n  std::vector<TimelineFixture> out;\n'
+  + `  out.reserve(${fixtures.length});\n`
+  + fixtures.map((_, index) => `  out.push_back(timelineFixture${index}());`).join('\n')
+  + '\n  return out;\n}\n';
 mkdirSync(dirname(resolve(output)), { recursive: true });
 writeFileSync(output, content);

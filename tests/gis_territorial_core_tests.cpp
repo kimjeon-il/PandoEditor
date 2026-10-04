@@ -22,8 +22,10 @@ bool rejected(const std::function<void()>& callback) {
 }
 int main() {
     auto p=project();
-    GisTerritorialInput region;region.id="R";region.name="Region";region.kind=UnitKind::Region;
-    region.geometry=square(0);region.sovereign=territorialRef("A");
+    GisTerritorialInput region;region.id="R";region.name="Region";region.kind=UnitKind::Regional;
+    region.geometry=square(0);
+    auto political=region;political.sovereign=territorialRef("A");
+    assert(rejected([&]{planTerritorialGisImport(p.snapshot(),"political",{"r","geojson"},GisExchangeTarget::Region,{political});}));
     auto plan=planTerritorialGisImport(p.snapshot(),"region",{"r.geojson","geojson"},
         GisExchangeTarget::Region,{region});
     CommandArguments args;args.action=plan;
@@ -42,7 +44,7 @@ int main() {
     assert(rejected([&]{planTerritorialGisImport(other.snapshot(),"missing",{"r","geojson"},
         GisExchangeTarget::Region,{missing});}));
     GisTerritorialInput country;country.id="C";country.name="Charlie";
-    country.kind=UnitKind::Country;country.geometry=square(1);
+    country.kind=UnitKind::General;country.geometry=square(1);
     assert(rejected([&]{planTerritorialGisImport(other.snapshot(),"overlap",{"c","geojson"},
         GisExchangeTarget::Country,{country});}));
     auto invalid=plan;invalid.units.front().id="swapped";

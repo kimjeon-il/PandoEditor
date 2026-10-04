@@ -1,6 +1,8 @@
 #pragma once
 #include <pandoeditor/presentation.h>
 #include <pandoeditor/temporal.h>
+#include <pandoeditor/geometry-types.h>
+#include <pandoeditor/timeline-records.h>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -10,32 +12,8 @@
 #include <vector>
 
 namespace pandoeditor {
-using Ring = std::vector<Point>;
-using Polygon = std::vector<Ring>;
-using MultiPolygon = std::vector<Polygon>;
 inline ObjectRef territorialRef(const std::string& id) { return {"territorial",id}; }
-struct GeometryRef {
-    std::string id;
-    std::uint32_t version=1;
-    bool operator<(const GeometryRef& b) const { return std::tie(id,version)<std::tie(b.id,b.version); }
-    bool operator==(const GeometryRef& b) const { return id==b.id && version==b.version; }
-};
-struct Geometry {
-    std::string type="MultiPolygon";
-    std::vector<Point> points;
-    std::vector<Ring> lines;
-    MultiPolygon polygons;
-};
-class GeometryStore {
-public:
-    void insert(GeometryRef ref, Geometry geometry);
-    std::shared_ptr<const Geometry> get(const GeometryRef& ref) const;
-    const auto& versions() const { return versions_; }
-private:
-    std::map<GeometryRef,std::shared_ptr<const Geometry>> versions_;
-};
-enum class UnitKind { Country, Subunit, Region };
-struct Validity { std::optional<std::string> from, to; };
+enum class UnitKind { General, Regional };
 struct SourceProvenance {
     std::string kind="user", dataset, version, sourceId, sourceFormat, sourceType, importedAt;
     // Lossless JSON object; parsing is owned by the codec boundary.
@@ -109,25 +87,16 @@ struct PhysicalDataSettings {
     std::string dataset, version, source;
     std::vector<std::string> hiddenHydroIds;
 };
-std::pair<std::int64_t,std::int64_t> temporalBounds(const Validity& validity);
 struct TerritorialUnit {
     std::string id, name, notes;
-    UnitKind kind=UnitKind::Country;
-    GeometryRef geometry;
+    UnitKind kind=UnitKind::General;
     bool locked=false;
-    Validity validity;
-    std::string coverageMode="explicit";
     // Country base name is immutable source data; name is the current override.
     std::string baseName;
     bool nameExplicit=true;
     std::optional<LibraryOrigin> libraryOrigin;
-};
-struct TerritorialRelation {
-    std::string id;
-    ObjectRef unit;
-    std::optional<ObjectRef> parent, sovereign;
-    bool dated=false;
-    Validity validity;
+    // Additional supported annotation metadata, lossless through the codec.
+    std::string metadata="{}", sourceFolderId, sourceLibraryId, sourceGeometryVersion;
 };
 struct Layer {
     std::string id, name;
@@ -162,11 +131,11 @@ struct Country {
     bool locked=false;
 };
 struct ProjectDocument {
-    // Read-time provenance for a migration notice, not document content or wire data.
-    int nativeSourceVersion=8;
     std::string documentId;
+    // Supported file header, source and physical-view annotations. The codec
+    // owns this lossless JSON object; temporal/content facts remain typed below.
+    std::string exchangeMetadata="{}";
     std::vector<TerritorialUnit> units;
-    std::vector<TerritorialRelation> relations;
     std::map<ObjectRef,CountryDetails> countryDetails;
     std::map<ObjectRef,TerritorialSymbolStyle> symbols;
     std::vector<PlaceLabel> labels;
@@ -176,6 +145,7 @@ struct ProjectDocument {
     std::vector<GenericFeature> genericFeatures;
     PhysicalDataSettings physicalData;
     GeometryStore geometries;
+    TimelineRecords timelineRecords;
     PresentationState presentation;
     std::vector<PreservedExtension> extensions;
     ProjectDocument()=default;
@@ -195,8 +165,7 @@ struct DocumentIndex {
     std::map<ObjectRef,std::size_t> objects;
     std::map<std::string,std::size_t> layers;
     std::map<ObjectRef,std::vector<ObjectRef>> children, dependents;
-    std::map<ObjectRef,std::vector<ObjectRef>> sovereignMembers;
-    std::map<ObjectRef,std::vector<std::size_t>> relationsByUnit;
+    std::map<ObjectRef,std::vector<std::size_t>> parentRelationsByUnit;
     std::map<GeometryRef,std::vector<ObjectRef>> geometryUsers;
 };
 DocumentIndex validateDocument(const ProjectDocument& document);
@@ -207,9 +176,19 @@ bool objectLocked(const ProjectDocument&,const DocumentIndex&,const ObjectRef&);
 std::string contentGroup(const ProjectDocument&,const ObjectRef&);
 std::vector<CountryView> countryViews(const ProjectDocument& document);
 const std::string& nativeLayerId(const ProjectDocument&,const ObjectRef&);
-const TerritorialRelation* effectiveRelation(const ProjectDocument&, const std::string& unitId, std::int64_t date);
-const TerritorialRelation* effectiveRelationAt(const ProjectDocument&,const std::string& unitId,
-                                               const std::string& referenceDate);
+std::vector<TimelineEntityIdentity> timelineEntityCatalog(const ProjectDocument&);
+bool isStaticTimeline(const ProjectDocument&);
+void requireStaticTimeline(const ProjectDocument&);
+const TimelineGeometryBinding& staticGeometryBinding(const ProjectDocument&,const std::string& entityId);
+TimelineGeometryBinding& staticGeometryBinding(ProjectDocument&,const std::string& entityId);
+const TimelineParentRelation& staticParentRelation(const ProjectDocument&,const std::string& entityId);
+TimelineParentRelation& staticParentRelation(ProjectDocument&,const std::string& entityId);
+const TimelineLifetime& staticLifetime(const ProjectDocument&,const std::string& entityId);
+TimelineLifetime& staticLifetime(ProjectDocument&,const std::string& entityId);
+void addStaticTerritorialRecords(ProjectDocument&,const std::string& entityId,GeometryRef,
+                                 const std::string& parentId="",const std::string& coverageMode="explicit");
+void removeTerritorialRecords(ProjectDocument&,const std::vector<std::string>& entityIds);
+bool isRootGeneral(const ProjectDocument&,const TerritorialUnit&);
 std::vector<std::string> blockingExtensions(const ProjectDocument&, const ObjectRef&, const std::string& effect);
 bool effectAllowed(const ProjectDocument&, const ObjectRef&, const std::string& effect);
 } // namespace pandoeditor

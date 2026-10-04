@@ -103,7 +103,6 @@ Rectangle {
                 }
                 ColumnLayout {
                     visible:tabs.currentIndex===2;Layout.fillWidth:true
-                    Label {textFormat:Text.PlainText;objectName:"relationSovereign";text:"소속 국가: "+(editor.objectProperties.sovereignName||"없음");Layout.fillWidth:true;wrapMode:Text.Wrap}
                     Label {textFormat:Text.PlainText;objectName:"relationParent";text:"상위 단위: "+(editor.objectProperties.parentName||"없음");Layout.fillWidth:true;wrapMode:Text.Wrap}
                     UiButton {text:"종류 전환";symbol:"type";description:"영토의 종류와 소속을 변경합니다.";visible:editor.primaryObject.domain==="territorial";outlined:true;enabled:editor.selectedEditable;onClicked:editor.beginTypeConversion()}
                 }

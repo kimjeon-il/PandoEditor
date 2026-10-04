@@ -15,7 +15,7 @@ HistoricalInstantiationPlan prepareHistoricalTransaction(const ProjectSnapshot& 
     for(const auto& request:requests) {
         const auto selected=catalog.instantiate(request.libraryId,request.referenceDate,request.geometryVersionId);
         if(selected.instantiation.mode=="territory-replacement") {
-            if(selected.type!=UnitKind::Country && !request.asIndependentCountry)
+            if((selected.type!=UnitKind::General||request.parent) && !request.asIndependentCountry)
                 throw std::invalid_argument("INVALID_LIBRARY: territory replacement requires country");
             replacements.push_back(selected.geometry);
             replacementTargets.emplace(territorialRef(selected.libraryId),selected.geometry);
@@ -31,9 +31,9 @@ HistoricalInstantiationPlan prepareHistoricalTransaction(const ProjectSnapshot& 
             combined=std::move(result.geometry);
         }
         std::map<ObjectRef,Geometry> donorRemainders;
-        for(const auto& unit:project.document().units)if(unit.kind==UnitKind::Country) {
+        for(const auto& unit:project.document().units)if(isRootGeneral(project.document(),unit)) {
             if(cancelled&&cancelled())throw std::runtime_error("CANCELLED");
-            const auto& original=*project.document().geometries.get(unit.geometry);
+            const auto& original=*project.document().geometries.get(pandoeditor::staticGeometryBinding(project.document(),unit.id).geometryRef);
             const auto intersection=calculator({GeometryOperation::Intersection,original,combined,{}},cancelled);
             if(!intersection.succeeded())throw std::runtime_error("INVALID_LIBRARY: M4 intersection failed");
             if(intersection.status==GeometryOperationStatus::Empty ||
@@ -56,15 +56,12 @@ HistoricalInstantiationPlan prepareHistoricalTransaction(const ProjectSnapshot& 
             donorRemainders.emplace(territorialRef(unit.id),remaining.geometry);
             patches.push_back({territorialRef(unit.id),std::move(remaining.geometry)});
         }
-        for(const auto& unit:project.document().units)if(unit.kind!=UnitKind::Country) {
+        for(const auto& unit:project.document().units)if(unit.kind==UnitKind::General&&!isRootGeneral(project.document(),unit)) {
             if(cancelled&&cancelled())throw std::runtime_error("CANCELLED");
-            const TerritorialRelation* relation=nullptr;
-            for(const auto& candidate:project.document().relations)
-                if(!candidate.dated&&candidate.unit==territorialRef(unit.id)) {relation=&candidate;break;}
-            if(!relation || !relation->sovereign || !donorRemainders.count(*relation->sovereign))continue;
-            const auto& original=*project.document().geometries.get(unit.geometry);
-            auto remaining=calculator({GeometryOperation::Intersection,original,
-                                      donorRemainders.at(*relation->sovereign),{}},cancelled);
+            const auto& relation=staticParentRelation(project.document(),unit.id);
+            const auto parent=territorialRef(relation.parentId);if(relation.parentId.empty()||!donorRemainders.count(parent))continue;
+            const auto& original=*project.document().geometries.get(staticGeometryBinding(project.document(),unit.id).geometryRef);
+            auto remaining=calculator({GeometryOperation::Intersection,original,donorRemainders.at(parent),{}},cancelled);
             if(remaining.status==GeometryOperationStatus::Empty)
                 throw std::invalid_argument("INVALID_LIBRARY: territory would erase dependent unit");
             if(remaining.status!=GeometryOperationStatus::Completed)

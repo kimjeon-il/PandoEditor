@@ -18,9 +18,9 @@ template<class F> bool invalid(const F& fn) {
 }
 }
 int main() {
-    assert(historicalUnitKind("territory")==UnitKind::Subunit);
-    assert(historicalUnitKind("admin")==UnitKind::Subunit);
-    assert(historicalUnitKind("country")==UnitKind::Country);
+    assert(historicalUnitKind("territory")==UnitKind::General);
+    assert(historicalUnitKind("admin")==UnitKind::General);
+    assert(historicalUnitKind("country")==UnitKind::General);
     assert(invalid([]{historicalUnitKind("arbitrary");}));
     HistoricalEntity entity;
     entity.libraryId="historical-country:example";

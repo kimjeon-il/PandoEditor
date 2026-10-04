@@ -52,10 +52,11 @@ struct WebPresentation {
     std::map<std::string,std::set<std::string>> hiddenItems;
     std::map<std::string,PresentationStyle> styles, objectStyles;
     std::vector<std::string> objectOrder;
+    std::vector<std::string> overlayOrder;
     std::map<ObjectRef,LabelSettings> labelSettings;
     DistributionSettings distributionSettings;
     bool operator==(const WebPresentation& b) const {
-        return visibility==b.visibility && hiddenItems==b.hiddenItems && styles==b.styles && objectStyles==b.objectStyles && objectOrder==b.objectOrder && labelSettings==b.labelSettings && distributionSettings==b.distributionSettings;
+        return visibility==b.visibility && hiddenItems==b.hiddenItems && styles==b.styles && objectStyles==b.objectStyles && objectOrder==b.objectOrder && overlayOrder==b.overlayOrder && labelSettings==b.labelSettings && distributionSettings==b.distributionSettings;
     }
 };
 struct LabelLayoutCandidate {
@@ -76,8 +77,8 @@ struct ResolvedTerritorialPresentation {
     bool boundaryVisible=true, nameVisible=true, flagVisible=true, colorVisible=true;
     std::string blendMode="normal";
 };
-std::string territorialGroup(UnitKind);
-std::string territorialPresentationKey(UnitKind,const std::string&);
+std::string territorialGroup(const ProjectDocument&,const std::string& entityId);
+std::string territorialPresentationKey(const std::string& entityId);
 bool groupVisible(const WebPresentation&,const std::string&);
 bool itemVisible(const WebPresentation&,const std::string&,const std::string&);
 bool effectiveMapVisibility(const ProjectDocument&,const ObjectRef&);
