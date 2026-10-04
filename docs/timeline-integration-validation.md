@@ -42,6 +42,18 @@ and each matches its staged Git blob. Neither source contents nor expected hashe
 were changed. The initial administrative fixture supplied its parent in the
 sovereignty argument and was correctly rejected; that fixture argument was fixed.
 
+Linux production results from [run 37197734241](https://github.com/kimjeon-il/PandoEditor/actions/runs/37197734241)
+on `fcd7d16704c9a552b6b76464ab9070e9baa18223` were downloaded and checked:
+13 CTests, 10 selected Qt flag cases, 48 flag-placement cases, 17 source assets
+and 16 actual exchange cases passed, with no failed/skipped production tests.
+The native file suite passed its 31 + 9 + 2 cases. That run's additional M32
+probe did not execute: its executable is in `build/`, and the workflow used
+`build/app/`. The pipeline hid the process error, so the overall green job is
+not evidence of an M32 pass. The follow-up changes only this workflow and report:
+it corrects the path, enables Bash pipefail, and exposes `probe_only` to rerun
+that comparison without repeating the passed production suites. M32's Linux
+result must be read from that separate run; it is not asserted here in advance.
+
 Evidence is in `D:/Codex/releases/timeline-t22-20261004`: Windows JUnit,
 `windows-LastTest.log`, flag/oracle/exchange logs and source-asset report.
 The Linux manual `Timeline persistence validation` workflow uses the same 13
