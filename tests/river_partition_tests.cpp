@@ -16,6 +16,16 @@ private slots:
         QVERIFY2(result.succeeded(),qPrintable(result.detail));QCOMPARE(result.candidates.size(),std::size_t(2));QCOMPARE(result.components.size(),std::size_t(2));
         QCOMPARE(result.components[0].sourcePolygonIndex,7);QCOMPARE(result.donors[0].status,RiverDonorStatus::Ready);QVERIFY(result.inputUnchanged);QVERIFY(result.compositionInputUnchanged);
     }
+    void presentationRunsAfterRawIdentity() {
+        QFile file(QStringLiteral(M972_RIVER_FIXTURE)+"/synthetic-cases.json");QVERIFY(file.open(QIODevice::ReadOnly));
+        const auto row=QJsonDocument::fromJson(file.readAll()).array()[0].toObject();
+        const auto result=calculateRiverPartitionsJson(QJsonDocument(row).toJson(QJsonDocument::Compact));
+        QVERIFY2(result.succeeded(),qPrintable(result.detail));QCOMPARE(result.presentationCandidates.size(),result.candidates.size());
+        QCOMPARE(result.presentationCandidates[0].key,result.candidates[0].key);
+        QCOMPARE(result.presentationCandidates[0].sourceRiverIds,result.candidates[0].sourceRiverIds);
+        QVERIFY(result.presentationCandidates[0].geometry.polygons[0][0][0].y!=result.candidates[0].geometry.polygons[0][0][0].y);
+        QCOMPARE(result.presentationComponents[0].sourcePolygonIndex,7);QVERIFY(!result.presentationJson.isEmpty());QVERIFY(!result.workspaceJson.isEmpty());
+    }
     void typedValuesAndLiveJsSignatures() {
         RiverPartitionRequest request;
         RiverPartitionDonor donor;donor.countryId="typed";donor.geometry.type="Polygon";

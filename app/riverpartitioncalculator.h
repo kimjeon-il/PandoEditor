@@ -77,12 +77,16 @@ struct RiverPartitionResult {
     bool inputUnchanged=false, compositionInputUnchanged=false;
     // Owned exact JS serialization for differential diagnostics, never JS objects.
     QByteArray json;
+    // Actual pinned presentation normalizer, after raw identity creation.
+    std::vector<RiverPartitionCell> presentationCandidates;
+    std::vector<RiverPartitionComponent> presentationComponents;
+    QByteArray presentationJson, workspaceJson;
     bool succeeded() const noexcept { return status==RiverPartitionStatus::Completed; }
 };
 // Fresh private engine in the calling worker thread. Synchronous JS cannot be
 // interrupted mid-call; cancellation is checked around load/call/decode and wins
 // over errors. Never call from the GUI thread. Raw geometry is not normalized:
-// the later presentation boundary must normalize AFTER identities are produced.
+// the separately returned presentation is normalized AFTER identities are produced.
 RiverPartitionResult calculateRiverPartitions(const RiverPartitionRequest&,
     const GeometryCancellation& cancelled={});
 // Narrow differential seam: {request, components, liveDonorIndices?, signatureEdits?}.

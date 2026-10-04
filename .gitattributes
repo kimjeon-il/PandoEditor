@@ -16,13 +16,16 @@ tests/fixtures/world-rendering/*.json text eol=lf
 tests/fixtures/world-rendering/*.geojson text eol=lf
 tests/fixtures/timeline-temporal-reference.mjs text eol=lf
 tests/fixtures/web-timeline/*.mjs text eol=lf
-# M9.7.2 originals, generated compatibility resources, retained V8 source and
+# M9.7.2 originals, generated compatibility resources, and
 # compact fixtures are SHA-256 verified. Preserve their bytes on Windows too.
 assets/geometry/river/** text eol=lf
-app/river/** text eol=lf
 tests/fixtures/web-m972-river/** text eol=lf
 # Existing source files reused by the new river provenance manifest.
 tests/fixtures/web-hydro/source/earcut.min.js text eol=lf
 tests/fixtures/web-hydro/source/geographic-boundary-core.js text eol=lf
 tests/fixtures/web-hydro/source/hydro-tile-worker.js text eol=lf
 tests/fixtures/web-m97/source/assets/js/modules/polygon-geometry.js text eol=lf
+tests/fixtures/web-m97/source/assets/js/modules/map-edit-geometry.js text eol=lf
+tests/fixtures/web-m97/source/assets/js/modules/coordinate-bounds.js text eol=lf
+tests/fixtures/web-m97/source/assets/js/modules/polygon-clipping-calculation.js text eol=lf
+tests/fixtures/web-m97/source/assets/js/modules/map-edit-country-commands.js text eol=lf

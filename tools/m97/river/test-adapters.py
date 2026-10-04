@@ -21,4 +21,4 @@ with tempfile.TemporaryDirectory() as temp:
     try:module.generated()
     except ValueError as e:assert 'ORIGINAL_HASH_MISMATCH' in str(e)
     else:raise AssertionError('Original hash drift accepted')
-print('PASS: deterministic bytes; six missing/duplicate guards; unchanged planar; hash-drift rejection; official cosine source/license.')
+print('PASS: deterministic bytes; six missing/duplicate guards; unchanged planar; hash-drift rejection.')

@@ -37,14 +37,14 @@ int main(int argc,char** argv){QCoreApplication app(argc,argv);const auto args=a
         const auto cases=QJsonDocument::fromJson(read(args[1])).array();if(cases.isEmpty())throw std::runtime_error("Required cases missing or empty");
         HydroRuntimeProvider provider;const auto providerArg=args.indexOf("--provider");
         if(providerArg>=0){QString error;if(!provider.open(args.value(providerArg+1),"river-differential",false,error))throw std::runtime_error(error.toStdString());}
-        QJsonArray observations,sourceObservations,memorySamples;
+        QJsonArray observations,sourceObservations,memorySamples,presentations,traces;
         if(args.contains("--cancel-test")){
             std::atomic_bool cancel{false};const auto bytes=QJsonDocument(cases[0].toObject()).toJson(QJsonDocument::Compact);
             auto future=std::async(std::launch::async,[&]{return calculateRiverPartitionsJson(bytes,[&]{return cancel.load();});});
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             if(future.wait_for(std::chrono::milliseconds(0))==std::future_status::ready)throw std::runtime_error("Real case completed before cancellation could be exercised");
             cancel.store(true);const auto result=future.get();
-            if(result.status!=RiverPartitionStatus::Cancelled||!result.candidates.empty()||!result.components.empty()||!result.donors.empty()||!result.json.isEmpty())throw std::runtime_error("Real cancellation retained result");
+            if(result.status!=RiverPartitionStatus::Cancelled||!result.candidates.empty()||!result.components.empty()||!result.donors.empty()||!result.json.isEmpty()||!result.presentationJson.isEmpty()||!result.workspaceJson.isEmpty()||!result.presentationCandidates.empty()||!result.presentationComponents.empty())throw std::runtime_error("Real cancellation retained result");
             QTextStream(stdout)<<"{\"cancelledWhileRunning\":true,\"resultDiscarded\":true}\n";return 0;
         }
         for(const auto& entry:cases){const auto row=entry.toObject();const auto name=row["name"].toString();logStage(name,"begin");RiverPartitionResult result;
@@ -60,6 +60,8 @@ int main(int argc,char** argv){QCoreApplication app(argc,argv);const auto args=a
             logStage(name,"kernel-returned");memorySamples.append(QJsonObject{{"name",name},{"processKiB",memory()},{"providerCacheBytes",double(provider.cachedBytes())}});
             if(!result.succeeded())throw std::runtime_error((row["name"].toString()+": "+result.detail).toStdString());
             auto observation=QJsonDocument::fromJson(result.json).object();observation["name"]=row["name"];observations.append(observation);
+            auto presentation=QJsonDocument::fromJson(result.presentationJson).object();presentation["name"]=row["name"];presentations.append(presentation);
+            traces.append(QJsonObject{{"name",row["name"]},{"workspaces",QJsonDocument::fromJson(result.workspaceJson).array()}});
         }
-        QTextStream(stdout)<<QJsonDocument(QJsonObject{{"qtVersion",qVersion()},{"observations",observations},{"sources",sourceObservations},{"memorySamples",memorySamples}}).toJson(QJsonDocument::Compact)<<'\n';return 0;
+        QTextStream(stdout)<<QJsonDocument(QJsonObject{{"qtVersion",qVersion()},{"observations",observations},{"sources",sourceObservations},{"memorySamples",memorySamples},{"presentations",presentations},{"traces",traces}}).toJson(QJsonDocument::Compact)<<'\n';return 0;
     }catch(const std::exception& e){QTextStream(stderr)<<e.what()<<'\n';return 1;}}

@@ -93,18 +93,6 @@ qt_add_resources(pandoeditor_editor m4_geometry
     PREFIX "/geometry" BASE "${PROJECT_SOURCE_DIR}/assets/geometry"
     FILES "${PROJECT_SOURCE_DIR}/assets/geometry/polygon-clipping-0.15.7.js"
           "${PROJECT_SOURCE_DIR}/assets/geometry/LICENSE.polygon-clipping.txt")
-# Only the generated cosine closure uses C++20 and strict floating-point flags.
-add_library(pandoeditor_river_cosine OBJECT river/v8-cosine.cpp)
-target_compile_features(pandoeditor_river_cosine PRIVATE cxx_std_20)
-set_target_properties(pandoeditor_river_cosine PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_VISIBILITY_PRESET hidden)
-if(MSVC)
-    target_compile_options(pandoeditor_river_cosine PRIVATE /fp:strict)
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(pandoeditor_river_cosine PRIVATE -fno-fast-math -ffp-contract=off)
-else()
-    message(FATAL_ERROR "River V8 cosine needs reviewed strict floating-point compiler flags")
-endif()
-target_link_libraries(pandoeditor_editor PRIVATE pandoeditor_river_cosine)
 qt_add_resources(pandoeditor_editor m972_river
     PREFIX "/river" BASE "${PROJECT_SOURCE_DIR}/assets/geometry/river"
     FILES
@@ -114,10 +102,10 @@ qt_add_resources(pandoeditor_editor m972_river
         "${PROJECT_SOURCE_DIR}/assets/geometry/river/adapted/planar-graph-faces.js"
         "${PROJECT_SOURCE_DIR}/assets/geometry/river/platform.js"
         "${PROJECT_SOURCE_DIR}/assets/geometry/river/bridge.js"
+        "${PROJECT_SOURCE_DIR}/assets/geometry/river/presentation.js"
+        "${PROJECT_SOURCE_DIR}/assets/geometry/river/workspace-observation.js"
+        "${PROJECT_SOURCE_DIR}/assets/geometry/river/original/polygon-geometry.js"
         "${PROJECT_SOURCE_DIR}/assets/geometry/river/provenance.json")
-qt_add_resources(pandoeditor_editor m972_river_license
-    PREFIX "/river/vendor" BASE "${PROJECT_SOURCE_DIR}/app/river/vendor"
-    FILES "${PROJECT_SOURCE_DIR}/app/river/vendor/LICENSE.v8")
 if(WIN32)
     target_link_libraries(pandoeditor_editor PRIVATE dwmapi user32)
 endif()
@@ -295,11 +283,11 @@ if(BUILD_TESTING)
     if(M972_NODE_EXECUTABLE)
         add_test(NAME m972_river_oracle_contract COMMAND "${M972_NODE_EXECUTABLE}" --test
             "${PROJECT_SOURCE_DIR}/tools/m97/river-kernel.test.mjs")
-        add_test(NAME m972_river_synthetic_differential COMMAND "${M972_NODE_EXECUTABLE}"
+        add_test(NAME m972_river_synthetic_browser_baseline COMMAND "${M972_NODE_EXECUTABLE}"
             "${PROJECT_SOURCE_DIR}/tools/m97/river/differential.mjs" --native "$<TARGET_FILE:m972_river_probe>" --synthetic)
-        add_test(NAME m972_river_full_source_differential COMMAND "${M972_NODE_EXECUTABLE}" --max-old-space-size=256
+        add_test(NAME m972_river_full_source_browser_baseline COMMAND "${M972_NODE_EXECUTABLE}" --max-old-space-size=256
             "${PROJECT_SOURCE_DIR}/tools/m97/river/differential.mjs" --native "$<TARGET_FILE:m972_river_probe>" --full)
-        set_tests_properties(m972_river_full_source_differential PROPERTIES TIMEOUT 240 LABELS "full-data;river-parity")
+        set_tests_properties(m972_river_full_source_browser_baseline PROPERTIES TIMEOUT 240 LABELS "full-data;river-parity")
     endif()
 
     add_executable(hydro_full_dataset_tests ../tests/hydro_full_dataset_tests.cpp)

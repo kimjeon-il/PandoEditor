@@ -47,17 +47,32 @@ jobs:
             assets/data/historical-library-pilot.json
             assets/data/hydro/v0.13.0
             assets/data/hydro/v0.13.1
+      - name: Fetch immutable original full-country validation context
+        uses: actions/checkout@v4
+        with:
+          repository: kimjeon-il/Pando
+          ref: 53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47
+          path: river-country-web
+          persist-credentials: false
+          sparse-checkout: assets/data/countries-ne-5.1.1.geojson
       - name: Full native regression with skip audit
         env:
           PANDOEDITOR_HYDRO_FULL_MANIFEST: ${{ github.workspace }}/full-hydro-web/assets/data/hydro/v0.13.1/manifest.json
           PANDOEDITOR_HISTORICAL_FULL_PILOT: ${{ github.workspace }}/full-hydro-web/assets/data/historical-library-pilot.json
+          PANDOEDITOR_RIVER_EVIDENCE: ${{ github.workspace }}/evidence/river-native
         run: |
           ctest --test-dir build --output-on-failure --output-junit results.xml
           python tools/m6-regression-audit.py build/results.xml build/Testing/Temporary/LastTest.log
-      - name: Record exact river native and complete-source differential
+      - name: Capture 42 compiled-native observations for direct browser comparison
         env:
           PANDOEDITOR_HYDRO_FULL_MANIFEST: ${{ github.workspace }}/full-hydro-web/assets/data/hydro/v0.13.1/manifest.json
-        run: node --max-old-space-size=256 tools/m97/river/differential.mjs --native build/app/m972_river_probe --synthetic --full --evidence evidence/river-native
+          PANDOEDITOR_RIVER_COUNTRIES: ${{ github.workspace }}/river-country-web/assets/data/countries-ne-5.1.1.geojson
+        run: node --max-old-space-size=512 tools/m97/river/collect-native.mjs --native build/app/m972_river_probe --reuse evidence/river-native --output evidence/river-direct
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m972-river-native-${{ github.sha }}
+          path: evidence/river-direct
+          retention-days: 14
       - name: Record real native calculation differences (not a parity pass)
         if: always()
         run: node tools/m97/native-baseline.mjs build/app/m4_geometry_probe evidence/native-baseline.json
@@ -72,6 +87,7 @@ jobs:
           retention-days: 14
 
   river-chromium-oracle:
+    needs: linux-regression
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -83,26 +99,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24.19.0'
-      - name: Fetch pinned full river oracle datasets
-        uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
-          repository: kimjeon-il/Pando
-          ref: c0bd31d13dc8495593d78cf51f7cc195de7c9469
-          path: full-hydro-web
-          persist-credentials: false
-          sparse-checkout: |
-            assets/data/hydro/v0.13.0
-            assets/data/hydro/v0.13.1
+          name: m972-river-native-${{ github.sha }}
+          path: native-river-artifact
       - name: Verify immutable sources and generated adapters
         run: python3 tools/m97/river/generate-adapters.py --check
       - name: Install pinned official Playwright and Chromium
         run: |
           npm ci --prefix tools/m97/river/browser --ignore-scripts --registry=https://registry.npmjs.org
           node tools/m97/river/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
-      - name: Compare 18 synthetic and 6 actual-source cases in official Chromium
-        env:
-          PANDOEDITOR_HYDRO_FULL_MANIFEST: ${{ github.workspace }}/full-hydro-web/assets/data/hydro/v0.13.1/manifest.json
-        run: node tools/m97/river/browser/run.mjs evidence/river-chromium
+      - name: Compare all 42 native and actual Chromium outputs, presentation, and annex oracle
+        run: node --max-old-space-size=512 tools/m97/river/browser/run.mjs native-river-artifact evidence/river-chromium
       - uses: actions/upload-artifact@v4
         if: always()
         with:

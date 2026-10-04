@@ -26,6 +26,26 @@
       "path": "assets/js/modules/polygon-geometry.js",
       "localPath": "tests/fixtures/web-m97/source/assets/js/modules/polygon-geometry.js",
       "sha256": "cc987c4076861a02a5d60720ebf536908175a9f1a605a86701ae4cf50c3a3fb5"
+    },
+    {
+      "path": "assets/js/modules/map-edit-geometry.js",
+      "localPath": "tests/fixtures/web-m97/source/assets/js/modules/map-edit-geometry.js",
+      "sha256": "0560653313500d5e9a4ca62fa5611cc4f4c18f3fb1cac353a828278094a1504e"
+    },
+    {
+      "path": "assets/js/modules/coordinate-bounds.js",
+      "localPath": "tests/fixtures/web-m97/source/assets/js/modules/coordinate-bounds.js",
+      "sha256": "67e2598e59d6e5ff98d871566332286dc83d7e4f9fbc3dc1236c9cc9d08665e0"
+    },
+    {
+      "path": "assets/js/modules/polygon-clipping-calculation.js",
+      "localPath": "tests/fixtures/web-m97/source/assets/js/modules/polygon-clipping-calculation.js",
+      "sha256": "79095890e49875610f27585c694a3f05e6c3322ef6a8b3e57c4a087236339406"
+    },
+    {
+      "path": "assets/js/modules/map-edit-country-commands.js",
+      "localPath": "tests/fixtures/web-m97/source/assets/js/modules/map-edit-country-commands.js",
+      "sha256": "1c8e7c828459b1ca1b8b8d208ac395d2505b913d80c60173d89376f126f3ce09"
     }
   ],
   "countrySource": {

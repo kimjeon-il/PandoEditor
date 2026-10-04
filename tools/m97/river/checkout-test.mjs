@@ -15,7 +15,7 @@ export function verifyRiverCheckout(root) {
       if(entry.isDirectory())collect(name);else if(entry.isFile())files.add(name);
     }
   }
-  for(const directory of ['assets/geometry/river','app/river','tests/fixtures/web-m972-river'])collect(directory);
+  for(const directory of ['assets/geometry/river','tests/fixtures/web-m972-river'])collect(directory);
   const manifest=JSON.parse(fs.readFileSync(path.join(root,'tests/fixtures/web-m972-river/manifest.json')));
   for(const source of manifest.sources)files.add(source.localPath);
   const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'m972-river-checkout-'));

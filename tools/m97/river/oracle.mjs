@@ -16,6 +16,7 @@ export function verifySources() {
   const pins={
     'river-territory-partition.js':'18b32eb7db238beaed99bce8bac980e547a48c785a7bd2071fa56fa63f51db24',
     'planar-graph-faces.js':'283da7701c21cb80e4fd9ef97e8f68e69a8d6f0ec9fc611ee8c23cab45d6c804',
+    'polygon-geometry.js':'cc987c4076861a02a5d60720ebf536908175a9f1a605a86701ae4cf50c3a3fb5',
   };
   for(const [name,hash] of Object.entries(pins))assert.equal(sha256(fs.readFileSync(path.join(riverRoot,'original',name))),hash,name);
   assert.equal(sha256(fs.readFileSync(path.join(root,'assets/geometry/polygon-clipping-0.15.7.js'))),'8c1ed56df8b1f97b047f82d91b910aacdaff67d8d9a55f2495eb26e8369186f7');
