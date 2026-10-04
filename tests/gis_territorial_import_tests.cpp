@@ -48,7 +48,7 @@ int main(int argc,char** argv) {
     QCoreApplication app(argc,argv);
     auto p=project();
     GisTerritorialMapping mapping;mapping.target=GisExchangeTarget::Subunit;
-    mapping.commonSovereign=territorialRef("A");mapping.commonParent=territorialRef("A");
+    mapping.commonParent=territorialRef("A");
     const auto crossing=collection("sub:transfer",rectangle(3,5),"{\"name\":\"Transferred\"}");
     assert(rejected([&]{prepareGisTerritorialImport(p.snapshot(),crossing,"reject",
         {"import.geojson","geojson"},mapping,calculateGeometry); }));
@@ -58,11 +58,11 @@ int main(int argc,char** argv) {
     assert(plan.countryReplacements.size()==2);
     assert(p.document().units.size()==2 && p.revision()==0);
     confirm(p,plan);
-    assert(unit(p,"sub:transfer").kind==UnitKind::Subunit);
-    assert(geometryContains(*p.document().geometries.get(unit(p,"A").geometry),
-                            *p.document().geometries.get(unit(p,"sub:transfer").geometry)));
-    assert(!geometrySignificantOverlap(*p.document().geometries.get(unit(p,"A").geometry),
-                                       *p.document().geometries.get(unit(p,"B").geometry)));
+    assert(unit(p,"sub:transfer").kind==UnitKind::General);
+    assert(geometryContains(*p.document().geometries.get(staticGeometryBinding(p.document(),"A").geometryRef),
+                            *p.document().geometries.get(staticGeometryBinding(p.document(),"sub:transfer").geometryRef)));
+    assert(!geometrySignificantOverlap(*p.document().geometries.get(staticGeometryBinding(p.document(),"A").geometryRef),
+                                       *p.document().geometries.get(staticGeometryBinding(p.document(),"B").geometryRef)));
     assert(p.undo()&&p.document().units.size()==2);
     assert(p.redo()&&p.document().units.size()==3);
     CommandArguments staleArgs;staleArgs.action=plan;
@@ -90,16 +90,14 @@ int main(int argc,char** argv) {
 
     auto owned=project();
     GisTerritorialMapping region;region.target=GisExchangeTarget::Region;
-    region.commonSovereign=territorialRef("A");
     auto regionPlan=prepareGisTerritorialImport(owned.snapshot(),
         collection("R",rectangle(1,2),"{\"name\":\"Region\"}"),"region",
         {"region.geojson","geojson"},region,calculateGeometry);
     confirm(owned,regionPlan);
-    assert(unit(owned,"R").kind==UnitKind::Region);
-    const auto mapped=prepareGisTerritorialImport(other.snapshot(),
+    assert(unit(owned,"R").kind==UnitKind::Regional);
+    assert(rejected([&]{prepareGisTerritorialImport(other.snapshot(),
         collection("bad",rectangle(1,2),"{\"name\":\"Bad\",\"sovereign_id\":\"missing\"}"),
-        "owner",{"x","geojson"},mapping,calculateGeometry);
-    assert(mapped.units.front().sovereign==territorialRef("A")); // explicit owner wins
+        "owner",{"x","geojson"},mapping,calculateGeometry);}));
 
     Project fixtureProject;
     fixtureProject.replace(ProjectDocument({{"Z","Remote",rectangle(30,34).polygons,0x333333}},

@@ -21,7 +21,7 @@ int main() {
     require(has(*scene,"territorial:DEU")&&has(*scene,"territorial:RUS"),"real country packets");
     require(has(*scene,"generic:DATELINE")&&has(*scene,"generic:POLAR"),"synthetic packets separate");
     for(const auto& unit:document.units)
-        if(unit.kind!=pandoeditor::UnitKind::Country)
+        if(unit.kind!=pandoeditor::UnitKind::General)
             require(has(*scene,"territorial:"+unit.id),"nested territorial packet");
     for(const auto& feature:document.hydro)require(has(*scene,"hydro:"+feature.id),"real hydro packet");
     for(const auto& feature:document.genericFeatures)require(has(*scene,"generic:"+feature.id),"generic packet");

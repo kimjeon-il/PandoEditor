@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include "historicaltransaction.h"
 #include "geometrycalculator.h"
 #include <pandoeditor/project.h>
@@ -38,11 +39,11 @@ private slots:
         QVERIFY2(prepared.ok(),prepared.detail.c_str());
         QVERIFY(CommandProcessor::confirm(p,*prepared.preview).changed());
         QCOMPARE(p.document().units.front().name,std::string("After"));
-        QCOMPARE(planarArea(*p.document().geometries.get(p.document().units.front().geometry)),60.);
+        QCOMPARE(planarArea(*p.document().geometries.get(staticGeometryBinding(p.document(),p.document().units.front().id).geometryRef)),60.);
         QVERIFY(p.undo());
         QCOMPARE(p.document().units.size(),std::size_t(1));
         QCOMPARE(p.document().units.front().name,std::string("Before"));
-        QCOMPARE(planarArea(*p.document().geometries.get(p.document().units.front().geometry)),100.);
+        QCOMPARE(planarArea(*p.document().geometries.get(staticGeometryBinding(p.document(),p.document().units.front().id).geometryRef)),100.);
     }
     void cancelAndFullTransfer() {
         auto p=project();auto source=catalog(box(0,0,4,10));

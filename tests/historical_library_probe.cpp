@@ -12,6 +12,7 @@ int main() {
     HistoricalEntity entity;
     entity.libraryId="historical-subunit:example";
     entity.type=historicalUnitKind("territory");
+    entity.catalogKind="territory";
     entity.canonicalName="Example";entity.displayNames={{"ko","예시"}};
     entity.alternateNames={"Former Example"};
     entity.validity={"1918","2003"};entity.geographicRegion="Europe";

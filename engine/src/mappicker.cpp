@@ -183,11 +183,11 @@ std::vector<ObjectRef> MapPicker::pickGeographic(
             const auto ref=territorialRef(unit->id);
             if(!spatialCandidates.count(ref))continue;
             if(nativeLayerId(document,ref)!=layer->id||!effectiveMapVisibility(document,ref))continue;
-            if(unit->kind==UnitKind::Country&&countryFound)continue;
-            const auto geometry=document.geometries.get(unit->geometry);
+            if(isRootGeneral(document,*unit)&&countryFound)continue;
+            const auto geometry=document.geometries.get(staticGeometryBinding(document,unit->id).geometryRef);
             if(!geometry)continue;
             bool hit=pointInCountry(point,geometry->polygons);
-            if(!hit&&unit->kind!=UnitKind::Country) {
+            if(!hit&&!isRootGeneral(document,*unit)) {
                 const Point cursor{point.x*xScale,point.y};
                 for(const auto& polygon:geometry->polygons)
                     for(const auto& ring:polygon)
@@ -198,7 +198,7 @@ std::vector<ObjectRef> MapPicker::pickGeographic(
             }
             if(hit) {
                 found.push_back(ref);
-                if(unit->kind==UnitKind::Country)countryFound=true;
+                if(isRootGeneral(document,*unit))countryFound=true;
             }
         }
     }

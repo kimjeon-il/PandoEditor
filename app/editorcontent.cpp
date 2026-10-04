@@ -101,7 +101,7 @@ bool EditorController::beginContentEdit(const QString& domain,const QString& typ
     else if(domain=="distributionEntry") {DistributionEntry v=create?DistributionEntry{}:d.distributionEntries.at(i);v.id=edit.target.id;edit.value=v;}
     else if(domain=="generic"&&!create) edit.value=d.genericFeatures.at(i);
     else if(domain=="territorial"&&!create) {
-        if(type=="capital") {if(d.units.at(i).kind!=UnitKind::Country)return false;auto it=d.countryDetails.find(edit.target);edit.value=it==d.countryDetails.end()?CountryDetails{}:it->second;}
+        if(type=="capital") {if(d.units.at(i).kind!=UnitKind::General)return false;auto it=d.countryDetails.find(edit.target);edit.value=it==d.countryDetails.end()?CountryDetails{}:it->second;}
         else if(type=="flag") {auto it=d.symbols.find(edit.target);edit.value=it==d.symbols.end()?TerritorialSymbolStyle{}:it->second;}
         else return false;
     } else return false;

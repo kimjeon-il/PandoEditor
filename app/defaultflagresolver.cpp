@@ -31,6 +31,8 @@ QString normalizedFlag(const QJsonValue& value) {
 }
 QJsonObject flagMetadata(const ProjectDocument& document,const ObjectRef& ref) {
     QJsonObject metadata;
+    const auto unit=std::find_if(document.units.begin(),document.units.end(),[&](const auto& value){return ref==territorialRef(value.id);});
+    if(unit!=document.units.end())metadata=QJsonDocument::fromJson(QByteArray::fromStdString(unit->metadata)).object();
     for(const auto& extension:document.extensions) {
         if(extension.status!="unsupported"||
            std::find(extension.dependencies.begin(),extension.dependencies.end(),ref)==extension.dependencies.end())continue;
@@ -57,17 +59,14 @@ DefaultFlagResult resolveDefaultFlag(const ProjectDocument& document,const Objec
     if(unit==document.units.end())return {{},QStringLiteral("대상 없음"),false};
     const auto metadata=flagMetadata(document,ref);
     QString source;
-    // Native symbols own an explicitly edited flag; preserved metadata supplies
-    // the same defaults as effectiveTerritorialFlagUrl in the web application.
     if(owner==document.symbols.end()&&metadata.contains("flagDataUrl"))source=normalizedFlag(metadata["flagDataUrl"]);
-    else if(unit->kind==UnitKind::Country)source=currentFlag(QString::fromStdString(unit->id));
     else if(owner!=document.symbols.end()&&owner->second.defaultFlagDataUrl)source=QString::fromStdString(*owner->second.defaultFlagDataUrl);
     else if(owner!=document.symbols.end()&&!owner->second.defaultCountryId.empty())source=currentFlag(QString::fromStdString(owner->second.defaultCountryId));
     else if(!metadata["defaultFlagDataUrl"].toString().isEmpty())source=normalizedFlag(metadata["defaultFlagDataUrl"]);
     else if(metadata["convertedFromCountry"].isObject()) {
-        const auto converted=metadata["convertedFromCountry"].toObject();
-        const auto override=converted["override"].toObject();
+        const auto converted=metadata["convertedFromCountry"].toObject();const auto override=converted["override"].toObject();
         source=override.contains("flagDataUrl")?normalizedFlag(override["flagDataUrl"]):currentFlag(converted["countryId"].toString());
-    } else source=currentFlag(metadata["builtinSubunit"].toObject()["sourceCountryId"].toString());
+    } else if(metadata["builtinSubunit"].isObject())source=currentFlag(metadata["builtinSubunit"].toObject()["sourceCountryId"].toString());
+    else if(unit->kind==UnitKind::General)source=currentFlag(QString::fromStdString(unit->id));
     return {source,source.isEmpty()?QStringLiteral("기본 국기 자료 없음"):QString{},!source.isEmpty()};
 }

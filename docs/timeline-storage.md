@@ -1,5 +1,8 @@
 # T2-2a: geometry-bearing timeline storage checkpoints
 
+This document records the T2-2a checkpoint scope and evidence. The subsequent
+production project integration is documented in [timeline-persistence.md](timeline-persistence.md).
+
 Date: 2026-10-04. Companion to `timeline-contract.md` and `timeline-records.md`.
 Bases: web `ccb180ac978a42d26dbcfd2c19c7a6a611764bfe`; app
 `a5346062328bcfe8e9d3314363b7fdd79c972bea`.

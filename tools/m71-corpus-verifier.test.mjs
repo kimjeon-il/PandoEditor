@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {linkSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
 import {gitBlobSha, readManifest, verifyCommittedCorpus} from './verify-m71-world-corpus.mjs';
 
@@ -60,7 +61,7 @@ test('rejects a fixture whose bytes differ from its registered SHA-256', () => {
 function sceneSandbox(sentinels, composition) {
   const s = sandbox();
   for (const name of ['countries.geojson', 'hydro-river.geojson', 'hydro-lake.geojson']) {
-    linkSync(new URL(`../tests/fixtures/world-rendering/${name}`, import.meta.url).pathname, join(s.root, name));
+    linkSync(fileURLToPath(new URL(`../tests/fixtures/world-rendering/${name}`, import.meta.url)), join(s.root, name));
   }
   for (const [name, value] of Object.entries({'sentinels.geojson': sentinels, 'composition.json': composition})) {
     const bytes = JSON.stringify(value) + '\n';

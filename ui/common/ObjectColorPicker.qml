@@ -37,7 +37,7 @@ Popup {
             Button {
                 id:defaultColor;objectName:"defaultObjectColor";Layout.fillWidth:true
                 visible:editor.selectionItems.length===1
-                text:editor.primaryObject.type==="subunit"?"국가색 상속":"기본 색상"
+                text:!!editor.objectProperties.parentId?"상위 색상 상속":"기본 색상"
                 icon.width:16;icon.height:16
                 contentItem:RowLayout {
                     Rectangle { Layout.preferredWidth:20;Layout.preferredHeight:20;color:editor.objectProperties.defaultColor||"#cccccc";border.color:"#657480" }

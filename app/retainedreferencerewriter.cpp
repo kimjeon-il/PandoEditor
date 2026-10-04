@@ -32,7 +32,7 @@ bool rewriteArray(losslessjson::Value& root,const ReferenceRewrite& rewrite) {
 std::optional<std::string> rewrittenKey(const std::string& key,const std::string& path,const ReferenceRewrite& rewrite) {
     if(key==rewrite.fromId) return rewrite.toId;
     if(path=="/labelSettings") {
-        for(const auto* prefix:{"country:","subunit:","region:","territorial:country:","territorial:subunit:","territorial:region:"}) {
+        for(const auto* prefix:{"territorial:entity:","country:","subunit:","region:","territorial:country:","territorial:subunit:","territorial:region:"}) {
             const std::string p(prefix);
             if(key==p+rewrite.fromId) return p+rewrite.toId;
         }

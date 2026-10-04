@@ -133,7 +133,7 @@ std::shared_ptr<const WorldBaseFrame> WorldDatasetLoader::matchingBaseFrame(
         const auto unit=std::find_if(document.units.begin(),document.units.end(),
             [&](const auto& value){return value.id==range.ownerId;});
         const pandoeditor::GeometryRef ref{range.geometryId,1};
-        if(unit==document.units.end()||!(unit->geometry==ref))continue;
+        if(unit==document.units.end()||!(pandoeditor::staticGeometryBinding(document,unit->id).geometryRef==ref))continue;
         const auto actual=document.geometries.get(ref);
         const auto expected=canonical.document.geometries.get(ref);
         if(!actual||!expected||actual->type!=expected->type||

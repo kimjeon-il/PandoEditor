@@ -11,8 +11,8 @@ using namespace pandoeditor;
 namespace {
 QString q(const std::string& value) { return QString::fromStdString(value); }
 QString rgb(std::uint32_t color) { return QString("#%1").arg(color,6,16,QChar('0')); }
-QString typeName(UnitKind kind) { return kind==UnitKind::Country?"country":kind==UnitKind::Subunit?"subunit":"region"; }
-QString typeLabel(UnitKind kind) { return kind==UnitKind::Country?QStringLiteral("국가"):kind==UnitKind::Subunit?QStringLiteral("하위단위"):QStringLiteral("지방"); }
+QString typeName(UnitKind kind) { return kind==UnitKind::General?"general":"regional"; }
+QString typeLabel(UnitKind kind) { return kind==UnitKind::General?QStringLiteral("일반객체"):QStringLiteral("독립 권역"); }
 }
 std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& value) const {
     const auto domain=value.value("domain").toString().trimmed();
@@ -145,12 +145,12 @@ void EditorController::parkDrafts() {
     if(const auto u=selectedUnit()) {
         const auto ref=territorialRef(u->id);const auto& style=project_.document().presentation.objectStyles.at(ref);
         CountryDraft d{nameDraft_,memoDraft_,colorDraft_,opacityPreview_,validFromDraft_,validToDraft_};
-        if(nameDraft_!=q(u->kind==UnitKind::Country?objectDisplayName(*u):u->name))d.fields.insert("name");
+        if(nameDraft_!=q(u->kind==UnitKind::General?objectDisplayName(*u):u->name))d.fields.insert("name");
         if(memoDraft_!=q(u->notes))d.fields.insert("notes");
         if(colorDraft_!=rgb(effectiveObjectColor(project_.document(),ref)))d.fields.insert("color");
         if(opacityPreview_&&*opacityPreview_!=style.opacity)d.fields.insert("opacity");
-        if(validFromDraft_!=q(u->validity.from.value_or("")))d.fields.insert("validFrom");
-        if(validToDraft_!=q(u->validity.to.value_or("")))d.fields.insert("validTo");
+        if(validFromDraft_!=q(pandoeditor::staticLifetime(project_.document(),u->id).validity.from.value_or("")))d.fields.insert("validFrom");
+        if(validToDraft_!=q(pandoeditor::staticLifetime(project_.document(),u->id).validity.to.value_or("")))d.fields.insert("validTo");
         if(d.fields.empty())parkedCountryDrafts_.erase(selected_);else parkedCountryDrafts_[selected_]=std::move(d);
     }
     if(const auto layer=project_.layer(selectedLayer_.toStdString())) {
@@ -213,7 +213,7 @@ bool EditorController::setSelection(const QVariantList& values,const QVariantMap
 }
 void EditorController::clearSelection() { closeObjectChooser();auto next=selection_;next.clear();applySelection(std::move(next)); }
 void EditorController::selectCountry(const QString& id) {
-    selectObject({{"domain","territorial"},{"type","country"},{"id",id}},"replace","countries");
+    selectObject({{"domain","territorial"},{"type","general"},{"id",id}},"replace","countries");
 }
 void EditorController::selectLayer(const QString& id) {
     if(!project_.layer(id.toStdString())||selectedLayer_==id) return;

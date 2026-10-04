@@ -55,7 +55,7 @@ std::shared_ptr<const detail::DocumentState> restoredHistoryState(
 {
     if(!target->needsHistoryPruning)return target;
     auto document=target->document;
-    for(auto& u:document.units)if(u.kind==UnitKind::Country) {
+    for(auto& u:document.units)if(u.kind==UnitKind::General) {
         u.notes=trimWebText(u.notes);
         if(u.name.empty())u.nameExplicit=false;
     }
@@ -81,6 +81,17 @@ void Project::replace(ProjectDocument document)
     // No allocation or validation after this point: replace is all-or-nothing.
     state_=std::move(next); saved_=state_; instanceId_.swap(identity);
     commands_.clear(); cursor_=0; revision_=0; presentationRevision_=0; checkpoint_=savedCheckpoint_=checkpointSequence_=0;
+    timelineCursor_.clear();
+}
+bool Project::setTimelineCursor(const std::string& month) {
+    std::string next;
+    if(!month.empty()) {
+        const auto parsed=parseTemporal(month);
+        if(parsed.precision!="month")throw std::invalid_argument("INVALID_TIMELINE_CURSOR: month precision required");
+        next=parsed.canonical;
+    }
+    if(next==timelineCursor_)return false;
+    timelineCursor_.swap(next);return true;
 }
 const ProjectDocument& Project::document() const noexcept { return state_->document; }
 const std::vector<CountryView>& Project::countries() const noexcept { return state_->countries; }
@@ -124,12 +135,12 @@ void Project::apply(const ChangeSet& change)
         if(const auto mutation=std::get_if<ApplyTerritorialMutation>(&change.request_.args.action))
             if(const auto conversion=std::get_if<ConvertTerritorialTypeIntent>(&mutation->plan.intent)) {
                 const auto& source=document().units.at(index().objects.at(conversion->source));
-                const auto id=conversion->targetKind==UnitKind::Country?source.id:conversion->generatedId;
-                const auto fromGroup=territorialGroup(source.kind),toGroup=territorialGroup(conversion->targetKind);
+                const auto& id=source.id;
+                const auto fromGroup=territorialGroup(document(),source.id),toGroup=territorialGroup(candidate,id);
                 auto& out=candidate.presentation.webPresentation;
                 if(itemVisible(document().presentation.webPresentation,fromGroup,source.id))out.hiddenItems[toGroup].erase(id);
                 else out.hiddenItems[toGroup].insert(id);
-                const auto fromKey=territorialPresentationKey(source.kind,source.id),toKey=territorialPresentationKey(conversion->targetKind,id);
+                const auto fromKey=territorialPresentationKey(source.id),toKey=territorialPresentationKey(id);
                 const auto latest=document().presentation.webPresentation.objectStyles.find(fromKey);
                 if(latest!=document().presentation.webPresentation.objectStyles.end())out.objectStyles[toKey]=latest->second;
                 normalizePresentation(candidate);

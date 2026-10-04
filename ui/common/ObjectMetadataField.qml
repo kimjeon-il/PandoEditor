@@ -30,7 +30,7 @@ ColumnLayout {
         if(current){if(edited&&(force===true||!holdCommits)&&owner===editor.selectedId)editor.confirmPropertyEdit(current);else editor.endPropertyEdit(current)}
         edited=false
     }
-    Label {text:entry.field==="name"?(editor.primaryObject.type==="country"?"국명":"이름"):"메모";color:entry.colors.muted;font.pixelSize:14}
+    Label {text:entry.field==="name"?(editor.primaryObject.type==="general"?"국명":"이름"):"메모";color:entry.colors.muted;font.pixelSize:14}
     UiTextField {
         id:nameInput;objectName:entry.field==="name"?"detailObjectName":"";visible:entry.field==="name";Layout.fillWidth:true;Layout.preferredHeight:36
         text:editor.nameDraft;enabled:!!editor.objectProperties.editable;selectByMouse:true

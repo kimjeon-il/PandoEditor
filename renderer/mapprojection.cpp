@@ -10,6 +10,7 @@ void MapProjection::setWorldExtent() {
 
 void MapProjection::rebuild(const pandoeditor::ProjectDocument& document)
 {
+    pandoeditor::requireStaticTimeline(document);
     // Read-only render DTOs share geometry; they are not a second editable model.
     std::vector<pandoeditor::CountryView> objects;
     objects.reserve(document.units.size());
@@ -19,7 +20,7 @@ void MapProjection::rebuild(const pandoeditor::ProjectDocument& document)
         const auto ref=pandoeditor::territorialRef(unit.id);
         const auto& style=document.presentation.objectStyles.at(ref);
         layerIds.push_back(pandoeditor::nativeLayerId(document,ref));
-        const auto geometry=document.geometries.get(unit.geometry);
+        const auto geometry=document.geometries.get(pandoeditor::staticGeometryBinding(document,unit.id).geometryRef);
         objects.push_back({unit.id,unit.name,geometry->polygons,style.color,unit.notes,
             style.opacity,layerIds.back(),unit.locked});
     }

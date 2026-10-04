@@ -45,7 +45,7 @@ QString EditorController::webImportSummary() const {
     if(webImportBusy())return QStringLiteral("웹 저장본 읽기·변환·검증 중…");
     if(!hasWebImportPreview())return webImportError_.isEmpty()?QStringLiteral("웹 완전 저장본을 선택하세요."):QStringLiteral("가져오기 후보를 준비하지 못했습니다.");
     const auto& c=webImport_->ready->candidate;
-    return QStringLiteral("웹 schema %1 → Qt v4 · 국가 %2 · 하위단위 %3 · 지방 %4\n아래 보존·표시 제한을 확인한 뒤 가져오기를 확정하세요.")
+    return QStringLiteral("웹 v%1 → 앱 v9 · 최상위 일반객체 %2 · 하위 일반객체 %3 · 독립 권역 %4\n검증된 정적 프로젝트를 가져옵니다.")
         .arg(c.sourceSchema).arg(c.countries).arg(c.subunits).arg(c.regions);
 }
 void EditorController::webImportFailure(const QString& message) {
@@ -76,6 +76,7 @@ bool EditorController::prepareWebImport(const QUrl& url) {
                 auto bytes=storage.read(url);
                 work->candidate=webimport::prepare(bytes,[token](){return token.cancelled();});
                 if(token.cancelled())return result;
+                requireStaticTimeline(work->candidate.document);
                 work->project.replace(std::move(work->candidate.document));
                 work->projection.rebuild(work->project.document());
                 result.status=CommandStatus::Prepared;

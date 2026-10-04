@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include <pandoeditor/project.h>
 #include <pandoeditor/commands.h>
 #include <pandoeditor/presentationcommands.h>
@@ -37,7 +38,7 @@ CommandRequest change(const Project& p) {
 }
 ProjectDocument deleteFixture() {
     auto d=fixture();
-    for(const auto id:{"S","R"}) { Geometry g;g.type="Polygon";g.polygons.push_back(Polygon{Ring{{1,1},{2,1},{2,2},{1,2},{1,1}}});GeometryRef ref{std::string("geometry-")+id,1};d.geometries.insert(ref,g);d.units.push_back({id,id,"",UnitKind::Region,ref});d.presentation.membership[territorialRef(id)]="countries";d.presentation.objectStyles[territorialRef(id)]={}; }
+    for(const auto id:{"S","R"}) { Geometry g;g.type="Polygon";g.polygons.push_back(Polygon{Ring{{1,1},{2,1},{2,2},{1,2},{1,1}}});GeometryRef ref{std::string("geometry-")+id,1};d.geometries.insert(ref,g);appendTerritory(d,{id,id,"",UnitKind::Regional,false},ref);d.presentation.membership[territorialRef(id)]="countries";d.presentation.objectStyles[territorialRef(id)]={}; }
     return d;
 }
 CommandRequest deletion(const Project& p) {
@@ -47,12 +48,12 @@ int main() {
     try {
         int geometryFailures=0;
         for(long position=0;position<5000;++position) {
-            auto d=deleteFixture();d.units[1].kind=UnitKind::Subunit;d.units[1].coverageMode="partition";
-            d.relations.push_back({"s-base",territorialRef("S"),territorialRef("A"),territorialRef("A")});
+            auto d=deleteFixture();d.units[1].kind=UnitKind::General;staticParentRelation(d,d.units[1].id).coverageMode="partition";
+            setFixtureParent(d,territorialRef("S"),territorialRef("A"));
             Project p;p.replace(d);check(p.setMemo("A","redo")&&p.undo());
-            const auto plan=CommandProcessor::planTerritorial(p,ConvertTerritorialTypeIntent{territorialRef("S"),UnitKind::Country,{},{},{}});check(plan.ok());
-            const auto source=*d.geometries.get(d.units[1].geometry);auto remainder=*d.geometries.get(d.units[0].geometry);remainder.polygons[0].push_back(source.polygons[0][0]);
-            CommandArguments args;args.action=ApplyTerritorialMutation{*plan.plan,GeometryPatch{p.revision(),{{territorialRef("S"),source},{territorialRef("A"),remainder}},{},{}}};
+            const auto plan=CommandProcessor::planTerritorial(p,ReplaceGeometryIntent{territorialRef("S")});check(plan.ok());
+            auto source=*d.geometries.get(staticGeometryBinding(d,d.units[1].id).geometryRef);source.polygons[0][0][1].x+=0.01;
+            CommandArguments args;args.action=ApplyTerritorialMutation{*plan.plan,GeometryPatch{p.revision(),{{territorialRef("S"),source}},{},{}}};
             const auto request=CommandProcessor::makeRequest(p,"territorial.geometry.commit",args);
             const auto before=&p.document();const auto rev=p.revision();
             failAfter=position;auto prepared=CommandProcessor::prepare(p,request);failAfter=-1;

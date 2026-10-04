@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include <pandoeditor/map/mapscenebuilder.h>
 #include <pandoeditor/commands.h>
 #include <pandoeditor/presentationcommands.h>
@@ -13,11 +14,11 @@ pandoeditor::Geometry square(double west) {
 }
 pandoeditor::ProjectDocument sample() {
     pandoeditor::ProjectDocument doc;
-    doc.units.push_back({"C","Country",{},pandoeditor::UnitKind::Country,{"C",1}});
-    doc.units.push_back({"S","Subunit",{},pandoeditor::UnitKind::Subunit,{"S",1}});
-    doc.units.push_back({"R","Region",{},pandoeditor::UnitKind::Region,{"R",1}});
+    appendTerritory(doc,{"C","Country",{},pandoeditor::UnitKind::General,false},{"C",1});
+    appendTerritory(doc,{"S","Subunit",{},pandoeditor::UnitKind::General,false},{"S",1});
+    appendTerritory(doc,{"R","Region",{},pandoeditor::UnitKind::Regional,false},{"R",1});
     for(const auto& id:{"C","S","R"})doc.geometries.insert({id,1},square(0));
-    doc.presentation.webPresentation.objectOrder={"territorial:region:R","territorial:subunit:S"};
+    doc.presentation.webPresentation.objectOrder={"territorial:entity:R","territorial:entity:S"};
     return doc;
 }
 void builderPreservesM5DrawOrderAndCache() {
@@ -63,8 +64,7 @@ void distributionRangeRestylesUnchangedPeersInPatch() {
 }
 void worldRangesKeepSourceSlotsAndLogicalOwnersSeparate() {
     pandoeditor::ProjectDocument doc({},{{"countries","Countries"}});
-    doc.units.push_back({"OWNER","Owner",{},pandoeditor::UnitKind::Country,
-                         {"world-country-OWNER",1}});
+    appendTerritory(doc,{"OWNER","Owner",{},pandoeditor::UnitKind::General,false},{"world-country-OWNER",1});
     doc.geometries.insert({"world-country-OWNER",1},square(0));
     doc.presentation.membership.emplace(pandoeditor::territorialRef("OWNER"),"countries");
     doc.presentation.objectStyles.emplace(pandoeditor::territorialRef("OWNER"),
@@ -110,7 +110,7 @@ pandoeditor::ProjectDocument zoomPreviewDocument() {
     ProjectDocument doc({},{{"countries","Countries"}});
     for(const auto& id:{"A","B","C"}) {
         const GeometryRef ref{"world-country-"+std::string(id),1};
-        doc.units.push_back({id,id,{},UnitKind::Country,ref});
+        appendTerritory(doc,{id,id,{},UnitKind::General,false},ref);
         doc.geometries.insert(ref,square(id[0]-'A'));
         doc.presentation.membership[territorialRef(id)]="countries";
         doc.presentation.objectStyles[territorialRef(id)]={0x123456,.5};
@@ -133,8 +133,8 @@ void documentReadyPreviewHonorsStylesVisibilityAndEditedShapes() {
     using namespace pandoeditor;
     auto doc=zoomPreviewDocument();
     doc.presentation.webPresentation.hiddenItems["countries"].insert("B");
-    doc.presentation.webPresentation.objectStyles["territorial:country:A"].boundaryVisible=false;
-    doc.geometries.insert({"world-country-C",2},square(30));doc.units[2].geometry.version=2;
+    doc.presentation.webPresentation.objectStyles["territorial:entity:A"].boundaryVisible=false;
+    doc.geometries.insert({"world-country-C",2},square(30));staticGeometryBinding(doc,doc.units[2].id).geometryRef.version=2;
     const auto originalA=doc.geometries.get({"world-country-A",1});
     const auto editedC=doc.geometries.get({"world-country-C",2});
     GeometryPacketCache cache;MapSceneBuilder builder(cache);MapViewState view;
@@ -202,7 +202,7 @@ void canonicalPreviewSwitchPublishesCorrectResourceAndDocumentState() {
 void immutableSnapshotsReusePreparationButRespectInvalidation() {
     using namespace pandoeditor;
     ProjectDocument doc({},{{"countries","Countries"}});
-    doc.units.push_back({"C","Country",{},UnitKind::Country,{"C",1}});
+    appendTerritory(doc,{"C","Country",{},UnitKind::General,false},{"C",1});
     doc.geometries.insert({"C",1},square(0));
     doc.presentation.membership.emplace(territorialRef("C"),"countries");
     doc.presentation.objectStyles.emplace(territorialRef("C"),ObjectStyle{});

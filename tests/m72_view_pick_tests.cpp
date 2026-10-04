@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include <pandoeditor/map/projectionengine.h>
 #include <pandoeditor/spatialindex.h>
 #include <algorithm>
@@ -14,7 +15,7 @@ void flatAndGlobeCandidates() {
     doc.geometries.insert({"DEU",1},{"Polygon",{},{},{{
         {{10,50},{12,50},{12,52},{10,52},{10,50}}
     }}});
-    doc.units.push_back({"DEU","Germany",{},UnitKind::Country,{"DEU",1}});
+    appendTerritory(doc,{"DEU","Germany",{},UnitKind::General,false},{"DEU",1});
     objects.objects[territorialRef("DEU")]=0;
     GeoSpatialIndex index;index.rebuild(doc,objects);
     MapViewState view;view.viewportWidth=800;view.viewportHeight=600;

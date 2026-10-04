@@ -1,3 +1,4 @@
+#include "territorial_fixture.h"
 #include <pandoeditor/project.h>
 #include <iostream>
 #include <stdexcept>
@@ -11,14 +12,13 @@ void rejects(const std::function<void()>& f,const char* message) {
 ProjectDocument fixture() {
     ProjectDocument d({{"A","Country",{{{{0,0},{10,0},{10,10},{0,10},{0,0}}}},0x123456}},{{"countries","국가"},{"other","기타"}});
     auto add=[&](std::string id,UnitKind kind) {
-        d.units.push_back({id,id,"note",kind,d.units.front().geometry});
+        appendTerritory(d,{id,id,"note",kind,false},staticGeometryBinding(d,d.units.front().id).geometryRef);
         d.presentation.membership[territorialRef(id)]="other";
         d.presentation.objectStyles[territorialRef(id)]={0xabcdef,0.75};
     };
-    add("S",UnitKind::Subunit); add("N",UnitKind::Subunit); add("R",UnitKind::Region);
-    d.relations.push_back({"base-s",territorialRef("S"),territorialRef("A"),territorialRef("A")});
-    d.relations.push_back({"base-n",territorialRef("N"),territorialRef("S"),territorialRef("A")});
-    d.relations.push_back({"dated-n",territorialRef("N"),territorialRef("A"),territorialRef("A"),true,{{"1900"},{"1901"}}});
+    add("S",UnitKind::General); add("N",UnitKind::General); add("R",UnitKind::Regional);
+    setFixtureParent(d,territorialRef("S"),territorialRef("A"));
+    setFixtureParent(d,territorialRef("N"),territorialRef("S"));
     return d;
 }
 void referencedEmptyLayerRemovalIsAtomic() {
@@ -32,13 +32,13 @@ void referencedEmptyLayerRemovalIsAtomic() {
         check(p.renameCountry("A","Undo history"),"set up history");
         check(p.setMemo("A","Redo history"),"set up redo"); check(p.undo(),"set up cursor");
         p.markSaved();
-        const auto geometry=p.document().geometries.get(p.document().units[0].geometry);
+        const auto geometry=p.document().geometries.get(staticGeometryBinding(p.document(),p.document().units[0].id).geometryRef);
         const auto view=&p.country("A")->name;
         check(!p.removeLayer("empty"),"referenced empty layer deletion must reject");
         check(p.layer("empty")&&p.layers().size()==3,"failed deletion retains layers");
         validateDocument(p.document());
         check(p.canUndo()&&p.canRedo()&&!p.dirty(),"failed deletion retains history and saved state");
-        check(p.document().geometries.get(p.document().units[0].geometry)==geometry,"failed deletion shares geometry");
+        check(p.document().geometries.get(staticGeometryBinding(p.document(),p.document().units[0].id).geometryRef)==geometry,"failed deletion shares geometry");
         check(&p.country("A")->name==view,"failed deletion preserves canonical views");
         check(p.redo()&&p.country("A")->memo=="Redo history","redo after rejected removal");
         check(p.undo()&&p.country("A")->memo.empty(),"undo after rejected removal");
@@ -51,21 +51,27 @@ void calendarTransitionsAreContinuous() {
             {"2024-04-30","2024-05-01"},{"-0001-12-31","0001-01-01"},
             {"-0004-02-29","-0004-03-01"}}) {
         ProjectDocument d({{"A","Old country",{{{{0,0},{10,0},{10,10},{0,0}}}},0x123456}},{{"countries","Countries"}});
-        d.units[0].validity.to=transition.first;
-        d.units.push_back({"B","New country","",UnitKind::Country,d.units[0].geometry,false,{transition.second,{}}});
-        d.units.push_back({"S","Continuous subunit","",UnitKind::Subunit,d.units[0].geometry});
+        staticLifetime(d,d.units[0].id).validity.to=transition.first;
+        appendTerritory(d,{"B","New country","",UnitKind::General},staticGeometryBinding(d,d.units[0].id).geometryRef);
+        staticLifetime(d,"B").validity.from=transition.second;
+        appendTerritory(d,{"S","Continuous subunit","",UnitKind::General,false},staticGeometryBinding(d,d.units[0].id).geometryRef);
         for(const auto& id:{"B","S"}) {
             d.presentation.membership[territorialRef(id)]="countries";
             d.presentation.objectStyles[territorialRef(id)]={0xabcdef,1};
         }
-        d.relations.push_back({"old",territorialRef("S"),territorialRef("A"),territorialRef("A"),true,{{},transition.first}});
-        d.relations.push_back({"new",territorialRef("S"),territorialRef("B"),territorialRef("B"),true,{transition.second,{}}});
+        staticGeometryBinding(d,"A").validity=d.timelineRecords.lifetimes[0].validity;
+        staticGeometryBinding(d,"B").validity=d.timelineRecords.lifetimes[1].validity;
+        staticParentRelation(d,"A").validity=d.timelineRecords.lifetimes[0].validity;
+        staticParentRelation(d,"B").validity=d.timelineRecords.lifetimes[1].validity;
+        d.timelineRecords.parentRelations.pop_back();
+        d.timelineRecords.parentRelations.push_back({"old","S",{{},transition.first},"A","explicit"});
+        d.timelineRecords.parentRelations.push_back({"new","S",{transition.second,{}},"B","explicit"});
         validateDocument(d);
-        check(effectiveRelation(d,"S",parseTemporal(transition.first).end)->parent->id=="A","last old calendar day");
-        check(effectiveRelation(d,"S",parseTemporal(transition.second).start)->parent->id=="B","first new calendar day");
+        check(d.timelineRecords.parentRelations[2].parentId=="A","last old parent record");
+        check(d.timelineRecords.parentRelations[3].parentId=="B","first new parent record");
         if(transition.first=="1900") {
-            d.units[1].validity.from="1901-01-02";
-            d.relations[1].validity.from="1901-01-02";
+            d.timelineRecords.lifetimes[1].validity.from="1901-01-02";
+            d.timelineRecords.parentRelations.back().validity.from="1901-01-02";
             rejects([&]{validateDocument(d);},"actual uncovered calendar day must still reject");
         }
     }
@@ -89,16 +95,17 @@ int main() {
         auto invalidOrigin=d;invalidOrigin.units.front().libraryOrigin->libraryId.clear();
         rejects([&]{validateDocument(invalidOrigin);},"empty historical library ID");
         check(index.objects.size()==4,"all units indexed");
-        check(index.geometryUsers.at(d.units[0].geometry).size()==4,"shared geometry reverse index");
-        check(index.relationsByUnit.at(territorialRef("N")).size()==2,"unit relationship index");
+        check(index.geometryUsers.at(staticGeometryBinding(d,d.units[0].id).geometryRef).size()==4,"shared geometry reverse index");
+        check(index.parentRelationsByUnit.at(territorialRef("N")).size()==1,"canonical parent relationship index");
         check(index.children.at(territorialRef("S")).front().id=="N","reverse parent index");
         check(index.dependents.at({"userLayer","other"}).size()==3,"layer reverse index");
-        check(effectiveRelation(d,"N",parseTemporal("1900").start)->parent->id=="A","dated replaces base");
-        check(effectiveRelation(d,"N",parseTemporal("1902").start)->parent->id=="S","return to base");
-        check(effectiveRelationAt(d,"N","1900")->parent->id=="A","date-aware relationship at year precision");
-        check(effectiveRelationAt(d,"N","1901-12-31")->parent->id=="A","date-aware inclusive end");
-        check(effectiveRelationAt(d,"N","1902-01-01")->parent->id=="S","date-aware return to base");
-        rejects([&]{effectiveRelationAt(d,"N","0000");},"date-aware relationship rejects year zero");
+        auto timed=d;timed.timelineRecords.parentRelations.erase(timed.timelineRecords.parentRelations.begin()+2);
+        timed.timelineRecords.parentRelations.insert(timed.timelineRecords.parentRelations.end(),{
+            {"N:before","N",{{},"1899"},"S","explicit"},
+            {"N:during","N",{"1900","1901"},"A","explicit"},
+            {"N:after","N",{"1902",{}},"S","explicit"}});
+        validateDocument(timed);check(!isStaticTimeline(timed),"dated parent changes remain storage-only");
+        rejects([&]{requireStaticTimeline(timed);},"rich records cannot activate existing editor");
         check(parseTemporal("-0044").start==-439899,"BCE ordering");
         check(parseTemporal("-0001-12-31").end<parseTemporal("0001-01-01").start,"no year zero gap");
         check(parseTemporal("+010000-02-29").precision=="date","extended leap date");
@@ -107,17 +114,17 @@ int main() {
             rejects([&]{parseTemporal(bad);},"invalid date accepted");
         rejects([&]{temporalBounds({{"1901"},{"1900"}});},"reversed dates");
         auto bad=d; bad.units.push_back(bad.units[0]); rejects([&]{validateDocument(bad);},"duplicate units");
-        bad=d; bad.relations[0].parent=territorialRef("missing"); rejects([&]{validateDocument(bad);},"dangling parent");
-        bad=d; bad.relations[0].sovereign=territorialRef("R"); rejects([&]{validateDocument(bad);},"noncountry sovereign");
-        bad=d; bad.relations[0].parent=territorialRef("N"); rejects([&]{validateDocument(bad);},"parent cycle");
-        bad=d; bad.relations.push_back({"overlap",territorialRef("N"),territorialRef("S"),territorialRef("A"),true,{{"1901-12-31"},{"1902"}}});
+        bad=d; staticParentRelation(bad,"S").parentId="missing"; rejects([&]{validateDocument(bad);},"dangling parent");
+        bad=d; staticParentRelation(bad,"S").parentId="R"; rejects([&]{validateDocument(bad);},"regional entity cannot be administrative parent");
+        bad=d; staticParentRelation(bad,"S").parentId="N"; rejects([&]{validateDocument(bad);},"parent cycle");
+        bad=timed;bad.timelineRecords.parentRelations.back().validity.from="1901-12-31";
         rejects([&]{validateDocument(bad);},"inclusive overlap");
-        bad.relations.back().validity.from="1902-01-01"; validateDocument(bad);
-        bad=d; bad.units[0].validity.from="1900"; rejects([&]{validateDocument(bad);},"inactive parent");
-        bad=d; bad.units[0].geometry.version=2; rejects([&]{validateDocument(bad);},"missing geometry version");
-        auto g=d.geometries.get(d.units[0].geometry);
-        auto copy=d; check(copy.geometries.get(copy.units[0].geometry)==g,"snapshot shares immutable geometry");
-        rejects([&]{copy.geometries.insert(copy.units[0].geometry,*g);},"duplicate geometry version");
+        bad.timelineRecords.parentRelations.back().validity.from="1902-01-01"; validateDocument(bad);
+        bad=d; staticLifetime(bad,bad.units[0].id).validity.from="1900"; rejects([&]{validateDocument(bad);},"inactive parent");
+        bad=d; staticGeometryBinding(bad,bad.units[0].id).geometryRef.version=2; rejects([&]{validateDocument(bad);},"missing geometry version");
+        auto g=d.geometries.get(staticGeometryBinding(d,d.units[0].id).geometryRef);
+        auto copy=d; check(copy.geometries.get(staticGeometryBinding(copy,copy.units[0].id).geometryRef)==g,"snapshot shares immutable geometry");
+        rejects([&]{copy.geometries.insert(staticGeometryBinding(copy,copy.units[0].id).geometryRef,*g);},"duplicate geometry version");
         auto invalidGeometry=*g; invalidGeometry.polygons[0][0].pop_back();
         rejects([&]{copy.geometries.insert({"bad",1},invalidGeometry);},"open polygon");
         Project project; project.replace(d);

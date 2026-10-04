@@ -1,35 +1,15 @@
 #include <pandoeditor/document.h>
 #include <algorithm>
 #include <cmath>
-#include <functional>
-#include <limits>
 #include <random>
 #include <set>
 #include <stdexcept>
 
 namespace pandoeditor {
 namespace {
-constexpr auto infinity=std::numeric_limits<std::int64_t>::max()/2;
 void require(bool ok,const std::string& code) { if(!ok) throw std::invalid_argument(code); }
 bool opacity(double x) { return std::isfinite(x) && x>=0 && x<=1; }
 bool named(const std::string& x) { return x.find_first_not_of(" \t\r\n")!=std::string::npos; }
-int monthDays(std::int64_t year,int month) {
-    const auto magnitude=std::abs(year);
-    return month==2 ? ((magnitude%4==0 && (magnitude%100!=0 || magnitude%400==0))?29:28)
-                    : ((month==4||month==6||month==9||month==11)?30:31);
-}
-// Public temporal keys retain YYYYMMDD ordering, but incrementing the integer
-// creates nonexistent dates at month/year boundaries. Sweep actual calendar days.
-std::int64_t nextCalendarDay(std::int64_t key) {
-    auto year=key/10000, remainder=key%10000;
-    if(remainder<0) { --year; remainder+=10000; }
-    int month=static_cast<int>(remainder/100), day=static_cast<int>(remainder%100);
-    if(++day>monthDays(year,month)) {
-        day=1;
-        if(++month>12) { month=1; if(++year==0) year=1; }
-    }
-    return year*10000+month*100+day;
-}
 void point(Point p) { require(std::isfinite(p.x)&&std::isfinite(p.y)&&std::abs(p.x)<=180&&std::abs(p.y)<=90,"INVALID_GEOMETRY: coordinate"); }
 void validateGeometry(const Geometry& g) {
     if(g.type=="Point" || g.type=="MultiPoint") {
@@ -69,34 +49,61 @@ ProjectDocument::ProjectDocument(std::vector<Country> countries,std::vector<Laye
         GeometryRef geometry{"legacy-geometry-"+c.id,1};
         geometries.insert(geometry,Geometry{"MultiPolygon",{},{},std::move(c.polygons)});
         const auto baseName=c.name;
-        units.push_back({c.id,std::move(c.name),std::move(c.memo),UnitKind::Country,geometry});
+        units.push_back({c.id,std::move(c.name),std::move(c.memo),UnitKind::General});
+        units.back().locked=c.locked;
+        addStaticTerritorialRecords(*this,c.id,geometry);
         units.back().baseName=baseName;
         presentation.membership.emplace(territorialRef(c.id),std::move(c.layerId));
         presentation.objectStyles.emplace(territorialRef(c.id),ObjectStyle{c.color,c.opacity});
     }
 }
-const TerritorialRelation* effectiveRelation(const ProjectDocument& d,const std::string& id,std::int64_t date) {
-    const TerritorialRelation* base=nullptr;
-    for(const auto& r:d.relations) if(r.unit==territorialRef(id)) {
-        if(!r.dated) base=&r;
-        else { auto b=temporalBounds(r.validity); if(date>=b.first&&date<=b.second) return &r; }
-    }
-    return base;
+std::vector<TimelineEntityIdentity> timelineEntityCatalog(const ProjectDocument& d) {
+    std::vector<TimelineEntityIdentity> result;
+    for(const auto& unit:d.units)result.push_back({unit.id,unit.kind==UnitKind::General?"general":"regional"});
+    return result;
 }
-const TerritorialRelation* effectiveRelationAt(const ProjectDocument& document,
-                                               const std::string& unitId,
-                                               const std::string& referenceDate) {
-    const auto point=parseTemporal(referenceDate);
-    const TerritorialRelation* base=nullptr;
-    const TerritorialRelation* dated=nullptr;
-    for(const auto& relation:document.relations)if(relation.unit==territorialRef(unitId)) {
-        if(!relation.dated){base=&relation;continue;}
-        const auto interval=normalizeTemporalInterval(relation.validity.from,relation.validity.to);
-        if(!temporalContains(interval,point))continue;
-        require(!dated,"PERIOD_CONFLICT: ambiguous reference date");
-        dated=&relation;
+namespace {
+template<class Rows> bool staticRows(const Rows& rows,const std::string& id) {
+    std::size_t count=0;
+    for(const auto& row:rows)if(row.entityId==id) {
+        if(row.validity.from||row.validity.to)return false;
+        ++count;
     }
-    return dated?dated:base;
+    return count==1;
+}
+template<class Rows> auto& staticRow(Rows& rows,const std::string& id) {
+    if(!staticRows(rows,id))throw TimelineError("TIMELINE_ACTIVATION","Current editing requires a single unbounded record.");
+    return *std::find_if(rows.begin(),rows.end(),[&](const auto& row){return row.entityId==id;});
+}
+}
+bool isStaticTimeline(const ProjectDocument& d) {
+    for(const auto& unit:d.units)if(!staticRows(d.timelineRecords.lifetimes,unit.id)
+      ||!staticRows(d.timelineRecords.geometryBindings,unit.id)||!staticRows(d.timelineRecords.parentRelations,unit.id))return false;
+    return true;
+}
+void requireStaticTimeline(const ProjectDocument& d) {
+    if(!isStaticTimeline(d))throw TimelineError("TIMELINE_ACTIVATION","Timeline activation requires T3/T4.");
+}
+const TimelineGeometryBinding& staticGeometryBinding(const ProjectDocument& d,const std::string& id) {return staticRow(d.timelineRecords.geometryBindings,id);}
+TimelineGeometryBinding& staticGeometryBinding(ProjectDocument& d,const std::string& id) {return staticRow(d.timelineRecords.geometryBindings,id);}
+const TimelineParentRelation& staticParentRelation(const ProjectDocument& d,const std::string& id) {return staticRow(d.timelineRecords.parentRelations,id);}
+TimelineParentRelation& staticParentRelation(ProjectDocument& d,const std::string& id) {return staticRow(d.timelineRecords.parentRelations,id);}
+const TimelineLifetime& staticLifetime(const ProjectDocument& d,const std::string& id) {return staticRow(d.timelineRecords.lifetimes,id);}
+TimelineLifetime& staticLifetime(ProjectDocument& d,const std::string& id) {return staticRow(d.timelineRecords.lifetimes,id);}
+bool isRootGeneral(const ProjectDocument& d,const TerritorialUnit& u) {
+    return u.kind==UnitKind::General&&staticParentRelation(d,u.id).parentId.empty();
+}
+void addStaticTerritorialRecords(ProjectDocument& d,const std::string& id,GeometryRef geometry,
+                                 const std::string& parent,const std::string& coverage) {
+    for(const auto& row:d.timelineRecords.lifetimes)require(row.entityId!=id,"DUPLICATE_ID: lifetime owner");
+    d.timelineRecords.lifetimes.push_back({"lifetime:"+id,id,{}});
+    d.timelineRecords.geometryBindings.push_back({"geometry:"+id,id,{},std::move(geometry)});
+    d.timelineRecords.parentRelations.push_back({"parent:"+id,id,{},parent,coverage});
+}
+void removeTerritorialRecords(ProjectDocument& d,const std::vector<std::string>& ids) {
+    const std::set<std::string> removed(ids.begin(),ids.end());
+    const auto erase=[&](auto& rows){rows.erase(std::remove_if(rows.begin(),rows.end(),[&](const auto& row){return removed.count(row.entityId);}),rows.end());};
+    erase(d.timelineRecords.lifetimes);erase(d.timelineRecords.geometryBindings);erase(d.timelineRecords.parentRelations);
 }
 DocumentIndex validateDocument(const ProjectDocument& d) {
     validatePresentation(d);
@@ -107,13 +114,10 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
         require(!l.id.empty() && named(l.name) && opacity(l.opacity),"INVALID_LAYER");
         require(idx.layers.emplace(l.id,i).second,"DUPLICATE_ID: layer");
     }
-    std::set<std::int64_t> boundaries{-infinity};
-    std::map<ObjectRef,std::pair<std::int64_t,std::int64_t>> life;
     for(std::size_t i=0;i<d.units.size();++i) {
         const auto& u=d.units[i]; auto ref=territorialRef(u.id);
         require(!u.id.empty(),"INVALID_UNIT: id");
-        require(u.kind==UnitKind::Country || u.kind==UnitKind::Subunit || u.kind==UnitKind::Region,"INVALID_UNIT: kind");
-        require(u.coverageMode=="partition"||u.coverageMode=="explicit","INVALID_UNIT: coverageMode");
+        require(u.kind==UnitKind::General || u.kind==UnitKind::Regional,"INVALID_UNIT: kind");
         if(u.libraryOrigin) {
             require(!u.libraryOrigin->libraryId.empty()&&!u.libraryOrigin->geometryVersionId.empty(),
                     "INVALID_LIBRARY_ORIGIN: identity");
@@ -122,10 +126,6 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
                 require(!missing.empty(),"INVALID_LIBRARY_ORIGIN: missing ref");
         }
         require(idx.objects.emplace(ref,i).second,"DUPLICATE_ID: territorial unit");
-        auto g=d.geometries.get(u.geometry);
-        require(g && (g->type=="Polygon"||g->type=="MultiPolygon"),"INVALID_GEOMETRY: territorial reference");
-        idx.geometryUsers[u.geometry].push_back(ref);
-        auto b=temporalBounds(u.validity); life[ref]=b; boundaries.insert(b.first); if(b.second<infinity) boundaries.insert(nextCalendarDay(b.second));
         require(d.presentation.objectStyles.count(ref),"DANGLING_REF: presentation missing");
     }
     indexContent(d,idx);
@@ -134,67 +134,16 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
         idx.dependents[{"userLayer",layer}].push_back(ref);
     }
     for(const auto& [ref,s]:d.presentation.objectStyles) require(idx.objects.count(ref)&&s.color<=0xffffff&&opacity(s.opacity),"INVALID_STYLE");
-    std::set<std::string> relationIds,baseUnits,extensionIds;
-    std::map<ObjectRef,std::vector<const TerritorialRelation*>> dated;
-    for(const auto& r:d.relations) {
-        require(!r.id.empty()&&relationIds.insert(r.id).second,"DUPLICATE_ID: relation");
-        require(r.unit.domain=="territorial" && idx.objects.count(r.unit),"DANGLING_REF: relation unit");
-        idx.relationsByUnit[r.unit].push_back(static_cast<std::size_t>(&r-d.relations.data()));
-        if(r.parent) {
-            require(r.parent->domain=="territorial" && idx.objects.count(*r.parent),"DANGLING_REF: parent");
-            idx.children[*r.parent].push_back(r.unit); idx.dependents[*r.parent].push_back(r.unit);
-        }
-        if(r.sovereign) {
-            require(r.sovereign->domain=="territorial" && idx.objects.count(*r.sovereign)&&d.units[idx.objects.at(*r.sovereign)].kind==UnitKind::Country,"DANGLING_REF: sovereign country");
-            idx.dependents[*r.sovereign].push_back(r.unit);
-            idx.sovereignMembers[*r.sovereign].push_back(r.unit);
-        }
-        if(!r.dated) {
-            require(!r.validity.from&&!r.validity.to&&baseUnits.insert(r.unit.id).second,"PERIOD_CONFLICT: duplicate base or dated base");
-        } else {
-            auto b=temporalBounds(r.validity);
-            require(b.first>=life.at(r.unit).first&&b.second<=life.at(r.unit).second,"PERIOD_CONFLICT: relation outside unit lifespan");
-            for(auto ref:{r.parent,r.sovereign}) if(ref) require(b.first>=life.at(*ref).first&&b.second<=life.at(*ref).second,"PERIOD_CONFLICT: target lifespan");
-            dated[r.unit].push_back(&r); boundaries.insert(b.first); if(b.second<infinity) boundaries.insert(nextCalendarDay(b.second));
-        }
+    const auto records=normalizeTimelineRecords(d.timelineRecords,{timelineEntityCatalog(d),[&](const GeometryRef& ref){
+        const auto geometry=d.geometries.get(ref);return geometry&&(geometry->type=="Polygon"||geometry->type=="MultiPolygon");
+    }});
+    for(const auto& binding:records.geometryBindings)idx.geometryUsers[binding.geometryRef].push_back(territorialRef(binding.entityId));
+    for(std::size_t i=0;i<records.parentRelations.size();++i) {
+        const auto& row=records.parentRelations[i];const auto owner=territorialRef(row.entityId);
+        idx.parentRelationsByUnit[owner].push_back(i);
+        if(!row.parentId.empty()) {const auto parent=territorialRef(row.parentId);idx.children[parent].push_back(owner);idx.dependents[parent].push_back(owner);}
     }
-    for(auto& [ref,rows]:dated) {
-        std::sort(rows.begin(),rows.end(),[](auto a,auto b){return temporalBounds(a->validity).first<temporalBounds(b->validity).first;});
-        for(std::size_t i=1;i<rows.size();++i) require(temporalBounds(rows[i-1]->validity).second<temporalBounds(rows[i]->validity).first,"PERIOD_CONFLICT: overlapping relations");
-    }
-    // Evaluate the effective graph at every boundary, including returns to base relations.
-    for(auto date:boundaries) {
-        std::map<ObjectRef,const TerritorialRelation*> graph;
-        auto active=[&](const ObjectRef& ref){ auto b=life.at(ref);return date>=b.first&&date<=b.second; };
-        for(const auto& u:d.units) if(active(territorialRef(u.id))) {
-            const auto ref=territorialRef(u.id);
-            const TerritorialRelation* effective=nullptr;
-            auto rows=idx.relationsByUnit.find(ref);
-            if(rows!=idx.relationsByUnit.end()) for(auto i:rows->second) {
-                const auto& r=d.relations[i];
-                if(!r.dated) effective=&r;
-                else { auto interval=temporalBounds(r.validity); if(date>=interval.first&&date<=interval.second) { effective=&r; break; } }
-            }
-            graph[ref]=effective;
-        }
-        for(const auto& [ref,r]:graph) {
-            const auto& u=d.units[idx.objects.at(ref)];
-            if(r) for(auto target:{r->parent,r->sovereign}) if(target) require(active(*target),"PERIOD_CONFLICT: inactive target");
-            if(u.kind==UnitKind::Country) require(!r || (!r->parent && (!r->sovereign || *r->sovereign==ref)),"SOVEREIGN_MISMATCH: country relationship");
-            if(u.kind==UnitKind::Subunit) {
-                require(r&&r->parent&&r->sovereign,"SOVEREIGN_MISMATCH: subunit needs parent and country");
-                const auto& parent=d.units[idx.objects.at(*r->parent)];
-                if(parent.kind==UnitKind::Country) require(*r->parent==*r->sovereign,"SOVEREIGN_MISMATCH");
-                else { auto pr=graph.at(*r->parent); require(parent.kind==UnitKind::Subunit&&pr&&pr->sovereign&&*pr->sovereign==*r->sovereign,"SOVEREIGN_MISMATCH"); }
-            }
-        }
-        std::map<ObjectRef,int> visited;
-        std::function<void(const ObjectRef&)> visit=[&](const ObjectRef& ref) {
-            require(visited[ref]!=1,"RELATION_CYCLE"); if(visited[ref]==2) return;
-            visited[ref]=1; auto r=graph.at(ref); if(r&&r->parent) visit(*r->parent); visited[ref]=2;
-        };
-        for(const auto& [ref,r]:graph) visit(ref);
-    }
+    std::set<std::string> extensionIds;
     for(const auto& e:d.extensions) {
         require(!e.id.empty()&&extensionIds.insert(e.id).second&&!e.payload.empty(),"INVALID_EXTENSION");
         require(e.dependencyKnowledge=="known"||e.dependencyKnowledge=="unknown","INVALID_EXTENSION: dependencies");
@@ -209,9 +158,10 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
 std::vector<CountryView> countryViews(const ProjectDocument& d) {
     static const std::uint32_t countryDefault=0xcccccc;
     std::vector<CountryView> result;
-    for(const auto& u:d.units) if(u.kind==UnitKind::Country) {
+    requireStaticTimeline(d);
+    for(const auto& u:d.units) if(isRootGeneral(d,u)) {
         auto ref=territorialRef(u.id); const auto& s=d.presentation.objectStyles.at(ref);
-        result.push_back({u.id,(u.nameExplicit&&!u.name.empty()?u.name:u.baseName),d.geometries.get(u.geometry)->polygons,(s.explicitColor?s.color:countryDefault),u.notes,s.opacity,nativeLayerId(d,ref),u.locked});
+        result.push_back({u.id,(u.nameExplicit&&!u.name.empty()?u.name:u.baseName),d.geometries.get(staticGeometryBinding(d,u.id).geometryRef)->polygons,(s.explicitColor?s.color:countryDefault),u.notes,s.opacity,nativeLayerId(d,ref),u.locked});
     }
     return result;
 }

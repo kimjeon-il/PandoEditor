@@ -164,15 +164,15 @@ BuiltinWorldMaterialization materializeBuiltinWorld(const CanonicalCountryStore&
         if(const auto* policy=subunitPolicy(source)) {
             owner=builtinSubunitId(source);
             item.id=owner;
-            item.kind=UnitKind::Subunit;
+            item.kind=UnitKind::General;
             item.baseName.clear();item.nameExplicit=true;
             item.notes=policy->note;
-            item.coverageMode="explicit";
-            document.relations.push_back({"builtin-subunit:"+source,territorialRef(owner),
-                territorialRef(policy->parent),territorialRef(policy->parent),false,{}});
         }
         const auto ref=territorialRef(owner);
-        document.geometries.insert(item.geometry,geometries.at(source));
+        const GeometryRef geometry{"world-country-"+source,1};
+        document.geometries.insert(geometry,geometries.at(source));
+        const auto* parentPolicy=subunitPolicy(source);
+        addStaticTerritorialRecords(document,owner,geometry,parentPolicy?parentPolicy->parent:"","explicit");
         document.presentation.membership.emplace(ref,"countries");
         document.presentation.objectStyles.emplace(ref,ObjectStyle{});
         document.units.push_back(std::move(item));

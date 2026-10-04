@@ -54,7 +54,7 @@ struct GisGenericImportPlan {
 // workspace for geometry operations.
 struct GisTerritorialInput {
     std::string id,name,notes;
-    UnitKind kind=UnitKind::Region;
+    UnitKind kind=UnitKind::Regional;
     Geometry geometry;
     std::optional<ObjectRef> parent,sovereign;
     Validity validity;

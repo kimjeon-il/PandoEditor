@@ -76,7 +76,7 @@ ColumnLayout {
             Layout.fillWidth: true; spacing: 4; visible: !root.editState.active && editor.selectionItems.length === 1
             UiButton {outlined:true; visible:root.selectionContent; text: "선택 객체 편집"; enabled: !!editor.primaryObject.id && editor.primaryObject.domain !== "territorial" && editor.primaryObject.domain !== "hydroBuiltin"; onClicked: root.start(editor.primaryObject.domain, "", false) }
             UiButton {outlined:true; visible:editor.primaryObject.domain==="hydroBuiltin"; text: editor.hydroCopyBusy ? "수계 복사 중…" : "편집용 복사"; enabled: editor.primaryObject.domain === "hydroBuiltin" && !editor.hydroCopyBusy; onClicked: editor.copyBuiltinHydro() }
-            UiButton {outlined:true; objectName: "contentCapital"; visible: editor.primaryObject.domain === "territorial" && editor.primaryObject.type === "country"; text: "수도"; onClicked: root.start("territorial", "capital", false) }
+            UiButton {outlined:true; objectName: "contentCapital"; visible: editor.primaryObject.domain === "territorial" && editor.primaryObject.type === "general"; text: "수도"; onClicked: root.start("territorial", "capital", false) }
         }
         Label { visible: root.editState.active; Layout.fillWidth: true; text: ({territorial:"국가·영토",label:"지명",hydro:"수계",distributionLayer:"분포 레이어",distributionEntry:"분포 항목",generic:"지도 객체"})[root.editState.domain] || ""; wrapMode: Text.WrapAnywhere }
         ColumnLayout {

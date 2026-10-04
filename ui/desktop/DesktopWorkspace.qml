@@ -152,9 +152,8 @@ Item {
             ColumnLayout {
                 id:createItems;width:createScroll.availableWidth
             spacing:2
-            Common.UiButton {menuItem:true;symbol:"country";text:"국가";Layout.fillWidth:true;onClicked:{editor.beginTerritorialCreate("country");createMenu.close()}}
-            Common.UiButton {menuItem:true;symbol:"subunit";text:"하위단위";Layout.fillWidth:true;onClicked:{editor.beginTerritorialCreate("subunit");createMenu.close()}}
-            Common.UiButton {menuItem:true;symbol:"region";text:"지방";Layout.fillWidth:true;onClicked:{editor.beginTerritorialCreate("region");createMenu.close()}}
+            Common.UiButton {objectName:"addGeneral";menuItem:true;symbol:"country";text:"일반객체";Layout.fillWidth:true;onClicked:{editor.beginTerritorialCreate("general");createMenu.close()}}
+            Common.UiButton {objectName:"addRegional";menuItem:true;symbol:"region";text:"독립 권역";Layout.fillWidth:true;onClicked:{editor.beginTerritorialCreate("regional");createMenu.close()}}
             Rectangle {Layout.fillWidth:true;height:1;color:workspace.colors.border}
             Common.UiButton {menuItem:true;objectName:"addDistributionLayer";symbol:"distribution";text:"분포";Layout.fillWidth:true;onClicked:workspace.createContent("distributionLayer","")}
             Common.UiButton {menuItem:true;objectName:"addDistributionEntry";symbol:"distribution";text:"분포 항목";Layout.fillWidth:true;onClicked:workspace.createContent("distributionEntry","")}

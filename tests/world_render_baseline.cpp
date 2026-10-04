@@ -64,12 +64,12 @@ ProjectDocument scenarioDocument(const ProjectDocument& full,const Selection& wa
         if(layer!=full.presentation.membership.end()) d.presentation.membership.emplace(*layer);
     };
     for(const auto& unit:full.units) {
-        if(unit.kind==UnitKind::Country ? !wanted.countries.count(unit.id) : !wanted.composition) continue;
-        d.units.push_back(unit);used.insert(unit.geometry);member(territorialRef(unit.id));
+        if(isRootGeneral(full,unit) ? !wanted.countries.count(unit.id) : !wanted.composition) continue;
+        const auto& binding=staticGeometryBinding(full,unit.id);const auto& parent=staticParentRelation(full,unit.id);
+        appendTerritory(d,unit,binding.geometryRef,parent.parentId,parent.coverageMode);used.insert(binding.geometryRef);member(territorialRef(unit.id));
     }
     if(wanted.composition) {
         d.presentation.webPresentation=full.presentation.webPresentation;
-        d.relations=full.relations;
         d.distributionLayers=full.distributionLayers;
         d.distributionEntries=full.distributionEntries;
         d.labels=full.labels;
@@ -174,7 +174,7 @@ QJsonObject run(const QString& root,const QString& name) {
         {"distributionEntry",int(document.distributionEntries.size())},
         {"generic",int(document.genericFeatures.size())},{"label",int(document.labels.size())}};
     const auto countryCount=std::count_if(document.units.begin(),document.units.end(),
-        [](const auto& unit){return unit.kind==UnitKind::Country;});
+        [](const auto& unit){return unit.kind==UnitKind::General;});
     const QJsonObject structure{{"objectCounts",counts},{"countryCount",int(countryCount)},
         {"polygonCount",double(polygons)},{"ringCount",double(rings)},{"holeCount",double(holes)},
         {"coordinateCount",double(positions)},{"geometryVersionCount",int(document.geometries.versions().size())},

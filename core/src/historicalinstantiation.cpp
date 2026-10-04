@@ -11,23 +11,24 @@ HistoricalInstantiationPlan planHistorical(const ProjectSnapshot& project,
     const HistoricalLibrary& catalog,const std::vector<HistoricalAddRequest>& requests,
     const std::vector<GeometryReplacement>& replacements,
     const std::map<ObjectRef,ObjectRef>& transfers) {
+    requireStaticTimeline(project.document());
     if(requests.empty())throw std::invalid_argument("INVALID_LIBRARY: empty selection");
     HistoricalInstantiationPlan plan{project.instanceId(),project.document().documentId,project.revision(),{}};
     std::set<std::string> ids;
     for(const auto& request:requests) {
         auto selection=catalog.instantiate(request.libraryId,request.referenceDate,request.geometryVersionId);
+        if(!selection.sovereignLibraryId.empty())throw std::invalid_argument("UNSUPPORTED_POLITICAL_RELATION: historical catalog sovereignty");
         if(selection.instantiation.mode!="independent"&&selection.instantiation.mode!="territory-replacement")
             throw std::invalid_argument("INVALID_LIBRARY: unsupported instantiation");
         if(selection.partial&&!request.approvePartial)
             throw std::invalid_argument("INVALID_LIBRARY: partial source requires approval");
         if(!ids.insert(selection.libraryId).second || project.index().objects.count(territorialRef(selection.libraryId)))
             throw std::invalid_argument("DUPLICATE_ID: historical unit");
-        if(request.asIndependentCountry && (selection.type!=UnitKind::Subunit || request.parent || request.sovereign || request.countryName.empty()))
+        if(request.asIndependentCountry && (selection.type!=UnitKind::General || request.parent || request.sovereign || request.countryName.empty()))
             throw std::invalid_argument("INVALID_LIBRARY: independent country ownership");
-        if(selection.type==UnitKind::Subunit && !request.asIndependentCountry && (!request.parent||!request.sovereign))
-            throw std::invalid_argument("SOVEREIGN_MISMATCH: explicit ownership required");
-        if(selection.type==UnitKind::Country && (request.parent||request.sovereign))
-            throw std::invalid_argument("INVALID_LIBRARY: country ownership");
+        if(request.sovereign)throw std::invalid_argument("UNSUPPORTED_POLITICAL_RELATION");
+        if(selection.type==UnitKind::Regional&&request.parent)throw std::invalid_argument("INVALID_PARENT_KIND");
+        if(selection.validity.from||selection.validity.to)throw std::invalid_argument("TIMELINE_ACTIVATION: dated creation requires T4");
         for(const auto& [country,name]:selection.instantiation.countryNameUpdates) {
             const auto existing=plan.countryNameUpdates.find(country);
             if(existing!=plan.countryNameUpdates.end()&&existing->second!=name)
@@ -44,21 +45,21 @@ HistoricalInstantiationPlan planHistorical(const ProjectSnapshot& project,
         const auto found=project.index().objects.find(donor);
         const auto selected=std::find_if(plan.additions.begin(),plan.additions.end(),[&](const auto& addition){
             return territorialRef(addition.selection.libraryId)==target&&
-                (addition.selection.type==UnitKind::Country||addition.asIndependentCountry)&&
+                (addition.selection.type==UnitKind::General||addition.asIndependentCountry)&&
                 addition.selection.instantiation.mode=="territory-replacement";
         });
         if(donor.domain!="territorial"||target.domain!="territorial"||found==project.index().objects.end()||
-           project.document().units.at(found->second).kind!=UnitKind::Country||donor==target||
+           project.document().units.at(found->second).kind!=UnitKind::General||donor==target||
            selected==plan.additions.end()||
            !geometryContains(selected->selection.geometry,
-               *project.document().geometries.get(project.document().units.at(found->second).geometry)))
+               *project.document().geometries.get(staticGeometryBinding(project.document(),donor.id).geometryRef)))
             throw std::invalid_argument("INVALID_LIBRARY: territory transfer target");
     }
     for(const auto& [id,name]:plan.countryNameUpdates) {
         if(transfers.count(territorialRef(id)))
             throw std::invalid_argument("INVALID_LIBRARY: cannot rename transferred country");
         auto found=project.index().objects.find(territorialRef(id));
-        if(found==project.index().objects.end()||project.document().units.at(found->second).kind!=UnitKind::Country||name.empty())
+        if(found==project.index().objects.end()||project.document().units.at(found->second).kind!=UnitKind::General||name.empty())
             throw std::invalid_argument("INVALID_LIBRARY: country update target");
     }
     // Verify every relation, geometry and sibling constraint before exposing a
@@ -108,29 +109,28 @@ void applyHistoricalInstantiation(ProjectDocument& document,const HistoricalInst
         auto unit=std::find_if(document.units.begin(),document.units.end(),[&](const auto& u){return u.id==patch.owner.id;});
         if(unit==document.units.end() || (patch.geometry.type!="Polygon" && patch.geometry.type!="MultiPolygon"))
             throw std::invalid_argument("INVALID_LIBRARY: geometry patch target");
-        GeometryRef ref=unit->geometry;
+        auto& binding=staticGeometryBinding(document,unit->id);GeometryRef ref=binding.geometryRef;
         do {
             if(ref.version==std::numeric_limits<std::uint32_t>::max())throw std::invalid_argument("INVALID_LIBRARY: geometry version overflow");
             ++ref.version;
         }while(document.geometries.get(ref));
-        document.geometries.insert(ref,patch.geometry);unit->geometry=ref;
+        document.geometries.insert(ref,patch.geometry);binding.geometryRef=ref;
     }
     for(const auto& [id,name]:plan.countryNameUpdates) {
-        auto unit=std::find_if(document.units.begin(),document.units.end(),[&](const auto& u){return u.id==id&&u.kind==UnitKind::Country;});
+        auto unit=std::find_if(document.units.begin(),document.units.end(),[&](const auto& u){return u.id==id&&u.kind==UnitKind::General;});
         if(unit==document.units.end()||name.empty())throw std::invalid_argument("INVALID_LIBRARY: country update target");
         unit->name=name;unit->nameExplicit=true;
     }
     for(const auto& addition:plan.additions) {
         const auto& selection=addition.selection;
-        const auto kind=addition.asIndependentCountry?UnitKind::Country:selection.type;
+        const auto kind=addition.asIndependentCountry?UnitKind::General:selection.type;
         GeometryRef ref{"historical-geometry:"+selection.libraryId,1};
         if(document.geometries.get(ref))throw std::invalid_argument("DUPLICATE_ID: historical geometry");
         document.geometries.insert(ref,selection.geometry);
         TerritorialUnit unit;
         unit.id=selection.libraryId;unit.kind=kind;unit.name=addition.asIndependentCountry?addition.countryName:selection.name;
-        unit.baseName=kind==UnitKind::Country?unit.name:"";
-        unit.nameExplicit=true;unit.geometry=ref;unit.validity=selection.validity;
-        unit.coverageMode=kind==UnitKind::Subunit?"partition":"explicit";
+        unit.baseName=kind==UnitKind::General?unit.name:"";
+        unit.nameExplicit=true;
         unit.libraryOrigin=LibraryOrigin{selection.libraryId,selection.geometryVersionId,
             addition.referenceDate,selection.sourceId,"2",selection.certainty,selection.datePrecision,
             selection.partial,selection.missingSourceIds};
@@ -139,16 +139,12 @@ void applyHistoricalInstantiation(ProjectDocument& document,const HistoricalInst
         document.presentation.objectStyles.emplace(owner,ObjectStyle{});
         if(!document.presentation.userLayers.empty())
             document.presentation.membership.emplace(owner,document.presentation.userLayers.front().id);
-        if(kind!=UnitKind::Country) {
-            auto relationId="historical-relation:"+selection.libraryId;
-            if(std::any_of(document.relations.begin(),document.relations.end(),[&](const auto& r){return r.id==relationId;}))
-                throw std::invalid_argument("DUPLICATE_ID: historical relation");
-            document.relations.push_back({relationId,owner,addition.parent,addition.sovereign,false,{}});
-        }
+        if(addition.sovereign)throw std::invalid_argument("UNSUPPORTED_POLITICAL_RELATION");
+        addStaticTerritorialRecords(document,selection.libraryId,ref,addition.parent?addition.parent->id:"","explicit");
     }
     for(const auto& [donor,target]:plan.territoryTransfers) {
         auto existing=std::find_if(document.units.begin(),document.units.end(),[&](const auto& u){return territorialRef(u.id)==donor;});
-        if(existing==document.units.end()||existing->kind!=UnitKind::Country)
+        if(existing==document.units.end()||existing->kind!=UnitKind::General)
             throw std::invalid_argument("INVALID_LIBRARY: missing transferred country");
         if(document.symbols.count(donor))
             throw std::invalid_argument("INVALID_LIBRARY: transferred country has flag asset");
@@ -156,12 +152,8 @@ void applyHistoricalInstantiation(ProjectDocument& document,const HistoricalInst
         if(details!=document.countryDetails.end()&&!details->second.capital.empty())
             throw std::invalid_argument("INVALID_LIBRARY: transferred country has capital");
         document.countryDetails.erase(donor);
-        for(auto& relation:document.relations) {
-            if(relation.parent==donor)relation.parent=target;
-            if(relation.sovereign==donor)relation.sovereign=target;
-        }
-        document.relations.erase(std::remove_if(document.relations.begin(),document.relations.end(),
-            [&](const auto& r){return r.unit==donor;}),document.relations.end());
+        for(auto& relation:document.timelineRecords.parentRelations)if(relation.parentId==donor.id)relation.parentId=target.id;
+        removeTerritorialRecords(document,{donor.id});
         for(auto& label:document.labels)if(label.territory==donor)label.territory=target;
         for(auto& entry:document.distributionEntries)if(entry.territory==donor)entry.territory=target;
         document.presentation.membership.erase(donor);

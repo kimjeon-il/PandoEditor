@@ -105,8 +105,7 @@ pandoeditor::TerritorialUnit CanonicalCountryStore::materializeUnit(std::size_t 
     unit.id=entry.value("id").toString().toStdString();
     unit.baseName=entry.value("properties").toObject().value("name").toString().toStdString();
     unit.name=unit.baseName.empty()?unit.id:unit.baseName;
-    unit.kind=pandoeditor::UnitKind::Country;
-    unit.geometry={"world-country-"+unit.id,1};
+    unit.kind=pandoeditor::UnitKind::General;
     return unit;
 }
 pandoeditor::Geometry CanonicalCountryStore::materializeGeometry(std::size_t index) const {

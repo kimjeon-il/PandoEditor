@@ -28,9 +28,9 @@ double segmentDistanceSquared(Point point,Point a,Point b,double& t) {
 Point snappedPoint(const ProjectDocument& document,const MapProjection& projection,Point input,double tolerance,std::optional<Point>& marker) {
     marker.reset();if(tolerance<=0)return input;double best=tolerance*tolerance;Point result=input;
     // Vertices have priority over edges, matching the web editor's stable snap.
-    for(const auto& unit:document.units)if(const auto geometry=document.geometries.get(unit.geometry))for(const auto& polygon:geometry->polygons)for(const auto& ring:polygon)for(const auto& candidate:ring){const auto view=projection.project(candidate);const auto inputView=projection.project(input);const auto distance=distanceSquared(view,inputView);if(distance<=best){best=distance;result=candidate;marker=candidate;}}
+    for(const auto& unit:document.units)if(const auto geometry=document.geometries.get(pandoeditor::staticGeometryBinding(document,unit.id).geometryRef))for(const auto& polygon:geometry->polygons)for(const auto& ring:polygon)for(const auto& candidate:ring){const auto view=projection.project(candidate);const auto inputView=projection.project(input);const auto distance=distanceSquared(view,inputView);if(distance<=best){best=distance;result=candidate;marker=candidate;}}
     if(marker)return result;
-    const auto inputView=projection.project(input);for(const auto& unit:document.units)if(const auto geometry=document.geometries.get(unit.geometry))for(const auto& polygon:geometry->polygons)for(const auto& ring:polygon)for(std::size_t i=1;i<ring.size();++i){double t=0;const auto distance=segmentDistanceSquared(inputView,projection.project(ring[i-1]),projection.project(ring[i]),t);if(distance<=best){best=distance;result={ring[i-1].x+(ring[i].x-ring[i-1].x)*t,ring[i-1].y+(ring[i].y-ring[i-1].y)*t};marker=result;}}
+    const auto inputView=projection.project(input);for(const auto& unit:document.units)if(const auto geometry=document.geometries.get(pandoeditor::staticGeometryBinding(document,unit.id).geometryRef))for(const auto& polygon:geometry->polygons)for(const auto& ring:polygon)for(std::size_t i=1;i<ring.size();++i){double t=0;const auto distance=segmentDistanceSquared(inputView,projection.project(ring[i-1]),projection.project(ring[i]),t);if(distance<=best){best=distance;result={ring[i-1].x+(ring[i].x-ring[i-1].x)*t,ring[i-1].y+(ring[i].y-ring[i-1].y)*t};marker=result;}}
     return result;
 }
 double orientation(Point a,Point b,Point c) { return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x); }
@@ -139,7 +139,7 @@ bool EditorController::beginGeometryEdit(const QString& tool)
     if(geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
     const auto target=selection_.primary();if(!target||!selectedEditable())return false;
     const auto unit=selectedUnit();if(!unit)return false;
-    const auto geometry=project_.document().geometries.get(unit->geometry);if(!geometry)return false;
+    const auto geometry=project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit->id).geometryRef);if(!geometry)return false;
     geometryEdit_=GeometryEditSession{project_.snapshot(),*target,*geometry,{},{},0,0,-1,tool,{}};
     emit geometryEditChanged();return true;
 }
@@ -329,7 +329,7 @@ bool EditorController::requestGeometryPreview()
                 const auto found=snapshot.index().objects.find(owner);
                 if(found==snapshot.index().objects.end())return failed;
                 const auto& unit=snapshot.document().units.at(found->second);
-                const auto geometry=snapshot.document().geometries.get(unit.geometry);
+                const auto geometry=snapshot.document().geometries.get(pandoeditor::staticGeometryBinding(snapshot.document(),unit.id).geometryRef);
                 if(!geometry)return failed;
                 request.operands.push_back(*geometry);
             }

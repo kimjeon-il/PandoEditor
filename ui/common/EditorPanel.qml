@@ -153,7 +153,7 @@ Rectangle {
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
                         visible: editor.selectedId !== "" && !editor.selectedEditable
                         text: editor.selectionItems.length>1 ? "여러 객체가 선택되었습니다."
-                            : editor.primaryObject.type !== "country" ? "이 객체의 속성 편집은 후속 단계에서 지원합니다."
+                            : editor.primaryObject.type !== "general" ? "이 객체의 속성 편집은 후속 단계에서 지원합니다."
                             : "객체 또는 소속 레이어가 잠겨 있습니다."
                         wrapMode: Text.WordWrap
                     }
@@ -161,56 +161,42 @@ Rectangle {
                         objectName: "territorialStructurePanel"
                         title: "영토 구조"
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
-                        visible: editor.primaryObject.type === "subunit" || editor.primaryObject.type === "region" || editor.primaryObject.type === "country"
+                        visible: editor.primaryObject.domain === "territorial"
                         ColumnLayout {
                             anchors.fill: parent
                             UiComboBox {
                                 id: parentChoice
                                 Layout.fillWidth: true
-                                visible: editor.primaryObject.type === "subunit"
+                                visible: editor.primaryObject.type === "general"
                                 model: editor.relationParentOptions
                                 textRole: "name"; valueRole: "id"
                                 displayText: editor.objectProperties.parentId || "상위 영역 선택"
                             }
                             UiButton {outlined:true;
                                 objectName: "changeTerritorialParent"
-                                visible: editor.primaryObject.type === "subunit"
+                                visible: editor.primaryObject.type === "general"
                                 text: "상위 영역 변경"
                                 enabled: parentChoice.currentValue !== ""
                                 onClicked: editor.changeSelectedParent(parentChoice.currentValue)
                             }
                             UiComboBox {
-                                id: sovereignChoice
-                                Layout.fillWidth: true
-                                visible: editor.primaryObject.type === "region"
-                                model: editor.relationCountryOptions
-                                textRole: "name"; valueRole: "id"
-                                displayText: editor.objectProperties.sovereignId || "소속 국가 없음"
-                            }
-                            UiComboBox {
                                 id: transferCountry
                                 objectName: "transferCountry"
                                 Layout.fillWidth: true
-                                visible: editor.primaryObject.type === "subunit"
+                                visible: editor.primaryObject.type === "general"
                                 model: editor.relationCountryOptions; textRole: "name"; valueRole: "id"
                             }
                             UiButton {outlined:true;
                                 objectName: "transferTerritorial"
-                                visible: editor.primaryObject.type === "subunit"
+                                visible: editor.primaryObject.type === "general"
                                 text: "선택 국가로 영토 이전"
                                 enabled: transferCountry.currentValue !== ""
                                 onClicked: editor.transferSelectedSubunit(transferCountry.currentValue)
                             }
-                            UiButton {outlined:true;
-                                objectName: "changeRegionSovereign"
-                                visible: editor.primaryObject.type === "region"
-                                text: "소속 국가 변경"
-                                onClicked: editor.changeSelectedRegionSovereign(sovereignChoice.currentValue)
-                            }
                             RowLayout {
                                 Layout.fillWidth: true
                                 UiButton {outlined:true; objectName: "deleteTerritorial"; text: "삭제"; enabled: editor.selectionItems.length > 0; onClicked: editor.beginDeleteSelection() }
-                                UiButton {outlined:true; objectName: "convertTerritorial"; text: "종류 전환"; visible: editor.primaryObject.type === "subunit" || editor.primaryObject.type === "country"; onClicked: editor.beginTypeConversion() }
+                                UiButton {outlined:true; objectName: "convertTerritorial"; text: "상위 관계 전환"; visible: editor.primaryObject.type === "general"; onClicked: editor.beginTypeConversion() }
                             }
                             RowLayout {
                                 Layout.fillWidth: true
@@ -224,9 +210,8 @@ Rectangle {
                             }
                             RowLayout {
                                 Layout.fillWidth: true
-                                UiButton {outlined:true; objectName: "createCountry"; text: "국가 추가"; onClicked: editor.beginTerritorialCreate("country") }
-                                UiButton {outlined:true; objectName: "createSubunit"; text: "하위단위 추가"; onClicked: editor.beginTerritorialCreate("subunit") }
-                                UiButton {outlined:true; objectName: "createRegion"; text: "지방 추가"; onClicked: editor.beginTerritorialCreate("region") }
+                                UiButton {outlined:true; objectName: "createGeneral"; text: "일반객체 추가"; onClicked: editor.beginTerritorialCreate("general") }
+                                UiButton {outlined:true; objectName: "createRegional"; text: "독립 권역 추가"; onClicked: editor.beginTerritorialCreate("regional") }
                             }
                         }
                     }
@@ -414,28 +399,17 @@ Rectangle {
             UiTextField { id: createName; objectName: "territorialCreateName"; visible: editor.structureState.createSetup === true; Layout.fillWidth: true; placeholderText: "이름"; text: editor.structureState.name || "" }
             UiTextField { id: createId; objectName: "territorialCreateId"; visible: editor.structureState.createSetup === true; Layout.fillWidth: true; placeholderText: "객체 ID"; text: editor.structureState.generatedId || "" }
             UiComboBox {
-                id: createSovereign; objectName: "territorialCreateSovereign"; visible: editor.structureState.createSetup === true && editor.structureState.kind !== 0
-                Layout.fillWidth: true; model: editor.relationCountryOptions; textRole: "name"; valueRole: "id"; displayText: "소속 국가 선택"
-            }
-            UiComboBox {
-                id: createParent; objectName: "territorialCreateParent"; visible: editor.structureState.createSetup === true && editor.structureState.kind === 1
+                id: createParent; objectName: "territorialCreateParent"; visible: editor.structureState.createSetup === true && editor.structureState.kind === 0
                 Layout.fillWidth: true; model: editor.relationParentOptions; textRole: "name"; valueRole: "id"; displayText: "상위 영역 선택"
             }
             UiButton {outlined:true;
                 objectName: "saveTerritorialCreateSetup"; visible: editor.structureState.createSetup === true; text: "설정 저장 후 도형 그리기"
                 onClicked: {
-                    if (editor.updateTerritorialCreateSetup(createName.text, createSovereign.currentValue || "", createParent.currentValue || "", createId.text))
+                    if (editor.updateTerritorialCreateSetup(createName.text, createParent.visible ? createParent.currentValue || "" : "", createId.text))
                         editor.beginGeometryDraw()
                 }
             }
-            Label { visible: editor.structureState.conversionSetup === true || (editor.structureState.generatedId !== undefined && editor.structureState.generatedId !== "" && !editor.structureState.createSetup); Layout.fillWidth: true; text: "새 객체 ID: " + (editor.structureState.generatedId || "") ; wrapMode: Text.WrapAnywhere }
-            UiComboBox {
-                id: conversionSovereign
-                objectName: "conversionSovereign"
-                visible: editor.structureState.conversionSetup === true
-                Layout.fillWidth: true; model: editor.relationCountryOptions; textRole: "name"; valueRole: "id"
-                displayText: "소속 국가 선택"
-            }
+            Label { visible: editor.structureState.conversionSetup === true || (editor.structureState.generatedId !== undefined && editor.structureState.generatedId !== "" && !editor.structureState.createSetup); Layout.fillWidth: true; text: "객체 ID: " + (editor.structureState.generatedId || "") ; wrapMode: Text.WrapAnywhere }
             UiComboBox {
                 id: conversionParent
                 objectName: "conversionParent"
@@ -447,8 +421,8 @@ Rectangle {
                 objectName: "applyConversionTarget"
                 visible: editor.structureState.conversionSetup === true
                 text: "전환 대상 설정"
-                enabled: conversionSovereign.currentValue !== "" && conversionParent.currentValue !== ""
-                onClicked: editor.updateTypeConversionTarget(conversionSovereign.currentValue, conversionParent.currentValue)
+                enabled: conversionParent.currentValue !== ""
+                onClicked: editor.updateTypeConversionTarget(conversionParent.currentValue)
             }
             Repeater { model: editor.structureState.impacts || []; delegate: Label { required property var modelData; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; text: (modelData.kind === "transfer" ? "영토 이전·도형 갱신" : modelData.kind === "convert" ? "종류 전환" : modelData.messageKey) + " · " + modelData.id } }
             RowLayout {

@@ -28,25 +28,24 @@ void append(GisGeoJsonCollection& out,std::string id,Geometry shape,V properties
 }
 GisGeoJsonCollection exportGisDocumentLayer(const ProjectDocument& document,
                                             const std::string& layer) {
-    validateDocument(document);
+    validateDocument(document);requireStaticTimeline(document);
     GisGeoJsonCollection out;
     if(layer=="countries"||layer=="subunits"||layer=="regions") {
-        const auto kind=layer=="countries"?UnitKind::Country:layer=="subunits"?UnitKind::Subunit:UnitKind::Region;
-        for(const auto& unit:document.units)if(unit.kind==kind) {
+        const auto kind=layer=="countries"?UnitKind::General:layer=="subunits"?UnitKind::General:UnitKind::Regional;
+        for(const auto& unit:document.units)if(territorialGroup(document,unit.id)==layer) {
             const auto ref=territorialRef(unit.id);
-            const auto relation=baseRelation(document,ref);
+            const auto& relation=staticParentRelation(document,unit.id);
             auto properties=webjson::obj({
                 {"id",V::str(unit.id)},{"name",V::str(objectDisplayName(unit))},
                 {"pandolab_id",V::str(unit.id)},{"pandolab_name",V::str(objectDisplayName(unit))},
-                {"type",V::str(kind==UnitKind::Country?"country":kind==UnitKind::Subunit?"subunit":"region")},
-                {"parent_id",relation&&relation->parent?V::str(relation->parent->id):V{}},
-                {"sovereign_id",relation&&relation->sovereign?V::str(relation->sovereign->id):V{}},
-                {"valid_from",nullable(unit.validity.from)},{"valid_to",nullable(unit.validity.to)},
+                {"entityKind",V::str(unit.kind==UnitKind::General?"general":"regional")},
+                {"parent_id",V::str(relation.parentId)},
+                {"valid_from",nullable(staticLifetime(document,unit.id).validity.from)},{"valid_to",nullable(staticLifetime(document,unit.id).validity.to)},
                 {"color",V::str(color(effectiveObjectColor(document,ref)))},
                 {"source_library_id",unit.libraryOrigin?V::str(unit.libraryOrigin->libraryId):V{}},
                 {"source_geometry_version",unit.libraryOrigin?V::str(unit.libraryOrigin->geometryVersionId):V{}}
             });
-            append(out,unit.id,geometry(document,unit.geometry),std::move(properties));
+            append(out,unit.id,geometry(document,staticGeometryBinding(document,unit.id).geometryRef),std::move(properties));
         }
     } else if(layer=="distributions") {
         for(const auto& entry:document.distributionEntries) {
@@ -58,7 +57,7 @@ GisGeoJsonCollection exportGisDocumentLayer(const ProjectDocument& document,
                 const auto ref=std::find_if(document.units.begin(),document.units.end(),
                     [&](const auto& unit){return territorialRef(unit.id)==*entry.territory;});
                 if(ref==document.units.end())throw std::invalid_argument("DANGLING_GIS_TERRITORY");
-                shape=geometry(document,ref->geometry);
+                shape=geometry(document,staticGeometryBinding(document,ref->id).geometryRef);
             } else if(entry.geometry)shape=geometry(document,*entry.geometry);
             else throw std::invalid_argument("DANGLING_GIS_GEOMETRY");
             auto properties=webjson::obj({
