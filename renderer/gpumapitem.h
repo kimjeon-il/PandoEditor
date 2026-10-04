@@ -1,4 +1,5 @@
 #pragma once
+#include <QVariantMap>
 
 #include "mapscenebridge.h"
 #include "scenegraph/mapscenenode.h"
@@ -62,6 +63,7 @@ public:
     qulonglong uploadBytesThisFrame() const{return publishedStats_.uploadBytesThisFrame;}
     bool uploadsPending() const{return publishedStats_.uploadsPending;}
     qulonglong resourceGeneration() const{return resourceGeneration_.load();}
+    QVariantMap resourceCacheStats() const;
     const MapGpuStats& gpuStats() const {return publishedStats_;}
     qulonglong uploadContinuationCount() const {return uploadContinuations_;}
     qulonglong uploadBudgetBytes() const{return uploadBudgetBytes_;}

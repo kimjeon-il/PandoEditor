@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <pandoeditor/map/mappicker.h>
 #include <pandoeditor/objectproperties.h>
 #include <cmath>

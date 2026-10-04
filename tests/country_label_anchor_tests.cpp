@@ -6,6 +6,39 @@
 class CountryLabelAnchorTests final : public QObject {
     Q_OBJECT
 private slots:
+    void deletedAndReplacedGeometryCannotKeepOrPublishAnchors() {
+        CountryLabelAnchors anchors;pandoeditor::Geometry geometry;geometry.type="Polygon";
+        geometry.polygons={{{{0,0},{10,0},{10,10},{0,10},{0,0}}}};
+        const pandoeditor::GeometryRef first{"shape-A",1},second{"shape-B",1};
+        auto token=anchors.recompute("owner",geometry,first);
+        anchors.invalidateOwner("owner");
+        QVERIFY(!anchors.commitDerived(token,"owner",first,pandoeditor::Point{5,5}));
+        token=anchors.recompute("owner",geometry,first);
+        QVERIFY(anchors.commitDerived(token,"owner",first,pandoeditor::Point{5,5}));
+        auto replacement=anchors.recompute("owner",geometry,second);
+        QVERIFY(!anchors.anchor("owner","").has_value());
+        QVERIFY(!anchors.commitDerived(replacement,"owner",first,pandoeditor::Point{7,7}));
+        QVERIFY(!anchors.commitDerived(replacement,"owner",second,std::nullopt));
+        QVERIFY(!anchors.anchor("owner","").has_value());
+        QCOMPARE(anchors.resourceCacheSnapshot().pendingCount,std::size_t(0));
+    }
+
+    void projectScopeRejectsSameOwnerVersionAndConsumesCompletion() {
+        CountryLabelAnchors anchors;
+        pandoeditor::Geometry geometry;geometry.type="Polygon";
+        geometry.polygons={{{{0,0},{10,0},{10,10},{0,10},{0,0}}}};
+        anchors.setProjectScope("project-A");
+        const auto old=anchors.recompute("owner",geometry,1);
+        anchors.setProjectScope("project-B");
+        const auto fresh=anchors.recompute("owner",geometry,1);
+        QVERIFY(!anchors.commitDerived(old,"owner",1,pandoeditor::Point{2,2}));
+        QVERIFY(anchors.commitDerived(fresh,"owner",1,pandoeditor::Point{5,5}));
+        QVERIFY(!anchors.commitDerived(fresh,"owner",1,pandoeditor::Point{7,7}));
+        QCOMPARE(anchors.anchor("owner","")->x,5.0);
+        anchors.setProjectScope("project-C");
+        QVERIFY(!anchors.anchor("owner","").has_value());
+    }
+
     void pinnedCorpusHasAllSourceCountries() {
         QFile file(":/world/country-label-anchors-v0.10.1.json");QVERIFY(file.open(QIODevice::ReadOnly));
         CountryLabelAnchors anchors(file.readAll());

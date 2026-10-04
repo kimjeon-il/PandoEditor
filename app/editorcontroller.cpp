@@ -1,4 +1,6 @@
 #include "editorcontroller.h"
+#include "terrainimageprovider.h"
+#include "../renderer/gpumapitem.h"
 #include "defaultflagresolver.h"
 #include "worlddatasetloader.h"
 #include <pandoeditor/maprenderorder.h>
@@ -56,6 +58,8 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         projectPreviewSourceSha_=std::move(config.projectPreviewSourceSha);
         connect(projectPreview_.get(),&ProjectPreviewService::generationFailed,this,&EditorController::errorOccurred);
     }
+    terrainResourceBridge_=std::make_unique<TerrainImageBridge>(this);
+    connect(this,&EditorController::terrainChanged,this,[this]{terrainResourceBridge_->setSource(terrainProvider_);});
     QFile anchorFile(QStringLiteral(":/world/country-label-anchors-v0.10.1.json"));
     labelAnchors_=std::make_unique<CountryLabelAnchors>(
         anchorFile.open(QIODevice::ReadOnly)?anchorFile.readAll():QByteArray{},this);
@@ -111,11 +115,10 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         invalidateViewportResources(ViewportResourceKind::Labels);
     });
     connect(this,&EditorController::selectionChanged,this,[this] {
-        std::optional<quint32> logical;
-        if(const auto selected=selection_.primary();selected&&selected->domain=="hydroBuiltin")
-            if(const auto record=hydroRuntime_.recordById(text(selected->id)))
-                logical=record->logicalFid;
-        hydroRuntime_.setSelectedLogical(logical);
+        std::set<quint32> logical;
+        for(const auto& selected:selection_.items())if(selected.domain=="hydroBuiltin")
+            if(const auto record=hydroRuntime_.recordById(text(selected.id)))logical.insert(record->logicalFid);
+        hydroRuntime_.setSelectedLogicals(logical);
     });
     connect(this,&EditorController::hoverChanged,this,refresh);
     connect(this,&EditorController::objectChooserChanged,this,refresh);
@@ -286,16 +289,36 @@ QString EditorController::labelSourceId(const std::string& ownerId) const {
 }
 void EditorController::scheduleDerivedLabelAnchor(const pandoeditor::ObjectRef& owner) {
     if(!labelAnchors_||owner.domain!="territorial")return;
-    const auto object=project_.index().objects.find(owner);if(object==project_.index().objects.end())return;
+    const auto object=project_.index().objects.find(owner);if(object==project_.index().objects.end()){labelAnchors_->invalidateOwner(text(owner.id));return;}
     const auto& unit=project_.document().units.at(object->second);const auto geometry=project_.document().geometries.get(unit.geometry);
-    if(geometry)labelAnchors_->recompute(text(owner.id),*geometry,unit.geometry.version);
+    labelAnchors_->setProjectScope(text(project_.instanceId()));
+    if(geometry)labelAnchors_->recompute(text(owner.id),*geometry,unit.geometry);
+    else labelAnchors_->invalidateOwner(text(owner.id));
 }
 QVariantMap EditorController::renderQuality() const {
+    resourceCoordinator_.setDomain("geometry",packetCache_.resourceCacheSnapshot());
+    resourceCoordinator_.setDomain("terrain",terrainProvider_?terrainProvider_->resourceCacheSnapshot():pandoeditor::ResourceCacheSnapshot{},"bounded",{{"assetPending",terrainAssetPending_},{"pendingKind","requested payloads not yet decoded"}});
+    resourceCoordinator_.setDomain("hydro",hydroRuntime_.resourceCacheSnapshot(),"bounded",{{"activeFrameBytes",qulonglong(hydroRuntime_.activeFrameBytes())},{"frameBytesAvailable",true}});
+    resourceCoordinator_.setDomain("world",worldResources_.snapshot(),worldResources_.compatibilityBudget()?"compatibilityWorkingSet":"bounded");
+    auto labels=labelEngine_.resourceCacheSnapshot();QVariantMap labelExtra;
+    if(labelAnchors_) {
+        const auto anchors=labelAnchors_->resourceCacheSnapshot();
+        labels.residentCount+=anchors.residentCount;labels.residentBytes+=anchors.residentBytes;
+        labels.protectedBytes+=anchors.protectedBytes;labels.activeBytes+=anchors.activeBytes;
+        labels.pendingCount+=anchors.pendingCount;labels.pendingUnknownCount+=anchors.pendingUnknownCount;
+        for(std::size_t i=0;i<labels.protectionCounts.size();++i)labels.protectionCounts[i]+=anchors.protectionCounts[i];
+        labels.failureCount+=anchors.failureCount;labels.invalidationCount+=anchors.invalidationCount;labels.staleCompletionCount+=anchors.staleCompletionCount;
+        if(labelEngine_.compatibilityResourceBudget())labels.budgetBytes+=anchors.budgetBytes;
+        labels.overBudgetBytes=labels.residentBytes>labels.budgetBytes?labels.residentBytes-labels.budgetBytes:0;
+        labels.protectedOverBudgetBytes=labels.protectedBytes>labels.budgetBytes?labels.protectedBytes-labels.budgetBytes:0;
+        labelExtra={{"anchorFixedBytes",qulonglong(labelAnchors_->fixedStorageBytes())},{"anchorDerivedBytes",qulonglong(labelAnchors_->derivedStorageBytes())},{"anchorPending",qulonglong(anchors.pendingCount)}};
+    }
+    resourceCoordinator_.setDomain("label",labels,labelEngine_.compatibilityResourceBudget()?"compatibilityWorkingSet":"bounded",labelExtra);
     const auto profile=quality_.profile();
     const auto stats=packetCache_.stats();
     const auto tier=profile.tier==RenderQualityTier::Coarse?"coarse":
         profile.tier==RenderQualityTier::Medium?"medium":"high";
-    return {{"tier",tier},{"revision",qulonglong(profile.revision)},
+    return {{"resourceCaches",resourceCoordinator_.snapshot()},{"tier",tier},{"revision",qulonglong(profile.revision)},
         {"worldDetailRequested",worldDetailCanonical_?"canonical":"preview"},
         {"worldDetailDisplayed",worldBase_&&worldBase_->mesh?(worldBase_->mesh->preview?"preview":"canonical"):"none"},
         {"interaction",profile.interaction},{"dprCap",profile.dprCap},
@@ -658,6 +681,7 @@ void EditorController::reloadDrafts()
 void EditorController::publish(bool pruneSelection)
 {
     Q_UNUSED(pruneSelection);
+    if(labelAnchors_)labelAnchors_->setProjectScope(text(project_.instanceId()));
     QScopedValueRollback<bool> guard(selectionTransition_,true);
     // Hidden/locked is not missing. A selected object remains addressable from a list.
     reconcileSelection();
@@ -804,8 +828,8 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
             if(generation!=worldGeneration_||!initial.matches(project_))return;
             try {
                 auto frames=watcher->result();if(!frames.first)return;
-                worldCanonicalBase_=std::move(frames.first);worldPreviewBase_=std::move(frames.second);
-                worldBase_=worldCanonicalBase_;worldRanges_=worldBase_->ranges;
+                worldBase_=std::move(frames.first);cacheWorldFrame(worldBase_);cacheWorldFrame(std::move(frames.second));
+                worldRanges_=worldBase_->ranges;
                 updateWorldDetail();worldStatus_=QStringLiteral("canonical");
                 refreshTypedScene();emit worldStatusChanged();
             }catch(const std::exception&) {
@@ -869,4 +893,17 @@ bool EditorController::confirmPrivateRecovery()
     if(!privateRecoveryRequired_)return true;
     try {storage_.preserveCorruptPrivate();privateRecoveryRequired_=false;emit privateRecoveryRequiredChanged();return true;}
     catch(const std::exception& e){emit errorOccurred(QString::fromUtf8(e.what()));return false;}
+}
+
+QObject* EditorController::terrainResourceBridge() const {return terrainResourceBridge_.get();}
+
+void EditorController::recordGpuResourceStats(QObject* source) {
+    auto* item=qobject_cast<GpuMapItem*>(source);if(!item)return;
+    if(gpuResourceSource_&&gpuResourceSource_!=source)return;
+    if(!gpuResourceSource_) {
+        gpuResourceSource_=source;resourceCoordinator_.setQsgSource(reinterpret_cast<quintptr>(source));
+        connect(source,&QObject::destroyed,this,[this]{if(!gpuResourceSource_)resourceCoordinator_.setQsgSource(0);});
+    }
+    resourceCoordinator_.acceptQsgSnapshot(reinterpret_cast<quintptr>(source),item->resourceGeneration(),item->resourceCacheStats());
+    // No renderQualityChanged here: per-frame diagnostics must not rebuild CPU cache snapshots.
 }

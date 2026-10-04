@@ -210,3 +210,13 @@ QSGNode* GpuMapItem::updatePaintNode(QSGNode* previous,UpdatePaintNodeData*) {
     },Qt::QueuedConnection);
     return node;
 }
+
+QVariantMap GpuMapItem::resourceCacheStats() const {
+    return {{"liveResourceCount",qulonglong(publishedStats_.liveResourceCount)},
+        {"liveResourceBytes",qulonglong(publishedStats_.liveResourceBytes)},
+        {"resourceCreationCount",qulonglong(publishedStats_.resourceCreationCount)},
+        {"resourceRetirementCount",qulonglong(publishedStats_.resourceRetirementCount)},
+        {"uploadsPending",publishedStats_.uploadsPending},
+        {"geometryUploadCount",qulonglong(publishedStats_.geometryUploadCount)},
+        {"uploadBytesThisFrame",qulonglong(publishedStats_.uploadBytesThisFrame)}};
+}

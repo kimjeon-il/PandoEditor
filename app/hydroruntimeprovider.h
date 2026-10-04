@@ -4,6 +4,8 @@
 #include "hydrometadata.h"
 #include "hydroshardreader.h"
 #include <pandoeditor/hydroviewport.h>
+#include <pandoeditor/map/resourcecachepolicy.h>
+#include <set>
 #include <QObject>
 #include <memory>
 #include <optional>
@@ -28,6 +30,9 @@ public:
     bool pinLogical(quint32 logicalFid);
     void clearPinned();
     void setSelectedLogical(std::optional<quint32> logicalFid);
+    void setSelectedLogicals(const std::set<quint32>& logicalFids);
+    pandoeditor::ResourceCacheSnapshot resourceCacheSnapshot() const;
+    std::size_t activeFrameBytes() const {const auto current=frame();return current?current->retainedBytes:0;}
     std::size_t cachedPackCount() const;
     std::size_t cachedBytes() const;
     void setCacheBudget(std::size_t bytes);

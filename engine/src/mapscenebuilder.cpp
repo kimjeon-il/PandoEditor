@@ -127,6 +127,7 @@ std::uint64_t interactionSignature(const InteractionRenderPacket& interaction) {
 
 void MapSceneBuilder::remember(const ProjectSnapshot& snapshot,const MapViewState& view,
                               const std::shared_ptr<const RenderScene>& scene) {
+    cache_.setActiveScene(scene);
     preparedSnapshot_=snapshot;preparedScene_=scene;preparedHydro_=builtinHydro_;
     preparedMode_=view.mode;preparedLod_=quality_.backgroundLod;
 }
@@ -184,7 +185,8 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::build(
         auto scene=std::make_shared<RenderScene>(*previous);
         std::set<ObjectRef> protectedObjects(interaction.selected.begin(),interaction.selected.end());
         if(interaction.editTarget)protectedObjects.insert(*interaction.editTarget);
-        cache_.protect(protectedObjects);
+        cache_.protectReasons(std::set<ObjectRef>(interaction.selected.begin(),interaction.selected.end()),
+            interaction.editTarget?std::set<ObjectRef>{*interaction.editTarget}:std::set<ObjectRef>{});
         scene->revision=nextSceneRevision(previous);
         scene->interaction=interaction;scene->interactionSignature=interactionSignature(interaction);
         if(!unchangedInteraction)scene->revisions.selection=advance(previous->revisions.selection);
@@ -296,7 +298,8 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
         scene->worldPlan=worldRenderPlanForView(*worldBase_->mesh,view);
     std::set<ObjectRef> protectedObjects(interaction.selected.begin(),interaction.selected.end());
     if(interaction.editTarget)protectedObjects.insert(*interaction.editTarget);
-    cache_.protect(protectedObjects);
+    cache_.protectReasons(std::set<ObjectRef>(interaction.selected.begin(),interaction.selected.end()),
+            interaction.editTarget?std::set<ObjectRef>{*interaction.editTarget}:std::set<ObjectRef>{});
     std::set<std::string> baseCountries;
     if(worldBase_&&worldBase_->mesh) {
         if(worldBase_->ranges.size()!=258)throw std::invalid_argument("world base needs 258 ranges");
@@ -594,7 +597,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     if(previous&&previous->revisions.document==documentRevision&&
        previous->geometrySignature==geometry&&previous->presentationSignature==presentation&&
        previous->interactionSignature==selection&&previous->datasetSignature==dataset&&
-       previous->revisions.view==view.revision)return previous;
+       previous->revisions.view==view.revision){cache_.setActiveScene(previous);return previous;}
     scene->revision=nextSceneRevision(previous);
     scene->revisions.document=documentRevision;
     scene->revisions.geometry=previous?
@@ -606,5 +609,6 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     scene->revisions.dataset=previous?
         (previous->datasetSignature!=dataset?advance(previous->revisions.dataset):previous->revisions.dataset):1;
     scene->revisions.view=view.revision;
+    cache_.setActiveScene(scene);
     return scene;
 }

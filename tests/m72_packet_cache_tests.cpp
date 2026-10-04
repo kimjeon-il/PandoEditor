@@ -41,5 +41,24 @@ void lodAndPolicyAreInKey() {
     auto policy=cache.polygon({"territorial","A"},{"A",1},source,0,ProjectionPreparationPolicy::GlobeReady);
     require(a.positions!=lod.positions&&a.positions!=policy.positions,"LOD/policy partition cache");
 }
+void commonLifecycleContract() {
+    GeometryPacketCache cache;
+    const pandoeditor::ObjectRef a{"territorial","A"};
+    cache.setBudget(0);cache.protectReasons({a},{a});
+    auto retained=cache.polygon(a,{"A",1},box(0));
+    auto snap=cache.resourceCacheSnapshot();
+    require(snap.residentCount==1&&snap.protectedBytes>0,"common protected packet accounting");
+    require(snap.protectedOverBudgetBytes==snap.residentBytes,"zero budget protection");
+    cache.protectReasons({},{a});
+    require(cache.resourceCacheSnapshot().protectedBytes>0,"editing survives selection release");
+    cache.protectReasons({},{});snap=cache.resourceCacheSnapshot();
+    require(snap.residentBytes==0&&snap.evictionCount==1,"released packet evicted");
+    require(retained.positions&&!retained.positions->empty(),"external immutable packet survives trim");
+    cache.setBudget(1000000);cache.polygon(a,{"A",1},box(0));cache.polygon(a,{"A",2},box(1));
+    require(cache.resourceCacheSnapshot().invalidationCount==1,"old version distinct from capacity eviction");
+    const auto epoch=cache.resourceCacheSnapshot().scopeEpoch;
+    cache.clear();require(cache.resourceCacheSnapshot().scopeEpoch>epoch,"clear starts new scope");
 }
-int main(){styleSelectionAndViewReuseGeometry();oneGeometryVersionChangeRebuildsOnlyOne();lodAndPolicyAreInKey();}
+
+}
+int main(){commonLifecycleContract();styleSelectionAndViewReuseGeometry();oneGeometryVersionChangeRebuildsOnlyOne();lodAndPolicyAreInKey();}

@@ -7,6 +7,7 @@
 #include <iterator>
 #include <set>
 #include <stdexcept>
+#include <limits>
 
 struct HydroRuntimeProvider::Dataset {
     explicit Dataset(bool mobile):cache(mobile?48*1024*1024:96*1024*1024){}
@@ -19,9 +20,37 @@ struct HydroRuntimeProvider::Dataset {
     std::vector<pandoeditor::HydroStageGrid> stages;
     mutable std::mutex mutex;
     HydroRuntimeCache cache;
-    std::set<std::uint32_t> active,pinned,selected;
+    std::set<std::uint32_t> active,pinned,selected,displayed;
+    void updateProtection() {
+        cache.protectReasons(displayed,selected,pinned,active.empty()?std::set<std::uint32_t>{}:displayed,active);
+    }
 };
 namespace {
+void addFrameBytes(std::size_t& total,std::size_t count,std::size_t size) {
+    if(size&&count>(std::numeric_limits<std::size_t>::max()-total)/size)throw std::overflow_error("hydro frame bytes overflow");
+    total+=count*size;
+}
+std::size_t frameStorageBytes(const HydroRuntimeFrame& frame) {
+    std::size_t bytes=sizeof(frame);
+    addFrameBytes(bytes,frame.packIds.capacity(),sizeof(std::uint32_t));
+    addFrameBytes(bytes,frame.features.capacity(),sizeof(pandoeditor::HydroPhysicalFeature));
+    const auto polygons=[&](const std::vector<pandoeditor::HydroPolygon>& values) {
+        addFrameBytes(bytes,values.capacity(),sizeof(pandoeditor::HydroPolygon));
+        for(const auto& polygon:values){addFrameBytes(bytes,polygon.capacity(),sizeof(pandoeditor::HydroLine));
+            for(const auto& ring:polygon)addFrameBytes(bytes,ring.capacity(),sizeof(pandoeditor::HydroPoint));}
+    };
+    for(const auto& feature:frame.features) {
+        addFrameBytes(bytes,feature.geometry.lines.capacity(),sizeof(pandoeditor::HydroLine));
+        for(const auto& line:feature.geometry.lines)addFrameBytes(bytes,line.capacity(),sizeof(pandoeditor::HydroPoint));
+        polygons(feature.geometry.polygons);
+        addFrameBytes(bytes,feature.widths.capacity(),sizeof(std::vector<double>));
+        for(const auto& widths:feature.widths)addFrameBytes(bytes,widths.capacity(),sizeof(double));
+    }
+    addFrameBytes(bytes,frame.packet.rivers.capacity(),sizeof(pandoeditor::HydroRiverSegment));
+    addFrameBytes(bytes,frame.packet.lakes.capacity(),sizeof(pandoeditor::HydroLakeShape));
+    for(const auto& lake:frame.packet.lakes)polygons(lake.polygons);
+    return bytes;
+}
 std::size_t decodedBytes(const pandoeditor::HydroPack& pack) {
     std::size_t bytes=sizeof(pack)+pack.features.capacity()*sizeof(pandoeditor::HydroPhysicalFeature);
     for(const auto& feature:pack.features){
@@ -36,8 +65,19 @@ std::size_t decodedBytes(const pandoeditor::HydroPack& pack) {
 }
 }
 HydroRuntimeProvider::HydroRuntimeProvider(QObject* parent):QObject(parent) {
-    connect(&scheduler_,&HydroLoadScheduler::frameAccepted,this,&HydroRuntimeProvider::frameChanged);
-    connect(&scheduler_,&HydroLoadScheduler::loadFailed,this,&HydroRuntimeProvider::loadFailed);
+    connect(&scheduler_,&HydroLoadScheduler::frameAccepted,this,[this] {
+        if(dataset_) {
+            const auto frame=scheduler_.frame();
+            std::lock_guard lock(dataset_->mutex);
+            dataset_->displayed=frame?std::set<std::uint32_t>(frame->packIds.begin(),frame->packIds.end()):std::set<std::uint32_t>{};
+            dataset_->active.clear();dataset_->updateProtection();
+        }
+        emit frameChanged();
+    });
+    connect(&scheduler_,&HydroLoadScheduler::loadFailed,this,[this](const QString& error) {
+        if(dataset_){std::lock_guard lock(dataset_->mutex);dataset_->active.clear();dataset_->updateProtection();}
+        emit loadFailed(error);
+    });
 }
 bool HydroRuntimeProvider::open(const QString& path,const QString& projectInstance,bool mobile,QString& error) {
     error.clear();
@@ -90,6 +130,13 @@ std::function<HydroLogicalCopy()> HydroRuntimeProvider::logicalGeometryJob(quint
     if(!dataset_||!dataset_->index.logicalPacks.count(logicalFid))return {};
     const auto dataset=dataset_;
     return [dataset,logicalFid]{
+        pandoeditor::ResourceRequestToken token;
+        {std::lock_guard lock(dataset->mutex);const auto& ids=dataset->index.logicalPacks.at(logicalFid);
+            token=dataset->cache.beginCopy(std::set<std::uint32_t>(ids.begin(),ids.end()));}
+        struct CopyGuard {
+            std::shared_ptr<Dataset> dataset;pandoeditor::ResourceRequestToken token;bool completed=false;
+            ~CopyGuard(){try{std::lock_guard lock(dataset->mutex);dataset->cache.endCopy(token,!completed);}catch(...){}}
+        } guard{dataset,token};
         QString error;
         const auto detail=readHydroAsset(dataset->manifest.metadataDetail,true,error);
         if(!error.isEmpty())throw std::runtime_error(error.toStdString());
@@ -115,7 +162,8 @@ std::function<HydroLogicalCopy()> HydroRuntimeProvider::logicalGeometryJob(quint
                 fragments.push_back(feature);
             }
         }
-        return HydroLogicalCopy{pandoeditor::mergeHydroLogicalFragments(std::move(fragments)),source,sourceId};
+        auto result=HydroLogicalCopy{pandoeditor::mergeHydroLogicalFragments(std::move(fragments)),source,sourceId};
+        guard.completed=true;return result;
     };
 }
 bool HydroRuntimeProvider::pinLogical(quint32 logicalFid) {
@@ -125,28 +173,31 @@ bool HydroRuntimeProvider::pinLogical(quint32 logicalFid) {
     std::lock_guard lock(dataset_->mutex);
     auto pinned=dataset_->pinned;
     pinned.insert(found->second.begin(),found->second.end());
-    auto protectedPacks=pinned;
-    protectedPacks.insert(dataset_->selected.begin(),dataset_->selected.end());
-    dataset_->cache.protect(dataset_->active,protectedPacks);
-    dataset_->pinned.swap(pinned);
+    dataset_->pinned.swap(pinned);dataset_->updateProtection();
     return true;
 }
 void HydroRuntimeProvider::clearPinned() {
     if(!dataset_)return;
     std::lock_guard lock(dataset_->mutex);
-    dataset_->cache.protect(dataset_->active,dataset_->selected);dataset_->pinned.clear();
+    dataset_->pinned.clear();dataset_->updateProtection();
 }
 void HydroRuntimeProvider::setSelectedLogical(std::optional<quint32> logicalFid) {
+    setSelectedLogicals(logicalFid?std::set<quint32>{*logicalFid}:std::set<quint32>{});
+}
+void HydroRuntimeProvider::setSelectedLogicals(const std::set<quint32>& logicalFids) {
     if(!dataset_)return;
     std::set<std::uint32_t> selected;
-    if(logicalFid)if(const auto found=dataset_->index.logicalPacks.find(*logicalFid);
-       found!=dataset_->index.logicalPacks.end())
+    for(const auto fid:logicalFids)if(const auto found=dataset_->index.logicalPacks.find(fid);found!=dataset_->index.logicalPacks.end())
         selected.insert(found->second.begin(),found->second.end());
-    std::lock_guard lock(dataset_->mutex);
-    dataset_->selected.swap(selected);
-    selected=dataset_->pinned;
-    selected.insert(dataset_->selected.begin(),dataset_->selected.end());
-    dataset_->cache.protect(dataset_->active,selected);
+    std::lock_guard lock(dataset_->mutex);dataset_->selected.swap(selected);dataset_->updateProtection();
+}
+pandoeditor::ResourceCacheSnapshot HydroRuntimeProvider::resourceCacheSnapshot() const {
+    auto snapshot=scheduler_.resourceCacheSnapshot();
+    if(!dataset_)return snapshot;
+    std::lock_guard lock(dataset_->mutex);auto cache=dataset_->cache.resourceCacheSnapshot();
+    cache.scopeEpoch=snapshot.scopeEpoch;cache.pendingCount+=snapshot.pendingCount;
+    cache.pendingEstimatedBytes+=snapshot.pendingEstimatedBytes;cache.pendingUnknownCount+=snapshot.pendingUnknownCount;
+    cache.staleCompletionCount+=snapshot.staleCompletionCount;cache.failureCount+=snapshot.failureCount;return cache;
 }
 std::size_t HydroRuntimeProvider::cachedPackCount() const {
     if(!dataset_)return 0;
@@ -173,10 +224,7 @@ void HydroRuntimeProvider::requestViewport(const pandoeditor::HydroFlatWindow& v
         }
         auto pending=ids;
         std::lock_guard lock(dataset->mutex);
-        auto protectedPacks=dataset->pinned;
-        protectedPacks.insert(dataset->selected.begin(),dataset->selected.end());
-        dataset->cache.protect(pending,protectedPacks);
-        dataset->active.swap(pending);
+        dataset->active.swap(pending);dataset->updateProtection();
     }catch(const std::exception& exception){emit loadFailed(QString::fromUtf8(exception.what()));return;}
     scheduler_.requestViewport([dataset,ids=std::move(ids)]{
         auto next=std::make_shared<HydroRuntimeFrame>();
@@ -202,6 +250,7 @@ void HydroRuntimeProvider::requestViewport(const pandoeditor::HydroFlatWindow& v
             next->packet.lakes.insert(next->packet.lakes.end(),
                 std::make_move_iterator(packet.lakes.begin()),std::make_move_iterator(packet.lakes.end()));
         }
+        next->retainedBytes=frameStorageBytes(*next);
         return std::shared_ptr<const HydroRuntimeFrame>(std::move(next));
     });
 }

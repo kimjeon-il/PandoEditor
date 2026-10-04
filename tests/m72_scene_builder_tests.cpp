@@ -24,6 +24,7 @@ void builderPreservesM5DrawOrderAndCache() {
     auto doc=sample();MapViewState view;GeometryPacketCache cache;MapSceneBuilder builder(cache);
     auto first=builder.buildDocument(doc,3,view,{},{});
     require(first->polygons.size()==3&&first->drawSequence.size()>=3,"country subunit region packets");
+    require(cache.resourceCacheSnapshot().activeBytes>0,"published resident geometry activity is measured");
     require(first->drawSequence.front().order.pass==0,"country fill behind overlays");
     for(std::size_t i=1;i<first->drawSequence.size();++i)
         require(!(first->drawSequence[i].order<first->drawSequence[i-1].order),"M5 order sorted");

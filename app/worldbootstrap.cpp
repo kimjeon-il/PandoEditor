@@ -17,19 +17,73 @@ struct RecoveredStartup {
 };
 }
 
+void EditorController::cacheWorldFrame(std::shared_ptr<const WorldBaseFrame> frame) {
+    if(!frame||!frame->mesh)return;
+    const auto detail=frame->mesh->preview?WorldDetail::Preview:WorldDetail::Canonical;
+    worldResources_.protect(detail,pandoeditor::ResourceProtection::Visible,worldBase_==frame);
+    worldResources_.protect(detail,pandoeditor::ResourceProtection::Fallback,
+                            worldDetailCanonical_==(detail==WorldDetail::Canonical));
+    const auto token=worldResources_.beginRequest(detail);
+    worldResources_.admit(detail,std::move(frame),token);
+}
+void EditorController::setWorldResourceBudget(std::size_t bytes) {
+    updateWorldDetail();worldResources_.setBudget(bytes);emit renderQualityChanged();
+}
 void EditorController::updateWorldDetail() {
     const auto display=camera_.display();
     const bool globe=camera_.mode()==ProjectionMode::Globe;
     auto& canonical=worldDetailCanonical_;
     const bool before=canonical;
-    if(worldFocusDetail_||mapEditorActive_||geometryEdit_||contentSession_||colorSession_||
-       !fieldSessions_.empty()||structureDialogOpen())canonical=true;
+    const bool editing=mapEditorActive_||geometryEdit_||contentSession_||colorSession_||
+        !fieldSessions_.empty()||structureDialogOpen();
+    if(worldFocusDetail_||editing)canonical=true;
     else if(display.zoom<=(globe?1.8:2.2))canonical=false;
     else if(display.zoom>=(globe?2.2:2.8))canonical=true;
-    // Never drop the currently visible mesh while the requested one loads.
-    const auto requested=canonical?worldCanonicalBase_:worldPreviewBase_;
-    if(requested)worldBase_=requested;
+    else if(worldBase_&&worldBase_->mesh)canonical=!worldBase_->mesh->preview;
+    const auto wanted=canonical?WorldDetail::Canonical:WorldDetail::Preview;
+    if(before!=canonical)worldReloadFailed_[static_cast<int>(wanted)]=false;
+    worldResources_.protect(WorldDetail::Canonical,pandoeditor::ResourceProtection::Editing,editing);
+    worldResources_.protect(WorldDetail::Canonical,pandoeditor::ResourceProtection::Selected,worldFocusDetail_);
+    const auto requested=worldResources_.get(wanted);
+    if(requested) {
+        worldResources_.protect(wanted,pandoeditor::ResourceProtection::Visible,true);
+        worldBase_=requested;
+        const auto other=canonical?WorldDetail::Preview:WorldDetail::Canonical;
+        worldResources_.protect(other,pandoeditor::ResourceProtection::Visible,false);
+        worldResources_.protect(other,pandoeditor::ResourceProtection::Fallback,false);
+        worldResources_.protect(wanted,pandoeditor::ResourceProtection::Fallback,false);
+    } else if(worldStatus_=="canonical"&&worldBase_&&worldBase_->documentReady)reloadWorldDetail(wanted);
     if(before!=canonical)emit renderQualityChanged();
+}
+void EditorController::reloadWorldDetail(WorldDetail detail) {
+    const auto slot=static_cast<int>(detail);
+    if(worldReloading_[slot]||worldReloadFailed_[slot]||worldRanges_.empty())return;
+    const auto token=worldResources_.beginRequest(detail);
+    const auto generation=worldGeneration_;const auto instance=project_.instanceId();const auto ranges=worldRanges_;
+    worldReloading_[slot]=true;
+    auto* watcher=new QFutureWatcher<std::shared_ptr<const CountryBaseMesh>>(this);
+    connect(watcher,&QFutureWatcher<std::shared_ptr<const CountryBaseMesh>>::finished,this,
+        [this,watcher,detail,slot,token,generation,instance,ranges] {
+        watcher->deleteLater();
+        if(generation!=worldGeneration_||instance!=project_.instanceId()||ranges!=worldRanges_) {
+            worldResources_.fail(token);return;
+        }
+        worldReloading_[slot]=false;
+        try {
+            auto frame=std::make_shared<WorldBaseFrame>();frame->mesh=watcher->result();frame->ranges=ranges;
+            if(!frame->mesh||frame->mesh->preview!=(detail==WorldDetail::Preview))throw std::runtime_error("Wrong world reload mesh");
+            const bool stillWanted=worldDetailCanonical_==(detail==WorldDetail::Canonical);
+            worldResources_.protect(detail,pandoeditor::ResourceProtection::Fallback,stillWanted);
+            if(!worldResources_.admit(detail,frame,token))return;
+            updateWorldDetail();refreshTypedScene();emit renderQualityChanged();
+        } catch(const std::exception& error) {
+            worldResources_.fail(token);worldReloadFailed_[slot]=true;
+            emit errorOccurred(QStringLiteral("World render resource reload unavailable: ")+QString::fromUtf8(error.what()));
+        }
+    });
+    watcher->setFuture(QtConcurrent::run([detail,root=worldDataRoot_] {
+        return detail==WorldDetail::Canonical?WorldDatasetLoader::canonicalMesh(root):WorldDatasetLoader::preview(root).frame->mesh;
+    }));
 }
 
 void EditorController::startAutosaveRecovery(bool useWorldBase) {
@@ -54,8 +108,8 @@ void EditorController::startAutosaveRecovery(bool useWorldBase) {
         project_=std::move(result->project);
         projection_=std::move(result->projection);
         packetCache_=std::move(result->packets);sceneInstance_=project_.instanceId();
-        worldBase_=std::move(result->base);worldCanonicalBase_=worldBase_;
-        worldPreviewBase_=std::move(result->preview);
+        worldBase_=std::move(result->base);cacheWorldFrame(worldBase_);
+        cacheWorldFrame(std::move(result->preview));
         if(worldBase_)worldRanges_=worldBase_->ranges;
         worldStatus_=worldBase_?QStringLiteral("canonical"):QStringLiteral("disabled");
         camera_.setMetrics(mapCameraMetrics());
@@ -115,7 +169,7 @@ void EditorController::startWorldBootstrap() {
         try {
             auto prepared=watcher->result();
             if(project_.revision()!=0) {cancelWorldBootstrap();return;}
-            worldBase_=std::move(prepared.frame);worldPreviewBase_=worldBase_;
+            worldBase_=std::move(prepared.frame);cacheWorldFrame(worldBase_);
             worldRanges_=worldBase_->ranges;
             projection_=*prepared.projection;
             try {
@@ -158,9 +212,8 @@ void EditorController::startCanonicalWorld(std::uint64_t generation) {
             cancelPreview();cancelStructureMutation();
             project_=std::move(candidate);
             projection_=*prepared.projection;
-            auto preview=std::make_shared<WorldBaseFrame>(*worldPreviewBase_);
-            preview->documentReady=true;worldPreviewBase_=std::move(preview);
-            worldBase_=worldPreviewBase_;
+            auto preview=std::make_shared<WorldBaseFrame>(*worldResources_.get(WorldDetail::Preview));
+            preview->documentReady=true;worldBase_=preview;cacheWorldFrame(std::move(preview));
             worldHydroNotice_=prepared.hydroAvailability;
             filePath_.clear();importedDirty_=false;
             refreshHistoricalCatalog();
@@ -190,7 +243,7 @@ void EditorController::startCanonicalWorldMesh(std::uint64_t generation) {
             if(!frame->mesh||frame->mesh->preview||frame->ranges.size()!=258)
                 throw std::runtime_error("Wrong canonical world mesh");
             // Select against the latest view, including edits committed while loading.
-            worldCanonicalBase_=std::move(frame);
+            cacheWorldFrame(std::move(frame));
             updateWorldDetail();
             worldStatus_=QStringLiteral("canonical");emit worldStatusChanged();
             refreshTypedScene();emit geometryChanged();
@@ -205,7 +258,8 @@ void EditorController::startCanonicalWorldMesh(std::uint64_t generation) {
 
 void EditorController::cancelWorldBootstrap() {
     ++worldGeneration_;
-    worldBase_.reset();worldPreviewBase_.reset();worldCanonicalBase_.reset();worldRanges_.clear();
+    worldBase_.reset();worldResources_.reset();worldRanges_.clear();
+    worldReloading_[0]=worldReloading_[1]=false;worldReloadFailed_[0]=worldReloadFailed_[1]=false;
     worldFocusDetail_=false;worldDetailCanonical_=false;
     terrainTiles_.clear();terrainProvider_.reset();worldHydroNotice_.clear();
     emit terrainChanged();

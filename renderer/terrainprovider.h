@@ -1,5 +1,6 @@
 #pragma once
 #include <pandoeditor/map/mapviewstate.h>
+#include <pandoeditor/map/resourcecachepolicy.h>
 #include <QByteArray>
 #include <QImage>
 #include <QString>
@@ -26,24 +27,31 @@ public:
     bool available() const {return available_;}
     QString error() const {return error_;}
     std::vector<TerrainTileSpec> tilesForView(const MapViewState& view) const;
-    QImage loadTile(const TerrainTileSpec& spec) const;
-    QImage loadTile(int level,int column,int row) const;
+    QImage loadTile(const TerrainTileSpec& spec,bool gray=false) const;
+    QImage loadTile(int level,int column,int row,bool gray=false) const;
     void setCacheBudget(std::size_t bytes);
-    void protectVisible(const std::vector<TerrainTileSpec>& tiles);
+    void protectVisible(const std::vector<TerrainTileSpec>& tiles,bool gray=false);
+    pandoeditor::ResourceCacheSnapshot resourceCacheSnapshot() const;
+    void switchVisibleVariant(bool gray);
     std::size_t cachedBytes() const;
 private:
     struct Level {int id=0,width=0,height=0,columns=0,rows=0,tileSize=0;};
     QString root_,error_;
     std::vector<Level> levels_;
     bool available_=false;
-    struct CachedImage {QImage image;std::size_t bytes=0;std::uint64_t used=0;};
+    using CacheKey=std::pair<QString,bool>;
+    struct CachedImage {QImage image;std::size_t bytes=0;};
     void trim() const;
+    void applyProtection() const;
+    void finishPending(const CacheKey&) const;
     QString tilePath(int level,int column,int row) const;
     std::function<QString(const QString&)> assetResolver_;
     mutable std::mutex mutex_;
-    mutable std::map<QString,CachedImage> images_;
-    mutable std::set<QString> visible_;
-    mutable std::uint64_t clock_=0;
+    mutable std::map<CacheKey,CachedImage> images_;
+    mutable std::set<CacheKey> visible_,fallback_,pending_;
+    mutable bool displayGray_=false;
+    mutable pandoeditor::ResourceCachePolicy<CacheKey> policy_{128ull*1024*1024};
     mutable std::size_t resident_=0;
+    mutable std::uint64_t failedDecodes_=0;
     std::size_t budget_=128ull*1024*1024;
 };

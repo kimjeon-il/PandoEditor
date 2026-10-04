@@ -104,7 +104,8 @@ Rectangle {
             required property var modelData
             anchors.fill: parent
             sceneBridge: editor.mapSceneBridge
-            source: modelData.source
+            terrainBridge: editor.terrainResourceBridge
+            terrainTile: ({level: modelData.level, column: modelData.column, row: modelData.row})
             smooth: true
             west: modelData.west; east: modelData.east
             south: modelData.south; north: modelData.north
@@ -209,6 +210,7 @@ Rectangle {
         sceneBridge: editor.mapSceneBridge
         uploadBudgetBytes: editor.renderQuality.uploadBudgetBytes
         onFrameSampled: function(milliseconds) { editor.recordMapFrame(milliseconds) }
+        onStatsChanged: editor.recordGpuResourceStats(gpuMapRenderer)
         originX: view.originX; originY: view.originY; mapScale: view.mapScale
         mapCosLatitude: editor.hydroProjection.cosLatitude
         mapMinX: editor.hydroProjection.minX

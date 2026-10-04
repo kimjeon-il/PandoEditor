@@ -9,6 +9,7 @@
 #include <QJsonObject>
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 TerrainTileProvider::TerrainTileProvider(const QByteArray& pinned,const QString& root,
                                          std::function<QString(const QString&)> resolver)
@@ -87,48 +88,96 @@ std::vector<TerrainTileSpec> TerrainTileProvider::tilesForView(const MapViewStat
     }
     return result;
 }
-QImage TerrainTileProvider::loadTile(const TerrainTileSpec& spec) const {
+QImage TerrainTileProvider::loadTile(const TerrainTileSpec& spec,bool grayMode) const {
     if(!available_||spec.level<0||spec.level>=int(levels_.size())||
        spec.column<0||spec.column>=levels_[spec.level].columns||
        spec.row<0||spec.row>=levels_[spec.level].rows)return {};
     const auto expected=tilePath(spec.level,spec.column,spec.row);
     if(spec.path!=expected)return {};
     std::lock_guard lock(mutex_);
-    if(auto found=images_.find(expected);found!=images_.end()) {
-        found->second.used=++clock_;return found->second.image;
-    }
+    const CacheKey key{expected,grayMode};
+    policy_.touch(key);
+    if(auto found=images_.find(key);found!=images_.end()){const auto image=found->second.image;finishPending(key);return image;}
     QImageReader reader(expected,"webp");
     auto image=reader.read();
-    if(image.isNull())return {}; // Missing tiles stay explicitly unavailable.
+    if(image.isNull()){if(failedDecodes_!=std::numeric_limits<std::uint64_t>::max())++failedDecodes_;return {};}
+    if(grayMode) {
+        image=image.convertToFormat(QImage::Format_ARGB32);
+        for(int y=0;y<image.height();++y)for(int x=0;x<image.width();++x) {
+            const auto pixel=image.pixel(x,y);const auto gray=qGray(pixel);
+            image.setPixel(x,y,qRgba(gray,gray,gray,qAlpha(pixel)));
+        }
+    }
     const auto bytes=std::size_t(image.sizeInBytes());
-    images_.emplace(expected,CachedImage{image,bytes,++clock_});
-    resident_+=bytes;trim();return image;
+    auto inserted=images_.emplace(key,CachedImage{image,bytes});
+    try {if(!policy_.admit(key,bytes)){images_.erase(inserted.first);return image;}}
+    catch(...){images_.erase(inserted.first);throw;}
+    policy_.setProtection(key,pandoeditor::ResourceProtection::Visible,visible_.count(key)!=0);
+    policy_.setProtection(key,pandoeditor::ResourceProtection::Fallback,fallback_.count(key)!=0);
+    finishPending(key);trim();return image;
 }
-QImage TerrainTileProvider::loadTile(int level,int column,int row) const {
+QImage TerrainTileProvider::loadTile(int level,int column,int row,bool gray) const {
     TerrainTileSpec spec;
     spec.level=level;spec.column=column;spec.row=row;
     spec.path=tilePath(level,column,row);
-    return loadTile(spec);
+    return loadTile(spec,gray);
 }
 void TerrainTileProvider::setCacheBudget(std::size_t bytes) {
-    std::lock_guard lock(mutex_);budget_=bytes;trim();
+    std::lock_guard lock(mutex_);budget_=bytes;policy_.setBudget(bytes);trim();
 }
-void TerrainTileProvider::protectVisible(const std::vector<TerrainTileSpec>& tiles) {
+void TerrainTileProvider::protectVisible(const std::vector<TerrainTileSpec>& tiles,bool gray) {
     std::lock_guard lock(mutex_);
-    visible_.clear();for(const auto& tile:tiles)visible_.insert(tile.path);
-    trim();
+    displayGray_=gray;
+    if(tiles.empty()){visible_.clear();fallback_.clear();pending_.clear();}
+    else {
+        if(pending_.empty())fallback_=visible_;
+        visible_.clear();for(const auto& tile:tiles)visible_.insert({tile.path,gray});
+        pending_=visible_;for(const auto& key:fallback_)if(key.second==gray)pending_.insert(key);
+        for(const auto& image:images_)pending_.erase(image.first);
+        if(pending_.empty())fallback_.clear();
+    }
+    applyProtection();trim();
 }
 std::size_t TerrainTileProvider::cachedBytes() const {
     std::lock_guard lock(mutex_);return resident_;
 }
+pandoeditor::ResourceCacheSnapshot TerrainTileProvider::resourceCacheSnapshot() const {
+    std::lock_guard lock(mutex_);auto snapshot=policy_.snapshot();
+    snapshot.pendingCount=pending_.size();snapshot.pendingUnknownCount=pending_.size();
+    snapshot.failureCount=failedDecodes_;return snapshot;
+}
 void TerrainTileProvider::trim() const {
-    while(resident_>budget_) {
-        auto victim=images_.end();
-        for(auto it=images_.begin();it!=images_.end();++it) {
-            if(visible_.count(it->first))continue;
-            if(victim==images_.end()||it->second.used<victim->second.used)victim=it;
-        }
-        if(victim==images_.end())break;
-        resident_-=victim->second.bytes;images_.erase(victim);
+    for(const auto& key:policy_.trim())images_.erase(key);
+    resident_=policy_.snapshot().residentBytes;
+}
+
+void TerrainTileProvider::applyProtection() const {
+    for(const auto& entry:images_) {
+        policy_.setProtection(entry.first,pandoeditor::ResourceProtection::Visible,visible_.count(entry.first)!=0);
+        policy_.setProtection(entry.first,pandoeditor::ResourceProtection::Fallback,fallback_.count(entry.first)!=0);
     }
+}
+void TerrainTileProvider::finishPending(const CacheKey& key) const {
+    pending_.erase(key);bool changed=false;
+    if(key.second==displayGray_&&fallback_.count(key))changed=fallback_.erase({key.first,!key.second})!=0;
+    if(pending_.empty()&&!fallback_.empty()){fallback_.clear();changed=true;}
+    if(changed){applyProtection();trim();}
+}
+
+void TerrainTileProvider::switchVisibleVariant(bool gray) {
+    std::lock_guard lock(mutex_);
+    std::set<CacheKey> next;for(const auto& key:visible_)next.insert({key.first,gray});
+    if(next==visible_&&displayGray_==gray)return;
+    displayGray_=gray;
+    if(pending_.empty())fallback_=visible_;
+    auto fallback=fallback_;
+    for(const auto& key:fallback_)fallback.insert({key.first,gray});
+    for(auto it=fallback.begin();it!=fallback.end();) {
+        if(it->second!=gray&&images_.count({it->first,gray}))it=fallback.erase(it);else ++it;
+    }
+    fallback_.swap(fallback);visible_.swap(next);pending_=visible_;
+    for(const auto& key:fallback_)if(key.second==gray)pending_.insert(key);
+    for(const auto& image:images_)pending_.erase(image.first);
+    if(pending_.empty())fallback_.clear();
+    applyProtection();trim();
 }

@@ -1,4 +1,5 @@
 add_library(pandoeditor_map_engine STATIC
+    src/resourcecachepolicy.cpp
     src/engine.cpp
     src/mapviewstate.cpp
     src/mapcamera.cpp
@@ -29,6 +30,9 @@ target_link_libraries(pandoeditor_map_engine PUBLIC Pandoeditor::Core)
 set_target_properties(pandoeditor_map_engine PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_TESTING)
+    add_executable(resource_cache_policy_tests ../tests/resource_cache_policy_tests.cpp)
+    target_link_libraries(resource_cache_policy_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME resource_cache_policy_tests COMMAND resource_cache_policy_tests)
     add_executable(map_engine_boundary_tests ../tests/map_engine_boundary_tests.cpp)
     target_link_libraries(map_engine_boundary_tests PRIVATE Pandoeditor::MapEngine)
     add_test(NAME map_engine_boundary_tests COMMAND map_engine_boundary_tests)

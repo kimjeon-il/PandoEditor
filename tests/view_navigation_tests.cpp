@@ -14,6 +14,46 @@
 class ViewNavigationTests final : public QObject {
     Q_OBJECT
 private slots:
+    void unifiedResourceDiagnosticsExposeEveryDomain() {
+        EditorControllerConfig config;config.bootstrapWorld=false;config.autosaveEnabled=false;
+        EditorController editor(config);
+        const auto quality=editor.renderQuality();const auto caches=quality.value("resourceCaches").toMap();
+        for(const auto* domain:{"terrain","hydro","world","label","geometry","qsg"})QVERIFY2(caches.contains(domain),domain);
+        const auto geometry=caches.value("geometry").toMap();
+        QCOMPARE(geometry.value("residentBytes").toULongLong(),quality.value("packetCacheBytes").toULongLong());
+        QVERIFY(!geometry.value("retiredBytesAvailable").toBool());
+        QVERIFY(caches.value("cacheOwnedCpuBytesAvailable").toBool());
+        QVERIFY(geometry.value("activeBytes").toULongLong()>0);
+        const auto labels=caches.value("label").toMap();
+        QVERIFY(labels.contains("anchorFixedBytes")&&labels.contains("anchorDerivedBytes")&&labels.contains("anchorPending"));
+        QVERIFY(labels.value("anchorFixedBytes").toULongLong()>0);
+        QVERIFY(caches.value("terrain").toMap().contains("assetPending"));
+        QVERIFY(caches.value("hydro").toMap().value("frameBytesAvailable").toBool());
+    }
+
+    void worldCacheEvictionReloadDoesNotChangeDocument() {
+        EditorControllerConfig config;config.bootstrapWorld=true;config.autosaveEnabled=false;
+        config.worldDataRoot=QDir(QFileInfo(QString::fromUtf8(__FILE__)).absolutePath()).filePath("../assets/world");
+        EditorController editor(config);QVERIFY(editor.resizeMapCamera(800,600));
+        QTRY_COMPARE_WITH_TIMEOUT(editor.worldStatus(),QString("canonical"),30000);
+        QVERIFY(editor.fitMapCamera());
+        const auto bytes=editor.documentBytes();const auto instance=editor.projectInstanceId();const auto undo=editor.canUndo();
+        editor.setWorldResourceBudget(0);
+        auto* bridge=qobject_cast<MapSceneBridge*>(editor.mapSceneBridge());QVERIFY(bridge);
+        auto before=bridge->sceneSnapshot()->worldBase;QVERIFY(before&&before->mesh->preview);
+        QVERIFY(editor.zoomMapCameraAt(3.,400,300));
+        QCOMPARE(bridge->sceneSnapshot()->worldBase,before);
+        QVERIFY(editor.zoomMapCameraAt(2./editor.mapViewState().value("zoom").toDouble(),400,300));
+        QTRY_COMPARE_WITH_TIMEOUT(QThreadPool::globalInstance()->activeThreadCount(),0,30000);
+        QCoreApplication::processEvents();
+        QVERIFY(bridge->sceneSnapshot()->worldBase->mesh->preview); // Band keeps the actual fallback, not an unmet request.
+        QVERIFY(editor.zoomMapCameraAt(3./editor.mapViewState().value("zoom").toDouble(),400,300));
+        QTRY_VERIFY_WITH_TIMEOUT(bridge->sceneSnapshot()->worldBase&&!bridge->sceneSnapshot()->worldBase->mesh->preview,30000);
+        QVERIFY(editor.fitMapCamera());
+        QTRY_VERIFY_WITH_TIMEOUT(bridge->sceneSnapshot()->worldBase&&bridge->sceneSnapshot()->worldBase->mesh->preview,30000);
+        QCOMPARE(editor.documentBytes(),bytes);QCOMPARE(editor.projectInstanceId(),instance);QCOMPARE(editor.canUndo(),undo);
+    }
+
     void colorEditingForcesDetailUntilCancelled() {
         EditorController editor;QVERIFY(editor.resizeMapCamera(800,600));editor.selectCountry("DEU");
         QVERIFY(editor.beginColorEdit());

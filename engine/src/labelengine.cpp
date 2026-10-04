@@ -88,6 +88,7 @@ void MapLabelEngine::setSources(std::vector<MapLabelSource> sources,
     stats_.sourceCount=sources_.size();
     stats_.cellCount=cells_.size();
     stats_.placements=0;
+    accountSources();accountWorkingSet();
 }
 
 std::vector<int> MapLabelEngine::visibleCells(
@@ -253,6 +254,7 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
         throw std::overflow_error("label layout revision overflow");
     ++stats_.layoutRevision;
     stats_.placements=placements_.size();
+    accountWorkingSet();
     return placements_;
 }
 
@@ -270,10 +272,61 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::reproject(const MapViewSta
         placements_.push_back(std::move(placement));
     }
     stats_.placements=placements_.size();
+    accountWorkingSet();
     return placements_;
 }
 
 void MapLabelEngine::clear() {
-    sources_.clear();sourceByRef_.clear();cells_.clear();pinned_.clear();accepted_.clear();placements_.clear();placedRefs_.clear();
-    stats_={};
+    decltype(sources_){}.swap(sources_);sourceByRef_.clear();cells_.clear();
+    decltype(pinned_){}.swap(pinned_);decltype(accepted_){}.swap(accepted_);
+    decltype(placements_){}.swap(placements_);placedRefs_.clear();
+    stats_={};sourceBytes_=0;resourcePolicy_.resetScope();
+}
+
+namespace {
+void labelBytesAdd(std::size_t& total,std::size_t count,std::size_t size=1) {
+    if(size&&count>(std::numeric_limits<std::size_t>::max()-total)/size)
+        throw std::overflow_error("label resource size overflow");
+    total+=count*size;
+}
+std::size_t labelStringStorage(const std::string& text) {
+    // Count heap backing only; SSO lies inside an already-counted object.
+    const auto address=reinterpret_cast<std::uintptr_t>(text.data());
+    const auto object=reinterpret_cast<std::uintptr_t>(&text);
+    return address>=object&&address<object+sizeof(text)?0:text.capacity()+1;
+}
+}
+void MapLabelEngine::accountSources() {
+    std::size_t bytes=0;labelBytesAdd(bytes,sources_.capacity(),sizeof(MapLabelSource));
+    for(const auto& source:sources_) {
+        labelBytesAdd(bytes,labelStringStorage(source.text));
+        labelBytesAdd(bytes,labelStringStorage(source.collisionGroup));
+        labelBytesAdd(bytes,labelStringStorage(source.ref.domain));
+        labelBytesAdd(bytes,labelStringStorage(source.ref.id));
+    }
+    // Container-node allocator bookkeeping is intentionally outside payload accounting.
+    labelBytesAdd(bytes,sourceByRef_.size(),sizeof(decltype(sourceByRef_)::value_type));
+    for(const auto& item:sourceByRef_){labelBytesAdd(bytes,labelStringStorage(item.first.domain));labelBytesAdd(bytes,labelStringStorage(item.first.id));}
+    labelBytesAdd(bytes,cells_.size(),sizeof(decltype(cells_)::value_type));
+    for(const auto& cell:cells_)labelBytesAdd(bytes,cell.second.capacity(),sizeof(std::size_t));
+    labelBytesAdd(bytes,pinned_.capacity(),sizeof(std::size_t));sourceBytes_=bytes;
+}
+void MapLabelEngine::accountWorkingSet() {
+    std::size_t bytes=sourceBytes_;
+    labelBytesAdd(bytes,accepted_.capacity(),sizeof(std::size_t));
+    labelBytesAdd(bytes,placements_.capacity(),sizeof(MapLabelPlacement));
+    for(const auto& placement:placements_) {
+        labelBytesAdd(bytes,labelStringStorage(placement.text));
+        labelBytesAdd(bytes,labelStringStorage(placement.ref.domain));
+        labelBytesAdd(bytes,labelStringStorage(placement.ref.id));
+    }
+    labelBytesAdd(bytes,placedRefs_.size(),sizeof(pandoeditor::ObjectRef));
+    for(const auto& ref:placedRefs_){labelBytesAdd(bytes,labelStringStorage(ref.domain));labelBytesAdd(bytes,labelStringStorage(ref.id));}
+    resourcePolicy_.setBudget(resourceBudget_.value_or(bytes));
+    if(!resourcePolicy_.admit(0,bytes))throw std::overflow_error("label working set overflow");
+    resourcePolicy_.setProtection(0,pandoeditor::ResourceProtection::Visible,true);
+    resourcePolicy_.trim(); // Protected active snapshot never loses individual sources.
+}
+void MapLabelEngine::setResourceBudget(std::size_t bytes) {
+    resourceBudget_=bytes;resourcePolicy_.setBudget(bytes);resourcePolicy_.trim();
 }
