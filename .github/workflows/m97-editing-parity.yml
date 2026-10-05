@@ -2,6 +2,8 @@ name: M9.7 editing parity validation
 on:
   push:
     branches: [codex/m97-web-editing-parity]
+    # Temporary source-only recovery filter; remove before next product checkpoint.
+    paths-ignore: ['.github/workflows/m975-source-recovery.yml', '.github/workflows/m97-editing-parity.yml']
   workflow_dispatch:
 permissions:
   contents: read
