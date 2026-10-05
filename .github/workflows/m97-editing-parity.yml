@@ -49,7 +49,8 @@ jobs:
       - name: Preserve exact compiled split probes
         run: |
           mkdir -p evidence/split-runtime
-          cp build/app/m973_split_controller_probe build/app/m973_cut_kernel_probe evidence/split-runtime/
+          df -h .
+          ln build/app/m973_split_controller_probe build/app/m973_cut_kernel_probe evidence/split-runtime/
           printf '%s\n' "$GITHUB_SHA" > evidence/split-runtime/COMMIT
           (cd evidence/split-runtime && sha256sum m973_split_controller_probe m973_cut_kernel_probe > SHA256SUMS)
       - uses: actions/upload-artifact@v4
@@ -60,7 +61,8 @@ jobs:
       - name: Preserve exact compiled M9.7.4 probes
         run: |
           mkdir -p evidence/m974-runtime
-          cp build/app/m974_snap_probe build/app/m974_snap_provider_probe build/app/m974_boundary_probe build/app/m974_snap_order_tests evidence/m974-runtime/
+          df -h .
+          ln build/app/m974_snap_probe build/app/m974_snap_provider_probe build/app/m974_boundary_probe build/app/m974_snap_order_tests evidence/m974-runtime/
           printf '%s\n' "$GITHUB_SHA" > evidence/m974-runtime/COMMIT
           (cd evidence/m974-runtime && sha256sum m974_snap_probe m974_snap_provider_probe m974_boundary_probe m974_snap_order_tests > SHA256SUMS)
       - uses: actions/upload-artifact@v4
@@ -110,7 +112,8 @@ jobs:
       - name: Preserve exact compiled controller probe for browser follow-on
         run: |
           mkdir -p evidence/river-controller-runtime
-          cp build/app/m972_river_controller_probe evidence/river-controller-runtime/
+          df -h .
+          ln build/app/m972_river_controller_probe evidence/river-controller-runtime/
           printf '%s\n' "$GITHUB_SHA" > evidence/river-controller-runtime/COMMIT
           (cd evidence/river-controller-runtime && sha256sum m972_river_controller_probe > SHA256SUMS)
       - uses: actions/upload-artifact@v4
