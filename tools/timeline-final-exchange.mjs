@@ -57,7 +57,10 @@ export async function runFinalExchange({ probe, webRoot, manifestPath, evidenceD
   }
   const appRoot = fileURLToPath(new URL('../', import.meta.url));
   const appSha = git(appRoot, 'rev-parse', 'HEAD').toString().trim();
-  if (process.env.PANDOEDITOR_EXPECT_APP_SHA) assert.equal(appSha, process.env.PANDOEDITOR_EXPECT_APP_SHA);
+  if (process.env.PANDOEDITOR_EXPECT_APP_SHA) {
+    assert.equal(appSha, process.env.PANDOEDITOR_EXPECT_APP_SHA);
+    assert.equal(git(appRoot, 'status', '--porcelain').toString().trim(), '', 'fixed app checkout changed');
+  }
   const contract = manifest.files.find(row => row.platform === 'web' && row.path === 'docs/timeline-contract.md');
   assert.equal(hash(git(appRoot, 'show', `${appSha}:docs/timeline-contract.md`)), contract.gitBlobSha256);
   fs.mkdirSync(path.resolve(evidenceDir), { recursive: true });
@@ -69,6 +72,9 @@ export async function runFinalExchange({ probe, webRoot, manifestPath, evidenceD
   const { productionGeoPackage } = await webImport('tests/helpers/production-geopackage.mjs');
   const fixtures = path.join(webRoot, 'tests/fixtures/timeline-exchange');
   const cases = [], processes = [];
+  // App output uses the existing encodeWeb JSON boundary. Its native GPKG
+  // carries native project_state and is not advertised as a web-format export.
+  // The gpkg fixture routes exercise actual web GPKG reads by both platforms.
   let stage;
   function execute(args, name) {
     const started = Date.now(), result = spawnSync(probe, args, { encoding: 'utf8', timeout: 120000, maxBuffer: 16 * 1024 * 1024 });
@@ -96,7 +102,13 @@ export async function runFinalExchange({ probe, webRoot, manifestPath, evidenceD
     stage = 'app.read';
     const dir = path.join(run, name);
     const result = execute(['--trace-file', kind, input, dir], name);
+    const statusPath = path.join(dir, 'trace-status.json');
+    if (fs.existsSync(statusPath)) stage = readJson(statusPath).stage;
+    for (const file of ['read.web.json', 'reopened.web.json', 'package-reopened.web.json', 'export.web.json'])
+      if (fs.existsSync(path.join(dir, file))) check(readJson(path.join(dir, file)), expected, 'app.'+file);
+    if (fs.existsSync(statusPath)) stage = readJson(statusPath).stage;
     assert.equal(result.status, 0, `${name}: ${result.stderr}`);
+    assert.equal(readJson(statusPath).complete, true, 'native trace ended early');
     for (const file of ['read.web.json', 'reopened.web.json', 'package-reopened.web.json', 'export.web.json'])
       check(readJson(path.join(dir, file)), expected, 'app.'+file);
     assert.ok(fs.existsSync(path.join(dir, 'saved.native.json')), 'native save missing');
@@ -187,6 +199,8 @@ export async function runFinalExchange({ probe, webRoot, manifestPath, evidenceD
   }
   assert.equal(cases.length, 12+negatives.length, 'mandatory cases omitted');
   const report = { WEB_CANDIDATE_SHA: WEB_SHA, APP_CANDIDATE_SHA: appSha,
+    exchangeBoundary: { appToWeb: 'production encodeWeb JSON', webToApp: 'JSON or web-produced GeoPackage',
+      nativeGeoPackage: 'native storage/reopen only; not a common web export' },
     appWorkingTree: git(appRoot, 'status', '--porcelain').toString(), MANIFEST_SHA256: MANIFEST_SHA,
     CONTRACT_HASHES: { web: contract.gitBlobSha256, app: contract.gitBlobSha256 }, consumed,
     probeSha256: hash(fs.readFileSync(probe)), processes, cases,
@@ -198,6 +212,9 @@ export async function runFinalExchange({ probe, webRoot, manifestPath, evidenceD
   saveJson('results.json', report);
   assert.equal(git(webRoot, 'rev-parse', 'HEAD').toString().trim(), WEB_SHA);
   assert.equal(git(webRoot, 'status', '--porcelain', '--untracked-files=no').toString().trim(), '', 'web changed during run');
+  assert.equal(git(appRoot, 'rev-parse', 'HEAD').toString().trim(), appSha, 'app commit changed during run');
+  if (process.env.PANDOEDITOR_EXPECT_APP_SHA)
+    assert.equal(git(appRoot, 'status', '--porcelain').toString().trim(), '', 'app changed during run');
   const fail = cases.filter(row => !row.pass).length;
   console.log(`${cases.length-fail}/${cases.length} final exchange cases passed, ${fail} failed, 0 skipped; ${run}`);
   if (fail) process.exitCode = 1;

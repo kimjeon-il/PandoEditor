@@ -171,18 +171,18 @@ V geometryValue(const Geometry& g) {
     else require(false,"INVALID_GEOMETRY: unsupported GeoJSON kind");
     return object({{"type",V::str(g.type)},{"coordinates",c}});
 }
-Validity recordInterval(const V& v) {
-    // Preserve endpoint spelling/precision. The owning record/content validator
-    // parses dates; timeline normalization also supplies TIMELINE_INTERVAL.
-    const auto endpoint=[](const V& value)->std::optional<std::string>{if(value.kind==V::Null)return {};return str(value);};
+Validity recordInterval(const V& v,bool timelineOwned=false) {
+    // Preserve endpoint spelling/precision. Timeline normalization owns date
+    // validation and TIMELINE_INTERVAL; other content retains its wire checks.
+    const auto endpoint=[timelineOwned](const V& value)->std::optional<std::string>{if(value.kind==V::Null)return {};const auto text=str(value);if(!timelineOwned)(void)parseTemporal(text);return text;};
     return {endpoint(field(v,"validFrom")),endpoint(field(v,"validTo"))};
 }
 TimelineRecords timelineRecords(const V& value,ProjectDocument& d) {
     TimelineRecords result;result.schemaVersion=integer(field(value,"schemaVersion"));
     unknown(d,9,value,"/timelineRecords",{"schemaVersion","lifetimes","geometryBindings","parentRelations"});
-    for(const auto& row:array(field(value,"lifetimes"))){unknown(d,9,row,"/timelineRecords/lifetimes",{"id","entityId","validFrom","validTo"});result.lifetimes.push_back({str(field(row,"id")),str(field(row,"entityId")),recordInterval(row)});}
-    for(const auto& row:array(field(value,"geometryBindings"))){unknown(d,9,row,"/timelineRecords/geometryBindings",{"id","entityId","validFrom","validTo","geometryRef"});result.geometryBindings.push_back({str(field(row,"id")),str(field(row,"entityId")),recordInterval(row),geometryRef(field(row,"geometryRef"),d,"/timelineRecords/geometryBindings/geometryRef")});}
-    for(const auto& row:array(field(value,"parentRelations"))){unknown(d,9,row,"/timelineRecords/parentRelations",{"id","entityId","validFrom","validTo","parentId","coverageMode"});result.parentRelations.push_back({str(field(row,"id")),str(field(row,"entityId")),recordInterval(row),str(field(row,"parentId")),str(field(row,"coverageMode"))});}
+    for(const auto& row:array(field(value,"lifetimes"))){unknown(d,9,row,"/timelineRecords/lifetimes",{"id","entityId","validFrom","validTo"});result.lifetimes.push_back({str(field(row,"id")),str(field(row,"entityId")),recordInterval(row,true)});}
+    for(const auto& row:array(field(value,"geometryBindings"))){unknown(d,9,row,"/timelineRecords/geometryBindings",{"id","entityId","validFrom","validTo","geometryRef"});result.geometryBindings.push_back({str(field(row,"id")),str(field(row,"entityId")),recordInterval(row,true),geometryRef(field(row,"geometryRef"),d,"/timelineRecords/geometryBindings/geometryRef")});}
+    for(const auto& row:array(field(value,"parentRelations"))){unknown(d,9,row,"/timelineRecords/parentRelations",{"id","entityId","validFrom","validTo","parentId","coverageMode"});result.parentRelations.push_back({str(field(row,"id")),str(field(row,"entityId")),recordInterval(row,true),str(field(row,"parentId")),str(field(row,"coverageMode"))});}
     return result;
 }
 V timelineRecordsValue(const TimelineRecords& records) {

@@ -65,9 +65,14 @@ static int intervalErrors() {
 // Expose each production file boundary for the independent fixed-web checker.
 // No test normalization or alternate codec is used to create these files.
 static int traceFile(const char* kind,const char* inputPath,const char* outputPath) {
+    const auto directory=QString::fromLocal8Bit(outputPath);QString phase="app.read";bool ownsDirectory=false;
+    const auto status=[&](bool complete,const QString& error={}) {
+        if(!ownsDirectory)return;QFile file(QDir(directory).filePath("trace-status.json"));
+        if(file.open(QIODevice::WriteOnly))file.write(QJsonDocument(QJsonObject{{"stage",phase},{"complete",complete},{"error",error}}).toJson());
+    };
     try {
-        const auto directory=QString::fromLocal8Bit(outputPath);
         if(QDir(directory).exists()||!QDir().mkpath(directory))throw std::runtime_error("trace directory must be fresh");
+        ownsDirectory=true;
         const auto read=[](const QString& path){QFile file(path);if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("trace read");return file.readAll();};
         const auto write=[&](const char* name,const QByteArray& bytes){QFile file(QDir(directory).filePath(name));if(!file.open(QIODevice::WriteOnly)||file.write(bytes)!=bytes.size())throw std::runtime_error("trace write");};
         const auto bytes=read(QString::fromLocal8Bit(inputPath));
@@ -76,23 +81,40 @@ static int traceFile(const char* kind,const char* inputPath,const char* outputPa
         else if(std::string(kind)=="native")project.replace(projectcodec::decode(bytes));
         else if(std::string(kind)=="gpkg")project.replace(projectcodec::decode(pandoeditor::readProjectGeoPackage(QString::fromLocal8Bit(inputPath))));
         else throw std::runtime_error("trace kind must be web/native/gpkg");
+        phase="app.activation";
         try{pandoeditor::requireStaticTimeline(project.document());write("activation.json","{\"result\":\"OK\"}");}
         catch(const pandoeditor::TimelineError& error){if(error.code!="TIMELINE_ACTIVATION")throw;write("activation.json","{\"result\":\"TIMELINE_ACTIVATION\"}");}
-        write("read.web.json",projectcodec::encodeWeb(project.snapshot()));
-        write("saved.native.json",projectcodec::encode(project.snapshot()));
+        phase="app.read.export";write("read.web.json",projectcodec::encodeWeb(project.snapshot()));
+        phase="app.save.native-json";write("saved.native.json",projectcodec::encode(project.snapshot()));
+        phase="app.reopen.native-json";
         pandoeditor::Project reopened;reopened.replace(projectcodec::decode(read(QDir(directory).filePath("saved.native.json"))));
-        write("reopened.web.json",projectcodec::encodeWeb(reopened.snapshot()));
-        write("saved.native.gpkg",pandoeditor::exportProjectGeoPackage(project));
+        phase="app.reopened.export";write("reopened.web.json",projectcodec::encodeWeb(reopened.snapshot()));
+        phase="app.save.native-gpkg";write("saved.native.gpkg",pandoeditor::exportProjectGeoPackage(project));
+        phase="app.reopen.native-gpkg";
         pandoeditor::Project package;package.replace(projectcodec::decode(pandoeditor::readProjectGeoPackage(QDir(directory).filePath("saved.native.gpkg"))));
-        write("package-reopened.web.json",projectcodec::encodeWeb(package.snapshot()));
-        write("export.web.json",projectcodec::encodeWeb(reopened.snapshot()));
+        phase="app.package-reopened.export";write("package-reopened.web.json",projectcodec::encodeWeb(package.snapshot()));
+        phase="app.export";write("export.web.json",projectcodec::encodeWeb(reopened.snapshot()));status(true);
         std::cout<<"1 production file read/save/reopen/export trace completed\n";return 0;
-    }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
+    }catch(const std::exception& error){status(false,QString::fromUtf8(error.what()));std::cerr<<error.what()<<'\n';return 1;}
+}
+
+static int contentIntervalErrors() {
+    QFile file(QFileInfo(QStringLiteral(PANDOEDITOR_TIMELINE_PROJECT_FIXTURES)).dir().filePath("timeline-exchange/content.json"));
+    if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("content interval fixture read");
+    const auto seed=QJsonDocument::fromJson(file.readAll()).object();int processed=0,failures=0;
+    for(const auto* slot:{"distributionLayers","distributionEntries"})for(const auto* endpoint:{"validFrom","validTo"})for(const auto* value:{"","  "}) {
+        auto input=seed;auto rows=input[slot].toArray();auto row=rows.first().toObject();row[endpoint]=value;rows[0]=row;input[slot]=rows;++processed;
+        try{(void)projectcodec::decodeWeb(QJsonDocument(input).toJson());++failures;std::cerr<<"FAIL blank content endpoint accepted\n";}
+        catch(const std::invalid_argument& error){if(std::string(error.what()).find("INVALID_DATE")!=0){++failures;std::cerr<<"FAIL content date category "<<error.what()<<'\n';}}
+    }
+    if(processed!=8)throw std::runtime_error("missing content interval cases");
+    std::cout<<processed<<" existing content interval wire cases, "<<failures<<" failures, 0 skipped\n";return failures;
 }
 
 int main(int argc,char** argv) {
     QCoreApplication application(argc,argv);
     if(argc==2&&std::string(argv[1])=="--interval-errors")return intervalErrors()?1:0;
+    if(argc==2&&std::string(argv[1])=="--content-interval-errors")return contentIntervalErrors()?1:0;
     if(argc==5&&std::string(argv[1])=="--trace-file")return traceFile(argv[2],argv[3],argv[4]);
     if(argc==3) {
         try {
@@ -164,6 +186,7 @@ int main(int argc,char** argv) {
         if(!refused){++failures;std::cerr<<"FAIL web native flag default loss guard\n";}
     }
     failures+=intervalErrors();
+    failures+=contentIntervalErrors();
     std::cout << cases.size() << " storage cases + 9 numeric boundary cases + 2 flag default boundary cases, " << failures << " failures, 0 skipped\n";
     return failures?1:0;
 }
