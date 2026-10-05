@@ -51,7 +51,7 @@ export function verifyCaptureSuite(suite){
 }
 export function verifyBrowserReport(suite,report){
  verifyCaptureSuite(suite);assert.equal(report.schema,'pando-m974-actual-chromium-workflows');assert.equal(report.version,1);assert.equal(report.state,'complete');assert.deepEqual(report.identity,suite.identity);
- assert.equal(report.runtime.playwright,runtimePin.playwright);assert.equal(report.runtime.browserVersion,runtimePin.chromium);assert.equal(report.runtime.chromiumRevision,runtimePin.revision);assert.equal(report.runtime.cdp.jsVersion,runtimePin.v8);assert.equal(report.runtime.cdp.product,'Chrome/'+runtimePin.chromium);
+ assert.equal(report.runtime.playwright,runtimePin.playwright);assert.equal(report.runtime.browserVersion,runtimePin.chromium);assert.equal(report.runtime.chromiumRevision,runtimePin.revision);assert.equal(report.runtime.cdp.jsVersion,runtimePin.v8);assert.ok(['Chrome/','HeadlessChrome/'].some(prefix=>report.runtime.cdp.product===prefix+runtimePin.chromium),'exact pinned Chromium product/version');
  assert.deepEqual(report.math.map(row=>({id:row.id,coordinate:row.coordinate})),suite.mathInputs,'complete numeric diagnostics');
  for(const row of report.math){
   assert.ok(Number.isFinite(row.hypot));assert.ok(row.hypot>=Math.max(...row.coordinate.map(Math.abs))&&row.hypot<=row.coordinate.reduce((sum,v)=>sum+Math.abs(v),0),'hypot must correspond to its nonzero input');
