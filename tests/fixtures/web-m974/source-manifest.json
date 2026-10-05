@@ -1,0 +1,807 @@
+{
+  "schema": "pando-m974-production-source-pin",
+  "version": 1,
+  "repository": "kimjeon-il/Pando",
+  "baseBehavioralCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+  "behavioralCommit": "ad78780f79f4f38fcd7c2a3c2fb1fe0ba8e37c32",
+  "sourceChain": [
+    {
+      "behavioralCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+      "tree": "55afeccb225746ec387bcb32d019e44252baaef3"
+    },
+    {
+      "behavioralCommit": "12cd8c8ec47c83cfb8c650e8f44c81cdfac10043",
+      "baseBehavioralCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+      "tree": "2ec7e0badab8804de7a5fc457a4e5e6f8ba3732d"
+    },
+    {
+      "behavioralCommit": "6c3f930b8573fa09991885b661879ea36725472e",
+      "baseBehavioralCommit": "12cd8c8ec47c83cfb8c650e8f44c81cdfac10043",
+      "tree": "a7ad5e8f79f0315228d5fe7614de3653666f88dc"
+    },
+    {
+      "behavioralCommit": "07d3e2053c71573e11c5cf89151f5f6686038511",
+      "baseBehavioralCommit": "6c3f930b8573fa09991885b661879ea36725472e",
+      "tree": "af43e2aaa30b870b6858283fedbadf2f0ee24bf5"
+    },
+    {
+      "behavioralCommit": "ad78780f79f4f38fcd7c2a3c2fb1fe0ba8e37c32",
+      "baseBehavioralCommit": "07d3e2053c71573e11c5cf89151f5f6686038511",
+      "tree": "e35fc94eb008249ba8ac6763132c72d218c649f2"
+    }
+  ],
+  "entrypoints": [
+    "territorial-units",
+    "territorial-entity-store",
+    "territorial-entity-repository",
+    "territorial-service",
+    "project-command-pipeline",
+    "project-state",
+    "history-service",
+    "app-project-snapshots",
+    "distribution-model",
+    "app-hydro-settings",
+    "app-layer-list",
+    "generic-feature-service",
+    "layer-presentation",
+    "project-invariants",
+    "geometry-preview",
+    "app-geometry-preview",
+    "app-territorial-drafts",
+    "app-object-presentation",
+    "map-object-categories",
+    "app-object-metadata",
+    "builtin-subunits",
+    "map-edit-worker-client",
+    "geometry-metrics",
+    "app-pointer-targets",
+    "app-cut-geometry",
+    "geometry-snap",
+    "geometry-segment-index",
+    "app-country-modes",
+    "app-country-validation",
+    "territorial-interaction-policy",
+    "editing-domain",
+    "selection-domain",
+    "geometry-versions",
+    "app-object-commands",
+    "selection-ui-controller",
+    "object-selection-controller",
+    "boundary-topology"
+  ],
+  "sourceArchive": {
+    "file": "production-sources.json.gz",
+    "decompressedSha256": "b8c8b492fd6b7a8819cce1575516955f37fe474ce6370084da6108259f21c8b5",
+    "decompressedBytes": 1226590
+  },
+  "sources": [
+    {
+      "path": "assets/js/modules/annex-geometry.js",
+      "blob": "bc69c505638599e2063fe6f99c1ed04deff5b1ee",
+      "baseBlob": "bc69c505638599e2063fe6f99c1ed04deff5b1ee",
+      "sha256": "bd2c035a475b51119e226b049664d86c007780c206035a7fe999eca036464e32",
+      "bytes": 1728
+    },
+    {
+      "path": "assets/js/modules/app-country-commits.js",
+      "blob": "f136f2dfe3b221c65b759c0e988f846fe938cf0e",
+      "baseBlob": "a3a9b3a763c9850cb895a109c7daa9deb239e518",
+      "sha256": "e4d7a8c2281cb7d3c8a9eb11925f5eadd1601ed1638e73de2bd21f239c3fc4f5",
+      "bytes": 35210
+    },
+    {
+      "path": "assets/js/modules/app-country-modes.js",
+      "blob": "8d93b3edb6b3d488daba9ed3e05af0e78f7ee088",
+      "baseBlob": "8d93b3edb6b3d488daba9ed3e05af0e78f7ee088",
+      "sha256": "0efed34a819721fbbf8c17e0732f15dacc9a26af4e66044fc373bf572011f8a5",
+      "bytes": 33840
+    },
+    {
+      "path": "assets/js/modules/app-country-validation.js",
+      "blob": "161391f4f4166632f258eb78346b517afa56f6bd",
+      "baseBlob": "161391f4f4166632f258eb78346b517afa56f6bd",
+      "sha256": "f1198177b310e835b0ac7febffa38ec2e3711d9091d4f5973deeea00ae40d513",
+      "bytes": 4058
+    },
+    {
+      "path": "assets/js/modules/app-cut-geometry.js",
+      "blob": "a37158d4e4e44532fdcaf6bd69c4b03511d87112",
+      "baseBlob": "d325cb72580b8be8ba7f2af0bd6aa4bc6e9a4943",
+      "sha256": "03bb2f37e997324ab41b65a6c838a621267959059b3021c86cf639a8e62248d4",
+      "bytes": 21359
+    },
+    {
+      "path": "assets/js/modules/app-domain-assembly.js",
+      "blob": "4d2478af011b2b66cc4919576f83cc57d74e85de",
+      "baseBlob": "4d2478af011b2b66cc4919576f83cc57d74e85de",
+      "sha256": "ae4f119cc41cb3e20b2ff60a9f67fe32c8c6fad21d3f6d7d48ad3396b3899679",
+      "bytes": 76674
+    },
+    {
+      "path": "assets/js/modules/app-geometry-preview.js",
+      "blob": "9acdb996768a5c55e56029dd904cad8efbfa5295",
+      "baseBlob": "9acdb996768a5c55e56029dd904cad8efbfa5295",
+      "sha256": "bf845128682142b13fdf9ca59706a6fede72071688b546339a3bb93079ee1ba9",
+      "bytes": 24691
+    },
+    {
+      "path": "assets/js/modules/app-hydro-settings.js",
+      "blob": "5903449960a1fa585488dbc412f065f5e72327bb",
+      "baseBlob": "5903449960a1fa585488dbc412f065f5e72327bb",
+      "sha256": "9d149092ab5f67315872c1d0698b4761929d9e5c96ff5c777aabd8c3d666d3b7",
+      "bytes": 9667
+    },
+    {
+      "path": "assets/js/modules/app-land-relations.js",
+      "blob": "10a1955d239d9fded0aab0ad1f8655086a8aef40",
+      "baseBlob": "6a98266dd4edb1d177fb6f1388b0821092f39ec5",
+      "sha256": "b332368e643d4c5767df0516f13864e4747bf92f80cdb4333a86145ff0f4046b",
+      "bytes": 7890
+    },
+    {
+      "path": "assets/js/modules/app-layer-list.js",
+      "blob": "343a74f132718cf5a44c81f873fa8400fd602aab",
+      "baseBlob": "343a74f132718cf5a44c81f873fa8400fd602aab",
+      "sha256": "27a08e1f51858aafd8b42b9f25af2540a5d6368c3698ceac79d808f095052140",
+      "bytes": 13776
+    },
+    {
+      "path": "assets/js/modules/app-object-commands.js",
+      "blob": "626e5b17bcbe9fb4a64454c6fe6ed16398297293",
+      "baseBlob": "626e5b17bcbe9fb4a64454c6fe6ed16398297293",
+      "sha256": "f49f2b14b2dd6d7a68abefc2716cac1ceae134858c3ffad356d205d418b40cbb",
+      "bytes": 40250
+    },
+    {
+      "path": "assets/js/modules/app-object-metadata.js",
+      "blob": "d517da45c8d6ce0b9d9c8c5fe000539c4e5cc457",
+      "baseBlob": "d517da45c8d6ce0b9d9c8c5fe000539c4e5cc457",
+      "sha256": "f25e2d62b15d95e232a803c4edc7b3c741096d53ceca632a56f98d069c580e1f",
+      "bytes": 6247
+    },
+    {
+      "path": "assets/js/modules/app-object-presentation.js",
+      "blob": "5204cd17fd2f2d61826e325ae017c11172964efb",
+      "baseBlob": "5204cd17fd2f2d61826e325ae017c11172964efb",
+      "sha256": "8de241034688e518b7d66ee63eccbc4840c88ceac6bf7ad7e8f716242d07c43e",
+      "bytes": 9139
+    },
+    {
+      "path": "assets/js/modules/app-pointer-targets.js",
+      "blob": "c062fc244712c06474ba3faf046b03290e5737e2",
+      "baseBlob": "c062fc244712c06474ba3faf046b03290e5737e2",
+      "sha256": "43515aae04b68f12aca4fbb89e1f6a8ed74ff1b991254be4f0b4fe8dfb5ace0e",
+      "bytes": 13274
+    },
+    {
+      "path": "assets/js/modules/app-project-snapshots.js",
+      "blob": "174b316ca92b3999f907707d0354c5538cd9d87b",
+      "baseBlob": "8dcab022c3832aa6b99159dc34121debddcb5d86",
+      "sha256": "8c24f299e4910386041e960efb2fd0a17f0c6282154dc482a6612629102a5bd0",
+      "bytes": 20488
+    },
+    {
+      "path": "assets/js/modules/app-river-candidates.js",
+      "blob": "d0cba5bf6f408f16fde82b29988273d54dbd7b4f",
+      "baseBlob": "d0cba5bf6f408f16fde82b29988273d54dbd7b4f",
+      "sha256": "fb72bb24a6407881eadbb75ee47bcb6bc7abda578791bdceceaa248f5345b7d5",
+      "bytes": 12393
+    },
+    {
+      "path": "assets/js/modules/app-territorial-drafts.js",
+      "blob": "0947b0e320724bc7d740474bf8c0c561ed4906b4",
+      "baseBlob": "0947b0e320724bc7d740474bf8c0c561ed4906b4",
+      "sha256": "8e17cc062b3076564308d22d334a7e7582f90ee60b171fc2c45a94ba57e5e648",
+      "bytes": 42703
+    },
+    {
+      "path": "assets/js/modules/app-territory-components.js",
+      "blob": "f0f7ddc549f5bcf169415f2cf7fc52b218740ef3",
+      "baseBlob": "f0f7ddc549f5bcf169415f2cf7fc52b218740ef3",
+      "sha256": "c82290d2e3601a4d07b6d94746a665bfad9a49c1020f447a0ace90740ef226d9",
+      "bytes": 6088
+    },
+    {
+      "path": "assets/js/modules/app-territory-selection-workflow.js",
+      "blob": "9cd369065747de407e4e83df3b6060383b3636a8",
+      "baseBlob": "e99033f1402a6c1e55cfe2a32e8398026aff86fc",
+      "sha256": "626d2dd6c0a8263224272adacaa3303f41a28a83cf22214bdedfffd11a9bc44d",
+      "bytes": 52299
+    },
+    {
+      "path": "assets/js/modules/boundary-display.js",
+      "blob": "833b8bc4957c0b53851d8996d561d5c71ad3e8cc",
+      "baseBlob": "833b8bc4957c0b53851d8996d561d5c71ad3e8cc",
+      "sha256": "7f36d9400efd3c7ecabc603df65f863518c006ccb9d52113e69b6b6b0efe6442",
+      "bytes": 4902
+    },
+    {
+      "path": "assets/js/modules/boundary-lines.js",
+      "blob": "460451311a47795d94eb80bcc79e2eb8451f2284",
+      "baseBlob": "460451311a47795d94eb80bcc79e2eb8451f2284",
+      "sha256": "8fba8b35ca687a853437e186475b08d1b08a6d65066d9f8a6681d4fd1a16b80a",
+      "bytes": 1402
+    },
+    {
+      "path": "assets/js/modules/boundary-preparation.js",
+      "blob": "fbcbaeedd53f6b6552babdd5f713ffb5555f8c54",
+      "baseBlob": "fbcbaeedd53f6b6552babdd5f713ffb5555f8c54",
+      "sha256": "9b7d12c92c91a5d1e9240d6ac4e012482219eed3d6abc10560acc1c2790f7376",
+      "bytes": 10024
+    },
+    {
+      "path": "assets/js/modules/boundary-spatial-index.js",
+      "blob": "c4557e5358ba3e2d3b05fd1a08ee982f21a59a7c",
+      "baseBlob": "c4557e5358ba3e2d3b05fd1a08ee982f21a59a7c",
+      "sha256": "e8721595a89faadfdaa8c61a70505c8f941e12db8ceed189ba829904d2878b5f",
+      "bytes": 2046
+    },
+    {
+      "path": "assets/js/modules/boundary-topology.js",
+      "blob": "1a6eb5ba8d509af0672bc18d5c4d939b87fda279",
+      "baseBlob": "1a6eb5ba8d509af0672bc18d5c4d939b87fda279",
+      "sha256": "1eb9271723d273d888cca4d4279c4a8f7774135b53c2f9c10180e40b62864e5a",
+      "bytes": 21164
+    },
+    {
+      "path": "assets/js/modules/builtin-subunits.js",
+      "blob": "e6701fe111751d070dda11a9e3b32b3a716f6df7",
+      "baseBlob": "e6701fe111751d070dda11a9e3b32b3a716f6df7",
+      "sha256": "1681be766cc7179185cf897e19299aa458a14adbc28ffcd9202e41346fa02673",
+      "bytes": 5363
+    },
+    {
+      "path": "assets/js/modules/builtin-territory-policy.js",
+      "blob": "060b493a91de49a68e88222d2b91fe83d6959b68",
+      "baseBlob": "060b493a91de49a68e88222d2b91fe83d6959b68",
+      "sha256": "ca5d8cb2fdcc4c7797bc9f114082f7824bcac630a4109b4fe0678fa9643e5dd7",
+      "bytes": 1868
+    },
+    {
+      "path": "assets/js/modules/coast-reconciliation.js",
+      "blob": "5b1d480136491c036ed34bd61e33edbcee72a26a",
+      "baseBlob": "5b1d480136491c036ed34bd61e33edbcee72a26a",
+      "sha256": "932556c08a7ac971912ff33e99ef6eb371a6ba9c4abf52dc1f6eb557b7d10bca",
+      "bytes": 26748
+    },
+    {
+      "path": "assets/js/modules/color-adapter.js",
+      "blob": "74ac942e2854025bedb11c172ca0d6cbe1da0315",
+      "baseBlob": "74ac942e2854025bedb11c172ca0d6cbe1da0315",
+      "sha256": "af47a25609d243db41abc6f36b19f37be43ee54af1210ca62354f1213b9a11f9",
+      "bytes": 3625
+    },
+    {
+      "path": "assets/js/modules/coordinate-bounds.js",
+      "blob": "c276945af12c75ffd5faebfc6aafaa370cc5ad68",
+      "baseBlob": "c276945af12c75ffd5faebfc6aafaa370cc5ad68",
+      "sha256": "67e2598e59d6e5ff98d871566332286dc83d7e4f9fbc3dc1236c9cc9d08665e0",
+      "bytes": 802
+    },
+    {
+      "path": "assets/js/modules/country-default-colors.js",
+      "blob": "b335acc32f99534f67630bc4678e1d5f6a0494ff",
+      "baseBlob": "b335acc32f99534f67630bc4678e1d5f6a0494ff",
+      "sha256": "886633888260354a2d8501ded3b6624cbefe34baf2e832e35c93bf7da980706b",
+      "bytes": 4879
+    },
+    {
+      "path": "assets/js/modules/country-flags.js",
+      "blob": "50b8e943b41c378b186a9dc38713ab0ca6159d7b",
+      "baseBlob": "50b8e943b41c378b186a9dc38713ab0ca6159d7b",
+      "sha256": "ce552be2cb2d339663eba55f0e24908f513d9aa68cac6f07f0e8b3a8391b0fad",
+      "bytes": 5057
+    },
+    {
+      "path": "assets/js/modules/cut-preparation-cache.js",
+      "blob": "d02d07ced5d5f2bd1429032d3df82c4bd065ffaf",
+      "baseBlob": "d02d07ced5d5f2bd1429032d3df82c4bd065ffaf",
+      "sha256": "38278991e38a0976e0337d805a0d44a611e453d80c2e91f8cb47780f8e8d1a11",
+      "bytes": 453
+    },
+    {
+      "path": "assets/js/modules/cut-worker-preparation.js",
+      "blob": "5a8c5e35fcf1e3c78c97c193b706655edf31331e",
+      "baseBlob": "5a8c5e35fcf1e3c78c97c193b706655edf31331e",
+      "sha256": "f80584f053717baa9cc172bbc8e26ed5a01316ae64c00f091744348c4736f2a2",
+      "bytes": 3238
+    },
+    {
+      "path": "assets/js/modules/distribution-model.js",
+      "blob": "78b8a02e75dd48633eb41d69cb65b12418d2adcb",
+      "baseBlob": "78b8a02e75dd48633eb41d69cb65b12418d2adcb",
+      "sha256": "f1e3f765e839699d199edb18c55533486e966ffc85c849471edbcf8fab4a2c8d",
+      "bytes": 8195
+    },
+    {
+      "path": "assets/js/modules/document-mutation-runner.js",
+      "blob": "7c5756b43c9819234d8101043d33cef28dc5397e",
+      "baseBlob": "7c5756b43c9819234d8101043d33cef28dc5397e",
+      "sha256": "637f3edb263c732a82ed942ba75a1c1f9802149ca91d84f2ab0a4c774fcb43b9",
+      "bytes": 445
+    },
+    {
+      "path": "assets/js/modules/draft-editor.js",
+      "blob": "252449ed72fcfbe435b29a45e38d6850cb21bdca",
+      "baseBlob": "252449ed72fcfbe435b29a45e38d6850cb21bdca",
+      "sha256": "c737f1f236ab77df6b5630598a93fddf2e9ef0ed4fd015a4c0d92eba2112a2f6",
+      "bytes": 4162
+    },
+    {
+      "path": "assets/js/modules/draft-stroke.js",
+      "blob": "6894044e221378f89d557fe95d1cc8d5493751d0",
+      "baseBlob": "6894044e221378f89d557fe95d1cc8d5493751d0",
+      "sha256": "a6ae53555dbff61c0a72028978ca4da8e5b4c5412a42813eb9c70d95ad63bbd5",
+      "bytes": 6343
+    },
+    {
+      "path": "assets/js/modules/edit-display-preparation.js",
+      "blob": "de8b2c780c22e6d27a5b66dd017755d5c8cc3904",
+      "baseBlob": "de8b2c780c22e6d27a5b66dd017755d5c8cc3904",
+      "sha256": "956c5981f26cab0f99d1faf7d25f9b91302dd1303df652a7a8024b6fded84efd",
+      "bytes": 3190
+    },
+    {
+      "path": "assets/js/modules/edit-source-tracker.js",
+      "blob": "9d5de5ae99db164f170b65eb584fd85a593bdd53",
+      "baseBlob": "9d5de5ae99db164f170b65eb584fd85a593bdd53",
+      "sha256": "5662998d94625a8730b41049303a4ea880bc590938dec5783fe2f6457be88e5f",
+      "bytes": 1751
+    },
+    {
+      "path": "assets/js/modules/editing-domain.js",
+      "blob": "3483ec45ecb375688aa90df5231d748ce300d77a",
+      "baseBlob": "3483ec45ecb375688aa90df5231d748ce300d77a",
+      "sha256": "960bd6c3198f7c3bbb1351c923cbd153fd93115e718c4a57d9ce70d15805515c",
+      "bytes": 38491
+    },
+    {
+      "path": "assets/js/modules/editing-render-packet.js",
+      "blob": "2ac8cb4bb343c34bcb75324d001b20ed129d034e",
+      "baseBlob": "2ac8cb4bb343c34bcb75324d001b20ed129d034e",
+      "sha256": "2f1f97a7758a3f1930065511878bc19acd872dcea04ea8362bf8b40c5327f387",
+      "bytes": 9695
+    },
+    {
+      "path": "assets/js/modules/exchange-adapter-registry.js",
+      "blob": "f4f6ee6352fd79059fdeaf3e7077993c119204d0",
+      "baseBlob": "f4f6ee6352fd79059fdeaf3e7077993c119204d0",
+      "sha256": "ed0fbe8264bc77b0cdef3377abc197d75d2e08f7593288bcb80856661b28fe5d",
+      "bytes": 3545
+    },
+    {
+      "path": "assets/js/modules/generic-feature-service.js",
+      "blob": "4415bcbb35a25788c71da02a14f1a4a543eea656",
+      "baseBlob": "4415bcbb35a25788c71da02a14f1a4a543eea656",
+      "sha256": "1ad84557a436b95c2ec0e0803ea5f863a8653201a81f44861ddc59c9d98bdbd0",
+      "bytes": 8760
+    },
+    {
+      "path": "assets/js/modules/geographic-boundary.js",
+      "blob": "37cac30e70fd905b8fecaac2cb26532ef390ff79",
+      "baseBlob": "37cac30e70fd905b8fecaac2cb26532ef390ff79",
+      "sha256": "80bf2f1c304920e8cbeea7986f4a1aa03b123bb94021ab382b7a822292d876d9",
+      "bytes": 5656
+    },
+    {
+      "path": "assets/js/modules/geometry-metrics.js",
+      "blob": "438927287535be682962f70c5f4eb9d2771eb07f",
+      "baseBlob": "438927287535be682962f70c5f4eb9d2771eb07f",
+      "sha256": "52b60e92cd70189dfd6a305fe288356943c315967b89f32a6d5a75ef949169f2",
+      "bytes": 2832
+    },
+    {
+      "path": "assets/js/modules/geometry-preview.js",
+      "blob": "1e9819d3a71024c5cc3f7517bf7d474242622092",
+      "baseBlob": "832d545ed32a03c69ab1ae8081a2735fdbbe523e",
+      "sha256": "c2dc482a2f3aeb28af0c53416046349cd1e25b112d33487d4ccd4a86a5c5cda6",
+      "bytes": 5693
+    },
+    {
+      "path": "assets/js/modules/geometry-segment-index.js",
+      "blob": "97e045d0388ef64205b2c88a1b04beea3ac01168",
+      "baseBlob": "97e045d0388ef64205b2c88a1b04beea3ac01168",
+      "sha256": "63680763f49fd03345b1503a135f17c8b66b538673d040dacd69f6a6b648aeb1",
+      "bytes": 2246
+    },
+    {
+      "path": "assets/js/modules/geometry-snap.js",
+      "blob": "da638bf69772209dcea9772042df8f7fc3020e17",
+      "baseBlob": "da638bf69772209dcea9772042df8f7fc3020e17",
+      "sha256": "6ba41e4dafffe417af43eff52df3e476e9c2fc8d2b73fda973c71e932aa6be9b",
+      "bytes": 2717
+    },
+    {
+      "path": "assets/js/modules/geometry-validation.js",
+      "blob": "316ffd159447ec07f08664825d2e42ba668c84a3",
+      "baseBlob": "316ffd159447ec07f08664825d2e42ba668c84a3",
+      "sha256": "581ed80c865457921c37591892bc942f655d99886e9e6322708393d76ae5ec92",
+      "bytes": 21294
+    },
+    {
+      "path": "assets/js/modules/geometry-version-store.js",
+      "blob": "72de730052a0a76e9096c412349af04428b50ba1",
+      "baseBlob": "72de730052a0a76e9096c412349af04428b50ba1",
+      "sha256": "517fdac775cac9c19125eb0cce27e0d50b18e4dcca2e97d52a6fcb1e67295d40",
+      "bytes": 4468
+    },
+    {
+      "path": "assets/js/modules/geometry-versions.js",
+      "blob": "cc4d3c2954dae1e93b5326aee96f59d2daeac649",
+      "baseBlob": "cc4d3c2954dae1e93b5326aee96f59d2daeac649",
+      "sha256": "e28a1992e25049a32ef8accd7a1e5bfa4871a85556c0a6aa5a6cbef61f27333a",
+      "bytes": 2257
+    },
+    {
+      "path": "assets/js/modules/gis-geometry-validation.js",
+      "blob": "758ec0b7c62040ad99ea661f7f21c41788b6ca94",
+      "baseBlob": "758ec0b7c62040ad99ea661f7f21c41788b6ca94",
+      "sha256": "345e759b4bf81270db83b02858b106895d96e324314518b7260f55540c02bb85",
+      "bytes": 7380
+    },
+    {
+      "path": "assets/js/modules/gis-import-plan.js",
+      "blob": "963c5f6458c600044cc3651c77e979413013176a",
+      "baseBlob": "963c5f6458c600044cc3651c77e979413013176a",
+      "sha256": "a4068c1662924404362743bd9d3846730fe3b69fff0a6c3f1f566883a628876f",
+      "bytes": 1953
+    },
+    {
+      "path": "assets/js/modules/history-service.js",
+      "blob": "c3bd031412cff2c56ebdbf6f37e2fd1f49c317db",
+      "baseBlob": "c3bd031412cff2c56ebdbf6f37e2fd1f49c317db",
+      "sha256": "0ed8b2b1cb5cc1bb526ecedf84d478fbd604855b01eeb48ceecf0b0aea3fd4a3",
+      "bytes": 2171
+    },
+    {
+      "path": "assets/js/modules/import-service.js",
+      "blob": "6965d79e920c7b5a6586231674c0293ebed40bbc",
+      "baseBlob": "6965d79e920c7b5a6586231674c0293ebed40bbc",
+      "sha256": "b42a782d58513e164ce0c6ee5bcb311c8103003d1372dee774ea70feb44dd4b5",
+      "bytes": 11530
+    },
+    {
+      "path": "assets/js/modules/layer-presentation.js",
+      "blob": "fab813c6dbb385259a0983921dd18bd494e3229d",
+      "baseBlob": "fab813c6dbb385259a0983921dd18bd494e3229d",
+      "sha256": "0ed3ff8a1b3ea3cdb886596589040d036889d99cf458195464d1b5460a40958c",
+      "bytes": 4630
+    },
+    {
+      "path": "assets/js/modules/map-edit-country-commands.js",
+      "blob": "ea3174d3d6be0e12f312937fbfcbc7219c9b904b",
+      "baseBlob": "8c7d1286333f1ce55529ee040107faecc9e0804f",
+      "sha256": "04bec6052ac8deb4894c2a3e47005b4909443bf69ba9b78e001195ec9ba45198",
+      "bytes": 20050
+    },
+    {
+      "path": "assets/js/modules/map-edit-geometry.js",
+      "blob": "afca4a15905cf43ede6798b48030d7df4e5f41ab",
+      "baseBlob": "8467a302c428503b553fc9ff50cb7af18a9a7c8f",
+      "sha256": "397da6a410d2abcaa871b3c626bd8b1808534351b8332912e13dd76f8feb9915",
+      "bytes": 1511
+    },
+    {
+      "path": "assets/js/modules/map-edit-library-calculation.js",
+      "blob": "01acf1b5bf6b91769bb29d4fc4c6f6ae3a026f3f",
+      "baseBlob": "01acf1b5bf6b91769bb29d4fc4c6f6ae3a026f3f",
+      "sha256": "dd507d9dd6f026acbabcb9f12560ce4bce7f79ea74a23c2c85469627c83a624d",
+      "bytes": 4620
+    },
+    {
+      "path": "assets/js/modules/map-edit-preparation-operations.js",
+      "blob": "ebbf6032227250b508fa569b49e817ca034925dd",
+      "baseBlob": "ebbf6032227250b508fa569b49e817ca034925dd",
+      "sha256": "bc3f2bdad6e4a185b66f06a935d50daa0efde507209a64dd107de4f4e3d49da8",
+      "bytes": 972
+    },
+    {
+      "path": "assets/js/modules/map-edit-preview-calculations.js",
+      "blob": "71026fe750521aee613501d712a00ce43b306633",
+      "baseBlob": "136b05685310bf234f000b8eeeae2a71ac86dd48",
+      "sha256": "328206674d1b8beb5072e1d74fee5cbd672cc3516057372ae623e691eba736ba",
+      "bytes": 2441
+    },
+    {
+      "path": "assets/js/modules/map-edit-query-calculations.js",
+      "blob": "c58c453222ef632c356c91b86bcb0afe5e6eeefc",
+      "baseBlob": "c58c453222ef632c356c91b86bcb0afe5e6eeefc",
+      "sha256": "ca0f176d205da0dd4b8eb14ed6bd7dca9a947fa84411be59fb859767d683896e",
+      "bytes": 1313
+    },
+    {
+      "path": "assets/js/modules/map-edit-snap-calculation.js",
+      "blob": "0c8529c7f7bc9fb6f8886047ca5ed1538196c1c2",
+      "baseBlob": "0c8529c7f7bc9fb6f8886047ca5ed1538196c1c2",
+      "sha256": "5fd69fb66b409c4dbe71a741a26e92f207f52446ba8b736c3e161e26e63beaa2",
+      "bytes": 3175
+    },
+    {
+      "path": "assets/js/modules/map-edit-territorial-commands.js",
+      "blob": "11e2da9ba588bf69e289c353ad9ead66891962eb",
+      "baseBlob": "11e2da9ba588bf69e289c353ad9ead66891962eb",
+      "sha256": "9865ffb671e18824bcc72c3700a8be7fb022a39b6c29fb5b73595370eae3f4f5",
+      "bytes": 1729
+    },
+    {
+      "path": "assets/js/modules/map-edit-worker-client.js",
+      "blob": "1f7bfd0a077f49b47dffb773707bca10f143d21b",
+      "baseBlob": "1f7bfd0a077f49b47dffb773707bca10f143d21b",
+      "sha256": "9b9bc339dcd2b15739b96c7c86dc83c01bddf7e61d51132886487ca7df73988d",
+      "bytes": 12299
+    },
+    {
+      "path": "assets/js/modules/map-object-categories.js",
+      "blob": "ad68c968d3a850306643c7aac2b73ddf290e2bc7",
+      "baseBlob": "ad68c968d3a850306643c7aac2b73ddf290e2bc7",
+      "sha256": "4bf2554712f8d78465ebeb0fc043ad149039ed47dbc0f9114ca78c8b787db006",
+      "bytes": 5637
+    },
+    {
+      "path": "assets/js/modules/object-selection-controller.js",
+      "blob": "5b92c77de9d17459b1ce71f08048241aa8ab8441",
+      "baseBlob": "5b92c77de9d17459b1ce71f08048241aa8ab8441",
+      "sha256": "61e5b9b1fc6592cdaae2306853bc60ec93c6668a5449f6d2e39ba3b7811ac453",
+      "bytes": 5787
+    },
+    {
+      "path": "assets/js/modules/place-contract.js",
+      "blob": "38b84cf497fcc9771ee7a1a0981b3c702f157752",
+      "baseBlob": "38b84cf497fcc9771ee7a1a0981b3c702f157752",
+      "sha256": "0ff49cc2ac68a22a3ebc086f8a0e0b733598598fadb02fc7a538d83ae3f3d121",
+      "bytes": 2365
+    },
+    {
+      "path": "assets/js/modules/planar-graph-faces.js",
+      "blob": "af8a3b873d98778544357bf0bff0f97c166c08b2",
+      "baseBlob": "af8a3b873d98778544357bf0bff0f97c166c08b2",
+      "sha256": "283da7701c21cb80e4fd9ef97e8f68e69a8d6f0ec9fc611ee8c23cab45d6c804",
+      "bytes": 2003
+    },
+    {
+      "path": "assets/js/modules/polygon-clipping-calculation.js",
+      "blob": "bb08caa903fe03f7263335a035fd4692bf375d03",
+      "baseBlob": "bb08caa903fe03f7263335a035fd4692bf375d03",
+      "sha256": "79095890e49875610f27585c694a3f05e6c3322ef6a8b3e57c4a087236339406",
+      "bytes": 1241
+    },
+    {
+      "path": "assets/js/modules/polygon-geometry.js",
+      "blob": "15f0ae1ee1873e42452778ca8b5e0f604ef5c925",
+      "baseBlob": "af7f296e867c51e764c86d55f9dcae678f1cbb89",
+      "sha256": "a645827c46f7c62dbf929f850c67f350516669dfeafe5c637aec6c67efcfebf4",
+      "bytes": 10152
+    },
+    {
+      "path": "assets/js/modules/project-command-pipeline.js",
+      "blob": "64611e104eabed53d505d95bfe603959f111e117",
+      "baseBlob": "64611e104eabed53d505d95bfe603959f111e117",
+      "sha256": "c0595f2c7fefb14e837583cca83b5ac57d607a26ee21f2d0c7132b2511c09c17",
+      "bytes": 9477
+    },
+    {
+      "path": "assets/js/modules/project-invariants.js",
+      "blob": "881b3f7330360d4b377205967983c3b799da45c0",
+      "baseBlob": "881b3f7330360d4b377205967983c3b799da45c0",
+      "sha256": "477045232dc260c25500622bd298430360eb0480c010c2fae23d56b6022eb61d",
+      "bytes": 9068
+    },
+    {
+      "path": "assets/js/modules/project-serializer.js",
+      "blob": "7a2afe953d7446eac20b2ff34a8c0e1e267f4e6a",
+      "baseBlob": "7a2afe953d7446eac20b2ff34a8c0e1e267f4e6a",
+      "sha256": "dffce28ba39286e78e784d756ec8a2146cb8e80a9c7fff285ccc463ae993fe28",
+      "bytes": 7436
+    },
+    {
+      "path": "assets/js/modules/project-state.js",
+      "blob": "735bef2ad8cfa6d5af5a60567fd5386f3318b8be",
+      "baseBlob": "735bef2ad8cfa6d5af5a60567fd5386f3318b8be",
+      "sha256": "ff7386339cd81fc03999d19937385eb5cf12e92a4c56fffceadae3bbb32da566",
+      "bytes": 19434
+    },
+    {
+      "path": "assets/js/modules/reference-image-input.js",
+      "blob": "fa8e39c2e4131677aa4f98c7aed8499b68b6fc4c",
+      "baseBlob": "fa8e39c2e4131677aa4f98c7aed8499b68b6fc4c",
+      "sha256": "bb0eecf0cc7d9c2bd5ccd7f17452411937a4af4d0b8b8ab5c6f6dd6880afa58a",
+      "bytes": 962
+    },
+    {
+      "path": "assets/js/modules/ring-hit-test.js",
+      "blob": "4d2e762b906ba484f795651c53003bd912fb38a6",
+      "baseBlob": "4d2e762b906ba484f795651c53003bd912fb38a6",
+      "sha256": "2f35ea5f6b8e01a14ad269b6689cf45f5212d1595a7c7bccc5ff39e8bb89f0b0",
+      "bytes": 1665
+    },
+    {
+      "path": "assets/js/modules/river-territory-partition.js",
+      "blob": "99def0a2fc9769e542869fe78cf4fdb091c3e802",
+      "baseBlob": "99def0a2fc9769e542869fe78cf4fdb091c3e802",
+      "sha256": "18b32eb7db238beaed99bce8bac980e547a48c785a7bd2071fa56fa63f51db24",
+      "bytes": 32651
+    },
+    {
+      "path": "assets/js/modules/runtime-performance-metrics.js",
+      "blob": "e36aeb3f068aa121ad24dd5728bfd74e25a3d9ae",
+      "baseBlob": "e36aeb3f068aa121ad24dd5728bfd74e25a3d9ae",
+      "sha256": "87e6ebdbca13faed1d6d00d419fa1acaebefe3d71151b68b3cf9b5b540b3fa9d",
+      "bytes": 17903
+    },
+    {
+      "path": "assets/js/modules/select-option-policy.js",
+      "blob": "dde6b5d3e1376e87bbed6a97c6bd16f957d78a5a",
+      "baseBlob": "dde6b5d3e1376e87bbed6a97c6bd16f957d78a5a",
+      "sha256": "fd226a4efb5a6f7b344247f041d842de3019a0b7bbb3c26141e20ec1eabdb2a3",
+      "bytes": 1517
+    },
+    {
+      "path": "assets/js/modules/selection-domain.js",
+      "blob": "fdf1c1ed72d494a0bf97059632a46f31f1f7261a",
+      "baseBlob": "fdf1c1ed72d494a0bf97059632a46f31f1f7261a",
+      "sha256": "8f3c595b0c227fe795972428e1afcc5e3759c6eac94b75f0066c9480ab29ff62",
+      "bytes": 7770
+    },
+    {
+      "path": "assets/js/modules/selection-packet.js",
+      "blob": "c99e329f62758c3eb30a459e561833b318ad911c",
+      "baseBlob": "c99e329f62758c3eb30a459e561833b318ad911c",
+      "sha256": "234a48818edad51c17dfaea9578ea56a923a75d97619ca4e24bccc994bae99e8",
+      "bytes": 853
+    },
+    {
+      "path": "assets/js/modules/selection-ui-controller.js",
+      "blob": "cf8c7aeffb01a5b3b50ddad703f74266666ab8bb",
+      "baseBlob": "cf8c7aeffb01a5b3b50ddad703f74266666ab8bb",
+      "sha256": "1326d893ca58848142cc049096e32235926502c401e503b5eedfff149f6c0312",
+      "bytes": 6773
+    },
+    {
+      "path": "assets/js/modules/source-provenance.js",
+      "blob": "ff47ef958294b8a2286a38e083dc0810d8a89fa3",
+      "baseBlob": "ff47ef958294b8a2286a38e083dc0810d8a89fa3",
+      "sha256": "4fa2497d2b6bef1b55c8dcb052675c65a706dae51ef6c73923a28ecc202b8aaa",
+      "bytes": 3202
+    },
+    {
+      "path": "assets/js/modules/temporal.js",
+      "blob": "34ef7a8bc1cba4cf9c550dc93be8882f5c9b6aa7",
+      "baseBlob": "34ef7a8bc1cba4cf9c550dc93be8882f5c9b6aa7",
+      "sha256": "cac4c811c98077407438d470e367143ffe015219de5c932785264859c17e0dcf",
+      "bytes": 4550
+    },
+    {
+      "path": "assets/js/modules/terrain-manifest.js",
+      "blob": "419ca1b7e155eb2cd7c81f0ef57a5732084b9416",
+      "baseBlob": "419ca1b7e155eb2cd7c81f0ef57a5732084b9416",
+      "sha256": "33f6395d07f6cc421ed2703e994c860dcb05f744d544f94eab7f0edca84ccaf1",
+      "bytes": 4885
+    },
+    {
+      "path": "assets/js/modules/territorial-edit-plan.js",
+      "blob": "dfb240378d670e6899a6729f0ebe397e30052138",
+      "baseBlob": "3d77920a7b84fa8df8d5c4ef1410aec421d1ebe7",
+      "sha256": "290c3b01d3c4318c560706d49e58a88157339b4060ef145a8758fd2bef2f5f47",
+      "bytes": 27125
+    },
+    {
+      "path": "assets/js/modules/territorial-entity-repository.js",
+      "blob": "54126c0905bd57ed8825907894bbd3eb1f2002cf",
+      "baseBlob": "54126c0905bd57ed8825907894bbd3eb1f2002cf",
+      "sha256": "a9dbdfd2d67d3e77a317ec54652f910c9b15842d2e0a95899897dd9fbf0b49e6",
+      "bytes": 5341
+    },
+    {
+      "path": "assets/js/modules/territorial-entity-store.js",
+      "blob": "f93b94f63ff74d8a052c827f1061917de6bd2427",
+      "baseBlob": "f93b94f63ff74d8a052c827f1061917de6bd2427",
+      "sha256": "4ada637003ca5a68fab4b00404624b589c25d57de42e683c4d59c10a6154db1d",
+      "bytes": 14246
+    },
+    {
+      "path": "assets/js/modules/territorial-geometry.js",
+      "blob": "2f0aef10b2501ffb317bfe2aab4eb97225aa12cf",
+      "baseBlob": "2f0aef10b2501ffb317bfe2aab4eb97225aa12cf",
+      "sha256": "25f9b30cc2527d3eafdb3473d0fe8dbc056fc654ce7ff51fc72861e47b3ee827",
+      "bytes": 3342
+    },
+    {
+      "path": "assets/js/modules/territorial-highlight-boundary.js",
+      "blob": "46341eebcb4dae3f9af6d87d35791f9939e00e2c",
+      "baseBlob": "46341eebcb4dae3f9af6d87d35791f9939e00e2c",
+      "sha256": "6ba1c0b59d5606b131f6f509e9868506a75a81b0be1f262eb85dc67033c4107c",
+      "bytes": 3765
+    },
+    {
+      "path": "assets/js/modules/territorial-interaction-policy.js",
+      "blob": "99923f7cde8f9ed29095d04ab6b50c435db6e405",
+      "baseBlob": "99923f7cde8f9ed29095d04ab6b50c435db6e405",
+      "sha256": "11c27a4e815b62fa0b12193ae1ebc41694d58fd07c4ec0d5b59c2de5bc09cf4d",
+      "bytes": 5081
+    },
+    {
+      "path": "assets/js/modules/territorial-service.js",
+      "blob": "91418c3e0d593bd62af543c5eaed889051622713",
+      "baseBlob": "91418c3e0d593bd62af543c5eaed889051622713",
+      "sha256": "c741ba8e478af5d33138d10059dd11a5b79a633797ae4dcbfc6c9b9383a30b61",
+      "bytes": 10174
+    },
+    {
+      "path": "assets/js/modules/territorial-units.js",
+      "blob": "e04dd7b7f8fa6831a4ed0d478ebbf49409e7d676",
+      "baseBlob": "fc1773be96eabc981d569307ba91e2a715b32282",
+      "sha256": "1be70174ebb8d89fa41e0a5943393aba9caa6946a2b6b0c3eefca04ebd680ae8",
+      "bytes": 8516
+    },
+    {
+      "path": "assets/js/modules/territory-component-plan.js",
+      "blob": "82ac3227116ab31002a98ba1f9ee100224b971be",
+      "baseBlob": "34a79cee4adce74f9a06ed7e7977c3e8572fc1b8",
+      "sha256": "c7b96e96bf41fbf4640376ccd36a9b7e9ae351e43cff7df968c63c50198c5bc1",
+      "bytes": 3912
+    },
+    {
+      "path": "assets/js/modules/timeline-records.js",
+      "blob": "f1353d9fb7d5f0a8d323452d63126d887577cc3f",
+      "baseBlob": "f1353d9fb7d5f0a8d323452d63126d887577cc3f",
+      "sha256": "9d9c41fd2f7850d3c230889f651196e7255ffc00c097f3d8be7e85670ef20020",
+      "bytes": 7840
+    },
+    {
+      "path": "assets/js/modules/timeline-static-view.js",
+      "blob": "ed75e50ebeb71af7a94533cbcc9988451a70c1ae",
+      "baseBlob": "ed75e50ebeb71af7a94533cbcc9988451a70c1ae",
+      "sha256": "a9bc7d9cfca65c962a48cde62d5dd5cbbc4020f5168f290350b29d0dcb29b1da",
+      "bytes": 1903
+    },
+    {
+      "path": "assets/js/modules/timeline-storage.js",
+      "blob": "e9691031f9ba2e7b7e4c72633c9066a9c8412b4b",
+      "baseBlob": "e9691031f9ba2e7b7e4c72633c9066a9c8412b4b",
+      "sha256": "c56738d103b67f6ba8584e79781a0fe0d2d0d7511b1a2292b0d841a1dae6aa5a",
+      "bytes": 2118
+    },
+    {
+      "path": "assets/js/modules/version-contract.js",
+      "blob": "98355311cba7039575e373d2c7ef4c5987fac78d",
+      "baseBlob": "98355311cba7039575e373d2c7ef4c5987fac78d",
+      "sha256": "9b2fd802f1b73dd18f9b074774bdc551146d4f7daf4c147e3fa58a75861ad7ec",
+      "bytes": 895
+    },
+    {
+      "path": "assets/js/modules/worker-job-scheduler.js",
+      "blob": "c07aea54ff105bf97f4986239f13e392585a9394",
+      "baseBlob": "c07aea54ff105bf97f4986239f13e392585a9394",
+      "sha256": "06d2ca1668a10a9de79c58bfbfce9fb4d68aa22611f8b83cd2471a93a1ce97c9",
+      "bytes": 8240
+    },
+    {
+      "path": "assets/js/modules/worker-rpc.js",
+      "blob": "0c87b6b92992ab3a75b57b003cc2b78d3fb25aa7",
+      "baseBlob": "0c87b6b92992ab3a75b57b003cc2b78d3fb25aa7",
+      "sha256": "5e5cb0b12ccb3c4ae88a44a50687b261ad95cdda3c716540f038207a1f834d8b",
+      "bytes": 13740
+    },
+    {
+      "path": "assets/js/vendor/d3.min.js",
+      "blob": "6733ae4c8bfa093fdd9a4630f986018e0a893a01",
+      "baseBlob": "6733ae4c8bfa093fdd9a4630f986018e0a893a01",
+      "sha256": "4cdf92091ed0cfdd8b862af1c6d4744bd0458e746b92c1bbd5403a1143ecd538",
+      "bytes": 151144
+    },
+    {
+      "path": "assets/js/vendor/polygon-clipping.min.js",
+      "blob": "66a4e7bb45fb37353ba86e1114f7e9166ef1efad",
+      "baseBlob": "66a4e7bb45fb37353ba86e1114f7e9166ef1efad",
+      "sha256": "8c1ed56df8b1f97b047f82d91b910aacdaff67d8d9a55f2495eb26e8369186f7",
+      "bytes": 29130
+    },
+    {
+      "path": "assets/js/workers/map-edit-worker.js",
+      "blob": "0fca51dde206da6cf858d46584749e45455e0164",
+      "baseBlob": "0fca51dde206da6cf858d46584749e45455e0164",
+      "sha256": "56fabaf3c0f7ac4c2ef51a457b874577100efdd33e8f86c85f01bd30680a94a0",
+      "bytes": 15785
+    }
+  ]
+}

@@ -1,0 +1,7208 @@
+{
+  "schema": "pando-m974-boundary-inputs",
+  "version": 1,
+  "cases": [
+    {
+      "id": "root-triple",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B",
+          "C"
+        ]
+      }
+    },
+    {
+      "id": "root-two-fixed",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "root-no-op",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": false,
+        "movedOwnerIds": []
+      }
+    },
+    {
+      "id": "root-coast-union-change",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,0",
+        "coordinate": [
+          0.9,
+          -0.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": false
+      }
+    },
+    {
+      "id": "root-invalid-latitude",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          91
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": false
+      }
+    },
+    {
+      "id": "root-uneven-multipolygon",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    2
+                  ],
+                  [
+                    0,
+                    2
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    0.2,
+                    0.2
+                  ],
+                  [
+                    0.4,
+                    0.2
+                  ],
+                  [
+                    0.4,
+                    0.4
+                  ],
+                  [
+                    0.2,
+                    0.4
+                  ],
+                  [
+                    0.2,
+                    0.2
+                  ]
+                ]
+              ],
+              [
+                [
+                  [
+                    -3,
+                    0
+                  ],
+                  [
+                    -2,
+                    0
+                  ],
+                  [
+                    -2,
+                    1
+                  ],
+                  [
+                    -3,
+                    1
+                  ],
+                  [
+                    -3,
+                    0
+                  ]
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1.1,
+          1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B"
+        ]
+      }
+    },
+    {
+      "id": "root-selected-three-move-two",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  0.5
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,0.5",
+        "coordinate": [
+          1.1,
+          0.5
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B"
+        ],
+        "unchangedIds": [
+          "C"
+        ]
+      }
+    },
+    {
+      "id": "root-negative-half-rounding",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  -1,
+                  0
+                ],
+                [
+                  -5e-8,
+                  0
+                ],
+                [
+                  -5e-8,
+                  1
+                ],
+                [
+                  -5e-8,
+                  2
+                ],
+                [
+                  -1,
+                  2
+                ],
+                [
+                  -1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  -5e-8,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  -5e-8,
+                  1
+                ],
+                [
+                  -5e-8,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  -5e-8,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  -5e-8,
+                  2
+                ],
+                [
+                  -5e-8,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "0,1",
+        "coordinate": [
+          0.1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B",
+          "C"
+        ]
+      }
+    },
+    {
+      "id": "child-triple",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "child",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B",
+          "C"
+        ],
+        "unchangedIds": [
+          "P"
+        ]
+      }
+    },
+    {
+      "id": "child-parent-fixed",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,0",
+        "coordinate": [
+          1.1,
+          0
+        ]
+      },
+      "expectedPath": "child",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "child-two-fixed",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "child",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "root-disjoint-pairs",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "D",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "D",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  4,
+                  0
+                ],
+                [
+                  5,
+                  0
+                ],
+                [
+                  5,
+                  2
+                ],
+                [
+                  4,
+                  2
+                ],
+                [
+                  4,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "E",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "E",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  5,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  5,
+                  2
+                ],
+                [
+                  5,
+                  1
+                ],
+                [
+                  5,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "D",
+        "E"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1.1,
+          1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B"
+        ],
+        "unchangedIds": [
+          "D",
+          "E"
+        ]
+      }
+    },
+    {
+      "id": "child-disjoint-pairs",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "D",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "D",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  4,
+                  0
+                ],
+                [
+                  5,
+                  0
+                ],
+                [
+                  5,
+                  2
+                ],
+                [
+                  4,
+                  2
+                ],
+                [
+                  4,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "E",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "E",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  5,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  5,
+                  2
+                ],
+                [
+                  5,
+                  1
+                ],
+                [
+                  5,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "D",
+        "E"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1.1,
+          1
+        ]
+      },
+      "expectedPath": "child",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B"
+        ]
+      }
+    },
+    {
+      "id": "child-auto-seed",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "D",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "D",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  4,
+                  0
+                ],
+                [
+                  5,
+                  0
+                ],
+                [
+                  5,
+                  2
+                ],
+                [
+                  4,
+                  2
+                ],
+                [
+                  4,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "E",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "E",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  5,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  5,
+                  2
+                ],
+                [
+                  5,
+                  1
+                ],
+                [
+                  5,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1.1,
+          1
+        ]
+      },
+      "expectedPath": "child",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B"
+        ]
+      },
+      "entryMode": "auto-child"
+    },
+    {
+      "id": "root-isolated-owner",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "D",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "D",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  5,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  1
+                ],
+                [
+                  5,
+                  1
+                ],
+                [
+                  5,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "root-selected-locked",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": true,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "invalid",
+      "expected": {
+        "entry": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "child-locked-parent",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": true,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "child",
+      "expected": {
+        "entry": true,
+        "prepared": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "child-locked-ancestor",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "G",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "G",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "G",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": true,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "child",
+      "expected": {
+        "entry": true,
+        "prepared": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "mixed-root-child",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "P"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "invalid",
+      "expected": {
+        "entry": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "mixed-parents",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "Q",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "Q",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "Q",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "invalid",
+      "expected": {
+        "entry": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "regional-selection",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "regional",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "invalid",
+      "expected": {
+        "entry": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "missing-selected-owner",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "missing"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "invalid",
+      "expected": {
+        "entry": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "mixed-domain-selection",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "invalid",
+      "expected": {
+        "entry": false,
+        "confirm": false
+      },
+      "selectedRefs": [
+        {
+          "domain": "territorial",
+          "type": "entity",
+          "id": "A"
+        },
+        {
+          "domain": "generic",
+          "type": "feature",
+          "id": "B"
+        }
+      ]
+    },
+    {
+      "id": "root-descendant-effects",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "whole",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "whole",
+            "parentId": "C",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.04,
+                  1.04
+                ],
+                [
+                  1.1,
+                  1.04
+                ],
+                [
+                  1.1,
+                  1.1
+                ],
+                [
+                  1.04,
+                  1.1
+                ],
+                [
+                  1.04,
+                  1.04
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "whole-deep",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "whole-deep",
+            "parentId": "whole",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.05,
+                  1.05
+                ],
+                [
+                  1.08,
+                  1.05
+                ],
+                [
+                  1.08,
+                  1.08
+                ],
+                [
+                  1.05,
+                  1.08
+                ],
+                [
+                  1.05,
+                  1.05
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "cut",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "cut",
+            "parentId": "C",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.3,
+                  1.2
+                ],
+                [
+                  1.5,
+                  1.2
+                ],
+                [
+                  1.5,
+                  1.4
+                ],
+                [
+                  1.3,
+                  1.4
+                ],
+                [
+                  1.3,
+                  1.2
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "cut-deep",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "cut-deep",
+            "parentId": "cut",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.32,
+                  1.22
+                ],
+                [
+                  1.38,
+                  1.22
+                ],
+                [
+                  1.38,
+                  1.38
+                ],
+                [
+                  1.32,
+                  1.38
+                ],
+                [
+                  1.32,
+                  1.22
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "removed",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "removed",
+            "parentId": "C",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.2,
+                  1.05
+                ],
+                [
+                  1.4,
+                  1.05
+                ],
+                [
+                  1.4,
+                  1.1
+                ],
+                [
+                  1.2,
+                  1.1
+                ],
+                [
+                  1.2,
+                  1.05
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "removed-deep",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "removed-deep",
+            "parentId": "removed",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.25,
+                  1.06
+                ],
+                [
+                  1.35,
+                  1.06
+                ],
+                [
+                  1.35,
+                  1.09
+                ],
+                [
+                  1.25,
+                  1.09
+                ],
+                [
+                  1.25,
+                  1.06
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1.3,
+          1.3
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B",
+          "C"
+        ],
+        "reparentedIds": [
+          "whole"
+        ],
+        "deletedIds": [
+          "removed",
+          "removed-deep"
+        ],
+        "clippedIds": [
+          "cut",
+          "cut-deep"
+        ]
+      },
+      "impactCancel": true
+    },
+    {
+      "id": "child-descendant-effects",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "P",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "P",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "P",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "whole",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "whole",
+            "parentId": "C",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.04,
+                  1.04
+                ],
+                [
+                  1.1,
+                  1.04
+                ],
+                [
+                  1.1,
+                  1.1
+                ],
+                [
+                  1.04,
+                  1.1
+                ],
+                [
+                  1.04,
+                  1.04
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "whole-deep",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "whole-deep",
+            "parentId": "whole",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.05,
+                  1.05
+                ],
+                [
+                  1.08,
+                  1.05
+                ],
+                [
+                  1.08,
+                  1.08
+                ],
+                [
+                  1.05,
+                  1.08
+                ],
+                [
+                  1.05,
+                  1.05
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "cut",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "cut",
+            "parentId": "C",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.3,
+                  1.2
+                ],
+                [
+                  1.5,
+                  1.2
+                ],
+                [
+                  1.5,
+                  1.4
+                ],
+                [
+                  1.3,
+                  1.4
+                ],
+                [
+                  1.3,
+                  1.2
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "cut-deep",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "cut-deep",
+            "parentId": "cut",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.32,
+                  1.22
+                ],
+                [
+                  1.38,
+                  1.22
+                ],
+                [
+                  1.38,
+                  1.38
+                ],
+                [
+                  1.32,
+                  1.38
+                ],
+                [
+                  1.32,
+                  1.22
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "removed",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "removed",
+            "parentId": "C",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.2,
+                  1.05
+                ],
+                [
+                  1.4,
+                  1.05
+                ],
+                [
+                  1.4,
+                  1.1
+                ],
+                [
+                  1.2,
+                  1.1
+                ],
+                [
+                  1.2,
+                  1.05
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "removed-deep",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "removed-deep",
+            "parentId": "removed",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.25,
+                  1.06
+                ],
+                [
+                  1.35,
+                  1.06
+                ],
+                [
+                  1.35,
+                  1.09
+                ],
+                [
+                  1.25,
+                  1.09
+                ],
+                [
+                  1.25,
+                  1.06
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1.3,
+          1.3
+        ]
+      },
+      "expectedPath": "child",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B",
+          "C"
+        ],
+        "reparentedIds": [
+          "whole"
+        ],
+        "deletedIds": [
+          "removed",
+          "removed-deep"
+        ],
+        "clippedIds": [
+          "cut",
+          "cut-deep"
+        ]
+      },
+      "impactCancel": true
+    },
+    {
+      "id": "root-locked-touching",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "touching",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "touching",
+            "parentId": "B",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": true,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0.8
+                ],
+                [
+                  1.2,
+                  0.8
+                ],
+                [
+                  1.2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0.8
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": false,
+        "confirm": false
+      }
+    },
+    {
+      "id": "root-locked-unrelated",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "unrelated",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "unrelated",
+            "parentId": "C",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": true,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.7,
+                  1.7
+                ],
+                [
+                  1.9,
+                  1.7
+                ],
+                [
+                  1.9,
+                  1.9
+                ],
+                [
+                  1.7,
+                  1.9
+                ],
+                [
+                  1.7,
+                  1.7
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": true,
+        "movedOwnerIds": [
+          "A",
+          "B",
+          "C"
+        ]
+      }
+    },
+    {
+      "id": "root-locked-cut-child",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "cut",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "cut",
+            "parentId": "C",
+            "coverageMode": "partition",
+            "style": {},
+            "locked": true,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1.3,
+                  1.2
+                ],
+                [
+                  1.5,
+                  1.2
+                ],
+                [
+                  1.5,
+                  1.4
+                ],
+                [
+                  1.3,
+                  1.4
+                ],
+                [
+                  1.3,
+                  1.2
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1.3,
+          1.3
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "prepared": true,
+        "gesture": true,
+        "confirm": false
+      }
+    },
+    {
+      "id": "root-pending-cancel",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "confirm": false
+      },
+      "scenario": "pending-cancel"
+    },
+    {
+      "id": "root-stale-preparation",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "confirm": false
+      },
+      "scenario": "stale-preparation"
+    },
+    {
+      "id": "root-stale-move",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "confirm": false
+      },
+      "scenario": "stale-move"
+    },
+    {
+      "id": "root-stale-preview",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "confirm": false
+      },
+      "scenario": "stale-preview"
+    },
+    {
+      "id": "root-pending-preview-cancel",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "A",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "A",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "B",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "B",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "C",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "C",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  1,
+                  1
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  1
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "selectedIds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "seedId": "A",
+      "move": {
+        "nodeKey": "1,1",
+        "coordinate": [
+          1,
+          1.1
+        ]
+      },
+      "expectedPath": "root",
+      "expected": {
+        "entry": true,
+        "confirm": false
+      },
+      "scenario": "pending-preview-cancel"
+    }
+  ]
+}

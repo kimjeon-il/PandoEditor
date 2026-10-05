@@ -1,0 +1,46 @@
+name: M9.7.4 actual web oracle
+
+on:
+  push:
+    branches: [codex/m97-web-editing-parity]
+    paths:
+      - '.github/workflows/m974-oracle-capture.yml'
+      - 'tools/m974-snap-boundary/**'
+      - 'tests/fixtures/web-m974/**'
+      - 'tools/m97/web-lifecycle.mjs'
+      - 'tools/m97/river/suite.mjs'
+      - 'tools/m97/river/browser/report-transfer.mjs'
+      - 'tools/m97/river/browser/package.json'
+      - 'tools/m97/river/browser/package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actual-web-workflows:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Verify source closure and capture protocol
+        run: node --test tools/m974-snap-boundary/*.test.mjs tools/m97/river-report-transfer.test.mjs
+      - name: Install pinned official browser runtime
+        run: |
+          npm ci --prefix tools/m97/river/browser --ignore-scripts --registry=https://registry.npmjs.org
+          node tools/m97/river/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Capture actual Chromium snap and shared-boundary workflows
+        run: node --max-old-space-size=512 tools/m974-snap-boundary/browser-runner.mjs evidence/snap-boundary-chromium
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m974-snap-boundary-chromium-${{ github.sha }}
+          path: evidence/snap-boundary-chromium
+          retention-days: 14
