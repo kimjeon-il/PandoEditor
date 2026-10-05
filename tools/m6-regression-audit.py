@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 REQUIRED = {
+    "m974_source_history_contract",
     "m974_snap_tests",
     "m974_snap_provider_tests",
     "m974_snap_workflow_tests",

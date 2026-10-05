@@ -1,0 +1,52 @@
+{
+  "schema": "pando-m974-source-history-input-pin",
+  "version": 1,
+  "role": "Synthetic source geometry and explicit workflow stimuli only; no browser-calculated golden values.",
+  "file": "source-history-inputs.json",
+  "bytes": 9974,
+  "sha256": "f92e085ecf8fd0da70be563746b5fbeb190eda0edffd3cac162261a4bd1a6a49",
+  "orderedCaseIds": [
+    "generic-unsynced",
+    "ready-boundary-worker-observes-deletion",
+    "pending-boundary-cancel-rebases-on-next-query",
+    "preview-stop-ready-snap-hit",
+    "stopped-worker-ignores-root-delete-undo",
+    "replacement-after-stop",
+    "settled-boundary-error-retains-history",
+    "superseded-result",
+    "split-setup-only",
+    "annex-setup-only",
+    "split-components-ready",
+    "annex-components-ready",
+    "component-timer-only-cancel",
+    "component-request-pending-cancel",
+    "annex-components-cache-hit",
+    "root-line-cut-preview",
+    "child-line-cut-preview",
+    "entity-polygon-preview",
+    "settled-success-observes-late-deletion",
+    "cancelled-ticket-skips-post-sync",
+    "root-line-cut-after-stop",
+    "entity-polygon-after-stop",
+    "annex-preview-after-stop",
+    "pending-selection-deselect-clear"
+  ],
+  "protectedFixtureSha256": {
+    "source-manifest.json": "ceb0680ac42ebff4f15b3fe1a15b4542f4fe33f611f299b45eaef46e480f981b",
+    "production-sources.json.gz": "a470960382f617d5c9f3e047b9c0db796da21ab43d15a083a75d41f0cedcea84",
+    "source-order-v2-manifest.json": "0ee25e39dba20ca32101391c7ac1a2f20427f1d27ef2542b9395004e6ac6b11a"
+  },
+  "pairedNativeCases": [
+    "no-query-retains",
+    "ready-boundary-worker-observes-deletion",
+    "pending-boundary-cancel-rebases-on-next-query",
+    "stopped-worker-ignores-root-delete-undo",
+    "settled-boundary-error-retains-history",
+    "split-setup-only",
+    "annex-setup-only",
+    "split-components-ready",
+    "annex-components-ready",
+    "component-timer-only-cancel",
+    "component-request-pending-cancel"
+  ]
+}

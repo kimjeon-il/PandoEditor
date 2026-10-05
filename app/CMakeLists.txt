@@ -831,4 +831,11 @@ if(BUILD_TESTING)
         "${PROJECT_SOURCE_DIR}/tools/m974-native-source-order.test.mjs"
         "${PROJECT_SOURCE_DIR}/tools/m974-snap-boundary/source-order-v2.test.mjs")
     set_tests_properties(m974_source_order_contract PROPERTIES TIMEOUT 120)
+    add_test(NAME m974_source_history_contract COMMAND "${M974_NODE_EXECUTABLE}" --test
+        "${PROJECT_SOURCE_DIR}/tools/m974-native-source-history.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m974-snap-boundary/source-history-runtime.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m974-snap-boundary/source-history-selection.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m974-snap-boundary/source-history-sources.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m974-snap-boundary/source-history-suite.test.mjs")
+    set_tests_properties(m974_source_history_contract PROPERTIES TIMEOUT 120)
 endif()

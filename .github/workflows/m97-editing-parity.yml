@@ -362,6 +362,7 @@ jobs:
           node --max-old-space-size=512 tools/m974-snap-boundary/browser-runner.mjs evidence/snap-boundary-chromium
           node --max-old-space-size=512 tools/m974-snap-boundary/supplemental-browser-runner.mjs evidence/supplemental-chromium
           node --max-old-space-size=512 tools/m974-snap-boundary/source-order-v2-browser-runner.mjs evidence/source-order-chromium
+          node --max-old-space-size=512 tools/m974-snap-boundary/source-history-browser-runner.mjs evidence/source-history-chromium
       - name: Compare native snap against actual Chromium
         run: |
           export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
@@ -404,6 +405,14 @@ jobs:
             --browser-directory evidence/source-order-chromium \
             --native-probe "$PWD/m974-runtime/m974_snap_order_tests" \
             --output evidence/native-source-order \
+            --expected-commit "$GITHUB_SHA" --expected-run-id "$GITHUB_RUN_ID"
+      - name: Compare mapped source-history workflows against actual Chromium
+        run: |
+          export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
+          node tools/m974-native-source-history.mjs \
+            --browser-directory evidence/source-history-chromium \
+            --native-probe "$PWD/m974-runtime/m974_snap_order_tests" \
+            --output evidence/native-source-history \
             --expected-commit "$GITHUB_SHA" --expected-run-id "$GITHUB_RUN_ID"
       - uses: actions/upload-artifact@v4
         if: always()

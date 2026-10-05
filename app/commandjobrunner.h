@@ -20,7 +20,9 @@ public:
     pandoeditor::JobTicket submit(pandoeditor::ProjectSnapshot,std::string key,Task,Completion,int priority=0);
     pandoeditor::JobTicket submitGeometry(pandoeditor::ProjectSnapshot,std::string key,GeometryTask,GeometryCompletion,int priority=0);
     void cancel(std::uint64_t id);
+    void cancelKey(const std::string& key);
     void cancelAll();
+    pandoeditor::ProjectSnapshot currentSnapshot() const;
     std::size_t runningCount() const { return scheduler_.runningCount(); }
     std::size_t queueDepth() const { return scheduler_.queueDepth(); }
 signals:

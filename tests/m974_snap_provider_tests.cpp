@@ -10,6 +10,54 @@ class M974SnapProviderTests : public QObject {
     static bool removeA(Project& p){const auto planned=CommandProcessor::planTerritorial(p,DeleteTerritorialIntent{{territorialRef("a")}});return planned.plan&&apply(p,"territorial.delete",ApplyTerritorialMutation{*planned.plan,{}});}
     static void populate(Project& p){p.replace(std::vector<Country>{{"A","A",{{{{0,0},{2,0},{2,2},{0,2},{0,0}}}},0xabcdef}});}
 private slots:
+    void stoppedWorkerDefersRebaseAndIgnoresRootPatches(){
+        Project p;pair(p);CommandJobRunner runner([&]()->const Project&{return p;});geometrysnap::Provider provider(runner);
+        provider.synchronizeInstallation(p.snapshot());QVERIFY(removeA(p));provider.synchronizeSources(p.snapshot());QVERIFY(p.undo());provider.synchronizeSources(p.snapshot());
+        const auto reordered=provider.sourceRanks();QVERIFY(reordered->at(territorialRef("b"))<reordered->at(territorialRef("a")));
+        const auto oldEpoch=provider.beginWorkerOperation(p.snapshot());provider.notifyWorkerStopped();QCOMPARE(provider.sourceRanks().get(),reordered.get());
+        const auto beforeDelete=p.snapshot();QVERIFY(removeA(p));
+        QVERIFY(!provider.requiresImmediateSynchronization(p.snapshot(),calculateChangeImpact(beforeDelete.document(),p.document())));
+        provider.synchronizeSources(p.snapshot());provider.synchronizeInstallation(p.snapshot());QCOMPARE(provider.sourceRanks().get(),reordered.get());
+        QVERIFY(p.undo());provider.synchronizeSources(p.snapshot());QCOMPARE(provider.sourceRanks().get(),reordered.get());
+        QVERIFY(!provider.completeWorkerOperation(p.snapshot(),oldEpoch));QCOMPARE(provider.sourceRanks().get(),reordered.get());
+        const auto newEpoch=provider.beginWorkerOperation(p.snapshot());QVERIFY(newEpoch!=oldEpoch);const auto rebased=provider.sourceRanks();
+        QVERIFY(rebased.get()!=reordered.get());QVERIFY(rebased->at(territorialRef("a"))<rebased->at(territorialRef("b")));
+        QVERIFY(reordered->at(territorialRef("b"))<reordered->at(territorialRef("a")));
+        QVERIFY(!provider.completeWorkerOperation(p.snapshot(),oldEpoch));QCOMPARE(provider.sourceRanks().get(),rebased.get());
+        QVERIFY(provider.completeWorkerOperation(p.snapshot(),newEpoch));QCOMPARE(provider.sourceRanks().get(),rebased.get());
+    }
+    void stoppedWorkerKeepsReadyCacheUntilGenuineRequest(){
+        Project p;pair(p);CommandJobRunner runner([&]()->const Project&{return p;});geometrysnap::Provider provider(runner);
+        provider.synchronizeSources(p.snapshot());QVERIFY(removeA(p));provider.synchronizeSources(p.snapshot());QVERIFY(p.undo());provider.synchronizeSources(p.snapshot());
+        geometrysnap::Request q;q.coordinate={.05,.05};q.margin=.2;provider.candidates(p.snapshot(),q,"draw",.1);QTRY_COMPARE(provider.status(),QString("ready"));
+        QCOMPARE(provider.candidates(p.snapshot(),q,"draw",.1).front().ownerIds.front(),std::string("b"));const auto reordered=provider.sourceRanks();
+        const auto submitted=provider.submittedCount();const auto diagnostics=provider.diagnostics();provider.notifyWorkerStopped();
+        for(int i=0;i<50;++i){QCOMPARE(provider.status(),QString("ready"));QCOMPARE(provider.candidates(p.snapshot(),q,"draw",.1).front().ownerIds.front(),std::string("b"));QCOMPARE(provider.sourceRanks().get(),reordered.get());}
+        QCOMPARE(provider.submittedCount(),submitted);QCOMPARE(provider.diagnostics().geometryIndexBuilds,diagnostics.geometryIndexBuilds);QCOMPARE(provider.diagnostics().segmentEntriesExamined,diagnostics.segmentEntriesExamined);
+        q.coordinate={.15,.05};QVERIFY(provider.candidates(p.snapshot(),q,"draw",.1).empty());QTRY_COMPARE(provider.status(),QString("ready"));
+        QCOMPARE(provider.submittedCount(),submitted+1);QCOMPARE(provider.candidates(p.snapshot(),q,"draw",.1).front().ownerIds.front(),std::string("a"));
+        QVERIFY(provider.sourceRanks().get()!=reordered.get());QCOMPARE(provider.diagnostics().geometryIndexBuilds,std::size_t(0));
+    }
+    void stoppedPendingSnapCannotInstallAndReplacementOverridesStop(){
+        Project p;pair(p);CommandJobRunner runner([&]()->const Project&{return p;});geometrysnap::Provider provider(runner);
+        const auto oldSnapshot=p.snapshot();const auto oldEpoch=provider.beginWorkerOperation(oldSnapshot);const auto oldRanks=provider.sourceRanks();
+        geometrysnap::Request q;q.coordinate={.05,.05};q.margin=.2;provider.candidates(p.snapshot(),q,"draw",.1);QCOMPARE(provider.status(),QString("pending"));
+        provider.notifyWorkerStopped();QCOMPARE(provider.status(),QString("empty"));QCOMPARE(provider.sourceRanks().get(),oldRanks.get());
+        QVERIFY(removeA(p));provider.synchronizeSources(p.snapshot());QCOMPARE(provider.sourceRanks().get(),oldRanks.get());
+        pair(p);provider.synchronizeInstallation(p.snapshot());const auto replacement=provider.sourceRanks();QVERIFY(replacement.get()!=oldRanks.get());
+        QVERIFY(!provider.completeWorkerOperation(oldSnapshot,oldEpoch));QCOMPARE(provider.sourceRanks().get(),replacement.get());
+        const auto before=p.snapshot();QVERIFY(removeA(p));QVERIFY(provider.requiresImmediateSynchronization(p.snapshot(),calculateChangeImpact(before.document(),p.document())));
+        provider.synchronizeSources(p.snapshot());QCOMPARE(provider.sourceRanks()->count(territorialRef("a")),std::size_t(0));QVERIFY(p.undo());provider.synchronizeSources(p.snapshot());
+        provider.candidates(p.snapshot(),q,"draw",.1);QTRY_COMPARE(provider.status(),QString("ready"));QCOMPARE(provider.candidates(p.snapshot(),q,"draw",.1).front().ownerIds.front(),std::string("b"));
+    }
+    void fulfilledOperationObservesCurrentSourcesWithoutAdoptingOldRanks(){
+        Project p;pair(p);CommandJobRunner runner([&]()->const Project&{return p;});geometrysnap::Provider provider(runner);
+        const auto initial=p.snapshot();const auto epoch=provider.beginWorkerOperation(initial);const auto oldRanks=provider.sourceRanks();QVERIFY(removeA(p));
+        QVERIFY(provider.completeWorkerOperation(p.snapshot(),epoch));const auto removed=provider.sourceRanks();QCOMPARE(removed->count(territorialRef("a")),std::size_t(0));QVERIFY(oldRanks->count(territorialRef("a")));
+        QVERIFY(!provider.completeWorkerOperation(initial,epoch));QCOMPARE(provider.sourceRanks().get(),removed.get());
+        QVERIFY(p.undo());QVERIFY(provider.completeWorkerOperation(p.snapshot(),epoch));const auto restored=provider.sourceRanks();QVERIFY(restored->at(territorialRef("b"))<restored->at(territorialRef("a")));
+        QVERIFY(p.renameCountry("a","Renamed"));QVERIFY(provider.completeWorkerOperation(p.snapshot(),epoch));QCOMPARE(provider.sourceRanks().get(),restored.get());
+    }
     void installationDefersGenericTransitionsUntilQueryOrRootGeometrySync(){
         ProjectDocument document(std::vector<Country>{{"root","root",square(10).polygons,0xabcdef}},{{"countries","Countries"}});
         for(const auto id:{"ga","gb"}){GenericFeature f;f.id=id;f.geometry={id,1};document.geometries.insert(f.geometry,square());document.genericFeatures.push_back(f);}

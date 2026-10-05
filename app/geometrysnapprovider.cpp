@@ -20,11 +20,31 @@ bool currentRootGeneral(const pandoeditor::ProjectSnapshot& snapshot,const pando
 }
 Provider::Provider(CommandJobRunner& runner,QObject* parent)
     :QObject(parent),runner_(&runner),index_(std::make_shared<Index>()) {}
+void Provider::notifyWorkerStopped() {
+    if(QThread::currentThread()!=thread())throw std::logic_error("snap source ordering is owner-thread only");
+    workerStopped_=true;++workerEpoch_;++epoch_;
+    if(status_=="pending") {
+        key_.clear();candidates_.clear();diagnostics_={};status_="empty";
+        if(job_){const auto id=job_->id();job_.reset();if(runner_)runner_->cancel(id);}
+    }
+}
+std::uint64_t Provider::beginWorkerOperation(const pandoeditor::ProjectSnapshot& snapshot) {
+    if(QThread::currentThread()!=thread())throw std::logic_error("snap source ordering is owner-thread only");
+    updateSourceRanks(snapshot,workerStopped_);workerStopped_=false;return workerEpoch_;
+}
+bool Provider::completeWorkerOperation(const pandoeditor::ProjectSnapshot& snapshot,std::uint64_t lifecycleEpoch) {
+    if(QThread::currentThread()!=thread())throw std::logic_error("snap source ordering is owner-thread only");
+    if(workerStopped_||lifecycleEpoch!=workerEpoch_||ranksInstance_!=snapshot.instanceId()||snapshot.revision()<ranksRevision_)return false;
+    synchronizeSources(snapshot);return true;
+}
 void Provider::synchronizeInstallation(const pandoeditor::ProjectSnapshot& snapshot) {
     if(QThread::currentThread()!=thread())throw std::logic_error("snap source ordering is owner-thread only");
-    if(!sourceRanks_||ranksInstance_!=snapshot.instanceId())synchronizeSources(snapshot);
+    if(!sourceRanks_||ranksInstance_!=snapshot.instanceId()) {
+        updateSourceRanks(snapshot,true);workerStopped_=false;
+    }
 }
 bool Provider::requiresImmediateSynchronization(const pandoeditor::ProjectSnapshot& snapshot,const pandoeditor::ChangeImpact& impact) const {
+    if(workerStopped_)return false;
     // Pinned app-object-commands / app-project-snapshots only immediately send
     // syncPatch for root-general membership or geometry changes. Generic-only
     // and child-only transitions wait until the next actual Worker request.
@@ -36,8 +56,12 @@ bool Provider::requiresImmediateSynchronization(const pandoeditor::ProjectSnapsh
 }
 void Provider::synchronizeSources(const pandoeditor::ProjectSnapshot& snapshot) {
     if(QThread::currentThread()!=thread())throw std::logic_error("snap source ordering is owner-thread only");
-    const bool replace=!sourceRanks_||ranksInstance_!=snapshot.instanceId();
-    if(!replace&&snapshot.revision()<ranksRevision_)throw std::invalid_argument("stale snap source-order transition");
+    if(!workerStopped_)updateSourceRanks(snapshot);
+}
+void Provider::updateSourceRanks(const pandoeditor::ProjectSnapshot& snapshot,bool rebase) {
+    const bool installation=!sourceRanks_||ranksInstance_!=snapshot.instanceId();
+    const bool replace=installation||rebase;
+    if(!installation&&snapshot.revision()<ranksRevision_)throw std::invalid_argument("stale snap source-order transition");
     if(!replace&&snapshot.revision()==ranksRevision_)return;
     std::vector<pandoeditor::ObjectRef> ordered;
     std::set<std::string> roots;
@@ -59,10 +83,11 @@ void Provider::synchronizeSources(const pandoeditor::ProjectSnapshot& snapshot) 
         next->emplace(ref,sequence++);
     }
     auto instance=snapshot.instanceId();
-    const bool replacingExisting=sourceRanks_&&replace;
+    const bool replacingExisting=sourceRanks_&&installation;
     sourceRanks_=std::move(next);ranksInstance_.swap(instance);
     rootGeneralIds_.swap(roots);
     ranksRevision_=snapshot.revision();nextSourceRank_=sequence;
+    if(replace)++workerEpoch_;
     if(replacingExisting)reset();
 }
 Provider::~Provider() {++epoch_;if(job_&&runner_)runner_->cancel(job_->id());}
@@ -76,7 +101,6 @@ void Provider::reset() {
 }
 const std::vector<Candidate>& Provider::candidates(const pandoeditor::ProjectSnapshot& snapshot,
     const Request& request,const QString& tool,double baseMargin,std::uint64_t sourceEpoch) {
-    synchronizeSources(snapshot);
     if(!std::isfinite(baseMargin)||baseMargin<=0||!std::isfinite(request.coordinate.x)||!std::isfinite(request.coordinate.y)) {
         reset();return candidates_;
     }
@@ -89,6 +113,8 @@ const std::vector<Candidate>& Provider::candidates(const pandoeditor::ProjectSna
         <<QString::number(std::floor(request.coordinate.y/baseMargin),'g',17);
     const auto key=parts.join(':');
     if(key==key_)return candidates_;
+    // A READY cache hit above neither prepares a stopped Worker nor rebases it.
+    const auto workerEpoch=beginWorkerOperation(snapshot);
     key_=key;candidates_.clear();diagnostics_={};status_="pending";const auto epoch=++epoch_;
     auto capturedRequest=request;
     capturedRequest.sourceRanks=sourceRanks_;
@@ -101,11 +127,13 @@ const std::vector<Candidate>& Provider::candidates(const pandoeditor::ProjectSna
         auto result=index->prepareAndCollect(current,request);
         if(token.cancelled())return {};
         return result;
-    },[self,epoch](std::uint64_t,pandoeditor::JobDisposition disposition,GeometryJobResult result){
-        if(!self||self->epoch_!=epoch)return;
+    },[self,epoch,workerEpoch](std::uint64_t,pandoeditor::JobDisposition disposition,GeometryJobResult result){
+        if(!self||self->epoch_!=epoch||self->workerEpoch_!=workerEpoch||self->workerStopped_)return;
         self->job_.reset();
         if(disposition==pandoeditor::JobDisposition::Accepted)if(auto ready=std::get_if<CandidateBatch>(&result)) {
-            self->candidates_=std::move(ready->candidates);self->diagnostics_=ready->diagnostics;self->status_="ready";return;
+            if(self->runner_&&self->completeWorkerOperation(self->runner_->currentSnapshot(),workerEpoch)) {
+                self->candidates_=std::move(ready->candidates);self->diagnostics_=ready->diagnostics;self->status_="ready";return;
+            }
         }
         // Current errors are retryable; stale completion cannot clear a newer entry.
         self->key_.clear();self->candidates_.clear();self->status_="empty";

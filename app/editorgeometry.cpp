@@ -1,4 +1,5 @@
 #include "editorcontroller.h"
+#include "geometrysnapprovider.h"
 #include "retainedreferencerewriter.h"
 #include "territorialgeometry.h"
 #include "geometrycalculator.h"
@@ -449,6 +450,10 @@ bool EditorController::confirmGeometryEdit()
 
 void EditorController::cancelGeometryEdit()
 {
+    // A pending boundary request stops the shared web Worker; a READY or
+    // settled error cancellation does not. Rebase is deferred until a request.
+    if(geometryEdit_&&geometryEdit_->tool=="boundary"&&geometryEdit_->boundaryStatus=="preparing"&&snapProvider_)
+        snapProvider_->notifyWorkerStopped();
     resetGeometrySnap();
     if(!geometryEdit_)return;
     const auto boundaryInitialSelection=geometryEdit_->boundaryInitialSelection;

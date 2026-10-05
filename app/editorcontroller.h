@@ -712,6 +712,11 @@ private:
         std::uint64_t generation=0, computationEpoch=0, previewEpoch=0;
         std::uint64_t previewSelectionRevision=0;
         bool selectionPending=false, previewPending=false, applying=false;
+        // Web component preparation exists only after method activation, not
+        // the native setup precomputation. These are request lifecycle facts,
+        // not another geometry cache or source-history ledger.
+        bool territoryComponentSourcePrepared=false;
+        std::uint64_t territoryWorkerRequests=0;
         struct RiverPreparation {
             std::uint64_t epoch=0, revision=0;
             QString sourceChoice;
@@ -751,7 +756,7 @@ private:
     bool promotePhysicalAsset(const QString& path);
     void scheduleTerritorySelection(bool requestPreview=true);
     void scheduleTerritoryPreview();
-    void cancelTerritoryCalculation(bool discardPreview=true);
+    void cancelTerritoryCalculation(bool discardPreview=true, bool stopWorker=true);
     bool toggleTerritorySource(const pandoeditor::ObjectRef&,bool confirmed=false);
     bool advanceTerritoryStage();
     bool backTerritoryStage();

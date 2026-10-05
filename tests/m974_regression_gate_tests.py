@@ -11,6 +11,7 @@ SPEC = importlib.util.spec_from_file_location("regression_audit", ROOT / "tools/
 AUDIT = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(AUDIT)
 STAGE4 = {
+    "m974_source_history_contract",
     "m974_snap_tests", "m974_snap_provider_tests", "m974_snap_workflow_tests",
     "m974_snap_ui_tests", "m974_snap_provider_probe_contract",
     "m974_boundary_session_tests", "m974_boundary_hierarchy_tests", "m974_boundary_ui_tests",

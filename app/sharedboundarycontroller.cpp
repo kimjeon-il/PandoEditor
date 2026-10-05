@@ -51,14 +51,15 @@ bool EditorController::boundaryGeometryReady() const {
 void EditorController::prepareBoundaryGeometry(){
     if(!geometryEdit_||geometryEdit_->tool!="boundary")return;
     // The pinned Worker client synchronizes edit sources before boundary-prepare.
-    if(snapProvider_)snapProvider_->synchronizeSources(project_.snapshot());
+    const auto sourceEpoch=snapProvider_?snapProvider_->beginWorkerOperation(project_.snapshot()):0;
     auto& edit=*geometryEdit_;if(edit.boundaryCancelled)edit.boundaryCancelled->store(true);
     edit.boundaryCancelled=std::make_shared<std::atomic_bool>(false);edit.boundarySession.reset();edit.boundaryStatus="preparing";edit.error.clear();edit.vertex=-1;
     const auto cancelled=edit.boundaryCancelled;const auto base=edit.base;const auto owners=edit.boundaryOwners;const auto autoSeed=edit.boundaryAutoSeed;const auto generation=edit.generation;const auto epoch=++edit.computationEpoch;
     auto* watcher=new QFutureWatcher<std::shared_ptr<sharedboundary::Session>>(this);
-    connect(watcher,&QFutureWatcherBase::finished,this,[this,watcher,cancelled,generation,epoch]{
+    connect(watcher,&QFutureWatcherBase::finished,this,[this,watcher,cancelled,generation,epoch,sourceEpoch]{
         auto result=watcher->result();watcher->deleteLater();if(cancelled->load()||!geometryEdit_||geometryEdit_->tool!="boundary"||geometryEdit_->generation!=generation||geometryEdit_->computationEpoch!=epoch)return;
-        auto& current=*geometryEdit_;if(!current.base.matches(project_)||current.boundarySelectionRevision!=selection_.revision()){current.boundaryStatus="error";current.error="BOUNDARY_STALE_PREPARATION";}
+        const bool sourcesCurrent=!snapProvider_||snapProvider_->completeWorkerOperation(project_.snapshot(),sourceEpoch);
+        auto& current=*geometryEdit_;if(!sourcesCurrent||!current.base.matches(project_)||current.boundarySelectionRevision!=selection_.revision()){current.boundaryStatus="error";current.error="BOUNDARY_STALE_PREPARATION";}
         else if(!result||!result->valid()){current.boundaryStatus="error";current.error=result?QString::fromStdString(result->error()):QStringLiteral("BOUNDARY_PREPARATION_FAILED");}
         else{current.boundaryOwners.clear();for(const auto& [id,geometry]:result->drafts())current.boundaryOwners.push_back(territorialRef(id));current.boundarySession=std::move(result);current.boundaryStatus="ready";current.error.clear();}
         emit geometryEditChanged();

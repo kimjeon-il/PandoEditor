@@ -17,6 +17,11 @@ public:
     const std::vector<Candidate>& candidates(const pandoeditor::ProjectSnapshot&,
         const Request&,const QString& tool,double baseMargin,std::uint64_t sourceEpoch=0);
     void reset();
+    // The shared edit Worker stops independently of its READY snap cache.
+    // Only a genuine subsequent execute observes/rebases current source rows.
+    void notifyWorkerStopped();
+    std::uint64_t beginWorkerOperation(const pandoeditor::ProjectSnapshot&);
+    bool completeWorkerOperation(const pandoeditor::ProjectSnapshot&,std::uint64_t lifecycleEpoch);
     // Synchronize at an actual Worker query or a root-country sync-patch event.
     // Unchanged revisions are O(1); content-only updates retain map identity.
     void synchronizeSources(const pandoeditor::ProjectSnapshot&);
@@ -31,6 +36,7 @@ public:
     const Diagnostics& diagnostics() const {return diagnostics_;}
     std::uint64_t submittedCount() const {return submitted_;}
 private:
+    void updateSourceRanks(const pandoeditor::ProjectSnapshot&,bool rebase=false);
     QPointer<CommandJobRunner> runner_;
     std::shared_ptr<Index> index_;
     std::optional<pandoeditor::JobTicket> job_;
@@ -46,5 +52,7 @@ private:
     std::set<std::string> rootGeneralIds_;
     std::string ranksInstance_;
     std::uint64_t ranksRevision_=0,nextSourceRank_=0;
+    std::uint64_t workerEpoch_=0;
+    bool workerStopped_=false;
 };
 }

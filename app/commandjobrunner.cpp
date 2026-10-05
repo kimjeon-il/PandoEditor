@@ -107,6 +107,17 @@ void CommandJobRunner::cancelAll()
     scheduler_.cancelAll(); QPointer<CommandJobRunner> guard(this); flushStopped();
     if(guard) emit changed();
 }
+void CommandJobRunner::cancelKey(const std::string& key)
+{
+    Q_ASSERT(QThread::currentThread()==thread());
+    scheduler_.cancelKey(key); QPointer<CommandJobRunner> guard(this); flushStopped();
+    if(guard) emit changed();
+}
+pandoeditor::ProjectSnapshot CommandJobRunner::currentSnapshot() const
+{
+    Q_ASSERT(QThread::currentThread()==thread());
+    return current_().snapshot();
+}
 void CommandJobRunner::pump()
 {
     Q_ASSERT(QThread::currentThread()==thread());
