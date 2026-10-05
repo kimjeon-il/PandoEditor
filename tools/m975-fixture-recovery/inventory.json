@@ -1,0 +1,183 @@
+{
+  "schema": "m975-external-regression-fixture-recovery",
+  "version": 1,
+  "readOnlyInventory": true,
+  "repositoryBaseline": "bdf5f979e262b6dd61e705c233f562a27264c6c1",
+  "pins": {
+    "fullHydroAndHistorical": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+    "originalFullCountries": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47"
+  },
+  "fileCount": 11,
+  "totalBytes": 30878542,
+  "files": [
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/historical-library-pilot.json",
+      "artifactPath": "full-hydro-web/assets/data/historical-library-pilot.json",
+      "bytes": 5633993,
+      "gitBlobSha1": "94ef368befa665b4ed61892622a71ffa6520457f",
+      "sha256": null,
+      "sha256Source": "No pre-existing SHA256 found; verify exact Git blob SHA1 and byte length, then compute SHA256 in retrieval artifact.",
+      "connectorBase64Candidate": false,
+      "required": true,
+      "mode": "100644"
+    },
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/hydro/v0.13.0/index.bin.gz",
+      "artifactPath": "full-hydro-web/assets/data/hydro/v0.13.0/index.bin.gz",
+      "bytes": 32632,
+      "gitBlobSha1": "c9113f4e6b22d652799c64f8e09cd6b900df4624",
+      "sha256": "a68aff611d2be202dbf31ef1fbce476386e1d49b1619b68e9219279be7896906",
+      "sha256Source": "pinned upstream hydro manifest",
+      "connectorBase64Candidate": true,
+      "required": true,
+      "mode": "100644"
+    },
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/hydro/v0.13.0/manifest.json",
+      "artifactPath": "full-hydro-web/assets/data/hydro/v0.13.0/manifest.json",
+      "bytes": 52920,
+      "gitBlobSha1": "38aa4775c9f3cf4cee2d1c658f8e8ec494f65807",
+      "sha256": "396f3ba3bdeef2620fd562c8bc573d40af82533976856418393e9e65ae53ef36",
+      "sha256Source": "tracked web-m972-river/manifest.json; freshly retrieved bytes verified",
+      "connectorBase64Candidate": true,
+      "required": true,
+      "mode": "100644"
+    },
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/hydro/v0.13.0/metadata-core.json.gz",
+      "artifactPath": "full-hydro-web/assets/data/hydro/v0.13.0/metadata-core.json.gz",
+      "bytes": 748376,
+      "gitBlobSha1": "3aae794f14b0b3500b99eb1edacfbde5113f0277",
+      "sha256": "796ab937222bfa4d123d6fda210f9e96bb90ce9e251c73274dcb0342decc1828",
+      "sha256Source": "pinned upstream hydro manifest",
+      "connectorBase64Candidate": true,
+      "required": true,
+      "mode": "100644"
+    },
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/hydro/v0.13.0/metadata-detail.json.gz",
+      "artifactPath": "full-hydro-web/assets/data/hydro/v0.13.0/metadata-detail.json.gz",
+      "bytes": 1670972,
+      "gitBlobSha1": "b00fa5d7414582f8021446e286e36bed517a166f",
+      "sha256": "1416c6932976427e9cb8140f171f4ccb54704111bce49fb8b8260819ce54b2bd",
+      "sha256Source": "pinned upstream hydro manifest",
+      "connectorBase64Candidate": false,
+      "required": true,
+      "mode": "100644"
+    },
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/hydro/v0.13.0/shards/s0.bin",
+      "artifactPath": "full-hydro-web/assets/data/hydro/v0.13.0/shards/s0.bin",
+      "bytes": 4169624,
+      "gitBlobSha1": "65e3556a787b094cd83626f550072301c0bb9713",
+      "sha256": "1ae657ac378ae4fb441425a8ce52c38348541717b363b3a8189d3bd7249702a8",
+      "sha256Source": "pinned upstream hydro manifest",
+      "connectorBase64Candidate": false,
+      "required": true,
+      "mode": "100644"
+    },
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/hydro/v0.13.0/shards/s1.bin",
+      "artifactPath": "full-hydro-web/assets/data/hydro/v0.13.0/shards/s1.bin",
+      "bytes": 4186759,
+      "gitBlobSha1": "3887f4d1b905a8ea0574d67966a1a6bb62a32e43",
+      "sha256": "76eb0b3392eb3376d344ebce4cbfdda05de6fee437d25ce5ee7f98e603a28fbf",
+      "sha256Source": "pinned upstream hydro manifest",
+      "connectorBase64Candidate": false,
+      "required": true,
+      "mode": "100644"
+    },
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/hydro/v0.13.0/shards/s2.bin",
+      "artifactPath": "full-hydro-web/assets/data/hydro/v0.13.0/shards/s2.bin",
+      "bytes": 1184508,
+      "gitBlobSha1": "768ac3dce1244e30cdd63c75f6aee4b98caea770",
+      "sha256": "f3b651e7a5a1503532701222f3deee658df03757076cd73b62994637fb63e15e",
+      "sha256Source": "pinned upstream hydro manifest",
+      "connectorBase64Candidate": false,
+      "required": true,
+      "mode": "100644"
+    },
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/hydro/v0.13.1/manifest.json",
+      "artifactPath": "full-hydro-web/assets/data/hydro/v0.13.1/manifest.json",
+      "bytes": 52975,
+      "gitBlobSha1": "67c648a207f4b26d69f0a86243e88c54b9241a2e",
+      "sha256": "427f7ec841b977034acc3e6509e9202397549aa4bcbf536e03a9808f702be203",
+      "sha256Source": "tracked web-m972-river/manifest.json; freshly retrieved bytes verified",
+      "connectorBase64Candidate": true,
+      "required": true,
+      "mode": "100644"
+    },
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/hydro/v0.13.1/metadata-core.json.gz",
+      "artifactPath": "full-hydro-web/assets/data/hydro/v0.13.1/metadata-core.json.gz",
+      "bytes": 730000,
+      "gitBlobSha1": "115e4c89b4aad42030b45398dac6e00ac8a41105",
+      "sha256": "5d1b1ad8d04ee405d313fc394033560fca8ee086de46f47998feb07f963f065b",
+      "sha256Source": "pinned upstream hydro manifest",
+      "connectorBase64Candidate": true,
+      "required": true,
+      "mode": "100644"
+    },
+    {
+      "repository": "kimjeon-il/Pando",
+      "commit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+      "path": "assets/data/countries-ne-5.1.1.geojson",
+      "artifactPath": "river-country-web/assets/data/countries-ne-5.1.1.geojson",
+      "bytes": 12415783,
+      "gitBlobSha1": "563cb4b45da28eb9367abf23bf111b1636b85c97",
+      "sha256": "6d29c349478cb2a7899573544ba580da70bd902c12ee86a4a93662ca6e94ad72",
+      "sha256Source": "tracked tests/fixtures/web-m972-river/manifest.json countrySource",
+      "connectorBase64Candidate": false,
+      "required": true,
+      "mode": "100644"
+    }
+  ],
+  "environment": {
+    "PANDOEDITOR_HYDRO_FULL_MANIFEST": "<artifact-root>/full-hydro-web/assets/data/hydro/v0.13.1/manifest.json",
+    "PANDOEDITOR_HISTORICAL_FULL_PILOT": "<artifact-root>/full-hydro-web/assets/data/historical-library-pilot.json",
+    "PANDOEDITOR_RIVER_COUNTRIES": "<artifact-root>/river-country-web/assets/data/countries-ne-5.1.1.geojson"
+  },
+  "retrievedLocally": [
+    {
+      "path": "upstream-manifests/v0.13.0.json",
+      "bytes": 52920,
+      "sha256": "396f3ba3bdeef2620fd562c8bc573d40af82533976856418393e9e65ae53ef36"
+    },
+    {
+      "path": "upstream-manifests/v0.13.1.json",
+      "bytes": 52975,
+      "sha256": "427f7ec841b977034acc3e6509e9202397549aa4bcbf536e03a9808f702be203"
+    }
+  ],
+  "sourceMetadata": "Read-only GitHub contents directory listings at exact pins; hydro manifest raw bytes freshly fetched and SHA256-checked against existing tracked pins.",
+  "cautions": [
+    "Bundled assets/historical/historical-library-pilot.json has 25 entities but is 344874 bytes/blob 7494c146b597a58fbbc51a550a8d4b9281c18997, not the full upstream file.",
+    "Tracked tests/fixtures/web-hydro is a generated miniature (5 tiles, 5 logical objects, 6 physical records), not the full source (953 tiles, 5173 logical objects, 16548 records).",
+    "Tracked countries.json is only SRB/HRV/MDA. World-rendering/countries.geojson is a separate 13-country subset. Neither replaces the pinned original full-country bytes.",
+    "Do not replace original 53db country bytes with c0bd country bytes: same path, different blob and length (12415840 at c0bd versus 12415783 required).",
+    "Historical pilot SHA256 is deliberately null until exact pinned blob is retrieved; do not invent or use the bundled asset hash.",
+    "A connector base64 candidate is classified by raw size <1000000 bytes; base64 expansion and tool response limits can still matter. The approved bounded artifact should include all 11 files for one authenticated closure."
+  ]
+}
