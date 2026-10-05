@@ -59,14 +59,42 @@ private slots:
     EditorController editor(EditorControllerConfig{false,dir.filePath("private.json")});
     QVERIFY(editor.openFile(QUrl::fromLocalFile(input)));editor.selectCountry("A");editor.setColor("#123456");
     QVERIFY(editor.saveFile(QUrl::fromLocalFile(saved)));QCOMPARE(QJsonDocument::fromJson(read(saved)).object()["version"].toInt(),9);
-    editor.setColor("#654321");editor.setColor("#abcdef");editor.undo();QVERIFY(editor.canUndo());QVERIFY(editor.canRedo());QVERIFY(editor.dirty());
+    editor.setColor("#654321");const auto previous=editor.documentBytes();editor.setColor("#abcdef");const auto future=editor.documentBytes();editor.undo();QVERIFY(editor.canUndo());QVERIFY(editor.canRedo());QVERIFY(editor.dirty());
     const auto bytes=editor.documentBytes();const auto selection=editor.primaryObject();const auto paths=editor.paths();
+    QCOMPARE(bytes,previous);const auto instance=editor.projectInstanceId();const auto documentId=editor.documentId();
+    const auto scene=editor.renderQuality();
+    const auto unchanged=[&]{
+        QCOMPARE(editor.documentBytes(),bytes);QCOMPARE(editor.primaryObject(),selection);QCOMPARE(editor.paths(),paths);
+        QCOMPARE(editor.projectInstanceId(),instance);QCOMPARE(editor.documentId(),documentId);
+        QVERIFY(editor.canUndo());QVERIFY(editor.canRedo());QVERIFY(editor.dirty());
+        const auto after=editor.renderQuality();
+        for(const auto* key:{"scenePublicationCount","scenePatchCount","sceneFullBuildCount","scenePreparationCount","viewportResourceGeneration"})
+            QCOMPARE(after.value(key),scene.value(key));
+    };
     const auto rejected=dir.filePath("rejected.json");Project complex;complex.replace(fixture("complex"));write(rejected,projectcodec::encode(complex));
-    QVERIFY(!editor.openFile(QUrl::fromLocalFile(rejected)));QCOMPARE(editor.documentBytes(),bytes);QCOMPARE(editor.primaryObject(),selection);QCOMPARE(editor.paths(),paths);QVERIFY(editor.canUndo());QVERIFY(editor.canRedo());QVERIFY(editor.dirty());
+    QVERIFY(!editor.openFile(QUrl::fromLocalFile(rejected)));unchanged();
     auto invalid=QJsonDocument::fromJson(bytes).object();invalid["geometries"]=QJsonArray{};write(rejected,QJsonDocument(invalid).toJson());
-    QVERIFY(!editor.openFile(QUrl::fromLocalFile(rejected)));QCOMPARE(editor.documentBytes(),bytes);QCOMPARE(editor.primaryObject(),selection);QVERIFY(editor.canUndo());QVERIFY(editor.canRedo());QVERIFY(editor.dirty());
+    QVERIFY(!editor.openFile(QUrl::fromLocalFile(rejected)));unchanged();
+    editor.redo();QCOMPARE(editor.documentBytes(),future);editor.undo();QCOMPARE(editor.documentBytes(),bytes);
     QVERIFY(editor.save());QCOMPARE(read(saved),bytes);QCOMPARE(read(input),projectcodec::encode(source));
     EditorController reopened(EditorControllerConfig{false,dir.filePath("private-2.json")});QVERIFY(reopened.openFile(QUrl::fromLocalFile(saved)));QCOMPARE(reopened.documentBytes(),bytes);
+ }
+ void privateRestoreFailurePreservesActiveState() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());const auto privatePath=dir.filePath("private.json"),input=dir.filePath("input.json");
+    Project source;source.replace(fixture("static"));write(input,projectcodec::encode(source));
+    EditorController editor(EditorControllerConfig{true,privatePath});QVERIFY(editor.openFile(QUrl::fromLocalFile(input)));
+    editor.selectCountry("A");editor.setColor("#123456");editor.setColor("#654321");const auto future=editor.documentBytes();editor.undo();
+    const auto bytes=editor.documentBytes();const auto selection=editor.primaryObject();const auto paths=editor.paths();
+    const auto instance=editor.projectInstanceId();const auto scene=editor.renderQuality();
+    Project complex;complex.replace(fixture("complex"));
+    auto invalid=QJsonDocument::fromJson(bytes).object();invalid["geometries"]=QJsonArray{};
+    for(const auto& rejected:{projectcodec::encode(complex),QJsonDocument(invalid).toJson()}) {
+        write(privatePath,rejected);QVERIFY(!editor.restorePrivateProject());
+        QCOMPARE(read(privatePath),rejected);QCOMPARE(editor.documentBytes(),bytes);QCOMPARE(editor.primaryObject(),selection);
+        QCOMPARE(editor.paths(),paths);QCOMPARE(editor.projectInstanceId(),instance);QVERIFY(editor.dirty());QVERIFY(editor.canUndo());QVERIFY(editor.canRedo());
+        const auto after=editor.renderQuality();for(const auto* key:{"scenePublicationCount","scenePreparationCount","viewportResourceGeneration"})QCOMPARE(after.value(key),scene.value(key));
+    }
+    editor.redo();QCOMPARE(editor.documentBytes(),future);editor.undo();QCOMPARE(editor.documentBytes(),bytes);
  }
  void realNativeAndWebGeoPackageArchives() {
     QTemporaryDir dir;QVERIFY(dir.isValid());

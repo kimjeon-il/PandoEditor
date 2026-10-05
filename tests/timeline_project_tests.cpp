@@ -1,7 +1,9 @@
 #include "projectcodec.h"
 #include "webimport.h"
 #include "losslessjson.h"
+#include "projectgeopackage.h"
 #include <pandoeditor/project.h>
+#include <pandoeditor/timeline-records.h>
 #include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
@@ -33,8 +35,65 @@ static QByteArray fileRoundTrip(const QByteArray& bytes,const QString& name) {
     if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("file reopen");return file.readAll();
 }
 
+static int intervalErrors() {
+    QFile file(QStringLiteral(PANDOEDITOR_TIMELINE_PROJECT_FIXTURES));
+    if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("interval fixture read");
+    const auto web=QJsonDocument::fromJson(file.readAll()).array().first().toObject()["project"].toObject();
+    pandoeditor::Project project;project.replace(projectcodec::decodeWeb(QJsonDocument(web).toJson()));
+    const auto native=QJsonDocument::fromJson(projectcodec::encode(project)).object();
+    int processed=0,failures=0;
+    for(bool nativeFormat:{false,true})for(const auto* slot:{"lifetimes","geometryBindings","parentRelations"})
+        for(const auto* endpoint:{"validFrom","validTo"})for(const auto* value:{"0000-02","1900-02-29"}) {
+            auto input=nativeFormat?native:web;auto records=input["timelineRecords"].toObject();
+            auto rows=records[slot].toArray();auto row=rows.first().toObject();row[endpoint]=value;rows[0]=row;
+            records[slot]=rows;input["timelineRecords"]=records;++processed;
+            try {
+                const auto bytes=QJsonDocument(input).toJson();
+                if(nativeFormat)(void)projectcodec::decode(bytes);else (void)projectcodec::decodeWeb(bytes);
+                ++failures;std::cerr<<"FAIL interval accepted "<<slot<<' '<<endpoint<<' '<<value<<'\n';
+            } catch(const pandoeditor::TimelineError& error) {
+                if(error.code!="TIMELINE_INTERVAL"){++failures;std::cerr<<"FAIL interval category "<<error.what()<<'\n';}
+            } catch(const std::exception& error) {
+                ++failures;std::cerr<<"FAIL premature date parser "<<error.what()<<'\n';
+            }
+        }
+    if(processed!=24)throw std::runtime_error("missing interval error cases");
+    std::cout<<processed<<" native/web file interval cases, "<<failures<<" failures, 0 skipped\n";
+    return failures;
+}
+
+// Expose each production file boundary for the independent fixed-web checker.
+// No test normalization or alternate codec is used to create these files.
+static int traceFile(const char* kind,const char* inputPath,const char* outputPath) {
+    try {
+        const auto directory=QString::fromLocal8Bit(outputPath);
+        if(QDir(directory).exists()||!QDir().mkpath(directory))throw std::runtime_error("trace directory must be fresh");
+        const auto read=[](const QString& path){QFile file(path);if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("trace read");return file.readAll();};
+        const auto write=[&](const char* name,const QByteArray& bytes){QFile file(QDir(directory).filePath(name));if(!file.open(QIODevice::WriteOnly)||file.write(bytes)!=bytes.size())throw std::runtime_error("trace write");};
+        const auto bytes=read(QString::fromLocal8Bit(inputPath));
+        pandoeditor::Project project;
+        if(std::string(kind)=="web")project.replace(webimport::prepare(bytes).document);
+        else if(std::string(kind)=="native")project.replace(projectcodec::decode(bytes));
+        else if(std::string(kind)=="gpkg")project.replace(projectcodec::decode(pandoeditor::readProjectGeoPackage(QString::fromLocal8Bit(inputPath))));
+        else throw std::runtime_error("trace kind must be web/native/gpkg");
+        try{pandoeditor::requireStaticTimeline(project.document());write("activation.json","{\"result\":\"OK\"}");}
+        catch(const pandoeditor::TimelineError& error){if(error.code!="TIMELINE_ACTIVATION")throw;write("activation.json","{\"result\":\"TIMELINE_ACTIVATION\"}");}
+        write("read.web.json",projectcodec::encodeWeb(project.snapshot()));
+        write("saved.native.json",projectcodec::encode(project.snapshot()));
+        pandoeditor::Project reopened;reopened.replace(projectcodec::decode(read(QDir(directory).filePath("saved.native.json"))));
+        write("reopened.web.json",projectcodec::encodeWeb(reopened.snapshot()));
+        write("saved.native.gpkg",pandoeditor::exportProjectGeoPackage(project));
+        pandoeditor::Project package;package.replace(projectcodec::decode(pandoeditor::readProjectGeoPackage(QDir(directory).filePath("saved.native.gpkg"))));
+        write("package-reopened.web.json",projectcodec::encodeWeb(package.snapshot()));
+        write("export.web.json",projectcodec::encodeWeb(reopened.snapshot()));
+        std::cout<<"1 production file read/save/reopen/export trace completed\n";return 0;
+    }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
+}
+
 int main(int argc,char** argv) {
     QCoreApplication application(argc,argv);
+    if(argc==2&&std::string(argv[1])=="--interval-errors")return intervalErrors()?1:0;
+    if(argc==5&&std::string(argv[1])=="--trace-file")return traceFile(argv[2],argv[3],argv[4]);
     if(argc==3) {
         try {
         QFile input(QString::fromLocal8Bit(argv[1]));if(!input.open(QIODevice::ReadOnly))return 2;
@@ -44,6 +103,7 @@ int main(int argc,char** argv) {
         if(!output.open(QIODevice::WriteOnly)||output.write(bytes)!=bytes.size())return 2;return 0;
         } catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
     }
+    if(argc!=1){std::cerr<<"unsupported probe arguments\n";return 2;}
     QFile file(QStringLiteral(PANDOEDITOR_TIMELINE_PROJECT_FIXTURES));
     if(!file.open(QIODevice::ReadOnly))return 2;
     const auto cases=QJsonDocument::fromJson(file.readAll()).array();
@@ -103,6 +163,7 @@ int main(int argc,char** argv) {
         bool refused=false;try{(void)projectcodec::encodeWeb(reopened.snapshot());}catch(const std::invalid_argument&){refused=true;}
         if(!refused){++failures;std::cerr<<"FAIL web native flag default loss guard\n";}
     }
+    failures+=intervalErrors();
     std::cout << cases.size() << " storage cases + 9 numeric boundary cases + 2 flag default boundary cases, " << failures << " failures, 0 skipped\n";
     return failures?1:0;
 }

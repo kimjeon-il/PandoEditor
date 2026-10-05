@@ -4,6 +4,11 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
+if (process.argv[2] === '--final') {
+  const { runFinalExchange } = await import('./timeline-final-exchange.mjs');
+  const [probe, webRoot, manifestPath, evidenceDir] = process.argv.slice(3);
+  await runFinalExchange({ probe, webRoot, manifestPath, evidenceDir });
+} else {
 const [probe, webRoot, evidenceDir] = process.argv.slice(2);
 assert.ok(probe && webRoot && evidenceDir, 'usage: node tools/timeline-exchange-oracle.mjs <native-probe> <web-checkout> <evidence-dir>');
 const { prepareProjectForStorage, prepareProjectForActivation } = await import(pathToFileURL(path.join(webRoot, 'assets/js/modules/project-state.js')));
@@ -85,3 +90,4 @@ for(const token of ['9007199254740993','1e400','0.123456789012345678901'])for(co
   console.log('PASS actual native file boundary rejects numeric precision loss: '+location+' '+token);passed++;
 }
 console.log(passed+' exchange cases passed, 0 failed, 0 skipped');
+}

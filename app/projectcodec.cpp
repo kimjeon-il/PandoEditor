@@ -172,7 +172,9 @@ V geometryValue(const Geometry& g) {
     return object({{"type",V::str(g.type)},{"coordinates",c}});
 }
 Validity recordInterval(const V& v) {
-    const auto endpoint=[](const V& value)->std::optional<std::string>{if(value.kind==V::Null)return {};const auto text=str(value);(void)parseTemporal(text);return text;};
+    // Preserve endpoint spelling/precision. The owning record/content validator
+    // parses dates; timeline normalization also supplies TIMELINE_INTERVAL.
+    const auto endpoint=[](const V& value)->std::optional<std::string>{if(value.kind==V::Null)return {};return str(value);};
     return {endpoint(field(v,"validFrom")),endpoint(field(v,"validTo"))};
 }
 TimelineRecords timelineRecords(const V& value,ProjectDocument& d) {
