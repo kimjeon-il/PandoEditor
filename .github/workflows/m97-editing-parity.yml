@@ -75,10 +75,11 @@ jobs:
           ref: c0bd31d13dc8495593d78cf51f7cc195de7c9469
           path: full-hydro-web
           persist-credentials: false
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            assets/data/historical-library-pilot.json
-            assets/data/hydro/v0.13.0
-            assets/data/hydro/v0.13.1
+            /assets/data/historical-library-pilot.json
+            /assets/data/hydro/v0.13.0/
+            /assets/data/hydro/v0.13.1/
       - name: Fetch immutable original full-country validation context
         uses: actions/checkout@v4
         with:
@@ -86,7 +87,8 @@ jobs:
           ref: 53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47
           path: river-country-web
           persist-credentials: false
-          sparse-checkout: assets/data/countries-ne-5.1.1.geojson
+          sparse-checkout-cone-mode: false
+          sparse-checkout: /assets/data/countries-ne-5.1.1.geojson
       - name: Full native regression with skip audit
         env:
           PANDOEDITOR_HYDRO_FULL_MANIFEST: ${{ github.workspace }}/full-hydro-web/assets/data/hydro/v0.13.1/manifest.json
@@ -217,9 +219,10 @@ jobs:
           ref: c0bd31d13dc8495593d78cf51f7cc195de7c9469
           path: full-hydro-web
           persist-credentials: false
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            assets/data/hydro/v0.13.0
-            assets/data/hydro/v0.13.1
+            /assets/data/hydro/v0.13.0/
+            /assets/data/hydro/v0.13.1/
       - name: Verify exact compiled artifact and actual browser controller parity
         env:
           PANDO_CONTROLLER_CASE: ${{ matrix.case-name }}
