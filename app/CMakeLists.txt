@@ -632,6 +632,8 @@ if(BUILD_TESTING AND EXISTS "${PROJECT_SOURCE_DIR}/tests/m972_river_controller_p
     target_link_libraries(m972_river_controller_probe PRIVATE pandoeditor_editor)
     qt_add_resources(m972_river_controller_probe sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     qt_add_resources(m972_river_controller_probe metric_ui PREFIX "/metric" BASE "${PROJECT_SOURCE_DIR}/ui" FILES "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml")
+    add_test(NAME m972_metric_contract_tests COMMAND m972_river_controller_probe --metric-contract-self-test)
+    set_tests_properties(m972_metric_contract_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()
 
 if(BUILD_TESTING)

@@ -15,6 +15,7 @@
 #include <QSaveFile>
 #include <algorithm>
 #include <cmath>
+#include <type_traits>
 #include <cstdio>
 #include <functional>
 #include <stdexcept>
@@ -89,7 +90,8 @@ struct MetricEvidenceContext {
 };
 void compareTransferArea(Checks& checks,const QString& field,const QJsonObject& observation,
     const QJsonValue& expectedArea,const QJsonValue& browserDiagnostic,const MetricEvidenceContext& context) {
-    const auto capturedArea=observation["state"].toObject()["transferAreaKm2"];
+    const QJsonValue capturedArea=observation["state"].toObject()["transferAreaKm2"];
+    static_assert(std::is_same_v<std::remove_cv_t<decltype(capturedArea)>,QJsonValue>,"Metric capture must own its value, never retain a QJsonValueRef from a temporary state object");
     QJsonObject diagnostic;
     try {
         require(observation["transferredGeometry"].isObject(),"NATIVE_AUTHORITATIVE_TRANSFER_GEOMETRY_REQUIRED");
@@ -454,6 +456,24 @@ int compare(const QString& browserPath,const QString& payloadPath,const QString&
 }
 int main(int argc,char** argv) {
     QGuiApplication app(argc,argv);
+    if(argc==2&&QString::fromLocal8Bit(argv[1])=="--metric-contract-self-test") {
+        try {
+            const QJsonObject geometry{{"type","Polygon"},{"coordinates",QJsonArray{QJsonArray{QJsonArray{0,0},QJsonArray{0,1},QJsonArray{1,1},QJsonArray{1,0},QJsonArray{0,0}}}}};
+            for(const double value:{0.,12364.031909465642,30050.653780980098}) {
+                const QJsonObject observation{{"state",QJsonObject{{"transferAreaKm2",value}}},{"transferredGeometry",geometry}};
+                Checks checks;compareTransferArea(checks,"test.transferAreaKm2",observation,value,QJsonValue(),{});
+                require(checks.matched==0&&checks.mismatched==1,"MISSING_DIAGNOSTIC_MUST_FAIL_CLOSED");
+                const auto evidence=checks.displayMetricDiagnostics[0].toObject();
+                require(evidence["capturedNativeAreaKm2"]==QJsonValue(value),"CAPTURED_METRIC_MUST_SURVIVE_TEMPORARY_STATE_OBJECT");
+                require(evidence["rawScalarEqual"].toBool()&&rawMetricMismatchCount(checks.displayMetricDiagnostics)==0,"RAW_EQUAL_METRIC_DIAGNOSTICS_REQUIRED");
+                Checks unequal;compareTransferArea(unequal,"test.transferAreaKm2",observation,std::nextafter(value,1e100),QJsonValue(),{});
+                require(unequal.mismatched==1&&rawMetricMismatchCount(unequal.displayMetricDiagnostics)==1,"UNEQUAL_RAW_METRIC_MUST_REMAIN_VISIBLE");
+            }
+            Checks missing;compareTransferArea(missing,"test.missing",QJsonObject{{"transferredGeometry",geometry}},1.,QJsonValue(),{});
+            require(missing.mismatched==1&&rawMetricMismatchCount(missing.displayMetricDiagnostics)==1,"MISSING_STATE_MUST_FAIL_CLOSED");
+            std::puts("Metric wrapper ownership and fail-closed diagnostics passed");return 0;
+        }catch(const std::exception& error){std::fprintf(stderr,"%s\n",error.what());return 1;}
+    }
     if(argc!=5&&argc!=7){std::fprintf(stderr,"Usage: m972_river_controller_probe --browser-annex browser-report.json native-payload.json output.json [--case exact-name]\n");return 2;}
     if(QString::fromLocal8Bit(argv[1])!="--browser-annex"||(argc==7&&QString::fromLocal8Bit(argv[5])!="--case"))return 2;
     return compare(QString::fromLocal8Bit(argv[2]),QString::fromLocal8Bit(argv[3]),QString::fromLocal8Bit(argv[4]),argc==7?QString::fromLocal8Bit(argv[6]):QString());
