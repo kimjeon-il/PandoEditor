@@ -31,12 +31,7 @@ PrepareResult prepareTerritorialGeometry(const ProjectSnapshot& snapshot,
         const auto& target=geometry(requirement.readOwners.front());
         const auto preparePatch=[&](GeometryPatch patch){CommandArguments args;args.action=ApplyTerritorialMutation{plan,std::move(patch)};CommandRequest command{"territorial.geometry.commit",snapshot.instanceId(),snapshot.document().documentId,snapshot.revision(),plan.affectedObjects,std::move(args)};return CommandProcessor::prepare(snapshot,command,[](const ProjectDocument& before,const TerritorialMutationPlan& mutation,std::vector<PreservedExtension>& candidate){const auto rewrite=retainedrefs::rewrite(before,mutation,candidate);return ExtensionRewriteResult{rewrite.ok,rewrite.detail,rewrite.handledExtensionIds};});};
         if(requirement.operation=="boundary") {
-            const auto& boundary=std::get<SharedBoundaryIntent>(plan.intent);if(boundary.drafts.size()<2||requirement.readOwners.size()<boundary.drafts.size())throw std::runtime_error("INVALID_GEOMETRY_REQUIREMENT");
-            for(std::size_t left=0;left<boundary.drafts.size();++left)for(std::size_t right=left+1;right<boundary.drafts.size();++right){auto collision=calculateGeometry({GeometryOperation::Intersection,boundary.drafts[left].geometry,boundary.drafts[right].geometry},[&]{return token.cancelled();});if(collision.succeeded()&&collision.status!=GeometryOperationStatus::Empty&&significantArea(planarArea(collision.geometry),std::min(planarArea(boundary.drafts[left].geometry),planarArea(boundary.drafts[right].geometry))))throw std::runtime_error("BOUNDARY_OWNER_OVERLAP");}
-            GeometryOperationRequest oldUnion;oldUnion.operation=GeometryOperation::Union;GeometryOperationRequest newUnion;newUnion.operation=GeometryOperation::Union;for(const auto& draft:boundary.drafts){oldUnion.operands.push_back(geometry(draft.owner));newUnion.operands.push_back(draft.geometry);}auto before=calculateGeometry(oldUnion,[&]{return token.cancelled();});auto after=calculateGeometry(newUnion,[&]{return token.cancelled();});if(!before.succeeded()||!after.succeeded())throw std::runtime_error("BOUNDARY_UNION_FAILED");auto overlap=calculateGeometry({GeometryOperation::Intersection,before.geometry,after.geometry},[&]{return token.cancelled();});const double beforeArea=planarArea(before.geometry),afterArea=planarArea(after.geometry),overlapArea=overlap.succeeded()?planarArea(overlap.geometry):0,epsilon=std::max(1e-9,beforeArea*1e-9);if(std::abs(beforeArea-afterArea)>epsilon||std::abs(beforeArea-overlapArea)>epsilon)throw std::runtime_error("BOUNDARY_OUTER_UNION_CHANGED");
-            GeometryPatch patch;patch.sourceRevision=snapshot.revision();for(const auto& draft:boundary.drafts)patch.replacements.push_back({draft.owner,draft.geometry});
-            for(std::size_t index=boundary.drafts.size();index<requirement.readOwners.size();++index){const auto owner=requirement.readOwners[index];const auto& child=geometry(owner);bool transferred=false;for(const auto& draft:boundary.drafts)if(geometryContains(draft.geometry,child)){patch.replacements.push_back({owner,child});transferred=true;break;}if(transferred)continue;const auto& relation=staticParentRelation(snapshot.document(),owner.id);if(relation.parentId.empty())throw std::runtime_error("BOUNDARY_CHILD_RELATION_MISSING");const auto parent=std::find_if(boundary.drafts.begin(),boundary.drafts.end(),[&](const auto& draft){return draft.owner.id==relation.parentId;});if(parent==boundary.drafts.end())throw std::runtime_error("BOUNDARY_CHILD_PARENT_MISSING");auto kept=calculateGeometry({GeometryOperation::Intersection,child,parent->geometry},[&]{return token.cancelled();});if(kept.status==GeometryOperationStatus::Empty)throw std::runtime_error("BOUNDARY_WOULD_REMOVE_CHILD");else if(!kept.succeeded())throw std::runtime_error(kept.detail);else patch.replacements.push_back({owner,std::move(kept.geometry)});}
-            return preparePatch(std::move(patch));
+            return prepareBoundaryGeometryCommit(snapshot,calculateBoundaryGeometryPreview(snapshot,std::get<SharedBoundaryIntent>(plan.intent),token),token);
         }
         if(requirement.operation=="coast") {
             const auto& coast=std::get<CoastlineIntent>(plan.intent);GeometryPatch patch;patch.sourceRevision=snapshot.revision();
@@ -641,5 +636,134 @@ PrepareResult prepareSplitGeometryCommit(const ProjectSnapshot& snapshot,const S
     auto prepared=CommandProcessor::prepare(snapshot,command,[](const ProjectDocument& before,const TerritorialMutationPlan& mutation,std::vector<PreservedExtension>& candidate){
         const auto rewritten=retainedrefs::rewrite(before,mutation,candidate);return ExtensionRewriteResult{rewritten.ok,rewritten.detail,rewritten.handledExtensionIds};
     });
+    if(token.cancelled()){failure.detail="CANCELLED";return failure;}return prepared;
+}
+
+bool BoundaryGeometryPreviewResult::ok() const {return validated_;}
+bool BoundaryGeometryPreviewResult::blocking() const {return !validated_;}
+BoundaryGeometryPreviewResult calculateBoundaryGeometryPreview(const ProjectSnapshot& snapshot,const SharedBoundaryIntent& intent,const JobToken& token) {
+    BoundaryGeometryPreviewResult result;
+    try {
+        annexCheckCancelled(token);result.plan_=planSharedBoundary(snapshot,intent);auto& plan=*result.plan_;
+        const auto& document=snapshot.document();const bool root=staticParentRelation(document,intent.drafts.front().owner.id).parentId.empty();
+        const auto same=[](const Geometry& a,const Geometry& b) {
+            if(a.type!=b.type||a.polygons.size()!=b.polygons.size())return false;
+            for(std::size_t p=0;p<a.polygons.size();++p){if(a.polygons[p].size()!=b.polygons[p].size())return false;for(std::size_t r=0;r<a.polygons[p].size();++r){if(a.polygons[p][r].size()!=b.polygons[p][r].size())return false;for(std::size_t n=0;n<a.polygons[p][r].size();++n)if(a.polygons[p][r][n].x!=b.polygons[p][r][n].x||a.polygons[p][r][n].y!=b.polygons[p][r][n].y)return false;}}
+            return true;
+        };
+        const auto wrapped=[&](const Geometry& geometry) {auto value=wrapSplitGeometry(geometry,[&]{return token.cancelled();});annexCheckCancelled(token);if(!value.succeeded())throw std::runtime_error(value.detail);return value.geometry;};
+        std::map<ObjectRef,Geometry> original,proposed;
+        for(const auto& owner:plan.geometry.readOwners)original.emplace(owner,wrapped(annexGeometry(snapshot,owner)));
+        std::vector<Geometry> beforeShapes,afterShapes;
+        for(const auto& draft:intent.drafts) {beforeShapes.push_back(original.at(draft.owner));auto next=wrapped(draft.geometry);if(next.polygons.empty()||planarArea(next)<=0)throw std::runtime_error("EMPTY_REQUIRED_GEOMETRY");afterShapes.push_back(next);proposed.emplace(draft.owner,std::move(next));}
+        const auto before=annexUnion(beforeShapes,token),after=annexUnion(afterShapes,token);
+        if(significantArea(planarArea(annexCalculate(GeometryOperation::Difference,before,after,token)),planarArea(before))||significantArea(planarArea(annexCalculate(GeometryOperation::Difference,after,before,token)),planarArea(after)))throw std::runtime_error("BOUNDARY_OUTER_UNION_CHANGED");
+        for(const auto& draft:intent.drafts) {
+            if(root) {
+                const auto gained=annexCalculate(GeometryOperation::Difference,proposed.at(draft.owner),original.at(draft.owner),token);
+                if(gained.polygons.empty())continue;
+                for(const auto& other:document.units)if(isRootGeneral(document,other)&&other.id!=draft.owner.id) {
+                    const auto ref=territorialRef(other.id);const auto changed=proposed.find(ref);const auto& otherGeometry=changed==proposed.end()?original.at(ref):changed->second;
+                    if(significantArea(planarArea(annexCalculate(GeometryOperation::Intersection,gained,otherGeometry,token)),planarArea(gained)))throw std::runtime_error("BOUNDARY_OWNER_OVERLAP");
+                }
+            } else for(const auto& other:intent.drafts)if(other.owner<draft.owner) {
+                const auto overlap=annexCalculate(GeometryOperation::Intersection,proposed.at(draft.owner),proposed.at(other.owner),token);
+                if(significantArea(planarArea(overlap),std::min(planarArea(proposed.at(draft.owner)),planarArea(proposed.at(other.owner)))))throw std::runtime_error("BOUNDARY_OWNER_OVERLAP");
+            }
+        }
+        std::map<ObjectRef,std::optional<Geometry>> next;
+        std::map<std::string,std::string> parents;
+        std::set<ObjectRef> shown;
+        for(const auto& mapping:plan.geometry.replacements)next.emplace(mapping.source,annexGeometry(snapshot,mapping.source));
+        for(const auto& draft:intent.drafts){next[draft.owner]=draft.geometry;if(!same(annexGeometry(snapshot,draft.owner),draft.geometry))shown.insert(draft.owner);}
+        const auto children=[&](const std::string& parent){std::vector<ObjectRef> out;for(const auto& unit:document.units)if(unit.kind==UnitKind::General&&staticParentRelation(document,unit.id).parentId==parent)out.push_back(territorialRef(unit.id));return out;};
+        const auto move=[&](const ObjectRef& owner,const ObjectRef& destination) {
+            const auto old=territorialRef(staticParentRelation(document,owner.id).parentId);parents[owner.id]=destination.id;
+            result.reparented.push_back({owner,old,destination});shown.insert(owner);
+            plan.impacts.push_back({"ownership-change",owner,"territorial.boundary.parent:"+destination.id});
+        };
+        const auto moveHierarchy=[&](const auto& self,const ObjectRef& owner,const ObjectRef& destination)->void {
+            move(owner,destination);for(const auto& child:children(owner.id))self(self,child,owner);
+        };
+        const auto clipped=[&](const ObjectRef& owner,const Geometry& parentGeometry) {
+            const auto& source=original.at(owner);const auto kept=parentGeometry.polygons.empty()?Geometry{}:annexCalculate(GeometryOperation::Intersection,source,parentGeometry,token);
+            const auto cut=kept.polygons.empty()?source:annexCalculate(GeometryOperation::Difference,source,kept,token);
+            const bool changes=significantArea(planarArea(cut),planarArea(source));
+            if(changes) {
+                shown.insert(owner);plan.impacts.push_back({kept.polygons.empty()?"remove-child":"clip-child",owner,kept.polygons.empty()?"territorial.boundary.remove-child":"territorial.boundary.clip-child"});
+                if(kept.polygons.empty())next[owner]=std::nullopt;
+                else {auto normalized=normalizeSplitClippedGeometry(kept,[&]{return token.cancelled();});annexCheckCancelled(token);if(!normalized.succeeded())throw std::runtime_error(normalized.detail);next[owner]=std::move(normalized.geometry);}
+            }
+            return std::make_pair(kept,changes);
+        };
+        if(root) {
+            const auto reconcile=[&](const auto& self,const std::string& parent,const Geometry& parentGeometry,const ObjectRef& sourceRoot)->void {
+                for(const auto& child:children(parent)) {
+                    annexCheckCancelled(token);
+                    const auto receiver=std::find_if(intent.drafts.begin(),intent.drafts.end(),[&](const auto& draft){return !(draft.owner==sourceRoot)&&geometryContains(draft.geometry,annexGeometry(snapshot,child));});
+                    if(receiver!=intent.drafts.end()){moveHierarchy(moveHierarchy,child,receiver->owner);continue;}
+                    const auto kept=clipped(child,parentGeometry);self(self,child.id,kept.first,sourceRoot);
+                }
+            };
+            for(const auto& draft:intent.drafts)reconcile(reconcile,draft.owner.id,proposed.at(draft.owner),draft.owner);
+        } else {
+            const auto reconcile=[&](const auto& self,const std::string& parent,const Geometry& parentGeometry)->void {
+                for(const auto& child:children(parent)){const auto kept=clipped(child,parentGeometry);if(kept.second)self(self,child.id,kept.first);}
+            };
+            for(const auto& draft:intent.drafts)for(const auto& child:children(draft.owner.id)) {
+                const auto receiver=std::find_if(intent.drafts.begin(),intent.drafts.end(),[&](const auto& other){return !(other.owner==draft.owner)&&geometryContains(other.geometry,annexGeometry(snapshot,child));});
+                if(receiver!=intent.drafts.end()){move(child,receiver->owner);continue;}
+                const auto kept=clipped(child,proposed.at(draft.owner));if(kept.second)reconcile(reconcile,child.id,kept.first);
+            }
+        }
+        // The web finalizer validates affected partition siblings after all
+        // ownership changes, including residents of a receiving parent.
+        const auto survives=[&](const ObjectRef& owner){const auto found=next.find(owner);return found==next.end()||found->second.has_value();};
+        const auto parentOf=[&](const std::string& id){const auto found=parents.find(id);return found==parents.end()?staticParentRelation(document,id).parentId:found->second;};
+        std::map<ObjectRef,Geometry> finalGeometry;
+        const auto finalShape=[&](const ObjectRef& owner)->const Geometry& {
+            const auto cached=finalGeometry.find(owner);if(cached!=finalGeometry.end())return cached->second;
+            const auto value=next.find(owner);
+            return finalGeometry.emplace(owner,value==next.end()||same(annexGeometry(snapshot,owner),*value->second)?original.at(owner):wrapped(*value->second)).first->second;
+        };
+        for(const auto& unit:document.units) {
+            if(unit.kind!=UnitKind::General)continue;const auto owner=territorialRef(unit.id);const auto parent=parentOf(unit.id);
+            if(parent.empty()||!survives(owner)||staticParentRelation(document,unit.id).coverageMode!="partition"||(!shown.count(owner)&&!shown.count(territorialRef(parent))))continue;
+            for(const auto& sibling:document.units) {
+                const auto other=territorialRef(sibling.id);
+                if(other==owner||sibling.kind!=UnitKind::General||!survives(other)||parentOf(sibling.id)!=parent||staticParentRelation(document,sibling.id).coverageMode!="partition")continue;
+                const auto& left=finalShape(owner);const auto& right=finalShape(other);
+                if(annexBoundsOverlap(annexBounds(left),annexBounds(right))&&significantArea(planarArea(annexCalculate(GeometryOperation::Intersection,left,right,token)),planarArea(left)))throw std::runtime_error("BOUNDARY_PARTITION_OVERLAP");
+            }
+        }
+        const auto rootOf=[&](std::string id,bool changed){std::set<std::string> seen;while(seen.insert(id).second){const auto found=parents.find(id);const auto parent=changed&&found!=parents.end()?found->second:staticParentRelation(document,id).parentId;if(parent.empty())return id;id=parent;}throw std::runtime_error("PARENT_CYCLE");};
+        result.patch_.sourceRevision=snapshot.revision();
+        for(const auto& mapping:plan.geometry.replacements) {
+            const auto owner=mapping.source;const auto& old=annexGeometry(snapshot,owner);const auto& value=next.at(owner);
+            const bool changed=!value||!same(old,*value)||(parents.count(owner.id)&&parents.at(owner.id)!=staticParentRelation(document,owner.id).parentId)||rootOf(owner.id,false)!=rootOf(owner.id,true);
+            const auto& unit=document.units.at(snapshot.index().objects.at(owner));const auto layer=snapshot.layer(nativeLayerId(document,owner));
+            if(changed&&(unit.locked||(layer&&layer->locked)))throw std::runtime_error("LOCKED");
+            if(value)result.patch_.replacements.push_back({owner,*value});else result.patch_.removedGeometryOwners.push_back(owner);
+            if(shown.count(owner))result.rows.push_back({owner,old,value});
+        }
+        annexCheckCancelled(token);result.status=GeometryOperationStatus::Completed;result.error=CommandError::None;result.validated_=true;token.reportProgress(100);return result;
+    } catch(const std::exception& error) {
+        result.detail=token.cancelled()?"CANCELLED":error.what();result.error=result.detail=="LOCKED"?CommandError::Locked:CommandError::ValidationFailed;
+        result.status=result.detail=="CANCELLED"?GeometryOperationStatus::Cancelled:GeometryOperationStatus::Failed;
+        if(result.status==GeometryOperationStatus::Cancelled){result.plan_.reset();result.patch_={};}
+        else result.issues.push_back({"boundary",{},result.detail,true});return result;
+    }
+}
+PrepareResult prepareBoundaryGeometryCommit(const ProjectSnapshot& snapshot,const BoundaryGeometryPreviewResult& result,const JobToken& token) {
+    PrepareResult failure;failure.error=CommandError::PrepareFailed;
+    if(token.cancelled()){failure.detail="CANCELLED";return failure;}
+    if(!result.validated_||!result.plan_){failure.error=result.error==CommandError::None?CommandError::PrepareFailed:result.error;failure.detail=result.detail.empty()?"INVALID_BOUNDARY_GEOMETRY_RECEIPT":result.detail;return failure;}
+    const auto& plan=*result.plan_;
+    if(plan.projectInstanceId!=snapshot.instanceId()){failure.error=CommandError::ProjectMismatch;failure.detail="PROJECT_MISMATCH";return failure;}
+    if(plan.documentId!=snapshot.document().documentId){failure.error=CommandError::DocumentMismatch;failure.detail="DOCUMENT_MISMATCH";return failure;}
+    if(plan.baseRevision!=snapshot.revision()){failure.error=CommandError::StaleRevision;failure.detail="STALE_GEOMETRY_REQUEST";return failure;}
+    CommandArguments args;args.action=ApplyTerritorialMutation{plan,result.patch_};
+    CommandRequest command{"territorial.geometry.commit",snapshot.instanceId(),snapshot.document().documentId,snapshot.revision(),plan.affectedObjects,std::move(args)};
+    auto prepared=CommandProcessor::prepare(snapshot,command,[](const ProjectDocument& before,const TerritorialMutationPlan& mutation,std::vector<PreservedExtension>& candidate){const auto rewritten=retainedrefs::rewrite(before,mutation,candidate);return ExtensionRewriteResult{rewritten.ok,rewritten.detail,rewritten.handledExtensionIds};});
     if(token.cancelled()){failure.detail="CANCELLED";return failure;}return prepared;
 }

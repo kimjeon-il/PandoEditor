@@ -7,6 +7,22 @@ from pathlib import Path
 
 
 REQUIRED = {
+    "m974_snap_tests",
+    "m974_snap_provider_tests",
+    "m974_snap_workflow_tests",
+    "m974_snap_ui_tests",
+    "m974_snap_provider_probe_contract",
+    "m974_boundary_session_tests",
+    "m974_boundary_hierarchy_tests",
+    "m974_boundary_ui_tests",
+    "m974_regression_gate_tests",
+    "m974_boundary_delivery_tests",
+    "m974_native_boundary_contract",
+    "m974_native_snap_contract",
+    "m974_boundary_supplemental_tests",
+    "m974_snap_order_tests",
+    "m974_native_supplemental_contract",
+    "m974_source_order_contract",
     "m4_geometry_web_parity",
     "m5_hydro_web_fixture",
     "m5_content_web_parity",

@@ -8,6 +8,8 @@
 #include "commandjobrunner.h"
 #include "territoryselection.h"
 #include "territorialgeometry.h"
+#include "sharedboundary.h"
+#include <atomic>
 #include "platformstorage.h"
 #include "autosavecoordinator.h"
 #include "projectpreviewcache.h"
@@ -41,6 +43,7 @@
 #include <optional>
 
 namespace pandoeditor { struct HistoricalSource; }
+namespace geometrysnap { class Provider; }
 
 struct EditorControllerConfig {
 #ifdef Q_OS_ANDROID
@@ -362,6 +365,13 @@ public:
     Q_INVOKABLE bool beginAnnexGeometry();
     Q_INVOKABLE bool beginSplitGeometry();
     Q_INVOKABLE bool beginSharedBoundaryGeometry();
+    Q_INVOKABLE bool canBeginSharedBoundaryGeometry() const;
+    Q_INVOKABLE QVariantMap geometrySnapState() const;
+    Q_INVOKABLE void clearGeometrySnapIndicator();
+    Q_INVOKABLE bool geometryHoverSnap(double x,double y,const QString& pointerType=QStringLiteral("mouse"));
+    Q_INVOKABLE bool geometryRetryBoundaryPreparation();
+    Q_INVOKABLE bool geometryConfirmBoundaryImpacts();
+    Q_INVOKABLE void geometryCancelBoundaryImpacts();
     Q_INVOKABLE bool beginCoastlineGeometry(const QString& authority="country");
     Q_INVOKABLE bool confirmStructureMutation();
     Q_INVOKABLE void cancelStructureMutation();
@@ -384,9 +394,9 @@ public:
     Q_INVOKABLE bool previewContentEdit(bool remove=false);
     Q_INVOKABLE bool confirmContentEdit();
     Q_INVOKABLE void cancelContentEdit();
-    Q_INVOKABLE bool geometryAddPoint(double x,double y,double tolerance=0);
+    Q_INVOKABLE bool geometryAddPoint(double x,double y,double tolerance=0,const QString& pointerType=QString());
     Q_INVOKABLE bool geometrySelectNearest(double x,double y,double tolerance);
-    Q_INVOKABLE bool geometryMoveSelectedVertex(double x,double y,double tolerance=0);
+    Q_INVOKABLE bool geometryMoveSelectedVertex(double x,double y,double tolerance=0,const QString& pointerType=QString());
     Q_INVOKABLE bool geometryBeginVertexDrag();
     Q_INVOKABLE void geometryEndVertexDrag(bool cancel=false);
     Q_INVOKABLE bool geometrySetMoveMode(bool enabled);
@@ -677,10 +687,19 @@ private:
         std::optional<pandoeditor::AnnexTerritoryIntent> annexIntent;
         std::optional<pandoeditor::SplitTerritorialIntent> splitIntent;
         std::vector<pandoeditor::ObjectRef> boundaryOwners;
+        std::optional<pandoeditor::SelectionState> boundaryInitialSelection;
+        std::shared_ptr<sharedboundary::Session> boundarySession;
+        std::shared_ptr<std::atomic_bool> boundaryCancelled;
+        QString boundaryStatus;
+        std::string boundaryAutoSeed;
+        bool boundaryImpactConfirmation=false,boundaryImpactsApproved=false;
+        std::uint64_t boundarySelectionRevision=0;
         std::optional<pandoeditor::CoastlineIntent> coastIntent;
         std::optional<pandoeditor::Geometry> dragBefore;
         bool objectDragMoved=false;
         std::optional<pandoeditor::Point> snapPoint;
+        QVariantMap snapIndicator;
+        QString snapExcludedNodeKey;
         bool content=false;
         QString stage=QStringLiteral("selection");
         bool choosingProviders=false;
@@ -714,6 +733,11 @@ private:
     std::optional<GeometryEditSession> geometryEdit_;
     std::uint64_t nextGeometrySession_=0;
     bool territoryGeometryReady() const;
+    bool boundaryGeometryReady() const;
+    void prepareBoundaryGeometry();
+    geometrysnap::Provider* snapProvider_=nullptr;
+    pandoeditor::Point snappedGeometryPoint(double x,double y,double tolerance,const QString& pointerType=QString());
+    void resetGeometrySnap();
     QVariantMap territorySelectionState() const;
     QVariantList territorySelectionPaths() const;
     struct RiverCacheEntry { QByteArray key; HydroSourceIdentity identity; std::shared_ptr<const RiverSelectionPreparationResult> value; };

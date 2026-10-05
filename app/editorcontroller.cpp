@@ -1,4 +1,5 @@
 #include "editorcontroller.h"
+#include "geometrysnapprovider.h"
 #include "terrainimageprovider.h"
 #include "../renderer/gpumapitem.h"
 #include "defaultflagresolver.h"
@@ -135,6 +136,8 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::jobChanged,this,&EditorController::propertyChanged);
     connect(this,&EditorController::webImportChanged,this,&EditorController::propertyChanged);
     jobs_=std::make_unique<CommandJobRunner>([this]() ->const pandoeditor::Project& {return project_;});
+    snapProvider_=new geometrysnap::Provider(*jobs_,this);
+    snapProvider_->synchronizeSources(project_.snapshot());
     connect(jobs_.get(),&CommandJobRunner::changed,this,&EditorController::jobChanged,Qt::QueuedConnection);
     presentationSaveTimer_.setSingleShot(true);presentationSaveTimer_.setInterval(500);
     connect(&presentationSaveTimer_,&QTimer::timeout,this,&EditorController::startPresentationRecovery);
@@ -246,6 +249,8 @@ void EditorController::refreshTypedScene() {
     }
 }
 void EditorController::noteAppliedImpact(const pandoeditor::ChangeImpact& impact) {
+    if(snapProvider_&&snapProvider_->requiresImmediateSynchronization(project_.snapshot(),impact))
+        snapProvider_->synchronizeSources(project_.snapshot());
     lastEditAffectedObjects_=impact.changedObjects.size();
     lastEditRetainedGeometries_=impact.retainedGeometryCount;
     lastEditNewGeometryBytes_=impact.estimatedNewGeometryBytes;
@@ -701,6 +706,7 @@ void EditorController::reloadDrafts()
 }
 void EditorController::publish(bool pruneSelection)
 {
+    if(snapProvider_)snapProvider_->synchronizeInstallation(project_.snapshot());
     Q_UNUSED(pruneSelection);
     if(labelAnchors_)labelAnchors_->setProjectScope(text(project_.instanceId()));
     QScopedValueRollback<bool> guard(selectionTransition_,true);
@@ -751,6 +757,7 @@ void EditorController::moveCountry(const QString& layerId) {if(executeCommand("c
 void EditorController::undo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
+    const auto clearBoundarySelection=project_.nextUndoTerritorialMutationKind()==pandoeditor::TerritorialMutationKind::ReconcileSharedBoundary;
     const auto before=project_.document();
     cancelPreview();
     if(project_.undo()) {
@@ -761,12 +768,14 @@ void EditorController::undo()
             noteAppliedImpact(impact);
         } catch(...) {pendingSceneImpact_.reset();}
         if(changed)projection_.rebuild(project_.document());
+        if(clearBoundarySelection)clearSelection();
         publish();if(hydroChanged)syncHydroData();if(changed)emit geometryChanged();
     }
 }
 void EditorController::redo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
+    const auto clearBoundarySelection=project_.nextRedoTerritorialMutationKind()==pandoeditor::TerritorialMutationKind::ReconcileSharedBoundary;
     const auto before=project_.document();
     cancelPreview();
     if(project_.redo()) {
@@ -777,6 +786,7 @@ void EditorController::redo()
             noteAppliedImpact(impact);
         } catch(...) {pendingSceneImpact_.reset();}
         if(changed)projection_.rebuild(project_.document());
+        if(clearBoundarySelection)clearSelection();
         publish();if(hydroChanged)syncHydroData();if(changed)emit geometryChanged();
     }
 }

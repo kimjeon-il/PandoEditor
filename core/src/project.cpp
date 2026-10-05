@@ -61,6 +61,24 @@ std::shared_ptr<const detail::DocumentState> restoredHistoryState(
     }
     return std::make_shared<const detail::DocumentState>(std::move(document));
 }
+bool boundaryHistoryAction(const CommandAction& action) {
+    const auto* mutation=std::get_if<ApplyTerritorialMutation>(&action);
+    return mutation&&mutation->plan.kind==TerritorialMutationKind::ReconcileSharedBoundary&&std::holds_alternative<SharedBoundaryIntent>(mutation->plan.intent);
+}
+std::shared_ptr<const detail::DocumentState> restoredBoundaryLabelSettings(
+    const ProjectDocument& current,const std::shared_ptr<const detail::DocumentState>& target)
+{
+    // The boundary web history captures territorial visibility/styles but only
+    // custom-label settings. Territorial label settings stay live view state:
+    // a deleted owner's key must not reappear solely because Undo restores it.
+    auto settings=target->document.presentation.webPresentation.labelSettings;
+    for(auto it=settings.begin();it!=settings.end();)if(it->first.domain=="territorial")it=settings.erase(it);else ++it;
+    for(const auto& [ref,value]:current.presentation.webPresentation.labelSettings)
+        if(ref.domain=="territorial"&&target->index.objects.count(ref))settings[ref]=value;
+    if(settings==target->document.presentation.webPresentation.labelSettings)return target;
+    auto document=target->document;document.presentation.webPresentation.labelSettings=std::move(settings);
+    return std::make_shared<const detail::DocumentState>(std::move(document));
+}
 CountryProperties properties(const CountryView& c) { return {c.name,c.memo,c.color,c.opacity,c.layerId}; }
 }
 Project::Project() : state_(std::make_shared<const detail::DocumentState>()),
@@ -235,6 +253,16 @@ bool Project::moveLayer(const std::string& id,int delta)
 {
     CommandArguments args; args.action=MoveLayer{id,delta}; return execute("layer.move",std::move(args));
 }
+std::optional<TerritorialMutationKind> Project::nextUndoTerritorialMutationKind() const noexcept {
+    if(!canUndo())return {};
+    const auto* action=std::get_if<ApplyTerritorialMutation>(&commands_[cursor_-1].request_.args.action);
+    return action?std::optional<TerritorialMutationKind>(action->plan.kind):std::nullopt;
+}
+std::optional<TerritorialMutationKind> Project::nextRedoTerritorialMutationKind() const noexcept {
+    if(!canRedo())return {};
+    const auto* action=std::get_if<ApplyTerritorialMutation>(&commands_[cursor_].request_.args.action);
+    return action?std::optional<TerritorialMutationKind>(action->plan.kind):std::nullopt;
+}
 bool Project::undo()
 {
     if(!canUndo() || revision_==std::numeric_limits<std::uint64_t>::max()) return false;
@@ -245,6 +273,7 @@ bool Project::undo()
         candidate.presentation.webPresentation=rebasePresentation(document(),commands_[cursor_-1].after_->document,candidate);
         next=std::make_shared<const detail::DocumentState>(std::move(candidate));
     }
+    if(boundaryHistoryAction(commands_[cursor_-1].request_.args.action))next=restoredBoundaryLabelSettings(document(),next);
     const bool savedTarget=target==saved_ || semanticallyEqual(target->document,saved_->document);
     // The saved bytes were already pruned by the codec; preserve that baseline.
     if(savedTarget)saved_=restoredHistoryState(target);
@@ -260,6 +289,7 @@ bool Project::redo()
         candidate.presentation.webPresentation=rebasePresentation(document(),commands_[cursor_].before_->document,candidate);
         next=std::make_shared<const detail::DocumentState>(std::move(candidate));
     }
+    if(boundaryHistoryAction(commands_[cursor_].request_.args.action))next=restoredBoundaryLabelSettings(document(),next);
     const bool savedTarget=target==saved_ || semanticallyEqual(target->document,saved_->document);
     if(savedTarget)saved_=restoredHistoryState(target);
     state_=std::move(next);checkpoint_=commands_[cursor_].checkpointAfter_;++cursor_;++revision_;++presentationRevision_;return true;

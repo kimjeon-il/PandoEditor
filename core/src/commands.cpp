@@ -311,7 +311,15 @@ void applyGeometryPatch(ProjectDocument& d,const TerritorialMutationPlan& plan,c
         const auto targetPatch=std::find_if(patch.replacements.begin(),patch.replacements.end(),[&](const auto& r){return !plan.geometry.replacements.empty()&&r.owner==plan.geometry.replacements.front().result;});
         const auto target=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return !plan.geometry.readOwners.empty()&&territorialRef(u.id)==plan.geometry.readOwners.front();});
         const bool splitCovered=plan.geometry.operation=="split"&&removed!=d.units.end()&&patch.creations.size()==1&&geometryContains(patch.creations.front().geometry,*d.geometries.get(staticGeometryBinding(d,removed->id).geometryRef));
-        require(plan.geometry.operation=="coast"||splitCovered||(target!=d.units.end()&&removed!=d.units.end()&&targetPatch!=patch.replacements.end()&&geometryContains(targetPatch->geometry,*d.geometries.get(staticGeometryBinding(d,removed->id).geometryRef))),CommandError::InvalidArguments,"removed owner is not covered by result");
+        bool boundaryRemoved=false;
+        if(plan.geometry.operation=="boundary"&&removed!=d.units.end()) {
+            const auto parent=territorialRef(staticParentRelation(d,removed->id).parentId);
+            const bool parentRemoved=std::find(patch.removedGeometryOwners.begin(),patch.removedGeometryOwners.end(),parent)!=patch.removedGeometryOwners.end();
+            const auto parentPatch=std::find_if(patch.replacements.begin(),patch.replacements.end(),[&](const auto& row){return row.owner==parent;});
+            boundaryRemoved=parentRemoved||(parentPatch!=patch.replacements.end()&&!geometrySignificantOverlap(parentPatch->geometry,*d.geometries.get(staticGeometryBinding(d,removed->id).geometryRef)));
+        }
+        const bool coveredByResult=target!=d.units.end()&&removed!=d.units.end()&&targetPatch!=patch.replacements.end()&&geometryContains(targetPatch->geometry,*d.geometries.get(staticGeometryBinding(d,removed->id).geometryRef));
+        require(plan.geometry.operation=="boundary"?boundaryRemoved:(plan.geometry.operation=="coast"||splitCovered||coveredByResult),CommandError::InvalidArguments,"removed owner is not covered by result");
     }
     if(seen!=expected) throw Rejection{CommandError::InvalidArguments,"geometry patch owner set incomplete"};
     for(const auto& replacement:patch.replacements) {
@@ -436,10 +444,85 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
                 }
             }
         } else if constexpr(std::is_same_v<T,SharedBoundaryIntent>) {
-            patch();std::set<std::string> owners;for(const auto& draft:in.drafts)owners.insert(draft.owner.id);
-            for(auto& relation:d.timelineRecords.parentRelations)if(owners.count(relation.parentId)){
-                const auto child=std::find_if(d.units.begin(),d.units.end(),[&](const auto& u){return u.id==relation.entityId;});if(child==d.units.end())continue;
-                for(const auto& owner:owners)if(geometryContains(*shape(owner),*shape(child->id))){relation.parentId=owner;break;}
+            require(action.geometry.has_value(),CommandError::InvalidArguments,"boundary geometry patch required");
+            const bool root=staticParentRelation(contentBefore,in.drafts.front().owner.id).parentId.empty();
+            std::map<std::string,std::string> reparented;
+            const auto children=[&](const std::string& parent){std::vector<std::string> ids;for(const auto& unit:contentBefore.units)if(unit.kind==UnitKind::General&&staticParentRelation(contentBefore,unit.id).parentId==parent)ids.push_back(unit.id);return ids;};
+            // Derive ownership independently from the approved draft owners and
+            // original hierarchy. The worker cannot submit arbitrary parents.
+            const auto reconcile=[&](const auto& self,const std::string& parent,const ObjectRef& sourceRoot)->void {
+                for(const auto& child:children(parent)) {
+                    const auto receiver=std::find_if(in.drafts.begin(),in.drafts.end(),[&](const auto& draft){return !(draft.owner==sourceRoot)&&geometryContains(draft.geometry,*shape(child));});
+                    if(receiver!=in.drafts.end()){reparented[child]=receiver->owner.id;continue;}
+                    if(root)self(self,child,sourceRoot);
+                }
+            };
+            for(const auto& draft:in.drafts) {
+                const auto replacement=std::find_if(action.geometry->replacements.begin(),action.geometry->replacements.end(),[&](const auto& row){return row.owner==draft.owner;});
+                require(replacement!=action.geometry->replacements.end()&&sameGeometry(replacement->geometry,draft.geometry),CommandError::InvalidArguments,"boundary owner draft mismatch");
+                reconcile(reconcile,draft.owner.id,draft.owner);
+            }
+            for(const auto& [child,parent]:reparented)require(std::find(action.geometry->removedGeometryOwners.begin(),action.geometry->removedGeometryOwners.end(),territorialRef(child))==action.geometry->removedGeometryOwners.end(),CommandError::InvalidArguments,"boundary transferred child removed");
+            // A boundary plan grants no authority to edit a contained or
+            // wholly transferred descendant. True clips may only lose source
+            // territory; their exact intersection remains the app receipt's
+            // checked calculation, not an untrusted patch assertion here.
+            for(const auto& replacement:action.geometry->replacements) {
+                if(std::any_of(in.drafts.begin(),in.drafts.end(),[&](const auto& draft){return draft.owner==replacement.owner;}))continue;
+                const auto& id=replacement.owner.id;const auto original=shape(id);
+                const auto moved=reparented.find(id);const auto parent=moved==reparented.end()?staticParentRelation(contentBefore,id).parentId:moved->second;
+                const auto parentPatch=std::find_if(action.geometry->replacements.begin(),action.geometry->replacements.end(),[&](const auto& row){return row.owner==territorialRef(parent);});
+                const auto& parentGeometry=parentPatch==action.geometry->replacements.end()?*shape(parent):parentPatch->geometry;
+                require(geometryContains(*original,replacement.geometry),CommandError::ValidationFailed,"boundary descendant gained territory");
+                if(geometryContains(parentGeometry,*original))require(sameGeometry(*original,replacement.geometry),CommandError::ValidationFailed,"boundary unchanged descendant geometry changed");
+            }
+            patch();for(const auto& [child,parent]:reparented)staticParentRelation(d,child).parentId=parent;
+            const auto rootId=[](const ProjectDocument& document,std::string id){std::set<std::string> seen;while(seen.insert(id).second){const auto parent=staticParentRelation(document,id).parentId;if(parent.empty())return id;id=parent;}throw Rejection{CommandError::ValidationFailed,"parent cycle"};};
+            std::set<std::string> changed;
+            for(const auto& unit:d.units) {
+                const auto original=contentBefore.geometries.get(staticGeometryBinding(contentBefore,unit.id).geometryRef);
+                if(!sameGeometry(*original,*shape(unit.id))||staticParentRelation(contentBefore,unit.id).parentId!=staticParentRelation(d,unit.id).parentId||rootId(contentBefore,unit.id)!=rootId(d,unit.id))changed.insert(unit.id);
+            }
+            // Core has no clipping backend. Certify only a conservative area
+            // lower bound for single, hole-free, nonwrapping rectangles. The
+            // sealed app calculator owns complete significant-area validation;
+            // a topological overlap predicate must not replace that tolerance.
+            struct Rectangle {double west,south,east,north;};
+            const auto rectangle=[](const Geometry& geometry)->std::optional<Rectangle> {
+                if(geometry.polygons.size()!=1||geometry.polygons.front().size()!=1)return {};
+                const auto& ring=geometry.polygons.front().front();if(ring.size()!=5||ring.front().x!=ring.back().x||ring.front().y!=ring.back().y)return {};
+                Rectangle bounds{ring[0].x,ring[0].y,ring[0].x,ring[0].y};
+                for(const auto point:ring){if(!std::isfinite(point.x)||!std::isfinite(point.y)||point.x< -180||point.x>180||point.y< -90||point.y>90)return {};bounds.west=std::min(bounds.west,point.x);bounds.east=std::max(bounds.east,point.x);bounds.south=std::min(bounds.south,point.y);bounds.north=std::max(bounds.north,point.y);}
+                if(bounds.east<=bounds.west||bounds.north<=bounds.south||bounds.east-bounds.west>=180)return {};
+                unsigned corners=0;
+                for(std::size_t i=0;i<4;++i){const auto point=ring[i],next=ring[i+1];if((point.x!=bounds.west&&point.x!=bounds.east)||(point.y!=bounds.south&&point.y!=bounds.north)||(point.x!=next.x&&point.y!=next.y))return {};const auto bit=1u<<((point.x==bounds.east?1:0)+(point.y==bounds.north?2:0));if(corners&bit)return {};corners|=bit;}
+                return corners==15?std::optional<Rectangle>(bounds):std::nullopt;
+            };
+            const auto certifiedOverlap=[&](const Geometry& a,const Geometry& b) {
+                const auto left=rectangle(a),right=rectangle(b);if(!left||!right)return false;
+                const long double width=static_cast<long double>(std::min(left->east,right->east))-std::max(left->west,right->west),height=static_cast<long double>(std::min(left->north,right->north))-std::max(left->south,right->south);if(width<=0||height<=0)return false;
+                const auto area=[](const Rectangle& value){return (static_cast<long double>(value.east)-value.west)*(static_cast<long double>(value.north)-value.south);};
+                const long double reference=std::max(area(*left),area(*right));
+                const long double magnitude=std::max({1.,std::abs(left->west),std::abs(left->east),std::abs(left->south),std::abs(left->north),std::abs(right->west),std::abs(right->east),std::abs(right->south),std::abs(right->north)});
+                // Conservatively cover floating shoelace/product/subtraction
+                // rounding. Near-threshold cases defer to the sealed calculator.
+                const long double roundoff=128*std::numeric_limits<double>::epsilon()*magnitude*magnitude;
+                return width*height>std::max(1e-10L,reference*1e-9L)+roundoff;
+            };
+            for(const auto& unit:d.units) {
+                if(unit.kind!=UnitKind::General)continue;const auto& parent=staticParentRelation(d,unit.id);
+                if(parent.parentId.empty()||parent.coverageMode!="partition"||(!changed.count(unit.id)&&!changed.count(parent.parentId)))continue;
+                for(const auto& sibling:d.units) {
+                    if(sibling.kind!=UnitKind::General||sibling.id==unit.id)continue;const auto& other=staticParentRelation(d,sibling.id);
+                    if(other.parentId==parent.parentId&&other.coverageMode=="partition")require(!certifiedOverlap(*shape(unit.id),*shape(sibling.id)),CommandError::ValidationFailed,"boundary partition sibling overlap");
+                }
+            }
+            auto& web=d.presentation.webPresentation;
+            for(const auto& removed:action.geometry->removedGeometryOwners) {
+                web.hiddenItems["subunits"].erase(removed.id);web.hiddenItems["regions"].erase(removed.id);
+                web.hiddenItems["countryLabels"].erase("territorial:"+removed.id);web.labelSettings.erase(removed);
+                const auto key=territorialPresentationKey(removed.id);web.objectStyles.erase(key);
+                web.objectOrder.erase(std::remove(web.objectOrder.begin(),web.objectOrder.end(),key),web.objectOrder.end());
             }
         }
     },plan.intent);
@@ -703,9 +786,19 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
         for(const auto& ref:structural->plan.affectedObjects) {
             if(project.index().objects.count(ref)) {
                 const auto& u=before.units.at(project.index().objects.at(ref));
-                require(!u.locked,CommandError::Locked,"object locked");
+                bool changed=true;
+                if(structural->plan.kind==TerritorialMutationKind::ReconcileSharedBoundary&&
+                   std::find(structural->plan.targets.begin(),structural->plan.targets.end(),ref)==structural->plan.targets.end()) {
+                    const auto next=std::find_if(after.units.begin(),after.units.end(),[&](const auto& unit){return unit.id==u.id;});
+                    if(next!=after.units.end()) {
+                        const auto root=[](const ProjectDocument& document,std::string id){std::set<std::string> seen;while(seen.insert(id).second){const auto& parent=staticParentRelation(document,id);if(parent.parentId.empty())return id;id=parent.parentId;}throw Rejection{CommandError::ValidationFailed,"parent cycle"};};
+                        changed=!sameGeometry(*before.geometries.get(staticGeometryBinding(before,u.id).geometryRef),*after.geometries.get(staticGeometryBinding(after,u.id).geometryRef))||
+                            staticParentRelation(before,u.id).parentId!=staticParentRelation(after,u.id).parentId||root(before,u.id)!=root(after,u.id);
+                    }
+                }
+                require(!changed||!u.locked,CommandError::Locked,"object locked");
                 const auto layer=project.layer(nativeLayerId(before,ref));
-                require(!layer||!layer->locked,CommandError::Locked,"source layer locked");
+                require(!changed||!layer||!layer->locked,CommandError::Locked,"source layer locked");
             }
         }
         return;
@@ -1036,7 +1129,9 @@ PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const Com
                         "territorial plan preparation failed");
             }
             require(rederived.plan&&rederived.plan->kind==structural->plan.kind&&rederived.plan->affectedObjects==structural->plan.affectedObjects,CommandError::ValidationFailed,"territorial plan changed");
-            require(rederived.plan->geometry.readOwners==structural->plan.geometry.readOwners &&
+            require(rederived.plan->geometry.kind==structural->plan.geometry.kind &&
+                    rederived.plan->geometry.operation==structural->plan.geometry.operation &&
+                    rederived.plan->geometry.readOwners==structural->plan.geometry.readOwners &&
                     rederived.plan->geometry.replacements==structural->plan.geometry.replacements &&
                     rederived.plan->geometry.createOwners==structural->plan.geometry.createOwners &&
                     rederived.plan->geometry.removableOwners==structural->plan.geometry.removableOwners,

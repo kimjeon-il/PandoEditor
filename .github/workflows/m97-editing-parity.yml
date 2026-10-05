@@ -57,6 +57,17 @@ jobs:
           name: m973-split-runtime-${{ github.sha }}
           path: evidence/split-runtime
           retention-days: 14
+      - name: Preserve exact compiled M9.7.4 probes
+        run: |
+          mkdir -p evidence/m974-runtime
+          cp build/app/m974_snap_probe build/app/m974_snap_provider_probe build/app/m974_boundary_probe build/app/m974_snap_order_tests evidence/m974-runtime/
+          printf '%s\n' "$GITHUB_SHA" > evidence/m974-runtime/COMMIT
+          (cd evidence/m974-runtime && sha256sum m974_snap_probe m974_snap_provider_probe m974_boundary_probe m974_snap_order_tests > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m974-runtime-${{ github.sha }}
+          path: evidence/m974-runtime
+          retention-days: 14
       - name: Fetch pinned full regression datasets
         uses: actions/checkout@v4
         with:
@@ -299,4 +310,98 @@ jobs:
         with:
           name: m973-split-differential-${{ github.sha }}
           path: evidence/split-differential
+          retention-days: 14
+
+  snap-boundary-parity:
+    needs: linux-regression
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install matching native runtime dependencies
+        run: sudo apt-get update && sudo apt-get install -y libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: m974-runtime-${{ github.sha }}
+          path: m974-runtime
+      - name: Verify exact native runtime and comparator contracts
+        run: |
+          test "$(cat m974-runtime/COMMIT)" = "$GITHUB_SHA"
+          (cd m974-runtime && sha256sum -c SHA256SUMS)
+          test "$(qmake -query QT_VERSION)" = '6.8.3'
+          chmod +x m974-runtime/m974_snap_probe m974-runtime/m974_snap_provider_probe m974-runtime/m974_boundary_probe m974-runtime/m974_snap_order_tests
+          node --test tools/m974-native-*.test.mjs tools/m974-snap-boundary/*.test.mjs
+      - name: Install pinned official browser runtime
+        run: |
+          npm ci --prefix tools/m97/river/browser --ignore-scripts --registry=https://registry.npmjs.org
+          node tools/m97/river/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Capture same-commit actual Chromium workflows and thresholds
+        run: |
+          node --max-old-space-size=512 tools/m974-snap-boundary/browser-runner.mjs evidence/snap-boundary-chromium
+          node --max-old-space-size=512 tools/m974-snap-boundary/supplemental-browser-runner.mjs evidence/supplemental-chromium
+          node --max-old-space-size=512 tools/m974-snap-boundary/source-order-v2-browser-runner.mjs evidence/source-order-chromium
+      - name: Compare native snap against actual Chromium
+        run: |
+          export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
+          node --max-old-space-size=512 tools/m974-native-snap.mjs \
+            --browser-report evidence/snap-boundary-chromium/browser-report.json \
+            --suite evidence/snap-boundary-chromium/suite.json.gz \
+            --suite-pin evidence/snap-boundary-chromium/suite-pin.json \
+            --report-transfer evidence/snap-boundary-chromium/report-transfer.json \
+            --probe-input evidence/snap-boundary-chromium/snap-probe-input.jsonl \
+            --math evidence/snap-boundary-chromium/math-diagnostics.json \
+            --helper-probe "$PWD/m974-runtime/m974_snap_probe" \
+            --provider-probe "$PWD/m974-runtime/m974_snap_provider_probe" \
+            --commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" \
+            --output evidence/native-snap
+      - name: Compare native boundary workflows against actual Chromium
+        run: |
+          export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
+          mkdir -p evidence/native-boundary
+          m974-runtime/m974_boundary_probe < tests/fixtures/web-m974/boundary-cases.json > evidence/native-boundary/observations.json
+          python tests/m974_boundary_delivery_tests.py --observations evidence/native-boundary/observations.json
+          node tools/m974-native-boundary.mjs \
+            --browser-directory evidence/snap-boundary-chromium \
+            --native-file evidence/native-boundary/observations.json \
+            --output-file evidence/native-boundary/comparison.json \
+            --expected-commit "$GITHUB_SHA" --expected-run-id "$GITHUB_RUN_ID" \
+            --native-commit "$(cat m974-runtime/COMMIT)" \
+            --native-binary-sha256 "$(sha256sum m974-runtime/m974_boundary_probe | cut -d ' ' -f 1)"
+      - name: Compare native threshold helpers against actual Chromium
+        run: |
+          export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
+          node tools/m974-native-supplemental.mjs \
+            --browser-directory evidence/supplemental-chromium \
+            --native-probe "$PWD/m974-runtime/m974_boundary_probe" \
+            --output evidence/native-supplemental \
+            --expected-commit "$GITHUB_SHA" --expected-run-id "$GITHUB_RUN_ID"
+      - name: Compare source insertion order across declared stimulus layers
+        run: |
+          export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
+          node tools/m974-native-source-order.mjs \
+            --browser-directory evidence/source-order-chromium \
+            --native-probe "$PWD/m974-runtime/m974_snap_order_tests" \
+            --output evidence/native-source-order \
+            --expected-commit "$GITHUB_SHA" --expected-run-id "$GITHUB_RUN_ID"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m974-differential-${{ github.sha }}
+          path: evidence
           retention-days: 14

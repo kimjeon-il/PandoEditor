@@ -227,11 +227,53 @@ TerritorialMutationPlan planSplit(const ProjectSnapshot& s,const SplitTerritoria
 }
 TerritorialMutationPlan planSharedBoundary(const ProjectSnapshot& s,const SharedBoundaryIntent& in) {
     if(in.drafts.size()<2)throw std::invalid_argument("BOUNDARY_REQUIRES_TWO_OWNERS");
-    std::vector<ObjectRef> owners;const auto& first=unit(s,in.drafts.front().owner);const auto relation=parentRecord(s.document(),in.drafts.front().owner);
-    for(const auto& draft:in.drafts){GeometryStore check;check.insert({"boundary-draft",1},draft.geometry);if(std::find(owners.begin(),owners.end(),draft.owner)!=owners.end())throw std::invalid_argument("DUPLICATE_OWNER");const auto& candidate=unit(s,draft.owner);unlocked(candidate);if(candidate.kind!=first.kind)throw std::invalid_argument("VALIDATION_FAILED");if(first.kind==UnitKind::General){const auto current=parentRecord(s.document(),draft.owner);if(relation->parentId!=current->parentId)throw std::invalid_argument("ADMINISTRATIVE_PARENT_MISMATCH");}owners.push_back(draft.owner);}
-    auto p=initial(s,TerritorialMutationKind::ReconcileSharedBoundary,in);p.targets=owners;p.affectedObjects=owners;p.selectedAfter=owners.front();p.requiresConfirmation=true;p.geometry.kind=GeometryRequirementKind::WorkerPatch;p.geometry.operation="boundary";p.geometry.readOwners=owners;for(const auto& owner:owners){p.geometry.replacements.push_back({owner,owner});guard(p,s.document(),owner,"geometry");}
-    for(const auto& candidate:s.document().units){const auto ref=territorialRef(candidate.id);const auto current=parentRecord(s.document(),ref);if(current&&!current->parentId.empty()&&std::find(owners.begin(),owners.end(),territorialRef(current->parentId))!=owners.end()){unlocked(candidate);p.affectedObjects.push_back(ref);p.geometry.readOwners.push_back(ref);p.geometry.replacements.push_back({ref,ref});guard(p,s.document(),ref,"geometry");guard(p,s.document(),ref,"relation");}}
-    requireRewritableGuards(p,s.document());p.impacts.push_back({"boundary",owners.front(),"territorial.boundary.reconcile"});return p;
+    const auto& document=s.document();const auto& first=unit(s,in.drafts.front().owner);
+    if(first.kind!=UnitKind::General)throw std::invalid_argument("BOUNDARY_REQUIRES_GENERAL");
+    const auto parentId=staticParentRelation(document,first.id).parentId;
+    std::vector<ObjectRef> owners;
+    for(const auto& draft:in.drafts) {
+        GeometryStore check;check.insert({"boundary-draft",1},draft.geometry);
+        if(draft.geometry.type!="Polygon"&&draft.geometry.type!="MultiPolygon")throw std::invalid_argument("INVALID_GEOMETRY");
+        if(std::find(owners.begin(),owners.end(),draft.owner)!=owners.end())throw std::invalid_argument("DUPLICATE_OWNER");
+        const auto& candidate=unit(s,draft.owner);unlocked(candidate);
+        if(candidate.kind!=UnitKind::General)throw std::invalid_argument("BOUNDARY_REQUIRES_GENERAL");
+        if(staticParentRelation(document,candidate.id).parentId!=parentId)throw std::invalid_argument("ADMINISTRATIVE_PARENT_MISMATCH");
+        const auto layer=s.layer(nativeLayerId(document,draft.owner));if(layer&&layer->locked)throw std::invalid_argument("LOCKED");
+        owners.push_back(draft.owner);
+    }
+    auto p=initial(s,TerritorialMutationKind::ReconcileSharedBoundary,in);p.targets=owners;p.affectedObjects=owners;p.selectedAfter=owners.front();p.requiresConfirmation=true;
+    p.geometry.kind=GeometryRequirementKind::WorkerPatch;p.geometry.operation="boundary";p.geometry.readOwners=owners;
+    for(const auto& owner:owners){p.geometry.replacements.push_back({owner,owner});guard(p,document,owner,"geometry");}
+    // All descendants are immutable reads and bounded potential replacements.
+    // Locks are checked against actual geometry, immediate-parent and inherited
+    // root effects at prepare, not against this conservative read set.
+    for(const auto& candidate:document.units) {
+        const auto ref=territorialRef(candidate.id);
+        if(candidate.kind!=UnitKind::General||std::find(owners.begin(),owners.end(),ref)!=owners.end())continue;
+        if(std::any_of(owners.begin(),owners.end(),[&](const auto& owner){return descendant(document,ref,owner);})) {
+            p.affectedObjects.push_back(ref);p.geometry.readOwners.push_back(ref);p.geometry.replacements.push_back({ref,ref});p.geometry.removableOwners.push_back(ref);
+            guard(p,document,ref,"geometry");guard(p,document,ref,"relation");guard(p,document,ref,"delete");
+        }
+    }
+    if(parentId.empty()) {
+        // Gained overlap is checked against every root, including unselected roots.
+        for(const auto& candidate:document.units)if(isRootGeneral(document,candidate)) {
+            const auto ref=territorialRef(candidate.id);if(std::find(p.geometry.readOwners.begin(),p.geometry.readOwners.end(),ref)==p.geometry.readOwners.end())p.geometry.readOwners.push_back(ref);
+        }
+    } else {
+        for(const auto& candidate:document.units)if(candidate.kind==UnitKind::General&&staticParentRelation(document,candidate.id).parentId==parentId) {
+            const auto ref=territorialRef(candidate.id);if(std::find(p.geometry.readOwners.begin(),p.geometry.readOwners.end(),ref)==p.geometry.readOwners.end())p.geometry.readOwners.push_back(ref);
+        }
+        auto current=parentId;std::vector<std::string> seen;
+        while(!current.empty()) {
+            if(std::find(seen.begin(),seen.end(),current)!=seen.end())throw std::invalid_argument("PARENT_CYCLE");seen.push_back(current);
+            const auto ref=territorialRef(current);const auto& ancestor=unit(s,ref);unlocked(ancestor);
+            if(ancestor.kind!=UnitKind::General)throw std::invalid_argument("ADMINISTRATIVE_PARENT_MISMATCH");
+            const auto layer=s.layer(nativeLayerId(document,ref));if(layer&&layer->locked)throw std::invalid_argument("LOCKED");
+            p.geometry.readOwners.push_back(ref);current=staticParentRelation(document,current).parentId;
+        }
+    }
+    requireRewritableGuards(p,document);p.impacts.push_back({"boundary",owners.front(),"territorial.boundary.reconcile"});return p;
 }
 TerritorialMutationPlan planCoastline(const ProjectSnapshot& s,const CoastlineIntent& in) {
     GeometryStore check;check.insert({"coast-draft",1},in.draft);const auto& target=unit(s,in.target);unlocked(target);

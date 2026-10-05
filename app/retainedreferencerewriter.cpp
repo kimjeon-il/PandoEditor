@@ -31,6 +31,9 @@ bool rewriteArray(losslessjson::Value& root,const ReferenceRewrite& rewrite) {
 }
 std::optional<std::string> rewrittenKey(const std::string& key,const std::string& path,const ReferenceRewrite& rewrite) {
     if(key==rewrite.fromId) return rewrite.toId;
+    // Canonical v9 label settings use this exact namespace. Visibility keys
+    // additionally require their category context (handled by rewriteKeys).
+    if(path=="/labelSettings"&&key=="territorial:"+rewrite.fromId)return "territorial:"+rewrite.toId;
     if(path=="/labelSettings") {
         for(const auto* prefix:{"territorial:entity:","country:","subunit:","region:","territorial:country:","territorial:subunit:","territorial:region:"}) {
             const std::string p(prefix);
@@ -39,15 +42,26 @@ std::optional<std::string> rewrittenKey(const std::string& key,const std::string
     }
     return std::nullopt;
 }
-bool rewriteKeys(losslessjson::Value& root,const std::string& path,const ReferenceRewrite& rewrite) {
+bool rewriteKeys(losslessjson::Value& root,const std::string& path,const ReferenceRewrite& rewrite,const std::string& visibilityGroup={}) {
     if(root.kind!=losslessjson::Value::Object)return false;bool changed=false;
+    if(path=="/itemVisibility"&&visibilityGroup.empty()) {
+        // Category names are not object IDs. Custom-label and other categories
+        // may contain identical literal keys and must remain untouched.
+        for(const auto* group:{"countries","subunits","regions","countryLabels"}) {
+            const auto found=root.object.find(group);if(found!=root.object.end())changed=rewriteKeys(found->second,path,rewrite,group)||changed;
+        }
+        return changed;
+    }
     for(auto it=root.object.begin();it!=root.object.end();) {
-        const auto replacement=rewrittenKey(it->first,path,rewrite);
+        std::optional<std::string> replacement;
+        if(path=="/itemVisibility") {
+            if(visibilityGroup=="countryLabels") {if(it->first=="territorial:"+rewrite.fromId)replacement="territorial:"+rewrite.toId;}
+            else if(it->first==rewrite.fromId)replacement=rewrite.toId;
+        } else replacement=rewrittenKey(it->first,path,rewrite);
         if(replacement) {
             if(rewrite.operation==ReferenceRewriteOperation::ReplaceId) {auto value=std::move(it->second);it=root.object.erase(it);root.object.emplace(*replacement,std::move(value));changed=true;continue;}
             if(rewrite.operation==ReferenceRewriteOperation::DeleteKey||rewrite.operation==ReferenceRewriteOperation::RemoveEntry){it=root.object.erase(it);changed=true;continue;}
         }
-        if(path=="/itemVisibility") changed=rewriteKeys(it->second,path,rewrite)||changed;
         ++it;
     }
     return changed;
@@ -78,7 +92,21 @@ RewriteResult rewrite(const ProjectDocument&,const TerritorialMutationPlan& plan
             for(const auto& item:plan.rewrites)if(item.sourcePath==extension.jsonPointer) {
             const bool changed=(extension.jsonPointer=="/distributionEntries"||extension.jsonPointer=="/genericFeatures")?rewriteArray(payload,item):rewriteKeys(payload,extension.jsonPointer,item);
             (void)changed;
-        }extension.payload=payload.encode().toStdString();extension.dependencies=dependenciesFor(extension.jsonPointer,payload);result.handledExtensionIds.push_back(extension.id);
+        }extension.payload=payload.encode().toStdString();
+        auto remainingDependencies=dependenciesFor(extension.jsonPointer,payload);
+        // Key-based containers have no ownerId value to rediscover. Preserve
+        // their declared known dependencies, transforming only the exact
+        // territorial references covered by this container's explicit edits.
+        if(extension.jsonPointer=="/labelSettings"||extension.jsonPointer=="/itemVisibility")for(const auto& dependency:extension.dependencies) {
+            std::optional<ObjectRef> remaining=dependency;
+            for(const auto& item:plan.rewrites)if(remaining&&item.sourcePath==extension.jsonPointer&&remaining->domain=="territorial"&&remaining->id==item.fromId) {
+                if(item.operation==ReferenceRewriteOperation::ReplaceId)remaining->id=item.toId;
+                else if(item.operation==ReferenceRewriteOperation::RemoveEntry||item.operation==ReferenceRewriteOperation::DeleteKey)remaining.reset();
+            }
+            if(remaining)remainingDependencies.push_back(*remaining);
+        }
+        std::sort(remainingDependencies.begin(),remainingDependencies.end());remainingDependencies.erase(std::unique(remainingDependencies.begin(),remainingDependencies.end()),remainingDependencies.end());
+        extension.dependencies=std::move(remainingDependencies);result.handledExtensionIds.push_back(extension.id);
         } catch(const std::exception& e) {return {false,e.what(),{}};}
     }return result;
 }

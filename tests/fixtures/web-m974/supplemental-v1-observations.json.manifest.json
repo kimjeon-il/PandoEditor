@@ -1,0 +1,14 @@
+{
+  "schema": "pando-m974-supplemental-regression-golden",
+  "version": 1,
+  "purpose": "Local native regression only; final acceptance requires fresh same-commit browser capture.",
+  "captureCommit": "17014e61ad0059dc9a55a8a1e7ce150e4ae6d5e1",
+  "captureRunId": "37291915880",
+  "browserReportSha256": "864b22071d98606b5e6fbb40cd3e8008b1dbd70b31e4b626a7129ca37529e45d",
+  "observationsSha256": "c4f79b832dba4d9aed401a36292fb4c9a079ea3fd92c901a4fdf81eccc2f1c81",
+  "observationsBytes": 671190,
+  "gzipSha256": "88075d3f7f5ab24314891042c1d4ce8d384e00e185874ee0620da5524844983b",
+  "gzipBytes": 37307,
+  "inputManifestSha256": "6c22ded477ea036c36f84dbe8e87d59458f4660b79de324062de713db8b96336",
+  "privacy": "Synthetic test geometries and source provenance only; no user project or credentials."
+}

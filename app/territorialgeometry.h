@@ -79,3 +79,39 @@ SplitGeometryPreviewResult calculateSplitGeometryPreview(
 pandoeditor::PrepareResult prepareSplitGeometryCommit(
     const pandoeditor::ProjectSnapshot&,const SplitGeometryPreviewResult&,
     const pandoeditor::JobToken&);
+
+// Detached boundary receipt. Rows include actual changed, reparented and removed
+// owners; patch covers the full planned hierarchy without publishing anything.
+struct BoundaryParentChange {
+    pandoeditor::ObjectRef owner,from,to;
+};
+// Only the calculator may seal the canonical plan and patch. Public rows and
+// diagnostics are inspectable presentation values and cannot authorize a commit.
+class BoundaryGeometryPreviewResult {
+public:
+    pandoeditor::GeometryOperationStatus status=pandoeditor::GeometryOperationStatus::Failed;
+    pandoeditor::CommandError error=pandoeditor::CommandError::PrepareFailed;
+    std::string detail;
+    std::vector<AnnexGeometryRow> rows;
+    std::vector<AnnexGeometryValidationIssue> issues;
+    std::vector<BoundaryParentChange> reparented;
+    const std::optional<pandoeditor::TerritorialMutationPlan>& plan() const noexcept {return plan_;}
+    const pandoeditor::GeometryPatch& patch() const noexcept {return patch_;}
+    bool ok() const;
+    bool blocking() const;
+private:
+    std::optional<pandoeditor::TerritorialMutationPlan> plan_;
+    pandoeditor::GeometryPatch patch_;
+    bool validated_=false;
+    friend BoundaryGeometryPreviewResult calculateBoundaryGeometryPreview(
+        const pandoeditor::ProjectSnapshot&,const pandoeditor::SharedBoundaryIntent&,const pandoeditor::JobToken&);
+    friend pandoeditor::PrepareResult prepareBoundaryGeometryCommit(
+        const pandoeditor::ProjectSnapshot&,const BoundaryGeometryPreviewResult&,const pandoeditor::JobToken&);
+};
+
+BoundaryGeometryPreviewResult calculateBoundaryGeometryPreview(
+    const pandoeditor::ProjectSnapshot&,const pandoeditor::SharedBoundaryIntent&,
+    const pandoeditor::JobToken&);
+pandoeditor::PrepareResult prepareBoundaryGeometryCommit(
+    const pandoeditor::ProjectSnapshot&,const BoundaryGeometryPreviewResult&,
+    const pandoeditor::JobToken&);

@@ -25,14 +25,6 @@ double segmentDistanceSquared(Point point,Point a,Point b,double& t) {
     t=denominator?std::clamp(((point.x-a.x)*dx+(point.y-a.y)*dy)/denominator,0.,1.):0.;
     return distanceSquared(point,{a.x+dx*t,a.y+dy*t});
 }
-Point snappedPoint(const ProjectDocument& document,const MapProjection& projection,Point input,double tolerance,std::optional<Point>& marker) {
-    marker.reset();if(tolerance<=0)return input;double best=tolerance*tolerance;Point result=input;
-    // Vertices have priority over edges, matching the web editor's stable snap.
-    for(const auto& unit:document.units)if(const auto geometry=document.geometries.get(pandoeditor::staticGeometryBinding(document,unit.id).geometryRef))for(const auto& polygon:geometry->polygons)for(const auto& ring:polygon)for(const auto& candidate:ring){const auto view=projection.project(candidate);const auto inputView=projection.project(input);const auto distance=distanceSquared(view,inputView);if(distance<=best){best=distance;result=candidate;marker=candidate;}}
-    if(marker)return result;
-    const auto inputView=projection.project(input);for(const auto& unit:document.units)if(const auto geometry=document.geometries.get(pandoeditor::staticGeometryBinding(document,unit.id).geometryRef))for(const auto& polygon:geometry->polygons)for(const auto& ring:polygon)for(std::size_t i=1;i<ring.size();++i){double t=0;const auto distance=segmentDistanceSquared(inputView,projection.project(ring[i-1]),projection.project(ring[i]),t);if(distance<=best){best=distance;result={ring[i-1].x+(ring[i].x-ring[i-1].x)*t,ring[i-1].y+(ring[i].y-ring[i-1].y)*t};marker=result;}}
-    return result;
-}
 double orientation(Point a,Point b,Point c) { return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x); }
 bool properIntersection(Point a,Point b,Point c,Point d) {
     const auto ab1=orientation(a,b,c),ab2=orientation(a,b,d),cd1=orientation(c,d,a),cd2=orientation(c,d,b);
@@ -75,15 +67,22 @@ QVariantMap EditorController::geometryEditState() const
         if(name.isEmpty()&&ref==edit.target) { if(edit.createIntent)name=QString::fromStdString(edit.createIntent->name);else if(edit.content && contentSession_){name=contentEditState().value("name").toString();if(name.isEmpty()&&!contentSession_->edit.create)name=objectProperties().value("displayName").toString();}else name=objectProperties().value("displayName").toString(); }
         row["name"]=name.isEmpty()?QStringLiteral("새 객체"):name;return row;
     };
-    QVariantList providers,targets;
+    QVariantList providers,targets,boundaryImpacts;
+    if(edit.tool=="boundary"&&edit.preview)if(const auto mutation=std::get_if<ApplyTerritorialMutation>(&edit.preview->change().request().args.action))for(const auto& impact:mutation->plan.impacts) {
+        if(impact.kind!="clip-child"&&impact.kind!="remove-child"&&impact.kind!="ownership-change")continue;
+        QString description=impact.kind=="clip-child"?QStringLiteral("일부 영역 절단"):impact.kind=="remove-child"?QStringLiteral("객체와 참조 삭제"):QStringLiteral("상위 단위 변경");
+        if(impact.kind=="ownership-change"){const auto separator=impact.messageKey.rfind(':');if(separator!=std::string::npos)description=QStringLiteral("상위 단위: ")+describe(territorialRef(impact.messageKey.substr(separator+1))).value("name").toString();}
+        boundaryImpacts.append(QVariantMap{{"kind",QString::fromStdString(impact.kind)},{"id",QString::fromStdString(impact.target.id)},{"name",describe(impact.target).value("name")},{"description",description},{"messageKey",QString::fromStdString(impact.messageKey)}});
+    }
     targets.append(describe(edit.target));
     for(const auto& ref:edit.boundaryOwners)if(!(ref==edit.target))targets.append(describe(ref));
     if(edit.mergeIntent)for(const auto& ref:edit.mergeIntent->donors)providers.append(describe(ref));
     if(edit.annexIntent)for(const auto& ref:edit.annexIntent->donors)providers.append(describe(ref));
     return {{"active",true},{"creating",bool(edit.createIntent)||(edit.content&&contentSession_&&contentSession_->edit.create)},{"tool",edit.tool},{"stage",edit.preview?QStringLiteral("review"):edit.stage},{"choosingProviders",edit.choosingProviders},{"providers",providers},
         {"phase",edit.preview?"preview":edit.job?"calculating":"editing"},{"previewReady",bool(edit.preview)},
-        {"calculating",bool(edit.job)},
-        {"selectedVertex",edit.vertex},{"error",edit.error},{"canUndo",edit.tool=="split"?!edit.lineDraft.empty():!edit.undo.empty()},{"canRedo",!edit.redo.empty()},
+        {"calculating",bool(edit.job)||edit.boundaryStatus=="preparing"},
+        {"snapIndicator",edit.snapIndicator},{"boundaryStatus",edit.tool=="boundary"&&edit.boundaryStatus=="ready"&&!boundaryGeometryReady()?QStringLiteral("error"):edit.boundaryStatus},{"boundaryImpacts",boundaryImpacts},{"boundaryImpactConfirmation",edit.boundaryImpactConfirmation},{"boundaryCanPreview",boundaryGeometryReady()&&!edit.boundarySession->dragging()&&!edit.boundarySession->changedDrafts().empty()},
+        {"selectedVertex",edit.vertex},{"error",edit.error},{"canUndo",edit.tool=="boundary"?boundaryGeometryReady()&&edit.boundarySession->canUndo():edit.tool=="split"?!edit.lineDraft.empty():!edit.undo.empty()},{"canRedo",edit.tool=="boundary"?boundaryGeometryReady()&&edit.boundarySession->canRedo():!edit.redo.empty()},
         {"target",objectRefValue(edit.target)},{"targets",targets},
         {"snapX",edit.snapPoint?projection_.project(*edit.snapPoint).x:std::numeric_limits<double>::quiet_NaN()},
         {"snapY",edit.snapPoint?projection_.project(*edit.snapPoint).y:std::numeric_limits<double>::quiet_NaN()}};
@@ -96,20 +95,42 @@ QVariantList EditorController::geometryDraftPaths() const
     if(geometryEdit_->preview) {
         const auto& document=geometryEdit_->preview->change().after();
         std::vector<ObjectRef> refs{geometryEdit_->target};
+        const auto& before=geometryEdit_->preview->change().before();
+        if(geometryEdit_->tool=="boundary") {
+            refs.clear();const auto beforeIndex=validateDocument(before),afterIndex=validateDocument(document);
+            for(const auto& ref:geometryEdit_->preview->change().impact().changedObjects)if(ref.domain=="territorial") {
+                const auto previous=objectGeometry(before,beforeIndex,ref),next=objectGeometry(document,afterIndex,ref);
+                if(!(previous==next))refs.push_back(ref);
+            }
+            if(const auto mutation=std::get_if<ApplyTerritorialMutation>(&geometryEdit_->preview->change().request().args.action))for(const auto& impact:mutation->plan.impacts)
+                if((impact.kind=="clip-child"||impact.kind=="remove-child"||impact.kind=="ownership-change")&&std::find(refs.begin(),refs.end(),impact.target)==refs.end())refs.push_back(impact.target);
+        }
         if(geometryEdit_->splitIntent)refs.push_back(territorialRef(geometryEdit_->splitIntent->createdId));
         const auto index=validateDocument(document);
         for(const auto& ref:refs) {
-            const auto geometryRef=objectGeometry(document,index,ref);if(!geometryRef)continue;
-            const auto geometry=document.geometries.get(*geometryRef);if(!geometry)continue;
+            const auto geometryRef=objectGeometry(document,index,ref);
+            const bool removed=!geometryRef;
+            const auto previous=removed?objectGeometry(before,validateDocument(before),ref):std::optional<GeometryRef>{};
+            const auto geometry=geometryRef?document.geometries.get(*geometryRef):previous?before.geometries.get(*previous):nullptr;if(!geometry)continue;
             for(const auto& polygon:geometry->polygons) {
                 QString path;
                 for(const auto& ring:polygon) {
                     for(std::size_t i=0;i<ring.size();++i) {const auto point=projection_.project(ring[i]);path+=QString("%1%2 %3 ").arg(i?"L":"M").arg(point.x,0,'g',17).arg(point.y,0,'g',17);}
                     path+="Z ";
                 }
-                paths.append(QVariantMap{{"path",path},{"vertices",QVariantList{}},{"hole",false},{"preview",true},{"created",!(ref==geometryEdit_->target)}});
+                paths.append(QVariantMap{{"path",path},{"vertices",QVariantList{}},{"hole",false},{"preview",true},{"ownerId",QString::fromStdString(ref.id)},{"removed",removed},{"created",geometryEdit_->tool!="boundary"&&!(ref==geometryEdit_->target)}});
             }
         }
+        return paths;
+    }
+    if(geometryEdit_->tool=="boundary") {
+        if(!boundaryGeometryReady())return paths;
+        const auto& session=*geometryEdit_->boundarySession;QVariantList vertices;
+        for(std::size_t i=0;i<session.nodes().size();++i){const auto& node=session.nodes()[i];const auto point=projection_.project(node.coordinate);QStringList owners;for(const auto& owner:node.owners)owners.append(QString::fromStdString(owner));
+            vertices.append(QVariantMap{{"x",point.x},{"y",point.y},{"polygon",0},{"ring",0},{"vertex",int(i)},{"ownerIds",owners},{"nodeKey",QString::fromStdString(sharedboundary::nodeKeyText(node.coordinate))},{"fixed",node.fixed},{"locked",!node.fixed&&!session.canMove(i)}});
+        }
+        bool first=true;for(const auto& segment:session.segments()){const auto a=projection_.project(session.nodes()[segment.start].coordinate),b=projection_.project(session.nodes()[segment.end].coordinate);paths.append(QVariantMap{{"path",QString("M%1 %2 L%3 %4").arg(a.x,0,'g',17).arg(a.y,0,'g',17).arg(b.x,0,'g',17).arg(b.y,0,'g',17)},{"vertices",first?vertices:QVariantList{}},{"hole",false},{"line",true},{"boundary",true}});first=false;}
+        for(const auto& segment:session.activeSegments()){const auto a=projection_.project(segment.first),b=projection_.project(segment.second);paths.append(QVariantMap{{"path",QString("M%1 %2 L%3 %4").arg(a.x,0,'g',17).arg(a.y,0,'g',17).arg(b.x,0,'g',17).arg(b.y,0,'g',17)},{"vertices",QVariantList{}},{"hole",false},{"line",true},{"boundary",true},{"activeBoundary",true}});}
         return paths;
     }
     if(!isArea(geometryEdit_->draft)&&geometryEdit_->tool!="split") {
@@ -158,25 +179,25 @@ bool EditorController::beginGeometryDraw()
     emit geometryEditChanged();return true;
 }
 
-bool EditorController::geometryAddPoint(double x,double y,double tolerance)
+bool EditorController::geometryAddPoint(double x,double y,double tolerance,const QString& pointerType)
 {
     if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->stage=="setup"||geometryEdit_->choosingProviders||!std::isfinite(x)||!std::isfinite(y))return false;
     auto& edit=*geometryEdit_;
     if(edit.territorySelection) {
         if(edit.stage!="selection"||edit.territorySelection->state().activePhase!=TerritorySelectionPhase::Drawing||edit.applying||edit.selectionPending||edit.sourceChange||edit.territorySelection->state().methodChangeConfirmation)return false;
-        if(edit.territorySelection->state().activeMethod==TerritorySelectionMethod::Line) {edit.lineDraft.push_back(projection_.unproject(x,y));++edit.request;emit geometryEditChanged();return true;}
+        if(edit.territorySelection->state().activeMethod==TerritorySelectionMethod::Line) {edit.lineDraft.push_back(snappedGeometryPoint(x,y,tolerance,pointerType));++edit.request;emit geometryEditChanged();return true;}
     }
-    if(edit.tool=="split"&&!edit.territorySelection){edit.lineDraft.push_back(snappedPoint(project_.document(),projection_,projection_.unproject(x,y),tolerance,edit.snapPoint));++edit.request;emit geometryEditChanged();return true;}if(edit.tool!="draw"&&edit.tool!="annex"&&!edit.territorySelection)return false;
+    if(edit.tool=="split"&&!edit.territorySelection){edit.lineDraft.push_back(snappedGeometryPoint(x,y,tolerance,pointerType));++edit.request;emit geometryEditChanged();return true;}if(edit.tool!="draw"&&edit.tool!="annex"&&!edit.territorySelection)return false;
     if(!isArea(edit.draft)) {
         edit.undo.push_back(edit.draft);edit.redo.clear();
-        const auto point=snappedPoint(project_.document(),projection_,projection_.unproject(x,y),tolerance,edit.snapPoint);
+        const auto point=snappedGeometryPoint(x,y,tolerance,pointerType);
         if(edit.draft.type=="Point")edit.draft.points={point};
         else if(edit.draft.type=="MultiPoint")edit.draft.points.push_back(point);
         else {if(edit.draft.lines.empty())edit.draft.lines.emplace_back();edit.draft.lines.front().push_back(point);}
         edit.polygon=0;edit.ring=0;edit.vertex=int(openPath(edit.draft,0)->size())-1;++edit.request;emit geometryEditChanged();return true;
     }
     if(edit.draft.polygons.empty())edit.draft.polygons.push_back({Ring{}});
-    auto& ring=edit.draft.polygons.front().front();edit.undo.push_back(edit.draft);edit.redo.clear();openRing(ring);ring.push_back(snappedPoint(project_.document(),projection_,projection_.unproject(x,y),tolerance,edit.snapPoint));
+    auto& ring=edit.draft.polygons.front().front();edit.undo.push_back(edit.draft);edit.redo.clear();openRing(ring);ring.push_back(snappedGeometryPoint(x,y,tolerance,pointerType));
     if(ring.size()>=3)closeRing(ring);edit.vertex=int(ring.size())-2;++edit.request;emit geometryEditChanged();return true;
 }
 
@@ -184,6 +205,12 @@ bool EditorController::geometrySelectNearest(double x,double y,double tolerance)
 {
     if(geometryEdit_&&geometryEdit_->territorySelection)return false;
     if(!geometryEdit_||geometryEdit_->preview||!std::isfinite(x)||!std::isfinite(y)||tolerance<0)return false;
+    if(geometryEdit_->tool=="boundary") {
+        if(!boundaryGeometryReady()||geometryEdit_->job)return false;
+        auto& edit=*geometryEdit_;double best=tolerance*tolerance;int found=-1;const auto& nodes=edit.boundarySession->nodes();
+        for(std::size_t i=0;i<nodes.size();++i){if(!edit.boundarySession->canMove(i))continue;const auto distance=distanceSquared(projection_.project(nodes[i].coordinate),{x,y});if(distance<=best){best=distance;found=int(i);}}
+        edit.polygon=edit.ring=0;edit.vertex=found;emit geometryEditChanged();return found>=0;
+    }
     const auto point=projection_.unproject(x,y);auto& edit=*geometryEdit_;double best=tolerance*tolerance;int bestPolygon=-1,bestRing=-1,bestVertex=-1;
     if(!isArea(edit.draft)) {
         for(int p=0;auto path=openPath(edit.draft,p);++p)for(std::size_t v=0;v<path->size();++v){const auto d=distanceSquared(projection_.project((*path)[v]),{x,y});if(d<=best){best=d;bestPolygon=p;bestVertex=int(v);}}
@@ -196,19 +223,41 @@ bool EditorController::geometrySelectNearest(double x,double y,double tolerance)
     edit.polygon=bestPolygon;edit.ring=bestRing;edit.vertex=bestVertex;emit geometryEditChanged();return bestVertex>=0;
 }
 
-bool EditorController::geometryMoveSelectedVertex(double x,double y,double tolerance)
+bool EditorController::geometryMoveSelectedVertex(double x,double y,double tolerance,const QString& pointerType)
 {
     if(geometryEdit_&&geometryEdit_->territorySelection)return false;
     if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->vertex<0||!std::isfinite(x)||!std::isfinite(y))return false;
     auto& edit=*geometryEdit_;
-    if(!isArea(edit.draft)) {auto path=openPath(edit.draft,edit.polygon);if(!path||std::size_t(edit.vertex)>=path->size())return false;if(!edit.dragBefore)edit.undo.push_back(edit.draft);edit.redo.clear();(*path)[edit.vertex]=snappedPoint(project_.document(),projection_,projection_.unproject(x,y),tolerance,edit.snapPoint);++edit.request;emit geometryEditChanged();return true;}
+    if(edit.tool=="boundary") {
+        if(!boundaryGeometryReady()||edit.job)return false;
+        // Resolve the pointer once, then fan the same snapped node out to all owners.
+        const auto point=snappedGeometryPoint(x,y,tolerance,pointerType);
+        if(!edit.boundarySession->move(std::size_t(edit.vertex),point))return false;
+        if(!edit.boundarySession->dragging())edit.draft=edit.boundarySession->drafts().at(edit.target.id);
+        edit.error.clear();++edit.request;emit geometryEditChanged();return true;
+    }
+    if(!isArea(edit.draft)) {auto path=openPath(edit.draft,edit.polygon);if(!path||std::size_t(edit.vertex)>=path->size())return false;if(!edit.dragBefore)edit.undo.push_back(edit.draft);edit.redo.clear();(*path)[edit.vertex]=snappedGeometryPoint(x,y,tolerance,pointerType);++edit.request;emit geometryEditChanged();return true;}
     if(edit.polygon<0||edit.ring<0||std::size_t(edit.polygon)>=edit.draft.polygons.size()||std::size_t(edit.ring)>=edit.draft.polygons[edit.polygon].size())return false;
     auto& ring=edit.draft.polygons[edit.polygon][edit.ring];const auto limit=ring.size()>1&&samePoint(ring.front(),ring.back())?ring.size()-1:ring.size();if(std::size_t(edit.vertex)>=limit)return false;
     const bool wasClosed=ring.size()>1&&samePoint(ring.front(),ring.back());
-    if(!edit.dragBefore)edit.undo.push_back(edit.draft);edit.redo.clear();ring[edit.vertex]=snappedPoint(project_.document(),projection_,projection_.unproject(x,y),tolerance,edit.snapPoint);if(wasClosed&&edit.vertex==0)ring.back()=ring.front();++edit.request;emit geometryEditChanged();return true;
+    if(!edit.dragBefore)edit.undo.push_back(edit.draft);edit.redo.clear();ring[edit.vertex]=snappedGeometryPoint(x,y,tolerance,pointerType);if(wasClosed&&edit.vertex==0)ring.back()=ring.front();++edit.request;emit geometryEditChanged();return true;
 }
-bool EditorController::geometryBeginVertexDrag(){if(!geometryEdit_||geometryEdit_->tool=="move"||geometryEdit_->preview||geometryEdit_->vertex<0||geometryEdit_->dragBefore)return false;geometryEdit_->dragBefore=geometryEdit_->draft;return true;}
-void EditorController::geometryEndVertexDrag(bool cancel){if(!geometryEdit_||geometryEdit_->tool=="move"||!geometryEdit_->dragBefore)return;if(cancel)geometryEdit_->draft=*geometryEdit_->dragBefore;else geometryEdit_->undo.push_back(*geometryEdit_->dragBefore);geometryEdit_->dragBefore.reset();geometryEdit_->snapPoint.reset();++geometryEdit_->request;emit geometryEditChanged();}
+bool EditorController::geometryBeginVertexDrag(){
+    if(geometryEdit_&&geometryEdit_->tool=="boundary") {
+        if(!boundaryGeometryReady()||geometryEdit_->preview||geometryEdit_->job||geometryEdit_->vertex<0||!geometryEdit_->boundarySession->beginDrag(std::size_t(geometryEdit_->vertex)))return false;
+        geometryEdit_->snapExcludedNodeKey=QString::fromStdString(sharedboundary::nodeKeyText(geometryEdit_->boundarySession->nodes()[geometryEdit_->vertex].coordinate));return true;
+    }
+    if(!geometryEdit_||geometryEdit_->tool=="move"||geometryEdit_->preview||geometryEdit_->vertex<0||geometryEdit_->dragBefore)return false;geometryEdit_->dragBefore=geometryEdit_->draft;return true;}
+
+void EditorController::geometryEndVertexDrag(bool cancel){
+    if(geometryEdit_&&geometryEdit_->tool=="boundary") {
+        auto& edit=*geometryEdit_;if(!edit.boundarySession||!edit.boundarySession->dragging())return;
+        const bool changed=edit.boundarySession->endDrag(cancel||!boundaryGeometryReady());edit.draft=edit.boundarySession->drafts().at(edit.target.id);
+        if(!edit.boundarySession->valid()){edit.boundaryStatus="error";edit.error=QString::fromStdString(edit.boundarySession->error());}
+        edit.snapPoint.reset();edit.snapIndicator.clear();edit.snapExcludedNodeKey.clear();++edit.request;emit geometryEditChanged();
+        if(changed&&!requestGeometryPreview()){edit.boundarySession->resetDraft();edit.draft=edit.boundarySession->drafts().at(edit.target.id);edit.vertex=-1;emit geometryEditChanged();}return;
+    }
+    if(!geometryEdit_||geometryEdit_->tool=="move"||!geometryEdit_->dragBefore)return;if(cancel)geometryEdit_->draft=*geometryEdit_->dragBefore;else geometryEdit_->undo.push_back(*geometryEdit_->dragBefore);geometryEdit_->dragBefore.reset();geometryEdit_->snapPoint.reset();geometryEdit_->snapIndicator.clear();++geometryEdit_->request;emit geometryEditChanged();}
 bool EditorController::geometrySetMoveMode(bool enabled){
     if(!geometryEdit_||!geometryEdit_->content||geometryEdit_->preview||geometryEdit_->dragBefore||
        (geometryEdit_->tool!="edit"&&geometryEdit_->tool!="move"))return false;
@@ -247,6 +296,7 @@ void EditorController::geometryEndObjectDrag(bool cancel){
 
 bool EditorController::geometryInsertNearest(double x,double y,double tolerance)
 {
+    if(geometryEdit_&&geometryEdit_->tool=="boundary")return false;
     if(geometryEdit_&&geometryEdit_->territorySelection)return false;
     if(!geometryEdit_||geometryEdit_->preview||!std::isfinite(x)||!std::isfinite(y)||tolerance<0)return false;
     auto& edit=*geometryEdit_;const auto point=projection_.unproject(x,y);double best=tolerance*tolerance;int foundP=-1,foundR=-1,foundV=-1;Point inserted;
@@ -261,6 +311,7 @@ bool EditorController::geometryInsertNearest(double x,double y,double tolerance)
 
 bool EditorController::geometryDeleteSelectedVertex()
 {
+    if(geometryEdit_&&geometryEdit_->tool=="boundary")return false;
     if(geometryEdit_&&geometryEdit_->territorySelection)return false;
     if(geometryEdit_&&!geometryEdit_->preview&&geometryEdit_->vertex>=0&&!isArea(geometryEdit_->draft)) {
         auto& edit=*geometryEdit_;auto path=openPath(edit.draft,edit.polygon);const std::size_t minimum=(edit.draft.type=="Point"||edit.draft.type=="MultiPoint")?1:2;
@@ -273,6 +324,7 @@ bool EditorController::geometryDeleteSelectedVertex()
 
 bool EditorController::geometryUndoDraft()
 {
+    if(geometryEdit_&&geometryEdit_->tool=="boundary") {auto& edit=*geometryEdit_;if(!boundaryGeometryReady()||edit.preview||edit.job||!edit.boundarySession->undo())return false;edit.draft=edit.boundarySession->drafts().at(edit.target.id);edit.vertex=-1;++edit.request;emit geometryEditChanged();return true;}
     if(geometryEdit_&&geometryEdit_->territorySelection) {
         if(geometryEdit_->applying||geometryEdit_->sourceChange||geometryEdit_->territorySelection->state().methodChangeConfirmation)return false;
         if(geometryEdit_->territorySelection->state().activePhase!=TerritorySelectionPhase::Drawing)return geometryUndoTerritoryPart();
@@ -281,7 +333,9 @@ bool EditorController::geometryUndoDraft()
     if(!geometryEdit_||geometryEdit_->preview)return false;if(geometryEdit_->tool=="split"&&!geometryEdit_->territorySelection){if(geometryEdit_->lineDraft.empty())return false;geometryEdit_->lineDraft.pop_back();++geometryEdit_->request;emit geometryEditChanged();return true;}if(geometryEdit_->undo.empty())return false;geometryEdit_->redo.push_back(geometryEdit_->draft);geometryEdit_->draft=std::move(geometryEdit_->undo.back());geometryEdit_->undo.pop_back();geometryEdit_->vertex=-1;++geometryEdit_->request;emit geometryEditChanged();return true;
 }
 
-bool EditorController::geometryRedoDraft(){if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->redo.empty()||(geometryEdit_->tool=="split"&&!geometryEdit_->territorySelection))return false;geometryEdit_->undo.push_back(geometryEdit_->draft);geometryEdit_->draft=std::move(geometryEdit_->redo.back());geometryEdit_->redo.pop_back();geometryEdit_->vertex=-1;++geometryEdit_->request;emit geometryEditChanged();return true;}
+bool EditorController::geometryRedoDraft(){
+    if(geometryEdit_&&geometryEdit_->tool=="boundary") {auto& edit=*geometryEdit_;if(!boundaryGeometryReady()||edit.preview||edit.job||!edit.boundarySession->redo())return false;edit.draft=edit.boundarySession->drafts().at(edit.target.id);edit.vertex=-1;++edit.request;emit geometryEditChanged();return true;}
+if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->redo.empty()||(geometryEdit_->tool=="split"&&!geometryEdit_->territorySelection))return false;geometryEdit_->undo.push_back(geometryEdit_->draft);geometryEdit_->draft=std::move(geometryEdit_->redo.back());geometryEdit_->redo.pop_back();geometryEdit_->vertex=-1;++geometryEdit_->request;emit geometryEditChanged();return true;}
 
 bool EditorController::requestGeometryPreview()
 {
@@ -290,11 +344,12 @@ bool EditorController::requestGeometryPreview()
         if(geometryEdit_->territorySelection->state().activePhase==TerritorySelectionPhase::Drawing)return geometryFinishTerritoryDraft();
         scheduleTerritoryPreview();return true;
     }
+    if(geometryEdit_&&geometryEdit_->tool=="boundary"&&(!boundaryGeometryReady()||geometryEdit_->job||geometryEdit_->boundarySession->dragging()||geometryEdit_->boundarySession->changedDrafts().size()<2))return false;
     std::string validationDetail;
     if(!geometryEdit_||geometryEdit_->preview||!geometryEdit_->base.matches(project_))return false;
     if(geometryEdit_->stage=="setup")return false;
     if(geometryEdit_->annexIntent&&geometryEdit_->choosingProviders)return false;
-    if(geometryEdit_->tool!="split"&&geometryEdit_->tool!="merge"&&!validGeometry(geometryEdit_->draft,&validationDetail)){geometryEdit_->error=validationDetail.empty()?QStringLiteral("닫힌 유효 폴리곤이 필요합니다."):QStringLiteral("닫힌 유효 폴리곤이 필요합니다: %1").arg(QString::fromStdString(validationDetail));emit geometryEditChanged();return false;}
+    if(geometryEdit_->tool!="split"&&geometryEdit_->tool!="merge"&&geometryEdit_->tool!="boundary"&&!validGeometry(geometryEdit_->draft,&validationDetail)){geometryEdit_->error=validationDetail.empty()?QStringLiteral("닫힌 유효 폴리곤이 필요합니다."):QStringLiteral("닫힌 유효 폴리곤이 필요합니다: %1").arg(QString::fromStdString(validationDetail));emit geometryEditChanged();return false;}
     auto& edit=*geometryEdit_;
     if(edit.content) {
         if(!contentSession_||!contentSession_->base.matches(project_))return false;
@@ -317,18 +372,17 @@ bool EditorController::requestGeometryPreview()
     else if(edit.mergeIntent){intent=*edit.mergeIntent;}
     else if(edit.annexIntent){auto annex=*edit.annexIntent;annex.selection=edit.draft;intent=std::move(annex);}
     else if(edit.splitIntent){intent=*edit.splitIntent;}
-    else if(!edit.boundaryOwners.empty()&&edit.boundaryOwners.size()!=2){edit.error=QStringLiteral("공유 국경은 두 객체를 선택해야 합니다.");emit geometryEditChanged();return false;}
     else if(edit.coastIntent){auto coast=*edit.coastIntent;coast.draft=edit.draft;intent=std::move(coast);}
     const auto schedule=[&](CommandJobRunner::Task task){
         if(edit.job)jobs_->cancel(edit.job->id());
         const auto request=edit.request;
-        edit.error.clear();
+        edit.error.clear();edit.boundaryImpactConfirmation=false;edit.boundaryImpactsApproved=false;
         edit.job=jobs_->submit(edit.base,"territorial:geometry-edit",
             std::move(task),
             [this,request](std::uint64_t id,JobDisposition disposition,PrepareResult result){
                 if(!geometryEdit_||!geometryEdit_->job||geometryEdit_->job->id()!=id)return;
                 auto& current=*geometryEdit_;current.job.reset();
-                if(current.request!=request||disposition!=JobDisposition::Accepted||!current.base.matches(project_)) {
+                if(current.request!=request||disposition!=JobDisposition::Accepted||!current.base.matches(project_)||(current.tool=="boundary"&&!boundaryGeometryReady())) {
                     current.error=QStringLiteral("초안 또는 문서가 변경되어 계산 결과를 폐기했습니다.");
                 } else if(!result.ok()||!result.preview) {
                     current.error=QString::fromStdString(result.detail.empty()?"GEOMETRY_PREPARATION_FAILED":result.detail);
@@ -338,32 +392,14 @@ bool EditorController::requestGeometryPreview()
         emit geometryEditChanged();return true;
     };
     if(!edit.boundaryOwners.empty()) {
-        const auto owners=edit.boundaryOwners;
-        const auto target=edit.target;
-        const auto draft=edit.draft;
-        return schedule([owners,target,draft](const ProjectSnapshot& snapshot,const JobToken& token){
-            PrepareResult failed;failed.error=CommandError::PrepareFailed;
-            if(token.cancelled())return failed;
-            GeometryOperationRequest request;request.operation=GeometryOperation::Union;
-            for(const auto& owner:owners) {
-                const auto found=snapshot.index().objects.find(owner);
-                if(found==snapshot.index().objects.end())return failed;
-                const auto& unit=snapshot.document().units.at(found->second);
-                const auto geometry=snapshot.document().geometries.get(pandoeditor::staticGeometryBinding(snapshot.document(),unit.id).geometryRef);
-                if(!geometry)return failed;
-                request.operands.push_back(*geometry);
-            }
-            const auto cancelled=[&token]{return token.cancelled();};
-            auto outer=calculateGeometry(request,cancelled);
-            if(!outer.succeeded()){failed.detail=outer.detail;return failed;}
-            const auto other=*std::find_if(owners.begin(),owners.end(),[&](const auto& owner){return !(owner==target);});
-            auto remainder=calculateGeometry({GeometryOperation::Difference,outer.geometry,draft},cancelled);
-            if(!remainder.succeeded()||remainder.status==GeometryOperationStatus::Empty){
-                failed.detail=remainder.detail.empty()?"EMPTY_SHARED_BOUNDARY_REMAINDER":remainder.detail;
-                return failed;
-            }
-            TerritorialMutationIntent boundary=SharedBoundaryIntent{{{target,draft},{other,std::move(remainder.geometry)}}};
-            auto planned=CommandProcessor::planTerritorial(snapshot,boundary);
+        const auto drafts=edit.boundarySession->changedDrafts();
+        // Preparation stays an immutable view of the canonical source. The
+        // detached owner payload alone travels into the preview calculation.
+        edit.boundarySession->resetDraft();edit.draft=edit.boundarySession->drafts().at(edit.target.id);edit.vertex=-1;
+        for(const auto& draft:drafts)if(!validGeometry(draft.geometry,&validationDetail)){edit.error=QString::fromStdString(validationDetail);emit geometryEditChanged();return false;}
+        return schedule([drafts](const ProjectSnapshot& snapshot,const JobToken& token){
+            PrepareResult failed;failed.error=CommandError::PrepareFailed;if(token.cancelled())return failed;
+            auto planned=CommandProcessor::planTerritorial(snapshot,SharedBoundaryIntent{drafts});
             if(!planned.ok()||!planned.plan){failed.error=planned.error;failed.detail=planned.detail;return failed;}
             return prepareTerritorialGeometry(snapshot,*planned.plan,token);
         });
@@ -389,15 +425,46 @@ bool EditorController::requestGeometryPreview()
 bool EditorController::confirmGeometryEdit()
 {
     if(geometryEdit_&&geometryEdit_->territorySelection)return applyTerritorySelection();
+    if(geometryEdit_&&geometryEdit_->tool=="boundary") {
+        if(!boundaryGeometryReady()||!geometryEdit_->preview)return false;
+        if(!geometryEdit_->boundaryImpactsApproved) {
+            const auto mutation=std::get_if<ApplyTerritorialMutation>(&geometryEdit_->preview->change().request().args.action);
+            if(mutation&&std::any_of(mutation->plan.impacts.begin(),mutation->plan.impacts.end(),[](const auto& impact){return impact.kind=="clip-child"||impact.kind=="remove-child"||impact.kind=="ownership-change";})) {
+                geometryEdit_->boundaryImpactConfirmation=true;emit geometryEditChanged();return false;
+            }
+        }
+    }
     if(!geometryEdit_||!geometryEdit_->preview)return false;MapProjection next;try{next.rebuild(geometryEdit_->preview->change().after());}catch(...){return false;}
-    auto applied=CommandProcessor::confirm(project_,*geometryEdit_->preview);if(!applied.ok()){commandError(applied.error,QString::fromStdString(applied.detail));geometryEdit_->preview.reset();geometryEdit_->stage="selection";geometryEdit_->error=QString::fromStdString(applied.detail);emit geometryEditChanged();return false;}
+    std::optional<ObjectRef> boundarySelectedAfter;
+    if(geometryEdit_->tool=="boundary") {
+        if(!staticParentRelation(geometryEdit_->base.document(),geometryEdit_->target.id).parentId.empty())boundarySelectedAfter=geometryEdit_->target;
+        else if(const auto mutation=std::get_if<ApplyTerritorialMutation>(&geometryEdit_->preview->change().request().args.action))if(const auto boundary=std::get_if<SharedBoundaryIntent>(&mutation->plan.intent))if(!boundary->drafts.empty())boundarySelectedAfter=boundary->drafts.front().owner;
+    }
+    auto applied=CommandProcessor::confirm(project_,*geometryEdit_->preview);if(!applied.ok()){commandError(applied.error,QString::fromStdString(applied.detail));geometryEdit_->preview.reset();geometryEdit_->boundaryImpactConfirmation=false;geometryEdit_->boundaryImpactsApproved=false;geometryEdit_->stage="selection";geometryEdit_->error=QString::fromStdString(applied.detail);emit geometryEditChanged();return false;}
     noteAppliedImpact(applied.impact);
-    projection_=std::move(next);const bool created=bool(geometryEdit_->createIntent);const bool content=geometryEdit_->content;geometryEdit_.reset();if(content){contentSession_.reset();emit contentEditChanged();}if(created)createDraft_.reset();hover_.reset();++hoverRevision_;closeObjectChooser();publish(false);emit geometryChanged();emit structureChanged();emit geometryEditChanged();return true;
+    projection_=std::move(next);const bool created=bool(geometryEdit_->createIntent);const bool content=geometryEdit_->content;geometryEdit_.reset();if(content){contentSession_.reset();emit contentEditChanged();}if(created)createDraft_.reset();hover_.reset();++hoverRevision_;closeObjectChooser();
+    if(boundarySelectedAfter){auto selected=selection_;selected.replace(*boundarySelectedAfter,"map");applySelection(std::move(selected));}
+    publish(false);emit geometryChanged();emit structureChanged();emit geometryEditChanged();return true;
 }
 
 void EditorController::cancelGeometryEdit()
 {
-    if(!geometryEdit_)return;if(geometryEdit_->territorySelection)cancelTerritoryCalculation();if(geometryEdit_->job)jobs_->cancel(geometryEdit_->job->id());if(geometryEdit_->preview)CommandProcessor::cancel(*geometryEdit_->preview);geometryEdit_.reset();emit geometryEditChanged();emit contentEditChanged();emit draftsChanged();emit dirtyChanged();
+    resetGeometrySnap();
+    if(!geometryEdit_)return;
+    const auto boundaryInitialSelection=geometryEdit_->boundaryInitialSelection;
+    std::optional<ObjectRef> boundaryChildPrimary;
+    // Child entry has no root selection snapshot. cancelActiveMode reapplies
+    // its current selected child as one selection; preview discard does not.
+    if(geometryEdit_->tool=="boundary"&&!boundaryInitialSelection)if(const auto primary=selection_.primary();primary&&primary->domain=="territorial") {
+        const auto found=project_.index().objects.find(*primary);
+        if(found!=project_.index().objects.end()&&project_.document().units.at(found->second).kind==UnitKind::General&&!staticParentRelation(project_.document(),primary->id).parentId.empty())boundaryChildPrimary=*primary;
+    }
+    if(geometryEdit_->boundaryCancelled)geometryEdit_->boundaryCancelled->store(true);if(geometryEdit_->territorySelection)cancelTerritoryCalculation();if(geometryEdit_->job)jobs_->cancel(geometryEdit_->job->id());if(geometryEdit_->preview)CommandProcessor::cancel(*geometryEdit_->preview);geometryEdit_.reset();
+    // Pinned web snapshots omit each item's key, so restore cannot resolve
+    // primaryKey and replaceMany falls back to the last surviving item.
+    if(boundaryInitialSelection){auto restored=selection_;restored.setMany(boundaryInitialSelection->items(),std::nullopt,"map");restored.prune([this](const ObjectRef& ref){return project_.index().objects.count(ref)>0;});applySelection(std::move(restored));}
+    else if(boundaryChildPrimary){auto restored=selection_;restored.replace(*boundaryChildPrimary,"map");applySelection(std::move(restored));}
+    emit geometryEditChanged();emit contentEditChanged();emit draftsChanged();emit dirtyChanged();
 }
 
 bool EditorController::geometryToggleProvider(const QVariantMap& object) {
@@ -428,8 +495,11 @@ bool EditorController::geometryBack() {
     if(geometryEdit_&&geometryEdit_->territorySelection)return backTerritoryStage();
     if(!geometryEdit_)return false;auto& edit=*geometryEdit_;
     if(edit.job){jobs_->cancel(edit.job->id());edit.job.reset();++edit.request;edit.error.clear();emit geometryEditChanged();return true;}
-    if(edit.preview){CommandProcessor::cancel(*edit.preview);edit.preview.reset();edit.stage="selection";edit.error.clear();++edit.request;emit geometryEditChanged();return true;}
+    if(edit.preview){CommandProcessor::cancel(*edit.preview);edit.preview.reset();edit.boundaryImpactConfirmation=false;edit.boundaryImpactsApproved=false;
+        if(edit.tool=="boundary"&&edit.boundarySession){edit.boundarySession->resetDraft();edit.draft=edit.boundarySession->drafts().at(edit.target.id);edit.vertex=-1;}
+        edit.stage="selection";edit.error.clear();++edit.request;emit geometryEditChanged();return true;}
     if(edit.annexIntent&&!edit.choosingProviders){edit.choosingProviders=true;emit geometryEditChanged();return true;}
+    if(edit.tool=="boundary"){cancelGeometryEdit();return true;}
     if(edit.stage=="selection"){edit.stage="setup";edit.error.clear();emit geometryEditChanged();return true;}
     cancelGeometryEdit();return true;
 }

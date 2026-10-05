@@ -1,0 +1,119 @@
+{
+  "schema": "pando-m974-source-order-inputs",
+  "version": 2,
+  "cases": [
+    {
+      "id": "source-order-v2-coincident-remove-restore-a",
+      "features": [
+        {
+          "type": "Feature",
+          "id": "a",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "a",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "id": "b",
+          "properties": {
+            "schemaVersion": 5,
+            "entityKind": "general",
+            "name": "b",
+            "parentId": "",
+            "coverageMode": "explicit",
+            "style": {},
+            "locked": false,
+            "validFrom": null,
+            "validTo": null,
+            "notes": "",
+            "metadata": {},
+            "sourceFolderId": "",
+            "sourceLibraryId": "",
+            "sourceGeometryVersion": ""
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          }
+        }
+      ],
+      "patchIds": [
+        "a"
+      ],
+      "query": {
+        "coordinate": [
+          0,
+          0
+        ],
+        "margin": 0.2,
+        "activeOwnerIds": [],
+        "sourceKey": ""
+      },
+      "observationOnly": true,
+      "stimulus": "Warm query over [a,b]; remove a and immediately syncPatch([a]); restore original [a,b] and immediately syncPatch([a]); then query, with no intervening query or application/history Undo."
+    }
+  ]
+}

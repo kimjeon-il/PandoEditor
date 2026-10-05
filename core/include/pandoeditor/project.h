@@ -73,6 +73,9 @@ public:
     bool redo();
     bool canUndo() const noexcept { return cursor_ > 0; }
     bool canRedo() const noexcept { return cursor_ < commands_.size(); }
+    // Read the validated stored action by value; no request/ledger alias escapes.
+    std::optional<TerritorialMutationKind> nextUndoTerritorialMutationKind() const noexcept;
+    std::optional<TerritorialMutationKind> nextRedoTerritorialMutationKind() const noexcept;
     bool dirty() const;
     void markSaved() noexcept;
 private:

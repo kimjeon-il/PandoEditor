@@ -203,7 +203,7 @@ Rectangle {
                                 UiButton {outlined:true; objectName: "mergeTerritorial"; text: "합병"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginMergeSelection() }
                                 UiButton {outlined:true; objectName: "annexTerritorial"; text: "영역 편입"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginAnnexGeometry() }
                                 UiButton {outlined:true; objectName: "splitTerritorial"; text: "절단선 분할"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginSplitGeometry() }
-                                UiButton {outlined:true; objectName: "sharedBoundaryTerritorial"; text: "공유 국경"; enabled: editor.selectionItems.length === 2; onClicked: editor.beginSharedBoundaryGeometry() }
+                                UiButton {outlined:true; objectName: "sharedBoundaryTerritorial"; text: "공유 국경"; enabled: editor.selectionItems.length >= 1 && editor.canBeginSharedBoundaryGeometry(); onClicked: editor.beginSharedBoundaryGeometry() }
                                 UiButton {outlined:true; objectName: "coastTerritorial"; text: "해안(국가)"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginCoastlineGeometry("country") }
                                 UiButton {outlined:true; objectName: "coastSubunitTerritorial"; text: "해안(하위)"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginCoastlineGeometry("subunit") }
                                 UiButton {outlined:true; objectName: "coastIndependentTerritorial"; text: "해안(독립)"; enabled: editor.selectionItems.length === 1; onClicked: editor.beginCoastlineGeometry("independent") }
