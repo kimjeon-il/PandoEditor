@@ -18,6 +18,25 @@
     const contains=(geometry,point)=>h.ports.landRelations.pointInCountryFeature(point,{geometry});
     h.state.hydroManifest={version:source.version,index:{sha256:source.indexSha256}};
     h.ports.territoryComponents={...h.components,installComponentIndex(...args){preparations.push(clone(args[1]));return h.components.installComponentIndex(...args);},installRiverComponentIndex(...args){compositions.push(clone(args[1]));return h.components.installRiverComponentIndex(...args);}};
+    // Separate read-only receipt diagnostics; canonical metrics remain unchanged.
+    const metricDiagnostic=async(geometry,expectedAreaKm2,{trace=false}={})=>{
+      const float64Hex=value=>{const bytes=new ArrayBuffer(8),view=new DataView(bytes);view.setFloat64(0,value,false);return Array.from(new Uint8Array(bytes),byte=>byte.toString(16).padStart(2,'0')).join('');};
+      const measure=geometry=>{const steradians=api.d3.geo.area(geometry),radiusSquared=6371.0088**2,productKm2=steradians*radiusSquared,clampedKm2=Math.max(0,productKm2);return {steradians,radiusSquared,productKm2,clampedKm2,formatted:h.components.formatTerritoryArea(clampedKm2),float64:{steradians:float64Hex(steradians),radiusSquared:float64Hex(radiusSquared),productKm2:float64Hex(productKm2)}};};
+      const metricGeometry=clone(geometry),normalizedGeometry=api.normalizePolygonGeometry(clone(metricGeometry));must(normalizedGeometry,'Diagnostic normalization failed');
+      const diagnostic={sourceIdentity:{d3Sha256:payload.controllerSources.modules['d3.min.js'].sha256,normalizerSha256:payload.controllerSources.modules['polygon-geometry.js'].sha256,formatterSha256:payload.controllerSources.modules['app-territory-components.js'].sha256,formatterEntrypoint:'app-territory-components.formatTerritoryArea'},role:'Read-only exact D3 metric diagnostic; canonical receipt metric is unchanged.',raw:measure(metricGeometry),normalized:measure(normalizedGeometry),
+        inputSha256:await digest(JSON.stringify(canonical(metricGeometry))),normalizedInputSha256:await digest(JSON.stringify(canonical(normalizedGeometry))),normalizedGeometry};
+      must(diagnostic.raw.productKm2===expectedAreaKm2,'Diagnostic differs from authoritative receipt metric');
+      if(trace){
+        const originals={sin:Math.sin,cos:Math.cos,atan2:Math.atan2},calls=[];let tracedSteradians;
+        try{
+          for(const [name,original] of Object.entries(originals))Math[name]=(...args)=>{const result=original(...args);calls.push({function:name,args,result});return result;};
+          tracedSteradians=api.d3.geo.area(normalizedGeometry);
+        }finally{for(const [name,original] of Object.entries(originals))Math[name]=original;}
+        const outputExact=Object.is(tracedSteradians,diagnostic.normalized.steradians);must(outputExact,'D3 diagnostic instrumentation changed its output');
+        diagnostic.trigonometryTrace={role:'Diagnostic-only calls to original Math built-ins on the normalized transfer copy.',calls,steradians:tracedSteradians,outputExact};
+      }
+      return diagnostic;
+    };
     const gis=h.ports.domainControllers.gisDomain,compute=gis.computeRiverPartition;
     gis.loadRiverPartitionFeatures=async donors=>{
       const result={features:provided.riverFeatures,diagnostics:{loadedRivers:provided.riverFeatures.length,failedLogicalIds:[],indexSha256:source.indexSha256,version:source.version}};
@@ -75,6 +94,7 @@
           Object.assign(observed,{sourceDiagnostics:clone(sourceCalls.at(-1).diagnostics),donorRevisionStrings:matching.donors.map(donor=>donor.geometryRevision),
             hydroRevision:matching.hydroRevision,editedRiverSignature:matching.hydroRevision.slice(source.version.length+source.indexSha256.length+2)});
         }
+        observed.transferAreaDiagnostic=ready?await metricDiagnostic(latest.output.result.transferredGeometry,observed.transferAreaKm2):null;
         return observed;
       };
       record.initialCheckpoint=await checkpoint('initial-selected');record.lifecycleActions=[];const removedParts=new Map();
@@ -102,23 +122,7 @@
         after:finalCalculation.output.afterFeatures.filter(feature=>finalCalculation.output.result.affectedIds.includes(String(feature.id))),
         fullWorldAfterSha256:await digest(JSON.stringify(canonical(finalCalculation.output.afterFeatures)))});
     }
-    // Separate diagnostic: never substitutes for the authoritative receipt metric.
-    const float64Hex=value=>{const bytes=new ArrayBuffer(8),view=new DataView(bytes);view.setFloat64(0,value,false);return Array.from(new Uint8Array(bytes),byte=>byte.toString(16).padStart(2,'0')).join('');};
-    const measure=geometry=>{const steradians=api.d3.geo.area(geometry),radiusSquared=6371.0088**2,productKm2=steradians*radiusSquared,clampedKm2=Math.max(0,productKm2);return {steradians,radiusSquared,productKm2,clampedKm2,formatted:h.components.formatTerritoryArea(clampedKm2),float64:{steradians:float64Hex(steradians),radiusSquared:float64Hex(radiusSquared),productKm2:float64Hex(productKm2)}};};
-    const metricGeometry=clone(record.result.transferredGeometry),normalizedGeometry=api.normalizePolygonGeometry(clone(metricGeometry));must(normalizedGeometry,'Diagnostic normalization failed');
-    const diagnostic={role:'Read-only exact D3 metric diagnostic; canonical receipt metric is unchanged.',raw:measure(metricGeometry),normalized:measure(normalizedGeometry),
-      inputSha256:await digest(JSON.stringify(canonical(metricGeometry))),normalizedInputSha256:await digest(JSON.stringify(canonical(normalizedGeometry))),normalizedGeometry};
-    must(diagnostic.raw.productKm2===record.expectedTransferAreaKm2,'Diagnostic differs from authoritative receipt metric');
-    if(!options.lifecycle){
-      const originals={sin:Math.sin,cos:Math.cos,atan2:Math.atan2},calls=[];let tracedSteradians;
-      try{
-        for(const [name,original] of Object.entries(originals))Math[name]=(...args)=>{const result=original(...args);calls.push({function:name,args,result});return result;};
-        tracedSteradians=api.d3.geo.area(normalizedGeometry);
-      }finally{for(const [name,original] of Object.entries(originals))Math[name]=original;}
-      const outputExact=Object.is(tracedSteradians,diagnostic.normalized.steradians);must(outputExact,'D3 diagnostic instrumentation changed its output');
-      diagnostic.trigonometryTrace={role:'Diagnostic-only calls to original Math built-ins on the normalized transfer copy.',calls,steradians:tracedSteradians,outputExact};
-    }
-    record.transferAreaDiagnostic=diagnostic;
+    record.transferAreaDiagnostic=await metricDiagnostic(record.result.transferredGeometry,record.expectedTransferAreaKm2,{trace:!options.lifecycle});
     output.push(record);
     h.workflow.clear();
   }

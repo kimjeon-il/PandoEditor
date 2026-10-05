@@ -1,6 +1,7 @@
 #include "territorial_fixture.h"
 #include "editorcontroller.h"
 #include "projectcodec.h"
+#include "m972_metric_display_contract.h"
 #include <QCryptographicHash>
 #include <QElapsedTimer>
 #include <QFile>
@@ -13,6 +14,7 @@
 #include <QThread>
 #include <QSaveFile>
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <functional>
 #include <stdexcept>
@@ -71,7 +73,7 @@ void settle(EditorController& controller,const QString& name,const QString& stag
 }
 struct Checks {
     int matched=0,mismatched=0;
-    QJsonArray differences,unobservedFields;
+    QJsonArray differences,unobservedFields,displayMetricDiagnostics;
     bool equal(const QString& name,const QJsonValue& actual,const QJsonValue& expected) {
         if(actual==expected){++matched;return true;}
         ++mismatched;differences.append(QJsonObject{{"field",name},{"actual",actual},{"expected",expected}});return false;
@@ -81,6 +83,39 @@ struct Checks {
         unobservedFields.append(QJsonObject{{"field",name},{"actual",actual},{"reason","Actual browser workflow did not produce this value at this checkpoint."}});
     }
 };
+struct MetricEvidenceContext {
+    QJsonObject browserSourceHashes;
+    QByteArray productionMapViewSource;
+};
+void compareTransferArea(Checks& checks,const QString& field,const QJsonObject& observation,
+    const QJsonValue& expectedArea,const QJsonValue& browserDiagnostic,const MetricEvidenceContext& context) {
+    const auto capturedArea=observation["state"].toObject()["transferAreaKm2"];
+    QJsonObject diagnostic;
+    try {
+        require(observation["transferredGeometry"].isObject(),"NATIVE_AUTHORITATIVE_TRANSFER_GEOMETRY_REQUIRED");
+        const auto result=m972test::validateMetricDisplayContract(browserDiagnostic.toObject(),
+            decodeGeometry(observation["transferredGeometry"].toObject()),capturedArea,expectedArea,
+            context.browserSourceHashes,context.productionMapViewSource);
+        diagnostic=result.toJson();
+    } catch(const std::exception& error) {
+        diagnostic={{"accepted",false},{"detail",QString::fromUtf8(error.what())}};
+    }
+    // The display contract never turns unequal doubles into equal doubles. Raw
+    // scalar values and ULP diagnostics remain separate owned evidence, including
+    // when the validated production formatter produces the same visible text.
+    diagnostic["field"]=field;diagnostic["capturedNativeAreaKm2"]=capturedArea;
+    diagnostic["browserCanonicalAreaKm2"]=expectedArea;
+    diagnostic["browserDiagnosticPresent"]=browserDiagnostic.isObject();
+    const bool rawScalarEqual=capturedArea.isDouble()&&expectedArea.isDouble()
+        &&std::isfinite(capturedArea.toDouble())&&std::isfinite(expectedArea.toDouble())
+        &&m972test::metric_detail::bits(capturedArea.toDouble())==m972test::metric_detail::bits(expectedArea.toDouble());
+    diagnostic["rawScalarEqual"]=rawScalarEqual;diagnostic["rawScalarMismatch"]=!rawScalarEqual;
+    checks.displayMetricDiagnostics.append(diagnostic);
+    checks.truth(field+".displayMetricContractAccepted",diagnostic["accepted"].toBool());
+}
+int rawMetricMismatchCount(const QJsonArray& diagnostics) {
+    return std::count_if(diagnostics.begin(),diagnostics.end(),[](const QJsonValue& value){return value.toObject()["rawScalarMismatch"].toBool();});
+}
 ProjectDocument worldDocument(const QJsonArray& features,const QString& manifest) {
     ProjectDocument document;document.documentId="m972-river-controller-browser-oracle";
     for(const auto& value:features) {const auto feature=value.toObject();const auto id=feature["id"].toString().toStdString();
@@ -140,7 +175,7 @@ void compareComponentFeatures(Checks& checks,const QString& prefix,const QJsonAr
         checks.equal(row+"sourcePolygonIndices",native["sourcePolygonIndices"],web.contains("sourcePolygonIndices")?web["sourcePolygonIndices"]:web["properties"].toObject()["__territorySourceIndices"]);
     }
 }
-void compareLifecycleCheckpoint(Checks& checks,const QJsonObject& actual,const QJsonObject& expected) {
+void compareLifecycleCheckpoint(Checks& checks,const QJsonObject& actual,const QJsonObject& expected,const MetricEvidenceContext& metrics) {
     const auto prefix="lifecycle."+expected["name"].toString()+".";const auto state=actual["state"].toObject();
     require(expected.contains("components")&&expected.contains("componentFeatures")&&expected.contains("parts")&&expected.contains("riverSliverContext"),"INCOMPLETE_BROWSER_LIFECYCLE_CHECKPOINT");
     compareComponents(checks,prefix+"components.",actual["components"].toArray(),expected["components"].toArray());
@@ -172,7 +207,11 @@ void compareLifecycleCheckpoint(Checks& checks,const QJsonObject& actual,const Q
     }
     for(const auto& field:{"selectedComponentKeys","previewReady","autoIncludedSliverCount","autoIncludedSliverAreaM2","transferAreaKm2"}) {
         require(expected.contains(field),"INCOMPLETE_BROWSER_LIFECYCLE_STATE: "+QString(field));
-        if(expected[field].isNull()&&QString(field)!="previewReady"&&QString(field)!="selectedComponentKeys")checks.unobserved(prefix+field,state[field]);
+        if(QString(field)=="transferAreaKm2") {
+            if(expected["previewReady"]==QJsonValue(false)&&expected[field].isNull())checks.unobserved(prefix+field,state[field]);
+            else compareTransferArea(checks,prefix+field,actual,expected[field],expected["transferAreaDiagnostic"],metrics);
+        }
+        else if(expected[field].isNull()&&QString(field)!="previewReady"&&QString(field)!="selectedComponentKeys")checks.unobserved(prefix+field,state[field]);
         else checks.equal(prefix+field,state[field],expected[field]);
     }
     if(expected.contains("sourceDiagnostics")) {
@@ -181,7 +220,7 @@ void compareLifecycleCheckpoint(Checks& checks,const QJsonObject& actual,const Q
         for(const auto& field:{"donorRevisionStrings","editedRiverSignature","hydroRevision"})checks.equal(prefix+field,actual[field],expected[field]);
     }
 }
-QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const QJsonArray& world,const QString& manifest) {
+QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const QJsonArray& world,const QString& manifest,const MetricEvidenceContext& metrics) {
     const auto name=evidence["name"].toString();const auto scenario=evidence["selection"].toObject();Checks checks;
     QJsonObject report{{"name",name},{"selection",scenario},{"observed",true}};QJsonArray checkpoints,timings;
     QTemporaryDir directory;require(directory.isValid(),"FIXTURE_DIRECTORY_FAILED");
@@ -263,7 +302,7 @@ QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const
             if(!actual.isEmpty())checks.equal("selectedCellGeometry."+expected["key"].toString(),actual["geometry"],expected["geometry"]);}
         if(evidence.contains("initialCheckpoint")) {
             auto expected=evidence["initialCheckpoint"].toObject();if(!expected.contains("name"))expected["name"]="initial-selected";
-            compareLifecycleCheckpoint(checks,observation,expected);report["actualInitialCheckpoint"]=observation;report["expectedInitialCheckpoint"]=expected;
+            compareLifecycleCheckpoint(checks,observation,expected,metrics);report["actualInitialCheckpoint"]=observation;report["expectedInitialCheckpoint"]=expected;
         }
         QJsonArray lifecycle;QJsonObject removedByOrderedIndex;
         for(const auto& value:evidence["lifecycleActions"].toArray()) {
@@ -302,8 +341,9 @@ QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const
             checks.truth("lifecycle."+stage+".accepted",accepted);require(accepted,"CONTROLLER_LIFECYCLE_ACTION_REJECTED: "+stage);
             wait(stage);checkpoint(stage);observation=ownedObservation(controller);
             auto expected=action["checkpoint"].toObject();if(!expected.contains("name"))expected["name"]=stage;
-            const auto differencesBefore=checks.differences.size();compareLifecycleCheckpoint(checks,observation,expected);
-            QJsonObject observed{{"op",op},{"name",stage},{"accepted",accepted},{"actualCheckpoint",observation},{"expectedCheckpoint",expected},{"exact",checks.differences.size()==differencesBefore}};
+            const auto differencesBefore=checks.differences.size();const auto rawMetricMismatchesBefore=rawMetricMismatchCount(checks.displayMetricDiagnostics);compareLifecycleCheckpoint(checks,observation,expected,metrics);
+            const bool checkpointPassed=checks.differences.size()==differencesBefore,rawMetricsExact=rawMetricMismatchCount(checks.displayMetricDiagnostics)==rawMetricMismatchesBefore;
+            QJsonObject observed{{"op",op},{"name",stage},{"accepted",accepted},{"actualCheckpoint",observation},{"expectedCheckpoint",expected},{"exact",checkpointPassed&&rawMetricsExact},{"passed",checkpointPassed},{"rawTransferAreaMetricsExact",rawMetricsExact}};
             if(action.contains("knownDivergence"))observed["knownDivergence"]=action["knownDivergence"];
             // Known stale-web checkpoints retain their raw exact differences and
             // still fail parity. Only an approved source correction can remove
@@ -324,7 +364,7 @@ QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const
         checks.equal("autoIncludedSliverAreaM2",previewState["autoIncludedSliverAreaM2"],expectedResult["autoIncludedSlivers"].toObject()["areaM2"]);
         if(actualEntryChain) {
             require(evidence.contains("expectedTransferAreaKm2"),"BROWSER_AUTHORITATIVE_TRANSFER_AREA_REQUIRED");
-            checks.equal("transferAreaKm2",previewState["transferAreaKm2"],evidence["expectedTransferAreaKm2"]);
+            compareTransferArea(checks,"transferAreaKm2",observation,evidence["expectedTransferAreaKm2"],evidence["transferAreaDiagnostic"],metrics);
         }
         require(controller.geometryAdvanceStage(),"CONTROLLER_REVIEW_REJECTED: "+previewState["error"].toString());checkpoint("review");
         require(controller.confirmGeometryEdit(),"CONTROLLER_APPLY_REJECTED");wait("settle strict receipt Apply");
@@ -347,14 +387,18 @@ QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const
     } catch(const std::exception& error) {report["error"]=error.what();checks.truth("controllerLifecycleCompleted",false);report["lastOwnedObservation"]=ownedObservation(controller);}
     controller.cancelGeometryEdit();report["checkpoints"]=checkpoints;report["timings"]=timings;report["matched"]=checks.matched;report["mismatched"]=checks.mismatched;
     report["differences"]=checks.differences;report["unobservedFields"]=checks.unobservedFields;report["passed"]=checks.mismatched==0;
+    report["displayMetricDiagnostics"]=checks.displayMetricDiagnostics;report["rawTransferAreaMetricMismatches"]=rawMetricMismatchCount(checks.displayMetricDiagnostics);
+    report["rawTransferAreaMetricsExact"]=rawMetricMismatchCount(checks.displayMetricDiagnostics)==0;
     progress(name,QString("matched=%1 mismatched=%2").arg(checks.matched).arg(checks.mismatched));return report;
 }
 int compare(const QString& browserPath,const QString& payloadPath,const QString& outputPath,const QString& onlyCase) {
-    QJsonArray observations;QJsonObject identity;bool passed=true,entryChainObserved=false,complete=false;int matched=0,mismatched=0,unobserved=0,expectedCases=0;
+    QJsonArray observations;QJsonObject identity;bool passed=true,entryChainObserved=false,complete=false;int matched=0,mismatched=0,unobserved=0,expectedCases=0,rawMetricMismatches=0;
     const auto save=[&](bool finished,const QString& runningCase=QString()) {
         const QJsonObject report{{"schema","native-controller-browser-annex-v1"},{"identity",identity},{"actualEntryChainOracle",entryChainObserved},{"complete",finished},{"passed",finished&&passed},
             {"status",finished?"complete":"incomplete"},{"runningCase",runningCase},{"expectedCases",expectedCases},{"completedCases",observations.size()},{"selectedCase",onlyCase},
             {"matched",matched},{"mismatched",mismatched},{"unobserved",unobserved},{"observations",observations},
+            {"transferAreaMetricCriterion","Validated actual-browser source/input identity and exact production formatted text, with direct native production D3 recomputation."},
+            {"rawTransferAreaMetricMismatches",rawMetricMismatches},{"rawTransferAreaMetricsExact",rawMetricMismatches==0},
             {"knownBoundedDivergence","Any observed web empty-selection or stale-river cache difference remains an explicit failing difference; no tolerance or checkpoint allowlist is applied."}};
         QSaveFile output(outputPath);if(!output.open(QIODevice::WriteOnly))return false;
         const auto bytes=QJsonDocument(report).toJson(QJsonDocument::Compact);
@@ -363,6 +407,9 @@ int compare(const QString& browserPath,const QString& payloadPath,const QString&
     try {
         const auto browser=readObject(browserPath),payload=readObject(payloadPath);identity=payload["identity"].toObject();
         require(!identity.isEmpty()&&browser["identity"].toObject()==identity,"BROWSER_NATIVE_IDENTITY_MISMATCH");
+        require(!browser["sourceHashes"].toObject().isEmpty()&&browser["sourceHashes"].toObject()==identity["sourceHashes"].toObject(),"ACTUAL_BROWSER_SOURCE_HASH_IDENTITY_REQUIRED");
+        QFile productionMapView(":/metric/common/MapView.qml");require(productionMapView.open(QIODevice::ReadOnly),"NATIVE_PRODUCTION_METRIC_FORMATTER_SOURCE_REQUIRED");
+        const MetricEvidenceContext metrics{browser["sourceHashes"].toObject(),productionMapView.readAll()};
         require(payload["provenance"].toObject()["webCommit"].toString()=="53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47","UNPINNED_WEB_SOURCE");
         const auto worldSource=payload["world"].toObject()["source"].toString().toUtf8();
         require(QString::fromLatin1(QCryptographicHash::hash(worldSource,QCryptographicHash::Sha256).toHex())==identity["worldSha256"].toString(),"WORLD_SOURCE_DIGEST_MISMATCH");
@@ -391,7 +438,8 @@ int compare(const QString& browserPath,const QString& payloadPath,const QString&
             const auto representation=evidence["selection"].toObject()["representation"].toString();
             if(representation!="normalized-filtered-presentation"&&representation!="controller-entry-chain") {
                 ++unobserved;observations.append(QJsonObject{{"name",name},{"observed",false},{"reason","Controller uses live-coordinate revisions and installed normalized presentation; raw fixtures are covered by the separate real preview differential."}});continue;}
-            auto row=runCase(evidence,browser,world,manifest);matched+=row["matched"].toInt();mismatched+=row["mismatched"].toInt();passed=passed&&row["passed"].toBool();observations.append(row);
+            auto row=runCase(evidence,browser,world,manifest,metrics);matched+=row["matched"].toInt();mismatched+=row["mismatched"].toInt();passed=passed&&row["passed"].toBool();observations.append(row);
+            rawMetricMismatches+=row["rawTransferAreaMetricMismatches"].toInt();
             if(!evidence["lifecycleActions"].toArray().isEmpty())++lifecycleCases;
             require(save(false),"ATOMIC_PARTIAL_CONTROLLER_REPORT_WRITE_FAILED");
         }

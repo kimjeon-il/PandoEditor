@@ -91,3 +91,31 @@ compilation.
 A–C leaves river source loading/partition/coordinator/sliver work for slice D,
 complex cut graphs for M9.7.3, and engine extraction for M9.7.6. No main merge,
 release, installation or additional web-source correction is included here.
+
+## Read-only transfer-area display contract and report transport
+
+The controller comparison keeps geometry, ordered source references, provenance,
+sliver filtering, receipts, history and generated/deleted objects exact. The
+read-only transfer-area label has a separate criterion: its actual production
+QML formatted text must equal the captured production web formatter text. Raw
+area doubles, Float64 encodings, ULP distance and `rawScalarEqual` remain in the
+report even when this display criterion passes; this is not raw numeric parity.
+Native area must reproduce the direct pinned D3 calculation on the exact native
+transfer geometry. Missing/invalid values, source or input identities, and
+inconsistent formatter/binary diagnostics fail closed.
+
+The trust boundary is the actual pinned Chromium capture produced in the same
+GitHub Actions run and exact commit, downloaded through that run's artifact
+chain. Source hashes identify the functions and inputs; they are not a
+cryptographic proof of computation for arbitrarily supplied JSON. A coherent
+same-display-bucket change cannot be ruled out by formatting alone. Therefore
+synthetic or manually modified reports are not accepted as completion evidence.
+JSON transports canonicalize signed zero; reported bit patterns describe the
+captured JSON numbers rather than an unavailable pre-serialization sign bit.
+
+The browser freezes the complete report as JSON and transfers bounded UTF-16
+chunks without nested Playwright object serialization. Full and area-diagnostic
+files are byte-count/SHA-256 checked and atomically published before the host
+parses them. The 512 MiB host heap limit is unchanged. Synthetic transfer tests
+are memory/transport regressions only; fresh exact-commit Chromium and all four
+controller scenario jobs are required for end-to-end validation.

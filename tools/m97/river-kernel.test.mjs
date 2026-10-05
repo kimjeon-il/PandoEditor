@@ -215,7 +215,7 @@ test('controller browser boundary drives the real production workflow and preser
     for(let i=0;i<256;i++)features.push(api.createTerritorialFeature({id:'unrelated-'+i,name:'unrelated',entityKind:'general',parentId:'',coverageMode:'explicit',geometry:square(30+i*.03,40,30+i*.03+.01,40.01)}));
     const river={type:'Feature',id:'fixture-river',properties:{pandolab_id:'fixture-river',category:'river'},geometry:{type:'LineString',coordinates:[[5,-1],[5,11]]}};
     const scenario={name:'protocol-synthetic-entry-chain',base:'donor-controller',representation:'controller-entry-chain',donorId:'donor',targetId:'target',samplePoints:[[1,1]]};
-    const payload={world:{source:JSON.stringify({features})},controllerAnnex:{scenarios:[scenario],source:{version:'0.13.1',indexSha256:'a'.repeat(64),inputs:[{donorId:'donor',riverFeatures:[river]}]}}};
+    const payload={controllerSources:bundle,world:{source:JSON.stringify({features})},controllerAnnex:{scenarios:[scenario],source:{version:'0.13.1',indexSha256:'a'.repeat(64),inputs:[{donorId:'donor',riverFeatures:[river]}]}}};
     const {sha256,canonical}=await import('./river/oracle.mjs');
     const rows=await observe(payload,api,runtime,async text=>sha256(text),canonical);
     assert.equal(rows.length,1);const row=rows[0];
@@ -244,7 +244,7 @@ test('controller browser boundary drives the real production workflow and preser
     assert.deepEqual(checkpoints.map(checkpoint=>checkpoint.parts.length),[3,3,2,2]);
     assert.notDeepEqual(checkpoints[1].componentFeatures,lifecycle.componentFeatures,'Residual source must be prepared by production');
     assert.notDeepEqual(checkpoints[2].componentFeatures,checkpoints[1].componentFeatures,'Removing middle part must restore residual source');
-    for(const checkpoint of checkpoints){assert.equal(checkpoint.inputUnchanged,true);if(!checkpoint.previewReady){assert.equal(checkpoint.input,null);assert.equal(checkpoint.result,null);}}
+    for(const checkpoint of checkpoints){assert.equal(checkpoint.inputUnchanged,true);if(checkpoint.previewReady){assert.ok(checkpoint.transferAreaDiagnostic,'Every current receipt has an actual formatter diagnostic');assert.equal(checkpoint.transferAreaDiagnostic.raw.productKm2,checkpoint.transferAreaKm2);assert.equal(checkpoint.transferAreaDiagnostic.trigonometryTrace,undefined);assert.equal(checkpoint.transferAreaDiagnostic.sourceIdentity.formatterSha256,bundle.modules['app-territory-components.js'].sha256);}if(!checkpoint.previewReady){assert.equal(checkpoint.input,null);assert.equal(checkpoint.result,null);}}
     assert.equal(checkpoints.at(-1).previewReady,true);
     assert.deepEqual(checkpoints[2].parts.map(part=>part.id),[checkpoints[0].parts[0].id,checkpoints[0].parts[2].id]);
     assert.deepEqual(lifecycle.input,checkpoints.at(-1).input);assert.deepEqual(lifecycle.result,checkpoints.at(-1).result);

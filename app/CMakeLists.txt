@@ -631,11 +631,13 @@ if(BUILD_TESTING AND EXISTS "${PROJECT_SOURCE_DIR}/tests/m972_river_controller_p
     add_executable(m972_river_controller_probe ../tests/m972_river_controller_probe.cpp)
     target_link_libraries(m972_river_controller_probe PRIVATE pandoeditor_editor)
     qt_add_resources(m972_river_controller_probe sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    qt_add_resources(m972_river_controller_probe metric_ui PREFIX "/metric" BASE "${PROJECT_SOURCE_DIR}/ui" FILES "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml")
 endif()
 
 if(BUILD_TESTING)
     add_executable(river_area_tests ../tests/river_area_tests.cpp)
     target_link_libraries(river_area_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(river_area_tests metric_ui PREFIX "/metric" BASE "${PROJECT_SOURCE_DIR}/ui" FILES "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml")
     add_test(NAME river_area_tests COMMAND river_area_tests -o -,txt)
     set_tests_properties(river_area_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()
