@@ -82,6 +82,38 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     sceneBridge_.publishView(camera_.view());
     camera_.acceptPublishedView(sceneBridge_.viewState());
     selectionInstance_=project_.instanceId();reloadDrafts();
+    // A successful reopen changes generation even for byte-identical sources.
+    // Observe identity before publishing the frame so old cells/cache entries
+    // cannot remain eligible under the newly installed provider.
+    connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,[this] {
+        const auto identity=hydroRuntime_.sourceIdentity();
+        const bool unchanged=(!identity&&!riverCacheSource_)||
+            (identity&&riverCacheSource_&&*identity==*riverCacheSource_);
+        bool unrelatedBootstrap=false;
+        if(geometryEdit_&&geometryEdit_->riverPreparation&&!geometryEdit_->riverPreparation->identity) {
+            auto& pending=*geometryEdit_->riverPreparation;
+            if(pending.openingSource&&identity) {
+                // Freeze the identity at the first owned publication, before
+                // any other signal observer can perform a nested reopen.
+                pending.identity=identity;pending.openingSource=false;
+            } else unrelatedBootstrap=true;
+        }
+        if(unchanged&&!unrelatedBootstrap)return;
+        riverCache_.clear();riverCacheSource_=identity;
+        if(!geometryEdit_||!geometryEdit_->territorySelection)return;
+        auto& edit=*geometryEdit_;
+        const bool frozenRequest=edit.riverPreparation&&edit.riverPreparation->identity&&
+            (!identity||!(*identity==*edit.riverPreparation->identity));
+        const bool installed=edit.territorySelection->state().useRiverBoundaries&&
+            edit.territorySelection->state().riverStatus==pandoeditor::TerritoryRiverStatus::Ready;
+        // A request's first successful bootstrap has no frozen identity yet.
+        if(unrelatedBootstrap||frozenRequest||installed) {
+            cancelTerritoryCalculation();
+            edit.territorySelection->setRiverStatus(pandoeditor::TerritoryRiverStatus::Error,
+                "하천 자료가 바뀌었습니다. 다시 시도해 주세요.");
+            emit geometryEditChanged();
+        }
+    });
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::hydroFrameChanged);
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::searchChanged);
     connect(&hydroRuntime_,&HydroRuntimeProvider::frameChanged,this,&EditorController::stateChanged);
@@ -245,16 +277,16 @@ void EditorController::initializePhysicalData() {
     connect(physicalStore_.get(),&PhysicalDataStore::activityChanged,this,[this](int active,int queued) {
         physicalActive_=active;physicalQueued_=queued;emit terrainChanged();emit stateChanged();
     });
-    connect(physicalStore_.get(),&PhysicalDataStore::assetFailed,this,[this](const QString&,const QString& message) {
-        physicalError_=message;emit terrainChanged();emit stateChanged();
+    connect(physicalStore_.get(),&PhysicalDataStore::assetFailed,this,[this](const QString& path,const QString& message) {
+        riverAssetFinished(path,false);physicalError_=message;emit terrainChanged();emit stateChanged();
     });
     connect(physicalStore_.get(),&PhysicalDataStore::assetReady,this,
         [this](const QString& path,const QString&,bool) {
-            physicalError_.clear();
+            riverAssetFinished(path,true);physicalError_.clear();
             if(path.startsWith("terrain/"))
                 invalidateViewportResources(ViewportResourceKind::Terrain);
             if(path.startsWith("hydro/")) {
-                if(!hydroRuntime_.isOpen())syncHydroData();
+                if(!hydroRuntime_.isOpen())QTimer::singleShot(0,this,[this]{if(!hydroRuntime_.isOpen())syncHydroData();});
                 invalidateViewportResources(ViewportResourceKind::Hydro);
             }
             emit terrainChanged();emit stateChanged();
@@ -278,7 +310,13 @@ void EditorController::ensureHydroBootstrap() {
     if(!physicalStore_)return;
     for(const auto& path:{QStringLiteral("hydro/v0.13.0/index.bin.gz"),
                           QStringLiteral("hydro/v0.13.1/metadata-core.json.gz")})
-        if(!physicalAssetReady(path))requestPhysicalAsset(path);
+        if(!promotePhysicalAsset(path)) {
+            const auto asset=physicalAssets_.constFind(path);
+            if(asset!=physicalAssets_.cend()&&!physicalStore_->resolveExisting(*asset).isEmpty()) {
+                physicalError_=QStringLiteral("검증된 하천 자료를 캐시에 설치하지 못했습니다.");
+                riverAssetFinished(path,false);
+            } else requestPhysicalAsset(path);
+        }
 }
 
 QString EditorController::labelSourceId(const std::string& ownerId) const {

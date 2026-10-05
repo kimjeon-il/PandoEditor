@@ -2,6 +2,7 @@
 #include <pandoeditor/commands.h>
 #include <pandoeditor/jobs.h>
 #include <pandoeditor/geometryoperations.h>
+#include "territoryselection.h"
 
 // Worker entry point: calculation and candidate preparation only, never commit.
 pandoeditor::PrepareResult prepareTerritorialGeometry(
@@ -20,6 +21,7 @@ struct AnnexGeometryPreviewRequest {
     pandoeditor::ObjectRef target;
     std::vector<pandoeditor::ObjectRef> donors;
     pandoeditor::Geometry selection;
+    std::vector<pandoeditor::TerritorySelectionRiverSliverContext> riverSliverContext;
 };
 struct AnnexGeometryRow {
     pandoeditor::ObjectRef owner;
@@ -42,6 +44,9 @@ struct AnnexGeometryPreviewResult {
     std::vector<AnnexGeometryValidationIssue> issues;
     std::optional<pandoeditor::TerritorialMutationPlan> plan;
     pandoeditor::GeometryPatch patch;
+    std::size_t autoIncludedSliverCount=0;
+    double autoIncludedSliverAreaM2=0;
+    double transferAreaKm2=0;
     bool ok() const;
     bool blocking() const;
 };

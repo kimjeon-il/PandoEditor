@@ -53,11 +53,12 @@ add_library(pandoeditor_editor STATIC
     hydroruntimecache.cpp hydroruntimecache.h
     geometrycalculator.cpp geometrycalculator.h geometryruntime_p.h
     riverpartitioncalculator.cpp riverpartitioncalculator.h
+    riverareacalculator.cpp riverareacalculator.h
     territorialgeometry.cpp territorialgeometry.h
     territoryselection.cpp territoryselection.h
     editorpresentation.cpp
     webimport.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
-    editorgeometry.cpp editorterritoryselection.cpp
+    editorgeometry.cpp editorterritoryselection.cpp editorriverselection.cpp
     editorhistorical.cpp
     editorprojectgeopackage.cpp
     editorgis.cpp
@@ -105,7 +106,11 @@ qt_add_resources(pandoeditor_editor m972_river
         "${PROJECT_SOURCE_DIR}/assets/geometry/river/presentation.js"
         "${PROJECT_SOURCE_DIR}/assets/geometry/river/workspace-observation.js"
         "${PROJECT_SOURCE_DIR}/assets/geometry/river/original/polygon-geometry.js"
-        "${PROJECT_SOURCE_DIR}/assets/geometry/river/provenance.json")
+        "${PROJECT_SOURCE_DIR}/assets/geometry/river/provenance.json"
+        "${PROJECT_SOURCE_DIR}/assets/geometry/river/original/d3.min.js"
+        "${PROJECT_SOURCE_DIR}/assets/geometry/river/adapted/d3.min.js"
+        "${PROJECT_SOURCE_DIR}/assets/geometry/river/LICENSE.d3.txt"
+        "${PROJECT_SOURCE_DIR}/assets/geometry/river/d3-provenance.json")
 if(WIN32)
     target_link_libraries(pandoeditor_editor PRIVATE dwmapi user32)
 endif()
@@ -582,4 +587,55 @@ if(BUILD_TESTING)
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME web_import_ui_tests COMMAND web_import_ui_tests -o -,txt)
     set_tests_properties(web_import_ui_tests PROPERTIES TIMEOUT 45 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(river_selection_controller_tests ../tests/river_selection_controller_tests.cpp)
+    target_link_libraries(river_selection_controller_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(river_selection_controller_tests PRIVATE WEB_HYDRO_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-hydro")
+    qt_add_resources(river_selection_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    qt_add_resources(river_selection_controller_tests physical_metadata PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
+        FILES "${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-c0bd31d1.json"
+              "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.1/manifest.json"
+              "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.12.6/manifest.json")
+    add_test(NAME river_selection_controller_tests COMMAND river_selection_controller_tests -o -,txt)
+    set_tests_properties(river_selection_controller_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+endif()
+
+if(BUILD_TESTING AND EXISTS "${PROJECT_SOURCE_DIR}/tests/river_selection_ui_tests.cpp")
+    add_executable(river_selection_ui_tests ../tests/river_selection_ui_tests.cpp)
+    target_link_libraries(river_selection_ui_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
+    target_compile_definitions(river_selection_ui_tests PRIVATE PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world" WEB_HYDRO_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-hydro")
+    qt_add_resources(river_selection_ui_tests ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui"
+        FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/GisImportPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/GisExportPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalEntityPreview.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/HistoricalOwnershipSetup.qml"
+              "${PROJECT_SOURCE_DIR}/ui/desktop/CaptionButton.qml"
+              "${PROJECT_SOURCE_DIR}/ui/common/MapView.qml"
+              "${PROJECT_SOURCE_DIR}/ui/common/EditorPanel.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/ObjectSelectionButton.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/ObjectSearch.qml"
+        "${PROJECT_SOURCE_DIR}/ui/common/ObjectChooser.qml"
+              "${PROJECT_SOURCE_DIR}/ui/desktop/DesktopWorkspace.qml")
+    qt_add_resources(river_selection_ui_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME river_selection_ui_tests COMMAND river_selection_ui_tests -o -,txt)
+    set_tests_properties(river_selection_ui_tests PROPERTIES TIMEOUT 120 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+endif()
+
+if(BUILD_TESTING AND EXISTS "${PROJECT_SOURCE_DIR}/tests/m972_river_controller_probe.cpp")
+    add_executable(m972_river_controller_probe ../tests/m972_river_controller_probe.cpp)
+    target_link_libraries(m972_river_controller_probe PRIVATE pandoeditor_editor)
+    qt_add_resources(m972_river_controller_probe sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+endif()
+
+if(BUILD_TESTING)
+    add_executable(river_area_tests ../tests/river_area_tests.cpp)
+    target_link_libraries(river_area_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME river_area_tests COMMAND river_area_tests -o -,txt)
+    set_tests_properties(river_area_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()

@@ -56,18 +56,32 @@ void orderSimpleCutLikeWeb(const Geometry& source,SplitGeometryResult& split) {
 }
 bool containsPoint(const Geometry& geometry,Point point){for(const auto& polygon:geometry.polygons){if(polygon.empty()||!pointInRing(polygon.front(),point))continue;bool hole=false;for(std::size_t i=1;i<polygon.size();++i)if(pointInRing(polygon[i],point))hole=true;if(!hole)return true;}return false;}
 }
+bool EditorController::territoryGeometryReady() const {
+    if(!geometryEdit_||!geometryEdit_->territorySelection)return false;
+    const auto& edit=*geometryEdit_;const auto& selection=*edit.territorySelection;const auto& state=selection.state();
+    if(edit.selectionPending||!selection.derivedReady()||(edit.stage!="selection"&&edit.stage!="review"))return false;
+    const bool draftActive=!edit.lineDraft.empty()||!edit.draft.polygons.empty();
+    if(edit.stage=="review")return state.combinedGeometry.has_value()&&!draftActive;
+    if(state.activePhase==TerritorySelectionPhase::Components)
+        return (!state.useRiverBoundaries||state.riverStatus==TerritoryRiverStatus::Ready)&&
+            !state.selectedComponentKeys.empty()&&state.currentGeometry.has_value();
+    if(state.activePhase==TerritorySelectionPhase::Candidate&&state.selectedCandidateIds.empty())return false;
+    if(state.activePhase==TerritorySelectionPhase::Drawing||edit.choosingProviders)return false;
+    return state.combinedGeometry.has_value()&&!draftActive;
+}
 QVariantMap EditorController::territorySelectionState() const {
     const auto& edit=*geometryEdit_;const auto& selection=*edit.territorySelection;const auto& state=selection.state();
-    const bool ready=edit.territoryPreview&&edit.territoryPreview->ok()&&!edit.territoryPreview->blocking()&&edit.previewSelectionRevision==state.revision&&edit.base.matches(project_);
+    const bool ready=territoryGeometryReady()&&edit.territoryPreview&&edit.territoryPreview->ok()&&!edit.territoryPreview->blocking()&&edit.previewSelectionRevision==state.revision&&edit.base.matches(project_);
     QVariantList providers,candidates,components,parts,selectedCandidates,selectedComponents;
     for(const auto& id:state.selectedCandidateIds)selectedCandidates.append(QString::fromStdString(id));
     for(const auto& id:state.selectedComponentKeys)selectedComponents.append(QString::fromStdString(id));
     for(const auto& source:state.sources){auto row=objectRefValue(source.ref);row["name"]=QString::fromStdString(source.name);providers.append(row);}
     for(const auto& item:state.candidates)candidates.append(QVariantMap{{"id",QString::fromStdString(item.id)},{"label",QStringLiteral("선택 영역 %1").arg(candidates.size()+1)},{"selected",selected(state.selectedCandidateIds,item.id)},{"area",item.area.value_or(planarArea(item.geometry))}});
-    for(const auto& item:selection.activeComponents())components.append(QVariantMap{{"key",QString::fromStdString(item.key)},{"label",QString::fromStdString(item.countryName)+QStringLiteral(" · %1").arg(item.sourcePolygonIndex+1)},{"selected",selected(state.selectedComponentKeys,item.key)},{"area",planarArea(item.geometry)}});
+    for(const auto& item:selection.activeComponents())components.append(QVariantMap{{"key",QString::fromStdString(item.key)},{"label",QString::fromStdString(item.countryName)+QStringLiteral(" · %1").arg(item.sourcePolygonIndex+1)},{"selected",selected(state.selectedComponentKeys,item.key)},{"area",planarArea(item.geometry)},{"partitionKind",QString::fromStdString(item.partitionKind)},{"sourcePolygonIndex",int(item.sourcePolygonIndex)},{"polygonIndex",int(item.polygonIndex)},{"provenance",QString::fromStdString(item.provenanceJson)}});
     for(const auto& item:state.parts)parts.append(QVariantMap{{"id",QString::fromStdString(item.id)},{"label",QStringLiteral("선택 영토 %1").arg(parts.size()+1)},{"method",methodName(item.method)},{"area",planarArea(item.geometry)}});
     const auto phase=edit.choosingProviders?QString("sources"):state.activePhase==TerritorySelectionPhase::Drawing?QString("drawing"):state.activePhase==TerritorySelectionPhase::Candidate?QString("candidates"):state.activePhase==TerritorySelectionPhase::Components?QString("components"):state.activePhase==TerritorySelectionPhase::Result?QString("result"):QString();
-    const bool idle=!edit.selectionPending&&!edit.previewPending&&!edit.applying;
+    const bool idle=!edit.selectionPending&&!edit.previewPending&&!edit.applying&&!edit.riverPreparation;
+    const auto riverStatus=state.riverStatus==TerritoryRiverStatus::Pending?"pending":state.riverStatus==TerritoryRiverStatus::Ready?"ready":state.riverStatus==TerritoryRiverStatus::SourceError?"sourceError":state.riverStatus==TerritoryRiverStatus::Error?"error":state.riverStatus==TerritoryRiverStatus::Unavailable?"unavailable":"idle";
     const bool confirmation=edit.sourceChange.has_value()||state.methodChangeConfirmation.has_value();
     const bool emptyDraftWithParts=edit.lineDraft.empty()&&edit.draft.polygons.empty()&&!state.parts.empty();
     const bool draftReady=state.activeMethod==TerritorySelectionMethod::Line?edit.lineDraft.size()>=2:!edit.draft.polygons.empty()&&!edit.draft.polygons.front().empty()&&edit.draft.polygons.front().front().size()>=4;
@@ -76,12 +90,13 @@ QVariantMap EditorController::territorySelectionState() const {
         {"confirmationKind",edit.sourceChange?QString("settings"):state.methodChangeConfirmation?QString("method"):QString()},{"selectionPending",edit.selectionPending},{"previewPending",edit.previewPending},{"previewReady",ready},{"previewBlocking",edit.territoryPreview&&edit.territoryPreview->blocking()},{"calculating",!idle},{"applying",edit.applying},{"error",edit.error},{"selectedVertex",-1},
         {"canFinishDraft",edit.stage=="selection"&&phase=="drawing"&&(draftReady||emptyDraftWithParts)&&selection.derivedReady()&&idle&&!confirmation},{"canAddPart",edit.stage=="selection"&&ready&&idle&&!confirmation&&selection.archiveReadiness()==TerritoryArchiveReadiness::Ready},
         {"canAdvance",!confirmation&&!edit.applying&&(edit.stage=="setup"?!state.sources.empty():edit.stage=="selection"&&ready&&idle&&!selection.candidateRequiresArchival())},{"canApply",edit.stage=="review"&&ready&&idle&&!confirmation},
-        {"canUndoDraft",!edit.lineDraft.empty()||!edit.undo.empty()},{"canUndo",!edit.lineDraft.empty()||!edit.undo.empty()||!state.selectedCandidateIds.empty()||!state.selectedComponentKeys.empty()||!state.parts.empty()},{"canRedo",!edit.redo.empty()},{"riverStatus","unavailable"},{"riverError","하천 경계 선택은 준비 중입니다."}};
+        {"canUndoDraft",!edit.lineDraft.empty()||!edit.undo.empty()},{"canUndo",!edit.lineDraft.empty()||!edit.undo.empty()||!state.selectedCandidateIds.empty()||!state.selectedComponentKeys.empty()||!state.parts.empty()},{"canRedo",!edit.redo.empty()},{"riverCacheHit",edit.riverCacheHit},{"riverCacheEntries",int(riverCache_.size())},{"riverSourceDispatches",qulonglong(edit.riverSourceDispatches)},{"riverKernelDispatches",qulonglong(edit.riverKernelDispatches)},{"useRiverBoundaries",state.useRiverBoundaries},{"riverStatus",riverStatus},{"riverError",QString::fromStdString(state.riverDetail)},{"riverWarning",edit.riverWarning},{"canToggleRiverBoundaries",edit.stage=="selection"&&state.activePhase==TerritorySelectionPhase::Components&&!edit.applying&&!confirmation},{"canRetryRiverPartitions",state.useRiverBoundaries&&!edit.riverPreparation&&!edit.applying&&!confirmation&&edit.stage=="selection"},{"autoIncludedSliverCount",ready?int(edit.territoryPreview->autoIncludedSliverCount):0},{"autoIncludedSliverAreaM2",ready?edit.territoryPreview->autoIncludedSliverAreaM2:0},{"transferArea",ready?planarArea(edit.territoryPreview->transferredGeometry):0},{"transferAreaKm2",ready?edit.territoryPreview->transferAreaKm2:0}};
 }
 QVariantList EditorController::territorySelectionPaths() const {
     QVariantList paths;const auto& edit=*geometryEdit_;const auto& selection=*edit.territorySelection;const auto& state=selection.state();
     auto append=[&](const Geometry& geometry,const QString& kind,const QString& id,bool picked,bool preview=false){for(const auto& polygon:geometry.polygons){QString path;for(const auto& ring:polygon){for(std::size_t i=0;i<ring.size();++i){const auto point=projection_.project(ring[i]);path+=QString("%1%2 %3 ").arg(i?"L":"M").arg(point.x,0,'g',17).arg(point.y,0,'g',17);}path+="Z ";}paths.append(QVariantMap{{"path",path},{"vertices",QVariantList{}},{"id",id},{"key",id},{"selectionKind",kind},{"selected",picked},{"preview",preview},{"hole",false}});}};
-    if(edit.stage=="review"&&edit.territoryPreview){for(const auto& row:edit.territoryPreview->rows)if(row.after)append(*row.after,"preview",QString::fromStdString(row.owner.id),true,true);return paths;}
+    if(edit.stage=="review"&&edit.territoryPreview){for(const auto& row:edit.territoryPreview->rows)if(row.after)append(*row.after,"preview",QString::fromStdString(row.owner.id),true,true);if(edit.territoryPreview->autoIncludedSliverCount)append(edit.territoryPreview->transferredGeometry,"transfer-preview","receipt-transfer",true,true);return paths;}
+    if(edit.territoryPreview&&edit.territoryPreview->ok()&&edit.previewSelectionRevision==state.revision&&edit.territoryPreview->autoIncludedSliverCount)append(edit.territoryPreview->transferredGeometry,"transfer-preview","receipt-transfer",true,true);
     for(const auto& part:state.parts)append(part.geometry,"part",QString::fromStdString(part.id),true);
     if(state.activePhase==TerritorySelectionPhase::Candidate)for(const auto& item:state.candidates)append(item.geometry,"candidate",QString::fromStdString(item.id),selected(state.selectedCandidateIds,item.id));
     if(state.activePhase==TerritorySelectionPhase::Components)for(const auto& item:selection.activeComponents())append(item.geometry,"component",QString::fromStdString(item.key),selected(state.selectedComponentKeys,item.key));
@@ -90,7 +105,7 @@ QVariantList EditorController::territorySelectionPaths() const {
 }
 void EditorController::cancelTerritoryCalculation(bool discardPreview){
     if(!geometryEdit_||!geometryEdit_->territorySelection)return;auto& edit=*geometryEdit_;
-    ++edit.computationEpoch;++edit.previewEpoch;if(edit.job){jobs_->cancel(edit.job->id());edit.job.reset();}edit.selectionPending=false;edit.previewPending=false;
+    cancelRiverPreparation();++edit.computationEpoch;++edit.previewEpoch;if(edit.job){jobs_->cancel(edit.job->id());edit.job.reset();}edit.selectionPending=false;edit.previewPending=false;
     if(discardPreview)edit.territoryPreview.reset();
 }
 void EditorController::scheduleTerritorySelection(bool requestPreview){
@@ -104,7 +119,7 @@ void EditorController::scheduleTerritorySelection(bool requestPreview){
             if(!geometryEdit_||!geometryEdit_->territorySelection||geometryEdit_->generation!=generation||geometryEdit_->computationEpoch!=epoch||!geometryEdit_->job||geometryEdit_->job->id()!=id)return;
             auto& edit=*geometryEdit_;edit.job.reset();edit.selectionPending=false;
             if(disposition!=JobDisposition::Accepted||!edit.base.matches(project_)){emit geometryEditChanged();return;}
-            if(auto derived=std::get_if<TerritorySelectionDerivedResult>(&result)){if(!edit.territorySelection->installDerived(std::move(*derived))){edit.error=QString::fromStdString(edit.territorySelection->lastError());edit.territorySelection->cancelRequestedMethod();}else if(requestPreview)scheduleTerritoryPreview();}
+            if(auto derived=std::get_if<TerritorySelectionDerivedResult>(&result)){if(!edit.territorySelection->installDerived(std::move(*derived))){edit.error=QString::fromStdString(edit.territorySelection->lastError());edit.territorySelection->cancelRequestedMethod();}else {prepareRiverPartitions();if(requestPreview&&!edit.riverPreparation)scheduleTerritoryPreview();}}
             else if(auto failure=std::get_if<GeometryJobFailure>(&result)){edit.error=QString::fromStdString(failure->detail);edit.territorySelection->cancelRequestedMethod();}
             emit geometryEditChanged();
         });emit geometryEditChanged();
@@ -112,13 +127,13 @@ void EditorController::scheduleTerritorySelection(bool requestPreview){
 }
 void EditorController::scheduleTerritoryPreview(){
     if(!geometryEdit_||!geometryEdit_->territorySelection)return;auto& edit=*geometryEdit_;const auto& selection=*edit.territorySelection;
-    if(!selection.derivedReady()||!selection.state().combinedGeometry||edit.stage=="setup"||edit.applying)return;
+    if(!territoryGeometryReady()||edit.applying)return;
     ++edit.previewEpoch;edit.territoryPreview.reset();edit.previewPending=true;
     const auto generation=edit.generation,epoch=edit.previewEpoch,revision=selection.state().revision;
     QTimer::singleShot(300,this,[this,generation,epoch,revision]{
         if(!geometryEdit_||!geometryEdit_->territorySelection||geometryEdit_->generation!=generation||geometryEdit_->previewEpoch!=epoch||geometryEdit_->territorySelection->state().revision!=revision)return;
-        auto& edit=*geometryEdit_;const auto& state=edit.territorySelection->state();if(!state.combinedGeometry){edit.previewPending=false;return;}
-        AnnexGeometryPreviewRequest request;request.target=edit.target;request.selection=*state.combinedGeometry;for(const auto& source:state.sources)request.donors.push_back(source.ref);
+        auto& edit=*geometryEdit_;const auto& state=edit.territorySelection->state();if(!territoryGeometryReady()){edit.previewPending=false;emit geometryEditChanged();return;}
+        AnnexGeometryPreviewRequest request;request.target=edit.target;request.selection=*state.combinedGeometry;request.riverSliverContext=edit.territorySelection->riverSliverContext();for(const auto& source:state.sources)request.donors.push_back(source.ref);
         edit.job=jobs_->submitGeometry(edit.base,"territorial:selection-preview",[request](const ProjectSnapshot& snapshot,const JobToken& token)->GeometryJobResult{return calculateAnnexGeometryPreview(snapshot,request,token);},
         [this,generation,epoch,revision](std::uint64_t id,JobDisposition disposition,GeometryJobResult result){
             if(!geometryEdit_||!geometryEdit_->territorySelection||geometryEdit_->generation!=generation||geometryEdit_->previewEpoch!=epoch||geometryEdit_->territorySelection->state().revision!=revision||!geometryEdit_->job||geometryEdit_->job->id()!=id)return;
@@ -183,14 +198,14 @@ bool EditorController::geometryCancelTerritoryChange(){if(!geometryEdit_||!geome
 bool EditorController::geometryPickTerritorySelection(double x,double y){if(!geometryEdit_||!geometryEdit_->territorySelection||!std::isfinite(x)||!std::isfinite(y))return false;const auto point=projection_.unproject(x,y);const auto& selection=*geometryEdit_->territorySelection;if(selection.state().activePhase==TerritorySelectionPhase::Candidate){for(const auto& item:selection.state().candidates)if(containsPoint(item.geometry,point))return geometryToggleTerritoryCandidate(QString::fromStdString(item.id));}else if(selection.state().activePhase==TerritorySelectionPhase::Components){for(const auto& item:selection.activeComponents())if(containsPoint(item.geometry,point))return geometryToggleTerritoryComponent(QString::fromStdString(item.key));}return false;}
 bool EditorController::advanceTerritoryStage(){
     if(!territorySelectionState().value("canAdvance").toBool())return false;auto& edit=*geometryEdit_;
-    if(edit.stage=="setup"){edit.stage="selection";edit.choosingProviders=false;if(!edit.territorySelection->derivedReady())scheduleTerritorySelection();else if(!edit.territoryPreview)scheduleTerritoryPreview();}
+    if(edit.stage=="setup"){edit.stage="selection";edit.choosingProviders=false;if(edit.territorySelection->state().useRiverBoundaries&&edit.territorySelection->state().riverStatus==TerritoryRiverStatus::Idle)edit.territorySelection->setRiverStatus(TerritoryRiverStatus::Pending);if(!edit.territorySelection->derivedReady())scheduleTerritorySelection();else {prepareRiverPartitions();if(!edit.territoryPreview&&!edit.riverPreparation)scheduleTerritoryPreview();}}
     else if(edit.stage=="selection")edit.stage="review";else return false;
     emit geometryEditChanged();return true;
 }
 bool EditorController::backTerritoryStage(){
     if(!geometryEdit_||geometryEdit_->applying)return false;auto& edit=*geometryEdit_;if(edit.sourceChange||edit.territorySelection->state().methodChangeConfirmation)return geometryCancelTerritoryChange();
     cancelTerritoryCalculation(false);edit.error.clear();edit.snapPoint.reset();edit.dragBefore.reset();edit.vertex=-1;
-    if(edit.stage=="review")edit.stage="selection";else if(edit.stage=="selection"){edit.stage="setup";edit.choosingProviders=true;}else {cancelGeometryEdit();return true;}emit geometryEditChanged();return true;
+    if(edit.stage=="review")edit.stage="selection";else if(edit.stage=="selection"){edit.stage="setup";edit.choosingProviders=true;if(edit.territorySelection->state().riverStatus==TerritoryRiverStatus::Pending)edit.territorySelection->setRiverStatus(TerritoryRiverStatus::Idle);}else {cancelGeometryEdit();return true;}emit geometryEditChanged();return true;
 }
 bool EditorController::applyTerritorySelection(){
     if(!territorySelectionState().value("canApply").toBool())return false;auto& edit=*geometryEdit_;const auto receipt=*edit.territoryPreview;edit.territoryPreview.reset();edit.applying=true;const auto generation=edit.generation;

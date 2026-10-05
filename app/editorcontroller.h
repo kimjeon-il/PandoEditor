@@ -35,6 +35,7 @@
 #include <QElapsedTimer>
 #include <QHash>
 #include <map>
+#include <deque>
 #include <limits>
 #include <set>
 #include <optional>
@@ -401,6 +402,10 @@ public:
     Q_INVOKABLE bool geometryAdvanceStage();
     Q_INVOKABLE bool geometryBack();
     Q_INVOKABLE bool geometryChooseSplitResult(int createdCandidate);
+    // Owned diagnostics for exact geometry/provenance comparison without projection round-trips.
+    QVariantMap riverSelectionObservation() const;
+    Q_INVOKABLE bool geometryToggleRiverBoundaries(bool enabled);
+    Q_INVOKABLE bool geometryRetryRiverPartitions();
     Q_INVOKABLE bool geometrySelectTerritoryMethod(const QString& method);
     Q_INVOKABLE bool geometryFinishTerritoryDraft();
     Q_INVOKABLE bool geometryToggleTerritoryCandidate(const QString& id);
@@ -687,12 +692,38 @@ private:
         std::uint64_t generation=0, computationEpoch=0, previewEpoch=0;
         std::uint64_t previewSelectionRevision=0;
         bool selectionPending=false, previewPending=false, applying=false;
+        struct RiverPreparation {
+            std::uint64_t epoch=0, revision=0;
+            QString sourceChoice;
+            std::optional<HydroSourceIdentity> identity;
+            pandoeditor::RiverPartitionRequest request;
+            std::vector<pandoeditor::GeoBounds> bounds;
+            QSet<QString> pendingAssets,failedAssets;
+            QByteArray cacheKey;
+            bool assetsRegistered=false,dispatched=false,bypassCache=false,openingSource=false;
+        };
+        std::uint64_t riverEpoch=0;
+        std::optional<RiverPreparation> riverPreparation;
+        QString riverWarning;
+        bool riverRetry=false,riverCacheHit=false;
+        std::uint64_t riverSourceDispatches=0,riverKernelDispatches=0;
+
 
     };
     std::optional<GeometryEditSession> geometryEdit_;
     std::uint64_t nextGeometrySession_=0;
+    bool territoryGeometryReady() const;
     QVariantMap territorySelectionState() const;
     QVariantList territorySelectionPaths() const;
+    struct RiverCacheEntry { QByteArray key; HydroSourceIdentity identity; std::shared_ptr<const RiverSelectionPreparationResult> value; };
+    std::deque<RiverCacheEntry> riverCache_;
+    QString riverCacheProject_;
+    std::optional<HydroSourceIdentity> riverCacheSource_;
+    void prepareRiverPartitions();
+    void continueRiverPreparation(std::uint64_t generation,std::uint64_t epoch);
+    void cancelRiverPreparation();
+    void riverAssetFinished(const QString& path,bool success);
+    bool promotePhysicalAsset(const QString& path);
     void scheduleTerritorySelection(bool requestPreview=true);
     void scheduleTerritoryPreview();
     void cancelTerritoryCalculation(bool discardPreview=true);

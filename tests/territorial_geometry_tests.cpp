@@ -70,9 +70,12 @@ private slots:
         QVERIFY(!c.geometryAdvanceStage());QVERIFY(c.geometryAddTerritoryPart());
         QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("canAdvance").toBool(),10000);
         QCOMPARE(c.geometryEditState().value("parts").toList().size(),1);QVERIFY(c.geometryAdvanceStage());
-        QVERIFY(c.geometryEditState().value("canApply").toBool());QVERIFY(c.geometryBack());QVERIFY(c.geometryEditState().value("previewReady").toBool());
-        QVERIFY(c.geometryBack());QCOMPARE(c.geometryEditState().value("stage").toString(),QString("setup"));QVERIFY(c.geometryEditState().value("previewReady").toBool());
-        QVERIFY(c.geometryAdvanceStage());QVERIFY(c.geometryEditState().value("previewReady").toBool());QVERIFY(c.geometryAdvanceStage());
+        const auto retainedTransfer=c.riverSelectionObservation().value("transferredGeometry");QVERIFY(retainedTransfer.isValid());const auto retainedRevision=c.revision();
+        const auto retainedUndo=c.canUndo(),retainedRedo=c.canRedo();
+        const auto receiptUnchanged=[&]{return c.riverSelectionObservation().value("transferredGeometry")==retainedTransfer&&c.documentBytes()==before&&c.revision()==retainedRevision&&c.canUndo()==retainedUndo&&c.canRedo()==retainedRedo;};
+        QVERIFY(c.geometryEditState().value("canApply").toBool());QVERIFY(c.geometryBack());QVERIFY(c.geometryEditState().value("previewReady").toBool());QVERIFY(receiptUnchanged());
+        QVERIFY(c.geometryBack());QCOMPARE(c.geometryEditState().value("stage").toString(),QString("setup"));QVERIFY(!c.geometryEditState().value("previewReady").toBool()); // Pinned web preserves the receipt but setup is not preview-ready.
+        QVERIFY(receiptUnchanged());QVERIFY(c.geometryAdvanceStage());QVERIFY(c.geometryEditState().value("previewReady").toBool());QVERIFY(receiptUnchanged());QVERIFY(c.geometryAdvanceStage());
         QVERIFY(c.confirmGeometryEdit());QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("active").toBool(),10000);
         Project after;after.replace(projectcodec::decode(c.documentBytes()));QCOMPARE(area(after,"A"),200.);QCOMPARE(after.document().units.size(),std::size_t(1));
         const auto committed=c.documentBytes();c.undo();QCOMPARE(c.documentBytes(),before);c.redo();QCOMPARE(c.documentBytes(),committed);
@@ -184,7 +187,9 @@ private slots:
         QVERIFY(c.geometryEditState().value("choosingProviders").toBool());QCOMPARE(c.geometryDraftPaths(),drawing);
         QCOMPARE(c.geometryEditState().value("providers").toList().size(),1);QCOMPARE(c.primaryObject().value("id").toString(),QStringLiteral("A"));
         QVERIFY(c.geometryAdvanceStage());QVERIFY(c.geometrySelectTerritoryMethod("polygon"));QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);QVERIFY(c.requestGeometryPreview());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);
-        QCOMPARE(c.documentBytes(),before);QVERIFY(c.geometryBack());QVERIFY(c.geometryEditState().value("previewReady").toBool());QVERIFY(c.geometryAdvanceStage());
+        const auto retainedTransfer=c.riverSelectionObservation().value("transferredGeometry");QVERIFY(retainedTransfer.isValid());const auto retainedRevision=c.revision();const auto retainedUndo=c.canUndo(),retainedRedo=c.canRedo();
+        QCOMPARE(c.documentBytes(),before);QVERIFY(c.geometryBack());QVERIFY(!c.geometryEditState().value("previewReady").toBool());QCOMPARE(c.riverSelectionObservation().value("transferredGeometry"),retainedTransfer);QCOMPARE(c.documentBytes(),before);QCOMPARE(c.revision(),retainedRevision);QCOMPARE(c.canUndo(),retainedUndo);QCOMPARE(c.canRedo(),retainedRedo);
+        QVERIFY(c.geometryAdvanceStage());QVERIFY(c.geometryEditState().value("previewReady").toBool());QCOMPARE(c.riverSelectionObservation().value("transferredGeometry"),retainedTransfer);QCOMPARE(c.documentBytes(),before);QCOMPARE(c.revision(),retainedRevision);QCOMPARE(c.canUndo(),retainedUndo);QCOMPARE(c.canRedo(),retainedRedo);
         QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("canAddPart").toBool(),10000);QVERIFY(c.geometryAddTerritoryPart());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("canAdvance").toBool(),10000);QVERIFY(c.geometryAdvanceStage());QVERIFY(c.confirmGeometryEdit());QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("active").toBool(),10000);
         Project after;after.replace(projectcodec::decode(c.documentBytes()));QCOMPARE(area(after,"A"),104.);QCOMPARE(area(after,"B"),96.);c.undo();QCOMPARE(c.documentBytes(),before);
     }

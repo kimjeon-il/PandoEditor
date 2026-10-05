@@ -33,6 +33,9 @@ struct RiverPartitionRequest {
     std::optional<QString> algorithmRevision;
     QJsonValue hydroRevision=QString{};
     std::vector<EditedRiverValue> signatureEdits;
+    // Opt-in live source revision. Appended to preserve aggregate callers.
+    // The suffix uses exact JavaScript JSON.stringify/sort, before the kernel.
+    std::optional<QString> liveHydroRevisionPrefix;
 };
 enum class RiverPartitionStatus { Completed, Cancelled, Failed };
 enum class RiverDonorStatus { Ready, Empty, Invalid };
@@ -42,6 +45,8 @@ struct RiverPartitionCell {
     double areaM2=0, area=0;
     QStringList sourceRiverIds;
     std::vector<std::array<Point,2>> riverBoundarySegments;
+    // Full owned candidate provenance, including fields unknown to this adapter.
+    QJsonObject attributes;
 };
 struct RiverPartitionComponent {
     QString key, countryId, componentKey;
@@ -56,6 +61,37 @@ struct RiverPartitionDonorResult {
     RiverDonorStatus status=RiverDonorStatus::Empty;
     int candidateCount=0;
 };
+// Pure, worker-only presentation stages. A completed normalization with no
+// geometry means the exact upstream normalizer filtered this polygon.
+struct RiverGeometryNormalizationResult {
+    RiverPartitionStatus status=RiverPartitionStatus::Failed;
+    QString detail;
+    std::optional<Geometry> geometry;
+    bool succeeded() const noexcept {return status==RiverPartitionStatus::Completed;}
+};
+struct RiverPartitionNormalizationResult {
+    RiverPartitionStatus status=RiverPartitionStatus::Failed;
+    QString detail;
+    std::vector<RiverPartitionCell> candidates;
+    QByteArray json;
+    bool succeeded() const noexcept {return status==RiverPartitionStatus::Completed;}
+};
+struct RiverPartitionCompositionResult {
+    RiverPartitionStatus status=RiverPartitionStatus::Failed;
+    QString detail;
+    std::vector<RiverPartitionComponent> components;
+    QStringList invalidDonorIds;
+    int splitComponentCount=0,riverCandidateCount=0;
+    QByteArray json;
+    bool succeeded() const noexcept {return status==RiverPartitionStatus::Completed;}
+};
+RiverGeometryNormalizationResult normalizeRiverGeometry(const Geometry&,
+    const GeometryCancellation& cancelled={});
+RiverPartitionNormalizationResult normalizeRiverPartitionCandidates(const std::vector<RiverPartitionCell>&,
+    const GeometryCancellation& cancelled={});
+RiverPartitionCompositionResult composeRiverPartitionComponents(const std::vector<RiverBaseComponent>&,
+    const std::vector<RiverPartitionCell>& normalizedCells,const std::vector<RiverPartitionDonorResult>&,
+    const GeometryCancellation& cancelled={});
 struct RiverPartitionDiagnostics {
     QString algorithmRevision;
     QJsonValue hydroRevision;
@@ -89,7 +125,7 @@ struct RiverPartitionResult {
 // the separately returned presentation is normalized AFTER identities are produced.
 RiverPartitionResult calculateRiverPartitions(const RiverPartitionRequest&,
     const GeometryCancellation& cancelled={});
-// Narrow differential seam: {request, components, liveDonorIndices?, signatureEdits?}.
+// Narrow differential seam: {request, components, liveDonorIndices?, signatureEdits?, liveHydroRevisionPrefix?}.
 // Same production path and typed output. Finite, owned JSON data only.
 RiverPartitionResult calculateRiverPartitionsJson(const QByteArray&,
     const GeometryCancellation& cancelled={});

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {assertExact,stable,outputHash} from './oracle.mjs';
+import {assertControllerAnnexObservations,assertControllerLifecycleObservations} from './controller-suite.mjs';
 import {verifySuite,canonicalHash,runtimePin} from './suite.mjs';
 export function assertRuntimeHash(actual,expected,label){assert.equal(actual,expected,label+' exact runtime output');}
 export function assertCompleteRows(caseIds,native,browser) {
@@ -30,5 +31,8 @@ export function compareBrowserNative(payload,native,browser,{commit,runId}={}) {
   assert.equal(browser.branchObservations?.length,3,'Required actual near-collinear traces');assert.ok(browser.branchObservations.every(r=>r.outputExact&&r.segments.length===1));
   assert.equal(browser.annex?.length,payload.annex.scenarios.length,'Required browser annex observations');
   assert.deepEqual(browser.annex.map(r=>r.name),payload.annex.scenarios.map(r=>r.name));assert.ok(browser.annex.every(r=>r.inputUnchanged&&r.fullWorldFeatureCount===258&&r.result.autoIncludedSlivers));
-  return {state:'passed',commit,runId,total:42,exactRaw:42,exactPresentation:42,exactWorkspace:42,hashes,annex:{role:payload.annex.role,observations:browser.annex.map(r=>({name:r.name,sha256:canonicalHash(r),selectedKeys:r.selectedCells.map(c=>c.key),autoIncludedSlivers:r.result.autoIncludedSlivers}))}};
+  assert.equal(browser.controllerSourceCommit,payload.controllerSources.baseBehavioralCommit,'Controller source commit');assert.equal(browser.controllerBehavioralCommit,payload.controllerSources.behavioralCommit,'Controller corrected behavior commit');
+  assertControllerAnnexObservations(payload.controllerAnnex,browser.controllerAnnex);
+  assertControllerLifecycleObservations(payload.controllerLifecycle,browser.controllerLifecycle);
+  return {state:'passed',commit,runId,total:42,exactRaw:42,exactPresentation:42,exactWorkspace:42,hashes,controllerLifecycle:{observations:browser.controllerLifecycle.map(row=>({name:row.name,sha256:canonicalHash(row),checkpoints:row.lifecycleActions.map(action=>action.name)}))},controllerAnnex:{role:payload.controllerAnnex.role,observations:browser.controllerAnnex.map(row=>({name:row.name,sha256:canonicalHash(row),selectedKeys:row.selectedCells.map(cell=>cell.key),autoIncludedSlivers:row.result.autoIncludedSlivers}))},annex:{role:payload.annex.role,observations:browser.annex.map(r=>({name:r.name,sha256:canonicalHash(r),selectedKeys:r.selectedCells.map(c=>c.key),autoIncludedSlivers:r.result.autoIncludedSlivers}))}};
 }

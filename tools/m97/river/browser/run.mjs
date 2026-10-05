@@ -27,6 +27,6 @@ try {
   const report=await page.evaluate(()=>globalThis.__riverReport);report.runtime={...report.runtime,playwright:packageVersion,browserVersion:browser.version(),chromiumRevision:chromiumPin.revision,cdp:version};
   fs.writeFileSync(path.join(output,'browser-report.json'),JSON.stringify(report));
   const comparison=compareBrowserNative(payload,native,report,{commit:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID});fs.writeFileSync(path.join(output,'direct-comparison.json'),JSON.stringify(comparison,null,2));
-  console.log(JSON.stringify({state:comparison.state,exactRaw:comparison.exactRaw,exactPresentation:comparison.exactPresentation,exactWorkspace:comparison.exactWorkspace,annex:comparison.annex},null,2));
+  console.log(JSON.stringify({state:comparison.state,exactRaw:comparison.exactRaw,exactPresentation:comparison.exactPresentation,exactWorkspace:comparison.exactWorkspace,annex:comparison.annex,controllerAnnex:comparison.controllerAnnex,controllerLifecycle:comparison.controllerLifecycle},null,2));
 }catch(error){fs.writeFileSync(path.join(output,'failure.txt'),String(error)+'\n'+error.stack);throw error;}
 finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

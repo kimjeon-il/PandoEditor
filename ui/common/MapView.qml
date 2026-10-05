@@ -672,11 +672,25 @@ Rectangle {
                     }
                     Label { objectName:"geometryTaskInstruction"; Layout.fillWidth:true; text:taskPanel.instruction; color:taskPanel.palette.text; wrapMode:Text.Wrap }
                     Label { objectName:"geometryTaskError"; visible:!!taskPanel.taskState.error; Layout.fillWidth:true; text:taskPanel.taskState.error || ""; textFormat:Text.PlainText; color:"#d44848"; wrapMode:Text.Wrap }
-                    BusyIndicator { visible:taskPanel.busy; running:visible; Layout.alignment:Qt.AlignHCenter }
+                    BusyIndicator { visible:taskPanel.busy && taskPanel.taskState.riverStatus!=="pending"; running:visible; Layout.alignment:Qt.AlignHCenter }
                     Label {
                         objectName:"geometrySelectionStatus"; visible:taskPanel.rootSelection; Layout.fillWidth:true
                         text:taskPanel.taskState.applying ? "결과를 적용하고 있습니다." : taskPanel.taskState.selectionPending ? "선택 영역을 계산하고 있습니다." : taskPanel.taskState.previewPending ? "편입 미리보기를 계산하고 있습니다." : taskPanel.taskState.previewBlocking ? "미리보기에 해결할 문제가 있습니다." : taskPanel.taskState.previewReady ? "미리보기가 준비되었습니다." : ""
                         color:taskPanel.palette.muted; wrapMode:Text.Wrap
+                    }
+                    Label {
+                        objectName:"geometryTransferMetrics";Layout.fillWidth:true;wrapMode:Text.Wrap
+                        visible:taskPanel.rootSelection && taskPanel.taskState.previewReady===true && Number.isFinite(taskPanel.taskState.transferAreaKm2)
+                        readonly property real areaKm2:Math.max(0,Number(taskPanel.taskState.transferAreaKm2 || 0))
+                        readonly property int fractionDigits:areaKm2<10 ? 2 : areaKm2<100 ? 1 : 0
+                        text:"편입 면적: "+areaKm2.toLocaleString(Qt.locale("ko-KR"),"f",fractionDigits).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "")+" km²"
+                        color:taskPanel.palette.text
+                    }
+                    Label {
+                        objectName:"geometrySliverMetrics";Layout.fillWidth:true;wrapMode:Text.Wrap
+                        visible:taskPanel.rootSelection && taskPanel.taskState.previewReady===true && taskPanel.taskState.autoIncludedSliverCount>0
+                        text:"함께 편입되는 미세 영역: "+(taskPanel.taskState.autoIncludedSliverCount || 0)+"개 · "+Number(taskPanel.taskState.autoIncludedSliverAreaM2 || 0).toLocaleString(Qt.locale(),"g",6)+" m²"
+                        color:taskPanel.palette.muted
                     }
                     Flow {
                         visible:taskPanel.rootSelection && !taskPanel.setup && !taskPanel.review
@@ -720,17 +734,51 @@ Rectangle {
                         visible:taskPanel.rootSelection && !taskPanel.setup && !taskPanel.review && taskPanel.taskState.selectionPhase==="components"
                         Layout.fillWidth:true
                         Label {text:"구성 영역";color:taskPanel.palette.muted}
+                        CheckBox {
+                            objectName:"geometryRiverBoundaries";Layout.fillWidth:true
+                            text:"하천 경계로 나누기";palette.windowText:taskPanel.palette.text
+                            checked:taskPanel.taskState.useRiverBoundaries===true
+                            enabled:taskPanel.taskState.canToggleRiverBoundaries===true
+                            onClicked:editor.geometryToggleRiverBoundaries(checked)
+                        }
+                        BusyIndicator {
+                            objectName:"geometryRiverLoading";Layout.alignment:Qt.AlignHCenter
+                            visible:taskPanel.taskState.useRiverBoundaries===true && taskPanel.taskState.riverStatus==="pending"
+                            running:visible
+                        }
+                        Label {
+                            objectName:"geometryRiverStatus";Layout.fillWidth:true;wrapMode:Text.Wrap;textFormat:Text.PlainText
+                            readonly property string status:taskPanel.taskState.riverStatus || "idle"
+                            readonly property bool hasRiverCells:(taskPanel.taskState.components || []).some(component=>component.partitionKind==="river")
+                            text:status==="pending" ? "하천 자료를 불러오고 경계 영역을 계산하고 있습니다." :
+                                 status==="sourceError" ? "하천 자료를 불러오지 못했습니다. "+(taskPanel.taskState.riverError || "다시 시도해 주세요.") :
+                                 status==="error" ? "하천 경계 영역을 계산하지 못했습니다. "+(taskPanel.taskState.riverError || "다시 시도해 주세요.") :
+                                 status==="ready" ? (hasRiverCells ? "하천 경계 영역이 준비되었습니다. 지도나 목록에서 선택하세요." : "나눌 하천 경계가 없어 원래 구성 영역을 표시합니다.") :
+                                 taskPanel.taskState.riverError || "하천을 경계로 구성 영역을 나누어 선택할 수 있습니다."
+                            color:status==="sourceError" || status==="error" ? "#d44848" : taskPanel.palette.muted
+                        }
+                        Label {
+                            objectName:"geometryRiverWarning";Layout.fillWidth:true;wrapMode:Text.Wrap;textFormat:Text.PlainText
+                            visible:taskPanel.taskState.useRiverBoundaries===true && !!taskPanel.taskState.riverWarning
+                            text:taskPanel.taskState.riverWarning || "";color:taskPanel.palette.muted
+                        }
+                        UiButton {
+                            objectName:"geometryRetryRiverPartitions";outlined:true;text:"하천 경계 다시 시도"
+                            visible:taskPanel.taskState.useRiverBoundaries===true && (["sourceError","error"].indexOf(taskPanel.taskState.riverStatus)>=0 || !!taskPanel.taskState.riverWarning)
+                            enabled:taskPanel.taskState.canRetryRiverPartitions===true
+                            onClicked:editor.geometryRetryRiverPartitions()
+                        }
                         Repeater {
                             model:taskPanel.taskState.components || []
                             UiButton {
                                 required property var modelData
+                                required property int index
                                 objectName:"geometryComponent_"+modelData.key;Layout.fillWidth:true;outlined:true
-                                text:(modelData.selected ? "✓ " : "")+(modelData.label || modelData.name || modelData.key)
+                                text:(modelData.selected ? "✓ " : "")+(modelData.label || modelData.name || modelData.key)+(modelData.partitionKind==="river" ? " · 하천 "+(index+1) : "")
                                 selected:modelData.selected===true;enabled:taskPanel.selectionControls
                                 onClicked:editor.geometryToggleTerritoryComponent(modelData.key)
                             }
                         }
-                        Label {objectName:"geometryRiverStatus";Layout.fillWidth:true;wrapMode:Text.Wrap;text:taskPanel.taskState.riverError || "하천 경계 선택은 준비 중입니다.";color:taskPanel.palette.muted}
                     }
                     ColumnLayout {
                         visible:taskPanel.rootSelection && (taskPanel.taskState.parts || []).length>0

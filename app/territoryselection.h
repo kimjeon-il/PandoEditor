@@ -11,7 +11,7 @@ enum class TerritorySelectionMethod { None, Line, Polygon, Components };
 enum class TerritorySelectionPhase { None, Drawing, Candidate, Components, Result };
 enum class TerritoryMethodChange { Activated, NeedsConfirmation, AwaitingComponentArchive, Rejected };
 enum class TerritoryArchiveReadiness { Ready, CalculationPending, NoCurrentGeometry, InvalidPhase, RiverComponentsPending, BoundedSourceExhausted };
-enum class TerritoryRiverStatus { Idle, Pending, Ready };
+enum class TerritoryRiverStatus { Idle, Pending, Ready, Unavailable, Error, SourceError };
 struct TerritorySelectionSource {
     ObjectRef ref;
     Geometry geometry;
@@ -72,7 +72,7 @@ struct TerritorySelectionState {
     std::optional<Geometry> currentGeometry,combinedGeometry,remainingGeometry;
     bool useRiverBoundaries=false;
     TerritoryRiverStatus riverStatus=TerritoryRiverStatus::Idle;
-    std::string riverPreparationKey;
+    std::string riverPreparationKey,riverDetail;
     std::vector<TerritorySelectionRiverSliverContext> derivedRiverSliverContext;
 };
 // Calculation-only values. Semantic IDs, selections, parts and confirmations
@@ -128,6 +128,9 @@ public:
     bool toggleCandidate(const std::string& id);
     bool toggleComponent(const std::string& key);
     bool toggleRiverBoundaries(bool enabled);
+    // Ready is installed only through validated components. Terminal failures
+    // clear live river intent but preserve immutable archived snapshots.
+    bool setRiverStatus(TerritoryRiverStatus,std::string detail={});
     // Caller has already checked source/session/preparation identity. Items are
     // the production composition (including untouched fallback original cells).
     bool installRiverComponents(std::vector<TerritorySelectionComponent>,std::string preparationKey);

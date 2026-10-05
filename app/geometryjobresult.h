@@ -1,6 +1,7 @@
 #pragma once
 #include "territorialgeometry.h"
 #include "territoryselection.h"
+#include "riverselectionpreparation.h"
 #include <string>
 #include <variant>
 
@@ -13,4 +14,4 @@ struct GeometryJobFailure {
 };
 using GeometryJobResult=std::variant<std::monostate,GeometryJobFailure,
     pandoeditor::TerritorySelectionDerivedResult,AnnexGeometryPreviewResult,
-    pandoeditor::TerritorySelectionDraftResult>;
+    pandoeditor::TerritorySelectionDraftResult,RiverSelectionPreparationResult>;

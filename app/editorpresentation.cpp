@@ -124,6 +124,14 @@ bool EditorController::configureHydroData(const QUrl& value) {
     publish(false);return true;
 }
 void EditorController::syncHydroData() {
+    if(geometryEdit_&&geometryEdit_->riverPreparation&&!geometryEdit_->riverPreparation->identity) {
+        // An initial river request owns its first source open. General asset
+        // notifications merely wake that owner, never replace its provider.
+        const auto generation=geometryEdit_->generation,epoch=geometryEdit_->riverPreparation->epoch;
+        QTimer::singleShot(0,this,[this,generation,epoch]{continueRiverPreparation(generation,epoch);});
+        return;
+    }
+    riverCache_.clear();riverCacheSource_.reset();
     hydroRuntime_.close(projectInstanceId());
     auto source=displayText(project_.document().physicalData.source);
     if(source.isEmpty()&&!physicalRoot_.isEmpty()) {

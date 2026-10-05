@@ -1,0 +1,9 @@
+{
+  "name": "pandoeditor-pinned-d3-adapter-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Development-only parser for regenerating the insertion-only pinned D3 Qt adapter",
+  "devDependencies": {
+    "acorn": "8.15.0"
+  }
+}

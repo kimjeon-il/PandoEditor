@@ -103,7 +103,7 @@ set(M32_PROPERTY_RESOURCES
     "${PROJECT_SOURCE_DIR}/ui/common/RegionValidityFields.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/MultiObjectProperties.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/ObjectPropertyPanel.qml")
-foreach(target_name pandoeditor ui_tests web_import_ui_tests selection_ui_tests)
+foreach(target_name pandoeditor ui_tests river_selection_ui_tests web_import_ui_tests selection_ui_tests)
     if(TARGET ${target_name})
         qt_add_resources(${target_name} m32_ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui" FILES ${M32_PROPERTY_RESOURCES})
     endif()
@@ -128,7 +128,7 @@ if(BUILD_TESTING)
     set_tests_properties(screen_color_tests PROPERTIES TIMEOUT 30 ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
 
-foreach(target_name pandoeditor ui_tests web_import_ui_tests selection_ui_tests property_ui_tests)
+foreach(target_name pandoeditor ui_tests river_selection_ui_tests web_import_ui_tests selection_ui_tests property_ui_tests)
     if(TARGET ${target_name})
         qt_add_resources(${target_name} ui_fonts PREFIX "/fonts" BASE "${PROJECT_SOURCE_DIR}/ui/fonts"
             FILES "${PROJECT_SOURCE_DIR}/ui/fonts/Pretendard-Regular.otf"

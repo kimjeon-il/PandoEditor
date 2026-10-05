@@ -426,6 +426,107 @@ private slots:
         const auto requested=selection.state().requestedMethod;QVERIFY(selection.addPart());
         QCOMPARE(selection.requestMethod(requested),TerritoryMethodChange::Activated);QCOMPARE(selection.state().parts.size(),std::size_t(1));
     }
+    void riverArchiveNormalizesResidualAndUnselectedCoordinates() {
+        SynchronousSelection selection;QVERIFY(selection.resetSources({source("donor",withIsland())}));
+        QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Components),TerritoryMethodChange::Activated);
+        QVERIFY(selection.toggleRiverBoundaries(true));
+        // Enabling the river route alone must not normalize untouched originals.
+        QCOMPARE(selection.state().components[0].geometry.polygons[0][0][0].y,0.);
+        auto left=selection.state().components[0],right=left;
+        left.key="river:left";left.geometry=box(0,0,5,10);left.partitionKind="river";
+        right.key="river:right";right.geometry=box(5,0,10,10);right.partitionKind="river";
+        QVERIFY(selection.installRiverComponents({left,right,selection.state().components[1]},"normalized-boundary"));
+        QVERIFY(selection.toggleComponent(left.key));
+        auto context=selection.riverSliverContext();QCOMPARE(context.size(),std::size_t(1));
+        // Exact pinned normalization reverses clipper's CCW ring, retaining its
+        // reversed starting vertex, rather than merely testing equal coverage.
+        const auto& unselected=context[0].unselectedGeometries[0].polygons[0][0];
+        QCOMPARE(unselected[0].x,5.);QCOMPARE(unselected[0].y,10.);
+        QCOMPARE(unselected[1].x,10.);QCOMPARE(unselected[1].y,10.);
+        QVERIFY(selection.toggleComponent(left.key));QVERIFY(!selection.state().currentGeometry);
+        QVERIFY(!selection.state().combinedGeometry);QVERIFY(selection.riverSliverContext().empty());
+        QVERIFY(selection.toggleComponent(left.key));
+        QVERIFY(selection.addPart());QVERIFY(!selection.state().useRiverBoundaries);
+        const auto& residual=selection.state().components[0].geometry.polygons[0][0];
+        QCOMPARE(residual[0].x,5.);QCOMPARE(residual[0].y,10.);
+        QCOMPARE(residual[1].x,10.);QCOMPARE(residual[1].y,10.);
+        QCOMPARE(selection.state().componentFeatures[0].sourcePolygonIndices,(std::vector<std::size_t>{0,1}));
+        QCOMPARE(selection.state().parts[0].component->geometry.polygons[0][0][0].y,0.);
+        QVERIFY(selection.removePart(selection.state().parts[0].id));
+        // Removing the last river part restores the original byte ordering.
+        QCOMPARE(selection.state().components[0].geometry.polygons[0][0][0].y,0.);
+    }
+    void middleRiverPartRemovalPreservesSnapshotAndExactResidualOrigins() {
+        SynchronousSelection selection;QVERIFY(selection.resetSources({source("donor",withIsland())}));
+        QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Components),TerritoryMethodChange::Activated);
+        QVERIFY(selection.toggleRiverBoundaries(true));
+        auto left=selection.state().components[0],middle=left,right=left;
+        left.key="river:left";left.partitionKind="river";left.geometry=box(0,0,3,10);
+        middle.key="river:middle";middle.partitionKind="river";middle.geometry=box(3,0,6,10);
+        right.key="river:right";right.partitionKind="river";right.geometry=box(6,0,10,10);
+        QVERIFY(selection.installRiverComponents({left,middle,right,selection.state().components[1]},"three-cells"));
+        QVERIFY(selection.toggleComponent(left.key));QVERIFY(selection.toggleComponent(middle.key));QVERIFY(selection.toggleComponent(right.key));
+        QVERIFY(selection.addPart());QCOMPARE(selection.state().parts.size(),std::size_t(3));
+        const auto first=selection.state().parts[0].id,last=selection.state().parts[2].id;
+        QVERIFY(selection.removePart(selection.state().parts[1].id));
+        QCOMPARE(selection.state().componentSnapshots.size(),std::size_t(1));
+        QCOMPARE(selection.state().componentSnapshots[0].items.size(),std::size_t(4));
+        QCOMPARE(selection.state().componentFeatures[0].sourcePolygonIndices,(std::vector<std::size_t>{0,1}));
+        const auto& residual=selection.state().components[0].geometry.polygons[0][0];
+        QCOMPARE(residual[0].x,3.);QCOMPARE(residual[0].y,10.);QCOMPARE(residual[1].x,6.);
+        const auto context=selection.riverSliverContext();QCOMPARE(context.size(),std::size_t(1));
+        QCOMPARE(context[0].unselectedGeometries.size(),std::size_t(1));QCOMPARE(planarArea(context[0].unselectedGeometries[0]),30.);
+        QVERIFY(selection.removePart(first));QCOMPARE(selection.state().componentSnapshots.size(),std::size_t(1));
+        QVERIFY(selection.removePart(last));QVERIFY(selection.state().componentSnapshots.empty());
+        QCOMPARE(planarArea(*selection.state().workingSourceGeometry),104.);QVERIFY(selection.riverSliverContext().empty());
+        QCOMPARE(selection.state().components[0].geometry.polygons[0][0][0].y,0.);
+    }
+    void onlyRiverDerivedResidualsNormalizeMicroscopicRawClip() {
+        TerritorySelectionState state;state.sources={source("donor",box(0,0,1,1))};
+        TerritorySelectionComponent archived;archived.countryId="donor";archived.partitionKind="river";
+        archived.usesRiverBoundary=true;archived.geometry=box(0,0,1-1e-15,1);
+        state.parts.push_back({"river-archive",TerritorySelectionMethod::Components,archived.geometry,archived});
+        const auto strict=calculateGeometry({GeometryOperation::Difference,state.sources[0].geometry,archived.geometry});
+        QCOMPARE(strict.status,GeometryOperationStatus::Failed);
+        const auto river=rebuildTerritorySelection(state);QVERIFY2(river.succeeded(),river.detail.c_str());
+        QVERIFY(!river.workingSourceGeometry);QVERIFY(river.components.empty());
+        state.parts[0].component.reset();
+        const auto ordinary=rebuildTerritorySelection(state);QCOMPARE(ordinary.status,GeometryOperationStatus::Failed);
+        const auto cancelled=rebuildTerritorySelection(state,[]{return true;});QCOMPARE(cancelled.status,GeometryOperationStatus::Cancelled);
+    }
+    void emptyRiverInstallationDoesNotClaimReady() {
+        SynchronousSelection selection;QVERIFY(selection.resetSources({source("donor",box(0,0,10,10))}));
+        QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Components),TerritoryMethodChange::Activated);
+        QVERIFY(selection.toggleRiverBoundaries(true));
+        QVERIFY(!selection.installRiverComponents({},"all-invalid"));
+        QVERIFY(selection.state().riverStatus!=TerritoryRiverStatus::Ready);
+        QVERIFY(!selection.lastError().empty());
+    }
+    void failedRiverInstallationClearsOldLiveSelectionAndAllowsRetry() {
+        SynchronousSelection selection;QVERIFY(selection.resetSources({source("donor",box(0,0,10,10))}));
+        QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Components),TerritoryMethodChange::Activated);
+        QVERIFY(selection.toggleRiverBoundaries(true));auto item=selection.state().components[0];
+        item.key="river:cell";item.partitionKind="river";
+        QVERIFY(selection.installRiverComponents({item},"old"));QVERIFY(selection.toggleComponent(item.key));
+        item.polygonIndex=17;
+        QVERIFY(!selection.installRiverComponents({item},"bad-index"));
+        QCOMPARE(selection.state().riverStatus,TerritoryRiverStatus::Error);
+        QVERIFY(selection.activeComponents().empty());QVERIFY(selection.state().selectedComponentKeys.empty());
+        QVERIFY(!selection.state().currentGeometry);QVERIFY(!selection.state().riverDetail.empty());
+        QVERIFY(selection.setRiverStatus(TerritoryRiverStatus::Pending));
+        QCOMPARE(selection.state().riverStatus,TerritoryRiverStatus::Pending);QVERIFY(selection.state().riverDetail.empty());
+        QVERIFY(!selection.setRiverStatus(TerritoryRiverStatus::Ready));
+        item.polygonIndex=0;QVERIFY(selection.installRiverComponents({item},"repaired"));
+        QVERIFY(selection.toggleComponent(item.key));QVERIFY(selection.addPart());
+        const auto archivedId=selection.state().parts[0].id;
+        QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Components),TerritoryMethodChange::Activated);
+        QVERIFY(selection.toggleRiverBoundaries(true));
+        QVERIFY(selection.setRiverStatus(TerritoryRiverStatus::SourceError,"missing source"));
+        QCOMPARE(selection.state().riverDetail,std::string("missing source"));
+        QCOMPARE(selection.state().parts[0].id,archivedId);QCOMPARE(selection.state().componentSnapshots.size(),std::size_t(1));
+        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state())));
+        QCOMPARE(selection.state().riverDetail,std::string("missing source"));
+    }
     void riverSlotsRequirePreparedCellsAndRetainSnapshotContext() {
         SynchronousSelection selection;QVERIFY(selection.resetSources({source("donor",withIsland())}));
         QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Components),TerritoryMethodChange::Activated);

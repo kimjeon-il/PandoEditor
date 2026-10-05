@@ -7,6 +7,31 @@ import {spawnSync} from 'node:child_process';
 import {root,verifySources,loadOracle,syntheticCases,assertBehavior} from './river/oracle.mjs';
 import {createPage} from './river/browser/page.mjs';
 import {verifyRiverCheckout} from './river/checkout-test.mjs';
+// Deliberately synthetic protocol rows; never persisted as browser evidence.
+function protocolControllerRows(scenarios){
+  const geometry={type:'Polygon',coordinates:[[[0,0],[1,0],[0,1],[0,0]]]};
+  return scenarios.map(selection=>{
+    const component={key:selection.donorId+':protocol-only',countryId:selection.donorId,geometry};
+    const components=selection.samplePoints.map((_,i)=>({...component,key:component.key+'-'+i}));
+    return {name:selection.name,selection,expectedTransferAreaKm2:1,components,componentFeatures:[{id:selection.donorId,geometry:{type:'MultiPolygon',coordinates:[geometry.coordinates]}}],selectedCells:structuredClone(components),
+      input:{operation:'annex',targetId:selection.targetId,donorIds:[selection.donorId],transferredGeometry:geometry,riverSliverContext:[{donorId:selection.donorId,polygonIndex:0,unselectedGeometries:[]}]},
+      combinedGeometry:geometry,result:{transferredGeometry:geometry,autoIncludedSlivers:{count:0,areaM2:0},affectedIds:[selection.donorId,selection.targetId],removedIds:[]},after:[{id:selection.donorId,geometry},{id:selection.targetId,geometry}],
+      sourceDiagnostics:{loadedRivers:1,failedLogicalIds:[],indexSha256:'a'.repeat(64),version:'0.13.1'},donorRevisionStrings:[selection.donorId+':'+JSON.stringify([geometry.coordinates])],editedRiverSignature:'',hydroRevision:'0.13.1:'+ 'a'.repeat(64)+':',inputUnchanged:true,fullWorldFeatureCount:258};
+  });
+}
+// Protocol scaffolding only; coordinates here are not browser/native output.
+function protocolLifecycleRows(scenarios){
+  const row=protocolControllerRows(scenarios)[0],parts=row.components.map((component,index)=>({id:'part-'+index,method:'components',geometry:structuredClone(component.geometry),component:{...structuredClone(component),snapshotId:'snapshot'}}));
+  const checkpoints=Array.from({length:7},(_,index)=>{
+    const previewReady=[0,1,6].includes(index),componentFeatures=structuredClone(row.componentFeatures);
+    componentFeatures[0].geometry.coordinates[0][0][0][0]+=index===0?0:index<3?1:2;
+    return {name:index===0?'initial-three-selected':scenarios[0].actions[index-1].name,componentKind:[1,3].includes(index)?'unavailable':index===4?'ordinary':'river',components:structuredClone(row.components),componentFeatures,
+      parts:structuredClone(index===0?[]:index<3?parts:[parts[0],parts[2]]),componentSnapshots:index===0?[]:[{id:'snapshot',items:structuredClone(row.components)}],
+      selectedComponentKeys:index===0?row.components.map(component=>component.key):index===6?[row.components[1].key]:[],combinedGeometry:row.combinedGeometry,workingSourceGeometry:componentFeatures[0].geometry,
+      previewReady,input:previewReady?structuredClone(row.input):null,result:previewReady?structuredClone(row.result):null,transferredGeometry:previewReady?row.result.transferredGeometry:null,riverSliverContext:previewReady?row.input.riverSliverContext:null,autoIncludedSliverCount:previewReady?0:null,autoIncludedSliverAreaM2:previewReady?0:null,transferAreaKm2:previewReady?1:null,inputUnchanged:true};
+  });
+  return [{...row,initialCheckpoint:checkpoints[0],lifecycleActions:scenarios[0].actions.map((action,index)=>({...action,...([2,5].includes(index)?{removedPart:structuredClone(parts[1])}:{}),...(index===5?{resolvedPoint:scenarios[0].samplePoints[1]}:{}),checkpoint:checkpoints[index+1]}))}];
+}
 test('river original sources, exact defaults and 18 real-algorithm synthetic cases',async()=>{
   verifySources();const oracle=await loadOracle(),cases=syntheticCases();assert.equal(cases.length,18);
   assert.equal(oracle.module.RIVER_TERRITORY_PARTITION_ALGORITHM_REVISION,'river-partitions-v2');
@@ -106,13 +131,15 @@ test('compareBrowserNative rejects corrupted protocol scaffolding through its pu
   const commit='1'.repeat(40),runId='offline-protocol-scaffolding';
   const names=Array.from({length:42},(_,i)=>'protocol-'+i);
   const identity={commit,runId,sourceHashes:{'protocol-source':'2'.repeat(64)},boundaryHashes:{'protocol-boundary':'3'.repeat(64)}};
-  const payload={protocolScaffoldingOnly:true,commit,runId,identity,cases:names.map(name=>({name})),annex:{role:annexRole,scenarios:requiredAnnexScenarios()}};
+  const {controllerAnnexRole,requiredControllerAnnexScenarios,requiredControllerLifecycleScenarios}=await import('./river/controller-suite.mjs');
+  const payload={protocolScaffoldingOnly:true,commit,runId,identity,cases:names.map(name=>({name})),annex:{role:annexRole,scenarios:requiredAnnexScenarios()},controllerAnnex:{role:controllerAnnexRole,scenarios:requiredControllerAnnexScenarios()},controllerLifecycle:{scenarios:requiredControllerLifecycleScenarios()},controllerSources:{baseBehavioralCommit:'53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47',behavioralCommit:'12cd8c8ec47c83cfb8c650e8f44c81cdfac10043'}};
   const geometry=()=>({type:'Polygon',coordinates:[[[0,0],[2,0],[0,2],[0,0]]]});
   const native={schema:'river-native-observations-v2',identity:structuredClone(identity),runtime:{binarySha256:'4'.repeat(64),qt:runtimePin.qt},
     observations:names.map(name=>({name,result:{diagnostics:{computeMs:0},candidates:[{geometry:geometry()}]}})),
     presentations:names.map(name=>({name,candidates:[{geometry:geometry()}]})),
     traces:names.map(name=>({name,center:[0,0]}))};
   const browser={...structuredClone(native),schema:'river-browser-observations-v2',
+    controllerAnnex:protocolControllerRows(payload.controllerAnnex.scenarios),controllerLifecycle:protocolLifecycleRows(payload.controllerLifecycle.scenarios),controllerSourceCommit:payload.controllerSources.baseBehavioralCommit,controllerBehavioralCommit:payload.controllerSources.behavioralCommit,
     sourceHashes:structuredClone(identity.sourceHashes),boundaryHashes:structuredClone(identity.boundaryHashes),
     runtime:{playwright:runtimePin.playwright,browserVersion:runtimePin.chromium,chromiumRevision:runtimePin.revision,cdp:{jsVersion:runtimePin.v8,product:'HeadlessChrome/'+runtimePin.chromium}},
     branchObservations:Array.from({length:3},()=>({outputExact:true,segments:[{protocolScaffoldingOnly:true}]})),
@@ -133,8 +160,98 @@ test('compareBrowserNative rejects corrupted protocol scaffolding through its pu
       assert.throws(()=>compare(payload,side==='native'?missing:native,side==='browser'?missing:browser),new RegExp('Missing '+side+' '+field),side+' missing '+field+' row');
     }
   }
+  for(const mutate of [r=>delete r.controllerLifecycle,r=>r.controllerLifecycle[0].lifecycleActions.pop(),r=>delete r.controllerAnnex,r=>r.controllerAnnex.pop(),r=>r.controllerAnnex[0].selectedCells[0].key='substitute',r=>r.controllerBehavioralCommit='wrong']){const bad=structuredClone(browser);mutate(bad);assert.throws(()=>compare(payload,native,bad),'Controller entry-chain evidence is mandatory');}
   const corruptedSource=structuredClone(browser);corruptedSource.sourceHashes['protocol-source']='6'.repeat(64);
   assert.throws(()=>compare(payload,native,corruptedSource),/Observed browser source hashes exact mismatch/,'Observed source identity');
   const wrongCommit=structuredClone(payload);wrongCommit.commit='7'.repeat(40);
   assert.throws(()=>compare(wrongCommit),{code:'ERR_ASSERTION',actual:wrongCommit.commit,expected:commit},'Requested exact commit');
+});
+
+test('controller entry-chain contract is separate, complete, and rejects source or representation substitution',async()=>{
+  const {requiredControllerAnnexScenarios,assertControllerAnnexContract,controllerSourceBundle}=await import('./river/controller-suite.mjs');
+  const scenarios=requiredControllerAnnexScenarios();
+  const valid={scenarios,role:'Actual production controller entry chain; browser preview oracle only.'};
+  assertControllerAnnexContract(valid);assert.equal(scenarios.length,2);
+  for(const mutate of [r=>r.scenarios.pop(),r=>r.scenarios.reverse(),r=>r.scenarios[0].representation='normalized-filtered-presentation',r=>r.scenarios[0].base='SRB-live']) {
+    const bad=structuredClone(valid);mutate(bad);assert.throws(()=>assertControllerAnnexContract(bad),/Required two actual controller entry-chain scenarios/);
+  }
+  const bundle=controllerSourceBundle();
+  assert.equal(bundle.baseBehavioralCommit,'53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47');
+  assert.equal(bundle.behavioralCommit,'12cd8c8ec47c83cfb8c650e8f44c81cdfac10043');
+  for(const name of ['app-territory-selection-workflow.js','territory-component-plan.js','app-territory-components.js','app-river-candidates.js','river-territory-partition.js','d3.min.js'])assert.ok(bundle.modules[name]?.source,name);
+  const {sha256}=await import('./river/oracle.mjs');
+  for(const module of Object.values(bundle.modules))assert.equal(sha256(module.source),module.sha256);
+  const boundary=vm.runInThisContext(bundle.runtime.source);assert.equal(typeof boundary.createSelectionRuntime,'function');assert.equal(typeof boundary.settle,'function');
+});
+
+test('controller entry-chain evidence fails closed for omissions and mutated installed geometry or preview payload',async()=>{
+  const {requiredControllerAnnexScenarios,assertControllerAnnexObservations}=await import('./river/controller-suite.mjs');
+  // Protocol-only stand-ins, never browser results or geometry goldens.
+  const scenarios=requiredControllerAnnexScenarios(),rows=protocolControllerRows(scenarios);
+  const contract={scenarios};assertControllerAnnexObservations(contract,rows);
+  for(const mutate of [r=>r.pop(),r=>r.reverse(),r=>delete r[0].componentFeatures,r=>r[0].componentFeatures[0].geometry.type='Polygon',r=>r[0].selectedCells[0].key='different',r=>r[0].input.transferredGeometry={type:'Polygon',coordinates:[]},r=>r[0].hydroRevision='::',r=>delete r[0].after,r=>delete r[0].expectedTransferAreaKm2]) {
+    const bad=structuredClone(rows);mutate(bad);assert.throws(()=>assertControllerAnnexObservations(contract,bad));
+  }
+});
+
+test('controller browser boundary drives the real production workflow and preserves prepare MultiPolygon',async()=>{
+  // Small Node execution checks wiring only. It is never saved as Chromium evidence.
+  const {controllerSourceBundle}=await import('./river/controller-suite.mjs');
+  const {prepareCorrectedSelectionSources}=await import('./web-selection-correction.mjs');
+  const {loadSelectionModules,seedSelectionFeatures,square}=await import('./web-selection.mjs');
+  const corrected=prepareCorrectedSelectionSources();
+  try {
+    const api=await loadSelectionModules(corrected.root),bundle=controllerSourceBundle();
+    Object.assign(api,await import('../../tests/fixtures/web-m97/lifecycle-source/assets/js/modules/ring-hit-test.js'));
+    const runtime=vm.runInThisContext(bundle.runtime.source);
+    const observe=vm.runInThisContext(fs.readFileSync(path.join(root,'tools/m97/river/browser/controller-annex.js'),'utf8'));
+    const features=seedSelectionFeatures(api,{remote:false});
+    for(let i=0;i<256;i++)features.push(api.createTerritorialFeature({id:'unrelated-'+i,name:'unrelated',entityKind:'general',parentId:'',coverageMode:'explicit',geometry:square(30+i*.03,40,30+i*.03+.01,40.01)}));
+    const river={type:'Feature',id:'fixture-river',properties:{pandolab_id:'fixture-river',category:'river'},geometry:{type:'LineString',coordinates:[[5,-1],[5,11]]}};
+    const scenario={name:'protocol-synthetic-entry-chain',base:'donor-controller',representation:'controller-entry-chain',donorId:'donor',targetId:'target',samplePoints:[[1,1]]};
+    const payload={world:{source:JSON.stringify({features})},controllerAnnex:{scenarios:[scenario],source:{version:'0.13.1',indexSha256:'a'.repeat(64),inputs:[{donorId:'donor',riverFeatures:[river]}]}}};
+    const {sha256,canonical}=await import('./river/oracle.mjs');
+    const rows=await observe(payload,api,runtime,async text=>sha256(text),canonical);
+    assert.equal(rows.length,1);const row=rows[0];
+    assert.equal(row.componentFeatures[0].geometry.type,'MultiPolygon');assert.equal(row.components.length,2);
+    assert.equal(row.selectedCells.length,1);assert.ok(row.selectedCells[0].selected);
+    assert.equal(row.input.riverSliverContext.length,1);assert.equal(row.sourceDiagnostics.loadedRivers,1);
+    assert.equal(row.donorRevisionStrings[0],'donor:'+JSON.stringify(row.componentFeatures[0].geometry.coordinates));
+    assert.deepEqual(row.input.transferredGeometry,row.combinedGeometry);assert.equal(row.inputUnchanged,true);
+    assert.equal(row.expectedTransferAreaKm2,api.d3.geo.area(row.result.transferredGeometry)*6371.0088**2);
+    assert.equal(row.result.autoIncludedSlivers.count,0);assert.equal(row.after.length,2);
+    const {requiredControllerLifecycleScenarios}=await import('./river/controller-suite.mjs');
+    const lifecycleScenario={...requiredControllerLifecycleScenarios()[0],donorId:'donor',targetId:'target',samplePoints:[[1,1],[4,1],[6,1]]};
+    const lifecyclePayload=structuredClone(payload);lifecyclePayload.controllerLifecycle={scenarios:[lifecycleScenario]};
+    lifecyclePayload.controllerAnnex.source.inputs[0].riverFeatures=[2.5,5,7.5].map((x,i)=>({...structuredClone(river),id:'synthetic-'+i,properties:{pandolab_id:'synthetic-'+i,category:'river'},geometry:{type:'LineString',coordinates:[[x,-1],[x,11]]}}));
+    const lifecycleRows=await observe(lifecyclePayload,api,runtime,async text=>sha256(text),canonical,{lifecycle:true});
+    assert.equal(lifecycleRows.length,1);const lifecycle=lifecycleRows[0];
+    assert.equal(lifecycle.lifecycleActions?.length,6,'Required actual archive/residual/removal action checkpoints');
+    assert.equal(lifecycle.initialCheckpoint.selectedComponentKeys.length,3);
+    const checkpoints=lifecycle.lifecycleActions.map(action=>action.checkpoint);
+    assert.deepEqual(checkpoints.map(checkpoint=>checkpoint.parts.length),[3,3,2,2,2,2]);
+    assert.notDeepEqual(checkpoints[1].componentFeatures,lifecycle.componentFeatures,'Residual source must be prepared by production');
+    assert.notDeepEqual(checkpoints[4].componentFeatures,checkpoints[1].componentFeatures,'Removing middle part must restore residual source');
+    for(const checkpoint of checkpoints){assert.equal(checkpoint.inputUnchanged,true);if(!checkpoint.previewReady){assert.equal(checkpoint.input,null);assert.equal(checkpoint.result,null);}}
+    assert.equal(checkpoints.at(-1).previewReady,true);
+    assert.deepEqual(checkpoints[2].parts.map(part=>part.id),[checkpoints[0].parts[0].id,checkpoints[0].parts[2].id]);
+    assert.deepEqual(lifecycle.input,checkpoints.at(-1).input);assert.deepEqual(lifecycle.result,checkpoints.at(-1).result);
+    const {assertControllerLifecycleObservations}=await import('./river/controller-suite.mjs');
+    const lifecycleContract={scenarios:[lifecycleScenario]};assertControllerLifecycleObservations(lifecycleContract,lifecycleRows);
+    for(const mutate of [r=>r.pop(),r=>r[0].lifecycleActions.pop(),r=>r[0].lifecycleActions[2].index=0,r=>delete r[0].lifecycleActions[1].checkpoint.componentFeatures,r=>r[0].lifecycleActions[2].checkpoint.parts.reverse(),r=>delete r[0].lifecycleActions[2].checkpoint.componentSnapshots,r=>r[0].lifecycleActions[1].checkpoint.input=r[0].input]){
+      const changed=structuredClone(lifecycleRows);mutate(changed);assert.throws(()=>assertControllerLifecycleObservations(lifecycleContract,changed));
+    }
+
+
+  }finally{corrected.cleanup();}
+});
+
+test('controller lifecycle contract requires the actual Serbia archive, residual, and middle-removal checkpoints',async()=>{
+  const {requiredControllerLifecycleScenarios,assertControllerLifecycleContract}=await import('./river/controller-suite.mjs');
+  const scenarios=requiredControllerLifecycleScenarios();
+  assert.equal(scenarios.length,1);assert.equal(scenarios[0].donorId,'SRB');
+  const contract={scenarios};assertControllerLifecycleContract(contract);
+  for(const mutate of [x=>x.scenarios.pop(),x=>x.scenarios[0].actions.pop(),x=>x.scenarios[0].actions.find(a=>a.op==='removePart').index=0]){
+    const changed=structuredClone(contract);mutate(changed);assert.throws(()=>assertControllerLifecycleContract(changed),/Required Serbia controller lifecycle/);
+  }
 });

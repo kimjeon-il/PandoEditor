@@ -69,7 +69,7 @@ Geometry geometry(const QJsonObject& object) {
 }
 QStringList strings(const QJsonValue& value) {QStringList result;for(const auto& item:value.toArray())result.push_back(item.toString());return result;}
 RiverPartitionCell cell(const QJsonObject& row) {
-    RiverPartitionCell result;result.key=row["key"].toString();result.donorCountryId=row["donorCountryId"].toString();
+    RiverPartitionCell result;result.attributes=row;result.key=row["key"].toString();result.donorCountryId=row["donorCountryId"].toString();
     result.componentKey=row["componentKey"].toString();result.algorithmRevision=row["algorithmRevision"].toString();
     result.geometry=geometry(row["geometry"].toObject());result.areaM2=row["areaM2"].toDouble();result.area=row["area"].toDouble();
     result.sourceRiverIds=strings(row["sourceRiverIds"]);
@@ -125,10 +125,118 @@ RiverPartitionResult decode(QByteArray json,const GeometryCancellation& cancelle
     const auto identity=object["identity"].toObject();output.donorRevisionStrings=strings(identity["donorRevisionStrings"]);output.editedRiverSignature=identity["editedRiverSignature"].toString();
     check(cancelled);output.json=std::move(json);output.status=RiverPartitionStatus::Completed;return output;
 }
+QJsonObject cellJson(const RiverPartitionCell& value) {
+    if(!std::isfinite(value.area)||!std::isfinite(value.areaM2))throw std::invalid_argument("RIVER_NONFINITE_AREA");
+    auto row=value.attributes;
+    row["key"]=value.key;row["donorCountryId"]=value.donorCountryId;row["componentKey"]=value.componentKey;
+    row["algorithmRevision"]=value.algorithmRevision;row["geometry"]=geometryJson(value.geometry);
+    row["area"]=value.area;row["areaM2"]=value.areaM2;
+    row["sourceRiverIds"]=QJsonArray::fromStringList(value.sourceRiverIds);
+    QJsonArray segments;for(const auto& segment:value.riverBoundarySegments)segments.append(points({segment[0],segment[1]}));
+    row["riverBoundarySegments"]=segments;return row;
+}
+QJsonObject baseComponentJson(const RiverBaseComponent& value) {
+    auto row=value.attributes;row["key"]=value.key;row["countryId"]=value.countryId;
+    row["polygonIndex"]=value.polygonIndex;row["sourcePolygonIndex"]=value.sourcePolygonIndex;
+    if(!value.componentKey.isEmpty())row["componentKey"]=value.componentKey;
+    row["geometry"]=geometryJson(value.geometry);return row;
+}
+QJSValue parse(QJSEngine& engine,const QJsonDocument& input) {
+    auto value=engine.globalObject().property("JSON").property("parse").call({QString::fromUtf8(input.toJson(QJsonDocument::Compact))});
+    jsCheck(value);return value;
+}
+QByteArray stringify(QJSEngine& engine,const QJSValue& value) {
+    const auto result=engine.globalObject().property("JSON").property("stringify").call({value});jsCheck(result);
+    return result.toString().toUtf8();
+}
+QJsonDocument jsonDocument(const QByteArray& bytes) {
+    QJsonParseError error;const auto document=QJsonDocument::fromJson(bytes,&error);
+    if(error.error!=QJsonParseError::NoError)throw std::runtime_error("RIVER_PRESENTATION_JSON_INVALID");
+    return document;
+}
+QJSValue loadNormalizer(QJSEngine& engine) {
+    initializeRiverResources();engine.globalObject().setProperty("globalThis",engine.globalObject());
+    jsCheck(engine.evaluate(QString::fromUtf8(verified(":/river/original/polygon-geometry.js",
+        "cc987c4076861a02a5d60720ebf536908175a9f1a605a86701ae4cf50c3a3fb5")),":/river/original/polygon-geometry.js"));
+    const auto normalize=engine.globalObject().property("PandoLabPolygonGeometry").property("normalizePolygonGeometry");
+    if(!normalize.isCallable())throw std::runtime_error("RIVER_NORMALIZER_UNAVAILABLE");
+    return normalize;
+}
+std::optional<Geometry> normalizeGeometry(QJSEngine& engine,const QJSValue& normalize,
+    const Geometry& input,const GeometryCancellation& cancelled) {
+    check(cancelled);const auto result=normalize.call({parse(engine,QJsonDocument(geometryJson(input)))});
+    check(cancelled);jsCheck(result);if(result.isNull())return {};
+    const auto document=jsonDocument(stringify(engine,result));
+    check(cancelled);if(!document.isObject())throw std::runtime_error("RIVER_NORMALIZED_GEOMETRY_INVALID");
+    return geometry(document.object());
+}
+template<class Result> Result presentationFailure(const GeometryCancellation& cancelled,const std::exception* error=nullptr) {
+    Result result;
+    if(!error||(cancelled&&cancelled()))result.status=RiverPartitionStatus::Cancelled;
+    else result.detail=QString::fromUtf8(error->what());
+    return result;
+}
 RiverPartitionResult stopped() {RiverPartitionResult result;result.status=RiverPartitionStatus::Cancelled;return result;}
 RiverPartitionResult failed(const std::exception& error,const GeometryCancellation& cancelled) {
     if(cancelled&&cancelled())return stopped();RiverPartitionResult result;result.detail=QString::fromUtf8(error.what());return result;
 }
+}
+RiverGeometryNormalizationResult normalizeRiverGeometry(const Geometry& input,const GeometryCancellation& cancelled) {
+    try {
+        check(cancelled);QJSEngine engine;const auto normalize=loadNormalizer(engine);check(cancelled);
+        RiverGeometryNormalizationResult output;output.geometry=normalizeGeometry(engine,normalize,input,cancelled);
+        check(cancelled);output.status=RiverPartitionStatus::Completed;return output;
+    }catch(const Cancelled&){return presentationFailure<RiverGeometryNormalizationResult>(cancelled);}
+    catch(const std::exception& error){return presentationFailure<RiverGeometryNormalizationResult>(cancelled,&error);}
+}
+RiverPartitionNormalizationResult normalizeRiverPartitionCandidates(const std::vector<RiverPartitionCell>& cells,
+    const GeometryCancellation& cancelled) {
+    try {
+        check(cancelled);QJSEngine engine;const auto normalize=loadNormalizer(engine);check(cancelled);
+        RiverPartitionNormalizationResult output;QJsonArray rows;
+        for(const auto& input:cells) {
+            check(cancelled);auto value=normalizeGeometry(engine,normalize,input.geometry,cancelled);
+            if(!value||input.donorCountryId.isEmpty())continue;
+            auto candidate=input;candidate.geometry=std::move(*value);
+            candidate.attributes=cellJson(candidate);rows.append(candidate.attributes);output.candidates.push_back(std::move(candidate));
+        }
+        check(cancelled);output.json=QJsonDocument(rows).toJson(QJsonDocument::Compact);
+        output.status=RiverPartitionStatus::Completed;return output;
+    }catch(const Cancelled&){return presentationFailure<RiverPartitionNormalizationResult>(cancelled);}
+    catch(const std::exception& error){return presentationFailure<RiverPartitionNormalizationResult>(cancelled,&error);}
+}
+RiverPartitionCompositionResult composeRiverPartitionComponents(const std::vector<RiverBaseComponent>& components,
+    const std::vector<RiverPartitionCell>& normalizedCells,const std::vector<RiverPartitionDonorResult>& donors,
+    const GeometryCancellation& cancelled) {
+    try {
+        check(cancelled);initializeRiverResources();
+        verified(":/river/original/river-territory-partition.js","18b32eb7db238beaed99bce8bac980e547a48c785a7bd2071fa56fa63f51db24");
+        verified(":/river/original/planar-graph-faces.js","283da7701c21cb80e4fd9ef97e8f68e69a8d6f0ec9fc611ee8c23cab45d6c804");
+        verified(":/river/adapted/river-territory-partition.js","b27fd1e62bb3fbee977089686eeb5713d9bde60c49230b3e2453c2200b4b773a");
+        verified(":/river/adapted/planar-graph-faces.js","283da7701c21cb80e4fd9ef97e8f68e69a8d6f0ec9fc611ee8c23cab45d6c804");
+        QJSEngine engine;engine.globalObject().setProperty("globalThis",engine.globalObject());
+        jsCheck(engine.evaluate(QString::fromUtf8(read(":/river/platform.js")),":/river/platform.js"));
+        const auto module=engine.importModule(":/river/adapted/river-territory-partition.js");check(cancelled);jsCheck(module);
+        QJsonArray base,candidates,results;
+        for(const auto& value:components){check(cancelled);base.append(baseComponentJson(value));}
+        for(const auto& value:normalizedCells){check(cancelled);candidates.append(cellJson(value));}
+        for(const auto& value:donors){check(cancelled);results.append(QJsonObject{{"donorCountryId",value.donorCountryId},
+            {"reason",value.reason},{"candidateCount",value.candidateCount},
+            {"status",value.status==RiverDonorStatus::Invalid?"invalid":value.status==RiverDonorStatus::Ready?"ready":"empty"}});}
+        const auto input=parse(engine,QJsonDocument(QJsonObject{{"components",base},{"candidates",candidates},{"donorResults",results}}));
+        check(cancelled);const auto result=module.property("composeRiverBoundaryTerritoryComponents").call({input});
+        check(cancelled);jsCheck(result);auto bytes=stringify(engine,result);check(cancelled);
+        const auto document=jsonDocument(bytes);if(!document.isObject())throw std::runtime_error("RIVER_COMPOSITION_SHAPE_INVALID");
+        const auto row=document.object();
+        if(!row["items"].isArray()||!row["invalidDonorIds"].isArray()||!row["splitComponentCount"].isDouble()||!row["riverCandidateCount"].isDouble())
+            throw std::runtime_error("RIVER_COMPOSITION_SHAPE_INVALID");
+        RiverPartitionCompositionResult output;
+        for(const auto& value:row["items"].toArray()){check(cancelled);output.components.push_back(component(value.toObject()));}
+        output.invalidDonorIds=strings(row["invalidDonorIds"]);output.splitComponentCount=row["splitComponentCount"].toInt();
+        output.riverCandidateCount=row["riverCandidateCount"].toInt();output.json=std::move(bytes);
+        check(cancelled);output.status=RiverPartitionStatus::Completed;return output;
+    }catch(const Cancelled&){return presentationFailure<RiverPartitionCompositionResult>(cancelled);}
+    catch(const std::exception& error){return presentationFailure<RiverPartitionCompositionResult>(cancelled,&error);}
 }
 RiverPartitionResult calculateRiverPartitionsJson(const QByteArray& json,const GeometryCancellation& cancelled) {
     try {
@@ -149,6 +257,20 @@ RiverPartitionResult calculateRiverPartitionsJson(const QByteArray& json,const G
         check(cancelled);
         auto input=engine.globalObject().property("JSON").property("parse").call({QString::fromUtf8(json)});jsCheck(input);
         if(!input.isObject()||input.isArray())throw std::invalid_argument("RIVER_REQUEST_OBJECT_REQUIRED");
+        if(!input.property("liveHydroRevisionPrefix").isUndefined()) {
+            if(!input.property("liveHydroRevisionPrefix").isString())
+                throw std::invalid_argument("RIVER_LIVE_HYDRO_REVISION_PREFIX_STRING_REQUIRED");
+            // Application metadata only. Preserve the pinned bridge and kernel;
+            // clone first so their nonfinite/non-JSON rejection remains intact.
+            const auto prepare=engine.evaluate(QStringLiteral(R"JS((function(row) {
+                row=structuredClone(row);
+                row.request=row.request||{};
+                row.request.hydroRevision=row.liveHydroRevisionPrefix+(row.signatureEdits||[])
+                    .map(f=>String(f.id)+':'+JSON.stringify(f.geometry.coordinates||[])).sort().join('|');
+                return row;
+            }))JS"));jsCheck(prepare);
+            check(cancelled);input=prepare.call({input});check(cancelled);jsCheck(input);
+        }
         const auto bridge=engine.evaluate(QString::fromUtf8(read(":/river/bridge.js")),":/river/bridge.js");jsCheck(bridge);
         check(cancelled);
         const auto result=bridge.call({input,module,engine.globalObject().property("polygonClipping")});
@@ -193,7 +315,8 @@ RiverPartitionResult calculateRiverPartitions(const RiverPartitionRequest& reque
         QJsonObject input{{"donors",donors},{"riverFeatures",features},{"hydroRevision",request.hydroRevision}};
         if(!request.configOverrides.isEmpty())input["config"]=request.configOverrides;
         if(request.algorithmRevision)input["algorithmRevision"]=*request.algorithmRevision;
-        const QJsonObject row{{"request",input},{"components",components},{"liveDonorIndices",live},{"signatureEdits",edits},{"includeIdentity",true}};
+        QJsonObject row{{"request",input},{"components",components},{"liveDonorIndices",live},{"signatureEdits",edits},{"includeIdentity",true}};
+        if(request.liveHydroRevisionPrefix)row["liveHydroRevisionPrefix"]=*request.liveHydroRevisionPrefix;
         check(cancelled);return calculateRiverPartitionsJson(QJsonDocument(row).toJson(QJsonDocument::Compact),cancelled);
     }catch(const Cancelled&){return stopped();}catch(const std::exception& error){return failed(error,cancelled);}
 }

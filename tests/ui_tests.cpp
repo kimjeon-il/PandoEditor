@@ -224,12 +224,14 @@ private slots:
         QVERIFY(click("geometryReview"));
         QCOMPARE(editor.geometryEditState().value("stage").toString(),QString("review"));
         QVERIFY(visualItem(window->contentItem(),"geometryConfirm")->isVisible());
+        const auto retainedTransfer=editor.riverSelectionObservation().value("transferredGeometry");QVERIFY(retainedTransfer.isValid());
         QVERIFY(click("geometryBack"));
         QCOMPARE(editor.geometryEditState().value("stage").toString(),QString("selection"));
         QVERIFY(editor.geometryEditState().value("previewReady").toBool());QVERIFY(unchanged());
         QVERIFY(click("geometryBack"));
         QCOMPARE(editor.geometryEditState().value("stage").toString(),QString("setup"));
-        QVERIFY(editor.geometryEditState().value("previewReady").toBool());
+        QVERIFY(!editor.geometryEditState().value("previewReady").toBool()); // Same retained receipt, unavailable in setup as on the pinned web.
+        QCOMPARE(editor.riverSelectionObservation().value("transferredGeometry"),retainedTransfer);QVERIFY(unchanged());
         QVERIFY(!visualItem(window->contentItem(),"geometryConfirm")->isVisible());
         QVERIFY(click("geometryRemoveProvider_B"));
         QCOMPARE(editor.geometryEditState().value("confirmationKind").toString(),QString("settings"));
@@ -238,6 +240,7 @@ private slots:
         QCOMPARE(editor.geometryEditState().value("providers").toList().size(),1);QVERIFY(unchanged());
         QVERIFY(click("geometryAdvance"));
         QVERIFY(editor.geometryEditState().value("previewReady").toBool());
+        QCOMPARE(editor.riverSelectionObservation().value("transferredGeometry"),retainedTransfer);QVERIFY(unchanged());
         QVERIFY(click("geometryReview"));
         QVERIFY(click("geometryConfirm"));
         QTRY_VERIFY_WITH_TIMEOUT(!editor.geometryEditState().value("active").toBool(),10000);
@@ -349,7 +352,9 @@ private slots:
         QCOMPARE(editor.geometryEditState().value("stage").toString(),QString("selection"));
         QVERIFY(unchanged());
         auto* river=visualItem(window->contentItem(),"geometryRiverBoundaries");
-        QVERIFY(!river||!river->isEnabled());
+        QVERIFY(river);
+        QCOMPARE(river->isVisible(),editor.geometryEditState().value("selectionPhase").toString()=="components");
+        if(river->isVisible())QCOMPARE(river->isEnabled(),editor.geometryEditState().value("canToggleRiverBoundaries").toBool());
         QVERIFY(click("geometryReview"));QVERIFY(unchanged());
         QVERIFY(click("geometryConfirm"));
         QTRY_VERIFY_WITH_TIMEOUT(!editor.geometryEditState().value("active").toBool(),10000);

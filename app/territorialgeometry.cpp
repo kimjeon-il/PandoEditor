@@ -1,5 +1,8 @@
 #include "territorialgeometry.h"
 #include "geometrycalculator.h"
+#include "geometryruntime_p.h"
+#include "riverpartitioncalculator.h"
+#include "riverareacalculator.h"
 #include "territoryselection.h"
 #include "retainedreferencerewriter.h"
 #include <pandoeditor/project.h>
@@ -8,6 +11,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <set>
+#include <limits>
 
 using namespace pandoeditor;
 PrepareResult prepareTerritorialGeometry(const ProjectSnapshot& snapshot,
@@ -170,18 +174,29 @@ const Geometry& annexGeometry(const ProjectSnapshot& snapshot,const ObjectRef& o
 void annexCheckCancelled(const JobToken& token) {
     if(token.cancelled())throw std::runtime_error("CANCELLED");
 }
-Geometry annexCalculate(GeometryOperation operation,const Geometry& left,const Geometry& right,const JobToken& token) {
+Geometry annexCalculate(GeometryOperation operation,const Geometry& left,const Geometry& right,const JobToken& token,bool river=false) {
     annexCheckCancelled(token);
+    if(river) {
+        auto calculated=calculateRiverGeometryIntermediate({operation,left,right},[&]{return token.cancelled();});
+        annexCheckCancelled(token);
+        if(!calculated.succeeded())throw std::runtime_error(calculated.detail);
+        return std::move(calculated.geometry);
+    }
     const auto calculated=calculateGeometry({operation,left,right},[&]{return token.cancelled();});
     annexCheckCancelled(token);
     if(!calculated.succeeded())throw std::runtime_error(calculated.detail);
     return calculated.geometry;
 }
-Geometry annexUnion(const std::vector<Geometry>& geometries,const JobToken& token) {
+Geometry annexUnion(const std::vector<Geometry>& geometries,const JobToken& token,bool river=false) {
     annexCheckCancelled(token);
     if(geometries.empty())return {};
     if(geometries.size()==1)return geometries.front();
     GeometryOperationRequest request;request.operation=GeometryOperation::Union;request.operands=geometries;
+    if(river) {
+        auto calculated=calculateRiverGeometryIntermediate(request,[&]{return token.cancelled();});annexCheckCancelled(token);
+        if(!calculated.succeeded())throw std::runtime_error(calculated.detail);
+        return std::move(calculated.geometry);
+    }
     const auto calculated=calculateGeometry(request,[&]{return token.cancelled();});annexCheckCancelled(token);
     if(!calculated.succeeded())throw std::runtime_error(calculated.detail);
     return calculated.geometry;
@@ -199,30 +214,103 @@ bool annexBoundsOverlap(const AnnexBounds& left,const AnnexBounds& right) {
     return left.minX<=right.maxX&&left.maxX>=right.minX&&left.minY<=right.maxY&&left.maxY>=right.minY;
 }
 Geometry annexPolygon(const Polygon& polygon) { Geometry geometry;geometry.polygons={polygon};return geometry; }
+// Exact pinned annex-slivers local-area and endpoint-dot overlap predicates.
+// Translation is an existence test; it does not introduce an area tolerance.
+double annexLocalRingArea(const Ring& ring,double scaleX=1,double scaleY=1) {
+    if(ring.empty())return 0;const auto origin=ring.front();double sum=0;
+    for(std::size_t i=1;i<ring.size();++i)
+        sum+=(ring[i-1].x-origin.x)*(ring[i].y-origin.y)-(ring[i].x-origin.x)*(ring[i-1].y-origin.y);
+    return std::abs(sum/2)*scaleX*scaleY;
+}
+double annexLocalPolygonArea(const Polygon& polygon,double scaleX=1,double scaleY=1) {
+    if(polygon.empty())return 0;double holes=0;
+    for(std::size_t i=1;i<polygon.size();++i)holes+=annexLocalRingArea(polygon[i],scaleX,scaleY);
+    return annexLocalRingArea(polygon.front(),scaleX,scaleY)-holes;
+}
+bool annexPositiveArea(const Geometry& geometry) {
+    return std::any_of(geometry.polygons.begin(),geometry.polygons.end(),[](const auto& polygon){return annexLocalPolygonArea(polygon)>0;});
+}
+double annexSliverAreaM2(const Polygon& polygon) {
+    const auto bounds=annexBounds(annexPolygon(polygon));
+    if(bounds.maxX-bounds.minX>1||bounds.maxY-bounds.minY>1||std::max(std::abs(bounds.minY),std::abs(bounds.maxY))>80)
+        return std::numeric_limits<double>::infinity();
+    const auto pi=std::acos(-1.),meters=6371008.8*pi/180;
+    const auto x=meters*std::cos((bounds.minY+bounds.maxY)/2*pi/180);
+    return std::max(0.,annexLocalPolygonArea(polygon,x,meters));
+}
+bool annexSharesBoundary(const Polygon& polygon,const Geometry& others) {
+    constexpr double epsilon=1e-11;
+    for(const auto& ring:polygon)for(std::size_t i=1;i<ring.size();++i) {
+        const auto a=ring[i-1],b=ring[i];const auto dx=b.x-a.x,dy=b.y-a.y,length=std::hypot(dx,dy);
+        if(length<=epsilon)continue;
+        for(const auto& other:others.polygons)for(const auto& otherRing:other)for(std::size_t j=1;j<otherRing.size();++j) {
+            const auto c=otherRing[j-1],d=otherRing[j];
+            if(std::abs(dx*(c.y-a.y)-dy*(c.x-a.x))/length>epsilon||std::abs(dx*(d.y-a.y)-dy*(d.x-a.x))/length>epsilon)continue;
+            const auto start=((c.x-a.x)*dx+(c.y-a.y)*dy)/length,end=((d.x-a.x)*dx+(d.y-a.y)*dy)/length;
+            if(std::min(length,std::max(start,end))-std::max(0.,std::min(start,end))>epsilon)return true;
+        }
+    }
+    return false;
+}
+Geometry annexNormalizeRiver(const Geometry& geometry,const JobToken& token) {
+    if(geometry.polygons.empty())return geometry;
+    auto normalized=normalizeRiverGeometry(geometry,[&]{return token.cancelled();});annexCheckCancelled(token);
+    if(!normalized.succeeded())throw std::runtime_error(normalized.detail.toStdString());
+    // A skipped microscopic remnant must not vanish at the presentation boundary.
+    // Strict failure is safer than claiming a transfer which never included it.
+    if(!normalized.geometry||normalized.geometry->polygons.size()!=geometry.polygons.size())
+        throw std::runtime_error("RIVER_REMAINDER_NOT_REPRESENTABLE");
+    for(std::size_t p=0;p<geometry.polygons.size();++p)
+        if(normalized.geometry->polygons[p].size()!=geometry.polygons[p].size())throw std::runtime_error("RIVER_REMAINDER_NOT_REPRESENTABLE");
+    GeometryStore validation;validation.insert({"river-annex-normalized",1},*normalized.geometry);
+    return std::move(*normalized.geometry);
+}
+struct AnnexSlivers { Geometry geometry;double areaM2=0; };
 // The web copies untouched polygons exactly and only sends affected pieces to
 // clipping. In particular, remote island order/winding must not be normalized.
-std::pair<bool,Geometry> annexSubtract(const Geometry& original,const Geometry& transfer,const JobToken& token) {
+std::pair<bool,Geometry> annexSubtract(const Geometry& original,const Geometry& transfer,const JobToken& token,
+    bool river=false,const std::vector<TerritorySelectionRiverSliverContext>& contexts={},
+    const std::string& donorId={},AnnexSlivers* slivers=nullptr) {
     Geometry remaining;bool affected=false;const auto transferBounds=annexBounds(transfer);
-    for(const auto& polygon:original.polygons) {
+    for(std::size_t polygonIndex=0;polygonIndex<original.polygons.size();++polygonIndex) {
+        const auto& polygon=original.polygons[polygonIndex];
         annexCheckCancelled(token);const auto source=annexPolygon(polygon);
-        if(!annexBoundsOverlap(annexBounds(source),transferBounds)||
-           planarArea(annexCalculate(GeometryOperation::Intersection,source,transfer,token))<=0) {
+        if(!annexBoundsOverlap(annexBounds(source),transferBounds)) {
             remaining.polygons.push_back(polygon);continue;
         }
-        affected=true;const auto pieces=annexCalculate(GeometryOperation::Difference,source,transfer,token);
-        remaining.polygons.insert(remaining.polygons.end(),pieces.polygons.begin(),pieces.polygons.end());
+        const auto overlap=annexCalculate(GeometryOperation::Intersection,source,transfer,token,river);
+        if(river?!annexPositiveArea(overlap):planarArea(overlap)<=0) {remaining.polygons.push_back(polygon);continue;}
+        affected=true;const auto pieces=annexCalculate(GeometryOperation::Difference,source,transfer,token,river);
+        const auto context=std::find_if(contexts.begin(),contexts.end(),[&](const auto& row){return row.donorId==donorId&&row.polygonIndex==polygonIndex;});
+        Geometry unselected;
+        if(context!=contexts.end())for(const auto& value:context->unselectedGeometries)
+            unselected.polygons.insert(unselected.polygons.end(),value.polygons.begin(),value.polygons.end());
+        for(const auto& piece:pieces.polygons) {
+            const auto size=slivers&&context!=contexts.end()?annexSliverAreaM2(piece):std::numeric_limits<double>::infinity();
+            if(slivers&&context!=contexts.end()&&size>0&&size<=1&&slivers->areaM2+size<=10
+                &&!annexPositiveArea(annexCalculate(GeometryOperation::Intersection,annexPolygon(piece),unselected,token,true))
+                &&annexSharesBoundary(piece,transfer)&&!annexSharesBoundary(piece,unselected)) {
+                slivers->geometry.polygons.push_back(piece);slivers->areaM2+=size;
+            } else {
+                const auto kept=river?annexNormalizeRiver(annexPolygon(piece),token):annexPolygon(piece);
+                remaining.polygons.insert(remaining.polygons.end(),kept.polygons.begin(),kept.polygons.end());
+            }
+        }
     }
+    if(river&&remaining.polygons.size()==1)remaining.type="Polygon";
     return {affected,std::move(remaining)};
 }
-Geometry annexAdd(const Geometry& original,const Geometry& transfer,const JobToken& token) {
+Geometry annexAdd(const Geometry& original,const Geometry& transfer,const JobToken& token,bool river=false) {
     Geometry result;std::vector<Geometry> nearby;const auto transferBounds=annexBounds(transfer);
     for(const auto& polygon:original.polygons) {
         auto source=annexPolygon(polygon);
         if(annexBoundsOverlap(annexBounds(source),transferBounds))nearby.push_back(std::move(source));
         else result.polygons.push_back(polygon);
     }
-    nearby.push_back(transfer);auto merged=annexUnion(nearby,token);
-    result.polygons.insert(result.polygons.end(),merged.polygons.begin(),merged.polygons.end());return result;
+    nearby.push_back(transfer);auto merged=annexUnion(nearby,token,river);
+    if(river)merged=annexNormalizeRiver(merged,token);
+    result.polygons.insert(result.polygons.end(),merged.polygons.begin(),merged.polygons.end());
+    if(river&&result.polygons.size()==1)result.type="Polygon";return result;
 }
 double annexBoundaryLength(const Geometry& geometry) {
     double length=0;
@@ -275,7 +363,7 @@ void annexIssue(AnnexGeometryPreviewResult& result,std::string kind,std::vector<
     const auto found=std::find_if(result.issues.begin(),result.issues.end(),[&](const auto& issue){return issue.kind==kind&&issue.objects==objects;});
     if(found==result.issues.end())result.issues.push_back({std::move(kind),std::move(objects),std::move(detail),true});
 }
-void validateAnnexRootGeometry(const ProjectSnapshot& snapshot,AnnexGeometryPreviewResult& result,const JobToken& token) {
+void validateAnnexRootGeometry(const ProjectSnapshot& snapshot,AnnexGeometryPreviewResult& result,const JobToken& token,bool river=false) {
     const auto roots=1+result.affectedDonors.size();double perimeter=0;std::vector<Geometry> beforeUnion,afterUnion;
     for(std::size_t i=0;i<roots;++i) {
         const auto& row=result.rows[i];perimeter+=annexBoundaryLength(row.before);beforeUnion.push_back(row.before);
@@ -298,17 +386,17 @@ void validateAnnexRootGeometry(const ProjectSnapshot& snapshot,AnnexGeometryPrev
             const auto& oldOther=annexGeometry(snapshot,other);const auto& newOther=changed==result.rows.begin()+roots?oldOther:*changed->after;
             if(!annexBoundsOverlap(annexBounds(*row.after),annexBounds(newOther)))continue;
             const double oldOverlap=annexBoundsOverlap(annexBounds(row.before),annexBounds(oldOther))?
-                planarArea(annexCalculate(GeometryOperation::Intersection,row.before,oldOther,token)):0;
-            const double newOverlap=planarArea(annexCalculate(GeometryOperation::Intersection,*row.after,newOther,token));
+                planarArea(annexCalculate(GeometryOperation::Intersection,row.before,oldOther,token,river)):0;
+            const double newOverlap=planarArea(annexCalculate(GeometryOperation::Intersection,*row.after,newOther,token,river));
             // Country calculation blocks increases above the scale tolerance;
             // preview additionally blocks any newly introduced overlap issue.
             if(newOverlap>oldOverlap+tolerance||(newOverlap>1e-10&&oldOverlap<=1e-10))
                 annexIssue(result,"overlap",{row.owner,other},"ANNEX_NEW_COUNTRY_OVERLAP");
         }
     }
-    const auto before=annexUnion(beforeUnion,token),after=annexUnion(afterUnion,token);
-    const double changed=planarArea(annexCalculate(GeometryOperation::Difference,before,after,token))+
-                         planarArea(annexCalculate(GeometryOperation::Difference,after,before,token));
+    const auto before=annexUnion(beforeUnion,token,river),after=annexUnion(afterUnion,token,river);
+    const double changed=planarArea(annexCalculate(GeometryOperation::Difference,before,after,token,river))+
+                         planarArea(annexCalculate(GeometryOperation::Difference,after,before,token,river));
     if(changed>tolerance)annexIssue(result,"gap",result.plan->targets,"ANNEX_UNION_AREA_CHANGED");
 }
 }
@@ -342,20 +430,37 @@ AnnexGeometryPreviewResult calculateAnnexGeometryPreview(const ProjectSnapshot& 
         }
         if(result.selectedDonors.empty())throw std::invalid_argument("INVALID_TARGETS");
         if(donorInputs.empty())throw std::invalid_argument("SELECTION_OUTSIDE_DONOR");
-        const auto coverage=annexUnion(donorInputs,token);
-        const auto outside=annexCalculate(GeometryOperation::Difference,request.selection,coverage,token);
-        if(planarArea(outside)>std::max(1e-8,annexBoundaryLength(request.selection)*2e-7))throw std::invalid_argument("SELECTION_OUTSIDE_DONOR");
-        result.transferredGeometry=annexCalculate(GeometryOperation::Intersection,request.selection,coverage,token);
-        if(result.transferredGeometry.polygons.empty()||planarArea(result.transferredGeometry)<=0)throw std::invalid_argument("NO_TRANSFERABLE_SELECTION");
-        result.rows.push_back({request.target,target,annexAdd(target,result.transferredGeometry,token)});
+        const bool river=std::any_of(request.riverSliverContext.begin(),request.riverSliverContext.end(),[&](const auto& context) {
+            return std::any_of(result.selectedDonors.begin(),result.selectedDonors.end(),[&](const auto& donor){return donor.id==context.donorId;});
+        });
+        const auto coverage=annexUnion(donorInputs,token,river);
+        if(!river) {
+            const auto outside=annexCalculate(GeometryOperation::Difference,request.selection,coverage,token);
+            if(planarArea(outside)>std::max(1e-8,annexBoundaryLength(request.selection)*2e-7))throw std::invalid_argument("SELECTION_OUTSIDE_DONOR");
+        }
+        result.transferredGeometry=annexCalculate(GeometryOperation::Intersection,request.selection,coverage,token,river);
+        if(river?!annexPositiveArea(result.transferredGeometry):result.transferredGeometry.polygons.empty()||planarArea(result.transferredGeometry)<=0)
+            throw std::invalid_argument("NO_TRANSFERABLE_SELECTION");
+        // Reserve the target's existing row position; its final union must wait
+        // until every admitted remnant has joined the authoritative transfer.
+        result.rows.push_back({request.target,target,{}});AnnexSlivers slivers;
         for(const auto& donor:result.selectedDonors) {
-            const auto& original=annexGeometry(snapshot,donor);auto [affected,remaining]=annexSubtract(original,result.transferredGeometry,token);
+            const auto& original=annexGeometry(snapshot,donor);
+            auto [affected,remaining]=annexSubtract(original,result.transferredGeometry,token,river,request.riverSliverContext,donor.id,river?&slivers:nullptr);
             if(!affected)continue;
             result.affectedDonors.push_back(donor);
             if(remaining.polygons.empty()){result.removedRoots.push_back(donor);result.rows.push_back({donor,original,{}});}
             else result.rows.push_back({donor,original,std::move(remaining)});
         }
         if(result.affectedDonors.empty())throw std::invalid_argument("NO_TRANSFERABLE_SELECTION");
+        if(!slivers.geometry.polygons.empty())
+            result.transferredGeometry=annexCalculate(GeometryOperation::Union,result.transferredGeometry,slivers.geometry,token,true);
+        result.autoIncludedSliverCount=slivers.geometry.polygons.size();result.autoIncludedSliverAreaM2=slivers.areaM2;
+        result.rows.front().after=annexAdd(target,result.transferredGeometry,token,river);
+        if(river) {
+            result.transferredGeometry=annexNormalizeRiver(result.transferredGeometry,token);
+            result.transferredGeometry.type="MultiPolygon";
+        }
         auto planned=CommandProcessor::planTerritorial(snapshot,AnnexTerritoryIntent{request.target,result.affectedDonors,result.transferredGeometry});
         if(!planned.ok()||!planned.plan){result.error=planned.error;throw std::runtime_error(planned.detail);}
         result.plan=std::move(planned.plan);result.patch.sourceRevision=snapshot.revision();
@@ -363,7 +468,7 @@ AnnexGeometryPreviewResult calculateAnnexGeometryPreview(const ProjectSnapshot& 
         // clip every nested general child; an empty child is removed, never moved.
         for(std::size_t i=1+result.affectedDonors.size();i<result.plan->geometry.readOwners.size();++i) {
             const auto owner=result.plan->geometry.readOwners[i];const auto& original=annexGeometry(snapshot,owner);
-            auto remaining=annexSubtract(original,result.transferredGeometry,token).second;
+            auto remaining=annexSubtract(original,result.transferredGeometry,token,river).second;
             if(remaining.polygons.empty())result.rows.push_back({owner,original,{}});
             else result.rows.push_back({owner,original,std::move(remaining)});
         }
@@ -371,7 +476,18 @@ AnnexGeometryPreviewResult calculateAnnexGeometryPreview(const ProjectSnapshot& 
             if(row.after)result.patch.replacements.push_back({row.owner,*row.after});
             else result.patch.removedGeometryOwners.push_back(row.owner);
         }
-        validateAnnexRootGeometry(snapshot,result,token);annexCheckCancelled(token);
+        validateAnnexRootGeometry(snapshot,result,token,river);annexCheckCancelled(token);
+        if(result.issues.empty()) {
+            // Web receipts have passed the pinned normalizer before D3 measures
+            // them. Normalize an observation copy; never rewrite the strict receipt.
+            const auto observed=normalizeRiverGeometry(result.transferredGeometry,[&]{return token.cancelled();});
+            annexCheckCancelled(token);
+            if(!observed.succeeded()||!observed.geometry)throw std::runtime_error("TRANSFER_AREA_NORMALIZATION_FAILED");
+            const auto area=calculateRiverAreaKm2(*observed.geometry,[&]{return token.cancelled();});
+            annexCheckCancelled(token);
+            if(!area.succeeded())throw std::runtime_error(area.detail.toStdString());
+            result.transferAreaKm2=area.areaKm2;
+        }
         result.status=GeometryOperationStatus::Completed;
         result.error=result.issues.empty()?CommandError::None:CommandError::ValidationFailed;
         if(!result.issues.empty())result.detail=result.issues.front().detail;

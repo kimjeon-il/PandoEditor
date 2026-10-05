@@ -59,6 +59,16 @@ int main(int argc,char** argv){QCoreApplication app(argc,argv);const auto args=a
                 const auto typed=request(row,source.features);result=std::async(std::launch::async,[typed]{return calculateRiverPartitions(typed);}).get();}
             logStage(name,"kernel-returned");memorySamples.append(QJsonObject{{"name",name},{"processKiB",memory()},{"providerCacheBytes",double(provider.cachedBytes())}});
             if(!result.succeeded())throw std::runtime_error((row["name"].toString()+": "+result.detail).toStdString());
+            const auto expectedPresentation=QJsonDocument::fromJson(result.presentationJson).object();
+            const auto base=request(row,{}).components;
+            const auto standalone=std::async(std::launch::async,[&]{
+                const auto normalized=normalizeRiverPartitionCandidates(result.candidates);
+                if(!normalized.succeeded())throw std::runtime_error(normalized.detail.toStdString());
+                const auto composed=composeRiverPartitionComponents(base,normalized.candidates,result.donors);
+                if(!composed.succeeded())throw std::runtime_error(composed.detail.toStdString());
+                return QJsonObject{{"candidates",QJsonDocument::fromJson(normalized.json).array()},{"composed",QJsonDocument::fromJson(composed.json).object()}};
+            }).get();
+            if(standalone!=expectedPresentation)throw std::runtime_error((name+": standalone presentation differs from exact kernel presentation").toStdString());
             auto observation=QJsonDocument::fromJson(result.json).object();observation["name"]=row["name"];observations.append(observation);
             auto presentation=QJsonDocument::fromJson(result.presentationJson).object();presentation["name"]=row["name"];presentations.append(presentation);
             traces.append(QJsonObject{{"name",row["name"]},{"workspaces",QJsonDocument::fromJson(result.workspaceJson).array()}});

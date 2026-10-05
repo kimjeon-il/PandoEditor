@@ -1,5 +1,7 @@
 #include "territoryselection.h"
 #include "geometrycalculator.h"
+#include "geometryruntime_p.h"
+#include "riverpartitioncalculator.h"
 #include <algorithm>
 #include <cctype>
 #include <set>
@@ -35,11 +37,23 @@ struct CalculationCancelled {};
 void checkpoint(const GeometryCancellation& cancelled) {
     if(cancelled&&cancelled())throw CalculationCancelled{};
 }
-MaybeGeometry calculate(GeometryOperation operation,std::vector<Geometry> operands,const GeometryCancellation& cancelled) {
+MaybeGeometry calculate(GeometryOperation operation,std::vector<Geometry> operands,const GeometryCancellation& cancelled,bool riverDerived=false) {
     checkpoint(cancelled);
     if(operands.empty())return {};
     if(operands.size()==1)return std::move(operands.front());
     GeometryOperationRequest request{operation,{},{}};request.operands=std::move(operands);
+    if(riverDerived) {
+        auto raw=calculateRiverGeometryIntermediate(request,cancelled);
+        if(raw.status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};
+        checkpoint(cancelled);
+        if(!raw.succeeded())throw std::runtime_error(raw.detail.empty()?"TERRITORY_SELECTION_CALCULATION_FAILED":raw.detail);
+        if(raw.status==GeometryOperationStatus::Empty)return {};
+        auto normalized=normalizeRiverGeometry(raw.geometry,cancelled);
+        if(normalized.status==RiverPartitionStatus::Cancelled)throw CalculationCancelled{};
+        checkpoint(cancelled);
+        if(!normalized.succeeded())throw std::runtime_error(normalized.detail.toStdString());
+        return std::move(normalized.geometry);
+    }
     auto result=calculateGeometry(request,cancelled);
     if(result.status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};
     checkpoint(cancelled);
@@ -47,13 +61,13 @@ MaybeGeometry calculate(GeometryOperation operation,std::vector<Geometry> operan
     if(result.status==GeometryOperationStatus::Empty)return {};
     return std::move(result.geometry);
 }
-MaybeGeometry unite(std::vector<Geometry> geometries,const GeometryCancellation& cancelled) {
-    return calculate(GeometryOperation::Union,std::move(geometries),cancelled);
+MaybeGeometry unite(std::vector<Geometry> geometries,const GeometryCancellation& cancelled,bool riverDerived=false) {
+    return calculate(GeometryOperation::Union,std::move(geometries),cancelled,riverDerived);
 }
-MaybeGeometry difference(const MaybeGeometry& base,const MaybeGeometry& removed,const GeometryCancellation& cancelled) {
+MaybeGeometry difference(const MaybeGeometry& base,const MaybeGeometry& removed,const GeometryCancellation& cancelled,bool riverDerived=false) {
     checkpoint(cancelled);
     if(!base||!removed)return base;
-    return calculate(GeometryOperation::Difference,{*base,*removed},cancelled);
+    return calculate(GeometryOperation::Difference,{*base,*removed},cancelled,riverDerived);
 }
 const std::vector<TerritorySelectionComponent>& activeItems(const State& state) {
     static const std::vector<TerritorySelectionComponent> empty;
@@ -72,17 +86,23 @@ std::vector<Geometry> operands(const State& state) {
     }
     return result;
 }
+bool riverDerived(const State& state) {
+    return state.useRiverBoundaries||std::any_of(state.parts.begin(),state.parts.end(),[](const auto& part){
+        return part.component&&part.component->usesRiverBoundary;
+    });
+}
 void prepare(State& state,const GeometryCancellation& cancelled) {
     checkpoint(cancelled);
+    const bool normalize=riverDerived(state);
     std::vector<Geometry> archived;
     for(const auto& part:state.parts){checkpoint(cancelled);archived.push_back(part.geometry);}
-    state.archivedGeometry=unite(std::move(archived),cancelled);
+    state.archivedGeometry=unite(std::move(archived),cancelled,normalize);
     if(!state.baseSourceGeometry) {
         std::vector<Geometry> source;
         for(const auto& feature:state.sources){checkpoint(cancelled);source.push_back(feature.geometry);}
-        state.baseSourceGeometry=unite(std::move(source),cancelled);
+        state.baseSourceGeometry=unite(std::move(source),cancelled,normalize);
     }
-    state.workingSourceGeometry=difference(state.baseSourceGeometry,state.archivedGeometry,cancelled);
+    state.workingSourceGeometry=difference(state.baseSourceGeometry,state.archivedGeometry,cancelled,normalize);
     state.components.clear();state.componentFeatures.clear();
     for(const auto& source:state.sources) {
         checkpoint(cancelled);
@@ -91,7 +111,7 @@ void prepare(State& state,const GeometryCancellation& cancelled) {
         for(std::size_t originalIndex=0;originalIndex<source.geometry.polygons.size();++originalIndex) {
             checkpoint(cancelled);
             Geometry original;original.type="Polygon";original.polygons={source.geometry.polygons[originalIndex]};
-            const auto remainder=difference(original,state.archivedGeometry,cancelled);
+            const auto remainder=difference(original,state.archivedGeometry,cancelled,normalize);
             if(!remainder)continue;
             for(std::size_t fragment=0;fragment<remainder->polygons.size();++fragment) {
                 checkpoint(cancelled);
@@ -109,22 +129,22 @@ void prepare(State& state,const GeometryCancellation& cancelled) {
         if(!feature.source.geometry.polygons.empty())state.componentFeatures.push_back(std::move(feature));
     }
     if(state.activePhase==Phase::Candidate||state.activePhase==Phase::Components)
-        state.currentGeometry=unite(operands(state),cancelled);
+        state.currentGeometry=unite(operands(state),cancelled,normalize);
     std::vector<Geometry> combined;
     if(state.archivedGeometry)combined.push_back(*state.archivedGeometry);
     if(state.currentGeometry)combined.push_back(*state.currentGeometry);
-    state.combinedGeometry=unite(std::move(combined),cancelled);
+    state.combinedGeometry=unite(std::move(combined),cancelled,normalize);
     // Deliberate web rule: live component selection does not consume the working
     // remainder. Components change workingSourceGeometry only once archived.
     state.remainingGeometry=state.activePhase==Phase::Components?state.workingSourceGeometry
-        :difference(state.workingSourceGeometry,state.currentGeometry,cancelled);
+        :difference(state.workingSourceGeometry,state.currentGeometry,cancelled,normalize);
 }
 void clear(State& state) {
     state.currentGeometry.reset();state.candidates.clear();state.selectedCandidateIds.clear();
     state.selectedComponentKeys.clear();state.activeMethod=Method::None;state.requestedMethod=Method::None;
     state.activePhase=Phase::None;state.methodChangeConfirmation.reset();
     state.useRiverBoundaries=false;state.riverStatus=TerritoryRiverStatus::Idle;
-    state.riverComponents.clear();state.riverPreparationKey.clear();
+    state.riverComponents.clear();state.riverPreparationKey.clear();state.riverDetail.clear();
 }
 void activate(State& state,Method method) {
     clear(state);state.activeMethod=method;
@@ -132,7 +152,7 @@ void activate(State& state,Method method) {
 }
 void invalidateRiverPreparation(State& state) {
     if(!state.useRiverBoundaries)return;
-    state.riverComponents.clear();state.riverPreparationKey.clear();
+    state.riverComponents.clear();state.riverPreparationKey.clear();state.riverDetail.clear();
     state.riverStatus=TerritoryRiverStatus::Pending;state.currentGeometry.reset();
 }
 void pruneSnapshots(State& state) {
@@ -249,23 +269,38 @@ bool TerritorySelection::toggleRiverBoundaries(bool enabled) {
     if(state_.useRiverBoundaries==enabled)return true;
     state_.useRiverBoundaries=enabled;state_.selectedComponentKeys.clear();
     state_.riverStatus=enabled?TerritoryRiverStatus::Pending:TerritoryRiverStatus::Idle;
-    state_.riverComponents.clear();state_.riverPreparationKey.clear();return touch();
+    state_.riverComponents.clear();state_.riverPreparationKey.clear();state_.riverDetail.clear();return touch();
+}
+bool TerritorySelection::setRiverStatus(TerritoryRiverStatus status,std::string detail) {
+    if(state_.activePhase!=Phase::Components||!state_.useRiverBoundaries
+        ||status==TerritoryRiverStatus::Ready)return false;
+    state_.riverComponents.clear();state_.riverPreparationKey.clear();
+    if(status!=TerritoryRiverStatus::Pending)state_.selectedComponentKeys.clear();
+    state_.riverStatus=status;state_.riverDetail=std::move(detail);
+    touch();
+    if(status!=TerritoryRiverStatus::Pending)lastError_=state_.riverDetail;
+    return true;
 }
 bool TerritorySelection::installRiverComponents(std::vector<TerritorySelectionComponent> items,std::string preparationKey) {
     if(state_.activePhase!=Phase::Components||!state_.useRiverBoundaries||preparationKey.empty())return false;
+    if(items.empty()) {
+        setRiverStatus(TerritoryRiverStatus::Error,"TERRITORY_SELECTION_NO_RIVER_COMPONENTS");return false;
+    }
     std::set<std::string> keys;
     try {
         for(auto& item:items) {
             const auto base=std::find_if(state_.components.begin(),state_.components.end(),[&](const auto& component){
                 return component.componentKey==item.componentKey&&component.countryId==item.countryId
-                    &&component.sourcePolygonIndex==item.sourcePolygonIndex;});
+                    &&component.sourcePolygonIndex==item.sourcePolygonIndex&&component.polygonIndex==item.polygonIndex;});
             if(item.key.empty()||!keys.insert(item.key).second||base==state_.components.end())
                 throw std::invalid_argument("TERRITORY_SELECTION_INVALID_RIVER_PROVENANCE");
             validate(item.geometry);item.usesRiverBoundary=item.partitionKind=="river";item.snapshotId.clear();
         }
-    } catch(const std::exception& error){lastError_=error.what();return false;}
+    } catch(const std::exception& error){setRiverStatus(TerritoryRiverStatus::Error,error.what());return false;}
     state_.riverComponents=std::move(items);state_.riverPreparationKey=std::move(preparationKey);
-    state_.riverStatus=TerritoryRiverStatus::Ready;return touch();
+    state_.selectedComponentKeys.erase(std::remove_if(state_.selectedComponentKeys.begin(),state_.selectedComponentKeys.end(),
+        [&](const auto& key){return !keys.count(key);}),state_.selectedComponentKeys.end());
+    state_.riverStatus=TerritoryRiverStatus::Ready;state_.riverDetail.clear();return touch();
 }
 const std::vector<TerritorySelectionComponent>& TerritorySelection::activeComponents() const noexcept {return activeItems(state_);}
 std::vector<Geometry> TerritorySelection::currentOperands() const {return operands(state_);}
@@ -347,7 +382,7 @@ std::vector<TerritorySelectionRiverSliverContext> sliverContext(const State& sta
     std::vector<TerritorySelectionRiverSliverContext> result;
     for(auto& group:groups) {
         for(const auto& cell:group.cells) {
-            auto remaining=difference(cell,state.combinedGeometry,cancelled);
+            auto remaining=difference(cell,state.combinedGeometry,cancelled,true);
             if(remaining)group.context.unselectedGeometries.push_back(std::move(*remaining));
         }
         result.push_back(std::move(group.context));

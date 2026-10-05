@@ -11,7 +11,7 @@ const binarySha256=sha256(fs.readFileSync(binary));
 const commit=process.env.GITHUB_SHA||spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).stdout.trim(),runId=process.env.GITHUB_RUN_ID||'local-development';
 const manifest=process.env.PANDOEDITOR_HYDRO_FULL_MANIFEST,countries=process.env.PANDOEDITOR_RIVER_COUNTRIES;
 assert.ok(manifest&&countries,'Required full hydro and original full-country files');
-const payload=await createSuite(path.resolve(path.dirname(manifest),'../v0.13.0/manifest.json'),countries,{commit,runId});verifySuite(payload);
+const payload=await createSuite(path.resolve(path.dirname(manifest),'../v0.13.0/manifest.json'),countries,{commit,runId,controllerManifestPath:manifest});verifySuite(payload);
 fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(path.join(directory,'payload.json'),JSON.stringify(payload));
 const cached=new Map();let qt=null;
 if(args.includes('--reuse'))for(const label of ['synthetic','original-v0.13.0']) {
