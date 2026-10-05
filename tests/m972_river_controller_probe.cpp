@@ -11,6 +11,7 @@
 #include <QJsonObject>
 #include <QTemporaryDir>
 #include <QThread>
+#include <QSaveFile>
 #include <algorithm>
 #include <cstdio>
 #include <functional>
@@ -52,14 +53,20 @@ QJsonObject ownedObservation(EditorController& controller) {
 void progress(const QString& name,const QString& stage) {
     std::fprintf(stderr,"%s: %s\n",name.toUtf8().constData(),stage.toUtf8().constData());std::fflush(stderr);
 }
-void settle(EditorController& controller,const QString& name,const QString& stage) {
-    progress(name,stage);QElapsedTimer timer;timer.start();
-    do {
-        QCoreApplication::processEvents(QEventLoop::AllEvents,10);
-        const auto state=controller.geometryEditState();
-        if(!state["active"].toBool()||!state["calculating"].toBool())return;
-        QThread::msleep(2);
-    }while(timer.elapsed()<120000);
+void settle(EditorController& controller,const QString& name,const QString& stage,QJsonArray& timings) {
+    progress(name,stage);QElapsedTimer timer;timer.start();qint64 stateNs=0;int observations=0;bool ready=false,expired=false;
+    QEventLoop loop;QTimer deadline;deadline.setSingleShot(true);deadline.setInterval(120000);
+    const auto observe=[&]{QElapsedTimer boundary;boundary.start();const auto state=controller.geometryEditState();stateNs+=boundary.nsecsElapsed();++observations;
+        ready=!state["active"].toBool()||!state["calculating"].toBool();if(ready)loop.quit();};
+    // Read the public state at actual production transitions, not every 2ms.
+    // The deadline is unchanged. Qt's event loop remains free to deliver worker
+    // completions, preview timers, cancellation and newer session requests.
+    const auto connection=QObject::connect(&controller,&EditorController::geometryEditChanged,&loop,observe);
+    QObject::connect(&deadline,&QTimer::timeout,&loop,[&]{expired=true;loop.quit();});observe();
+    if(!ready){deadline.start();loop.exec();}deadline.stop();QObject::disconnect(connection);
+    timings.append(QJsonObject{{"kind","settle"},{"stage",stage},{"elapsedMs",timer.elapsed()},{"stateObservationMs",double(stateNs)/1e6},{"stateObservations",observations},{"deadlineExpired",expired}});
+    progress(name,QString("%1 settled in %2ms (%3 signal observations, state observation %4ms)").arg(stage).arg(timer.elapsed()).arg(observations).arg(double(stateNs)/1e6));
+    if(ready&&!expired)return;
     throw std::runtime_error(("CONTROLLER_DID_NOT_SETTLE: "+stage+": "+QString::fromUtf8(QJsonDocument(QJsonObject::fromVariantMap(controller.geometryEditState())).toJson(QJsonDocument::Compact))).toStdString());
 }
 struct Checks {
@@ -176,29 +183,34 @@ void compareLifecycleCheckpoint(Checks& checks,const QJsonObject& actual,const Q
 }
 QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const QJsonArray& world,const QString& manifest) {
     const auto name=evidence["name"].toString();const auto scenario=evidence["selection"].toObject();Checks checks;
-    QJsonObject report{{"name",name},{"selection",scenario},{"observed",true}};QJsonArray checkpoints;
+    QJsonObject report{{"name",name},{"selection",scenario},{"observed",true}};QJsonArray checkpoints,timings;
     QTemporaryDir directory;require(directory.isValid(),"FIXTURE_DIRECTORY_FAILED");
     const auto document=worldDocument(world,manifest);Project project;project.replace(document);MapProjection projection;projection.rebuild(document);
     QFile input(directory.filePath("input.pando.json"));require(input.open(QIODevice::WriteOnly),"FIXTURE_WRITE_FAILED");
     input.write(projectcodec::encode(project));input.close();EditorController controller({false,directory.filePath("private.json")});
+    const auto wait=[&](const QString& stage){settle(controller,name,stage,timings);};
     QByteArray before;qulonglong revision=0;bool hadUndo=false,hadRedo=false;
-    const auto checkpoint=[&](const QString& stage) {auto observation=ownedObservation(controller);observation["stage"]=stage;
-        observation["canonicalBytesUnchanged"]=controller.documentBytes()==before;observation["revisionUnchanged"]=controller.revision()==revision;
+    const auto checkpoint=[&](const QString& stage) {QElapsedTimer timer;timer.start();auto observation=ownedObservation(controller);const auto ownedMs=timer.elapsed();timer.restart();const auto bytes=controller.documentBytes();const auto encodeMs=timer.elapsed();observation["stage"]=stage;
+        const bool unchanged=bytes==before;observation["canonicalBytesUnchanged"]=unchanged;observation["revisionUnchanged"]=controller.revision()==revision;
         observation["historyUnchanged"]=controller.canUndo()==hadUndo&&controller.canRedo()==hadRedo;checkpoints.append(observation);
-        checks.truth(stage+".canonicalBytesUnchanged",controller.documentBytes()==before);
+        // Reuse one exact canonical serialization for both the report and the
+        // assertion at this same checkpoint. No geometry comparison is weakened.
+        checks.truth(stage+".canonicalBytesUnchanged",unchanged);
         checks.truth(stage+".revisionUnchanged",controller.revision()==revision);
-        checks.truth(stage+".historyUnchanged",controller.canUndo()==hadUndo&&controller.canRedo()==hadRedo);};
+        checks.truth(stage+".historyUnchanged",controller.canUndo()==hadUndo&&controller.canRedo()==hadRedo);
+        timings.append(QJsonObject{{"kind","checkpoint"},{"stage",stage},{"ownedObservationMs",ownedMs},{"canonicalEncodeMs",encodeMs},{"canonicalByteCount",bytes.size()}});
+        progress(name,QString("%1 checkpoint: owned %2ms, canonical encode %3ms (%4 bytes)").arg(stage).arg(ownedMs).arg(encodeMs).arg(bytes.size()));};
     try {
         progress(name,"open configured full source");require(controller.openFile(QUrl::fromLocalFile(input.fileName())),"CONTROLLER_OPEN_FAILED");
         controller.selectCountry(scenario["targetId"].toString());before=controller.documentBytes();revision=controller.revision();hadUndo=controller.canUndo();hadRedo=controller.canRedo();
         require(controller.beginAnnexGeometry(),"CONTROLLER_BEGIN_REJECTED");
         require(controller.geometryToggleProvider({{"domain","territorial"},{"id",scenario["donorId"].toString()}}),"CONTROLLER_DONOR_REJECTED");
-        settle(controller,name,"settle source selection");checkpoint("sources");
+        wait("settle source selection");checkpoint("sources");
         require(controller.geometryAdvanceStage(),"CONTROLLER_ADVANCE_TO_SELECTION_REJECTED");
         require(controller.geometrySelectTerritoryMethod("components"),"CONTROLLER_COMPONENT_METHOD_REJECTED");
-        settle(controller,name,"settle ordinary components");checkpoint("ordinary-components");
+        wait("settle ordinary components");checkpoint("ordinary-components");
         require(controller.geometryToggleRiverBoundaries(true),"CONTROLLER_RIVER_TOGGLE_REJECTED");
-        settle(controller,name,"settle real provider/kernel/components");checkpoint("river-components");
+        wait("settle real provider/kernel/components");checkpoint("river-components");
         auto observation=ownedObservation(controller);const auto state=observation["state"].toObject();
         require(state["riverStatus"].toString()=="ready","CONTROLLER_RIVER_NOT_READY: "+state["riverError"].toString());
         checks.equal("riverSourceDispatches",state["riverSourceDispatches"],1);checks.equal("riverKernelDispatches",state["riverKernelDispatches"],1);
@@ -240,7 +252,7 @@ QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const
         // read from owned geographic values, never SVG round-trip geometry.
         QJsonArray originalSampleSelections;
         for(const auto& value:scenario["samplePoints"].toArray()) {const auto prior=selectedKeys(ownedObservation(controller));const auto point=value.toArray();const auto xy=projection.project({point[0].toDouble(),point[1].toDouble()});
-            require(controller.geometryPickTerritorySelection(xy.x,xy.y),"CONTROLLER_SAMPLE_SELECTION_REJECTED");settle(controller,name,"settle sample selection");checkpoint("sample-selected");
+            require(controller.geometryPickTerritorySelection(xy.x,xy.y),"CONTROLLER_SAMPLE_SELECTION_REJECTED");wait("settle sample selection");checkpoint("sample-selected");
             QStringList added;for(const auto& key:selectedKeys(ownedObservation(controller)))if(!prior.contains(key))added.append(key);
             require(added.size()==1,"ORIGINAL_SAMPLE_MUST_SELECT_ONE_NEW_CONTROLLER_CELL");originalSampleSelections.append(QJsonObject{{"point",value},{"key",added[0]}});}
         observation=ownedObservation(controller);const auto nativeKeys=selectedKeys(observation);
@@ -260,7 +272,7 @@ QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const
             if(op=="archive")accepted=controller.geometryAddTerritoryPart();
             else if(op=="components") {
                 accepted=controller.geometrySelectTerritoryMethod("components");require(accepted,"LIFECYCLE_COMPONENT_METHOD_REJECTED");
-                settle(controller,name,stage+" ordinary components");checkpoint(stage+" ordinary components");
+                wait(stage+" ordinary components");checkpoint(stage+" ordinary components");
                 accepted=controller.geometryToggleRiverBoundaries(true);
             } else if(op=="removePart") {
                 const auto parts=controller.geometryEditState()["parts"].toList();const auto index=action["index"].toInt(-1);
@@ -288,7 +300,7 @@ QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const
                 const auto xy=projection.project({point[0].toDouble(),point[1].toDouble()});accepted=controller.geometryPickTerritorySelection(xy.x,xy.y);
             } else throw std::runtime_error(("UNSUPPORTED_LIFECYCLE_ACTION: "+op).toStdString());
             checks.truth("lifecycle."+stage+".accepted",accepted);require(accepted,"CONTROLLER_LIFECYCLE_ACTION_REJECTED: "+stage);
-            settle(controller,name,stage);checkpoint(stage);observation=ownedObservation(controller);
+            wait(stage);checkpoint(stage);observation=ownedObservation(controller);
             auto expected=action["checkpoint"].toObject();if(!expected.contains("name"))expected["name"]=stage;
             const auto differencesBefore=checks.differences.size();compareLifecycleCheckpoint(checks,observation,expected);
             QJsonObject observed{{"op",op},{"name",stage},{"accepted",accepted},{"actualCheckpoint",observation},{"expectedCheckpoint",expected},{"exact",checks.differences.size()==differencesBefore}};
@@ -315,7 +327,7 @@ QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const
             checks.equal("transferAreaKm2",previewState["transferAreaKm2"],evidence["expectedTransferAreaKm2"]);
         }
         require(controller.geometryAdvanceStage(),"CONTROLLER_REVIEW_REJECTED: "+previewState["error"].toString());checkpoint("review");
-        require(controller.confirmGeometryEdit(),"CONTROLLER_APPLY_REJECTED");settle(controller,name,"settle strict receipt Apply");
+        require(controller.confirmGeometryEdit(),"CONTROLLER_APPLY_REJECTED");wait("settle strict receipt Apply");
         require(!controller.geometryEditState()["active"].toBool(),"CONTROLLER_STRICT_APPLY_FAILED: "+controller.geometryEditState()["error"].toString());
         const auto after=controller.documentBytes();const auto afterFeatures=documentFeatures(after);report["actualChangedFeatures"]=QJsonArray{};
         QJsonArray changed;for(const auto& expected:evidence["after"].toArray()) {const auto feature=expected.toObject();const auto actual=featureById(afterFeatures,feature["id"].toString());
@@ -333,12 +345,21 @@ QJsonObject runCase(const QJsonObject& evidence,const QJsonObject& browser,const
         report["beforeSha256"]=QString::fromLatin1(QCryptographicHash::hash(before,QCryptographicHash::Sha256).toHex());
         report["afterSha256"]=QString::fromLatin1(QCryptographicHash::hash(after,QCryptographicHash::Sha256).toHex());
     } catch(const std::exception& error) {report["error"]=error.what();checks.truth("controllerLifecycleCompleted",false);report["lastOwnedObservation"]=ownedObservation(controller);}
-    controller.cancelGeometryEdit();report["checkpoints"]=checkpoints;report["matched"]=checks.matched;report["mismatched"]=checks.mismatched;
+    controller.cancelGeometryEdit();report["checkpoints"]=checkpoints;report["timings"]=timings;report["matched"]=checks.matched;report["mismatched"]=checks.mismatched;
     report["differences"]=checks.differences;report["unobservedFields"]=checks.unobservedFields;report["passed"]=checks.mismatched==0;
     progress(name,QString("matched=%1 mismatched=%2").arg(checks.matched).arg(checks.mismatched));return report;
 }
 int compare(const QString& browserPath,const QString& payloadPath,const QString& outputPath,const QString& onlyCase) {
-    QJsonArray observations;QJsonObject identity;bool passed=true,entryChainObserved=false;int matched=0,mismatched=0,unobserved=0;
+    QJsonArray observations;QJsonObject identity;bool passed=true,entryChainObserved=false,complete=false;int matched=0,mismatched=0,unobserved=0,expectedCases=0;
+    const auto save=[&](bool finished,const QString& runningCase=QString()) {
+        const QJsonObject report{{"schema","native-controller-browser-annex-v1"},{"identity",identity},{"actualEntryChainOracle",entryChainObserved},{"complete",finished},{"passed",finished&&passed},
+            {"status",finished?"complete":"incomplete"},{"runningCase",runningCase},{"expectedCases",expectedCases},{"completedCases",observations.size()},{"selectedCase",onlyCase},
+            {"matched",matched},{"mismatched",mismatched},{"unobserved",unobserved},{"observations",observations},
+            {"knownBoundedDivergence","Any observed web empty-selection or stale-river cache difference remains an explicit failing difference; no tolerance or checkpoint allowlist is applied."}};
+        QSaveFile output(outputPath);if(!output.open(QIODevice::WriteOnly))return false;
+        const auto bytes=QJsonDocument(report).toJson(QJsonDocument::Compact);
+        return output.write(bytes)==bytes.size()&&output.commit();
+    };
     try {
         const auto browser=readObject(browserPath),payload=readObject(payloadPath);identity=payload["identity"].toObject();
         require(!identity.isEmpty()&&browser["identity"].toObject()==identity,"BROWSER_NATIVE_IDENTITY_MISMATCH");
@@ -352,9 +373,13 @@ int compare(const QString& browserPath,const QString& payloadPath,const QString&
         auto corpus=actualEntryChain?browser["controllerAnnex"].toArray():browser["annex"].toArray();
         require(actualEntryChain?corpus.size()>=2:corpus.size()==4,"INCOMPLETE_BROWSER_ANNEX_CORPUS");
         if(actualEntryChain)for(const auto& lifecycle:browser["controllerLifecycle"].toArray())corpus.append(lifecycle);
+        for(const auto& value:corpus)if(onlyCase.isEmpty()||value.toObject()["name"].toString()==onlyCase)++expectedCases;
         if(actualEntryChain) {
             require(browser["controllerSourceCommit"].toString()=="53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47","UNPINNED_CONTROLLER_BROWSER_SOURCE");
-            require(browser["controllerBehavioralCommit"].toString()=="12cd8c8ec47c83cfb8c650e8f44c81cdfac10043","UNAPPROVED_CONTROLLER_BROWSER_CORRECTION");
+            const auto behavior=browser["controllerBehavioralCommit"].toString();
+            require(behavior=="12cd8c8ec47c83cfb8c650e8f44c81cdfac10043"||behavior=="6c3f930b8573fa09991885b661879ea36725472e","UNAPPROVED_CONTROLLER_BROWSER_CORRECTION");
+            if(behavior=="6c3f930b8573fa09991885b661879ea36725472e")
+                require(identity["sourceHashes"].toObject()["controller/app-territory-selection-workflow.js"].toString()=="626d2dd6c0a8263224272adacaa3303f41a28a83cf22214bdedfffd11a9bc44d","APPROVED_CONTROLLER_WORKFLOW_SOURCE_HASH_REQUIRED");
             const auto chromium=identity["runtimePin"].toObject()["chromium"].toString();
             require(!chromium.isEmpty()&&browser["runtime"].toObject()["userAgent"].toString().contains("Chrome/"+chromium),"CONTROLLER_ORACLE_REQUIRES_PINNED_CHROMIUM");
         }
@@ -362,21 +387,21 @@ int compare(const QString& browserPath,const QString& payloadPath,const QString&
         int lifecycleCases=0;
         for(const auto& value:corpus) {const auto evidence=value.toObject();const auto name=evidence["name"].toString();
             if(!onlyCase.isEmpty()&&name!=onlyCase)continue;
+            require(save(false,name),"ATOMIC_PARTIAL_CONTROLLER_REPORT_WRITE_FAILED");
             const auto representation=evidence["selection"].toObject()["representation"].toString();
             if(representation!="normalized-filtered-presentation"&&representation!="controller-entry-chain") {
                 ++unobserved;observations.append(QJsonObject{{"name",name},{"observed",false},{"reason","Controller uses live-coordinate revisions and installed normalized presentation; raw fixtures are covered by the separate real preview differential."}});continue;}
             auto row=runCase(evidence,browser,world,manifest);matched+=row["matched"].toInt();mismatched+=row["mismatched"].toInt();passed=passed&&row["passed"].toBool();observations.append(row);
             if(!evidence["lifecycleActions"].toArray().isEmpty())++lifecycleCases;
+            require(save(false),"ATOMIC_PARTIAL_CONTROLLER_REPORT_WRITE_FAILED");
         }
         require(!observations.isEmpty(),"REQUESTED_BROWSER_CASE_MISSING");
         require(matched>0,"NO_CONTROLLER_CASE_OBSERVED");
         require(actualEntryChain,"ISOLATED_BROWSER_FIXTURES_DO_NOT_ESTABLISH_CONTROLLER_ENTRYCHAIN_PARITY");
         if(onlyCase.isEmpty())require(lifecycleCases>0,"MISSING_FULL_COUNTRY_CONTROLLER_ARCHIVE_RESIDUAL_MIDDLE_REMOVAL_EVIDENCE");
+        complete=true;
     } catch(const std::exception& error) {observations.append(QJsonObject{{"error",error.what()},{"passed",false}});passed=false;++mismatched;}
-    QFile output(outputPath);if(!output.open(QIODevice::WriteOnly))return 2;
-    const QJsonObject report{{"schema","native-controller-browser-annex-v1"},{"identity",identity},{"actualEntryChainOracle",entryChainObserved},{"passed",passed},{"matched",matched},{"mismatched",mismatched},{"unobserved",unobserved},{"observations",observations},
-        {"knownBoundedDivergence","Original/corrected web empty-selection stale cache is not exercised or masked by this nonempty full-source annex probe."}};
-    output.write(QJsonDocument(report).toJson());return passed?0:1;
+    if(!save(complete))return 2;return complete&&passed?0:1;
 }
 }
 int main(int argc,char** argv) {

@@ -29,3 +29,6 @@ tests/fixtures/web-m97/source/assets/js/modules/map-edit-geometry.js text eol=lf
 tests/fixtures/web-m97/source/assets/js/modules/coordinate-bounds.js text eol=lf
 tests/fixtures/web-m97/source/assets/js/modules/polygon-clipping-calculation.js text eol=lf
 tests/fixtures/web-m97/source/assets/js/modules/map-edit-country-commands.js text eol=lf
+
+# Approved 6c3f930 river-removal source overlay remains byte-identical.
+tests/fixtures/web-m97/selection-removal-correction-source/** text eol=lf

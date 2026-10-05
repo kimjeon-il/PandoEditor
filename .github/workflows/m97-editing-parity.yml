@@ -138,6 +138,22 @@ jobs:
   river-controller-parity:
     needs: [linux-regression, river-chromium-oracle]
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - case-id: serbia-annex
+            case-name: Serbia-to-Hungary-controller-entry-chain
+            timeout-seconds: 300
+          - case-id: moldova-annex
+            case-name: Moldova-to-Romania-controller-entry-chain
+            timeout-seconds: 300
+          - case-id: serbia-middle-removal
+            case-name: Serbia-to-Hungary-controller-archive-residual-middle-removal
+            timeout-seconds: 360
+          - case-id: serbia-last-removal
+            case-name: Serbia-to-Hungary-controller-archive-residual-last-removal
+            timeout-seconds: 360
     defaults:
       run:
         shell: bash
@@ -180,6 +196,8 @@ jobs:
             assets/data/hydro/v0.13.1
       - name: Verify exact compiled artifact and actual browser controller parity
         env:
+          PANDO_CONTROLLER_CASE: ${{ matrix.case-name }}
+          PANDO_CONTROLLER_TIMEOUT: ${{ matrix.timeout-seconds }}
           PANDOEDITOR_HYDRO_FULL_MANIFEST: ${{ github.workspace }}/full-hydro-web/assets/data/hydro/v0.13.1/manifest.json
         run: |
           test "$(cat controller-runtime/COMMIT)" = "$GITHUB_SHA"
@@ -188,10 +206,10 @@ jobs:
           export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
           chmod +x controller-runtime/m972_river_controller_probe
           mkdir -p evidence/river-controller
-          timeout 300 controller-runtime/m972_river_controller_probe --browser-annex browser-river-artifact/browser-report.json native-river-artifact/payload.json evidence/river-controller/controller-report.json 2> evidence/river-controller/controller-stderr.txt
+          timeout "$PANDO_CONTROLLER_TIMEOUT" controller-runtime/m972_river_controller_probe --browser-annex browser-river-artifact/browser-report.json native-river-artifact/payload.json evidence/river-controller/controller-report.json --case "$PANDO_CONTROLLER_CASE" 2> evidence/river-controller/controller-stderr.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m972-river-controller-${{ github.sha }}
+          name: m972-river-controller-${{ matrix.case-id }}-${{ github.sha }}
           path: evidence/river-controller
           retention-days: 14
