@@ -839,3 +839,15 @@ if(BUILD_TESTING)
         "${PROJECT_SOURCE_DIR}/tools/m974-snap-boundary/source-history-suite.test.mjs")
     set_tests_properties(m974_source_history_contract PROPERTIES TIMEOUT 120)
 endif()
+
+if(BUILD_TESTING)
+    add_executable(m975_model_exchange_probe ../tests/m975_model_exchange_probe.cpp)
+    target_link_libraries(m975_model_exchange_probe PRIVATE pandoeditor_editor)
+    target_compile_definitions(m975_model_exchange_probe PRIVATE
+        M975_EXCHANGE_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-exchange")
+    qt_add_resources(m975_model_exchange_probe sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME m975_model_exchange_probe_contract COMMAND m975_model_exchange_probe --self-test)
+    set_tests_properties(m975_model_exchange_probe_contract PROPERTIES TIMEOUT 180
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+endif()

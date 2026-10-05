@@ -1,0 +1,371 @@
+{
+  "format": "pandolab-project-state",
+  "schemaVersion": 9,
+  "version": "0.34.0",
+  "savedAt": "2026-10-05T00:00:00.000Z",
+  "baseDataset": "external-territorial-entities",
+  "landObjectModel": {
+    "schemaVersion": 2,
+    "coastlineAuthority": "territorialEntities",
+    "purpose": "lossless-fallback",
+    "directCreation": false,
+    "sourceProvenanceSchemaVersion": 1,
+    "canonicalProperties": [
+      "name",
+      "notes",
+      "color",
+      "locked",
+      "source"
+    ]
+  },
+  "territorialModel": {
+    "schemaVersion": 5,
+    "coastlineAuthority": "territorialEntities",
+    "storage": "territorialEntities",
+    "kinds": [
+      "general",
+      "regional"
+    ],
+    "coverageModes": [
+      "partition",
+      "explicit"
+    ]
+  },
+  "distributionModel": {
+    "schemaVersion": 3,
+    "sourceModes": [
+      "territorial",
+      "geometry"
+    ],
+    "valueKind": "finite-number"
+  },
+  "sourceInfo": {
+    "dataset": "m975-fixture",
+    "version": "9",
+    "nested": {
+      "order": [
+        "z",
+        "a"
+      ]
+    }
+  },
+  "labels": [
+    {
+      "id": "97500000-0000-4000-8000-000000000002",
+      "name": "서울",
+      "kind": "city",
+      "notes": "M975 source retained",
+      "coordinates": [
+        40,
+        40
+      ],
+      "territorialUnitId": "source",
+      "source": {
+        "schemaVersion": 1,
+        "kind": "user",
+        "dataset": "m975-exchange",
+        "version": "9",
+        "sourceId": "original",
+        "sourceFormat": "geojson",
+        "sourceType": "Point",
+        "importedAt": "2026-10-05",
+        "details": {
+          "provider": "new-valid-v9",
+          "nested": [
+            {
+              "order": 2
+            },
+            {
+              "order": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "genericFeatures": [
+    {
+      "type": "Feature",
+      "id": "97500000-0000-4000-8000-000000000003",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          41,
+          41
+        ]
+      },
+      "properties": {
+        "schemaVersion": 2,
+        "name": "Fallback point",
+        "notes": "ordered provenance",
+        "color": "#123456",
+        "locked": false,
+        "source": {
+          "schemaVersion": 1,
+          "kind": "user",
+          "dataset": "m975-exchange",
+          "version": "9",
+          "sourceId": "original",
+          "sourceFormat": "geojson",
+          "sourceType": "Point",
+          "importedAt": "2026-10-05",
+          "details": {
+            "provider": "new-valid-v9",
+            "nested": [
+              {
+                "order": 2
+              },
+              {
+                "order": 1
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "hydroEdits": [
+    {
+      "type": "Feature",
+      "id": "97500000-0000-4000-8000-000000000004",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            45,
+            45
+          ],
+          [
+            46,
+            46
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Saved water",
+        "notes": "retained",
+        "category": "river",
+        "locked": false,
+        "editorColor": "#123456",
+        "source": {
+          "schemaVersion": 1,
+          "kind": "user",
+          "dataset": "m975-exchange",
+          "version": "9",
+          "sourceId": "original",
+          "sourceFormat": "geojson",
+          "sourceType": "LineString",
+          "importedAt": "2026-10-05",
+          "details": {
+            "provider": "new-valid-v9",
+            "nested": [
+              {
+                "order": 2
+              },
+              {
+                "order": 1
+              }
+            ]
+          }
+        },
+        "pandolab_schema_version": 1,
+        "pandolab_domain": "hydro",
+        "pandolab_id": "97500000-0000-4000-8000-000000000004",
+        "sourceFeatureId": "water-original"
+      }
+    }
+  ],
+  "timelineRecords": {
+    "schemaVersion": 1,
+    "lifetimes": [
+      {
+        "id": "lifetime:source",
+        "entityId": "source",
+        "validFrom": null,
+        "validTo": null
+      }
+    ],
+    "geometryBindings": [
+      {
+        "id": "geometry:source",
+        "entityId": "source",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:source",
+          "version": 1
+        }
+      }
+    ],
+    "parentRelations": [
+      {
+        "id": "parent:source",
+        "entityId": "source",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "",
+        "coverageMode": "explicit"
+      }
+    ]
+  },
+  "geometries": [
+    {
+      "id": "territorial-geometry:source",
+      "version": 1,
+      "geojson": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                10,
+                10
+              ],
+              [
+                10,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                20,
+                0
+              ],
+              [
+                20,
+                2
+              ],
+              [
+                22,
+                2
+              ],
+              [
+                22,
+                0
+              ],
+              [
+                20,
+                0
+              ]
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "distributionLayers": [
+    {
+      "id": "97500000-0000-4000-8000-000000000001",
+      "schemaVersion": 3,
+      "name": "Exchange",
+      "unit": "",
+      "valueScale": {
+        "mode": "auto"
+      },
+      "color": "#8c68d8",
+      "locked": false,
+      "parentId": "",
+      "groups": [
+        "second",
+        "first"
+      ],
+      "validFrom": null,
+      "validTo": null,
+      "metadata": {
+        "origin": "M975"
+      }
+    }
+  ],
+  "distributionEntries": [],
+  "labelSettings": {
+    "label:97500000-0000-4000-8000-000000000002": {
+      "pinned": true,
+      "priority": 10,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": [
+        10,
+        20
+      ],
+      "collisionGroup": "map"
+    }
+  },
+  "distributionSettings": {
+    "renderMode": "overlap",
+    "activeLayerId": "97500000-0000-4000-8000-000000000001",
+    "boundaryVisible": true
+  },
+  "layerPresentation": {
+    "schemaVersion": 4,
+    "styles": {
+      "countries": {
+        "opacity": 0.7
+      }
+    },
+    "objectStyles": {},
+    "objectOrder": [
+      "territorial:entity:source"
+    ],
+    "overlayOrder": [
+      "genericFeatures",
+      "regions",
+      "subunits",
+      "distributions"
+    ]
+  },
+  "physicalSettings": {},
+  "layerVisibility": {
+    "labels": false,
+    "subunits": false
+  },
+  "itemVisibility": {
+    "genericFeatures": {
+      "97500000-0000-4000-8000-000000000003": false
+    }
+  },
+  "territorialEntities": [
+    {
+      "type": "Feature",
+      "id": "source",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "source",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    }
+  ],
+  "physicalSourceInfo": {
+    "terrain": {
+      "dataset": "terrain",
+      "version": "0.12.6"
+    },
+    "hydro": {
+      "dataset": "hydro",
+      "version": "0.34.0",
+      "coordinatePolicy": "selected source coordinates retained without simplification",
+      "selection": {}
+    }
+  }
+}

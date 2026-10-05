@@ -27,6 +27,16 @@ bool presentationGroup(const std::string& key) {
 bool presentationSymbol(const std::string& key) {
     return std::set<std::string>{"basemapLabels","countryFlags","subunitLabels","subunitFlags","regionLabels","regionFlags"}.count(key);
 }
+// Current web project-state.js has distinct layer/item/style namespaces.
+// Native presentation retains its broader key set for native-only documents.
+bool webLayerVisibilityKey(const std::string& key) {
+    static const std::set<std::string> keys={"countries","subunits","regions","distributions","rivers","lakes","genericFeatures","labels","basemapLabels","countryFlags","subunitLabels","subunitFlags","regionLabels","regionFlags"};
+    return keys.count(key);
+}
+bool webItemVisibilityKey(const std::string& key) {
+    static const std::set<std::string> keys={"countries","subunits","regions","distributions","hydro","genericFeatures","labels","countryLabels"};
+    return keys.count(key);
+}
 V object(std::initializer_list<std::pair<const std::string,V>> entries) { V v=V::obj(); v.object=entries; return v; }
 const V& field(const V& v,const std::string& key) {
     require(v.kind==V::Object,"INVALID_JSON: expected object");
@@ -565,11 +575,13 @@ V labelSettingsValue(const LabelSettings& settings) {
     result.object["manualPosition"]=settings.manualPosition?pointValue(*settings.manualPosition):V{};return result;
 }
 void readWebPresentation(const V& root,ProjectDocument& d) {
+    const auto& visibility=field(root,"layerVisibility");require(visibility.kind==V::Object,"INVALID_JSON: presentation visibility");
+    for(const auto& [key,value]:visibility.object)if(!webLayerVisibilityKey(key))throw std::invalid_argument("UNSUPPORTED_WEB_VISIBILITY: layerVisibility/"+key);
     const auto& layer=field(root,"layerPresentation");require(integer(field(layer,"schemaVersion"))==4,"UNSUPPORTED_PRESENTATION_VERSION");
     unknown(d,9,layer,"/layerPresentation",{"schemaVersion","styles","objectStyles","objectOrder","overlayOrder"});
     const auto overlays=layer.object.count("overlayOrder")?field(layer,"overlayOrder"):V::arr();
     V hidden=V::obj();const auto& items=field(root,"itemVisibility");require(items.kind==V::Object,"INVALID_ITEM_VISIBILITY");
-    for(const auto& [group,values]:items.object){require(values.kind==V::Object,"INVALID_ITEM_VISIBILITY");V ids=V::arr();for(const auto& [id,visible]:values.object)if(!boolean(visible))ids.array.push_back(V::str(id));hidden.object[group]=ids;}
+    for(const auto& [group,values]:items.object){if(!webItemVisibilityKey(group))throw std::invalid_argument("UNSUPPORTED_WEB_VISIBILITY: itemVisibility/"+group);require(values.kind==V::Object,"INVALID_ITEM_VISIBILITY");V ids=V::arr();for(const auto& [id,visible]:values.object)if(!boolean(visible))ids.array.push_back(V::str(id));hidden.object[group]=ids;}
     V labels=V::arr();const auto& settings=field(root,"labelSettings");require(settings.kind==V::Object,"INVALID_LABEL_SETTINGS");
     for(const auto& [key,value]:settings.object){const auto colon=key.find(':');require(colon!=std::string::npos,"INVALID_LABEL_KEY");const auto domain=key.substr(0,colon);require(domain=="territorial"||domain=="label","UNSUPPORTED_LABEL_KEY");auto row=value;require(row.kind==V::Object,"INVALID_LABEL_SETTINGS");row.object["ref"]=refValue({domain,key.substr(colon+1)});
         for(const auto* fieldName:{"priority","minZoom","maxZoom","manualPosition"})if(row.object.count(fieldName)&&field(row,fieldName).kind==V::Null)row.object.erase(fieldName);
@@ -618,6 +630,8 @@ ProjectDocument decodeWeb(const QByteArray& bytes) {
 }
 QByteArray encodeWeb(const ProjectSnapshot& snapshot) {
     const auto& d=snapshot.document();validateDocument(d);
+    for(const auto& [key,value]:d.presentation.webPresentation.visibility)if(!webLayerVisibilityKey(key))throw std::invalid_argument("UNSUPPORTED_WEB_EXPORT: layerVisibility/"+key);
+    for(const auto& [key,value]:d.presentation.webPresentation.hiddenItems)if(!webItemVisibilityKey(key))throw std::invalid_argument("UNSUPPORTED_WEB_EXPORT: itemVisibility/"+key);
     for(const auto& [owner,symbol]:d.symbols)
         require(symbol.defaultCountryId.empty()&&!symbol.defaultFlagDataUrl.has_value(),
                 "UNSUPPORTED_WEB_EXPORT: native captured flag defaults");
@@ -640,7 +654,17 @@ QByteArray encodeWeb(const ProjectSnapshot& snapshot) {
     const auto native=losslessjson::parse(encode(snapshot));const auto& web=field(field(native,"presentation"),"webPresentation");root.object["layerVisibility"]=field(web,"visibility");V hidden=V::obj();for(const auto& [group,ids]:d.presentation.webPresentation.hiddenItems){V rows=V::obj();for(const auto& id:ids)rows.object[id]=V::boolean(false);hidden.object[group]=rows;}root.object["itemVisibility"]=hidden;
     root.object["layerPresentation"]=object({{"schemaVersion",V::num(4)},{"styles",field(web,"styles")},{"objectStyles",field(web,"objectStyles")},{"objectOrder",field(web,"objectOrder")},{"overlayOrder",field(web,"overlayOrder")}});root.object["distributionSettings"]=field(web,"distributionSettings");V settings=V::obj();for(const auto& [owner,value]:d.presentation.webPresentation.labelSettings)settings.object[owner.domain+":"+owner.id]=labelSettingsValue(value);root.object["labelSettings"]=settings;
     requireWebNumbers(root);
-    const auto bytes=root.encode()+"\n";require(bytes.size()<=256ll*1024*1024,"LIMIT_EXCEEDED");(void)decodeWeb(bytes);return bytes;
+    const auto bytes=root.encode()+"\n";require(bytes.size()<=256ll*1024*1024,"LIMIT_EXCEEDED");const auto restored=decodeWeb(bytes);
+    // Web stores these shapes inline without an identity/version carrier. Refuse
+    // only exports whose real import would choose a different archived reference.
+    const auto requirePreservedInlineRefs=[](const auto& before,const auto& after){
+        require(before.size()==after.size(),"UNSUPPORTED_WEB_EXPORT: non-territorial geometry reference loss");
+        for(std::size_t i=0;i<before.size();++i)
+            require(before[i].id==after[i].id&&before[i].geometry==after[i].geometry,"UNSUPPORTED_WEB_EXPORT: non-territorial geometry reference loss");
+    };
+    requirePreservedInlineRefs(d.labels,restored.labels);requirePreservedInlineRefs(d.hydro,restored.hydro);
+    requirePreservedInlineRefs(d.genericFeatures,restored.genericFeatures);requirePreservedInlineRefs(d.distributionEntries,restored.distributionEntries);
+    return bytes;
 }
 
 }

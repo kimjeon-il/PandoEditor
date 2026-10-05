@@ -1,0 +1,1223 @@
+{
+  "format": "pandolab-project-state",
+  "schemaVersion": 9,
+  "version": "0.34.0",
+  "savedAt": "2026-10-05T00:00:00.000Z",
+  "baseDataset": "external-territorial-entities",
+  "landObjectModel": {
+    "schemaVersion": 2,
+    "coastlineAuthority": "territorialEntities",
+    "purpose": "lossless-fallback",
+    "directCreation": false,
+    "sourceProvenanceSchemaVersion": 1,
+    "canonicalProperties": [
+      "name",
+      "notes",
+      "color",
+      "locked",
+      "source"
+    ]
+  },
+  "territorialModel": {
+    "schemaVersion": 5,
+    "coastlineAuthority": "territorialEntities",
+    "storage": "territorialEntities",
+    "kinds": [
+      "general",
+      "regional"
+    ],
+    "coverageModes": [
+      "partition",
+      "explicit"
+    ]
+  },
+  "distributionModel": {
+    "schemaVersion": 3,
+    "sourceModes": [
+      "territorial",
+      "geometry"
+    ],
+    "valueKind": "finite-number"
+  },
+  "sourceInfo": {
+    "dataset": "m975-fixture",
+    "version": "9",
+    "nested": {
+      "order": [
+        "z",
+        "a"
+      ]
+    }
+  },
+  "labels": [
+    {
+      "id": "97500000-0000-4000-8000-000000000002",
+      "name": "서울",
+      "kind": "city",
+      "notes": "M975 source retained",
+      "coordinates": [
+        40,
+        0
+      ],
+      "territorialUnitId": "P",
+      "source": {
+        "schemaVersion": 1,
+        "kind": "user",
+        "dataset": "m975-exchange",
+        "version": "9",
+        "sourceId": "original",
+        "sourceFormat": "geojson",
+        "sourceType": "Point",
+        "importedAt": "2026-10-05",
+        "details": {
+          "provider": "new-valid-v9",
+          "nested": [
+            {
+              "order": 2
+            },
+            {
+              "order": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "genericFeatures": [
+    {
+      "type": "Feature",
+      "id": "97500000-0000-4000-8000-000000000003",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          41,
+          0
+        ]
+      },
+      "properties": {
+        "schemaVersion": 2,
+        "name": "Fallback point",
+        "notes": "ordered provenance",
+        "color": "#123456",
+        "locked": false,
+        "source": {
+          "schemaVersion": 1,
+          "kind": "user",
+          "dataset": "m975-exchange",
+          "version": "9",
+          "sourceId": "original",
+          "sourceFormat": "geojson",
+          "sourceType": "Point",
+          "importedAt": "2026-10-05",
+          "details": {
+            "provider": "new-valid-v9",
+            "nested": [
+              {
+                "order": 2
+              },
+              {
+                "order": 1
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "hydroEdits": [
+    {
+      "type": "Feature",
+      "id": "97500000-0000-4000-8000-000000000004",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            45,
+            -2
+          ],
+          [
+            46,
+            0
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Saved water",
+        "notes": "retained",
+        "category": "river",
+        "locked": false,
+        "editorColor": "#123456",
+        "source": {
+          "schemaVersion": 1,
+          "kind": "user",
+          "dataset": "m975-exchange",
+          "version": "9",
+          "sourceId": "original",
+          "sourceFormat": "geojson",
+          "sourceType": "LineString",
+          "importedAt": "2026-10-05",
+          "details": {
+            "provider": "new-valid-v9",
+            "nested": [
+              {
+                "order": 2
+              },
+              {
+                "order": 1
+              }
+            ]
+          }
+        },
+        "pandolab_schema_version": 1,
+        "pandolab_domain": "hydro",
+        "pandolab_id": "97500000-0000-4000-8000-000000000004",
+        "sourceFeatureId": "water-original"
+      }
+    }
+  ],
+  "timelineRecords": {
+    "schemaVersion": 1,
+    "lifetimes": [
+      {
+        "id": "lifetime:P",
+        "entityId": "P",
+        "validFrom": null,
+        "validTo": null
+      },
+      {
+        "id": "lifetime:A",
+        "entityId": "A",
+        "validFrom": null,
+        "validTo": null
+      },
+      {
+        "id": "lifetime:B",
+        "entityId": "B",
+        "validFrom": null,
+        "validTo": null
+      },
+      {
+        "id": "lifetime:C",
+        "entityId": "C",
+        "validFrom": null,
+        "validTo": null
+      },
+      {
+        "id": "lifetime:whole",
+        "entityId": "whole",
+        "validFrom": null,
+        "validTo": null
+      },
+      {
+        "id": "lifetime:whole-deep",
+        "entityId": "whole-deep",
+        "validFrom": null,
+        "validTo": null
+      },
+      {
+        "id": "lifetime:cut",
+        "entityId": "cut",
+        "validFrom": null,
+        "validTo": null
+      },
+      {
+        "id": "lifetime:cut-deep",
+        "entityId": "cut-deep",
+        "validFrom": null,
+        "validTo": null
+      },
+      {
+        "id": "lifetime:removed",
+        "entityId": "removed",
+        "validFrom": null,
+        "validTo": null
+      },
+      {
+        "id": "lifetime:removed-deep",
+        "entityId": "removed-deep",
+        "validFrom": null,
+        "validTo": null
+      }
+    ],
+    "geometryBindings": [
+      {
+        "id": "geometry:P",
+        "entityId": "P",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:P",
+          "version": 1
+        }
+      },
+      {
+        "id": "geometry:A",
+        "entityId": "A",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:A",
+          "version": 1
+        }
+      },
+      {
+        "id": "geometry:B",
+        "entityId": "B",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:B",
+          "version": 1
+        }
+      },
+      {
+        "id": "geometry:C",
+        "entityId": "C",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:C",
+          "version": 1
+        }
+      },
+      {
+        "id": "geometry:whole",
+        "entityId": "whole",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:whole",
+          "version": 1
+        }
+      },
+      {
+        "id": "geometry:whole-deep",
+        "entityId": "whole-deep",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:whole-deep",
+          "version": 1
+        }
+      },
+      {
+        "id": "geometry:cut",
+        "entityId": "cut",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:cut",
+          "version": 1
+        }
+      },
+      {
+        "id": "geometry:cut-deep",
+        "entityId": "cut-deep",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:cut-deep",
+          "version": 1
+        }
+      },
+      {
+        "id": "geometry:removed",
+        "entityId": "removed",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:removed",
+          "version": 1
+        }
+      },
+      {
+        "id": "geometry:removed-deep",
+        "entityId": "removed-deep",
+        "validFrom": null,
+        "validTo": null,
+        "geometryRef": {
+          "id": "territorial-geometry:removed-deep",
+          "version": 1
+        }
+      }
+    ],
+    "parentRelations": [
+      {
+        "id": "parent:P",
+        "entityId": "P",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "",
+        "coverageMode": "explicit"
+      },
+      {
+        "id": "parent:A",
+        "entityId": "A",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "P",
+        "coverageMode": "partition"
+      },
+      {
+        "id": "parent:B",
+        "entityId": "B",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "P",
+        "coverageMode": "partition"
+      },
+      {
+        "id": "parent:C",
+        "entityId": "C",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "P",
+        "coverageMode": "partition"
+      },
+      {
+        "id": "parent:whole",
+        "entityId": "whole",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "C",
+        "coverageMode": "partition"
+      },
+      {
+        "id": "parent:whole-deep",
+        "entityId": "whole-deep",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "whole",
+        "coverageMode": "partition"
+      },
+      {
+        "id": "parent:cut",
+        "entityId": "cut",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "C",
+        "coverageMode": "partition"
+      },
+      {
+        "id": "parent:cut-deep",
+        "entityId": "cut-deep",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "cut",
+        "coverageMode": "partition"
+      },
+      {
+        "id": "parent:removed",
+        "entityId": "removed",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "C",
+        "coverageMode": "partition"
+      },
+      {
+        "id": "parent:removed-deep",
+        "entityId": "removed-deep",
+        "validFrom": null,
+        "validTo": null,
+        "parentId": "removed",
+        "coverageMode": "partition"
+      }
+    ]
+  },
+  "geometries": [
+    {
+      "id": "territorial-geometry:A",
+      "version": 1,
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "territorial-geometry:B",
+      "version": 1,
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "territorial-geometry:C",
+      "version": 1,
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "territorial-geometry:P",
+      "version": 1,
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              6,
+              0
+            ],
+            [
+              6,
+              2
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "territorial-geometry:cut",
+      "version": 1,
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1.3,
+              1.2
+            ],
+            [
+              1.5,
+              1.2
+            ],
+            [
+              1.5,
+              1.4
+            ],
+            [
+              1.3,
+              1.4
+            ],
+            [
+              1.3,
+              1.2
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "territorial-geometry:cut-deep",
+      "version": 1,
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1.32,
+              1.22
+            ],
+            [
+              1.38,
+              1.22
+            ],
+            [
+              1.38,
+              1.38
+            ],
+            [
+              1.32,
+              1.38
+            ],
+            [
+              1.32,
+              1.22
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "territorial-geometry:removed",
+      "version": 1,
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1.2,
+              1.05
+            ],
+            [
+              1.4,
+              1.05
+            ],
+            [
+              1.4,
+              1.1
+            ],
+            [
+              1.2,
+              1.1
+            ],
+            [
+              1.2,
+              1.05
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "territorial-geometry:removed-deep",
+      "version": 1,
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1.25,
+              1.06
+            ],
+            [
+              1.35,
+              1.06
+            ],
+            [
+              1.35,
+              1.09
+            ],
+            [
+              1.25,
+              1.09
+            ],
+            [
+              1.25,
+              1.06
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "territorial-geometry:whole",
+      "version": 1,
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1.04,
+              1.04
+            ],
+            [
+              1.1,
+              1.04
+            ],
+            [
+              1.1,
+              1.1
+            ],
+            [
+              1.04,
+              1.1
+            ],
+            [
+              1.04,
+              1.04
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "id": "territorial-geometry:whole-deep",
+      "version": 1,
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1.05,
+              1.05
+            ],
+            [
+              1.08,
+              1.05
+            ],
+            [
+              1.08,
+              1.08
+            ],
+            [
+              1.05,
+              1.08
+            ],
+            [
+              1.05,
+              1.05
+            ]
+          ]
+        ]
+      }
+    }
+  ],
+  "distributionLayers": [
+    {
+      "id": "97500000-0000-4000-8000-000000000001",
+      "schemaVersion": 3,
+      "name": "Exchange",
+      "unit": "",
+      "valueScale": {
+        "mode": "auto"
+      },
+      "color": "#8c68d8",
+      "locked": false,
+      "parentId": "",
+      "groups": [
+        "second",
+        "first"
+      ],
+      "validFrom": null,
+      "validTo": null,
+      "metadata": {
+        "origin": "M975"
+      }
+    }
+  ],
+  "distributionEntries": [
+    {
+      "id": "97500000-0000-4000-8000-000000000100",
+      "schemaVersion": 3,
+      "layerId": "97500000-0000-4000-8000-000000000001",
+      "mode": "territorial",
+      "territorialUnitId": "A",
+      "geometry": null,
+      "value": 0.5,
+      "certainty": "unknown",
+      "validFrom": null,
+      "validTo": null,
+      "metadata": {
+        "index": 0
+      }
+    },
+    {
+      "id": "97500000-0000-4000-8000-000000000101",
+      "schemaVersion": 3,
+      "layerId": "97500000-0000-4000-8000-000000000001",
+      "mode": "territorial",
+      "territorialUnitId": "B",
+      "geometry": null,
+      "value": 1.5,
+      "certainty": "unknown",
+      "validFrom": null,
+      "validTo": null,
+      "metadata": {
+        "index": 1
+      }
+    },
+    {
+      "id": "97500000-0000-4000-8000-000000000102",
+      "schemaVersion": 3,
+      "layerId": "97500000-0000-4000-8000-000000000001",
+      "mode": "territorial",
+      "territorialUnitId": "C",
+      "geometry": null,
+      "value": 2.5,
+      "certainty": "unknown",
+      "validFrom": null,
+      "validTo": null,
+      "metadata": {
+        "index": 2
+      }
+    },
+    {
+      "id": "97500000-0000-4000-8000-000000000103",
+      "schemaVersion": 3,
+      "layerId": "97500000-0000-4000-8000-000000000001",
+      "mode": "territorial",
+      "territorialUnitId": "whole",
+      "geometry": null,
+      "value": 3.5,
+      "certainty": "unknown",
+      "validFrom": null,
+      "validTo": null,
+      "metadata": {
+        "index": 3
+      }
+    },
+    {
+      "id": "97500000-0000-4000-8000-000000000104",
+      "schemaVersion": 3,
+      "layerId": "97500000-0000-4000-8000-000000000001",
+      "mode": "territorial",
+      "territorialUnitId": "whole-deep",
+      "geometry": null,
+      "value": 4.5,
+      "certainty": "unknown",
+      "validFrom": null,
+      "validTo": null,
+      "metadata": {
+        "index": 4
+      }
+    },
+    {
+      "id": "97500000-0000-4000-8000-000000000105",
+      "schemaVersion": 3,
+      "layerId": "97500000-0000-4000-8000-000000000001",
+      "mode": "territorial",
+      "territorialUnitId": "cut",
+      "geometry": null,
+      "value": 5.5,
+      "certainty": "unknown",
+      "validFrom": null,
+      "validTo": null,
+      "metadata": {
+        "index": 5
+      }
+    },
+    {
+      "id": "97500000-0000-4000-8000-000000000106",
+      "schemaVersion": 3,
+      "layerId": "97500000-0000-4000-8000-000000000001",
+      "mode": "territorial",
+      "territorialUnitId": "cut-deep",
+      "geometry": null,
+      "value": 6.5,
+      "certainty": "unknown",
+      "validFrom": null,
+      "validTo": null,
+      "metadata": {
+        "index": 6
+      }
+    }
+  ],
+  "labelSettings": {
+    "label:97500000-0000-4000-8000-000000000002": {
+      "pinned": true,
+      "priority": 10,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": [
+        10,
+        20
+      ],
+      "collisionGroup": "map"
+    },
+    "territorial:A": {
+      "pinned": true,
+      "priority": 1,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": null,
+      "collisionGroup": "map"
+    },
+    "territorial:B": {
+      "pinned": true,
+      "priority": 1,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": null,
+      "collisionGroup": "map"
+    },
+    "territorial:C": {
+      "pinned": true,
+      "priority": 1,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": null,
+      "collisionGroup": "map"
+    },
+    "territorial:whole": {
+      "pinned": true,
+      "priority": 1,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": null,
+      "collisionGroup": "map"
+    },
+    "territorial:whole-deep": {
+      "pinned": true,
+      "priority": 1,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": null,
+      "collisionGroup": "map"
+    },
+    "territorial:cut": {
+      "pinned": true,
+      "priority": 1,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": null,
+      "collisionGroup": "map"
+    },
+    "territorial:cut-deep": {
+      "pinned": true,
+      "priority": 1,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": null,
+      "collisionGroup": "map"
+    },
+    "territorial:removed": {
+      "pinned": true,
+      "priority": 1,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": null,
+      "collisionGroup": "map"
+    },
+    "territorial:removed-deep": {
+      "pinned": true,
+      "priority": 1,
+      "minZoom": 0,
+      "maxZoom": null,
+      "manualPosition": null,
+      "collisionGroup": "map"
+    }
+  },
+  "distributionSettings": {
+    "renderMode": "overlap",
+    "activeLayerId": "97500000-0000-4000-8000-000000000001",
+    "boundaryVisible": true
+  },
+  "layerPresentation": {
+    "schemaVersion": 4,
+    "styles": {
+      "countries": {
+        "opacity": 0.7
+      }
+    },
+    "objectStyles": {
+      "territorial:entity:A": {
+        "opacity": 0.5
+      },
+      "territorial:entity:B": {
+        "opacity": 0.5
+      },
+      "territorial:entity:C": {
+        "opacity": 0.5
+      },
+      "territorial:entity:whole": {
+        "opacity": 0.5
+      },
+      "territorial:entity:whole-deep": {
+        "opacity": 0.5
+      },
+      "territorial:entity:cut": {
+        "opacity": 0.5
+      },
+      "territorial:entity:cut-deep": {
+        "opacity": 0.5
+      },
+      "territorial:entity:removed": {
+        "opacity": 0.5
+      },
+      "territorial:entity:removed-deep": {
+        "opacity": 0.5
+      }
+    },
+    "objectOrder": [
+      "territorial:entity:removed-deep",
+      "territorial:entity:removed",
+      "territorial:entity:cut-deep",
+      "territorial:entity:cut",
+      "territorial:entity:whole-deep",
+      "territorial:entity:whole",
+      "territorial:entity:C",
+      "territorial:entity:B",
+      "territorial:entity:A",
+      "territorial:entity:P"
+    ],
+    "overlayOrder": [
+      "genericFeatures",
+      "regions",
+      "subunits",
+      "distributions"
+    ]
+  },
+  "physicalSettings": {},
+  "layerVisibility": {
+    "labels": false,
+    "subunits": false
+  },
+  "itemVisibility": {
+    "genericFeatures": {
+      "97500000-0000-4000-8000-000000000003": false
+    },
+    "subunits": {
+      "A": false,
+      "B": false,
+      "C": false,
+      "whole": false,
+      "whole-deep": false,
+      "cut": false,
+      "cut-deep": false,
+      "removed": false,
+      "removed-deep": false
+    }
+  },
+  "territorialEntities": [
+    {
+      "type": "Feature",
+      "id": "P",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "P",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "A",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "A",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "B",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "B",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "C",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "C",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "whole",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "whole",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "whole-deep",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "whole-deep",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "cut",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "cut",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "cut-deep",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "cut-deep",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "removed",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "removed",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "removed-deep",
+      "geometry": null,
+      "properties": {
+        "schemaVersion": 5,
+        "entityKind": "general",
+        "name": "removed-deep",
+        "style": {},
+        "locked": false,
+        "notes": "",
+        "metadata": {},
+        "sourceFolderId": "",
+        "sourceLibraryId": "",
+        "sourceGeometryVersion": ""
+      }
+    }
+  ],
+  "physicalSourceInfo": {
+    "terrain": {
+      "dataset": "terrain",
+      "version": "0.12.6"
+    },
+    "hydro": {
+      "dataset": "hydro",
+      "version": "0.34.0",
+      "coordinatePolicy": "selected source coordinates retained without simplification",
+      "selection": {}
+    }
+  }
+}

@@ -2,8 +2,6 @@ name: M9.7 editing parity validation
 on:
   push:
     branches: [codex/m97-web-editing-parity]
-    # Temporary source-only recovery filter; remove before next product checkpoint.
-    paths-ignore: ['.github/workflows/m975-source-recovery.yml', '.github/workflows/m97-editing-parity.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -35,6 +33,8 @@ jobs:
           mkdir -p evidence
           mapfile -t oracle_tests < <(find tools/m97 -maxdepth 1 -name '*.test.mjs' ! -name 'native-selection.test.mjs' ! -name 'split-differential-native.test.mjs' | sort)
           node --test "${oracle_tests[@]}" | tee evidence/node-tests.txt
+      - name: Verify model exchange contracts
+        run: node --test tools/m975-model-exchange/*.test.mjs
       - name: Install native build dependencies
         run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
       - uses: jurplel/install-qt-action@v4
@@ -71,6 +71,18 @@ jobs:
         with:
           name: m974-runtime-${{ github.sha }}
           path: evidence/m974-runtime
+          retention-days: 14
+      - name: Preserve exact compiled model exchange probe
+        run: |
+          mkdir -p evidence/m975-runtime
+          ln build/app/m975_model_exchange_probe evidence/m975-runtime/
+          printf '%s\n' "$GITHUB_SHA" > evidence/m975-runtime/COMMIT
+          qmake -query QT_VERSION > evidence/m975-runtime/QT_VERSION
+          (cd evidence/m975-runtime && sha256sum m975_model_exchange_probe > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m975-runtime-${{ github.sha }}
+          path: evidence/m975-runtime
           retention-days: 14
       - name: Fetch pinned full regression datasets
         uses: actions/checkout@v4
@@ -421,4 +433,66 @@ jobs:
         with:
           name: m974-differential-${{ github.sha }}
           path: evidence
+          retention-days: 14
+  model-exchange-parity:
+    needs: linux-regression
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Initialize exchange identity evidence
+        if: always()
+        run: |
+          mkdir -p evidence/model-exchange
+          printf '%s\n' "$GITHUB_SHA" > evidence/model-exchange/COMMIT
+          printf '%s\n' "$GITHUB_RUN_ID" > evidence/model-exchange/RUN_ID
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install matching native runtime dependencies
+        run: sudo apt-get update && sudo apt-get install -y libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: m975-runtime-${{ github.sha }}
+          path: m975-runtime
+      - name: Verify exact compiled native model exchange runtime
+        run: |
+          test "$(cat m975-runtime/COMMIT)" = "$GITHUB_SHA"
+          test "$(cat m975-runtime/QT_VERSION)" = '6.8.3'
+          test "$(qmake -query QT_VERSION)" = '6.8.3'
+          (cd m975-runtime && sha256sum -c SHA256SUMS)
+          chmod +x m975-runtime/m975_model_exchange_probe
+      - name: Install pinned official browser runtime
+        run: |
+          npm ci --prefix tools/m97/river/browser --ignore-scripts --registry=https://registry.npmjs.org
+          node tools/m97/river/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Compare actual Chromium and native saved-file exchange
+        run: |
+          export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
+          node tools/m975-model-exchange/browser-runner.mjs m975-runtime evidence/model-exchange
+      - name: Record terminal exchange job status
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          mkdir -p evidence/model-exchange
+          printf '%s\n' "$JOB_STATUS" > evidence/model-exchange/job-status.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m975-model-exchange-${{ github.sha }}
+          path: evidence/model-exchange
           retention-days: 14

@@ -19,10 +19,169 @@ namespace {
 QByteArray read(const QString& path){QFile file(path);if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("fixture read");return file.readAll();}
 void write(const QString& path,const QByteArray& bytes){QFile file(path);if(!file.open(QIODevice::WriteOnly)||file.write(bytes)!=bytes.size())throw std::runtime_error("fixture write");}
 ProjectDocument fixture(const char* kind){return webimport::prepare(read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/"+kind+".json")).document;}
+const std::string contentId="97050000-0000-4000-8000-000000000001";
+const std::string distributionLayerId="97050000-0000-4000-8000-000000000002";
+Geometry inlineShape(const QString& domain,double offset=0) {
+    if(domain=="hydroEdits")return {"LineString",{},{{{31+offset,41},{32+offset,42}}},{}};
+    if(domain=="distributionEntry")return {"Polygon",{},{},{{{{31+offset,41},{32+offset,41},{32+offset,42},{31+offset,41}}}}};
+    return {"Point",{{31+offset,41}},{},{}};
+}
+void addInlineContent(ProjectDocument& document,const QString& domain,const GeometryRef& geometry) {
+    if(domain=="label") {PlaceLabel value;value.id=contentId;value.name="Exchange label";value.geometry=geometry;document.labels.push_back(value);}
+    else if(domain=="hydroEdits") {HydroFeature value;value.id=contentId;value.name="Exchange river";value.geometry=geometry;document.hydro.push_back(value);}
+    else if(domain=="genericFeatures") {GenericFeature value;value.id=contentId;value.name="Exchange fallback";value.geometry=geometry;document.genericFeatures.push_back(value);}
+    else {DistributionLayer layer;layer.id=distributionLayerId;layer.name="Exchange distribution";document.distributionLayers.push_back(layer);DistributionEntry value;value.id=contentId;value.layerId=layer.id;value.geometry=geometry;document.distributionEntries.push_back(value);}
+}
+GeometryRef inlineContentRef(const ProjectDocument& document,const QString& domain) {
+    if(domain=="label")return document.labels.front().geometry;
+    if(domain=="hydroEdits")return document.hydro.front().geometry;
+    if(domain=="genericFeatures")return document.genericFeatures.front().geometry;
+    return *document.distributionEntries.front().geometry;
+}
+void verifyStoredColorHistory(Project& project,const QByteArray& baseline,const QByteArray& firstEdit,const QByteArray& secondEdit) {
+    QVERIFY(project.undo());QCOMPARE(projectcodec::encode(project),baseline);
+    QVERIFY(project.redo());QCOMPARE(projectcodec::encode(project),firstEdit);
+    QVERIFY(project.redo());QCOMPARE(projectcodec::encode(project),secondEdit);
+    QVERIFY(project.undo());QCOMPARE(projectcodec::encode(project),firstEdit);
+    QVERIFY(project.canUndo());QVERIFY(project.canRedo());
+}
+void visibilityBoundaryData() {
+    QTest::addColumn<QString>("key");QTest::addColumn<bool>("item");
+    for(const auto* key:{"hydro","terrain","countryLabels"})QTest::newRow((QByteArray("layer-")+key).constData())<<QString(key)<<false;
+    for(const auto* key:{"rivers","lakes","terrain"})QTest::newRow((QByteArray("item-")+key).constData())<<QString(key)<<true;
+}
 }
 class TimelineEditorPersistenceTests final:public QObject {
  Q_OBJECT
 private slots:
+ void webVisibilityImportRejectsUnsupportedNamespacesAtomically_data() {visibilityBoundaryData();}
+ void webVisibilityImportRejectsUnsupportedNamespacesAtomically() {
+    QFETCH(QString,key);QFETCH(bool,item);
+    Project current;current.replace(fixture("static"));const auto baseline=projectcodec::encode(current);
+    QVERIFY(current.setColor("A",0x123456));const auto firstEdit=projectcodec::encode(current);
+    QVERIFY(current.setColor("A",0x654321));const auto secondEdit=projectcodec::encode(current);QVERIFY(current.undo());
+    QVERIFY(current.setTimelineCursor("1914-06"));const auto before=projectcodec::encode(current);
+    const auto input=QJsonDocument::fromJson(read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/static.json")).object();
+    // A true item entry must not hide an unsupported namespace by being normalized away.
+    for(bool visible:{false,true}) {
+        const auto revision=current.revision();auto invalid=input;invalid[item?"itemVisibility":"layerVisibility"]=item?QJsonObject{{key,QJsonObject{{"A",visible}}}}:QJsonObject{{key,visible}};
+        QString error;try{current.replace(projectcodec::decodeWeb(QJsonDocument(invalid).toJson()));}
+        catch(const std::invalid_argument& failure){error=QString::fromUtf8(failure.what());}
+        QVERIFY2(error.contains("UNSUPPORTED_WEB_VISIBILITY"),qPrintable(error.isEmpty()?"Invalid real-web visibility namespace was accepted":error));
+        QCOMPARE(projectcodec::encode(current),before);QCOMPARE(current.revision(),revision);QCOMPARE(current.timelineCursor(),std::string("1914-06"));
+        QVERIFY(current.canUndo());QVERIFY(current.canRedo());QVERIFY(current.dirty());
+        verifyStoredColorHistory(current,baseline,firstEdit,secondEdit);
+        QCOMPARE(current.timelineCursor(),std::string("1914-06"));
+    }
+ }
+ void nativeOnlyVisibilitySurvivesNativeSaveButRefusesWebExport_data() {visibilityBoundaryData();}
+ void nativeOnlyVisibilitySurvivesNativeSaveButRefusesWebExport() {
+    QFETCH(QString,key);QFETCH(bool,item);auto document=fixture("static");
+    if(item)document.presentation.webPresentation.hiddenItems[key.toStdString()].insert("A");
+    else document.presentation.webPresentation.visibility[key.toStdString()]=false;
+    Project original;original.replace(document);const auto before=projectcodec::encode(original);
+    Project reopened;reopened.replace(projectcodec::decode(before));QCOMPARE(projectcodec::encode(reopened),before);
+    QByteArray output="not published";QString error;
+    try{output=projectcodec::encodeWeb(reopened.snapshot());}catch(const std::invalid_argument& failure){error=QString::fromUtf8(failure.what());}
+    QVERIFY2(error.contains("UNSUPPORTED_WEB_EXPORT")&&error.contains(key),qPrintable(error.isEmpty()?"Native-only visibility produced incompatible web JSON":error));
+    QCOMPARE(output,QByteArray("not published"));QCOMPARE(projectcodec::encode(reopened),before);QCOMPARE(projectcodec::encode(original),before);
+ }
+ void supportedWebPresentationNamespacesRoundTrip() {
+    auto document=fixture("static");auto& presentation=document.presentation.webPresentation;
+    // Pinned real-web project-state.js uses distinct layer, item and style namespaces.
+    for(const auto* key:{"countries","subunits","regions","distributions","rivers","lakes","genericFeatures","labels","basemapLabels","countryFlags","subunitLabels","subunitFlags","regionLabels","regionFlags"})presentation.visibility[key]=false;
+    for(const auto* key:{"countries","subunits","regions","distributions","hydro","genericFeatures","labels","countryLabels"})presentation.hiddenItems[key].insert("A");
+    for(const auto* key:{"countries","subunits","regions","distributions","rivers","lakes","hydro","genericFeatures","labels","countryLabels","terrain"})presentation.styles[key].opacity=0.5;
+    Project original;original.replace(document);const auto before=projectcodec::encode(original);
+    Project reopened;reopened.replace(projectcodec::decodeWeb(projectcodec::encodeWeb(original.snapshot())));
+    QVERIFY(reopened.document().presentation.webPresentation==presentation);
+    QCOMPARE(projectcodec::encode(original),before);
+ }
+ void inlineGeometryReferencesArePreservedOrExplicitlyRefused_data() {
+    QTest::addColumn<QString>("domain");QTest::addColumn<QString>("scenario");QTest::addColumn<bool>("representable");
+    for(const auto* domain:{"label","hydroEdits","genericFeatures","distributionEntry"}) {
+        for(const auto* scenario:{"unique","duplicate-first","synthetic-preferred","changed-version-unique"})QTest::newRow((QByteArray(domain)+"-"+scenario).constData())<<QString(domain)<<QString(scenario)<<true;
+        for(const auto* scenario:{"duplicate-later","equal-versions","synthetic-equal-versions","synthetic-conflict"})QTest::newRow((QByteArray(domain)+"-"+scenario).constData())<<QString(domain)<<QString(scenario)<<false;
+    }
+ }
+ void inlineGeometryReferencesArePreservedOrExplicitlyRefused() {
+    QFETCH(QString,domain);QFETCH(QString,scenario);QFETCH(bool,representable);
+    auto document=fixture("static");const auto shape=inlineShape(domain);GeometryRef target{"z-native-content",3};
+    const GeometryRef synthetic{"web-"+domain.toStdString()+":"+contentId,1};
+    if(scenario=="duplicate-first")target={"a-native-content",1};
+    if(scenario=="synthetic-preferred")target=synthetic;
+    if(scenario=="equal-versions"||scenario=="changed-version-unique")target={"native-content",2};
+    if(scenario.startsWith("synthetic-")&&scenario!="synthetic-preferred")target={synthetic.id,2};
+    if(scenario=="duplicate-later"||scenario=="synthetic-preferred")document.geometries.insert({"a-native-content",1},shape);
+    if(scenario=="duplicate-first")document.geometries.insert({"z-native-content",3},shape);
+    if(scenario=="equal-versions")document.geometries.insert({target.id,1},shape);
+    if(scenario=="changed-version-unique")document.geometries.insert({target.id,1},inlineShape(domain,1));
+    if(scenario=="synthetic-equal-versions")document.geometries.insert(synthetic,shape);
+    if(scenario=="synthetic-conflict")document.geometries.insert(synthetic,inlineShape(domain,1));
+    document.geometries.insert(target,shape);addInlineContent(document,domain,target);
+    Project original;original.replace(document);const auto baseline=projectcodec::encode(original);
+    QVERIFY(original.setColor("A",0x123456));const auto firstEdit=projectcodec::encode(original);
+    QVERIFY(original.setColor("A",0x654321));const auto secondEdit=projectcodec::encode(original);QVERIFY(original.undo());
+    QVERIFY(original.setTimelineCursor("1914-06"));const auto before=projectcodec::encode(original);const auto revision=original.revision();const auto frozen=original.snapshot();
+    Project native;native.replace(projectcodec::decode(before));QCOMPARE(projectcodec::encode(native),before);QVERIFY(inlineContentRef(native.document(),domain)==target);
+    QByteArray output="not published";QString error;
+    try{output=projectcodec::encodeWeb(original.snapshot());}catch(const std::invalid_argument& failure){error=QString::fromUtf8(failure.what());}
+    if(representable) {
+        QVERIFY2(error.isEmpty(),qPrintable(error));Project restored;restored.replace(projectcodec::decodeWeb(output));
+        QVERIFY(inlineContentRef(restored.document(),domain)==target);QVERIFY(sameContent(original.document(),restored.document()));
+        const auto restoredJson=QJsonDocument::fromJson(projectcodec::encode(restored)).object(),beforeJson=QJsonDocument::fromJson(before).object();
+        QCOMPARE(restoredJson["geometries"],beforeJson["geometries"]);QCOMPARE(restoredJson["timelineRecords"],beforeJson["timelineRecords"]);
+    } else {
+        if(error.isEmpty()) {
+            const auto restored=projectcodec::decodeWeb(output);const auto actual=inlineContentRef(restored,domain);
+            QFAIL(qPrintable(QString("Web exchange rebound %1/%2 to %3/%4 instead of refusing").arg(QString::fromStdString(target.id)).arg(target.version).arg(QString::fromStdString(actual.id)).arg(actual.version)));
+        }
+        QVERIFY2(error.contains(scenario=="synthetic-conflict"?"GEOMETRY_ARCHIVE_CONFLICT":"UNSUPPORTED_WEB_EXPORT: non-territorial geometry reference"),qPrintable(error));
+        QCOMPARE(output,QByteArray("not published"));
+    }
+    QCOMPARE(projectcodec::encode(original),before);QCOMPARE(projectcodec::encode(frozen),before);QCOMPARE(original.revision(),revision);
+    QCOMPARE(original.timelineCursor(),std::string("1914-06"));QVERIFY(original.canUndo());QVERIFY(original.canRedo());QVERIFY(original.dirty());
+    for(const auto& [ref,stored]:frozen.document().geometries.versions())QVERIFY(original.document().geometries.get(ref)==stored);
+    verifyStoredColorHistory(original,baseline,firstEdit,secondEdit);
+    QCOMPARE(projectcodec::encode(frozen),before);QCOMPARE(original.timelineCursor(),std::string("1914-06"));
+ }
+ void nativeOnlyFieldsRefuseWebExportWithoutLoss_data() {
+    QTest::addColumn<QString>("field");QTest::addColumn<QString>("expected");
+    for(const auto* field:{"captured-country","captured-empty-flag","captured-flag"})QTest::newRow(field)<<QString(field)<<QString("native captured flag defaults");
+    QTest::newRow("extension")<<QString("extension")<<QString("retained native extensions");
+    for(const auto* field:{"physical-dataset","physical-version","physical-source","physical-hidden"})QTest::newRow(field)<<QString(field)<<QString("native physical dataset settings");
+    for(const auto* field:{"style-label","style-hydroEdits","style-genericFeatures","style-distributionEntry"})QTest::newRow(field)<<QString(field)<<QString("native non-territorial style override");
+    for(const auto* field:{"user-layer","membership"})QTest::newRow(field)<<QString(field)<<QString("native user layer membership");
+    QTest::newRow("territorial-opacity")<<QString("territorial-opacity")<<QString("native entity opacity");
+ }
+ void nativeOnlyFieldsRefuseWebExportWithoutLoss() {
+    QFETCH(QString,field);QFETCH(QString,expected);auto document=fixture("static");const auto owner=territorialRef("A");
+    if(field=="captured-country")document.symbols[owner].defaultCountryId="DEU";
+    else if(field=="captured-empty-flag")document.symbols[owner].defaultFlagDataUrl=std::string{};
+    else if(field=="captured-flag")document.symbols[owner].defaultFlagDataUrl="data:image/svg+xml;base64,PHN2Zy8+";
+    else if(field=="extension") {PreservedExtension extension;extension.id="preserved";extension.jsonPointer="/future";extension.payload="{\"original\":[1,2]}";extension.dependencyKnowledge="known";document.extensions.push_back(extension);}
+    else if(field=="physical-dataset")document.physicalData.dataset="native-hydro";
+    else if(field=="physical-version")document.physicalData.version="1";
+    else if(field=="physical-source")document.physicalData.source="native source";
+    else if(field=="physical-hidden")document.physicalData.hiddenHydroIds={"source-river"};
+    else if(field.startsWith("style-")) {
+        const auto domain=field.mid(6);const GeometryRef geometry{"native-content",1};document.geometries.insert(geometry,inlineShape(domain));addInlineContent(document,domain,geometry);
+        const auto nativeDomain=domain=="hydroEdits"?"hydro":domain=="genericFeatures"?"generic":domain.toStdString();
+        document.presentation.objectStyles[{nativeDomain,contentId}]={0x123456,0.5,true};
+    } else if(field=="territorial-opacity")document.presentation.objectStyles[owner].opacity=0.5;
+    else {document.presentation.userLayers.push_back({"native-layer","Native layer"});if(field=="membership")document.presentation.membership[owner]="native-layer";}
+    Project original;original.replace(document);const auto baseline=projectcodec::encode(original);
+    QVERIFY(original.setColor("A",0x123456));const auto firstEdit=projectcodec::encode(original);
+    QVERIFY(original.setColor("A",0x654321));const auto secondEdit=projectcodec::encode(original);QVERIFY(original.undo());
+    const auto before=projectcodec::encode(original);const auto revision=original.revision();const auto frozen=original.snapshot();
+    Project reopened;reopened.replace(projectcodec::decode(before));QCOMPARE(projectcodec::encode(reopened),before);
+    QByteArray output="not published";QString error;
+    try{output=projectcodec::encodeWeb(original.snapshot());}catch(const std::invalid_argument& failure){error=QString::fromUtf8(failure.what());}
+    QVERIFY2(error.contains("UNSUPPORTED_WEB_EXPORT")&&error.contains(expected),qPrintable(error));QCOMPARE(output,QByteArray("not published"));
+    QCOMPARE(projectcodec::encode(original),before);QCOMPARE(projectcodec::encode(frozen),before);QCOMPARE(original.revision(),revision);
+    QVERIFY(original.canUndo());QVERIFY(original.canRedo());QVERIFY(original.dirty());
+    verifyStoredColorHistory(original,baseline,firstEdit,secondEdit);QCOMPARE(projectcodec::encode(frozen),before);
+ }
  void canonicalFlagMetadataSurvivesWebImportAndNativeReopen() {
     auto document=fixture("static");auto& unit=document.units.front();
     unit.metadata="{\"builtinSubunit\":{\"sourceCountryId\":\"KOR\"}}";

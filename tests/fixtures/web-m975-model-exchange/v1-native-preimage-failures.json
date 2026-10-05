@@ -1,0 +1,36 @@
+{
+  "schema": "pando-m975-v1-native-preimage-failure-diagnostics",
+  "version": 1,
+  "authoritativeBrowserObservation": false,
+  "reason": "Original exact public screen-input inversion cannot represent these unchanged geographic edit coordinates within four ULPs for asymmetric inline-content scene bounds.",
+  "cases": [
+    {
+      "id": "m975-annex-partial-refs",
+      "inputSha256": "ccb2127f0c8a235237de49ab209be7a3137f1aff7932b122d773727a4cace3dc",
+      "stderr": "No exact public projection preimage within four ULPs\n",
+      "bytes": 53,
+      "sha256": "37c2b6c547d2b7f0c825ede5ce6256d27140979d0daf4cd24e39daa3118f048d"
+    },
+    {
+      "id": "m975-split-child-descendants",
+      "inputSha256": "4cb95e39814f69d16f40daa5dd3352269bcc7840c819e36b02fb733a078cd774",
+      "stderr": "No exact public projection preimage within four ULPs\n",
+      "bytes": 53,
+      "sha256": "37c2b6c547d2b7f0c825ede5ce6256d27140979d0daf4cd24e39daa3118f048d"
+    },
+    {
+      "id": "m975-boundary-root-descendants",
+      "inputSha256": "e0845deaabdd81940d75b335e2b290e4ed0aa301d893a4c39b482d2bb1b3e17e",
+      "stderr": "No exact public projection preimage within four ULPs\n",
+      "bytes": 53,
+      "sha256": "37c2b6c547d2b7f0c825ede5ce6256d27140979d0daf4cd24e39daa3118f048d"
+    },
+    {
+      "id": "m975-boundary-child-fixed-parent",
+      "inputSha256": "06a38e2d6cac5cc3858148a26944c64e5b7f4e8c37624676262ea1ae26f905bb",
+      "stderr": "No exact public projection preimage within four ULPs\n",
+      "bytes": 53,
+      "sha256": "37c2b6c547d2b7f0c825ede5ce6256d27140979d0daf4cd24e39daa3118f048d"
+    }
+  ]
+}

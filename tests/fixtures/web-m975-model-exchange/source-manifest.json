@@ -1,0 +1,40 @@
+{
+  "schema": "pando-m975-approved-source-completion",
+  "version": 1,
+  "behavioralCommit": "ad78780f79f4f38fcd7c2a3c2fb1fe0ba8e37c32",
+  "baseManifestSha256": "200cf832af6d359c3d97cf48e323f9802dcaeb8107dd2ca42d558c84ad40f18e",
+  "executablePaths": [
+    "assets/js/modules/app-color-picker.js",
+    "assets/js/modules/custom-color-control.js"
+  ],
+  "evidencePaths": [
+    "assets/js/modules/app-environment.js"
+  ],
+  "archive": {
+    "file": "source-additions.json.gz",
+    "bytes": 15086,
+    "sha256": "3ba363c3be9a140dd7b6ee7fc1dcdda14ef976a51c2daffefc780a1476c1bda3",
+    "decompressedBytes": 57487,
+    "decompressedSha256": "b22c0f73d35d1840460b68d805da9b5161dacf7ccb845e854104471e618d0c0f"
+  },
+  "sources": [
+    {
+      "path": "assets/js/modules/app-color-picker.js",
+      "bytes": 14715,
+      "sha256": "8a1d74101e12ab015a8f546a3478fc7977c226098466c7f6e48ddcaf9cf09bab",
+      "blob": "98393e3393c2316a475a03bdac060f14deb73e46"
+    },
+    {
+      "path": "assets/js/modules/custom-color-control.js",
+      "bytes": 11987,
+      "sha256": "13ab4bea9f9a78daf61fe16092a05a537cfa6bb0ae975dc80658db908bc7ff0e",
+      "blob": "f0d71c6e0ddcbfae16ee4e0e070beb3c1ff39a99"
+    },
+    {
+      "path": "assets/js/modules/app-environment.js",
+      "bytes": 29479,
+      "sha256": "926b19b4a5cbd19ec8f653ab7265e3074a87ff122c55f86ba6b29528f78727c1",
+      "blob": "66e9dc6414795657bc90af3c4cb9869f9b0e49a4"
+    }
+  ]
+}
