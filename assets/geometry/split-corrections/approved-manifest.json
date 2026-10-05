@@ -1,0 +1,71 @@
+{
+  "schema": "pando-approved-split-correction",
+  "version": 1,
+  "repository": "kimjeon-il/Pando",
+  "baseBehavioralCommit": "6c3f930b8573fa09991885b661879ea36725472e",
+  "behavioralCommit": "07d3e2053c71573e11c5cf89151f5f6686038511",
+  "tree": "af43e2aaa30b870b6858283fedbadf2f0ee24bf5",
+  "scope": "Approved web/native dateline split preview and commit correction; original fixtures remain immutable.",
+  "changes": [
+    {
+      "path": "assets/js/modules/app-cut-geometry.js",
+      "blob": "a37158d4e4e44532fdcaf6bd69c4b03511d87112",
+      "sha256": "03bb2f37e997324ab41b65a6c838a621267959059b3021c86cf639a8e62248d4",
+      "bytes": 21359
+    },
+    {
+      "path": "assets/js/modules/app-land-relations.js",
+      "blob": "10a1955d239d9fded0aab0ad1f8655086a8aef40",
+      "sha256": "b332368e643d4c5767df0516f13864e4747bf92f80cdb4333a86145ff0f4046b",
+      "bytes": 7890
+    },
+    {
+      "path": "assets/js/modules/geometry-preview.js",
+      "blob": "1e9819d3a71024c5cc3f7517bf7d474242622092",
+      "sha256": "c2dc482a2f3aeb28af0c53416046349cd1e25b112d33487d4ccd4a86a5c5cda6",
+      "bytes": 5693
+    },
+    {
+      "path": "assets/js/modules/map-edit-country-commands.js",
+      "blob": "ea3174d3d6be0e12f312937fbfcbc7219c9b904b",
+      "sha256": "04bec6052ac8deb4894c2a3e47005b4909443bf69ba9b78e001195ec9ba45198",
+      "bytes": 20050
+    },
+    {
+      "path": "assets/js/modules/map-edit-geometry.js",
+      "blob": "afca4a15905cf43ede6798b48030d7df4e5f41ab",
+      "sha256": "397da6a410d2abcaa871b3c626bd8b1808534351b8332912e13dd76f8feb9915",
+      "bytes": 1511
+    },
+    {
+      "path": "assets/js/modules/map-edit-preview-calculations.js",
+      "blob": "71026fe750521aee613501d712a00ce43b306633",
+      "sha256": "328206674d1b8beb5072e1d74fee5cbd672cc3516057372ae623e691eba736ba",
+      "bytes": 2441
+    },
+    {
+      "path": "assets/js/modules/polygon-geometry.js",
+      "blob": "15f0ae1ee1873e42452778ca8b5e0f604ef5c925",
+      "sha256": "a645827c46f7c62dbf929f850c67f350516669dfeafe5c637aec6c67efcfebf4",
+      "bytes": 10152
+    },
+    {
+      "path": "assets/js/modules/territorial-edit-plan.js",
+      "blob": "dfb240378d670e6899a6729f0ebe397e30052138",
+      "sha256": "290c3b01d3c4318c560706d49e58a88157339b4060ef145a8758fd2bef2f5f47",
+      "bytes": 27125
+    },
+    {
+      "path": "assets/js/modules/territorial-units.js",
+      "blob": "e04dd7b7f8fa6831a4ed0d478ebbf49409e7d676",
+      "sha256": "1be70174ebb8d89fa41e0a5943393aba9caa6946a2b6b0c3eefca04ebd680ae8",
+      "bytes": 8516
+    },
+    {
+      "path": "assets/js/modules/territory-component-plan.js",
+      "blob": "82ac3227116ab31002a98ba1f9ee100224b971be",
+      "sha256": "c7b96e96bf41fbf4640376ccd36a9b7e9ae351e43cff7df968c63c50198c5bc1",
+      "bytes": 3912
+    }
+  ]
+}

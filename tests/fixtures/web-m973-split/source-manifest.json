@@ -1,0 +1,13 @@
+{
+  "schema": "pando-web-split-supplemental-sources",
+  "version": 1,
+  "behavioralCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+  "sources": [
+    {
+      "path": "assets/js/modules/app-object-picking.js",
+      "file": "original/app-object-picking.js",
+      "blob": "d14bdc2c506118d33d19db19419ded1155dd16ce",
+      "sha256": "19e62d26000134b4c7ca695ed21e3a9bbaad176ed3b90b757f59d0b141c13e23"
+    }
+  ]
+}

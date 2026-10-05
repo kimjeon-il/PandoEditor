@@ -56,3 +56,26 @@ AnnexGeometryPreviewResult calculateAnnexGeometryPreview(
 pandoeditor::PrepareResult prepareAnnexGeometryCommit(
     const pandoeditor::ProjectSnapshot&,const AnnexGeometryPreviewResult&,
     const pandoeditor::JobToken&);
+
+// Inert split receipt: one fresh sibling receives the selected union. Existing
+// display rows follow the root/child preview owner order; the commit patch also
+// owns all affected descendants. An exhausted root has a valid inert preview,
+// but prepareSplitGeometryCommit rejects it under bounded creation rules.
+struct SplitGeometryPreviewResult {
+    pandoeditor::GeometryOperationStatus status=pandoeditor::GeometryOperationStatus::Failed;
+    pandoeditor::CommandError error=pandoeditor::CommandError::PrepareFailed;
+    std::string detail;
+    pandoeditor::Geometry transferredGeometry,remainingGeometry;
+    std::vector<AnnexGeometryRow> rows;
+    std::vector<AnnexGeometryValidationIssue> issues;
+    std::optional<pandoeditor::TerritorialMutationPlan> plan;
+    pandoeditor::GeometryPatch patch;
+    bool ok() const;
+    bool blocking() const;
+};
+SplitGeometryPreviewResult calculateSplitGeometryPreview(
+    const pandoeditor::ProjectSnapshot&,const pandoeditor::SplitTerritorialIntent&,
+    const pandoeditor::JobToken&);
+pandoeditor::PrepareResult prepareSplitGeometryCommit(
+    const pandoeditor::ProjectSnapshot&,const SplitGeometryPreviewResult&,
+    const pandoeditor::JobToken&);

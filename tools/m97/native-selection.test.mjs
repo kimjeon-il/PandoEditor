@@ -44,6 +44,15 @@ test('actual controller timers, worker previews, strict Apply and Undo match pin
   const {collectNativeSelection,validateSelectionReport}=await implementation();
   const report=await collectNativeSelection(process.env.PANDO_M972_SELECTION_PROBE);
   validateSelectionReport(report);
+  // The gate must reject mismatched or absent view evidence independently of
+  // the geometry comparison. These are observation mutations, not goldens.
+  for(const mutate of [row=>delete row.inputView,
+    row=>{row.observations[0].native.mapViewState.projection='globe';},
+    row=>{row.observations[0].web.view.scale=1;},
+    row=>{row.observations.find(o=>o.web.cutInputs.length).web.cutInputs[0].view.scale=1;}]) {
+    const altered=structuredClone(report);mutate(altered.cases[0]);
+    assert.throws(()=>validateSelectionReport(altered),/view|camera/);
+  }
   assert.equal(report.parityComplete,false);
   assert.equal(report.cases.length,17);
   assert.ok(report.cases.every(row=>row.status==='matched'||row.status==='known-mismatch'));

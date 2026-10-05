@@ -2,6 +2,7 @@
 #include "geometrycalculator.h"
 #include "geometryruntime_p.h"
 #include "riverpartitioncalculator.h"
+#include "splitgeometrynormalizer.h"
 #include <algorithm>
 #include <cctype>
 #include <set>
@@ -41,25 +42,21 @@ MaybeGeometry calculate(GeometryOperation operation,std::vector<Geometry> operan
     checkpoint(cancelled);
     if(operands.empty())return {};
     if(operands.size()==1)return std::move(operands.front());
+    // The approved web component plan wraps only operands actually entering a
+    // Boolean operation. Its one-operand identity path above stays byte-exact.
+    for(auto& operand:operands){auto wrapped=wrapSplitGeometry(operand,cancelled);if(wrapped.status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};if(!wrapped.succeeded())throw std::runtime_error(wrapped.detail);operand=std::move(wrapped.geometry);}
     GeometryOperationRequest request{operation,{},{}};request.operands=std::move(operands);
-    if(riverDerived) {
-        auto raw=calculateRiverGeometryIntermediate(request,cancelled);
-        if(raw.status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};
-        checkpoint(cancelled);
-        if(!raw.succeeded())throw std::runtime_error(raw.detail.empty()?"TERRITORY_SELECTION_CALCULATION_FAILED":raw.detail);
-        if(raw.status==GeometryOperationStatus::Empty)return {};
-        auto normalized=normalizeRiverGeometry(raw.geometry,cancelled);
-        if(normalized.status==RiverPartitionStatus::Cancelled)throw CalculationCancelled{};
-        checkpoint(cancelled);
-        if(!normalized.succeeded())throw std::runtime_error(normalized.detail.toStdString());
-        return std::move(normalized.geometry);
-    }
-    auto result=calculateGeometry(request,cancelled);
-    if(result.status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};
-    checkpoint(cancelled);
-    if(!result.succeeded())throw std::runtime_error(result.detail.empty()?"TERRITORY_SELECTION_CALCULATION_FAILED":result.detail);
-    if(result.status==GeometryOperationStatus::Empty)return {};
-    return std::move(result.geometry);
+    GeometryOperationStatus status;Geometry geometry;std::string detail;
+    if(riverDerived){auto result=calculateRiverGeometryIntermediate(request,cancelled);status=result.status;geometry=std::move(result.geometry);detail=std::move(result.detail);}
+    else{auto result=calculateGeometry(request,cancelled);status=result.status;geometry=std::move(result.geometry);detail=std::move(result.detail);}
+    if(status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};checkpoint(cancelled);
+    if(status==GeometryOperationStatus::Empty)return {};
+    if(status!=GeometryOperationStatus::Completed)throw std::runtime_error(detail.empty()?"TERRITORY_SELECTION_CALCULATION_FAILED":detail);
+    auto normalized=normalizeSplitClippedGeometry(geometry,cancelled);
+    if(normalized.status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};checkpoint(cancelled);
+    if(!normalized.succeeded())throw std::runtime_error(normalized.detail);
+    if(normalized.status==GeometryOperationStatus::Empty)return {};
+    return std::move(normalized.geometry);
 }
 MaybeGeometry unite(std::vector<Geometry> geometries,const GeometryCancellation& cancelled,bool riverDerived=false) {
     return calculate(GeometryOperation::Union,std::move(geometries),cancelled,riverDerived);

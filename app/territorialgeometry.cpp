@@ -1,5 +1,6 @@
 #include "territorialgeometry.h"
 #include "geometrycalculator.h"
+#include "splitgeometrynormalizer.h"
 #include "geometryruntime_p.h"
 #include "riverpartitioncalculator.h"
 #include "riverareacalculator.h"
@@ -46,13 +47,7 @@ PrepareResult prepareTerritorialGeometry(const ProjectSnapshot& snapshot,
             patch.replacements.push_back({country,std::move(countryResult)});if(coast.authority==CoastlineAuthority::Country)for(std::size_t index=1;index<requirement.readOwners.size();++index){const auto owner=requirement.readOwners[index];auto kept=calculateGeometry({GeometryOperation::Intersection,geometry(owner),coast.draft},[&]{return token.cancelled();});if(kept.status==GeometryOperationStatus::Empty)patch.removedGeometryOwners.push_back(owner);else if(!kept.succeeded())throw std::runtime_error(kept.detail);else patch.replacements.push_back({owner,std::move(kept.geometry)});}return preparePatch(std::move(patch));
         }
         if(requirement.operation=="split") {
-            if(requirement.readOwners.size()!=1||requirement.replacements.size()!=1||requirement.createOwners.size()!=1)throw std::runtime_error("INVALID_GEOMETRY_REQUIREMENT");const auto& split=std::get<SplitTerritorialIntent>(plan.intent);
-            auto result=splitGeometryByLine(target,split.cutLine,[&]{return token.cancelled();});if(result.status==GeometryOperationStatus::Cancelled){failure.detail="CANCELLED";return failure;}if(!result.succeeded())throw std::runtime_error(result.detail);
-            const int retainedPart=split.retainedPart<0?(planarArea(result.candidates[0])>=planarArea(result.candidates[1])?0:1):split.retainedPart;
-            Geometry retained=result.candidates[retainedPart],created=result.candidates[1-retainedPart];for(std::size_t p=0;p<target.polygons.size();++p)if(p!=result.componentIndex)retained.polygons.push_back(target.polygons[p]);
-            GeometryPatch patch;patch.sourceRevision=snapshot.revision();patch.replacements.push_back({split.source,std::move(retained)});patch.creations.push_back({territorialRef(split.createdId),std::move(created)});
-            CommandArguments args;args.action=ApplyTerritorialMutation{plan,std::move(patch)};CommandRequest requestCommand{"territorial.geometry.commit",snapshot.instanceId(),snapshot.document().documentId,snapshot.revision(),plan.affectedObjects,std::move(args)};
-            return CommandProcessor::prepare(snapshot,requestCommand,[](const ProjectDocument& before,const TerritorialMutationPlan& mutation,std::vector<PreservedExtension>& candidate){const auto rewrite=retainedrefs::rewrite(before,mutation,candidate);return ExtensionRewriteResult{rewrite.ok,rewrite.detail,rewrite.handledExtensionIds};});
+            return prepareSplitGeometryCommit(snapshot,calculateSplitGeometryPreview(snapshot,std::get<SplitTerritorialIntent>(plan.intent),token),token);
         }
         if(requirement.readOwners.size()<2||requirement.readOwners.size()!=requirement.replacements.size())throw std::runtime_error("INVALID_GEOMETRY_REQUIREMENT");
         const bool converting=requirement.operation=="country-to-subunit";
@@ -363,10 +358,11 @@ void annexIssue(AnnexGeometryPreviewResult& result,std::string kind,std::vector<
     const auto found=std::find_if(result.issues.begin(),result.issues.end(),[&](const auto& issue){return issue.kind==kind&&issue.objects==objects;});
     if(found==result.issues.end())result.issues.push_back({std::move(kind),std::move(objects),std::move(detail),true});
 }
-void validateAnnexRootGeometry(const ProjectSnapshot& snapshot,AnnexGeometryPreviewResult& result,const JobToken& token,bool river=false) {
+void validateAnnexRootGeometry(const ProjectSnapshot& snapshot,AnnexGeometryPreviewResult& result,const JobToken& token,bool river=false,
+    const std::function<const Geometry&(const ObjectRef&)>& geographicGeometry={}) {
     const auto roots=1+result.affectedDonors.size();double perimeter=0;std::vector<Geometry> beforeUnion,afterUnion;
     for(std::size_t i=0;i<roots;++i) {
-        const auto& row=result.rows[i];perimeter+=annexBoundaryLength(row.before);beforeUnion.push_back(row.before);
+        const auto& row=result.rows[i];perimeter+=annexBoundaryLength(row.before);if(!row.before.polygons.empty())beforeUnion.push_back(row.before);
         if(!row.after)continue;
         afterUnion.push_back(*row.after);const auto oldIssues=annexShapeIssues(row.before,token);
         for(const auto& issue:annexShapeIssues(*row.after,token))if(std::find(oldIssues.begin(),oldIssues.end(),issue)==oldIssues.end())
@@ -383,7 +379,7 @@ void validateAnnexRootGeometry(const ProjectSnapshot& snapshot,AnnexGeometryPrev
             if(!tested.insert(key).second)continue;
             const auto changed=std::find_if(result.rows.begin(),result.rows.begin()+roots,[&](const auto& candidate){return candidate.owner==other;});
             if(changed!=result.rows.begin()+roots&&!changed->after)continue;
-            const auto& oldOther=annexGeometry(snapshot,other);const auto& newOther=changed==result.rows.begin()+roots?oldOther:*changed->after;
+            const auto& oldOther=geographicGeometry?geographicGeometry(other):annexGeometry(snapshot,other);const auto& newOther=changed==result.rows.begin()+roots?oldOther:*changed->after;
             if(!annexBoundsOverlap(annexBounds(*row.after),annexBounds(newOther)))continue;
             const double oldOverlap=annexBoundsOverlap(annexBounds(row.before),annexBounds(oldOther))?
                 planarArea(annexCalculate(GeometryOperation::Intersection,row.before,oldOther,token,river)):0;
@@ -515,4 +511,135 @@ PrepareResult prepareAnnexGeometryCommit(const ProjectSnapshot& snapshot,const A
     });
     if(token.cancelled()){failure.detail="CANCELLED";return failure;}
     return prepared;
+}
+
+bool SplitGeometryPreviewResult::ok() const { return status==GeometryOperationStatus::Completed&&error==CommandError::None&&plan&&!blocking(); }
+bool SplitGeometryPreviewResult::blocking() const { return status!=GeometryOperationStatus::Completed||std::any_of(issues.begin(),issues.end(),[](const auto& issue){return issue.blocking;}); }
+SplitGeometryPreviewResult calculateSplitGeometryPreview(const ProjectSnapshot& snapshot,const SplitTerritorialIntent& input,const JobToken& token) {
+    SplitGeometryPreviewResult result;
+    try {
+        annexCheckCancelled(token);const auto& original=annexGeometry(snapshot,input.source);auto intent=input;
+        const auto& document=snapshot.document();const auto& sourceUnit=document.units.at(snapshot.index().objects.at(intent.source));const bool root=isRootGeneral(document,sourceUnit);
+        const auto normalized=[&](const Geometry& geometry) {
+            const auto value=normalizeSplitClippedGeometry(geometry,[&]{return token.cancelled();});annexCheckCancelled(token);
+            if(!value.succeeded())throw std::runtime_error(value.detail);
+            if(value.status==GeometryOperationStatus::Empty)throw std::invalid_argument("EMPTY_SPLIT_RESULT");
+            return value.geometry;
+        };
+        const auto normalizedRaw=[&](const Geometry& geometry) {
+            const auto value=normalizeSplitRawGeometry(geometry,[&]{return token.cancelled();});annexCheckCancelled(token);
+            if(!value.succeeded())throw std::runtime_error(value.detail);
+            if(value.status==GeometryOperationStatus::Empty)throw std::invalid_argument("EMPTY_SPLIT_RESULT");
+            return value.geometry;
+        };
+        const auto wrapped=[&](const Geometry& geometry) {
+            const auto value=wrapSplitGeometry(geometry,[&]{return token.cancelled();});annexCheckCancelled(token);
+            if(!value.succeeded())throw std::runtime_error(value.detail);
+            return value.geometry;
+        };
+        std::map<ObjectRef,Geometry> geographic;
+        const auto geographicOwner=[&](const ObjectRef& owner)->const Geometry& {
+            const auto found=geographic.find(owner);if(found!=geographic.end())return found->second;
+            return geographic.emplace(owner,wrapped(annexGeometry(snapshot,owner))).first->second;
+        };
+        const auto& sourceGeometry=geographicOwner(input.source);const auto selectedGeometry=wrapped(input.selection);
+        if(sourceGeometry.polygons.empty())throw std::invalid_argument("EMPTY_SPLIT_SOURCE");
+        GeometryStore validation;validation.insert({"split-selection",1},intent.selection);
+        if(intent.selection.type!="Polygon"&&intent.selection.type!="MultiPolygon")throw std::invalid_argument("INVALID_GEOMETRY: polygon required");
+        if(planarArea(intent.selection)<=0)throw std::invalid_argument("NO_SPLIT_SELECTION");
+        const auto outside=annexCalculate(GeometryOperation::Difference,selectedGeometry,sourceGeometry,token);
+        const auto outsideTolerance=root?std::max(1e-8,annexBoundaryLength(selectedGeometry)*2e-7):std::max(1e-10,planarArea(selectedGeometry)*1e-9);
+        if(planarArea(outside)>outsideTolerance)throw std::invalid_argument("SELECTION_OUTSIDE_SOURCE");
+        // Country commands authoritatively intersect their transfer with source
+        // coverage; sibling creation preserves the accepted draft verbatim.
+        result.transferredGeometry=root?annexCalculate(GeometryOperation::Intersection,selectedGeometry,sourceGeometry,token):selectedGeometry;
+        if(result.transferredGeometry.polygons.empty())throw std::invalid_argument("NO_SPLIT_SELECTION");
+        result.remainingGeometry=root?annexSubtract(sourceGeometry,result.transferredGeometry,token).second:annexCalculate(GeometryOperation::Difference,sourceGeometry,result.transferredGeometry,token);
+        if(!root&&!significantArea(planarArea(result.remainingGeometry),planarArea(sourceGeometry)))throw std::invalid_argument("SPLIT_SOURCE_EXHAUSTED");
+        result.transferredGeometry=normalized(result.transferredGeometry);
+        if(!result.remainingGeometry.polygons.empty())result.remainingGeometry=normalized(result.remainingGeometry);
+        intent.selection=result.transferredGeometry;
+        auto planned=CommandProcessor::planTerritorial(snapshot,intent);
+        if(!planned.ok()||!planned.plan){result.error=planned.error;throw std::invalid_argument(planned.detail);}
+        result.plan=std::move(planned.plan);result.patch.sourceRevision=snapshot.revision();
+        result.rows.push_back({intent.source,original,result.remainingGeometry.polygons.empty()?std::optional<Geometry>{}:std::optional<Geometry>{result.remainingGeometry}});
+        std::set<ObjectRef> previewChanged{intent.source},calculatedOwners{intent.source};
+        if(root) {
+            for(std::size_t index=1;index<result.plan->geometry.readOwners.size();++index) {
+                const auto owner=result.plan->geometry.readOwners[index];const auto& shape=annexGeometry(snapshot,owner);
+                auto kept=annexCalculate(GeometryOperation::Difference,geographicOwner(owner),result.transferredGeometry,token);
+                result.rows.push_back({owner,shape,kept.polygons.empty()?std::optional<Geometry>{}:std::optional<Geometry>{std::move(kept)}});
+            }
+        } else {
+            const auto visit=[&](const auto& self,const std::string& parent,const std::optional<Geometry>& keptParent,bool movedAncestor)->void {
+                for(const auto& relation:document.timelineRecords.parentRelations)if(relation.parentId==parent) {
+                    annexCheckCancelled(token);const auto owner=territorialRef(relation.entityId);const auto& shape=annexGeometry(snapshot,owner);
+                    if(movedAncestor||geometryContains(result.transferredGeometry,shape)) {
+                        result.rows.push_back({owner,shape,shape});
+                        if(!movedAncestor){previewChanged.insert(owner);result.issues.push_back({"reparent-child",{owner},"SPLIT_CHILD_REPARENTED",false});}
+                        self(self,owner.id,std::optional<Geometry>{shape},true);continue;
+                    }
+                    const auto& calculationShape=geographicOwner(owner);
+                    auto kept=keptParent?annexCalculate(GeometryOperation::Intersection,calculationShape,*keptParent,token):Geometry{};
+                    const auto cut=kept.polygons.empty()?calculationShape:annexCalculate(GeometryOperation::Difference,calculationShape,kept,token);
+                    if(!significantArea(planarArea(cut),planarArea(calculationShape))) {
+                        result.rows.push_back({owner,shape,shape});
+                        // The web does not descend into an unchanged child.
+                        // Populate immutable reads without altering that subtree.
+                        self(self,owner.id,std::optional<Geometry>{shape},true);continue;
+                    }
+                    previewChanged.insert(owner);calculatedOwners.insert(owner);std::optional<Geometry> remainder;if(!kept.polygons.empty())remainder=std::move(kept);
+                    result.rows.push_back({owner,shape,remainder});self(self,owner.id,remainder,false);
+                }
+            };visit(visit,intent.source.id,std::optional<Geometry>{result.remainingGeometry},false);
+        }
+        for(auto& row:result.rows) {
+            if(std::none_of(result.plan->geometry.replacements.begin(),result.plan->geometry.replacements.end(),[&](const auto& mapping){return mapping.result==row.owner;}))continue;
+            if(row.after){if(root||calculatedOwners.count(row.owner))row.after=normalized(*row.after);else if(previewChanged.count(row.owner))row.after=normalizedRaw(*row.after);result.patch.replacements.push_back({row.owner,*row.after});}
+            else result.patch.removedGeometryOwners.push_back(row.owner);
+        }
+        result.patch.creations.push_back({territorialRef(intent.createdId),result.transferredGeometry});
+        result.rows.push_back({territorialRef(intent.createdId),{},result.transferredGeometry});
+        if(root) {
+            // Country creation uses the same post-edit country overlap/union
+            // validator as annex. The fresh owner has no baseline geometry.
+            AnnexGeometryPreviewResult validation;validation.plan=result.plan;validation.affectedDonors={intent.source};
+            validation.rows={result.rows.back(),result.rows.front()};validation.rows[1].before=sourceGeometry;
+            validateAnnexRootGeometry(snapshot,validation,token,false,geographicOwner);
+            result.issues.insert(result.issues.end(),validation.issues.begin(),validation.issues.end());
+        }
+        // Root previews show the root calculator's owners only; dependent
+        // changes remain in the full commit patch. Child previews put the fresh
+        // sibling first, then only changed/reparented existing owners.
+        if(root) {auto created=std::move(result.rows.back());result.rows.resize(1);result.rows.push_back(std::move(created));}
+        else {std::vector<AnnexGeometryRow> shown;shown.push_back(std::move(result.rows.back()));for(std::size_t index=0;index+1<result.rows.size();++index)if(previewChanged.count(result.rows[index].owner))shown.push_back(std::move(result.rows[index]));result.rows=std::move(shown);}
+        annexCheckCancelled(token);result.status=GeometryOperationStatus::Completed;
+        result.error=result.blocking()?CommandError::ValidationFailed:CommandError::None;
+        if(result.blocking())for(const auto& issue:result.issues)if(issue.blocking){result.detail=issue.detail;break;}
+        token.reportProgress(100);return result;
+    } catch(const std::exception& error) {
+        result.detail=token.cancelled()?"CANCELLED":error.what();
+        result.status=result.detail=="CANCELLED"?GeometryOperationStatus::Cancelled:GeometryOperationStatus::Failed;
+        if(result.status==GeometryOperationStatus::Cancelled){result.plan.reset();result.patch={};}
+        else result.issues.push_back({"invalid-geometry",{input.source},result.detail,true});
+        return result;
+    }
+}
+PrepareResult prepareSplitGeometryCommit(const ProjectSnapshot& snapshot,const SplitGeometryPreviewResult& result,const JobToken& token) {
+    PrepareResult failure;failure.error=CommandError::PrepareFailed;
+    if(token.cancelled()){failure.detail="CANCELLED";return failure;}
+    if(!result.ok()||!result.plan){failure.error=result.error;failure.detail=result.detail.empty()?"INVALID_SPLIT_GEOMETRY_RECEIPT":result.detail;return failure;}
+    const auto& plan=*result.plan;
+    if(plan.projectInstanceId!=snapshot.instanceId()){failure.error=CommandError::ProjectMismatch;failure.detail="PROJECT_MISMATCH";return failure;}
+    if(plan.documentId!=snapshot.document().documentId){failure.error=CommandError::DocumentMismatch;failure.detail="DOCUMENT_MISMATCH";return failure;}
+    if(plan.baseRevision!=snapshot.revision()){failure.error=CommandError::StaleRevision;failure.detail="STALE_GEOMETRY_REQUEST";return failure;}
+    // The root worker can display a complete transfer, but bounded creation
+    // cannot archive/apply it. Never turn that inert preview into source deletion.
+    if(result.remainingGeometry.polygons.empty()){failure.error=CommandError::InvalidArguments;failure.detail="SPLIT_SOURCE_EXHAUSTED";return failure;}
+    CommandArguments args;args.action=ApplyTerritorialMutation{plan,result.patch};
+    CommandRequest command{"territorial.geometry.commit",snapshot.instanceId(),snapshot.document().documentId,snapshot.revision(),plan.affectedObjects,std::move(args)};
+    auto prepared=CommandProcessor::prepare(snapshot,command,[](const ProjectDocument& before,const TerritorialMutationPlan& mutation,std::vector<PreservedExtension>& candidate){
+        const auto rewritten=retainedrefs::rewrite(before,mutation,candidate);return ExtensionRewriteResult{rewritten.ok,rewritten.detail,rewritten.handledExtensionIds};
+    });
+    if(token.cancelled()){failure.detail="CANCELLED";return failure;}return prepared;
 }

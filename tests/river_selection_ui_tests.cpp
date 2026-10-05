@@ -210,7 +210,13 @@ private slots:
         QVERIFY(!ui.state()["useRiverBoundaries"].toBool());
         const auto firstPart=ui.state()["parts"].toList().front().toMap()["id"].toString();
         const auto secondPart=ui.state()["parts"].toList()[1].toMap()["id"].toString();
-        QVERIFY(ui.click("geometryMethod_polygon"));ui.tap({40.2,.3});ui.tap({40.3,.3});
+        QVERIFY(ui.click("geometryMethod_polygon"));
+        // A method switch prepares its working source asynchronously. Exercise
+        // the ready drawing state, rather than sending taps into the explicitly
+        // disabled pending state after an arbitrary 60 ms click delay.
+        QTRY_VERIFY_WITH_TIMEOUT(!ui.state()["selectionPending"].toBool(),15000);
+        ui.tap({40.2,.3});ui.tap({40.3,.3});
+        QVERIFY(ui.state()["canUndoDraft"].toBool());
         QVERIFY(ui.click("geometryMethod_line"));
         QCOMPARE(ui.state()["confirmationKind"].toString(),QString("method"));
         QVERIFY(ui.click("geometryCancelTerritoryChange"));

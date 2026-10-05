@@ -81,7 +81,6 @@ QVariantMap EditorController::geometryEditState() const
     if(edit.mergeIntent)for(const auto& ref:edit.mergeIntent->donors)providers.append(describe(ref));
     if(edit.annexIntent)for(const auto& ref:edit.annexIntent->donors)providers.append(describe(ref));
     return {{"active",true},{"creating",bool(edit.createIntent)||(edit.content&&contentSession_&&contentSession_->edit.create)},{"tool",edit.tool},{"stage",edit.preview?QStringLiteral("review"):edit.stage},{"choosingProviders",edit.choosingProviders},{"providers",providers},
-        {"splitChoice",edit.splitIntent?edit.splitIntent->retainedPart:-1},
         {"phase",edit.preview?"preview":edit.job?"calculating":"editing"},{"previewReady",bool(edit.preview)},
         {"calculating",bool(edit.job)},
         {"selectedVertex",edit.vertex},{"error",edit.error},{"canUndo",edit.tool=="split"?!edit.lineDraft.empty():!edit.undo.empty()},{"canRedo",!edit.redo.empty()},
@@ -167,7 +166,7 @@ bool EditorController::geometryAddPoint(double x,double y,double tolerance)
         if(edit.stage!="selection"||edit.territorySelection->state().activePhase!=TerritorySelectionPhase::Drawing||edit.applying||edit.selectionPending||edit.sourceChange||edit.territorySelection->state().methodChangeConfirmation)return false;
         if(edit.territorySelection->state().activeMethod==TerritorySelectionMethod::Line) {edit.lineDraft.push_back(projection_.unproject(x,y));++edit.request;emit geometryEditChanged();return true;}
     }
-    if(edit.tool=="split"){edit.lineDraft.push_back(snappedPoint(project_.document(),projection_,projection_.unproject(x,y),tolerance,edit.snapPoint));++edit.request;emit geometryEditChanged();return true;}if(edit.tool!="draw"&&edit.tool!="annex")return false;
+    if(edit.tool=="split"&&!edit.territorySelection){edit.lineDraft.push_back(snappedPoint(project_.document(),projection_,projection_.unproject(x,y),tolerance,edit.snapPoint));++edit.request;emit geometryEditChanged();return true;}if(edit.tool!="draw"&&edit.tool!="annex"&&!edit.territorySelection)return false;
     if(!isArea(edit.draft)) {
         edit.undo.push_back(edit.draft);edit.redo.clear();
         const auto point=snappedPoint(project_.document(),projection_,projection_.unproject(x,y),tolerance,edit.snapPoint);
@@ -279,10 +278,10 @@ bool EditorController::geometryUndoDraft()
         if(geometryEdit_->territorySelection->state().activePhase!=TerritorySelectionPhase::Drawing)return geometryUndoTerritoryPart();
         if(geometryEdit_->territorySelection->state().activeMethod==TerritorySelectionMethod::Line) {if(geometryEdit_->lineDraft.empty())return false;geometryEdit_->lineDraft.pop_back();++geometryEdit_->request;emit geometryEditChanged();return true;}
     }
-    if(!geometryEdit_||geometryEdit_->preview)return false;if(geometryEdit_->tool=="split"){if(geometryEdit_->lineDraft.empty())return false;geometryEdit_->lineDraft.pop_back();++geometryEdit_->request;emit geometryEditChanged();return true;}if(geometryEdit_->undo.empty())return false;geometryEdit_->redo.push_back(geometryEdit_->draft);geometryEdit_->draft=std::move(geometryEdit_->undo.back());geometryEdit_->undo.pop_back();geometryEdit_->vertex=-1;++geometryEdit_->request;emit geometryEditChanged();return true;
+    if(!geometryEdit_||geometryEdit_->preview)return false;if(geometryEdit_->tool=="split"&&!geometryEdit_->territorySelection){if(geometryEdit_->lineDraft.empty())return false;geometryEdit_->lineDraft.pop_back();++geometryEdit_->request;emit geometryEditChanged();return true;}if(geometryEdit_->undo.empty())return false;geometryEdit_->redo.push_back(geometryEdit_->draft);geometryEdit_->draft=std::move(geometryEdit_->undo.back());geometryEdit_->undo.pop_back();geometryEdit_->vertex=-1;++geometryEdit_->request;emit geometryEditChanged();return true;
 }
 
-bool EditorController::geometryRedoDraft(){if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->redo.empty()||geometryEdit_->tool=="split")return false;geometryEdit_->undo.push_back(geometryEdit_->draft);geometryEdit_->draft=std::move(geometryEdit_->redo.back());geometryEdit_->redo.pop_back();geometryEdit_->vertex=-1;++geometryEdit_->request;emit geometryEditChanged();return true;}
+bool EditorController::geometryRedoDraft(){if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->redo.empty()||(geometryEdit_->tool=="split"&&!geometryEdit_->territorySelection))return false;geometryEdit_->undo.push_back(geometryEdit_->draft);geometryEdit_->draft=std::move(geometryEdit_->redo.back());geometryEdit_->redo.pop_back();geometryEdit_->vertex=-1;++geometryEdit_->request;emit geometryEditChanged();return true;}
 
 bool EditorController::requestGeometryPreview()
 {
@@ -317,7 +316,7 @@ bool EditorController::requestGeometryPreview()
     if(edit.createIntent) { auto create=*edit.createIntent;create.geometry=edit.draft;intent=std::move(create);command=QStringLiteral("territorial.create"); }
     else if(edit.mergeIntent){intent=*edit.mergeIntent;}
     else if(edit.annexIntent){auto annex=*edit.annexIntent;annex.selection=edit.draft;intent=std::move(annex);}
-    else if(edit.splitIntent){auto split=*edit.splitIntent;split.cutLine=edit.lineDraft;intent=std::move(split);}
+    else if(edit.splitIntent){intent=*edit.splitIntent;}
     else if(!edit.boundaryOwners.empty()&&edit.boundaryOwners.size()!=2){edit.error=QStringLiteral("공유 국경은 두 객체를 선택해야 합니다.");emit geometryEditChanged();return false;}
     else if(edit.coastIntent){auto coast=*edit.coastIntent;coast.draft=edit.draft;intent=std::move(coast);}
     const auto schedule=[&](CommandJobRunner::Task task){
@@ -433,14 +432,4 @@ bool EditorController::geometryBack() {
     if(edit.annexIntent&&!edit.choosingProviders){edit.choosingProviders=true;emit geometryEditChanged();return true;}
     if(edit.stage=="selection"){edit.stage="setup";edit.error.clear();emit geometryEditChanged();return true;}
     cancelGeometryEdit();return true;
-}
-bool EditorController::geometryChooseSplitResult(int createdCandidate) {
-    if(!geometryEdit_||!geometryEdit_->splitIntent||createdCandidate< -1||createdCandidate>1)return false;
-    auto& edit=*geometryEdit_;if(edit.job)return false;
-    const int retainedPart=createdCandidate<0?-1:1-createdCandidate;
-    if(edit.splitIntent->retainedPart==retainedPart)return true;
-    const bool preview=bool(edit.preview);
-    if(preview){CommandProcessor::cancel(*edit.preview);edit.preview.reset();}
-    edit.splitIntent->retainedPart=retainedPart;edit.stage="selection";++edit.request;emit geometryEditChanged();
-    return !preview||requestGeometryPreview();
 }

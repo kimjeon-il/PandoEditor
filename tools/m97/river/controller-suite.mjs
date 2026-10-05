@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {sha256} from './oracle.mjs';
 import {prepareRiverRemovalCorrectedSelectionSources} from '../web-selection-removal-correction.mjs';
-import {selectionEntrypoints,createSelectionRuntime,settle} from '../web-selection.mjs';
+import {selectionEntrypoints,createSelectionRuntime,settle,selectionCutView} from '../web-selection.mjs';
 
 export const controllerAnnexRole='Actual production controller entry chain; browser preview oracle only.';
 export function requiredControllerAnnexScenarios(){return [
@@ -27,7 +27,7 @@ export function controllerSourceBundle(){
     };
     const entrypoints=[...selectionEntrypoints,'territorial-units','ring-hit-test'].map(name=>name+'.js');
     for(const name of [...entrypoints,'polygon-geometry.js','d3.min.js'])add(name);
-    const source=`(()=>{const clone=value=>structuredClone(value),noop=()=>{};return {createSelectionRuntime:${createSelectionRuntime.toString()},settle:${settle.toString()}};})()`;
+    const source=`(()=>{const clone=value=>structuredClone(value),noop=()=>{},selectionCutView=${selectionCutView.toString()};return {createSelectionRuntime:${createSelectionRuntime.toString()},settle:${settle.toString()}};})()`;
     return {baseBehavioralCommit:corrected.sourceChain[0].baseBehavioralCommit,behavioralCommit:corrected.manifest.behavioralCommit,sourceDelta:corrected.manifest.changes,sourceChain:corrected.sourceChain.map(({baseBehavioralCommit,behavioralCommit,publishedTree,changes})=>({baseBehavioralCommit,behavioralCommit,publishedTree,changes})),entrypoints,modules,runtime:{source,sha256:sha256(source)}};
   }finally{corrected.cleanup();}
 }

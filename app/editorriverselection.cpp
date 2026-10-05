@@ -159,6 +159,21 @@ QVariantMap EditorController::riverSelectionObservation() const {
     for(const auto& snapshot:state.componentSnapshots){QVariantList items;for(const auto& c:snapshot.items)items.append(QVariantMap{{"key",QString::fromStdString(c.key)},{"countryId",QString::fromStdString(c.countryId)},{"componentKey",QString::fromStdString(c.componentKey)},{"polygonIndex",int(c.polygonIndex)},{"sourcePolygonIndex",int(c.sourcePolygonIndex)},{"partitionKind",QString::fromStdString(c.partitionKind)},{"geometry",encode(c.geometry)},{"provenance",QString::fromStdString(c.provenanceJson)}});snapshots.append(QVariantMap{{"items",items}});}
     QVariantMap result{{"state",territorySelectionState()},{"components",cells},{"parts",parts},{"componentFeatures",features},{"riverSliverContext",contexts},{"componentSnapshots",snapshots}};
     for(const auto& entry:riverCache_)if(entry.key.toHex().toStdString()==state.riverPreparationKey){QVariantList failedIds;for(const auto id:entry.value->source.failedLogicalIds)failedIds.append(qulonglong(id));result["sourceDiagnostics"]=QVariantMap{{"loadedRivers",qulonglong(entry.value->source.diagnostics.loadedRivers)},{"failedLogicalIds",failedIds},{"indexSha256",entry.identity.indexSha256},{"version",entry.identity.version},{"generation",qulonglong(entry.identity.generation)}};result["donorRevisionStrings"]=entry.value->partition.donorRevisionStrings;result["editedRiverSignature"]=entry.value->partition.editedRiverSignature;result["hydroRevision"]=entry.value->partition.diagnostics.hydroRevision.toVariant();break;}
+    // Owned diagnostic snapshots preserve raw coordinates; callers must not
+    // reconstruct editing geometry from rounded screen/SVG representations.
+    QVariantList candidates,inputLine;
+    for(const auto& candidate:state.candidates){QVariantMap row{{"id",QString::fromStdString(candidate.id)},{"geometry",encode(candidate.geometry)}};if(candidate.area)row["area"]=*candidate.area;candidates.append(row);}
+    for(const auto point:geometryEdit_->lineDraft)inputLine.append(QVariant(QVariantList{point.x,point.y}));
+    result["candidates"]=candidates;result["inputLine"]=inputLine;
+    if(geometryEdit_->splitIntent){
+        result["combinedGeometry"]=QVariant();result["remainingGeometry"]=QVariant();result["currentGeometry"]=state.currentGeometry?QVariant(encode(*state.currentGeometry)):QVariant();
+    }
+    if(state.remainingGeometry)result["remainingGeometry"]=encode(*state.remainingGeometry);
+    if(geometryEdit_->splitPreview&&geometryEdit_->previewSelectionRevision==state.revision){
+        const auto& receipt=*geometryEdit_->splitPreview;QVariantList rows;
+        for(const auto& row:receipt.rows){QVariantMap item{{"owner",objectRefValue(row.owner)},{"before",encode(row.before)}};if(row.after)item["after"]=encode(*row.after);else item["after"]=QVariant();rows.append(item);}
+        result["splitPreview"]=QVariantMap{{"ok",receipt.ok()},{"blocking",receipt.blocking()},{"detail",QString::fromStdString(receipt.detail)},{"transferredGeometry",encode(receipt.transferredGeometry)},{"remainingGeometry",encode(receipt.remainingGeometry)},{"rows",rows}};
+    }
     if(state.combinedGeometry)result["combinedGeometry"]=encode(*state.combinedGeometry);
     if(state.workingSourceGeometry)result["workingSourceGeometry"]=encode(*state.workingSourceGeometry);
     if(geometryEdit_->territoryPreview&&geometryEdit_->previewSelectionRevision==state.revision&&geometryEdit_->territoryPreview->ok())result["transferredGeometry"]=encode(geometryEdit_->territoryPreview->transferredGeometry);

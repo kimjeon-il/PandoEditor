@@ -13,5 +13,5 @@ struct GeometryJobFailure {
     std::string detail;
 };
 using GeometryJobResult=std::variant<std::monostate,GeometryJobFailure,
-    pandoeditor::TerritorySelectionDerivedResult,AnnexGeometryPreviewResult,
+    pandoeditor::TerritorySelectionDerivedResult,AnnexGeometryPreviewResult,SplitGeometryPreviewResult,
     pandoeditor::TerritorySelectionDraftResult,RiverSelectionPreparationResult>;

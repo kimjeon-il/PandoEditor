@@ -1,0 +1,150 @@
+[
+  {
+    "id": "root-with-dependent-presentation",
+    "scope": "root",
+    "source": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            10
+          ],
+          [
+            10,
+            10
+          ],
+          [
+            10,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        -1,
+        5
+      ],
+      [
+        11,
+        5
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        5,
+        5
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": true,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": true,
+    "dependentGeneric": false
+  },
+  {
+    "id": "child-with-dependent-presentation",
+    "scope": "child",
+    "source": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            10
+          ],
+          [
+            10,
+            10
+          ],
+          [
+            10,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        -1,
+        5
+      ],
+      [
+        11,
+        5
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        5,
+        5
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": true,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": true,
+    "dependentGeneric": false
+  }
+]

@@ -4,7 +4,7 @@ import {spawnSync} from 'node:child_process';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {compareCalculation} from './native-baseline.mjs';
-import {loadSelectionModules,createSelectionRuntime,seedSelectionFeatures,settle,observeSelection,defaultSelectionSourceRoot,behavioralCommit} from './web-selection.mjs';
+import {loadSelectionModules,createSelectionRuntime,seedSelectionFeatures,settle,observeSelection,defaultSelectionSourceRoot,behavioralCommit,selectionCutView} from './web-selection.mjs';
 import {prepareCorrectedSelectionSources} from './web-selection-correction.mjs';
 import {productionModules,createRuntime,observe,workerFactory} from './web-lifecycle.mjs';
 
@@ -73,7 +73,7 @@ export function selectionControllerCases(api) {
   // Equator-symmetric fixtures keep the controller's actual flat projection
   // exactly invertible. No geometry tolerance or coordinate rounding is used.
   const features=remote=>seedSelectionFeatures(api,{remote}).map(feature=>{const copy=clone(feature);const shift=value=>{if(typeof value[0]==='number')value[1]-=5;else value.forEach(shift);};shift(copy.geometry.coordinates);return copy;});
-  const row=(name,actions,{remote=false,corrected=false,reference=''}={})=>({case:name,sourceIds:['donor'],features:features(remote),corrected,reference,actions:[step('observe','before'),...actions]});
+  const row=(name,actions,{remote=false,corrected=false,reference=''}={})=>({case:name,sourceIds:['donor'],features:features(remote),view:selectionCutView(),corrected,reference,actions:[step('observe','before'),...actions]});
   const start=method=>[step('begin'),step('advance'),step('method',null,{method})];
   const draft=(method,points)=>[...start(method),step('draft',null,{points}),step('finish','candidate')];
   const line=y=>[[-1,y],[11,y]];
@@ -97,6 +97,7 @@ function webReferences(runtime) {
   return [...runtime.state.distributionEntries.filter(e=>e.territorialUnitId).map(e=>({kind:'distribution',id:e.id,target:e.territorialUnitId})),...runtime.state.labels.filter(l=>l.countryId).map(l=>({kind:'label',id:l.id,target:l.countryId})),...Object.keys(runtime.state.labelSettings).map(key=>({kind:'label-settings',id:key.slice('territorial:'.length),target:key.slice('territorial:'.length)}))];
 }
 export async function replayControllerWeb(row,api,loaded) {
+  assert.deepEqual(row.view,selectionCutView(),`${row.case}: missing or altered explicit stage-2 view`);
   const runtime=createRuntime(api);runtime.entityStore.restoreProject(api.createStaticTerritorialSnapshot(row.features));
   Object.assign(runtime.state,{distributionEntries:[],labels:[],labelSettings:{},itemVisibility:{},layerPresentation:{schemaVersion:4,styles:{},objectStyles:{},objectOrder:[]}});
   if(row.reference==='distribution')runtime.state.distributionEntries=api.normalizeDistributionEntries([{id:'donor-reference',schemaVersion:3,layerId:'distribution',mode:'territorial',territorialUnitId:'donor',value:1}],{layerExists:()=>true});
@@ -104,7 +105,7 @@ export async function replayControllerWeb(row,api,loaded) {
   if(row.reference==='label-settings')runtime.state.labelSettings={'territorial:donor':{visible:false}};
   api.assertProjectReferenceIntegrity({...runtime.state,territorialEntities:runtime.entityRepository.list()});runtime.state.historyDirtyEntityIds.clear();
   const client=api.createMapEditWorkerClient({createWorker:workerFactory(loaded.root,loaded.manifest),getEntities:runtime.entityRepository.list,getFeatureById:runtime.entityRepository.get,getTargetRevision:()=>runtime.state.stateRevision});runtime.ports.spatialQuery.mapEditClient=client;
-  const h=createSelectionRuntime(api,{lifecycle:runtime,features:row.features}),observations=[];
+  const h=createSelectionRuntime(api,{lifecycle:runtime,features:row.features,cutView:row.view}),observations=[];
   const canonical=()=>{const o=observe(runtime);return {document:o.document,labels:runtime.state.labels};};const before=clone(canonical());
   try {
     for(const action of row.actions) {
@@ -129,7 +130,7 @@ export async function replayControllerWeb(row,api,loaded) {
         default:throw Error(`unknown web action ${action.op}`);
       }
       if(!['apply','cancel'].includes(action.op)&&!action.deferSettle)await settle(action.expectError?{...h,errors:[]}:h);
-      if(action.name)observations.push({name:action.name,accepted:Boolean(accepted),outcome,selection:observeSelection(h),features:clone(runtime.entityRepository.list()),references:webReferences(runtime),history:{canUndo:runtime.state.history.length>0,canRedo:runtime.state.future.length>0},unchangedFromBefore:isDeepStrictEqual(before,canonical()),errors:clone(h.errors),reviewFeatures:h.workflow.activeSession()?.stage==='review'&&runtime.state.geometryPreview.session?clone(runtime.state.geometryPreview.session.afterFeatures):[]});
+      if(action.name)observations.push({name:action.name,accepted:Boolean(accepted),outcome,view:clone(h.cutView),cutInputs:clone(h.cutInputs),selection:observeSelection(h),features:clone(runtime.entityRepository.list()),references:webReferences(runtime),history:{canUndo:runtime.state.history.length>0,canRedo:runtime.state.future.length>0},unchangedFromBefore:isDeepStrictEqual(before,canonical()),errors:clone(h.errors),reviewFeatures:h.workflow.activeSession()?.stage==='review'&&runtime.state.geometryPreview.session?clone(runtime.state.geometryPreview.session.afterFeatures):[]});
     }
   }finally{h.workflow.clear();client.stop();}
   return {case:row.case,observations};
@@ -147,7 +148,7 @@ export function compareControllerCase(row,web,native,clipper) {
     for(const d of compareCalculation({ok:true,afterFeatures:w.features},{ok:true,features:n.features},clipper))add({field:`document.${d.field}`,...Object.fromEntries(Object.entries(d).filter(([key])=>key!=='field'))});
     observations.push({name:w.name,web:{...w,selection:ws},native:{...n,selection:ns}});
   }
-  return {case:row.case,behavioralCommit:row.corrected?'12cd8c8ec47c83cfb8c650e8f44c81cdfac10043':behavioralCommit,status:differences.length?'unexpected-mismatch':'matched',differences,observations,events:native.events};
+  return {case:row.case,inputView:clone(row.view),behavioralCommit:row.corrected?'12cd8c8ec47c83cfb8c650e8f44c81cdfac10043':behavioralCommit,status:differences.length?'unexpected-mismatch':'matched',differences,observations,events:native.events};
 }
 export async function collectNativeSelection(binary) {
   const loaded=await productionModules(),api={...loaded.api,...await loadSelectionModules(defaultSelectionSourceRoot)},corpus=selectionControllerCases(api);
@@ -166,6 +167,22 @@ export function validateSelectionReport(report) {
   assert.equal(report.schema,'pando-m972-real-controller-differential');assert.equal(report.parityComplete,false);
   const expected=expectations();assert.deepEqual(report.cases.map(row=>row.case),expected.cases.map(row=>row.case),'missing or extra controller report case');
   for(const row of report.cases) {
+    assert.deepEqual(row.inputView,selectionCutView(),`${row.case}: missing or altered explicit stage-2 view`);
+    for(const observation of row.observations) {
+      const view=row.inputView,actual=observation.native.mapViewState;
+      assert.ok(actual,`${row.case}/${observation.name}: missing actual native view`);
+      const expectedView={projection:view.kind,scale:view.scale,translateX:view.translate[0],translateY:view.translate[1],
+        centerLongitude:view.center[0],centerLatitude:view.center[1],rotationLongitude:view.rotate[0],rotationLatitude:view.rotate[1],rotationRoll:view.rotate[2],
+        viewportWidth:view.size.width,viewportHeight:view.size.height};
+      assert.deepEqual(Object.fromEntries(Object.keys(expectedView).map(key=>[key,actual[key]])),expectedView,
+        `${row.case}/${observation.name}: native camera differs from explicit web view`);
+      assert.equal(observation.native.coarsePointer,view.coarsePointer,`${row.case}: native pointer mode differs`);
+      assert.deepEqual(observation.web.view,view,`${row.case}/${observation.name}: web view differs from input`);
+      assert.ok(Array.isArray(observation.web.cutInputs),`${row.case}: missing actual web cut input evidence`);
+      for(const payload of observation.web.cutInputs)assert.deepEqual(payload.view,view,`${row.case}: worker cut view differs from input`);
+      if(observation.web.selection?.activeMethod==='line'&&observation.web.selection.candidates.length)
+        assert.ok(observation.web.cutInputs.length,`${row.case}: candidates lack actual cut input evidence`);
+    }
     assert.deepEqual(row.differences,expected.knownDifferences[row.case],`${row.case}: unexpected difference`);
     assert.notEqual(row.status,'unexpected-mismatch',`${row.case}: ${JSON.stringify(row.differences)}`);
     assert.ok(row.events.some(event=>event.selectionPending),`${row.case} did not execute selection worker`);

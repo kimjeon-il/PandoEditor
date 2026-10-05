@@ -227,37 +227,4 @@ RiverGeometryIntermediateResult calculateRiverGeometryIntermediate(const Geometr
     return {result.status,std::move(result.geometry),std::move(result.detail)};
 }
 
-namespace {
-bool near(Point a,Point b,double e=1e-8){return std::hypot(a.x-b.x,a.y-b.y)<=e;}
-struct CutHit{double position=0,boundaryT=0;std::size_t polygon=0,segment=0;Point point{};};
-std::optional<CutHit> cutIntersection(Point a,Point b,Point c,Point d,std::size_t lineIndex,std::size_t polygon,std::size_t segment){
-    const Point r{b.x-a.x,b.y-a.y},s{d.x-c.x,d.y-c.y};const auto denominator=r.x*s.y-r.y*s.x;if(std::abs(denominator)<1e-12)return {};
-    const Point ca{c.x-a.x,c.y-a.y};const auto t=(ca.x*s.y-ca.y*s.x)/denominator,u=(ca.x*r.y-ca.y*r.x)/denominator;
-    if(t<-1e-9||t>1+1e-9||u<-1e-9||u>1+1e-9)return {};
-    return CutHit{double(lineIndex)+std::clamp(t,0.,1.),std::clamp(u,0.,1.),polygon,segment,{a.x+r.x*std::clamp(t,0.,1.),a.y+r.y*std::clamp(t,0.,1.)}};
-}
-bool pointInRing(const Ring& ring,Point point){bool inside=false;for(std::size_t i=0,j=ring.size()-1;i<ring.size();j=i++){const auto a=ring[j],b=ring[i];if((a.y>point.y)!=(b.y>point.y)&&point.x<(b.x-a.x)*(point.y-a.y)/(b.y-a.y)+a.x)inside=!inside;}return inside;}
-Ring ensureClosed(Ring ring){if(ring.size()>1&&!near(ring.front(),ring.back()))ring.push_back(ring.front());return ring;}
-Ring walk(const Ring& ring,std::size_t start,std::size_t end,int step){Ring result{ring[start]};auto index=start;for(std::size_t guard=0;index!=end&&guard<=ring.size();++guard){index=(index+ring.size()+step)%ring.size();result.push_back(ring[index]);}if(index!=end)throw std::runtime_error("INVALID_CUT_ARC");return result;}
-}
-SplitGeometryResult splitGeometryByLine(const Geometry& source,const Ring& line,const GeometryCancellation& cancelled) {
-    const auto stopped=[&]{return cancelled&&cancelled();};if(stopped())return {GeometryOperationStatus::Cancelled,{},{},""};
-    try {
-        if(line.size()<2||source.polygons.empty())throw std::invalid_argument("CUT_REQUIRES_TWO_POINTS");std::vector<CutHit> hits;
-        for(std::size_t l=0;l+1<line.size();++l)for(std::size_t p=0;p<source.polygons.size();++p){if(source.polygons[p].empty())continue;const auto ring=ensureClosed(source.polygons[p].front());for(std::size_t s=0;s+1<ring.size();++s)if(auto hit=cutIntersection(line[l],line[l+1],ring[s],ring[s+1],l,p,s))hits.push_back(*hit);}
-        std::sort(hits.begin(),hits.end(),[](const auto& a,const auto& b){return a.position<b.position;});hits.erase(std::unique(hits.begin(),hits.end(),[](const auto& a,const auto& b){return std::abs(a.position-b.position)<1e-7&&near(a.point,b.point,1e-7);}),hits.end());
-        if(hits.size()!=2||hits[0].polygon!=hits[1].polygon)throw std::invalid_argument("CUT_MUST_CROSS_ONE_COMPONENT_TWICE");const auto component=hits[0].polygon;auto outer=ensureClosed(source.polygons[component].front());outer.pop_back();
-        std::vector<std::pair<std::size_t,CutHit>> insertions{{hits[0].segment,hits[0]},{hits[1].segment,hits[1]}};Ring augmented;
-        for(std::size_t i=0;i<outer.size();++i){augmented.push_back(outer[i]);std::vector<CutHit> at;for(const auto& [segment,hit]:insertions)if(segment==i&&hit.boundaryT>0.002&&hit.boundaryT<0.998)at.push_back(hit);std::sort(at.begin(),at.end(),[](const auto& a,const auto& b){return a.boundaryT<b.boundaryT;});for(const auto& hit:at)if(!near(augmented.back(),hit.point))augmented.push_back(hit.point);}
-        const auto indexOf=[&](Point point){for(std::size_t i=0;i<augmented.size();++i)if(near(augmented[i],point,1e-7))return i;throw std::runtime_error("CUT_ENDPOINT_NOT_ON_BOUNDARY");};const auto first=indexOf(hits[0].point),last=indexOf(hits[1].point);if(first==last)throw std::runtime_error("CUT_ENDPOINTS_TOO_CLOSE");
-        Ring cut{hits[0].point};for(std::size_t i=1;i+1<line.size();++i)if(double(i)>hits[0].position+1e-7&&double(i)<hits[1].position-1e-7)cut.push_back(line[i]);if(!near(cut.back(),hits[1].point))cut.push_back(hits[1].point);
-        const auto forward=walk(augmented,first,last,1),backward=walk(augmented,first,last,-1);std::array<Ring,2> rings;
-        for(int side=0;side<2;++side){rings[side]=cut;const auto& arc=side?backward:forward;for(auto i=arc.rbegin()+1;i+1!=arc.rend();++i)rings[side].push_back(*i);rings[side]=ensureClosed(std::move(rings[side]));}
-        SplitGeometryResult result;result.status=GeometryOperationStatus::Completed;result.componentIndex=component;
-        for(int side=0;side<2;++side){result.candidates[side].type="MultiPolygon";result.candidates[side].polygons={Polygon{rings[side]}};}
-        for(std::size_t h=1;h<source.polygons[component].size();++h){const auto& hole=source.polygons[component][h];if(hole.empty())continue;const auto point=hole.front();if(pointInRing(rings[0],point))result.candidates[0].polygons.front().push_back(hole);else if(pointInRing(rings[1],point))result.candidates[1].polygons.front().push_back(hole);else throw std::runtime_error("CUT_SPLITS_HOLE");}
-        for(const auto& candidate:result.candidates){GeometryStore validator;validator.insert({"cut",1},candidate);if(planarArea(candidate)<=1e-10)throw std::runtime_error("EMPTY_CUT_PART");}
-        if(stopped())return {GeometryOperationStatus::Cancelled,{},{},""};return result;
-    }catch(const std::exception& error){if(stopped())return {GeometryOperationStatus::Cancelled,{},{},""};return {GeometryOperationStatus::Failed,{},0,error.what()};}
-}
 }

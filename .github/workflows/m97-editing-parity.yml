@@ -31,7 +31,7 @@ jobs:
       - name: Verify offline pinned production oracle and comparator
         run: |
           mkdir -p evidence
-          mapfile -t oracle_tests < <(find tools/m97 -maxdepth 1 -name '*.test.mjs' ! -name 'native-selection.test.mjs' | sort)
+          mapfile -t oracle_tests < <(find tools/m97 -maxdepth 1 -name '*.test.mjs' ! -name 'native-selection.test.mjs' ! -name 'split-differential-native.test.mjs' | sort)
           node --test "${oracle_tests[@]}" | tee evidence/node-tests.txt
       - name: Install native build dependencies
         run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
@@ -42,6 +42,21 @@ jobs:
           cache: true
       - name: Build native production and regression probes
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON && cmake --build build --parallel 2
+      - name: Verify actual compiled split controller probe
+        env:
+          PANDO_M973_SPLIT_PROBE: ${{ github.workspace }}/build/app/m973_split_controller_probe
+        run: node --test tools/m97/split-differential-native.test.mjs | tee evidence/split-native-probe-tests.txt
+      - name: Preserve exact compiled split probes
+        run: |
+          mkdir -p evidence/split-runtime
+          cp build/app/m973_split_controller_probe build/app/m973_cut_kernel_probe evidence/split-runtime/
+          printf '%s\n' "$GITHUB_SHA" > evidence/split-runtime/COMMIT
+          (cd evidence/split-runtime && sha256sum m973_split_controller_probe m973_cut_kernel_probe > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m973-split-runtime-${{ github.sha }}
+          path: evidence/split-runtime
+          retention-days: 14
       - name: Fetch pinned full regression datasets
         uses: actions/checkout@v4
         with:
@@ -212,4 +227,76 @@ jobs:
         with:
           name: m972-river-controller-${{ matrix.case-id }}-${{ github.sha }}
           path: evidence/river-controller
+          retention-days: 14
+
+  split-chromium-oracle:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install pinned official Playwright and Chromium
+        run: |
+          npm ci --prefix tools/m97/river/browser --ignore-scripts --registry=https://registry.npmjs.org
+          node tools/m97/river/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Capture actual split lifecycle and bounded flat-globe kernel corpus
+        run: node --max-old-space-size=512 tools/m97/split-browser-runner.mjs evidence/split-chromium
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m973-split-chromium-${{ github.sha }}
+          path: evidence/split-chromium
+          retention-days: 14
+
+  split-controller-parity:
+    needs: [linux-regression, split-chromium-oracle]
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install matching native runtime dependencies
+        run: sudo apt-get update && sudo apt-get install -y libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: m973-split-runtime-${{ github.sha }}
+          path: split-runtime
+      - uses: actions/download-artifact@v4
+        with:
+          name: m973-split-chromium-${{ github.sha }}
+          path: browser-split-artifact
+      - name: Compare actual compiled observations against actual Chromium
+        run: |
+          test "$(cat split-runtime/COMMIT)" = "$GITHUB_SHA"
+          (cd split-runtime && sha256sum -c SHA256SUMS)
+          test "$(qmake -query QT_VERSION)" = '6.8.3'
+          export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
+          chmod +x split-runtime/m973_split_controller_probe split-runtime/m973_cut_kernel_probe
+          node --max-old-space-size=512 tools/m97/split-differential-runner.mjs browser-split-artifact split-runtime evidence/split-differential
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m973-split-differential-${{ github.sha }}
+          path: evidence/split-differential
           retention-days: 14

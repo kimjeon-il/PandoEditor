@@ -1,0 +1,24 @@
+{
+  "schema": "pando-approved-split-correction",
+  "version": 1,
+  "repository": "kimjeon-il/Pando",
+  "baseBehavioralCommit": "07d3e2053c71573e11c5cf89151f5f6686038511",
+  "behavioralCommit": "ad78780f79f4f38fcd7c2a3c2fb1fe0ba8e37c32",
+  "tree": "e35fc94eb008249ba8ac6763132c72d218c649f2",
+  "parentManifest": "../dateline/manifest.json",
+  "scope": "Approved deleted-child visibility/object-style cleanup with sparse identity appearance history; surviving object preferences remain current.",
+  "changes": [
+    {
+      "path": "assets/js/modules/app-country-commits.js",
+      "blob": "f136f2dfe3b221c65b759c0e988f846fe938cf0e",
+      "sha256": "e4d7a8c2281cb7d3c8a9eb11925f5eadd1601ed1638e73de2bd21f239c3fc4f5",
+      "bytes": 35210
+    },
+    {
+      "path": "assets/js/modules/app-project-snapshots.js",
+      "blob": "174b316ca92b3999f907707d0354c5538cd9d87b",
+      "sha256": "8c24f299e4910386041e960efb2fd0a17f0c6282154dc482a6612629102a5bd0",
+      "bytes": 20488
+    }
+  ]
+}

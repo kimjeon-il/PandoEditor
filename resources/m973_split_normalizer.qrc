@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="/split-corrections">
+    <file alias="approved-manifest.json">../assets/geometry/split-corrections/approved-manifest.json</file>
+    <file alias="original/polygon-geometry.js">../assets/geometry/split-corrections/original/polygon-geometry.js</file>
+    <file alias="provenance.json">../assets/geometry/split-corrections/provenance.json</file>
+  </qresource>
+</RCC>

@@ -27,8 +27,9 @@ struct ConvertTerritorialTypeIntent { ObjectRef source; UnitKind targetKind=Unit
 struct ReplaceGeometryIntent { ObjectRef target; };
 struct MergeTerritorialIntent { ObjectRef target; std::vector<ObjectRef> donors; };
 struct AnnexTerritoryIntent { ObjectRef target; std::vector<ObjectRef> donors; Geometry selection; };
-// -1 retains the larger cut result; 0/1 explicitly choose the retained result.
-struct SplitTerritorialIntent { ObjectRef source; Ring cutLine; int retainedPart=-1; std::string createdId,createdName; };
+// One fresh sibling receives the selected union. Drawing, candidate order and
+// the number of cut fragments belong to the selection workflow, not the commit.
+struct SplitTerritorialIntent { ObjectRef source; Geometry selection; std::string createdId,createdName; };
 struct DraftGeometry { ObjectRef owner; Geometry geometry; };
 struct SharedBoundaryIntent { std::vector<DraftGeometry> drafts; };
 enum class CoastlineAuthority { Country, Subunit, Independent };

@@ -192,12 +192,38 @@ TerritorialMutationPlan planAnnex(const ProjectSnapshot& s,const AnnexTerritoryI
     requireRewritableGuards(p,s.document());p.impacts.push_back({"annex",in.target,"territorial.annex"});return p;
 }
 TerritorialMutationPlan planSplit(const ProjectSnapshot& s,const SplitTerritorialIntent& in) {
-    const auto& source=unit(s,in.source);unlocked(source);if(in.cutLine.size()<2||in.retainedPart< -1||in.retainedPart>1||in.createdId.empty()||in.createdName.empty())throw std::invalid_argument("INVALID_ARGUMENTS");
+    const auto& source=unit(s,in.source);unlocked(source);if(source.kind!=UnitKind::General)throw std::invalid_argument("SPLIT_REQUIRES_GENERAL");
+    if(in.createdId.empty()||trimWebText(in.createdName).empty())throw std::invalid_argument("INVALID_ARGUMENTS");
+    {GeometryStore validation;validation.insert({"split-selection",1},in.selection);if(in.selection.type!="Polygon"&&in.selection.type!="MultiPolygon")throw std::invalid_argument("INVALID_GEOMETRY");}
     const auto created=territorialRef(in.createdId);if(created==in.source||s.index().objects.count(created))throw std::invalid_argument("DUPLICATE_ID");
     const auto layer=s.layer(nativeLayerId(s.document(),in.source));if(layer&&layer->locked)throw std::invalid_argument("LOCKED");
-    auto p=initial(s,TerritorialMutationKind::SplitTerritorial,in);p.targets={in.source};p.affectedObjects={in.source};p.selectedAfter=in.source;p.requiresConfirmation=true;
+    const auto& relation=staticParentRelation(s.document(),in.source.id);
+    if(!relation.parentId.empty()) {const auto& parent=unit(s,territorialRef(relation.parentId));unlocked(parent);if(parent.kind!=UnitKind::General)throw std::invalid_argument("ADMINISTRATIVE_PARENT_MISMATCH");const auto parentLayer=s.layer(nativeLayerId(s.document(),territorialRef(parent.id)));if(parentLayer&&parentLayer->locked)throw std::invalid_argument("LOCKED");}
+    auto p=initial(s,TerritorialMutationKind::SplitTerritorial,in);p.targets={in.source};p.affectedObjects={in.source};p.selectedAfter=created;p.requiresConfirmation=true;
     p.geometry.kind=GeometryRequirementKind::WorkerPatch;p.geometry.operation="split";p.geometry.readOwners={in.source};p.geometry.replacements={{in.source,in.source}};p.geometry.createOwners={created};
-    guard(p,s.document(),in.source,"geometry");guard(p,s.document(),created,"add");requireRewritableGuards(p,s.document());p.impacts.push_back({"split",in.source,"territorial.split"});return p;
+    guard(p,s.document(),in.source,"geometry");guard(p,s.document(),created,"add");
+    for(const auto& candidate:s.document().units) {
+        const auto ref=territorialRef(candidate.id);if(ref==in.source||candidate.kind!=UnitKind::General||!descendant(s.document(),ref,in.source))continue;
+        p.geometry.readOwners.push_back(ref);
+        bool carriedByAncestor=false;
+        if(!relation.parentId.empty()) {
+            auto parentId=staticParentRelation(s.document(),ref.id).parentId;
+            for(std::size_t depth=0;depth<s.document().units.size()&&!parentId.empty()&&parentId!=in.source.id;++depth) {
+                if(geometryContains(in.selection,*shape(s.document(),territorialRef(parentId)))){carriedByAncestor=true;break;}
+                parentId=staticParentRelation(s.document(),parentId).parentId;
+            }
+        }
+        const bool changing=!carriedByAncestor&&geometrySignificantOverlap(*shape(s.document(),ref),in.selection);
+        // Child creation stops at a whole transferred ancestor. Descendants
+        // carried with it are read-only: no mutable patch permission or lock
+        // effect is granted for their unchanged geometry/immediate parent.
+        if(relation.parentId.empty()||changing){p.geometry.replacements.push_back({ref,ref});p.geometry.removableOwners.push_back(ref);}
+        if(changing) {
+            unlocked(candidate);p.affectedObjects.push_back(ref);const auto childLayer=s.layer(nativeLayerId(s.document(),ref));if(childLayer&&childLayer->locked)throw std::invalid_argument("LOCKED");
+            guard(p,s.document(),ref,"geometry");guard(p,s.document(),ref,"relation");guard(p,s.document(),ref,"delete");
+        }
+    }
+    requireRewritableGuards(p,s.document());p.impacts.push_back({"split",in.source,"territorial.split"});return p;
 }
 TerritorialMutationPlan planSharedBoundary(const ProjectSnapshot& s,const SharedBoundaryIntent& in) {
     if(in.drafts.size()<2)throw std::invalid_argument("BOUNDARY_REQUIRES_TWO_OWNERS");

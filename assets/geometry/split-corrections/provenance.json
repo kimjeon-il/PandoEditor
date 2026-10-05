@@ -1,0 +1,25 @@
+{
+  "schema": "pando-approved-split-normalizer",
+  "version": 1,
+  "webCommit": "07d3e2053c71573e11c5cf89151f5f6686038511",
+  "baseBehavioralCommit": "6c3f930b8573fa09991885b661879ea36725472e",
+  "tree": "af43e2aaa30b870b6858283fedbadf2f0ee24bf5",
+  "sourceManifest": "tests/fixtures/web-m973-split/corrections/dateline/manifest.json",
+  "sourceManifestSha256": "d15bd80373af3ff98c3cc4fcec2f78b6268956c275e3318b08a5a71208c30096",
+  "source": {
+    "path": "assets/js/modules/polygon-geometry.js",
+    "gitBlob": "15f0ae1ee1873e42452778ca8b5e0f604ef5c925",
+    "sha256": "a645827c46f7c62dbf929f850c67f350516669dfeafe5c637aec6c67efcfebf4",
+    "bytes": 10152,
+    "resource": "original/polygon-geometry.js"
+  },
+  "generator": "tools/m97/split-normalizer-generate.mjs",
+  "transformation": "None. The complete approved application module, including every export, is evaluated byte-identically.",
+  "license": {
+    "application": "Shared-owner Pando application source. No separate upstream application license is asserted.",
+    "polygonClipping": "MIT; assets/geometry/LICENSE.polygon-clipping.txt"
+  },
+  "dependencies": {
+    "polygonClipping": "Existing loadPinnedPolygonClipping, retaining its original hash and single reviewed Qt comma-return correction."
+  }
+}

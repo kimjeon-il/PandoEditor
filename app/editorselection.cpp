@@ -189,6 +189,9 @@ void EditorController::applySelection(SelectionState next) {
     emit selectionChanged();
     emit stateChanged();emit draftsChanged();
     emit visualChanged();
+    // Child split previews bind to the selection identity observed at request
+    // time. Refresh their read-only readiness when that identity changes.
+    if(geometryEdit_&&geometryEdit_->splitIntent&&!staticParentRelation(geometryEdit_->base.document(),geometryEdit_->target.id).parentId.empty())emit geometryEditChanged();
     // No dirtyChanged, project revision, history, import epoch, preview or worker mutation.
 }
 bool EditorController::selectObject(const QVariantMap& value,const QString& mode,const QString& scope,const QVariantList& ordered,bool additive) {

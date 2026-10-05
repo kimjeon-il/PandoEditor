@@ -529,10 +529,35 @@ private slots:
         QVERIFY(h.click("geometryMinimize"));QVERIFY(dock->property("minimized").toBool());
         QVERIFY(h.click("geometryMinimize"));QVERIFY(h.click("geometryCancel"));QVERIFY(!h.editor.geometryEditState()["active"].toBool());
         QVERIFY(h.editor.beginSplitGeometry());QTest::qWait(80);QVERIFY(!dock->property("minimized").toBool());
-        QVERIFY(h.control("splitResultChoice")->isVisible());QVERIFY(!h.control("geometryDeleteVertex")->isVisible());
+        QVERIFY(h.editor.geometryEditState()["territorySelection"].toBool());QVERIFY(!h.control("geometryDeleteVertex")->isVisible());
+        QVERIFY(h.editor.geometryAdvanceStage());QVERIFY(h.editor.geometrySelectTerritoryMethod("line"));QTRY_VERIFY_WITH_TIMEOUT(!h.editor.geometryEditState()["calculating"].toBool(),10000);
         for(const auto point:{Point{2,-1},Point{2,10}}){const auto xy=projection.project(point);QVERIFY(h.editor.geometryAddPoint(xy.x,xy.y,0));}
         QVERIFY(h.click("geometryUndoDraft"));QCOMPARE(h.editor.geometryDraftPaths().front().toMap()["vertices"].toList().size(),1);
         QVERIFY(h.click("geometryCancel"));QCOMPARE(h.editor.documentBytes(),after);
+        QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
+    }
+    void splitDynamicCandidates_data(){modes();}
+    void splitDynamicCandidates(){
+        QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);h.editor.selectCountry("B");
+        const auto before=h.editor.documentBytes();MapProjection projection;projection.rebuild(projectcodec::decode(before));
+        QVERIFY(h.editor.beginSplitGeometry());QVERIFY(h.click("geometryAdvance"));QVERIFY(h.click("geometryMethod_line"));
+        QTRY_VERIFY_WITH_TIMEOUT(!h.editor.geometryEditState()["calculating"].toBool(),10000);
+        for(const auto point:{Point{19,2},Point{31,2},Point{31,5},Point{19,5},Point{19,8},Point{31,8}}){const auto xy=projection.project(point);QVERIFY(h.editor.geometryAddPoint(xy.x,xy.y,0));}
+        QVERIFY(h.click("geometryFinishDraft"));
+        QTRY_VERIFY_WITH_TIMEOUT(!h.editor.geometryEditState()["calculating"].toBool(),15000);
+        QVERIFY2(h.editor.geometryEditState()["error"].toString().isEmpty(),qPrintable(h.editor.geometryEditState()["error"].toString()));
+        const auto candidates=h.editor.geometryEditState()["candidates"].toList();QCOMPARE(candidates.size(),4);QString picked;
+        for(const auto candidate:candidates)if(!candidate.toMap()["selected"].toBool()){picked=candidate.toMap()["id"].toString();break;}
+        QVERIFY(h.click("geometryCandidate_"+picked));QTRY_VERIFY_WITH_TIMEOUT(h.editor.geometryEditState()["canAddPart"].toBool(),15000);
+        QCOMPARE(h.editor.geometryEditState()["selectedCandidateIds"].toList().size(),2);
+        QVERIFY(h.click("geometryArchivePart"));QTRY_VERIFY_WITH_TIMEOUT(h.editor.geometryEditState()["canAdvance"].toBool(),15000);
+        QVERIFY(h.click("geometryReview"));QCOMPARE(h.editor.geometryEditState()["stage"].toString(),QString("review"));
+        QVERIFY(h.click("geometryBack"));QCOMPARE(h.editor.geometryEditState()["stage"].toString(),QString("selection"));
+        QTRY_VERIFY_WITH_TIMEOUT(h.editor.geometryEditState()["canAdvance"].toBool(),15000);QVERIFY(h.click("geometryReview"));
+        QVERIFY(h.click("geometryConfirm"));QTRY_VERIFY_WITH_TIMEOUT(!h.editor.geometryEditState()["active"].toBool(),15000);
+        QVERIFY(h.editor.selectedId()!="B");const auto after=h.editor.documentBytes();QVERIFY(after!=before);
+        h.editor.undo();QCOMPARE(h.editor.documentBytes(),before);h.editor.redo();QCOMPARE(h.editor.documentBytes(),after);
+        h.editor.selectCountry("B");QVERIFY(h.editor.beginSplitGeometry());QVERIFY(h.click("geometryCancel"));QCOMPARE(h.editor.documentBytes(),after);
         QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
     }
     void overlayAndHierarchicalMenus_data(){modes();}

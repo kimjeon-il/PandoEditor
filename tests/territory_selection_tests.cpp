@@ -96,6 +96,15 @@ class TerritorySelectionTests:public QObject {
         return {};
     }
 private slots:
+    void approvedDatelineSelectionSubtractsInWrappedLongitudeSpace() {
+        Geometry raw;raw.type="Polygon";raw.polygons={{{{179,-2},{179,2},{-179,2},{-179,-2},{179,-2}}}};
+        Geometry selected=box(179,0,180,2);selected.type="MultiPolygon";selected.polygons.push_back(box(-180,0,-179,2).polygons.front());
+        SynchronousSelection selection(TerritorySelectionKind::BoundedCreation);
+        QVERIFY(selection.resetSources({source("dateline",raw)}));QVERIFY(selection.requestMethod(TerritorySelectionMethod::Line)!=TerritoryMethodChange::Rejected);
+        QVERIFY(selection.setCandidates({{"north",selected,4.}}));QVERIFY(selection.state().remainingGeometry.has_value());
+        QCOMPARE(planarArea(*selection.state().remainingGeometry),4.);QVERIFY(selection.archiveReadiness()==TerritoryArchiveReadiness::Ready);
+    }
+
     void failedDeferredSwitchKeepsExplicitMethodConfirmation() {
         TerritorySelection selection;QVERIFY(selection.resetSources({source("donor",box(0,0,10,10))}));
         QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Polygon),TerritoryMethodChange::Activated);

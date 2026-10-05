@@ -1,0 +1,1386 @@
+[
+  {
+    "id": "root-dateline-basic",
+    "scope": "root",
+    "source": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            179,
+            -2
+          ],
+          [
+            179,
+            2
+          ],
+          [
+            -179,
+            2
+          ],
+          [
+            -179,
+            -2
+          ],
+          [
+            179,
+            -2
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        178,
+        0
+      ],
+      [
+        -178,
+        0
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        180,
+        0
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": false,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": false,
+    "dependentGeneric": false,
+    "parentGeometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            173,
+            -3
+          ],
+          [
+            173,
+            3
+          ],
+          [
+            -178,
+            3
+          ],
+          [
+            -178,
+            -3
+          ],
+          [
+            173,
+            -3
+          ]
+        ]
+      ]
+    }
+  },
+  {
+    "id": "root-dateline-hole",
+    "scope": "root",
+    "source": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            179,
+            -2
+          ],
+          [
+            179,
+            2
+          ],
+          [
+            -179,
+            2
+          ],
+          [
+            -179,
+            -2
+          ],
+          [
+            179,
+            -2
+          ]
+        ],
+        [
+          [
+            179.5,
+            0.5
+          ],
+          [
+            -179.5,
+            0.5
+          ],
+          [
+            -179.5,
+            1.5
+          ],
+          [
+            179.5,
+            1.5
+          ],
+          [
+            179.5,
+            0.5
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        178,
+        0
+      ],
+      [
+        -178,
+        0
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        180,
+        0
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": false,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": false,
+    "dependentGeneric": false,
+    "parentGeometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            173,
+            -3
+          ],
+          [
+            173,
+            3
+          ],
+          [
+            -178,
+            3
+          ],
+          [
+            -178,
+            -3
+          ],
+          [
+            173,
+            -3
+          ]
+        ]
+      ]
+    }
+  },
+  {
+    "id": "root-dateline-island",
+    "scope": "root",
+    "source": {
+      "type": "MultiPolygon",
+      "coordinates": [
+        [
+          [
+            [
+              179,
+              -2
+            ],
+            [
+              179,
+              2
+            ],
+            [
+              -179,
+              2
+            ],
+            [
+              -179,
+              -2
+            ],
+            [
+              179,
+              -2
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              174,
+              0
+            ],
+            [
+              174,
+              1
+            ],
+            [
+              175,
+              1
+            ],
+            [
+              175,
+              0
+            ],
+            [
+              174,
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        178,
+        0
+      ],
+      [
+        -178,
+        0
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        180,
+        0
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": false,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": false,
+    "dependentGeneric": false,
+    "parentGeometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            173,
+            -3
+          ],
+          [
+            173,
+            3
+          ],
+          [
+            -178,
+            3
+          ],
+          [
+            -178,
+            -3
+          ],
+          [
+            173,
+            -3
+          ]
+        ]
+      ]
+    }
+  },
+  {
+    "id": "root-dateline-multiple-crossings",
+    "scope": "root",
+    "source": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            179,
+            -2
+          ],
+          [
+            179,
+            2
+          ],
+          [
+            -179,
+            2
+          ],
+          [
+            -179,
+            -2
+          ],
+          [
+            179,
+            -2
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        178,
+        -1
+      ],
+      [
+        -178,
+        -1
+      ],
+      [
+        -178,
+        0
+      ],
+      [
+        178,
+        0
+      ],
+      [
+        178,
+        1
+      ],
+      [
+        -178,
+        1
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        180,
+        0
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": false,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": false,
+    "dependentGeneric": false,
+    "parentGeometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            173,
+            -3
+          ],
+          [
+            173,
+            3
+          ],
+          [
+            -178,
+            3
+          ],
+          [
+            -178,
+            -3
+          ],
+          [
+            173,
+            -3
+          ]
+        ]
+      ]
+    }
+  },
+  {
+    "id": "root-dateline-dependents",
+    "scope": "root",
+    "source": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            179,
+            -2
+          ],
+          [
+            179,
+            2
+          ],
+          [
+            -179,
+            2
+          ],
+          [
+            -179,
+            -2
+          ],
+          [
+            179,
+            -2
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        178,
+        0
+      ],
+      [
+        -178,
+        0
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        180,
+        0
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": false,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": false,
+    "dependentGeneric": false,
+    "parentGeometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            173,
+            -3
+          ],
+          [
+            173,
+            3
+          ],
+          [
+            -178,
+            3
+          ],
+          [
+            -178,
+            -3
+          ],
+          [
+            173,
+            -3
+          ]
+        ]
+      ]
+    },
+    "dependentFeatures": [
+      {
+        "id": "child-kept",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                179.2,
+                0.5
+              ],
+              [
+                179.2,
+                1.5
+              ],
+              [
+                -179.2,
+                1.5
+              ],
+              [
+                -179.2,
+                0.5
+              ],
+              [
+                179.2,
+                0.5
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "id": "child-moved",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                179.2,
+                -1.5
+              ],
+              [
+                179.2,
+                -0.5
+              ],
+              [
+                -179.2,
+                -0.5
+              ],
+              [
+                -179.2,
+                -1.5
+              ],
+              [
+                179.2,
+                -1.5
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "id": "child-cross",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                179.2,
+                -0.4
+              ],
+              [
+                179.2,
+                0.4
+              ],
+              [
+                -179.2,
+                0.4
+              ],
+              [
+                -179.2,
+                -0.4
+              ],
+              [
+                179.2,
+                -0.4
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "id": "grandchild-cross",
+        "parentId": "child-cross",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                179.4,
+                -0.2
+              ],
+              [
+                179.4,
+                0.2
+              ],
+              [
+                -179.4,
+                0.2
+              ],
+              [
+                -179.4,
+                -0.2
+              ],
+              [
+                179.4,
+                -0.2
+              ]
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "child-dateline-basic",
+    "scope": "child",
+    "source": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            179,
+            -2
+          ],
+          [
+            179,
+            2
+          ],
+          [
+            -179,
+            2
+          ],
+          [
+            -179,
+            -2
+          ],
+          [
+            179,
+            -2
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        178,
+        0
+      ],
+      [
+        -178,
+        0
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        180,
+        0
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": false,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": false,
+    "dependentGeneric": false,
+    "parentGeometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            173,
+            -3
+          ],
+          [
+            173,
+            3
+          ],
+          [
+            -178,
+            3
+          ],
+          [
+            -178,
+            -3
+          ],
+          [
+            173,
+            -3
+          ]
+        ]
+      ]
+    }
+  },
+  {
+    "id": "child-dateline-hole",
+    "scope": "child",
+    "source": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            179,
+            -2
+          ],
+          [
+            179,
+            2
+          ],
+          [
+            -179,
+            2
+          ],
+          [
+            -179,
+            -2
+          ],
+          [
+            179,
+            -2
+          ]
+        ],
+        [
+          [
+            179.5,
+            0.5
+          ],
+          [
+            -179.5,
+            0.5
+          ],
+          [
+            -179.5,
+            1.5
+          ],
+          [
+            179.5,
+            1.5
+          ],
+          [
+            179.5,
+            0.5
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        178,
+        0
+      ],
+      [
+        -178,
+        0
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        180,
+        0
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": false,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": false,
+    "dependentGeneric": false,
+    "parentGeometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            173,
+            -3
+          ],
+          [
+            173,
+            3
+          ],
+          [
+            -178,
+            3
+          ],
+          [
+            -178,
+            -3
+          ],
+          [
+            173,
+            -3
+          ]
+        ]
+      ]
+    }
+  },
+  {
+    "id": "child-dateline-island",
+    "scope": "child",
+    "source": {
+      "type": "MultiPolygon",
+      "coordinates": [
+        [
+          [
+            [
+              179,
+              -2
+            ],
+            [
+              179,
+              2
+            ],
+            [
+              -179,
+              2
+            ],
+            [
+              -179,
+              -2
+            ],
+            [
+              179,
+              -2
+            ]
+          ]
+        ],
+        [
+          [
+            [
+              174,
+              0
+            ],
+            [
+              174,
+              1
+            ],
+            [
+              175,
+              1
+            ],
+            [
+              175,
+              0
+            ],
+            [
+              174,
+              0
+            ]
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        178,
+        0
+      ],
+      [
+        -178,
+        0
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        180,
+        0
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": false,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": false,
+    "dependentGeneric": false,
+    "parentGeometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            173,
+            -3
+          ],
+          [
+            173,
+            3
+          ],
+          [
+            -178,
+            3
+          ],
+          [
+            -178,
+            -3
+          ],
+          [
+            173,
+            -3
+          ]
+        ]
+      ]
+    }
+  },
+  {
+    "id": "child-dateline-multiple-crossings",
+    "scope": "child",
+    "source": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            179,
+            -2
+          ],
+          [
+            179,
+            2
+          ],
+          [
+            -179,
+            2
+          ],
+          [
+            -179,
+            -2
+          ],
+          [
+            179,
+            -2
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        178,
+        -1
+      ],
+      [
+        -178,
+        -1
+      ],
+      [
+        -178,
+        0
+      ],
+      [
+        178,
+        0
+      ],
+      [
+        178,
+        1
+      ],
+      [
+        -178,
+        1
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        180,
+        0
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": false,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": false,
+    "dependentGeneric": false,
+    "parentGeometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            173,
+            -3
+          ],
+          [
+            173,
+            3
+          ],
+          [
+            -178,
+            3
+          ],
+          [
+            -178,
+            -3
+          ],
+          [
+            173,
+            -3
+          ]
+        ]
+      ]
+    }
+  },
+  {
+    "id": "child-dateline-dependents",
+    "scope": "child",
+    "source": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            179,
+            -2
+          ],
+          [
+            179,
+            2
+          ],
+          [
+            -179,
+            2
+          ],
+          [
+            -179,
+            -2
+          ],
+          [
+            179,
+            -2
+          ]
+        ]
+      ]
+    },
+    "coords": [
+      [
+        178,
+        0
+      ],
+      [
+        -178,
+        0
+      ]
+    ],
+    "view": {
+      "kind": "flat",
+      "scale": 500,
+      "translate": [
+        512,
+        384
+      ],
+      "rotate": [
+        0,
+        0,
+        0
+      ],
+      "center": [
+        180,
+        0
+      ],
+      "snapDistance": {
+        "mouse": 10,
+        "touch": 18
+      },
+      "coarsePointer": false,
+      "size": {
+        "width": 1024,
+        "height": 768
+      }
+    },
+    "select": "default",
+    "dependents": false,
+    "dependentReference": false,
+    "dependentLabel": false,
+    "dependentLabelSettings": false,
+    "dependentPresentation": false,
+    "dependentGeneric": false,
+    "parentGeometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            173,
+            -3
+          ],
+          [
+            173,
+            3
+          ],
+          [
+            -178,
+            3
+          ],
+          [
+            -178,
+            -3
+          ],
+          [
+            173,
+            -3
+          ]
+        ]
+      ]
+    },
+    "dependentFeatures": [
+      {
+        "id": "child-kept",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                179.2,
+                0.5
+              ],
+              [
+                179.2,
+                1.5
+              ],
+              [
+                -179.2,
+                1.5
+              ],
+              [
+                -179.2,
+                0.5
+              ],
+              [
+                179.2,
+                0.5
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "id": "child-moved",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                179.2,
+                -1.5
+              ],
+              [
+                179.2,
+                -0.5
+              ],
+              [
+                -179.2,
+                -0.5
+              ],
+              [
+                -179.2,
+                -1.5
+              ],
+              [
+                179.2,
+                -1.5
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "id": "child-cross",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                179.2,
+                -0.4
+              ],
+              [
+                179.2,
+                0.4
+              ],
+              [
+                -179.2,
+                0.4
+              ],
+              [
+                -179.2,
+                -0.4
+              ],
+              [
+                179.2,
+                -0.4
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "id": "grandchild-cross",
+        "parentId": "child-cross",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                179.4,
+                -0.2
+              ],
+              [
+                179.4,
+                0.2
+              ],
+              [
+                -179.4,
+                0.2
+              ],
+              [
+                -179.4,
+                -0.2
+              ],
+              [
+                179.4,
+                -0.2
+              ]
+            ]
+          ]
+        }
+      }
+    ]
+  }
+]

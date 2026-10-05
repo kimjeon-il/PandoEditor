@@ -144,10 +144,10 @@ private slots:
         const auto provider=c.pickObjectScreen(screen.x,screen.y,1);QCOMPARE(provider.value("id").toString(),QString("B"));QVERIFY(c.geometryToggleProvider(provider));
         const auto scene=static_cast<MapSceneBridge*>(c.mapSceneBridge())->sceneSnapshot();QVERIFY(scene);QCOMPARE(scene->interaction.selected,std::vector<ObjectRef>{territorialRef("B")});c.cancelGeometryEdit();
     }
-    void holeCrossingRemainsExplicitDeferredCut_data() {
+    void holeCrossingWorksAndSelfCrossingRemainsRejected_data() {
         QTest::addColumn<bool>("selfCrossing");QTest::newRow("hole")<<false;QTest::newRow("self crossing line")<<true;
     }
-    void holeCrossingRemainsExplicitDeferredCut() {
+    void holeCrossingWorksAndSelfCrossingRemainsRejected() {
         QFETCH(bool,selfCrossing);
         QTemporaryDir dir;auto donor=square(10,0,10);if(!selfCrossing)donor.polygons.front().push_back(square(13,3,4).polygons.front().front());
         Project source;source.replace(ProjectDocument({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",donor.polygons,0x123456}},{{"countries","Countries"}}));
@@ -156,7 +156,9 @@ private slots:
         QVERIFY(c.beginAnnexGeometry());QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","B"}}));QVERIFY(c.geometryAdvanceStage());QVERIFY(c.geometrySelectTerritoryMethod("line"));QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);
         MapProjection projection;projection.rebuild(source.document());for(const auto point:selfCrossing?Ring{{9,5},{18,8},{12,8},{18,2},{21,5}}:Ring{{9,5},{21,5}}){const auto xy=projection.project(point);QVERIFY(c.geometryAddPoint(xy.x,xy.y));}
         const auto draft=c.geometryDraftPaths();QVERIFY(c.geometryFinishTerritoryDraft());QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);
-        QVERIFY(c.geometryEditState().value("candidates").toList().isEmpty());QCOMPARE(c.geometryEditState().value("error").toString(),QString(selfCrossing?"CUT_SELF_INTERSECTION":"CUT_SPLITS_HOLE"));QCOMPARE(c.geometryDraftPaths(),draft);c.cancelGeometryEdit();
+        if(selfCrossing) {QVERIFY(c.geometryEditState().value("candidates").toList().isEmpty());QVERIFY(!c.geometryEditState().value("error").toString().isEmpty());QCOMPARE(c.geometryDraftPaths(),draft);}
+        else {const auto candidates=c.geometryEditState().value("candidates").toList();QCOMPARE(candidates.size(),2);QVERIFY(c.geometryEditState().value("error").toString().isEmpty());QVERIFY(std::abs(candidates[0].toMap().value("area").toDouble()+candidates[1].toMap().value("area").toDouble()-84.)<1e-9);}
+        c.cancelGeometryEdit();
     }
     void fixedTargetProviderSelectionAndBack() {
         QTemporaryDir dir;Project source;source.replace(ProjectDocument({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}}));
@@ -341,26 +343,33 @@ private slots:
     void splitDefaultsToSmallerResultAndCanChooseOtherResult() {
         QTemporaryDir dir;Project source;source.replace(ProjectDocument({{"A","A",square(0,0,10).polygons,0xabcdef}},{{"countries","Countries"}}));
         QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();
-        EditorController c({false,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(file.fileName())));c.selectCountry("A");const auto before=c.documentBytes();
-        MapProjection projection;projection.rebuild(source.document());QVERIFY(c.beginSplitGeometry());
-        for(const auto point:{Point{2,-1},Point{2,11}}){const auto xy=projection.project(point);QVERIFY(c.geometryAddPoint(xy.x,xy.y,0));}
-        QVERIFY(c.requestGeometryPreview());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);
-        QVERIFY(c.geometryChooseSplitResult(0));QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);
-        QVERIFY(c.geometryChooseSplitResult(-1));QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);
-        QVERIFY(c.confirmGeometryEdit());const auto doc=projectcodec::decode(c.documentBytes());
-        const auto created=std::find_if(doc.units.begin(),doc.units.end(),[](const auto& u){return u.id!="A";});QVERIFY(created!=doc.units.end());
-        QCOMPARE(planarArea(*doc.geometries.get(staticGeometryBinding(doc,created->id).geometryRef)),20.);c.undo();QCOMPARE(c.documentBytes(),before);
-        std::array<double,2> chosenAreas{};
-        for(int choice=0;choice<2;++choice) {
+        EditorController c({false,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(file.fileName())));const auto before=c.documentBytes();
+        MapProjection projection;projection.rebuild(source.document());
+        for(const int choice:{-1,0,1}) {
             c.selectCountry("A");QVERIFY(c.beginSplitGeometry());
+            QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);
+            QVERIFY(c.geometryAdvanceStage());QVERIFY(c.geometrySelectTerritoryMethod("line"));
+            QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);
             for(const auto point:{Point{2,-1},Point{2,11}}){const auto xy=projection.project(point);QVERIFY(c.geometryAddPoint(xy.x,xy.y,0));}
-            QVERIFY(c.geometryChooseSplitResult(choice));QVERIFY(c.requestGeometryPreview());
-            QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),5000);QVERIFY(c.confirmGeometryEdit());
-            const auto chosen=projectcodec::decode(c.documentBytes());
-            const auto unit=std::find_if(chosen.units.begin(),chosen.units.end(),[](const auto& u){return u.id!="A";});QVERIFY(unit!=chosen.units.end());
-            chosenAreas[choice]=planarArea(*chosen.geometries.get(staticGeometryBinding(chosen,unit->id).geometryRef));c.undo();QCOMPARE(c.documentBytes(),before);
+            QVERIFY(c.geometryFinishTerritoryDraft());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),10000);
+            const auto candidates=c.geometryEditState().value("candidates").toList();QCOMPARE(candidates.size(),2);
+            double expectedArea=std::min(candidates[0].toMap().value("area").toDouble(),candidates[1].toMap().value("area").toDouble());
+            if(choice>=0) {
+                const auto selected=c.geometryEditState().value("selectedCandidateIds").toList();
+                for(const auto& id:selected)QVERIFY(c.geometryToggleTerritoryCandidate(id.toString()));
+                QVERIFY(c.geometryToggleTerritoryCandidate(candidates[choice].toMap().value("id").toString()));
+                expectedArea=candidates[choice].toMap().value("area").toDouble();
+            }
+            QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("canAddPart").toBool(),10000);
+            QVERIFY(c.geometryAddTerritoryPart());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("canAdvance").toBool(),10000);
+            QVERIFY(c.geometryAdvanceStage());QVERIFY(c.confirmGeometryEdit());
+            QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("active").toBool(),10000);
+            const auto document=projectcodec::decode(c.documentBytes());
+            const auto created=std::find_if(document.units.begin(),document.units.end(),[](const auto& unit){return unit.id!="A";});QVERIFY(created!=document.units.end());
+            QVERIFY(std::abs(planarArea(*document.geometries.get(staticGeometryBinding(document,created->id).geometryRef))-expectedArea)<1e-9);
+            QCOMPARE(c.primaryObject().value("id").toString(),QString::fromStdString(created->id));
+            c.undo();QCOMPARE(c.documentBytes(),before);
         }
-        QVERIFY(chosenAreas[0]!=chosenAreas[1]);QCOMPARE(chosenAreas[0]+chosenAreas[1],100.);
     }
     void metadataFieldsCommitAndUndoIndependently() {
         QTemporaryDir dir;auto d=fixture();Geometry point;point.type="Point";point.points={{1,1}};d.geometries.insert({"city",1},point);
@@ -499,8 +508,49 @@ private slots:
         Project p;p.replace(d);const auto before=projectcodec::encode(p);auto result=prepare(p,AnnexTerritoryIntent{territorialRef("AX"),{territorialRef("AY")},square(4,6,1)});QVERIFY2(result.ok(),result.detail.c_str());QVERIFY(CommandProcessor::confirm(p,*result.preview).ok());
         QCOMPARE(area(p,"AX"),5.);QCOMPARE(area(p,"AY"),3.);QCOMPARE(staticParentRelation(p.document(),"AZ").parentId,std::string("AX"));QVERIFY(p.undo());QCOMPARE(projectcodec::encode(p),before);
     }
-    void cutSplitCreatesOneUndoableSibling(){
-        Project p;p.replace(fixture());const auto before=projectcodec::encode(p);auto result=prepare(p,SplitTerritorialIntent{territorialRef("B"),{{25,-2},{25,12}},0,"B-east","B East"});QVERIFY2(result.ok(),result.detail.c_str());QCOMPARE(projectcodec::encode(p),before);
+    void splitSelectedUnionReceiptIsInertAndCreatesOneSibling() {
+        Project project;project.replace(fixture());const auto before=projectcodec::encode(project);
+        SplitTerritorialIntent intent{territorialRef("B"),{},"created","Created"};
+        Geometry selected=rectangle(20,0,2,10);selected.polygons.push_back(rectangle(28,0,2,10).polygons.front());intent.selection=selected;
+        JobScheduler jobs;auto ticket=jobs.enqueue(project.snapshot(),"split-receipt");jobs.takeNext();
+        const auto receipt=calculateSplitGeometryPreview(project.snapshot(),intent,ticket.token());
+        QVERIFY2(receipt.ok(),receipt.detail.c_str());QCOMPARE(projectcodec::encode(project),before);
+        QCOMPARE(receipt.patch.creations.size(),std::size_t(1));QCOMPARE(planarArea(receipt.transferredGeometry),40.);QCOMPARE(planarArea(receipt.remainingGeometry),60.);
+        auto prepared=prepareSplitGeometryCommit(project.snapshot(),receipt,ticket.token());QVERIFY2(prepared.ok(),prepared.detail.c_str());
+        QCOMPARE(projectcodec::encode(project),before);QVERIFY(CommandProcessor::confirm(project,*prepared.preview).ok());
+        QCOMPARE(project.document().units.size(),std::size_t(6));QCOMPARE(area(project,"B"),60.);QCOMPARE(area(project,"created"),40.);
+        const auto after=projectcodec::encode(project);QVERIFY(project.undo());QCOMPARE(projectcodec::encode(project),before);QVERIFY(project.redo());QCOMPARE(projectcodec::encode(project),after);
+    }
+    void splitSiblingUsesFreshCreationDefaults() {
+        auto document=fixture();auto& source=document.units.at(validateDocument(document).objects.at(territorialRef("S")));
+        source.notes="source notes";source.baseName="source base";source.metadata="{\"origin\":true}";
+        source.sourceFolderId="folder";source.sourceLibraryId="library";source.sourceGeometryVersion="version";
+        document.presentation.objectStyles[territorialRef("S")]={0xff00ff,.4,true};
+        Project project;project.replace(document);const auto before=projectcodec::encode(project);
+        auto prepared=prepare(project,SplitTerritorialIntent{territorialRef("S"),rectangle(3.5,2,.5,2),"fresh","Fresh sibling"});
+        QVERIFY2(prepared.ok(),prepared.detail.c_str());QCOMPARE(projectcodec::encode(project),before);
+        QVERIFY(CommandProcessor::confirm(project,*prepared.preview).ok());
+        const auto& created=project.document().units.at(project.index().objects.at(territorialRef("fresh")));
+        QCOMPARE(created.notes,std::string());QCOMPARE(created.baseName,std::string());QCOMPARE(created.metadata,std::string("{}"));
+        QCOMPARE(created.sourceFolderId,std::string());QCOMPARE(created.sourceLibraryId,std::string());QCOMPARE(created.sourceGeometryVersion,std::string());
+        QVERIFY(!created.libraryOrigin);QVERIFY(!created.locked);
+        const auto style=project.document().presentation.objectStyles.at(territorialRef("fresh"));QVERIFY(!style.explicitColor);QCOMPARE(style.opacity,1.);
+        QCOMPARE(staticParentRelation(project.document(),"fresh").parentId,std::string("P"));
+        QCOMPARE(staticParentRelation(project.document(),"fresh").coverageMode,std::string("partition"));
+        QVERIFY(project.undo());QCOMPARE(projectcodec::encode(project),before);
+    }
+    void splitSiblingReparentsFullyTransferredChild() {
+        Project project;project.replace(fixture());const auto before=projectcodec::encode(project);
+        // The short right-hand side remains the source. The left-hand creation
+        // wholly contains C; the pinned child-create path reparents C unchanged.
+        auto prepared=prepare(project,SplitTerritorialIntent{territorialRef("S"),rectangle(2,2,1.5,2),"receiver","Receiver"});
+        QVERIFY2(prepared.ok(),prepared.detail.c_str());
+        QVERIFY(CommandProcessor::confirm(project,*prepared.preview).ok());
+        QCOMPARE(staticParentRelation(project.document(),"C").parentId,std::string("receiver"));
+        QCOMPARE(area(project,"C"),1.);QVERIFY(project.undo());QCOMPARE(projectcodec::encode(project),before);
+    }
+    void splitSelectionCreatesOneUndoableSibling(){
+        Project p;p.replace(fixture());const auto before=projectcodec::encode(p);auto result=prepare(p,SplitTerritorialIntent{territorialRef("B"),rectangle(25,0,5,10),"B-east","B East"});QVERIFY2(result.ok(),result.detail.c_str());QCOMPARE(projectcodec::encode(p),before);
         QVERIFY(CommandProcessor::confirm(p,*result.preview).ok());QCOMPARE(area(p,"B"),50.);QCOMPARE(area(p,"B-east"),50.);QVERIFY(p.document().units.at(p.index().objects.at(territorialRef("B-east"))).kind==UnitKind::General);
         const auto after=projectcodec::encode(p);Project reopened;reopened.replace(projectcodec::decode(after));QCOMPARE(projectcodec::encode(reopened),after);QVERIFY(p.undo());QCOMPARE(projectcodec::encode(p),before);QVERIFY(p.redo());QCOMPARE(projectcodec::encode(p),after);
     }

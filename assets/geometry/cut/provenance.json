@@ -1,0 +1,407 @@
+{
+  "webCommit": "53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47",
+  "sourceManifest": "tests/fixtures/web-m97/lifecycle-manifest.json",
+  "sourceRoot": "tests/fixtures/web-m97/lifecycle-source",
+  "approvedCorrections": {
+    "manifest": "tests/fixtures/web-m973-split/corrections/dateline/manifest.json",
+    "baseBehavioralCommit": "6c3f930b8573fa09991885b661879ea36725472e",
+    "behavioralCommit": "07d3e2053c71573e11c5cf89151f5f6686038511",
+    "tree": "af43e2aaa30b870b6858283fedbadf2f0ee24bf5"
+  },
+  "generator": "tools/m97/cut-kernel-generate.mjs",
+  "parser": {
+    "name": "acorn",
+    "version": "8.15.0",
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "transformation": "Only object-spread expressions become ordered, nested own-data merges; an unused UI module is reduced to its exact imported prefix. No cut arithmetic or algorithm changes.",
+  "platform": {
+    "file": "assets/geometry/cut/platform.js",
+    "sha256": "59c674d9618b4f1f01627a78d54f222d2f69e0a5bd5705d71a5118eaf09d15cb",
+    "role": "Array.prototype.at fallback only when missing"
+  },
+  "dependencies": {
+    "d3": "assets/geometry/river/d3-provenance.json",
+    "polygonClipping": "assets/geometry/README.md",
+    "platform": "assets/geometry/river/platform.js",
+    "polygonGeometry": "Original pinned application module, evaluated unchanged."
+  },
+  "modules": [
+    {
+      "name": "map-edit-geometry.js",
+      "sourcePath": "assets/js/modules/map-edit-geometry.js",
+      "gitBlob": "8467a302c428503b553fc9ff50cb7af18a9a7c8f",
+      "originalSha256": "0560653313500d5e9a4ca62fa5611cc4f4c18f3fb1cac353a828278094a1504e",
+      "adaptedSha256": "0560653313500d5e9a4ca62fa5611cc4f4c18f3fb1cac353a828278094a1504e",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "corrected-original/map-edit-geometry.js",
+      "correctedOriginalSha256": "397da6a410d2abcaa871b3c626bd8b1808534351b8332912e13dd76f8feb9915",
+      "correctedSha256": "397da6a410d2abcaa871b3c626bd8b1808534351b8332912e13dd76f8feb9915",
+      "correctedSyntaxReplacements": []
+    },
+    {
+      "name": "app-country-validation.js",
+      "sourcePath": "assets/js/modules/app-country-validation.js",
+      "gitBlob": "161391f4f4166632f258eb78346b517afa56f6bd",
+      "originalSha256": "f1198177b310e835b0ac7febffa38ec2e3711d9091d4f5973deeea00ae40d513",
+      "adaptedSha256": "c23247743b4926d2e986da2d6db6b3d1a796fbcb56153dd83aec8a40ba528b92",
+      "syntaxReplacements": [
+        {
+          "start": 3072,
+          "end": 3128,
+          "before": "{ ...geometry, coordinates: snap(geometry.coordinates) }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, geometry), {coordinates: snap(geometry.coordinates)})"
+        }
+      ],
+      "correctedOriginalPath": "original/app-country-validation.js",
+      "correctedOriginalSha256": "f1198177b310e835b0ac7febffa38ec2e3711d9091d4f5973deeea00ae40d513",
+      "correctedSha256": "c23247743b4926d2e986da2d6db6b3d1a796fbcb56153dd83aec8a40ba528b92",
+      "correctedSyntaxReplacements": [
+        {
+          "start": 3072,
+          "end": 3128,
+          "before": "{ ...geometry, coordinates: snap(geometry.coordinates) }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, geometry), {coordinates: snap(geometry.coordinates)})"
+        }
+      ]
+    },
+    {
+      "name": "app-cut-geometry.js",
+      "sourcePath": "assets/js/modules/app-cut-geometry.js",
+      "gitBlob": "d325cb72580b8be8ba7f2af0bd6aa4bc6e9a4943",
+      "originalSha256": "b91c06a4eddc151890d4ea381eba7c57807d50fb34b19aa460e17a9e9f22cc30",
+      "adaptedSha256": "7c65fe3ef3b646b4f97ba7501c6513cb79193e24d5d1de587b7d812871932acf",
+      "syntaxReplacements": [
+        {
+          "start": 7840,
+          "end": 7861,
+          "before": "{ ...issue, message }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, issue), {message})"
+        },
+        {
+          "start": 8551,
+          "end": 8619,
+          "before": "{ ...snapped, extracted: extractInteriorCuts(line, sourceGeometry) }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, snapped), {extracted: extractInteriorCuts(line, sourceGeometry)})"
+        },
+        {
+          "start": 9100,
+          "end": 9202,
+          "before": "{ ...prepareCutDraft(rawLine, sourceGeometry), status: 'valid', valid: true, message: '', issues: [] }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, prepareCutDraft(rawLine, sourceGeometry)), {status: 'valid', valid: true, message: '', issues: []})"
+        },
+        {
+          "start": 9239,
+          "end": 9400,
+          "before": "{ ...snapCutDraftLine(rawLine, sourceGeometry), status: 'invalid', valid: false,\n        message: error.message, issues: error.cutIssue ? [error.cutIssue] : [] }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, snapCutDraftLine(rawLine, sourceGeometry)), {status: 'invalid', valid: false, message: error.message, issues: error.cutIssue ? [error.cutIssue] : []})"
+        }
+      ],
+      "correctedOriginalPath": "corrected-original/app-cut-geometry.js",
+      "correctedOriginalSha256": "03bb2f37e997324ab41b65a6c838a621267959059b3021c86cf639a8e62248d4",
+      "correctedSha256": "f6b82c8b317df7ad1d8011b70ac7811ac53ed3e030ebdc52a4dca259171faf9d",
+      "correctedSyntaxReplacements": [
+        {
+          "start": 7889,
+          "end": 7910,
+          "before": "{ ...issue, message }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, issue), {message})"
+        },
+        {
+          "start": 8600,
+          "end": 8668,
+          "before": "{ ...snapped, extracted: extractInteriorCuts(line, sourceGeometry) }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, snapped), {extracted: extractInteriorCuts(line, sourceGeometry)})"
+        },
+        {
+          "start": 9149,
+          "end": 9251,
+          "before": "{ ...prepareCutDraft(rawLine, sourceGeometry), status: 'valid', valid: true, message: '', issues: [] }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, prepareCutDraft(rawLine, sourceGeometry)), {status: 'valid', valid: true, message: '', issues: []})"
+        },
+        {
+          "start": 9288,
+          "end": 9449,
+          "before": "{ ...snapCutDraftLine(rawLine, sourceGeometry), status: 'invalid', valid: false,\n        message: error.message, issues: error.cutIssue ? [error.cutIssue] : [] }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, snapCutDraftLine(rawLine, sourceGeometry)), {status: 'invalid', valid: false, message: error.message, issues: error.cutIssue ? [error.cutIssue] : []})"
+        }
+      ]
+    },
+    {
+      "name": "app-land-relations.js",
+      "sourcePath": "assets/js/modules/app-land-relations.js",
+      "gitBlob": "6a98266dd4edb1d177fb6f1388b0821092f39ec5",
+      "originalSha256": "c98e42a15794fcfa967fd9b5efe2cbb81c3fbcc9bb7db1c9db97d39eb10ab93e",
+      "adaptedSha256": "4d5f52300187625652ee51583c8f1f87a204a7e431be549a18fab31c66e718ab",
+      "syntaxReplacements": [
+        {
+          "start": 2728,
+          "end": 2761,
+          "before": "{ ...feature, geometry: clipped }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, feature), {geometry: clipped})"
+        },
+        {
+          "start": 4779,
+          "end": 4814,
+          "before": "{ ...feature, geometry: remainder }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, feature), {geometry: remainder})"
+        },
+        {
+          "start": 5566,
+          "end": 5591,
+          "before": "{ ...feature.properties }",
+          "after": "__riverOwnDataMerge({}, feature.properties)"
+        },
+        {
+          "start": 5718,
+          "end": 5744,
+          "before": "{ ...feature, properties }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, feature), {properties})"
+        }
+      ],
+      "correctedOriginalPath": "corrected-original/app-land-relations.js",
+      "correctedOriginalSha256": "b332368e643d4c5767df0516f13864e4747bf92f80cdb4333a86145ff0f4046b",
+      "correctedSha256": "4f517dba3bcbcc2e48e792a6648115ddf499c4109d4a14500305fdfb6191643e",
+      "correctedSyntaxReplacements": [
+        {
+          "start": 2886,
+          "end": 2919,
+          "before": "{ ...feature, geometry: clipped }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, feature), {geometry: clipped})"
+        },
+        {
+          "start": 4982,
+          "end": 5017,
+          "before": "{ ...feature, geometry: remainder }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, feature), {geometry: remainder})"
+        },
+        {
+          "start": 5769,
+          "end": 5794,
+          "before": "{ ...feature.properties }",
+          "after": "__riverOwnDataMerge({}, feature.properties)"
+        },
+        {
+          "start": 5921,
+          "end": 5947,
+          "before": "{ ...feature, properties }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, feature), {properties})"
+        }
+      ]
+    },
+    {
+      "name": "app-territory-components.js",
+      "sourcePath": "assets/js/modules/app-territory-components.js",
+      "gitBlob": "f0f7ddc549f5bcf169415f2cf7fc52b218740ef3",
+      "originalSha256": "c82290d2e3601a4d07b6d94746a665bfad9a49c1020f447a0ace90740ef226d9",
+      "adaptedSha256": "297bb0b5638f7362d3d40f533e61e682b01ae255fa40e952e1022c7d900a2ad9",
+      "syntaxReplacements": [
+        {
+          "start": 1961,
+          "end": 2177,
+          "before": "{ ...item, geometry: freezeEditingGeometry(item.geometry),\n      countryName: names.get(item.countryId) || '기준 영역',\n      areaKm2: Math.max(0, dependencies.platform.d3.geo.area(item.geometry) * 6371.0088 ** 2),\n    }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, item), {geometry: freezeEditingGeometry(item.geometry), countryName: names.get(item.countryId) || '기준 영역', areaKm2: Math.max(0, dependencies.platform.d3.geo.area(item.geometry) * 6371.0088 ** 2)})"
+        },
+        {
+          "start": 4007,
+          "end": 4052,
+          "before": "{ ...item, selected: selected.has(item.key) }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, item), {selected: selected.has(item.key)})"
+        },
+        {
+          "start": 4353,
+          "end": 4837,
+          "before": "{\n      ...item, key: String(item.key), geometry: freezeEditingGeometry(item.geometry),\n      countryName: baseByComponent.get(item.componentKey)?.countryName || '기준 영역',\n      areaKm2: Number.isFinite(item.areaKm2) ? item.areaKm2 : Number.isFinite(item.areaM2)\n        ? item.areaM2 / 1e6 : dependencies.platform.d3.geo.area(item.geometry) * 6371.0088 ** 2,\n      usesRiverBoundary: item.partitionKind === 'river',\n      riverBoundarySegments: item.riverBoundarySegments || [],\n    }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, item), {key: String(item.key), geometry: freezeEditingGeometry(item.geometry), countryName: baseByComponent.get(item.componentKey)?.countryName || '기준 영역', areaKm2: Number.isFinite(item.areaKm2) ? item.areaKm2 : Number.isFinite(item.areaM2)\n        ? item.areaM2 / 1e6 : dependencies.platform.d3.geo.area(item.geometry) * 6371.0088 ** 2, usesRiverBoundary: item.partitionKind === 'river', riverBoundarySegments: item.riverBoundarySegments || []})"
+        }
+      ],
+      "correctedOriginalPath": "original/app-territory-components.js",
+      "correctedOriginalSha256": "c82290d2e3601a4d07b6d94746a665bfad9a49c1020f447a0ace90740ef226d9",
+      "correctedSha256": "297bb0b5638f7362d3d40f533e61e682b01ae255fa40e952e1022c7d900a2ad9",
+      "correctedSyntaxReplacements": [
+        {
+          "start": 1961,
+          "end": 2177,
+          "before": "{ ...item, geometry: freezeEditingGeometry(item.geometry),\n      countryName: names.get(item.countryId) || '기준 영역',\n      areaKm2: Math.max(0, dependencies.platform.d3.geo.area(item.geometry) * 6371.0088 ** 2),\n    }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, item), {geometry: freezeEditingGeometry(item.geometry), countryName: names.get(item.countryId) || '기준 영역', areaKm2: Math.max(0, dependencies.platform.d3.geo.area(item.geometry) * 6371.0088 ** 2)})"
+        },
+        {
+          "start": 4007,
+          "end": 4052,
+          "before": "{ ...item, selected: selected.has(item.key) }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, item), {selected: selected.has(item.key)})"
+        },
+        {
+          "start": 4353,
+          "end": 4837,
+          "before": "{\n      ...item, key: String(item.key), geometry: freezeEditingGeometry(item.geometry),\n      countryName: baseByComponent.get(item.componentKey)?.countryName || '기준 영역',\n      areaKm2: Number.isFinite(item.areaKm2) ? item.areaKm2 : Number.isFinite(item.areaM2)\n        ? item.areaM2 / 1e6 : dependencies.platform.d3.geo.area(item.geometry) * 6371.0088 ** 2,\n      usesRiverBoundary: item.partitionKind === 'river',\n      riverBoundarySegments: item.riverBoundarySegments || [],\n    }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, item), {key: String(item.key), geometry: freezeEditingGeometry(item.geometry), countryName: baseByComponent.get(item.componentKey)?.countryName || '기준 영역', areaKm2: Number.isFinite(item.areaKm2) ? item.areaKm2 : Number.isFinite(item.areaM2)\n        ? item.areaM2 / 1e6 : dependencies.platform.d3.geo.area(item.geometry) * 6371.0088 ** 2, usesRiverBoundary: item.partitionKind === 'river', riverBoundarySegments: item.riverBoundarySegments || []})"
+        }
+      ]
+    },
+    {
+      "name": "boundary-spatial-index.js",
+      "sourcePath": "assets/js/modules/boundary-spatial-index.js",
+      "gitBlob": "c4557e5358ba3e2d3b05fd1a08ee982f21a59a7c",
+      "originalSha256": "e8721595a89faadfdaa8c61a70505c8f941e12db8ceed189ba829904d2878b5f",
+      "adaptedSha256": "e8721595a89faadfdaa8c61a70505c8f941e12db8ceed189ba829904d2878b5f",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "original/boundary-spatial-index.js",
+      "correctedOriginalSha256": "e8721595a89faadfdaa8c61a70505c8f941e12db8ceed189ba829904d2878b5f",
+      "correctedSha256": "e8721595a89faadfdaa8c61a70505c8f941e12db8ceed189ba829904d2878b5f",
+      "correctedSyntaxReplacements": []
+    },
+    {
+      "name": "coordinate-bounds.js",
+      "sourcePath": "assets/js/modules/coordinate-bounds.js",
+      "gitBlob": "c276945af12c75ffd5faebfc6aafaa370cc5ad68",
+      "originalSha256": "67e2598e59d6e5ff98d871566332286dc83d7e4f9fbc3dc1236c9cc9d08665e0",
+      "adaptedSha256": "67e2598e59d6e5ff98d871566332286dc83d7e4f9fbc3dc1236c9cc9d08665e0",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "original/coordinate-bounds.js",
+      "correctedOriginalSha256": "67e2598e59d6e5ff98d871566332286dc83d7e4f9fbc3dc1236c9cc9d08665e0",
+      "correctedSha256": "67e2598e59d6e5ff98d871566332286dc83d7e4f9fbc3dc1236c9cc9d08665e0",
+      "correctedSyntaxReplacements": []
+    },
+    {
+      "name": "cut-preparation-cache.js",
+      "sourcePath": "assets/js/modules/cut-preparation-cache.js",
+      "gitBlob": "d02d07ced5d5f2bd1429032d3df82c4bd065ffaf",
+      "originalSha256": "38278991e38a0976e0337d805a0d44a611e453d80c2e91f8cb47780f8e8d1a11",
+      "adaptedSha256": "38278991e38a0976e0337d805a0d44a611e453d80c2e91f8cb47780f8e8d1a11",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "original/cut-preparation-cache.js",
+      "correctedOriginalSha256": "38278991e38a0976e0337d805a0d44a611e453d80c2e91f8cb47780f8e8d1a11",
+      "correctedSha256": "38278991e38a0976e0337d805a0d44a611e453d80c2e91f8cb47780f8e8d1a11",
+      "correctedSyntaxReplacements": []
+    },
+    {
+      "name": "cut-worker-preparation.js",
+      "sourcePath": "assets/js/modules/cut-worker-preparation.js",
+      "gitBlob": "5a8c5e35fcf1e3c78c97c193b706655edf31331e",
+      "originalSha256": "f80584f053717baa9cc172bbc8e26ed5a01316ae64c00f091744348c4736f2a2",
+      "adaptedSha256": "e8e6be3f7aa0dea6e4cc3efd112ae8e150797dd38c8b44f757e0eba7341798c0",
+      "syntaxReplacements": [
+        {
+          "start": 1128,
+          "end": 1175,
+          "before": "{ ...geometryApi, snapLineEndpointsToBoundary }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, geometryApi), {snapLineEndpointsToBoundary})"
+        }
+      ],
+      "correctedOriginalPath": "original/cut-worker-preparation.js",
+      "correctedOriginalSha256": "f80584f053717baa9cc172bbc8e26ed5a01316ae64c00f091744348c4736f2a2",
+      "correctedSha256": "e8e6be3f7aa0dea6e4cc3efd112ae8e150797dd38c8b44f757e0eba7341798c0",
+      "correctedSyntaxReplacements": [
+        {
+          "start": 1128,
+          "end": 1175,
+          "before": "{ ...geometryApi, snapLineEndpointsToBoundary }",
+          "after": "__riverOwnDataMerge(__riverOwnDataMerge({}, geometryApi), {snapLineEndpointsToBoundary})"
+        }
+      ]
+    },
+    {
+      "name": "editing-render-packet.js",
+      "sourcePath": "assets/js/modules/editing-render-packet.js",
+      "gitBlob": "2ac8cb4bb343c34bcb75324d001b20ed129d034e",
+      "originalSha256": "2f1f97a7758a3f1930065511878bc19acd872dcea04ea8362bf8b40c5327f387",
+      "adaptedSha256": "679c7490c7198359709b1a846c356ab53940c5db3f90912ed4c189c482b0e76f",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "original/editing-render-packet.js",
+      "correctedOriginalSha256": "2f1f97a7758a3f1930065511878bc19acd872dcea04ea8362bf8b40c5327f387",
+      "correctedSha256": "679c7490c7198359709b1a846c356ab53940c5db3f90912ed4c189c482b0e76f",
+      "correctedSyntaxReplacements": [],
+      "dependencyPruning": {
+        "retainedByteRange": [
+          0,
+          578
+        ],
+        "retainedExports": [
+          "freezeEditingGeometry"
+        ],
+        "omittedExports": [
+          "createDraftRenderPacket",
+          "adoptBoundaryRenderPacket",
+          "adoptBoundaryRenderPacketAsync",
+          "createEditingRenderPacket",
+          "EMPTY_EDITING_RENDER_PACKET"
+        ],
+        "reason": "The complete cut import closure consumes only freezeEditingGeometry and its private WeakSet. Unreachable UI packet exports include async syntax unsupported by Qt; the retained prefix is byte-identical."
+      }
+    },
+    {
+      "name": "geometry-segment-index.js",
+      "sourcePath": "assets/js/modules/geometry-segment-index.js",
+      "gitBlob": "97e045d0388ef64205b2c88a1b04beea3ac01168",
+      "originalSha256": "63680763f49fd03345b1503a135f17c8b66b538673d040dacd69f6a6b648aeb1",
+      "adaptedSha256": "63680763f49fd03345b1503a135f17c8b66b538673d040dacd69f6a6b648aeb1",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "original/geometry-segment-index.js",
+      "correctedOriginalSha256": "63680763f49fd03345b1503a135f17c8b66b538673d040dacd69f6a6b648aeb1",
+      "correctedSha256": "63680763f49fd03345b1503a135f17c8b66b538673d040dacd69f6a6b648aeb1",
+      "correctedSyntaxReplacements": []
+    },
+    {
+      "name": "geometry-versions.js",
+      "sourcePath": "assets/js/modules/geometry-versions.js",
+      "gitBlob": "cc4d3c2954dae1e93b5326aee96f59d2daeac649",
+      "originalSha256": "e28a1992e25049a32ef8accd7a1e5bfa4871a85556c0a6aa5a6cbef61f27333a",
+      "adaptedSha256": "e28a1992e25049a32ef8accd7a1e5bfa4871a85556c0a6aa5a6cbef61f27333a",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "original/geometry-versions.js",
+      "correctedOriginalSha256": "e28a1992e25049a32ef8accd7a1e5bfa4871a85556c0a6aa5a6cbef61f27333a",
+      "correctedSha256": "e28a1992e25049a32ef8accd7a1e5bfa4871a85556c0a6aa5a6cbef61f27333a",
+      "correctedSyntaxReplacements": []
+    },
+    {
+      "name": "planar-graph-faces.js",
+      "sourcePath": "assets/js/modules/planar-graph-faces.js",
+      "gitBlob": "af8a3b873d98778544357bf0bff0f97c166c08b2",
+      "originalSha256": "283da7701c21cb80e4fd9ef97e8f68e69a8d6f0ec9fc611ee8c23cab45d6c804",
+      "adaptedSha256": "283da7701c21cb80e4fd9ef97e8f68e69a8d6f0ec9fc611ee8c23cab45d6c804",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "original/planar-graph-faces.js",
+      "correctedOriginalSha256": "283da7701c21cb80e4fd9ef97e8f68e69a8d6f0ec9fc611ee8c23cab45d6c804",
+      "correctedSha256": "283da7701c21cb80e4fd9ef97e8f68e69a8d6f0ec9fc611ee8c23cab45d6c804",
+      "correctedSyntaxReplacements": []
+    },
+    {
+      "name": "polygon-geometry.js",
+      "sourcePath": "assets/js/modules/polygon-geometry.js",
+      "gitBlob": "af7f296e867c51e764c86d55f9dcae678f1cbb89",
+      "originalSha256": "cc987c4076861a02a5d60720ebf536908175a9f1a605a86701ae4cf50c3a3fb5",
+      "adaptedSha256": "cc987c4076861a02a5d60720ebf536908175a9f1a605a86701ae4cf50c3a3fb5",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "corrected-original/polygon-geometry.js",
+      "correctedOriginalSha256": "a645827c46f7c62dbf929f850c67f350516669dfeafe5c637aec6c67efcfebf4",
+      "correctedSha256": "a645827c46f7c62dbf929f850c67f350516669dfeafe5c637aec6c67efcfebf4",
+      "correctedSyntaxReplacements": []
+    },
+    {
+      "name": "ring-hit-test.js",
+      "sourcePath": "assets/js/modules/ring-hit-test.js",
+      "gitBlob": "4d2e762b906ba484f795651c53003bd912fb38a6",
+      "originalSha256": "2f35ea5f6b8e01a14ad269b6689cf45f5212d1595a7c7bccc5ff39e8bb89f0b0",
+      "adaptedSha256": "2f35ea5f6b8e01a14ad269b6689cf45f5212d1595a7c7bccc5ff39e8bb89f0b0",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "original/ring-hit-test.js",
+      "correctedOriginalSha256": "2f35ea5f6b8e01a14ad269b6689cf45f5212d1595a7c7bccc5ff39e8bb89f0b0",
+      "correctedSha256": "2f35ea5f6b8e01a14ad269b6689cf45f5212d1595a7c7bccc5ff39e8bb89f0b0",
+      "correctedSyntaxReplacements": []
+    },
+    {
+      "name": "territorial-geometry.js",
+      "sourcePath": "assets/js/modules/territorial-geometry.js",
+      "gitBlob": "2f0aef10b2501ffb317bfe2aab4eb97225aa12cf",
+      "originalSha256": "25f9b30cc2527d3eafdb3473d0fe8dbc056fc654ce7ff51fc72861e47b3ee827",
+      "adaptedSha256": "25f9b30cc2527d3eafdb3473d0fe8dbc056fc654ce7ff51fc72861e47b3ee827",
+      "syntaxReplacements": [],
+      "correctedOriginalPath": "original/territorial-geometry.js",
+      "correctedOriginalSha256": "25f9b30cc2527d3eafdb3473d0fe8dbc056fc654ce7ff51fc72861e47b3ee827",
+      "correctedSha256": "25f9b30cc2527d3eafdb3473d0fe8dbc056fc654ce7ff51fc72861e47b3ee827",
+      "correctedSyntaxReplacements": []
+    }
+  ]
+}

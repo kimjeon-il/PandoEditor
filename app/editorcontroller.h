@@ -401,7 +401,6 @@ public:
     Q_INVOKABLE bool geometryToggleProvider(const QVariantMap& object);
     Q_INVOKABLE bool geometryAdvanceStage();
     Q_INVOKABLE bool geometryBack();
-    Q_INVOKABLE bool geometryChooseSplitResult(int createdCandidate);
     // Owned diagnostics for exact geometry/provenance comparison without projection round-trips.
     QVariantMap riverSelectionObservation() const;
     Q_INVOKABLE bool geometryToggleRiverBoundaries(bool enabled);
@@ -688,6 +687,8 @@ private:
         std::optional<pandoeditor::MergeTerritorialIntent> mergeIntent;
         std::optional<pandoeditor::TerritorySelection> territorySelection;
         std::optional<AnnexGeometryPreviewResult> territoryPreview;
+        std::optional<SplitGeometryPreviewResult> splitPreview;
+        QString splitPreviewSelectionId;
         std::optional<pandoeditor::ObjectRef> sourceChange;
         std::uint64_t generation=0, computationEpoch=0, previewEpoch=0;
         std::uint64_t previewSelectionRevision=0;

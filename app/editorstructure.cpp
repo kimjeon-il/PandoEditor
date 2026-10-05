@@ -87,9 +87,16 @@ bool EditorController::beginAnnexGeometry(){
     geometryEdit_->choosingProviders=true;emit geometryEditChanged();emit visualChanged();return true;
 }
 bool EditorController::beginSplitGeometry(){
-    const auto primary=selection_.primary();const auto unit=selectedUnit();if(!primary||!unit||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
+    const auto primary=selection_.primary();const auto unit=selectedUnit();if(!primary||!unit||unit->kind!=UnitKind::General||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
+    const auto& parent=staticParentRelation(project_.document(),unit->id).parentId;
+    if(!parent.empty()&&objectLocked(project_.document(),project_.index(),territorialRef(parent)))return false;
     geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit->id).geometryRef),{},{},0,0,-1,QStringLiteral("split"),{}};
-    geometryEdit_->splitIntent=SplitTerritorialIntent{*primary,{},-1,QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString(),objectDisplayName(*unit)+" 분할"};emit geometryEditChanged();return true;
+    geometryEdit_->splitIntent=SplitTerritorialIntent{*primary,{},QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString(),"새 객체"};
+    geometryEdit_->territorySelection.emplace(TerritorySelectionKind::BoundedCreation);
+    const auto binding=staticGeometryBinding(project_.document(),unit->id).geometryRef;
+    geometryEdit_->territorySelection->resetSources({{*primary,*project_.document().geometries.get(binding),binding,objectDisplayName(*unit)}});
+    geometryEdit_->draft={"Polygon",{},{},{}};geometryEdit_->generation=++nextGeometrySession_;geometryEdit_->stage="setup";
+    scheduleTerritorySelection(false);emit geometryEditChanged();return true;
 }
 bool EditorController::beginSharedBoundaryGeometry(){
     for(const auto& ref:selection_.items())if(ref.domain!="territorial")return false;

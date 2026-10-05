@@ -11,10 +11,27 @@
 #include <QTemporaryDir>
 #include <QThread>
 #include <cstdio>
+#include <cmath>
 #include <stdexcept>
 using namespace pandoeditor;
 namespace {
 void require(bool condition,const char* message) {if(!condition)throw std::runtime_error(message);}
+void configureView(EditorController& controller,const QJsonObject& row) {
+    require(row["view"].isObject(),"missing explicit controller view");
+    const auto view=row["view"].toObject();
+    const auto number=[](const QJsonValue& value) {require(value.isDouble()&&std::isfinite(value.toDouble()),"invalid controller view number");return value.toDouble();};
+    const auto vector=[&](const char* key,int length) {require(view[key].isArray(),"missing controller view vector");const auto values=view[key].toArray();require(values.size()==length,"invalid controller view vector");for(const auto value:values)number(value);return values;};
+    const auto translate=vector("translate",2),rotate=vector("rotate",3),center=vector("center",2);
+    require(view["size"].isObject()&&view["snapDistance"].isObject()&&view["coarsePointer"].isBool(),"incomplete controller view");
+    const auto size=view["size"].toObject(),snap=view["snapDistance"].toObject();
+    require(number(snap["mouse"])==10&&number(snap["touch"])==18,"unsupported controller snap policy");
+    require(view["coarsePointer"].toBool()==controller.mobileMode(),"controller pointer mode differs from input");
+    require(controller.setProjectionMode(view["kind"].toString()),"invalid controller projection");
+    require(controller.publishMapView({{"scale",number(view["scale"])},{"translateX",number(translate[0])},{"translateY",number(translate[1])},
+        {"rotationLongitude",number(rotate[0])},{"rotationLatitude",number(rotate[1])},{"rotationRoll",number(rotate[2])},
+        {"centerLongitude",number(center[0])},{"centerLatitude",number(center[1])},
+        {"viewportWidth",number(size["width"])},{"viewportHeight",number(size["height"])}}),"controller view rejected");
+}
 Geometry decodeGeometry(const QJsonObject& value) {
     Geometry geometry;geometry.type=value["type"].toString().toStdString();
     require(geometry.type=="Polygon"||geometry.type=="MultiPolygon","invalid input geometry type");
@@ -78,12 +95,13 @@ QJsonObject snapshot(EditorController& controller,const QByteArray& before,const
     for(const auto& entry:d.distributionEntries)if(entry.territory)references.append(QJsonObject{{"kind","distribution"},{"id",QString::fromStdString(entry.id)},{"target",QString::fromStdString(entry.territory->id)}});
     for(const auto& label:d.labels)if(label.territory)references.append(QJsonObject{{"kind","label"},{"id",QString::fromStdString(label.id)},{"target",QString::fromStdString(label.territory->id)}});
     for(const auto& [ref,settings]:d.presentation.webPresentation.labelSettings)references.append(QJsonObject{{"kind","label-settings"},{"id",QString::fromStdString(ref.id)},{"target",QString::fromStdString(ref.id)}});
-    return {{"state",QJsonObject::fromVariantMap(controller.geometryEditState())},{"overlays",overlays(controller,projection)},{"features",features},{"references",references},{"history",QJsonObject{{"canUndo",controller.canUndo()},{"canRedo",controller.canRedo()}}},{"unchangedFromBefore",bytes==before}};
+    return {{"state",QJsonObject::fromVariantMap(controller.geometryEditState())},{"mapViewState",QJsonObject::fromVariantMap(controller.mapViewState())},{"coarsePointer",controller.mobileMode()},{"overlays",overlays(controller,projection)},{"features",features},{"references",references},{"history",QJsonObject{{"canUndo",controller.canUndo()},{"canRedo",controller.canRedo()}}},{"unchangedFromBefore",bytes==before}};
 }
 QJsonObject run(const QJsonObject& row) {
     QTemporaryDir dir;require(dir.isValid(),"fixture directory failed");Project p;p.replace(document(row));MapProjection projection;projection.rebuild(p.document());
     QFile file(dir.filePath("input.json"));require(file.open(QIODevice::WriteOnly),"fixture write failed");file.write(projectcodec::encode(p));file.close();
     EditorController controller({false,dir.filePath("private.json")});require(controller.openFile(QUrl::fromLocalFile(file.fileName())),"controller fixture open failed");controller.selectCountry("target");
+    configureView(controller,row);
     const auto before=controller.documentBytes();QJsonArray observations,events;
     QObject::connect(&controller,&EditorController::geometryEditChanged,&controller,[&]{const auto s=controller.geometryEditState();events.append(QJsonObject{{"selectionPending",s.value("selectionPending").toBool()},{"previewPending",s.value("previewPending").toBool()},{"applying",s.value("applying").toBool()},{"active",s.value("active").toBool()}});});
     for(const auto& v:row["actions"].toArray()) {

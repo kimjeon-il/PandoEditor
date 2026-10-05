@@ -1,4 +1,6 @@
 #include "geometrycalculator.h"
+#include "cutgeometrycalculator.h"
+#include <QJsonArray>
 #include <pandoeditor/geometrypredicates.h>
 #include <QtTest>
 #include <future>
@@ -68,10 +70,12 @@ private slots:
         QVERIFY2(result.succeeded(),result.detail.c_str());QCOMPARE(planarArea(result.geometry),6.);
     }
     void cutLineReconstructsTwoExactRings() {
-        const auto source=box(0,0,10,10);const auto result=splitGeometryByLine(source,{{5,-2},{5,12}});
-        QVERIFY2(result.succeeded(),result.detail.c_str());QCOMPARE(planarArea(result.candidates[0]),50.);QCOMPARE(planarArea(result.candidates[1]),50.);
-        const auto combined=calculateGeometry({GeometryOperation::Union,result.candidates[0],result.candidates[1]});QVERIFY(combined.succeeded());QCOMPARE(planarArea(combined.geometry),100.);
-        QVERIFY(splitGeometryByLine(source,{{-2,-2},{-1,-1}}).status==GeometryOperationStatus::Failed);
+        const QJsonObject source{{"type","Polygon"},{"coordinates",QJsonArray{QJsonArray{QJsonArray{0,0},QJsonArray{0,10},QJsonArray{10,10},QJsonArray{10,0},QJsonArray{0,0}}}}};
+        const QJsonObject view{{"kind","flat"},{"scale",500},{"translate",QJsonArray{512,384}},{"rotate",QJsonArray{0,0,0}},{"center",QJsonArray{5,5}},{"size",QJsonObject{{"width",1024},{"height",768}}},{"snapDistance",QJsonObject{{"mouse",10},{"touch",18}}},{"coarsePointer",false}};
+        auto result=prepareCutGeometry({{"source",source},{"coords",QJsonArray{QJsonArray{5,-2},QJsonArray{5,12}}},{"view",view},{"buildPreview",true}});
+        QVERIFY2(result.succeeded(),qPrintable(result.detail));QVERIFY(result.result["valid"].toBool());QCOMPARE(result.result["split"].toObject()["candidates"].toArray().size(),2);
+        result=prepareCutGeometry({{"source",source},{"coords",QJsonArray{QJsonArray{-2,-2},QJsonArray{-1,-1}}},{"view",view},{"buildPreview",true}});
+        QVERIFY(result.succeeded());QVERIFY(!result.result["valid"].toBool());
     }
 };
 QTEST_GUILESS_MAIN(GeometryCalculatorTests)

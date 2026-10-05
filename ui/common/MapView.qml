@@ -632,8 +632,8 @@ Rectangle {
         readonly property bool selectionControls: rootSelection && !setup && !review && !confirmation && !taskState.applying
         readonly property bool vertices: !rootSelection && editable && ["edit","draw","annex","boundary","coast"].indexOf(taskState.tool)>=0
         readonly property string taskName: taskState.creating === true ? "새 객체 그리기" : ({edit:"모양 편집",draw:"다시 그리기",move:"객체 이동",merge:"영역 병합",annex:"영역 편입",split:"영역 분할",boundary:"공유 경계 편집",coast:"해안선 편집"})[taskState.tool] || "지도 편집"
-        readonly property string stageName: rootSelection ? (review ? "3단계 · 결과 검토" : setup ? "1단계 · 제공 영역 선택" : "2단계 · 영역 선택") : busy ? "계산 중" : review ? "3단계 · 결과 검토" : setup ? "1단계 · 작업 준비" : picking ? "2단계 · 제공 영역 선택" : "2단계 · 지도 편집"
-        readonly property string instruction: rootSelection ? (setup ? "지도에서 가져올 제공 영역을 선택한 뒤 다음을 누르세요." : review ? "편입 결과를 검토한 뒤 확정하세요. 이전을 누르면 선택을 이어갑니다." : !taskState.activeMethod ? "절단선, 다각형, 구성 영역 중 선택 방법을 고르세요." : taskState.selectionPhase === "drawing" ? (taskState.activeMethod === "line" ? "제공 영역을 가로지르는 선을 그린 뒤 그리기 완료를 누르세요." : "지도에 다각형을 그린 뒤 그리기 완료를 누르세요.") : taskState.selectionPhase === "candidates" ? "지도나 목록에서 편입할 영역을 선택하세요. 미리보기가 준비되면 선택을 보관하세요." : "지도나 목록에서 구성 영역을 선택하세요. 선택을 보관하거나 결과를 검토할 수 있습니다.") : busy ? "결과를 계산하고 있습니다. 이전을 누르면 계산을 중단하고 초안으로 돌아갑니다." : review ? "지도에 표시된 결과를 검토한 뒤 확정하세요. 이전을 누르면 초안을 이어서 편집합니다." : setup ? "대상과 작업을 확인한 뒤 다음 단계로 진행하세요." : picking ? "대상은 고정됩니다. 지도에서 같은 종류의 제공 영역을 선택하거나 목록에서 제외하세요." : taskState.tool === "split" ? "영역을 가로지르는 절단선을 지도에서 그리세요. 새 객체로 남길 결과를 선택할 수 있습니다." : taskState.tool === "move" ? "지도에서 객체를 끌어 위치를 옮기세요." : taskState.tool === "draw" || taskState.tool === "annex" ? "지도에 점을 추가해 영역을 그린 뒤 미리보기를 누르세요." : taskState.tool === "merge" ? "선택한 제공 영역과 대상의 병합 결과를 미리보기로 확인하세요." : "지도에서 점을 끌어 편집하세요. 변을 두 번 누르면 점을 추가합니다."
+        readonly property string stageName: rootSelection ? (review ? "3단계 · 결과 검토" : setup ? (taskState.tool==="split" ? "1단계 · 작업 준비" : "1단계 · 제공 영역 선택") : "2단계 · 영역 선택") : busy ? "계산 중" : review ? "3단계 · 결과 검토" : setup ? "1단계 · 작업 준비" : picking ? "2단계 · 제공 영역 선택" : "2단계 · 지도 편집"
+        readonly property string instruction: rootSelection ? (setup ? (taskState.tool==="split" ? "분할할 객체를 확인한 뒤 다음을 누르세요." : "지도에서 가져올 제공 영역을 선택한 뒤 다음을 누르세요.") : review ? "결과를 검토한 뒤 확정하세요. 이전을 누르면 선택을 이어갑니다." : !taskState.activeMethod ? "절단선, 다각형, 구성 영역 중 선택 방법을 고르세요." : taskState.selectionPhase === "drawing" ? (taskState.activeMethod === "line" ? "제공 영역을 가로지르는 선을 그린 뒤 그리기 완료를 누르세요." : "지도에 다각형을 그린 뒤 그리기 완료를 누르세요.") : taskState.selectionPhase === "candidates" ? "지도나 목록에서 영역을 선택하세요. 미리보기가 준비되면 선택을 보관하세요." : "지도나 목록에서 구성 영역을 선택하세요. 선택을 보관하거나 결과를 검토할 수 있습니다.") : busy ? "결과를 계산하고 있습니다. 이전을 누르면 계산을 중단하고 초안으로 돌아갑니다." : review ? "지도에 표시된 결과를 검토한 뒤 확정하세요. 이전을 누르면 초안을 이어서 편집합니다." : setup ? "대상과 작업을 확인한 뒤 다음 단계로 진행하세요." : picking ? "대상은 고정됩니다. 지도에서 같은 종류의 제공 영역을 선택하거나 목록에서 제외하세요." : taskState.tool === "split" ? "영역을 가로지르는 절단선을 지도에서 그리세요. 새 객체로 남길 결과를 선택할 수 있습니다." : taskState.tool === "move" ? "지도에서 객체를 끌어 위치를 옮기세요." : taskState.tool === "draw" || taskState.tool === "annex" ? "지도에 점을 추가해 영역을 그린 뒤 미리보기를 누르세요." : taskState.tool === "merge" ? "선택한 제공 영역과 대상의 병합 결과를 미리보기로 확인하세요." : "지도에서 점을 끌어 편집하세요. 변을 두 번 누르면 점을 추가합니다."
         onVisibleChanged: if (!visible) minimized=false
         MouseArea { anchors.fill: parent; onWheel: wheel => wheel.accepted=true }
         ColumnLayout {
@@ -675,12 +675,12 @@ Rectangle {
                     BusyIndicator { visible:taskPanel.busy && taskPanel.taskState.riverStatus!=="pending"; running:visible; Layout.alignment:Qt.AlignHCenter }
                     Label {
                         objectName:"geometrySelectionStatus"; visible:taskPanel.rootSelection; Layout.fillWidth:true
-                        text:taskPanel.taskState.applying ? "결과를 적용하고 있습니다." : taskPanel.taskState.selectionPending ? "선택 영역을 계산하고 있습니다." : taskPanel.taskState.previewPending ? "편입 미리보기를 계산하고 있습니다." : taskPanel.taskState.previewBlocking ? "미리보기에 해결할 문제가 있습니다." : taskPanel.taskState.previewReady ? "미리보기가 준비되었습니다." : ""
+                        text:taskPanel.taskState.applying ? "결과를 적용하고 있습니다." : taskPanel.taskState.selectionPending ? "선택 영역을 계산하고 있습니다." : taskPanel.taskState.previewPending ? "미리보기를 계산하고 있습니다." : taskPanel.taskState.previewBlocking ? "미리보기에 해결할 문제가 있습니다." : taskPanel.taskState.previewReady ? "미리보기가 준비되었습니다." : ""
                         color:taskPanel.palette.muted; wrapMode:Text.Wrap
                     }
                     Label {
                         objectName:"geometryTransferMetrics";Layout.fillWidth:true;wrapMode:Text.Wrap
-                        visible:taskPanel.rootSelection && taskPanel.taskState.previewReady===true && Number.isFinite(taskPanel.taskState.transferAreaKm2)
+                        visible:taskPanel.rootSelection && taskPanel.taskState.tool!=="split" && taskPanel.taskState.previewReady===true && Number.isFinite(taskPanel.taskState.transferAreaKm2)
                         readonly property real areaKm2:Math.max(0,Number(taskPanel.taskState.transferAreaKm2 || 0))
                         readonly property int fractionDigits:areaKm2<10 ? 2 : areaKm2<100 ? 1 : 0
                         text:"편입 면적: "+areaKm2.toLocaleString(Qt.locale("ko-KR"),"f",fractionDigits).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "")+" km²"
@@ -794,7 +794,6 @@ Rectangle {
                             }
                         }
                     }
-                    ComboBox { objectName:"splitResultChoice"; Layout.fillWidth:true; visible:taskPanel.taskState.tool==="split"; model:["작은 부분을 새 객체로","결과 1을 새 객체로","결과 2를 새 객체로"]; currentIndex:taskPanel.taskState.splitChoice===undefined || taskPanel.taskState.splitChoice<0 ? 0 : 2-taskPanel.taskState.splitChoice; enabled:!taskPanel.busy; onActivated:editor.geometryChooseSplitResult(currentIndex-1) }
                     Flow {
                         Layout.fillWidth:true; spacing:4
                         UiButton {outlined:true; objectName:"geometryMoveObject"; visible:taskPanel.editable && taskPanel.taskState.target && taskPanel.taskState.target.domain!=="territorial" && taskPanel.taskState.tool!=="draw"; text:taskPanel.taskState.tool==="move"?"점 편집":"객체 이동"; onClicked:editor.geometrySetMoveMode(taskPanel.taskState.tool!=="move") }

@@ -9,6 +9,9 @@ export const behavioralCommit = '53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47';
 export const selectionEntrypoints = ['app-territory-selection-workflow','app-territory-components','territory-component-plan','app-country-modes','app-country-commits','app-river-candidates','river-territory-partition','annex-geometry','cut-worker-preparation','map-edit-country-commands','map-edit-preview-calculations','map-edit-geometry','app-cut-geometry','app-land-relations'];
 const clone = value => structuredClone(value);
 const noop = () => {};
+// This is the original stage-2 oracle view. Controller replays pass it as
+// explicit input so camera-dependent endpoint snapping is compared fairly.
+export const selectionCutView = () => ({kind:'flat',scale:1000,translate:[500,500],rotate:[0,0,0],center:[0,0],snapDistance:{mouse:10,touch:18},coarsePointer:false,size:{width:2000,height:2000}});
 export const square = (x0,y0,x1,y1) => ({ type:'Polygon', coordinates:[[[x0,y0],[x0,y1],[x1,y1],[x1,y0],[x0,y0]]] });
 export async function loadSelectionModules(root) {
   await import(pathToFileURL(resolve(root, 'assets/js/vendor/polygon-clipping.min.js')).href);
@@ -23,11 +26,12 @@ export function seedSelectionFeatures(api, {remote = true, children = false} = {
   return [feature('target',square(-5,0,0,10)),feature('donor',donor), ...(children ? [feature('child-left',square(0,0,5,10),'donor'),feature('child-right',square(5,0,10,10),'donor'),feature('independent-region',square(1,1,9,9),'','regional')] : [])];
 }
 /** All geometry and selection state transitions are production code. The default preview adapter executes the real annex calculator+validator; it never mutates document state. Supply production lifecycle ports to exercise confirmation. */
-export function createSelectionRuntime(api, {features=seedSelectionFeatures(api), lifecycle=null, riverFeatures=[]}={}) {
+export function createSelectionRuntime(api, {features=seedSelectionFeatures(api), lifecycle=null, riverFeatures=[], cutView=selectionCutView()}={}) {
   const state = lifecycle?.state || {territorySelectionSession:null, geometryPreview:{session:null},hydroEdits:[],physicalLoadState:{hydro:'ready'}};
   state.hydroEdits ||= []; state.physicalLoadState ||= {hydro:'ready'};
   const repository = lifecycle?.entityRepository || { get:id => features.find(f=>String(f.id)===String(id)),list:() => features };
-  const errors=[], requests=[], previews=[], effects=[]; let draft=[], uid=0;
+  const errors=[], requests=[], previews=[], effects=[], cutInputs=[]; let draft=[], uid=0;
+  const view=clone(cutView);
   const workflow=api.createTerritorySelectionWorkflow(), components=api.createTerritoryComponents(), modes=api.createCountryModes(), commits=api.createCountryCommits(), rivers=api.createRiverCandidates();
   const plan=api.createTerritoryComponentPlan({clipper:api.clipper,normalize:api.normalizePolygonGeometry});
   const calculator=api.createCountryCommandCalculator(api.clipper);
@@ -68,12 +72,13 @@ export function createSelectionRuntime(api, {features=seedSelectionFeatures(api)
   };
   const cut=api.createCutGeometry(); const land=api.createLandRelations();
   const actualCut={applyWorkerCountryPatches:cut.applyWorkerCountryPatches,buildCutSplitCandidates(source,coords){
-    const result=api.prepareCutInWorker({source,coords,buildPreview:true,view:{kind:'flat',scale:1000,translate:[500,500],rotate:[0,0,0],center:[0,0],snapDistance:{mouse:10,touch:18},coarsePointer:false,size:{width:2000,height:2000}}},api,api.d3,api.clipper);
+    const payload={source,coords,buildPreview:true,view};cutInputs.push(clone(payload));
+    const result=api.prepareCutInWorker(payload,api,api.d3,api.clipper);
     effects.push({cutAssessment:clone(result)}); if(!result.valid||!result.split) throw Error(result.message||result.splitError||'Cut failed'); return result.split;
   }};
   ports.cutOperations=actualCut;ports.landRelations=land;ports.geometryMutation={setApplyingWorkerResult:noop};
   cut.connect(ports);land.connect(ports);components.connect(ports);modes.connect(ports);commits.connect(ports);rivers.connect(ports);rivers.initializeRiverPartitionGeneration();workflow.connect(ports);workflow.initializeTerritorySelectionWorkflow();
-  return {state,api,workflow,components,commits,ports,features,errors,requests,previews,effects,setDraft:coords=>{draft=clone(coords);},draft:()=>clone(draft),lifecycle};
+  return {state,api,workflow,components,commits,ports,features,errors,requests,previews,effects,cutInputs,cutView:clone(view),setDraft:coords=>{draft=clone(coords);},draft:()=>clone(draft),lifecycle};
 }
 export async function settle(h) {
   const end=Date.now()+10000;
