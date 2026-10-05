@@ -8,6 +8,7 @@
 #include <QQuickItem>
 #include <QQuickStyle>
 #include <QTest>
+#include <QElapsedTimer>
 #include <QTemporaryDir>
 #include <QFile>
 #include <QFileInfo>
@@ -32,14 +33,29 @@ bool writeFile(const QString& path,const QByteArray& bytes) {
 }
 bool clickControl(QQuickWindow* window,const QString& name,bool settle=true) {
     enterExistingControlRoute(window,name);
-    auto* item=navigationItem(window->contentItem(),name);
-    if(!item||!item->isVisible()||!item->isEnabled())return false;
-    navigationEnsureVisible(item);window->grabWindow();
-    QRectF visibleRect(item->mapToScene({}),QSizeF(item->width(),item->height()));
-    for(auto* parent=item->parentItem();parent;parent=parent->parentItem())if(parent->clip())
-        visibleRect=visibleRect.intersected(QRectF(parent->mapToScene({}),QSizeF(parent->width(),parent->height())));
-    visibleRect=visibleRect.intersected(QRectF(QPointF(),window->size()));
-    if(visibleRect.isEmpty())return false;
+    QRectF visibleRect,previousRect;QElapsedTimer stable;stable.start();
+    // Controller data can be ready before QML delegates, layouts and sheet
+    // animations are ready for input. Re-find the item after each event turn;
+    // never click coordinates captured from a stale or still-moving layout.
+    const auto ready=[&] {
+        auto* item=navigationItem(window->contentItem(),name);
+        if(!item||!item->isVisible()||!item->isEnabled()){stable.restart();previousRect={};return false;}
+        navigationEnsureVisible(item);window->grabWindow();
+        item=navigationItem(window->contentItem(),name);
+        if(!item||!item->isVisible()||!item->isEnabled()){stable.restart();previousRect={};return false;}
+        visibleRect=QRectF(item->mapToScene({}),QSizeF(item->width(),item->height()));
+        bool moving=false;
+        for(auto* parent=item->parentItem();parent;parent=parent->parentItem()) {
+            moving=moving||parent->property("moving").toBool();
+            if(parent->clip())visibleRect=visibleRect.intersected(QRectF(parent->mapToScene({}),QSizeF(parent->width(),parent->height())));
+        }
+        visibleRect=visibleRect.intersected(QRectF(QPointF(),window->size()));
+        if(!settle)return !visibleRect.isEmpty();
+        if(moving||visibleRect.isEmpty()||visibleRect!=previousRect){previousRect=visibleRect;stable.restart();return false;}
+        return stable.elapsed()>=80;
+    };
+    // Pending-action tests deliberately dispatch immediately while work runs.
+    if(settle?!QTest::qWaitFor(ready,3000):!ready())return false;
     QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,visibleRect.center().toPoint());
     if(settle)QTest::qWait(60);
     return true;
