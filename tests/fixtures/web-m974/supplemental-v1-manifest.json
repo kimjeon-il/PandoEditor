@@ -1,0 +1,23 @@
+{
+  "schema": "pando-m974-supplemental-input-pin",
+  "version": 1,
+  "parentOriginalCorpusCommit": "735ee31149bd7a78e3521d1a498efc96f59352c1",
+  "role": "Separate synthetic threshold diagnostics; original68workflow inputs stay immutable.",
+  "file": "supplemental-v1-cases.json",
+  "bytes": 34383,
+  "sha256": "0558b4eeb00b2be2d50bc442462c0975376c1234f70e1927f0631477ce1bcc65",
+  "orderedCaseIds": [
+    "supp-v1-diagonal-epsilon-below",
+    "supp-v1-diagonal-epsilon-at",
+    "supp-v1-diagonal-epsilon-above",
+    "supp-v1-diagonal-epsilon-negative-at",
+    "supp-v1-half-grid-negative-below",
+    "supp-v1-half-grid-negative-at",
+    "supp-v1-half-grid-negative-above",
+    "supp-v1-half-grid-positive-below",
+    "supp-v1-half-grid-positive-at",
+    "supp-v1-half-grid-positive-above",
+    "supp-v1-owner-already-destination-4e-10",
+    "supp-v1-owner-already-destination-4e-8"
+  ]
+}

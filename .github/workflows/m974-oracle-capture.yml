@@ -38,9 +38,17 @@ jobs:
           node tools/m97/river/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
       - name: Capture actual Chromium snap and shared-boundary workflows
         run: node --max-old-space-size=512 tools/m974-snap-boundary/browser-runner.mjs evidence/snap-boundary-chromium
+      - name: Capture separate actual Chromium threshold diagnostics
+        run: node --max-old-space-size=512 tools/m974-snap-boundary/supplemental-browser-runner.mjs evidence/supplemental-chromium
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: m974-snap-boundary-chromium-${{ github.sha }}
           path: evidence/snap-boundary-chromium
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m974-supplemental-chromium-${{ github.sha }}
+          path: evidence/supplemental-chromium
           retention-days: 14
