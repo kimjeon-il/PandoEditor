@@ -70,10 +70,25 @@ contexts prevent the original and corrected modules from sharing cached imports.
   identities, reference targets, presentation, and opaque generic ownership
   metadata are observed independently at each checkpoint. No expected-state
   reducer is used by the native probe.
-- Review owner identities and geometry come from actual receipt rows. Preview
-  parent relations are not present in that production receipt and are not
-  invented. They remain an explicit M9.7.7 coverage gap; committed relations
-  are compared exactly.
+- Review owner identities, geometry and predicted parent relations come from
+  actual receipt rows. Parent values are retained at the existing production
+  calculation branches, including moved children, clipped descendants and
+  carried grandchildren; they do not authorize or drive commit. The same
+  actual ephemeral sibling identity map is used for preview owners and parent
+  targets. Missing, conflicting, null and unknown parent identities fail closed;
+  the empty string remains an explicitly observed root parent. Native flattened
+  preview features must exactly preserve their raw receipt rows and order.
+- Review completed-preview presence is observed separately: explicit absence
+  and an empty completed preview are different observations, and omitted
+  presence/status evidence is invalid. Native receipt presence and its closed
+  calculation status are explicit independent observations. A failed calculation
+  retains its full raw receipt, detail and rows, but has no completed preview;
+  a completed blocking-validation result does have a preview. Neither the
+  controller's failure ownership nor its UI error/readiness behavior is changed.
+  Canonical relations before Apply, Cancel, final relations and references,
+  and actual Undo/Redo remain independently observed. Existing archived browser
+  evidence may diagnose a new native candidate; it never certifies that newer
+  candidate as an exact-commit Chromium gate.
 - Cancel, rejected commit, Undo, and Redo also check native canonical document
   byte hashes and public history availability. Exact native stack depth,
   pixel rendering, and private cache fields outside the owned observations are not claimed.

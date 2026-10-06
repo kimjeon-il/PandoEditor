@@ -80,3 +80,39 @@ test('exact boundaries preserve exterior-hole roles and reject backtracking spik
  assert.notDeepEqual(implementation.exactGeometryBoundary(a),implementation.exactGeometryBoundary({type:'Polygon',coordinates:[hole,outer]}));
  const spike=structuredClone(outer);spike.splice(2,0,[12,0],[10,0]);assert.notDeepEqual(implementation.exactGeometryBoundary({type:'Polygon',coordinates:[outer]}),implementation.exactGeometryBoundary({type:'Polygon',coordinates:[spike]}));
 });
+
+test('review preserves actual preview parent identity and ordered moved and retained descendants',()=>{
+ const {normalizeSplitWebCase}=api();
+ const root=normalizeSplitWebCase(fixture());assert.equal(root.stages.review.previewPresent,true);assert.deepEqual(root.stages.review.previewFeatures.map(({id,parentId})=>({id,parentId})),[{id:'source',parentId:''},{id:'$created-preview',parentId:''}]);
+ const raw=readSplitObservation().cases.find(row=>row.case==='child-with-dependents'),row=normalizeSplitWebCase(raw);
+ assert.deepEqual(row.stages.review.previewFeatures.map(({id,parentId})=>({id,parentId})),[
+  {id:'$created-preview',parentId:'parent'},{id:'source',parentId:'parent'},{id:'child-moved',parentId:'$created-preview'},{id:'child-cross',parentId:'source'},{id:'grandchild-cross',parentId:'child-cross'}]);
+ assert.equal(row.stages.review.features.find(f=>f.id==='child-moved').parentId,'source','preview must not mutate canonical ancestry');
+ assert.equal(row.stages.cancel.features.find(f=>f.id==='child-moved').parentId,'source');
+});
+test('review rejects omitted, null, conflicting and unknown preview parent observations',()=>{
+ const {normalizeSplitWebCase}=api();
+ for(const mutate of [r=>delete r.stages.review.document.preview,r=>delete r.stages.review.document.preview.afterFeatures,r=>delete r.stages.review.document.preview.afterFeatures[0].properties.parentId,r=>r.stages.review.document.preview.afterFeatures[0].properties.parentId=null,r=>r.stages.review.document.preview.afterFeatures[0].parentId='source',r=>r.stages.review.document.preview.afterFeatures[0].properties.parentId='unobserved-parent']){
+  const raw=fixture();mutate(raw);assert.throws(()=>normalizeSplitWebCase(raw),/missing|invalid|conflicting|unknown|identity|preview/i);
+ }
+});
+test('review compares parent mutations and cannot accept missing parents on both sides',async()=>{
+ const {normalizeSplitWebCase,compareSplitObservations}=api(),row=normalizeSplitWebCase(readSplitObservation().cases.find(c=>c.case==='child-with-dependents'));
+ for(const mutate of [r=>r.stages.review.previewFeatures.find(f=>f.id==='child-moved').parentId='source',r=>r.stages.review.previewFeatures.find(f=>f.id==='grandchild-cross').parentId='$created-preview',r=>r.stages.review.previewFeatures[0].parentId='',r=>r.stages.review.previewFeatures.reverse()]){
+  const bad=structuredClone(row);mutate(bad);assert.ok((await compareSplitObservations(row,bad)).some(d=>d.field==='review.previewFeatures.metadata'));
+ }
+ const missing=structuredClone(row);delete missing.stages.review.previewFeatures[0].parentId;
+ await assert.rejects(()=>compareSplitObservations(row,missing),/missing.*parent/i);
+ await assert.rejects(()=>compareSplitObservations(missing,structuredClone(missing)),/missing.*parent/i);
+});
+test('an observed null review preview differs from an observed empty preview and never fills missing evidence',async()=>{
+ const {normalizeSplitWebCase,compareSplitObservations}=api(),raw=readSplitObservation().cases.find(c=>c.case==='root-empty-selection'),row=normalizeSplitWebCase(raw);
+ assert.equal(row.stages.review.previewPresent,false);assert.deepEqual(row.stages.review.previewFeatures,[]);
+ const empty=structuredClone(raw);empty.stages.review.document.preview={afterFeatures:[]};const normalized=normalizeSplitWebCase(empty);assert.equal(normalized.stages.review.previewPresent,true);
+ assert.ok((await compareSplitObservations(row,normalized)).some(d=>d.field==='review.previewPresent'));
+ const absent=structuredClone(row);delete absent.stages.review.previewPresent;await assert.rejects(()=>compareSplitObservations(row,absent),/missing.*preview/i);
+});
+test('normalized review cannot accept an out-of-map parent on both sides',async()=>{
+ const {normalizeSplitWebCase,compareSplitObservations}=api(),row=normalizeSplitWebCase(fixture());row.stages.review.previewFeatures[0].parentId='unobserved-parent';
+ await assert.rejects(()=>compareSplitObservations(row,structuredClone(row)),/unknown.*parent|parent.*identity/i);
+});

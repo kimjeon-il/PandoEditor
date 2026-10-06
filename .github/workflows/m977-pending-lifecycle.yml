@@ -1,0 +1,59 @@
+name: M9.7.7 pending-input lifecycle
+on:
+  push:
+    branches: [codex/m97-web-editing-parity]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pending-lifecycle:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Verify lifecycle source and negative contracts
+        run: node --test tools/m977-pending-lifecycle/runtime.test.mjs tools/m977-pending-lifecycle/contract.test.mjs tools/m977-pending-lifecycle/suite.test.mjs tests/m977-pending-lifecycle-integration.test.mjs
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - name: Build and test exact-commit native lifecycle
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(qmake -query QT_VERSION)" = '6.8.3'
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+          cmake --build build --target m977_pending_lifecycle_probe --parallel 2
+          ctest --test-dir build -R '^m977_pending_lifecycle_contract$' --output-on-failure
+          mkdir -p evidence
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';import {createHash} from 'node:crypto';
+          fs.writeFileSync('evidence/native-identity.json',JSON.stringify({commit:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,qt:'6.8.3',sha256:createHash('sha256').update(fs.readFileSync('build/app/m977_pending_lifecycle_probe')).digest('hex')}));
+          JS
+      - name: Install unchanged pinned Chromium
+        run: |
+          npm ci --prefix tools/m97/river/browser --ignore-scripts --registry=https://registry.npmjs.org
+          node tools/m97/river/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Capture actual desktop and 360px lifecycle on the exact commit
+        run: node --max-old-space-size=512 tools/m977-pending-lifecycle/browser-runner.mjs evidence/chromium
+      - name: Verify full lifecycle and retain all raw differences
+        run: node tools/m977-pending-lifecycle/gate.mjs evidence/chromium "$PWD/build/app/m977_pending_lifecycle_probe" evidence/native-identity.json evidence/verified
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m977-pending-lifecycle-${{ github.sha }}
+          path: evidence
+          retention-days: 14

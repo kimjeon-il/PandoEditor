@@ -138,7 +138,7 @@ private slots:
   QVERIFY(c.geometryAdvanceStage());QVERIFY(c.geometrySelectTerritoryMethod("line"));
   QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);
   QCOMPARE(c.geometryEditState().value("selectionPhase").toString(),QString("drawing"));
-  const auto observation=c.riverSelectionObservation();QVERIFY(observation.contains("combinedGeometry"));QVERIFY(observation["combinedGeometry"].isNull());QVERIFY(observation.contains("remainingGeometry"));
+  const auto observation=c.riverSelectionObservation();QVERIFY(observation.contains("combinedGeometry"));QVERIFY(observation["combinedGeometry"].isNull());QVERIFY(observation.contains("remainingGeometry"));QVERIFY(observation.contains("splitPreview"));QVERIFY(observation["splitPreview"].isNull());QVERIFY(observation.contains("splitPreviewPresent"));QVERIFY(!observation["splitPreviewPresent"].toBool());QVERIFY(observation.contains("splitPreviewReceiptPresent"));QVERIFY(!observation["splitPreviewReceiptPresent"].toBool());
   c.cancelGeometryEdit();QCOMPARE(c.documentBytes(),bytes);QCOMPARE(c.revision(),revision);QVERIFY(!c.geometryEditState().value("active").toBool());
  }
 };

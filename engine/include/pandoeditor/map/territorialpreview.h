@@ -1,5 +1,6 @@
 #pragma once
 #include <pandoeditor/commands.h>
+#include <map>
 #include <pandoeditor/jobs.h>
 #include <pandoeditor/map/territoryselection.h>
 
@@ -72,6 +73,10 @@ struct SplitGeometryPreviewResult {
     pandoeditor::CommandError error=pandoeditor::CommandError::PrepareFailed;
     std::string detail;
     pandoeditor::Geometry transferredGeometry,remainingGeometry;
+    // Inert relation observations captured by the same traversal as rows and
+    // patch. Only surviving owners have an entry; an explicit empty string is
+    // a root parent, not a missing observation. Commit does not consume these.
+    std::map<pandoeditor::ObjectRef,std::string> parentIds;
     std::vector<AnnexGeometryRow> rows;
     std::vector<AnnexGeometryValidationIssue> issues;
     std::optional<pandoeditor::TerritorialMutationPlan> plan;

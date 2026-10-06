@@ -1,0 +1,171 @@
+{
+  "schema": "pando-m977-pending-lifecycle-corpus",
+  "version": 2,
+  "fixture": {
+    "path": "tests/fixtures/web-m975-model-exchange/m975-annex-partial-refs.json",
+    "bytes": 15217,
+    "sha256": "e5fa646e6c6dcf7ca054c2b57368e7e4b1d8a89c108deebb2a33ff4729302cf0"
+  },
+  "pendingPoints": [
+    [
+      2,
+      2
+    ],
+    [
+      4,
+      2
+    ]
+  ],
+  "readyPoints": [
+    [
+      -1,
+      0
+    ],
+    [
+      4,
+      0
+    ],
+    [
+      4,
+      10
+    ],
+    [
+      -1,
+      10
+    ]
+  ],
+  "cases": [
+    {
+      "id": "pending-lifecycle-desktop",
+      "profile": {
+        "id": "desktop",
+        "width": 1024,
+        "height": 768,
+        "pointerType": "mouse"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 572.9577951308232,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 1024,
+          "height": 768
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false
+      },
+      "stages": [
+        "before",
+        "activation",
+        "firstPending",
+        "secondPending",
+        "held",
+        "ready",
+        "firstReady",
+        "secondReady",
+        "thirdReady",
+        "fourthReady",
+        "finished",
+        "preview",
+        "review",
+        "cancel",
+        "retryActivation",
+        "retryFirstPending",
+        "retrySecondPending",
+        "retryHeld",
+        "retryReady",
+        "retryFirstReady",
+        "retrySecondReady",
+        "retryThirdReady",
+        "retryFourthReady",
+        "retryFinished",
+        "retryPreview",
+        "retryReview",
+        "applied",
+        "undo",
+        "redo"
+      ]
+    },
+    {
+      "id": "pending-lifecycle-mobile-360",
+      "profile": {
+        "id": "mobile-360",
+        "width": 360,
+        "height": 800,
+        "pointerType": "touch"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 572.9577951308232,
+        "translate": [
+          180,
+          400
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 360,
+          "height": 800
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": true
+      },
+      "stages": [
+        "before",
+        "activation",
+        "firstPending",
+        "secondPending",
+        "held",
+        "ready",
+        "firstReady",
+        "secondReady",
+        "thirdReady",
+        "fourthReady",
+        "finished",
+        "preview",
+        "review",
+        "cancel",
+        "retryActivation",
+        "retryFirstPending",
+        "retrySecondPending",
+        "retryHeld",
+        "retryReady",
+        "retryFirstReady",
+        "retrySecondReady",
+        "retryThirdReady",
+        "retryFourthReady",
+        "retryFinished",
+        "retryPreview",
+        "retryReview",
+        "applied",
+        "undo",
+        "redo"
+      ]
+    }
+  ]
+}

@@ -166,13 +166,18 @@ QVariantMap EditorController::riverSelectionObservation() const {
     for(const auto point:geometryEdit_->lineDraft)inputLine.append(QVariant(QVariantList{point.x,point.y}));
     result["candidates"]=candidates;result["inputLine"]=inputLine;
     if(geometryEdit_->splitIntent){
-        result["combinedGeometry"]=QVariant();result["remainingGeometry"]=QVariant();result["currentGeometry"]=state.currentGeometry?QVariant(encode(*state.currentGeometry)):QVariant();
+        result["combinedGeometry"]=QVariant();result["remainingGeometry"]=QVariant();result["splitPreview"]=QVariant();result["splitPreviewPresent"]=false;result["splitPreviewReceiptPresent"]=false;result["currentGeometry"]=state.currentGeometry?QVariant(encode(*state.currentGeometry)):QVariant();
     }
     if(state.remainingGeometry)result["remainingGeometry"]=encode(*state.remainingGeometry);
     if(geometryEdit_->splitPreview&&geometryEdit_->previewSelectionRevision==state.revision){
         const auto& receipt=*geometryEdit_->splitPreview;QVariantList rows;
-        for(const auto& row:receipt.rows){QVariantMap item{{"owner",objectRefValue(row.owner)},{"before",encode(row.before)}};if(row.after)item["after"]=encode(*row.after);else item["after"]=QVariant();rows.append(item);}
-        result["splitPreview"]=QVariantMap{{"ok",receipt.ok()},{"blocking",receipt.blocking()},{"detail",QString::fromStdString(receipt.detail)},{"transferredGeometry",encode(receipt.transferredGeometry)},{"remainingGeometry",encode(receipt.remainingGeometry)},{"rows",rows}};
+        // A failed calculation remains an owned diagnostic receipt, but did
+        // not produce a preview. Completed blocking previews still exist.
+        result["splitPreviewReceiptPresent"]=true;
+        result["splitPreviewPresent"]=receipt.status==GeometryOperationStatus::Completed;
+        const auto status=receipt.status==GeometryOperationStatus::Completed?"completed":receipt.status==GeometryOperationStatus::Empty?"empty":receipt.status==GeometryOperationStatus::Cancelled?"cancelled":"failed";
+        for(const auto& row:receipt.rows){QVariantMap item{{"owner",objectRefValue(row.owner)},{"before",encode(row.before)}};if(row.after){item["after"]=encode(*row.after);const auto parent=receipt.parentIds.find(row.owner);if(parent!=receipt.parentIds.end())item["parentId"]=QString::fromStdString(parent->second);}else item["after"]=QVariant();rows.append(item);}
+        result["splitPreview"]=QVariantMap{{"status",status},{"ok",receipt.ok()},{"blocking",receipt.blocking()},{"detail",QString::fromStdString(receipt.detail)},{"transferredGeometry",encode(receipt.transferredGeometry)},{"remainingGeometry",encode(receipt.remainingGeometry)},{"rows",rows}};
     }
     if(state.combinedGeometry)result["combinedGeometry"]=encode(*state.combinedGeometry);
     if(state.workingSourceGeometry)result["workingSourceGeometry"]=encode(*state.workingSourceGeometry);

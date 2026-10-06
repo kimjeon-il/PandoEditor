@@ -397,12 +397,15 @@ SplitGeometryPreviewResult calculateSplitGeometryPreview(const ProjectSnapshot& 
         if(!planned.ok()||!planned.plan){result.error=planned.error;throw std::invalid_argument(planned.detail);}
         result.plan=std::move(planned.plan);result.patch.sourceRevision=snapshot.revision();
         result.rows.push_back({intent.source,original,result.remainingGeometry.polygons.empty()?std::optional<Geometry>{}:std::optional<Geometry>{result.remainingGeometry}});
+        const auto sourceParentId=staticParentRelation(document,intent.source.id).parentId;
+        if(result.rows.back().after)result.parentIds.emplace(intent.source,sourceParentId);
         std::set<ObjectRef> previewChanged{intent.source},calculatedOwners{intent.source};
         if(root) {
             for(std::size_t index=1;index<result.plan->geometry.readOwners.size();++index) {
                 const auto owner=result.plan->geometry.readOwners[index];const auto& shape=annexGeometry(snapshot,owner);
                 auto kept=annexCalculate(GeometryOperation::Difference,geographicOwner(owner),result.transferredGeometry,calculators,token);
                 result.rows.push_back({owner,shape,kept.polygons.empty()?std::optional<Geometry>{}:std::optional<Geometry>{std::move(kept)}});
+                if(result.rows.back().after)result.parentIds.emplace(owner,staticParentRelation(document,owner.id).parentId);
             }
         } else {
             const auto visit=[&](const auto& self,const std::string& parent,const std::optional<Geometry>& keptParent,bool movedAncestor)->void {
@@ -410,6 +413,7 @@ SplitGeometryPreviewResult calculateSplitGeometryPreview(const ProjectSnapshot& 
                     annexCheckCancelled(token);const auto owner=territorialRef(relation.entityId);const auto& shape=annexGeometry(snapshot,owner);
                     if(movedAncestor||geometryContains(result.transferredGeometry,shape)) {
                         result.rows.push_back({owner,shape,shape});
+                        result.parentIds.emplace(owner,movedAncestor?relation.parentId:intent.createdId);
                         if(!movedAncestor){previewChanged.insert(owner);result.issues.push_back({"reparent-child",{owner},"SPLIT_CHILD_REPARENTED",false});}
                         self(self,owner.id,std::optional<Geometry>{shape},true);continue;
                     }
@@ -418,12 +422,13 @@ SplitGeometryPreviewResult calculateSplitGeometryPreview(const ProjectSnapshot& 
                     const auto cut=kept.polygons.empty()?calculationShape:annexCalculate(GeometryOperation::Difference,calculationShape,kept,calculators,token);
                     if(!significantArea(planarArea(cut),planarArea(calculationShape))) {
                         result.rows.push_back({owner,shape,shape});
+                        result.parentIds.emplace(owner,relation.parentId);
                         // The web does not descend into an unchanged child.
                         // Populate immutable reads without altering that subtree.
                         self(self,owner.id,std::optional<Geometry>{shape},true);continue;
                     }
                     previewChanged.insert(owner);calculatedOwners.insert(owner);std::optional<Geometry> remainder;if(!kept.polygons.empty())remainder=std::move(kept);
-                    result.rows.push_back({owner,shape,remainder});self(self,owner.id,remainder,false);
+                    result.rows.push_back({owner,shape,remainder});if(remainder)result.parentIds.emplace(owner,relation.parentId);self(self,owner.id,remainder,false);
                 }
             };visit(visit,intent.source.id,std::optional<Geometry>{result.remainingGeometry},false);
         }
@@ -434,6 +439,7 @@ SplitGeometryPreviewResult calculateSplitGeometryPreview(const ProjectSnapshot& 
         }
         result.patch.creations.push_back({territorialRef(intent.createdId),result.transferredGeometry});
         result.rows.push_back({territorialRef(intent.createdId),{},result.transferredGeometry});
+        result.parentIds.emplace(territorialRef(intent.createdId),sourceParentId);
         if(root) {
             // Country creation uses the same post-edit country overlap/union
             // validator as annex. The fresh owner has no baseline geometry.

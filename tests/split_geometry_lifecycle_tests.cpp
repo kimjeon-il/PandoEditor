@@ -137,6 +137,24 @@ private slots:
         SplitTerritorialIntent intent{territorialRef("source"),observedGeometry(selected["combinedGeometry"].toObject()),created,"새 객체"};
         JobScheduler jobs;auto ticket=jobs.enqueue(project.snapshot(),"observed-split");jobs.takeNext();
         const auto receipt=calculateSplitGeometryPreview(project.snapshot(),intent,territorialPreviewCalculators(),ticket.token());QCOMPARE(projectcodec::encode(project),before);
+        const auto webPreview=stages["review"].toObject()["document"].toObject()["preview"];
+        QVERIFY(!webPreview.isUndefined());
+        if(webPreview.isObject()) {
+            QVERIFY(webPreview.toObject()["afterFeatures"].isArray());const auto expected=webPreview.toObject()["afterFeatures"].toArray();
+            QSet<QString> initialIds;for(const auto& value:observedDocument(beforeStage)["entities"].toArray())initialIds.insert(value.toObject()["id"].toString());
+            QString previewCreated;for(const auto& value:expected){const auto id=value.toObject()["id"].toString();if(!initialIds.contains(id)){QVERIFY(previewCreated.isEmpty());previewCreated=id;}}
+            // Map only the observed preview-created identity to this explicit
+            // mutation input. Existing IDs and parent targets remain untouched.
+            const auto ownerId=[&](const QString& id){return !previewCreated.isEmpty()&&id==previewCreated?created:id.toStdString();};
+            std::vector<const AnnexGeometryRow*> shown;for(const auto& row:receipt.rows)if(row.after)shown.push_back(&row);
+            QCOMPARE(shown.size(),std::size_t(expected.size()));
+            for(int index=0;index<expected.size();++index) {
+                const auto feature=expected[index].toObject(),properties=feature["properties"].toObject();QVERIFY(properties["parentId"].isString());
+                const auto& row=*shown[std::size_t(index)];QCOMPARE(row.owner,territorialRef(ownerId(feature["id"].toString())));
+                const auto parent=receipt.parentIds.find(row.owner);QVERIFY2(parent!=receipt.parentIds.end(),row.owner.id.c_str());QCOMPARE(parent->second,ownerId(properties["parentId"].toString()));
+            }
+            QCOMPARE(projectcodec::encode(project),before);
+        }
         if(!stages.contains("confirm")) {
             QCOMPARE(receipt.ok(),selected["previewReady"].toBool());
             if(receipt.ok()){const auto rejected=prepareSplitGeometryCommit(project.snapshot(),receipt,ticket.token());QVERIFY(!rejected.ok());}
@@ -175,6 +193,11 @@ private slots:
     void childSourceMovesContainedChildAndPreservesGrandchildRelation() {
         Project project;project.replace(nested());const auto before=projectcodec::encode(project);
         const auto receipt=preview(project,"source",box(1,1,5,8));QVERIFY2(receipt.ok(),receipt.detail.c_str());
+        QCOMPARE(receipt.parentIds.at(territorialRef("created")),std::string("root"));
+        QCOMPARE(receipt.parentIds.at(territorialRef("source")),std::string("root"));
+        QCOMPARE(receipt.parentIds.at(territorialRef("child")),std::string("created"));
+        QCOMPARE(receipt.parentIds.at(territorialRef("grandchild")),std::string("child"));
+        QCOMPARE(receipt.rows.size(),std::size_t(3));QCOMPARE(receipt.rows[0].owner,territorialRef("created"));QCOMPARE(receipt.rows[1].owner,territorialRef("source"));QCOMPARE(receipt.rows[2].owner,territorialRef("child"));
         QCOMPARE(projectcodec::encode(project),before);auto command=prepare(project,receipt);QVERIFY2(command.ok(),command.detail.c_str());
         QVERIFY(CommandProcessor::confirm(project,*command.preview).ok());
         QCOMPARE(staticParentRelation(project.document(),"created").parentId,std::string("root"));
@@ -197,7 +220,9 @@ private slots:
     }
     void childSourceClipsParentAndMovesContainedGrandchild() {
         Project project;project.replace(nested());const auto receipt=preview(project,"source",box(1,1,3,8));
-        QVERIFY2(receipt.ok(),receipt.detail.c_str());auto command=prepare(project,receipt);QVERIFY2(command.ok(),command.detail.c_str());
+        QVERIFY2(receipt.ok(),receipt.detail.c_str());
+        QCOMPARE(receipt.parentIds.at(territorialRef("child")),std::string("source"));QCOMPARE(receipt.parentIds.at(territorialRef("grandchild")),std::string("created"));
+        auto command=prepare(project,receipt);QVERIFY2(command.ok(),command.detail.c_str());
         QVERIFY(CommandProcessor::confirm(project,*command.preview).ok());
         QCOMPARE(staticParentRelation(project.document(),"child").parentId,std::string("source"));
         QCOMPARE(staticParentRelation(project.document(),"grandchild").parentId,std::string("created"));
@@ -272,6 +297,7 @@ private slots:
         const auto receipt=preview(project,"root",box(0,0,10,10));QVERIFY2(receipt.ok(),receipt.detail.c_str());
         QVERIFY(receipt.remainingGeometry.polygons.empty());QCOMPARE(receipt.rows.size(),std::size_t(2));
         QCOMPARE(receipt.rows[0].owner,territorialRef("root"));QVERIFY(!receipt.rows[0].after);QVERIFY(receipt.rows[1].after);
+        QVERIFY(!receipt.parentIds.count(territorialRef("root")));QCOMPARE(receipt.parentIds.at(territorialRef("created")),std::string());
         const auto rejected=prepare(project,receipt);QVERIFY(!rejected.ok());QCOMPARE(rejected.detail,std::string("SPLIT_SOURCE_EXHAUSTED"));
         QCOMPARE(projectcodec::encode(project),before);QVERIFY(!project.undo());
     }

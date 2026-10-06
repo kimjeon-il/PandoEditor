@@ -41,10 +41,44 @@ function mapObjectIds(row,entities){
  const stable=id=>{if(initial.includes(id)||id==='')return id;if(confirmed.includes(id))return '$created';throw Error('unknown created or replaced object identity '+id);};
  return {initial,confirmed,stable,preview(features){const ids=features.filter(f=>!initial.includes(f.id)).map(f=>f.id);unique(ids,'preview object');assert.ok(ids.length<=1,'preview created more than one identity');return id=>initial.includes(id)||id===''?id:ids.includes(id)?'$created-preview':stable(id);}};
 }
+function observedParentId(feature){
+ const hasOuter=Object.hasOwn(feature,'parentId'),hasInner=feature.properties&&Object.hasOwn(feature.properties,'parentId');
+ assert.ok(hasOuter||hasInner,'missing explicit parent identity observation');
+ if(hasOuter)assert.equal(typeof feature.parentId,'string','invalid parent identity');
+ if(hasInner)assert.equal(typeof feature.properties.parentId,'string','invalid parent identity');
+ if(hasOuter&&hasInner)assert.equal(feature.parentId,feature.properties.parentId,'conflicting parent identity observations');
+ return hasOuter?feature.parentId:feature.properties.parentId;
+}
 function mappedFeatures(features,map){return list(features,'features').map(f=>{
- const hasOuter=Object.hasOwn(f,'parentId'),hasInner=f.properties&&Object.hasOwn(f.properties,'parentId');assert.ok(hasOuter||hasInner,'missing explicit parent identity observation');if(hasOuter)assert.equal(typeof f.parentId,'string','invalid parent identity');if(hasInner)assert.equal(typeof f.properties.parentId,'string','invalid parent identity');if(hasOuter&&hasInner)assert.equal(f.parentId,f.properties.parentId,'conflicting parent identity observations');const parentId=hasOuter?f.parentId:f.properties.parentId;
+ const parentId=observedParentId(f);
  const name=f.name??f.properties?.name,coverageMode=f.coverageMode??f.properties?.coverageMode;assert.equal(typeof name,'string','missing explicit object name observation');assert.equal(typeof coverageMode,'string','missing explicit coverage observation');return {id:map(f.id),parentId:map(parentId),name,coverageMode,geometry:clone(geometry(f.geometry))};
 });}
+function mappedPreviewFeatures(features,map){return features.map(f=>({id:map(f.id),parentId:map(observedParentId(f)),geometry:clone(geometry(f.geometry))}));}
+function webReviewPreview(stage){
+ assert.ok(Object.hasOwn(stage.document,'preview'),'missing explicit review preview observation');
+ const preview=stage.document.preview;if(preview===null)return {present:false,features:[]};
+ assert.ok(preview&&typeof preview==='object','invalid review preview observation');
+ return {present:true,features:list(preview.afterFeatures,'preview features')};
+}
+function nativeReviewPreview(stage){
+ assert.ok(Object.hasOwn(stage.raw,'splitPreview'),'missing explicit native review preview observation');
+ const receipt=stage.raw.splitPreview,features=list(stage.previewFeatures,'preview features');
+ for(const key of ['splitPreviewPresent','splitPreviewReceiptPresent'])assert.equal(typeof stage.raw[key],'boolean','missing explicit '+key+' observation');
+ assert.equal(stage.raw.splitPreviewReceiptPresent,receipt!==null,'preview receipt presence must match the raw receipt');
+ if(receipt===null){assert.equal(stage.raw.splitPreviewPresent,false,'null receipt cannot produce a preview');assert.deepEqual(features,[],'null preview must not expose preview features');return {present:false,features};}
+ assert.ok(receipt&&typeof receipt==='object','invalid native preview receipt');
+ assert.ok(['completed','empty','failed','cancelled'].includes(receipt.status),'missing or invalid preview receipt status');
+ assert.equal(typeof receipt.detail,'string','missing preview receipt detail');assert.equal(typeof receipt.ok,'boolean','missing preview receipt validity');assert.equal(typeof receipt.blocking,'boolean','missing preview receipt blocking state');
+ assert.equal(stage.raw.splitPreviewPresent,receipt.status==='completed','preview presence must match completed calculation status');
+ const receiptRows=list(receipt.rows,'preview receipt rows');
+ if(!stage.raw.splitPreviewPresent){assert.equal(receipt.ok,false,'failed receipt cannot be valid');assert.equal(receipt.blocking,true,'failed receipt must remain blocking');assert.deepEqual(features,[],'failed calculation must not expose preview features');return {present:false,features};}
+ const rows=receiptRows.filter(row=>row.after!==null).map(row=>{
+  assert.ok(row.owner&&row.owner.domain==='territorial'&&typeof row.owner.id==='string','missing preview receipt owner');
+  return {id:row.owner.id,parentId:observedParentId(row),geometry:clone(geometry(row.after))};
+ });
+ assert.deepEqual(features,rows,'preview features must preserve the actual receipt rows and parent identities');
+ return {present:true,features};
+}
 function selection(value,raw){
  if(value===null)return null;
  assert.ok(value&&typeof value==='object','missing selection observation');for(const key of ['combinedGeometry','remainingGeometry'])assert.ok(Object.hasOwn(raw??value,key),`missing explicit ${key} geometry observation`);assert.equal(typeof value.stage,'string','missing stage observation');assert.ok(Object.hasOwn(value,'activeMethod'),'missing active method observation');assert.ok([null,'','line','polygon','components'].includes(value.activeMethod),'invalid active method observation');assert.ok(Object.hasOwn(value,raw?'selectionPhase':'activePhase'),'missing active phase observation');assert.ok(raw?typeof value.selectionPhase==='string':value.activePhase===null||typeof value.activePhase==='string','invalid phase observation');assert.equal(typeof value.previewReady,'boolean','missing preview readiness');assert.equal(typeof value.canAddPart,'boolean','missing archive readiness');
@@ -66,8 +100,8 @@ export function normalizeSplitWebCase(row){
  assert.ok(row.stages?.before,'missing before stage');validateRawCandidateContinuity(row);const entities=s=>list(s.document?.document?.entities,'document entities'),ids=mapObjectIds(row,entities),stages={};
  for(const [name,s]of Object.entries(row.stages)){
   assert.ok(s.document?.history&&['undo','redo'].every(key=>Number.isInteger(s.document.history[key])&&s.document.history[key]>=0),'missing exact web history observation');
-  const features=mappedFeatures(entities(s),ids.stable),preview=list(name==='review'?s.document.preview?.afterFeatures??[]:[],'preview features');
-  const normalized={outcome:s.outcome,selection:selection(s.selection),features,references:webRefs(s,ids.stable),presentation:webPresentation(s),genericMetadata:list(s.document.genericFeatures,'generic metadata').map(f=>({id:f.id,sourceDetails:f.properties.source?.details??{}})),history:{canUndo:s.document.history.undo>0,canRedo:s.document.history.redo>0},previewFeatures:preview.map(f=>({id:ids.preview(preview)(f.id),geometry:clone(geometry(f.geometry))}))};
+  const features=mappedFeatures(entities(s),ids.stable),review=name==='review'?webReviewPreview(s):{present:null,features:[]},preview=review.features;
+  const normalized={outcome:s.outcome,selection:selection(s.selection),features,references:webRefs(s,ids.stable),presentation:webPresentation(s),genericMetadata:list(s.document.genericFeatures,'generic metadata').map(f=>({id:f.id,sourceDetails:f.properties.source?.details??{}})),history:{canUndo:s.document.history.undo>0,canRedo:s.document.history.redo>0},previewPresent:review.present,previewFeatures:mappedPreviewFeatures(preview,ids.preview(preview))};
   if(name==='confirm'&&s.outcome){const intent=s.selectionEffects?.filter(e=>e.name==='selection.applyIntent').at(-1)?.args?.[0];assert.ok(intent&&typeof intent.id==='string','missing committed selection intent');normalized.committedSelection={domain:intent.domain,id:ids.stable(intent.id)};}else normalized.committedSelection=null;
   Object.assign(normalized,identities(normalized,ids.initial));stages[name]=normalized;
  }
@@ -79,8 +113,8 @@ export function normalizeSplitNativeCase(row){
  for(const name of list(row.stageOrder,'stage order')){
   const s=row.stages[name];assert.ok(s,'missing ordered stage');
   assert.ok(s.state&&typeof s.state==='object'&&!Array.isArray(s.state)&&s.raw&&typeof s.raw==='object'&&!Array.isArray(s.raw)&&typeof s.unchangedFromBefore==='boolean'&&typeof s.documentSha256==='string','missing actual controller observation');assert.equal(typeof s.state.active,'boolean','missing native active boolean observation');assert.match(s.documentSha256,/^[a-f0-9]{64}$/,'missing exact native document hash observation');
-  const preview=list(name==='review'?s.previewFeatures:[],'preview features'),features=mappedFeatures(entities(s),ids.stable);
-  const normalized={outcome:s.outcome,selection:s.state.active?selection(s.state,s.raw):null,features,references:list(s.references,'references').map(r=>({...r,target:ids.stable(r.target),...(r.kind==='label-settings'?{id:ids.stable(r.id)}:{})})),presentation:s.presentation,genericMetadata:s.genericMetadata,history:s.history,previewFeatures:preview.map(f=>({id:ids.preview(preview)(f.id),geometry:clone(geometry(f.geometry))}))};
+  const review=name==='review'?nativeReviewPreview(s):{present:null,features:[]},preview=review.features,features=mappedFeatures(entities(s),ids.stable);
+  const normalized={outcome:s.outcome,selection:s.state.active?selection(s.state,s.raw):null,features,references:list(s.references,'references').map(r=>({...r,target:ids.stable(r.target),...(r.kind==='label-settings'?{id:ids.stable(r.id)}:{})})),presentation:s.presentation,genericMetadata:s.genericMetadata,history:s.history,previewPresent:review.present,previewFeatures:mappedPreviewFeatures(preview,ids.preview(preview))};
   if(name==='confirm'&&s.outcome){assert.ok(s.primaryObject&&typeof s.primaryObject.id==='string','missing native committed primary selection');normalized.committedSelection={domain:s.primaryObject.domain,id:ids.stable(s.primaryObject.id)};}else normalized.committedSelection=null;
   Object.assign(normalized,identities(normalized,ids.initial));stages[name]=normalized;
  }
@@ -95,7 +129,9 @@ function validate(row){
  for(const name of ['before','candidates','selected','archive','review','cancel'])assert.ok(row.stages[name],`missing ${name} stage`);
  for(const [name,s]of Object.entries(row.stages)){
   assert.ok(Object.hasOwn(s,'selection')&&Object.hasOwn(s,'outcome'),'missing observation fields');assert.ok(s.outcome===null||typeof s.outcome==='boolean','invalid outcome observation');
-  for(const key of ['features','previewFeatures']){unique(list(s[key],key).map(f=>f.id),key);for(const f of s[key]){geometry(f.geometry);if(key==='features')assert.equal(typeof f.parentId,'string','missing parent identity');}}
+  for(const key of ['features','previewFeatures']){unique(list(s[key],key).map(f=>f.id),key);for(const f of s[key]){geometry(f.geometry);assert.equal(typeof f.parentId,'string','missing parent identity');}}
+  const previewParentIds=new Set(['',...s.features.map(f=>f.id),...s.previewFeatures.map(f=>f.id)]);for(const feature of s.previewFeatures)assert.ok(previewParentIds.has(feature.parentId),'unknown preview parent identity');
+  assert.ok(name==='review'?typeof s.previewPresent==='boolean':s.previewPresent===null,'missing explicit preview presence observation');if(s.previewPresent===false)assert.deepEqual(s.previewFeatures,[],'absent preview cannot expose features');
   list(s.references,'references');assert.ok(s.presentation,'missing presentation observation');list(s.genericMetadata,'generic metadata');assert.ok(s.history&&typeof s.history.canUndo==='boolean'&&typeof s.history.canRedo==='boolean','missing history observation');
   for(const key of ['createdIds','retainedIds','deletedIds'])unique(list(s[key],key),key);
   if(s.selection){const state=s.selection;assert.ok(typeof state.previewReady==='boolean'&&typeof state.canAddPart==='boolean','missing selection readiness');unique(list(state.candidates,'candidates').map(c=>c.id),'candidate');for(const c of state.candidates)geometry(c.geometry);for(const p of list(state.parts,'parts'))geometry(p.geometry);for(const id of list(state.selectedCandidateIds,'selected candidates'))assert.ok(state.candidates.some(c=>c.id===id),'selected candidate identity missing');for(const key of ['combinedGeometry','remainingGeometry'])if(state[key]!==null)geometry(state[key]);}
@@ -108,7 +144,7 @@ export async function compareSplitObservations(web,native){
  const shapes=(field,w,n)=>{const a=new Map(w.map(f=>[f.id,f])),b=new Map(n.map(f=>[f.id,f]));for(const id of [...new Set([...a.keys(),...b.keys()])].sort()){if(!a.has(id)||!b.has(id)){differences.push({field:field+'.object',id,web:a.has(id),native:b.has(id)});continue;}if(!exactGeometryEqual(a.get(id).geometry,b.get(id).geometry))differences.push({field:field+'.geometry',id,web:a.get(id).geometry,native:b.get(id).geometry});}};
  const shape=(field,w,n)=>{if(w===null||n===null){different(field,w,n);return;}shapes(field,[{id:'geometry',geometry:w}],[{id:'geometry',geometry:n}]);};
  for(const [name,w]of Object.entries(web.stages)){
-  const n=native.stages[name];for(const field of ['outcome','committedSelection','references','presentation','genericMetadata','history','createdIds','retainedIds','deletedIds'])different(`${name}.${field}`,w[field],n[field]);
+  const n=native.stages[name];for(const field of ['outcome','previewPresent','committedSelection','references','presentation','genericMetadata','history','createdIds','retainedIds','deletedIds'])different(`${name}.${field}`,w[field],n[field]);
   for(const field of ['features','previewFeatures']){different(`${name}.${field}.metadata`,w[field].map(({geometry,...rest})=>rest),n[field].map(({geometry,...rest})=>rest));shapes(`${name}.${field}`,w[field],n[field]);}
   if(!w.selection||!n.selection){different(`${name}.selection`,w.selection,n.selection);continue;}
   for(const field of ['stage','activeMethod','activePhase','sourceCountryIds','selectedCandidateIds','previewReady','canAddPart'])different(`${name}.selection.${field}`,w.selection[field],n.selection[field]);

@@ -18,6 +18,7 @@ REQUIRED = {
     "m976_shared_boundary_engine_tests",
     "m974_source_history_contract",
     "m977_boundary_timing_contract",
+    "m977_pending_lifecycle_contract",
     "m977_boundary_session_replacement_contract",
     "m974_snap_tests",
     "m974_snap_provider_tests",
