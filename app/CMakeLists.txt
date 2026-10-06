@@ -56,6 +56,7 @@ add_library(pandoeditor_editor STATIC
     riverareacalculator.cpp riverareacalculator.h
     territorialgeometry.cpp territorialgeometry.h
     territoryselectionruntime.cpp territoryselectionruntime.h
+    territorialpreviewruntime.cpp territorialpreviewruntime.h
     editorpresentation.cpp
     webimport.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
     editorgeometry.cpp editorterritoryselection.cpp editorriverselection.cpp

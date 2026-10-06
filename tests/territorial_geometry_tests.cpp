@@ -1,3 +1,4 @@
+#include "territorialpreviewruntime.h"
 #include "territorial_fixture.h"
 #include "territorialgeometry.h"
 #include "projectcodec.h"
@@ -513,7 +514,7 @@ private slots:
         SplitTerritorialIntent intent{territorialRef("B"),{},"created","Created"};
         Geometry selected=rectangle(20,0,2,10);selected.polygons.push_back(rectangle(28,0,2,10).polygons.front());intent.selection=selected;
         JobScheduler jobs;auto ticket=jobs.enqueue(project.snapshot(),"split-receipt");jobs.takeNext();
-        const auto receipt=calculateSplitGeometryPreview(project.snapshot(),intent,ticket.token());
+        const auto receipt=calculateSplitGeometryPreview(project.snapshot(),intent,territorialPreviewCalculators(),ticket.token());
         QVERIFY2(receipt.ok(),receipt.detail.c_str());QCOMPARE(projectcodec::encode(project),before);
         QCOMPARE(receipt.patch.creations.size(),std::size_t(1));QCOMPARE(planarArea(receipt.transferredGeometry),40.);QCOMPARE(planarArea(receipt.remainingGeometry),60.);
         auto prepared=prepareSplitGeometryCommit(project.snapshot(),receipt,ticket.token());QVERIFY2(prepared.ok(),prepared.detail.c_str());

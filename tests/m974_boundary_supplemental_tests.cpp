@@ -1,3 +1,4 @@
+#include "territorialpreviewruntime.h"
 #include <pandoeditor/map/sharedboundary.h>
 #include "territorialgeometry.h"
 #include "territorial_fixture.h"
@@ -42,7 +43,7 @@ private slots:
         // patch is deliberately not presented as a native gesture result.
         if(!changed){QVERIFY(session->changedDrafts().empty());QVERIFY(!session->canUndo());QVERIFY(!stages["preview"].toObject()["observed"].toBool());return;}
         const auto direct=observed["directMove"].toObject();QVERIFY(direct["ok"].toBool());const auto expected=direct["result"].toObject()["features"].toArray();const auto patches=session->changedDrafts();QCOMPARE(patches.size(),std::size_t(expected.size()));QJsonArray affected,actuallyChanged;for(std::size_t i=0;i<patches.size();++i){const auto id=QString::fromStdString(patches[i].owner.id);affected.append(id);QCOMPARE(id,expected[int(i)].toObject()["id"].toString());QCOMPARE(encode(patches[i].geometry),expected[int(i)].toObject()["geometry"].toObject());const auto original=project.document().geometries.get(staticGeometryBinding(project.document(),patches[i].owner.id).geometryRef);if(encode(patches[i].geometry)!=encode(*original))actuallyChanged.append(id);}QCOMPARE(affected,direct["result"].toObject()["affectedIds"].toArray());QCOMPARE(actuallyChanged,observed["changedOwnerIds"].toArray());
-        JobScheduler jobs;const auto ticket=jobs.enqueue(project.snapshot(),"supplemental-boundary");jobs.takeNext();const auto receipt=calculateBoundaryGeometryPreview(project.snapshot(),SharedBoundaryIntent{patches},ticket.token());const bool previewObserved=stages["preview"].toObject()["observed"].toBool();QCOMPARE(receipt.ok(),previewObserved);QCOMPARE(projectcodec::encode(project),before);
+        JobScheduler jobs;const auto ticket=jobs.enqueue(project.snapshot(),"supplemental-boundary");jobs.takeNext();const auto receipt=calculateBoundaryGeometryPreview(project.snapshot(),SharedBoundaryIntent{patches},territorialPreviewCalculators(),ticket.token());const bool previewObserved=stages["preview"].toObject()["observed"].toBool();QCOMPARE(receipt.ok(),previewObserved);QCOMPARE(projectcodec::encode(project),before);
     }
 };
 QTEST_MAIN(M974BoundarySupplementalTests)

@@ -1,3 +1,4 @@
+#include "territorialpreviewruntime.h"
 #include "territorial_fixture.h"
 #include "territorialgeometry.h"
 #include "projectcodec.h"
@@ -33,7 +34,7 @@ ProjectDocument nested() {
 SplitGeometryPreviewResult preview(Project& project,const std::string& source,const Geometry& selected) {
     JobScheduler jobs;auto ticket=jobs.enqueue(project.snapshot(),"split-preview");jobs.takeNext();
     SplitTerritorialIntent intent{territorialRef(source),selected,"created","Created"};
-    return calculateSplitGeometryPreview(project.snapshot(),intent,ticket.token());
+    return calculateSplitGeometryPreview(project.snapshot(),intent,territorialPreviewCalculators(),ticket.token());
 }
 PrepareResult prepare(Project& project,const SplitGeometryPreviewResult& receipt) {
     JobScheduler jobs;auto ticket=jobs.enqueue(project.snapshot(),"split-commit");jobs.takeNext();
@@ -135,7 +136,7 @@ private slots:
         const auto created=createdIds.isEmpty()?std::string("uncommitted-created"):createdIds[0].toString().toStdString();
         SplitTerritorialIntent intent{territorialRef("source"),observedGeometry(selected["combinedGeometry"].toObject()),created,"새 객체"};
         JobScheduler jobs;auto ticket=jobs.enqueue(project.snapshot(),"observed-split");jobs.takeNext();
-        const auto receipt=calculateSplitGeometryPreview(project.snapshot(),intent,ticket.token());QCOMPARE(projectcodec::encode(project),before);
+        const auto receipt=calculateSplitGeometryPreview(project.snapshot(),intent,territorialPreviewCalculators(),ticket.token());QCOMPARE(projectcodec::encode(project),before);
         if(!stages.contains("confirm")) {
             QCOMPARE(receipt.ok(),selected["previewReady"].toBool());
             if(receipt.ok()){const auto rejected=prepareSplitGeometryCommit(project.snapshot(),receipt,ticket.token());QVERIFY(!rejected.ok());}
@@ -349,7 +350,7 @@ private slots:
         const auto stale=prepare(project,receipt);QCOMPARE(stale.error,CommandError::StaleRevision);
         JobScheduler jobs;auto ticket=jobs.enqueue(project.snapshot(),"cancelled-split");jobs.takeNext();jobs.cancel(ticket.id());
         SplitTerritorialIntent intent{territorialRef("source"),box(1,1,1,8),"next","Next"};
-        const auto cancelled=calculateSplitGeometryPreview(project.snapshot(),intent,ticket.token());
+        const auto cancelled=calculateSplitGeometryPreview(project.snapshot(),intent,territorialPreviewCalculators(),ticket.token());
         QCOMPARE(cancelled.status,GeometryOperationStatus::Cancelled);QVERIFY(!cancelled.plan);QVERIFY(cancelled.patch.creations.empty());
     }
 };

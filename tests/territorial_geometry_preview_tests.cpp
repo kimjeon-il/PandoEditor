@@ -1,5 +1,8 @@
 #include "territorial_fixture.h"
 #include "territorialgeometry.h"
+#include "territorialpreviewruntime.h"
+#include "splitgeometrynormalizer.h"
+#include "riverareacalculator.h"
 #include "projectcodec.h"
 #include "geometrycalculator.h"
 #include "geometryruntime_p.h"
@@ -14,8 +17,31 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <cstring>
 using namespace pandoeditor;
 namespace {
+bool exactPreviewGeometry(const Geometry& a,const Geometry& b) {
+    const auto ring=[](const Ring& a,const Ring& b) {
+        if(a.size()!=b.size())return false;
+        for(std::size_t i=0;i<a.size();++i)if(std::memcmp(&a[i].x,&b[i].x,sizeof(double))||std::memcmp(&a[i].y,&b[i].y,sizeof(double)))return false;
+        return true;
+    };
+    if(a.type!=b.type||!ring(a.points,b.points)||a.lines.size()!=b.lines.size()||a.polygons.size()!=b.polygons.size())return false;
+    for(std::size_t i=0;i<a.lines.size();++i)if(!ring(a.lines[i],b.lines[i]))return false;
+    for(std::size_t p=0;p<a.polygons.size();++p) {
+        if(a.polygons[p].size()!=b.polygons[p].size())return false;
+        for(std::size_t r=0;r<a.polygons[p].size();++r)if(!ring(a.polygons[p][r],b.polygons[p][r]))return false;
+    }
+    return true;
+}
+GeometryOperationStatus previewStatus(RiverPartitionStatus status) {
+    switch(status) {
+    case RiverPartitionStatus::Completed:return GeometryOperationStatus::Completed;
+    case RiverPartitionStatus::Cancelled:return GeometryOperationStatus::Cancelled;
+    case RiverPartitionStatus::Failed:return GeometryOperationStatus::Failed;
+    }
+    throw std::logic_error("invalid test status");
+}
 Geometry rectangle(double x,double y,double width,double height) {
     Geometry geometry;geometry.polygons={{{{x,y},{x+width,y},{x+width,y+height},{x,y+height},{x,y}}}};return geometry;
 }
@@ -30,7 +56,7 @@ void addUnit(ProjectDocument& document,const std::string& id,Geometry geometry,c
 }
 AnnexGeometryPreviewResult preview(Project& project,const AnnexGeometryPreviewRequest& request) {
     JobScheduler jobs;const auto ticket=jobs.enqueue(project.snapshot(),"annex-preview");jobs.takeNext();
-    return calculateAnnexGeometryPreview(project.snapshot(),request,ticket.token());
+    return calculateAnnexGeometryPreview(project.snapshot(),request,territorialPreviewCalculators(),ticket.token());
 }
 PrepareResult prepare(Project& project,const AnnexGeometryPreviewResult& result) {
     JobScheduler jobs;const auto ticket=jobs.enqueue(project.snapshot(),"annex-commit");jobs.takeNext();
@@ -158,6 +184,40 @@ int compareBrowserAnnex(const QString& reportPath,const QString& payloadPath,con
 class TerritorialGeometryPreviewTests:public QObject {
     Q_OBJECT
 private slots:
+    void runtimeFactoryExactlyForwardsActualPreviewKernels() {
+        const auto& runtime=territorialPreviewCalculators();
+        QVERIFY(&runtime==&territorialPreviewCalculators());
+        QVERIFY(runtime.geometry.clip&&runtime.geometry.clipRiverIntermediate&&runtime.geometry.wrap&&runtime.geometry.normalizeClipped);
+        QVERIFY(runtime.normalizeRaw&&runtime.normalizeRiver&&runtime.areaKm2);
+        auto crossing=rectangle(179,-2,2,4);
+        crossing.polygons[0][0][2].x=-179;crossing.polygons[0][0][3].x=-179;
+        Geometry malformed;malformed.type="Polygon";malformed.polygons={{{{0,0},{1,1},{0,0}}}};
+        const auto microscopic=rectangle(-0.0,0,1e-12,1e-12);
+        for(const auto& input:{rectangle(-0.0,0,1,1),crossing,Geometry{},microscopic,malformed})for(const bool cancelled:{false,true}) {
+            const auto before=input;
+            const GeometryCancellation cancellation=cancelled?GeometryCancellation{[]{return true;}}:GeometryCancellation{};
+            const auto raw=normalizeSplitRawGeometry(input,cancellation);
+            const auto adaptedRaw=runtime.normalizeRaw(input,cancellation);
+            QCOMPARE(adaptedRaw.status,raw.status);QCOMPARE(adaptedRaw.detail,raw.detail);QVERIFY(exactPreviewGeometry(adaptedRaw.geometry,raw.geometry));
+            const auto river=normalizeRiverGeometry(input,cancellation);
+            const auto adaptedRiver=runtime.normalizeRiver(input,cancellation);
+            QCOMPARE(adaptedRiver.status,previewStatus(river.status));QCOMPARE(adaptedRiver.detail,river.detail.toStdString());
+            QCOMPARE(adaptedRiver.geometry.has_value(),river.geometry.has_value());
+            if(river.geometry)QVERIFY(exactPreviewGeometry(*adaptedRiver.geometry,*river.geometry));
+            const auto area=calculateRiverAreaKm2(input,cancellation);
+            const auto adaptedArea=runtime.areaKm2(input,cancellation);
+            QCOMPARE(adaptedArea.status,previewStatus(area.status));QCOMPARE(adaptedArea.detail,area.detail.toStdString());
+            QVERIFY(std::memcmp(&adaptedArea.areaKm2,&area.areaKm2,sizeof(double))==0);
+            QVERIFY(exactPreviewGeometry(input,before));
+            if(cancelled) {
+                QCOMPARE(adaptedRaw.status,GeometryOperationStatus::Cancelled);
+                QCOMPARE(adaptedRiver.status,GeometryOperationStatus::Cancelled);
+                QCOMPARE(adaptedArea.status,GeometryOperationStatus::Cancelled);
+            }
+        }
+        const auto dropped=runtime.normalizeRiver(microscopic,{});
+        QCOMPARE(dropped.status,GeometryOperationStatus::Completed);QVERIFY(!dropped.geometry);
+    }
     void rawRiverIntermediateRetainsMicroscopicPositiveRemnant() {
         const auto donor=rectangle(20,45,.01,.01);auto selected=donor;
         selected.polygons[0][0]={{20+1e-7,45},{20.01,45},{20.01,45.01},{20,45.01},{20,45+1e-7},{20+1e-7,45}};
@@ -473,7 +533,7 @@ private slots:
         JobScheduler jobs;const auto ticket=jobs.enqueue(project.snapshot(),"cancelled-annex");jobs.takeNext();jobs.cancel(ticket.id());
         const auto fresh=preview(project,{territorialRef("A"),{territorialRef("B")},rectangle(10,0,5,10)});QVERIFY(fresh.ok());
         const auto refused=prepareAnnexGeometryCommit(project.snapshot(),fresh,ticket.token());QVERIFY(!refused.ok());QVERIFY(!refused.preview);QCOMPARE(refused.detail,std::string("CANCELLED"));
-        const auto cancelled=calculateAnnexGeometryPreview(project.snapshot(),{territorialRef("A"),{territorialRef("B")},rectangle(10,0,5,10)},ticket.token());
+        const auto cancelled=calculateAnnexGeometryPreview(project.snapshot(),{territorialRef("A"),{territorialRef("B")},rectangle(10,0,5,10)},territorialPreviewCalculators(),ticket.token());
         QCOMPARE(cancelled.status,GeometryOperationStatus::Cancelled);QVERIFY(!cancelled.ok());QVERIFY(!cancelled.plan);QCOMPARE(projectcodec::encode(project),before);
     }
     void baselineOverlapIsAllowedButNewOverlapBlocks() {

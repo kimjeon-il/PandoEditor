@@ -1,3 +1,4 @@
+#include "territorialpreviewruntime.h"
 #include "territoryselectionruntime.h"
 #include "editorcontroller.h"
 #include "geometrysnapprovider.h"
@@ -160,7 +161,7 @@ void EditorController::scheduleTerritoryPreview(){
         // annex/new-country and child territorial-edit call the client here,
         // after the preview timer. They are not counted selection requests.
         const auto sourceEpoch=snapProvider_?snapProvider_->beginWorkerOperation(project_.snapshot()):0;
-        edit.job=jobs_->submitGeometry(edit.base,"territorial:selection-preview",[request,split](const ProjectSnapshot& snapshot,const JobToken& token)->GeometryJobResult{if(split)return calculateSplitGeometryPreview(snapshot,*split,token);return calculateAnnexGeometryPreview(snapshot,request,token);},
+        edit.job=jobs_->submitGeometry(edit.base,"territorial:selection-preview",[request,split](const ProjectSnapshot& snapshot,const JobToken& token)->GeometryJobResult{if(split)return calculateSplitGeometryPreview(snapshot,*split,territorialPreviewCalculators(),token);return calculateAnnexGeometryPreview(snapshot,request,territorialPreviewCalculators(),token);},
         [this,generation,epoch,revision,childSplit,entrySelection,sourceEpoch](std::uint64_t id,JobDisposition disposition,GeometryJobResult result){
             const auto* splitResult=std::get_if<SplitGeometryPreviewResult>(&result);const auto* annexResult=std::get_if<AnnexGeometryPreviewResult>(&result);
             const bool fulfilled=disposition==JobDisposition::Accepted&&((splitResult&&splitResult->status==GeometryOperationStatus::Completed)||(annexResult&&annexResult->status==GeometryOperationStatus::Completed));
