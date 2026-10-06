@@ -156,7 +156,7 @@ void Project::apply(const ChangeSet& change)
                 const auto& id=source.id;
                 const auto fromGroup=territorialGroup(document(),source.id),toGroup=territorialGroup(candidate,id);
                 auto& out=candidate.presentation.webPresentation;
-                if(itemVisible(document().presentation.webPresentation,fromGroup,source.id))out.hiddenItems[toGroup].erase(id);
+                if(itemVisible(document().presentation.webPresentation,fromGroup,source.id))out.eraseHiddenItem(toGroup,id);
                 else out.hiddenItems[toGroup].insert(id);
                 const auto fromKey=territorialPresentationKey(source.id),toKey=territorialPresentationKey(id);
                 const auto latest=document().presentation.webPresentation.objectStyles.find(fromKey);

@@ -79,7 +79,6 @@ void normalizePresentation(ProjectDocument& d) {
     for(const auto& u:d.units){ids[territorialGroup(d,u.id)].insert(u.id);keys.insert(territorialPresentationKey(u.id));}
     for(const auto& ref:contentRefs(d))ids[contentGroup(d,ref)].insert(ref.id);
     for(auto& [g,hidden]:p.hiddenItems)for(auto i=hidden.begin();i!=hidden.end();)if(!ids[g].count(*i))i=hidden.erase(i);else ++i;
-    for(auto i=p.hiddenItems.begin();i!=p.hiddenItems.end();)if(i->second.empty())i=p.hiddenItems.erase(i);else ++i;
     for(auto i=p.objectStyles.begin();i!=p.objectStyles.end();)if(!keys.count(i->first))i=p.objectStyles.erase(i);else ++i;
     std::set<std::string> seen;p.objectOrder.erase(std::remove_if(p.objectOrder.begin(),p.objectOrder.end(),[&](const auto& k){return !keys.count(k)||!seen.insert(k).second;}),p.objectOrder.end());
     for(auto i=p.labelSettings.begin();i!=p.labelSettings.end();) {
@@ -93,7 +92,9 @@ void validatePresentation(const ProjectDocument& d) {
     const auto& p=d.presentation.webPresentation;
     std::set<std::string> keys;for(const auto& unit:d.units)keys.insert(territorialPresentationKey(unit.id));
     for(const auto& [key,style]:p.objectStyles)if(!keys.count(key))throw std::invalid_argument("DANGLING_REF: object presentation");
-    std::set<std::string> order;for(const auto& key:p.objectOrder)if(!keys.count(key)||!order.insert(key).second)throw std::invalid_argument("INVALID_PRESENTATION_ORDER");
+    const std::string prefix="territorial:entity:";
+    std::set<std::string> order;for(const auto& key:p.objectOrder)if(key.rfind(prefix,0)!=0||key.size()==prefix.size()||!order.insert(key).second)throw std::invalid_argument("INVALID_PRESENTATION_ORDER");
+    if(!p.overlayOrderPresent&&!p.overlayOrder.empty())throw std::invalid_argument("INVALID_OVERLAY_ORDER");
     std::set<std::string> overlays;for(const auto& group:p.overlayOrder)if((group!="genericFeatures"&&group!="distributions"&&group!="subunits"&&group!="regions")||!overlays.insert(group).second)throw std::invalid_argument("INVALID_OVERLAY_ORDER");
     for(const auto* styles:{&p.styles,&p.objectStyles})for(const auto& [key,s]:*styles) {
         if((s.opacity&&(!std::isfinite(*s.opacity)||*s.opacity<0||*s.opacity>1))||(s.boundaryWidth&&*s.boundaryWidth!=1)||(s.blendMode&&*s.blendMode!="normal"&&*s.blendMode!="multiply"))throw std::invalid_argument("INVALID_PRESENTATION_STYLE");
@@ -169,14 +170,14 @@ WebPresentation rebasePresentation(const ProjectDocument& current,const ProjectD
         if(std::find(priorContent.begin(),priorContent.end(),ref)!=priorContent.end())continue;
         const auto group=contentGroup(to,ref);
         if(!itemVisible(to.presentation.webPresentation,group,ref.id))out.hiddenItems[group].insert(ref.id);
-        else out.hiddenItems[group].erase(ref.id);
+        else out.eraseHiddenItem(group,ref.id);
         if(auto settings=to.presentation.webPresentation.labelSettings.find(ref);settings!=to.presentation.webPresentation.labelSettings.end())out.labelSettings[ref]=settings->second;
     }
     for(const auto& u:to.units) {
         const auto prior=unit(from,territorialRef(u.id));if(prior&&prior->kind==u.kind&&territorialGroup(from,prior->id)==territorialGroup(to,u.id))continue;
         const auto group=territorialGroup(to,u.id),key=territorialPresentationKey(u.id);
         const auto& restore=to.presentation.webPresentation;
-        if(!itemVisible(restore,group,u.id))out.hiddenItems[group].insert(u.id);else out.hiddenItems[group].erase(u.id);
+        if(!itemVisible(restore,group,u.id))out.hiddenItems[group].insert(u.id);else out.eraseHiddenItem(group,u.id);
         if(auto settings=restore.labelSettings.find(territorialRef(u.id));settings!=restore.labelSettings.end())out.labelSettings[territorialRef(u.id)]=settings->second;
         if(auto s=restore.objectStyles.find(key);s!=restore.objectStyles.end())out.objectStyles[key]=s->second;
         const auto position=std::find(restore.objectOrder.begin(),restore.objectOrder.end(),key);

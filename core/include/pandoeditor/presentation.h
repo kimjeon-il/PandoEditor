@@ -49,14 +49,23 @@ struct DistributionValueScale {
 struct DistributionValueRange { double min,max; };
 struct WebPresentation {
     std::map<std::string,bool> visibility;
+    // An explicitly present empty group is distinct from an absent group in
+    // web/native exchange. Erase-only edits must not manufacture group keys.
     std::map<std::string,std::set<std::string>> hiddenItems;
+    std::size_t eraseHiddenItem(const std::string& group,const std::string& id) {
+        const auto found=hiddenItems.find(group);
+        return found==hiddenItems.end()?0:found->second.erase(id);
+    }
     std::map<std::string,PresentationStyle> styles, objectStyles;
+    // Rank hints may outlive their owners in web saves; native edits still
+    // deliberately prune missing-owner hints during normalization.
     std::vector<std::string> objectOrder;
     std::vector<std::string> overlayOrder;
+    bool overlayOrderPresent=true;
     std::map<ObjectRef,LabelSettings> labelSettings;
     DistributionSettings distributionSettings;
     bool operator==(const WebPresentation& b) const {
-        return visibility==b.visibility && hiddenItems==b.hiddenItems && styles==b.styles && objectStyles==b.objectStyles && objectOrder==b.objectOrder && overlayOrder==b.overlayOrder && labelSettings==b.labelSettings && distributionSettings==b.distributionSettings;
+        return visibility==b.visibility && hiddenItems==b.hiddenItems && styles==b.styles && objectStyles==b.objectStyles && objectOrder==b.objectOrder && overlayOrder==b.overlayOrder && overlayOrderPresent==b.overlayOrderPresent && labelSettings==b.labelSettings && distributionSettings==b.distributionSettings;
     }
 };
 struct LabelLayoutCandidate {

@@ -371,7 +371,7 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
             if(action.geometry)patch();
             auto& parent=staticParentRelation(d,in.source.id);parent.parentId=in.parent?in.parent->id:"";parent.coverageMode="explicit";
             const auto toGroup=territorialGroup(d,in.source.id);auto& web=d.presentation.webPresentation;
-            if(web.hiddenItems[fromGroup].erase(in.source.id))web.hiddenItems[toGroup].insert(in.source.id);
+            if(web.eraseHiddenItem(fromGroup,in.source.id))web.hiddenItems[toGroup].insert(in.source.id);
         } else if constexpr(std::is_same_v<T,ReplaceGeometryIntent>||std::is_same_v<T,CoastlineIntent>) {
             patch();
         } else if constexpr(std::is_same_v<T,MergeTerritorialIntent>) {
@@ -438,8 +438,8 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
                 d.presentation.webPresentation.visibility["subunits"]=true;
                 auto& web=d.presentation.webPresentation;
                 for(const auto& removed:action.geometry->removedGeometryOwners) {
-                    web.hiddenItems["subunits"].erase(removed.id);web.hiddenItems["regions"].erase(removed.id);
-                    web.hiddenItems["countryLabels"].erase("territorial:"+removed.id);
+                    web.eraseHiddenItem("subunits",removed.id);web.eraseHiddenItem("regions",removed.id);
+                    web.eraseHiddenItem("countryLabels","territorial:"+removed.id);
                     web.labelSettings.erase(removed);web.objectStyles.erase(territorialPresentationKey(removed.id));
                 }
             }
@@ -519,8 +519,8 @@ void applyTerritorial(ProjectDocument& d,const ApplyTerritorialMutation& action)
             }
             auto& web=d.presentation.webPresentation;
             for(const auto& removed:action.geometry->removedGeometryOwners) {
-                web.hiddenItems["subunits"].erase(removed.id);web.hiddenItems["regions"].erase(removed.id);
-                web.hiddenItems["countryLabels"].erase("territorial:"+removed.id);web.labelSettings.erase(removed);
+                web.eraseHiddenItem("subunits",removed.id);web.eraseHiddenItem("regions",removed.id);
+                web.eraseHiddenItem("countryLabels","territorial:"+removed.id);web.labelSettings.erase(removed);
                 const auto key=territorialPresentationKey(removed.id);web.objectStyles.erase(key);
                 web.objectOrder.erase(std::remove(web.objectOrder.begin(),web.objectOrder.end(),key),web.objectOrder.end());
             }
@@ -1179,14 +1179,6 @@ PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const Com
                 require(std::find(rewritten.handledExtensionIds.begin(),rewritten.handledExtensionIds.end(),guard.id)!=rewritten.handledExtensionIds.end(),CommandError::UnsupportedDependency,"retained reference not handled");
         }
         checkEffects(project,candidate,request);
-        normalizePresentation(candidate);
-        reconcileGeometryProvenance(project.document(),candidate);
-        // Full candidate validation and all derived allocations precede preview.
-        std::shared_ptr<const detail::DocumentState> after;
-        try { after=std::make_shared<const detail::DocumentState>(std::move(candidate)); }
-        catch(const std::invalid_argument& e) {
-            result.error=CommandError::ValidationFailed; result.detail=e.what(); return result;
-        }
         bool checkpoint=request.commandId=="territorial.batch-color";
         if(const auto field=std::get_if<TerritorialFieldEdit>(&request.args.action)) {
             const auto& unit=project.document().units.at(project.index().objects.at(field->target));
@@ -1194,6 +1186,19 @@ PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const Com
             // country-metadata command even when the stored empty override agrees.
             checkpoint=unit.kind==UnitKind::General && field->field==TerritorialField::Name &&
                 unit.nameExplicit && unit.name.empty() && trimWebText(field->value).empty();
+        }
+        // The unchanged candidate is already validated by the current snapshot.
+        // Do not turn a no-op into an edit solely by pruning saved rank hints.
+        if(!checkpoint && semanticallyEqual(project.document(),candidate)) {
+            result.status=CommandStatus::NoOp; return result;
+        }
+        normalizePresentation(candidate);
+        reconcileGeometryProvenance(project.document(),candidate);
+        // Full candidate validation and all derived allocations precede preview.
+        std::shared_ptr<const detail::DocumentState> after;
+        try { after=std::make_shared<const detail::DocumentState>(std::move(candidate)); }
+        catch(const std::invalid_argument& e) {
+            result.error=CommandError::ValidationFailed; result.detail=e.what(); return result;
         }
         if(!checkpoint && semanticallyEqual(project.document(),after->document)) {
             result.status=CommandStatus::NoOp; return result;

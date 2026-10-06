@@ -491,8 +491,9 @@ void readPresentation(const V& value,ProjectDocument& d) {const unsigned schema=
                 else throw std::invalid_argument("UNSUPPORTED_VISIBILITY: "+key);
             }
             for(const auto& [group,values]:field(w,"hiddenItems").object) {
-                if(presentationGroup(group))for(const auto& id:array(values))out.hiddenItems[group].insert(str(id));
-                else throw std::invalid_argument("UNSUPPORTED_VISIBILITY: "+group);
+                if(!presentationGroup(group))throw std::invalid_argument("UNSUPPORTED_VISIBILITY: "+group);
+                const auto& ids=array(values);auto& hidden=out.hiddenItems[group];
+                for(const auto& id:ids)hidden.insert(str(id));
             }
             auto readStyles=[&](const char* name,auto& target){
                 const auto& values=field(w,name);require(values.kind==V::Object,"INVALID_JSON: presentation styles");
@@ -511,7 +512,8 @@ void readPresentation(const V& value,ProjectDocument& d) {const unsigned schema=
             };
             readStyles("styles",out.styles);readStyles("objectStyles",out.objectStyles);
             std::set<std::string> overlays;
-            for(const auto& key:array(field(w,"overlayOrder"))){const auto text=str(key);require((text=="genericFeatures"||text=="distributions"||text=="subunits"||text=="regions")&&overlays.insert(text).second,"UNSUPPORTED_OVERLAY_ORDER");out.overlayOrder.push_back(text);}
+            out.overlayOrderPresent=w.object.count("overlayOrder");
+            if(out.overlayOrderPresent)for(const auto& key:array(field(w,"overlayOrder"))){const auto text=str(key);require((text=="genericFeatures"||text=="distributions"||text=="subunits"||text=="regions")&&overlays.insert(text).second,"UNSUPPORTED_OVERLAY_ORDER");out.overlayOrder.push_back(text);}
             for(const auto& key:array(field(w,"objectOrder"))){const auto text=str(key);require(text.rfind("territorial:entity:",0)==0,"INVALID_PRESENTATION_ORDER");out.objectOrder.push_back(text);}
             if(schema>=6 && w.object.count("labelSettings")) for(const auto& value:array(field(w,"labelSettings"))) {
                 auto path="/presentation/webPresentation/labelSettings/"+std::to_string(out.labelSettings.size());
@@ -609,6 +611,7 @@ QByteArray encode(const pandoeditor::ProjectSnapshot& snapshot) {
     for(const auto& [owner,s]:web.labelSettings){V value=object({{"ref",refValue(owner)},{"pinned",V::boolean(s.pinned)},{"collisionGroup",V::str(s.collisionGroup)}});if(s.priority)value.object["priority"]=V::num(*s.priority);if(s.minZoom)value.object["minZoom"]=V::num(*s.minZoom);if(s.maxZoom)value.object["maxZoom"]=V::num(*s.maxZoom);if(s.manualPosition){V point=V::arr();point.array={V::num(s.manualPosition->x),V::num(s.manualPosition->y)};value.object["manualPosition"]=point;}labelSettings.array.push_back(std::move(value));}
     auto distributionSettings=object({{"renderMode",V::str(web.distributionSettings.renderMode==DistributionRenderMode::Single?"single":"overlap")},{"activeLayerId",V::str(web.distributionSettings.activeLayerId)},{"boundaryVisible",V::boolean(web.distributionSettings.boundaryVisible)}});
     auto webValue=object({{"visibility",visibility},{"hiddenItems",hidden},{"styles",groups},{"objectStyles",overrides},{"objectOrder",order},{"overlayOrder",overlayOrder},{"labelSettings",labelSettings},{"distributionSettings",distributionSettings}});
+    if(!web.overlayOrderPresent)webValue.object.erase("overlayOrder");
     auto root=object({{"format",V::str("pandoeditor-project")},{"version",V::num(10)},{"documentId",V::str(d.documentId)},{"units",units},{"timelineRecords",timelineRecordsValue(d.timelineRecords)},{"geometries",geometries},{"presentation",object({{"userLayers",layers},{"membership",membership},{"objectStyles",styles},{"webPresentation",webValue}})},{"extensions",extensions}});
     root.object["exchangeMetadata"]=jsonObject(d.exchangeMetadata);
     root.object["content"]=contentValue(d);
@@ -673,14 +676,14 @@ void readWebPresentation(const V& root,ProjectDocument& d) {
     for(const auto& [key,value]:visibility.object)if(!webLayerVisibilityKey(key))throw std::invalid_argument("UNSUPPORTED_WEB_VISIBILITY: layerVisibility/"+key);
     const auto& layer=field(root,"layerPresentation");require(integer(field(layer,"schemaVersion"))==4,"UNSUPPORTED_PRESENTATION_VERSION");
     unknown(d,9,layer,"/layerPresentation",{"schemaVersion","styles","objectStyles","objectOrder","overlayOrder"});
-    const auto overlays=layer.object.count("overlayOrder")?field(layer,"overlayOrder"):V::arr();
     V hidden=V::obj();const auto& items=field(root,"itemVisibility");require(items.kind==V::Object,"INVALID_ITEM_VISIBILITY");
     for(const auto& [group,values]:items.object){if(!webItemVisibilityKey(group))throw std::invalid_argument("UNSUPPORTED_WEB_VISIBILITY: itemVisibility/"+group);require(values.kind==V::Object,"INVALID_ITEM_VISIBILITY");V ids=V::arr();for(const auto& [id,visible]:values.object)if(!boolean(visible))ids.array.push_back(V::str(id));hidden.object[group]=ids;}
     V labels=V::arr();const auto& settings=field(root,"labelSettings");require(settings.kind==V::Object,"INVALID_LABEL_SETTINGS");
     for(const auto& [key,value]:settings.object){const auto colon=key.find(':');require(colon!=std::string::npos,"INVALID_LABEL_KEY");const auto domain=key.substr(0,colon);require(domain=="territorial"||domain=="label","UNSUPPORTED_LABEL_KEY");auto row=value;require(row.kind==V::Object,"INVALID_LABEL_SETTINGS");row.object["ref"]=refValue({domain,key.substr(colon+1)});
         for(const auto* fieldName:{"priority","minZoom","maxZoom","manualPosition"})if(row.object.count(fieldName)&&field(row,fieldName).kind==V::Null)row.object.erase(fieldName);
         if(!row.object.count("collisionGroup"))row.object["collisionGroup"]=V::str("map");labels.array.push_back(std::move(row));}
-    const auto empty=V::arr();auto presentation=object({{"userLayers",empty},{"membership",empty},{"objectStyles",V::obj()},{"webPresentation",object({{"visibility",field(root,"layerVisibility")},{"hiddenItems",hidden},{"styles",field(layer,"styles")},{"objectStyles",field(layer,"objectStyles")},{"objectOrder",field(layer,"objectOrder")},{"overlayOrder",overlays},{"labelSettings",labels},{"distributionSettings",field(root,"distributionSettings")}})}});
+    const auto empty=V::arr();auto presentation=object({{"userLayers",empty},{"membership",empty},{"objectStyles",V::obj()},{"webPresentation",object({{"visibility",field(root,"layerVisibility")},{"hiddenItems",hidden},{"styles",field(layer,"styles")},{"objectStyles",field(layer,"objectStyles")},{"objectOrder",field(layer,"objectOrder")},{"labelSettings",labels},{"distributionSettings",field(root,"distributionSettings")}})}});
+    if(layer.object.count("overlayOrder"))presentation.object["webPresentation"].object["overlayOrder"]=field(layer,"overlayOrder");
     // Entity color is already owned by the native identity's presentation row.
     const auto styles=d.presentation.objectStyles;readPresentation(presentation,d);d.presentation.objectStyles=styles;
 }
@@ -758,7 +761,9 @@ QByteArray encodeWeb(const ProjectSnapshot& snapshot) {
     for(const auto& value:d.distributionEntries){auto row=interval(value);row.object["layerId"]=V::str(value.layerId);row.object["mode"]=V::str(value.territory?"territorial":"geometry");row.object["territorialUnitId"]=V::str(value.territory?value.territory->id:"");row.object["geometry"]=value.geometry?geometryValue(*d.geometries.get(*value.geometry)):V{};row.object["value"]=V::num(value.value);row.object["certainty"]=V::str(value.certainty);entries.array.push_back(std::move(row));}
     root.object["territorialEntities"]=units;root.object["timelineRecords"]=timelineRecordsValue(d.timelineRecords);root.object["geometries"]=archive;root.object["labels"]=labels;root.object["hydroEdits"]=hydro;root.object["genericFeatures"]=generic;root.object["distributionLayers"]=layers;root.object["distributionEntries"]=entries;
     const auto native=losslessjson::parse(encode(snapshot));const auto& web=field(field(native,"presentation"),"webPresentation");root.object["layerVisibility"]=field(web,"visibility");V hidden=V::obj();for(const auto& [group,ids]:d.presentation.webPresentation.hiddenItems){V rows=V::obj();for(const auto& id:ids)rows.object[id]=V::boolean(false);hidden.object[group]=rows;}root.object["itemVisibility"]=hidden;
-    root.object["layerPresentation"]=object({{"schemaVersion",V::num(4)},{"styles",field(web,"styles")},{"objectStyles",field(web,"objectStyles")},{"objectOrder",field(web,"objectOrder")},{"overlayOrder",field(web,"overlayOrder")}});root.object["distributionSettings"]=field(web,"distributionSettings");V settings=V::obj();for(const auto& [owner,value]:d.presentation.webPresentation.labelSettings)settings.object[owner.domain+":"+owner.id]=labelSettingsValue(value);root.object["labelSettings"]=settings;
+    root.object["layerPresentation"]=object({{"schemaVersion",V::num(4)},{"styles",field(web,"styles")},{"objectStyles",field(web,"objectStyles")},{"objectOrder",field(web,"objectOrder")}});
+    if(web.object.count("overlayOrder"))root.object["layerPresentation"].object["overlayOrder"]=field(web,"overlayOrder");
+    root.object["distributionSettings"]=field(web,"distributionSettings");V settings=V::obj();for(const auto& [owner,value]:d.presentation.webPresentation.labelSettings)settings.object[owner.domain+":"+owner.id]=labelSettingsValue(value);root.object["labelSettings"]=settings;
     requireWebNumbers(root);
     const auto bytes=root.encode()+"\n";require(bytes.size()<=256ll*1024*1024,"LIMIT_EXCEEDED");const auto restored=decodeWeb(bytes);
     // Web stores these shapes inline without an identity/version carrier. Refuse

@@ -4,6 +4,18 @@
 
 The implementation requires the normal, exact-commit GitHub Actions regression and actual-Chromium exchange gates. A local diagnostic pass or this document is not a final acceptance result. The UI suite retains its original 180-second limit; no warnings, tests, comparisons, or cases are suppressed.
 
+## Exact-candidate CI and presentation follow-up
+
+The [2026-10-06 run for feab14b8](https://github.com/kimjeon-il/PandoEditor/actions/runs/37391751350) passed the complete native regression: 163/163 tests, zero failed/skipped/disabled, in 1096.66 seconds. The original UI gate passed in 173.975 seconds within its unchanged 180-second limit. All nine non-model-exchange jobs passed. Independent checks reconciled the downloaded JUnit and LastTest records against all 163 CTest registrations.
+
+The actual Chromium model-exchange job failed on the first Undo checkpoint whose explicitly empty `itemVisibility` groups were lost by native decoding/normalization. This candidate is therefore not accepted. The failed artifact and its complete Chromium checkpoint report remain unchanged.
+
+A subsequent diagnostic exercised all 100 checkpoints with 111 invocations of that exact CI binary, using the 51 captured Chromium saves and the pinned production readers/serializer in Node. It found 80 passing checkpoints and 20 failures: eleven lost empty visibility groups, eight rejections of retained object-order hints for deleted entities, and one absent `overlayOrder` emitted as an empty array. All 49 native-origin checkpoint returns passed. This diagnostic is not actual Chromium reopen acceptance; it batches the three representation fixes before the next complete exact-commit CI run.
+
+The corrective candidate preserves empty-group and optional-field presence, accepts unique well-formed territorial object-order rank hints without treating them as live typed references, and keeps deliberate cleanup for actual native edits. Typed object styles, label settings, and content references remain subject to their existing ownership validation. No-op requests must not trigger that cleanup. Files written by the corrected candidate with an absent native `overlayOrder` are not forward-readable by the earlier feab14b8 candidate, which required that field; native v9 input compatibility remains supported. Native v10 is still an unreleased candidate, and web exchange remains v9.
+
+The corrected local probe passed all 100 diagnostic checkpoints and 111 native invocations with zero mismatches. The final focused native rerun passed 16/16 suites, including presentation, persistence, migration, ownership, command-allocation/history, boundary cleanup, and the exchange-probe contract. Independent source review found no blocking defects. These focused and Node-assisted results do not replace the required final exact-commit full regression and actual Chromium exchange.
+
 ## Focused verification before the final CI candidate
 
 - Native provenance core: 21 cases and 13 focused CTest targets passed.

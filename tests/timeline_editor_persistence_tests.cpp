@@ -5,6 +5,7 @@
 #include "territorial_fixture.h"
 #include "defaultflagresolver.h"
 #include <pandoeditor/commands.h>
+#include <pandoeditor/presentationcommands.h>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -92,6 +93,120 @@ void visibilityBoundaryData() {
 class TimelineEditorPersistenceTests final:public QObject {
  Q_OBJECT
 private slots:
+ void webItemVisibilityPreservesExactGroupPresence_data() {
+    QTest::addColumn<QJsonObject>("visibility");
+    QJsonObject all;
+    for(const auto* group:{"countries","subunits","regions","distributions","hydro","genericFeatures","labels","countryLabels"}) {
+        all[group]=QJsonObject{};QTest::newRow(group)<<QJsonObject{{group,QJsonObject{}}};
+    }
+    QTest::newRow("absent-groups")<<QJsonObject{};
+    QTest::newRow("all-empty")<<all;
+    all["countries"]=QJsonObject{{"A",false}};QTest::newRow("empty-and-hidden")<<all;
+    QTest::newRow("partial-groups")<<QJsonObject{{"countries",QJsonObject{{"A",false}}},{"labels",QJsonObject{}}};
+ }
+ void webItemVisibilityPreservesExactGroupPresence() {
+    QFETCH(QJsonObject,visibility);
+    auto input=QJsonDocument::fromJson(read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/static.json")).object();input["itemVisibility"]=visibility;
+    auto document=projectcodec::decodeWeb(QJsonDocument(input).toJson());
+    QCOMPARE(document.presentation.webPresentation.hiddenItems.size(),std::size_t(visibility.size()));
+    normalizePresentation(document);
+    QCOMPARE(document.presentation.webPresentation.hiddenItems.size(),std::size_t(visibility.size()));
+    Project project;project.replace(std::move(document));
+    for(int cycle=0;cycle<2;++cycle) {
+        const auto native=projectcodec::encode(project);project.replace(projectcodec::decode(native));QCOMPARE(projectcodec::encode(project),native);
+        const auto web=projectcodec::encodeWeb(project.snapshot());QCOMPARE(QJsonDocument::fromJson(web).object(),input);
+        project.replace(projectcodec::decodeWeb(web));
+    }
+ }
+ void nativeItemVisibilityPreservesEmptyGroups_data() {
+    QTest::addColumn<int>("version");QTest::newRow("native-nine")<<9;QTest::newRow("native-ten")<<10;
+ }
+ void nativeItemVisibilityPreservesEmptyGroups() {
+    QFETCH(int,version);Project source;source.replace(fixture("static"));auto input=QJsonDocument::fromJson(projectcodec::encode(source)).object();
+    input["version"]=version;if(version==9)input.remove("geometryProvenance");
+    QJsonObject hidden;for(const auto* group:{"countries","subunits","regions","distributions","hydro","genericFeatures","labels","countryLabels"})hidden[group]=QJsonArray{};
+    auto presentation=input["presentation"].toObject(),web=presentation["webPresentation"].toObject();web["hiddenItems"]=hidden;presentation["webPresentation"]=web;input["presentation"]=presentation;
+    Project restored;restored.replace(projectcodec::decode(QJsonDocument(input).toJson()));
+    QCOMPARE(restored.document().presentation.webPresentation.hiddenItems.size(),std::size_t(hidden.size()));
+    const auto output=QJsonDocument::fromJson(projectcodec::encode(restored)).object();
+    QCOMPARE(output["presentation"].toObject()["webPresentation"].toObject()["hiddenItems"].toObject(),hidden);
+ }
+ void emptyVisibilityGroupsSurviveEditorHistoryAutosaveAndGeoPackage() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());auto input=QJsonDocument::fromJson(read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/static.json")).object();
+    QJsonObject visibility;for(const auto* group:{"countries","subunits","regions","distributions","hydro","genericFeatures","labels","countryLabels"})visibility[group]=QJsonObject{};
+    input["itemVisibility"]=visibility;const auto webPath=dir.filePath("input.web.json"),nativePath=dir.filePath("saved.pando.json");write(webPath,QJsonDocument(input).toJson());
+    EditorController editor({false,dir.filePath("private.json")});QVERIFY(editor.prepareWebImport(QUrl::fromLocalFile(webPath)));QTRY_VERIFY(editor.hasWebImportPreview());QVERIFY(editor.confirmWebImport(editor.webImportHash(),"discard"));
+    const auto baseline=editor.documentBytes();editor.selectCountry("A");editor.setColor("#123456");editor.undo();QCOMPARE(editor.documentBytes(),baseline);editor.redo();
+    QVERIFY(editor.saveFile(QUrl::fromLocalFile(nativePath)));EditorController reopened({false,dir.filePath("private-reopened.json")});QVERIFY(reopened.openFile(QUrl::fromLocalFile(nativePath)));QCOMPARE(reopened.documentBytes(),editor.documentBytes());
+    Project project;project.replace(projectcodec::decode(reopened.documentBytes()));QCOMPARE(QJsonDocument::fromJson(projectcodec::encodeWeb(project.snapshot())).object()["itemVisibility"].toObject(),visibility);
+    ProjectAutosave autosave(dir.filePath("autosave.json"),dir.filePath("view.json"));autosave.scheduleDocument(project.snapshot());QVERIFY(autosave.flushNow());
+    Project recovered;recovered.replace(projectcodec::decode(autosave.restoreDocument()));QCOMPARE(projectcodec::encode(recovered),projectcodec::encode(project));
+    const auto packagePath=dir.filePath("saved.gpkg");write(packagePath,exportProjectGeoPackage(project));recovered.replace(projectcodec::decode(readProjectGeoPackage(packagePath)));QCOMPARE(projectcodec::encode(recovered),projectcodec::encode(project));
+    QCOMPARE(QJsonDocument::fromJson(projectcodec::encodeWeb(recovered.snapshot())).object()["itemVisibility"].toObject(),visibility);
+ }
+ void webObjectOrderRetainsDeletedRankHintsWithoutWeakeningTypedReferences() {
+    auto input=QJsonDocument::fromJson(read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/static.json")).object();auto layer=input["layerPresentation"].toObject();
+    const QJsonArray order{"territorial:entity:deleted-first","territorial:entity:A","territorial:entity:deleted-last"};layer["objectOrder"]=order;input["layerPresentation"]=layer;
+    Project project;QString error;try{project.replace(projectcodec::decodeWeb(QJsonDocument(input).toJson()));}catch(const std::invalid_argument& failure){error=QString::fromUtf8(failure.what());}
+    QVERIFY2(error.isEmpty(),qPrintable(error));
+    QCOMPARE(territorialRenderOrder(project.document(),territorialRef("A")),-1000.+10.+1./4.);
+    for(int cycle=0;cycle<2;++cycle) {
+        const auto bytes=projectcodec::encode(project);project.replace(projectcodec::decode(bytes));QCOMPARE(projectcodec::encode(project),bytes);
+        const auto web=projectcodec::encodeWeb(project.snapshot());QCOMPARE(QJsonDocument::fromJson(web).object(),input);project.replace(projectcodec::decodeWeb(web));
+    }
+    auto normalized=project.document();normalizePresentation(normalized);
+    QCOMPARE(normalized.presentation.webPresentation.objectOrder,std::vector<std::string>{"territorial:entity:A"});
+    for(const auto& invalid: {QJsonArray{"territorial:entity:A","territorial:entity:A"},QJsonArray{"territorial:country:A"},QJsonArray{"territorial:entity:"},QJsonArray{42}}) {
+        auto bad=input;auto presentation=layer;presentation["objectOrder"]=invalid;bad["layerPresentation"]=presentation;
+        QVERIFY_EXCEPTION_THROWN(projectcodec::decodeWeb(QJsonDocument(bad).toJson()),std::invalid_argument);
+    }
+    auto bad=input;layer["objectStyles"]=QJsonObject{{"territorial:entity:deleted-first",QJsonObject{{"opacity",0.5}}}};bad["layerPresentation"]=layer;
+    QVERIFY_EXCEPTION_THROWN(projectcodec::decodeWeb(QJsonDocument(bad).toJson()),std::invalid_argument);
+    bad=input;bad["labelSettings"]=QJsonObject{{"territorial:deleted-first",QJsonObject{}}};QVERIFY_EXCEPTION_THROWN(projectcodec::decodeWeb(QJsonDocument(bad).toJson()),std::invalid_argument);
+ }
+ void webOverlayOrderPreservesOptionalPresence_data() {
+    QTest::addColumn<QString>("kind");QTest::addColumn<int>("presence");
+    for(const auto* kind:{"static","complex"})for(int presence=0;presence<3;++presence)QTest::newRow((QByteArray(kind)+QByteArray::number(presence)).constData())<<QString(kind)<<presence;
+ }
+ void savedRankHintsDoNotTurnNoopsIntoEdits_data() {
+    QTest::addColumn<bool>("presentation");QTest::newRow("presentation")<<true;QTest::newRow("content")<<false;
+ }
+ void savedRankHintsDoNotTurnNoopsIntoEdits() {
+    QFETCH(bool,presentation);
+    auto document=fixture("static");document.presentation.webPresentation.objectOrder={"territorial:entity:deleted","territorial:entity:A"};
+    Project project;project.replace(document);const auto before=projectcodec::encode(project);
+    if(presentation)QCOMPARE(PresentationCommandProcessor::apply(project,SetBatchVisibility{{territorialRef("A")},true}),PresentationResult::NoOp);
+    else QVERIFY(!project.setColor("A",project.country("A")->color));
+    QCOMPARE(projectcodec::encode(project),before);QVERIFY(!project.dirty());QCOMPARE(project.presentationRevision(),std::uint64_t(0));QVERIFY(!project.canUndo());
+    QVERIFY(project.setColor("A",0x123456));QCOMPARE(project.document().presentation.webPresentation.objectOrder,std::vector<std::string>{"territorial:entity:A"});
+ }
+ void savedRankHintsKeepDeliberateNativeCheckpoints_data() {
+    QTest::addColumn<bool>("nameCheckpoint");QTest::newRow("batch-color")<<false;QTest::newRow("fallback-name")<<true;
+ }
+ void savedRankHintsKeepDeliberateNativeCheckpoints() {
+    QFETCH(bool,nameCheckpoint);auto document=fixture("static");document.presentation.webPresentation.objectOrder={"territorial:entity:deleted","territorial:entity:A"};
+    if(nameCheckpoint){document.units.front().name.clear();document.units.front().nameExplicit=true;document.units.front().baseName="Fallback";}
+    Project project;project.replace(document);CommandArguments args;
+    if(nameCheckpoint)args.action=TerritorialFieldEdit{territorialRef("A"),TerritorialField::Name,""};
+    else args.action=TerritorialColorEdit{{territorialRef("A"),territorialRef("B")},project.country("A")->color};
+    QString error;const auto apply=[&](){auto prepared=CommandProcessor::prepare(project,CommandProcessor::makeRequest(project,nameCheckpoint?"territorial.field":"territorial.batch-color",args));if(!prepared.preview){error=QString::fromStdString(prepared.detail);return false;}const auto result=CommandProcessor::confirm(project,*prepared.preview);error=QString::fromStdString(result.detail);return result.changed();};
+    QVERIFY2(apply(),qPrintable(error));QCOMPARE(project.document().presentation.webPresentation.objectOrder,std::vector<std::string>{"territorial:entity:A"});
+    const auto before=projectcodec::encode(project);project.markSaved();const auto revision=project.revision();QVERIFY2(apply(),qPrintable(error));QCOMPARE(projectcodec::encode(project),before);QCOMPARE(project.revision(),revision+1);QVERIFY(project.dirty());QVERIFY(project.canUndo());
+ }
+ void webOverlayOrderPreservesOptionalPresence() {
+    QFETCH(QString,kind);QFETCH(int,presence);QTemporaryDir dir;QVERIFY(dir.isValid());
+    auto input=QJsonDocument::fromJson(read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/"+kind+".json")).object();auto layer=input["layerPresentation"].toObject();
+    if(presence==0)layer.remove("overlayOrder");else layer["overlayOrder"]=presence==1?QJsonArray{}:QJsonArray{"regions","subunits","distributions","genericFeatures"};input["layerPresentation"]=layer;
+    Project project;project.replace(projectcodec::decodeWeb(QJsonDocument(input).toJson()));
+    QCOMPARE(project.document().presentation.webPresentation.overlayOrderPresent,presence!=0);
+    for(int cycle=0;cycle<2;++cycle) {
+        const auto native=projectcodec::encode(project);const auto path=dir.filePath("saved.pando.json");write(path,native);project.replace(projectcodec::decode(read(path)));QCOMPARE(projectcodec::encode(project),native);
+        QCOMPARE(QJsonDocument::fromJson(native).object()["presentation"].toObject()["webPresentation"].toObject().contains("overlayOrder"),presence!=0);
+        const auto web=projectcodec::encodeWeb(project.snapshot());QCOMPARE(QJsonDocument::fromJson(web).object(),input);project.replace(projectcodec::decodeWeb(web));
+    }
+    const auto path=dir.filePath("saved.gpkg");write(path,exportProjectGeoPackage(project));project.replace(projectcodec::decode(readProjectGeoPackage(path)));
+    QCOMPARE(QJsonDocument::fromJson(projectcodec::encodeWeb(project.snapshot())).object(),input);
+ }
  void nativeVersionClassificationAndSaveNotice() {
     for(int version:{9,10}) {
         const auto bytes=QJsonDocument(QJsonObject{{"format","pandoeditor-project"},{"version",version}}).toJson();

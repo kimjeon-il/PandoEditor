@@ -10,7 +10,19 @@ ProjectDocument fixture(){
     return d;
 }
 int main(){try{
+    auto groups=fixture();groups.presentation.webPresentation.hiddenItems={{"countries",{}},{"subunits",{"missing"}},{"labels",{}}};
+    normalizePresentation(groups);
+    check(groups.presentation.webPresentation.hiddenItems==std::map<std::string,std::set<std::string>>{{"countries",{}},{"subunits",{}},{"labels",{}}},"normalization preserves group presence while pruning missing IDs");
     Project p;p.replace(fixture());
+    const auto visibleBefore=p.document().presentation.webPresentation;
+    check(PresentationCommandProcessor::apply(p,SetBatchVisibility{{territorialRef("A")},true})==PresentationResult::NoOp,"visible item in absent group is a noop");
+    check(p.document().presentation.webPresentation==visibleBefore&&!p.dirty(),"visibility noop does not create absent groups");
+    auto absent=fixture();absent.presentation.webPresentation.overlayOrderPresent=false;
+    check(!(absent.presentation.webPresentation==fixture().presentation.webPresentation),"absent overlay order differs from present empty order");
+    Project noOverlay;noOverlay.replace(absent);
+    check(PresentationCommandProcessor::apply(noOverlay,SetPresentationVisibility{"countries",true})==PresentationResult::NoOp&&!noOverlay.document().presentation.webPresentation.overlayOrderPresent,"overlay presence survives unrelated noop");
+    absent.presentation.webPresentation.overlayOrder={"regions"};bool rejected=false;try{Project::validate(absent);}catch(const std::invalid_argument&){rejected=true;}
+    check(rejected,"absent overlay order cannot contain hidden values");
     auto apply=[&](PresentationAction a){check(PresentationCommandProcessor::apply(p,a)==PresentationResult::Applied,"presentation applied");};
     apply(SetPresentationVisibility{"subunits",false});
     check(!effectiveMapVisibility(p.document(),territorialRef("S")),"V01 hidden");
@@ -35,7 +47,7 @@ int main(){try{
     CommandArguments args;args.action=SetCountryColor{"A",0xff0000};auto prepared=CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"country.color",args));check(bool(prepared.preview),"prepared");
     apply(SetPresentationVisibility{"countryFlags",true});check(CommandProcessor::confirm(p,*prepared.preview).changed(),"prepared survives presentation");
     check(groupVisible(p.document().presentation.webPresentation,"countryFlags"),"prepared keeps latest presentation");
-    auto d=fixture();d.presentation.webPresentation.objectStyles["territorial:entity:S"].opacity=.3;d.presentation.webPresentation.objectStyles["territorial:entity:R"].opacity=.3;p.replace(d);
+    auto d=fixture();d.presentation.webPresentation.objectStyles["territorial:entity:S"].opacity=.3;d.presentation.webPresentation.objectStyles["territorial:entity:R"].opacity=.3;d.presentation.webPresentation.objectOrder={"territorial:entity:R","territorial:entity:S"};p.replace(d);
     s.opacity=.7;apply(PatchGroupPresentation{"subunits",s});apply(PatchGroupPresentation{"regions",s});
     check(resolvedTerritorialPresentation(p.document(),territorialRef("S")).opacity==.7,"V14 subunit propagation");
     check(resolvedTerritorialPresentation(p.document(),territorialRef("R")).opacity==.3,"V15 region keeps override");
@@ -45,8 +57,10 @@ int main(){try{
     auto deletionPreview=CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"territorial.delete",remove));check(bool(deletionPreview.preview),"delete preview");
     check(CommandProcessor::confirm(p,*deletionPreview.preview).changed(),"delete commit");
     check(itemVisible(p.document().presentation.webPresentation,"subunits","S"),"V32 delete prunes visibility");
+    check(p.document().presentation.webPresentation.objectOrder==std::vector<std::string>{"territorial:entity:R"},"native delete prunes order hints");
     apply(SetBatchVisibility{{territorialRef("R")},false});
     check(p.undo(),"delete undo");
+    check(p.document().presentation.webPresentation.objectOrder==std::vector<std::string>{"territorial:entity:R","territorial:entity:S"},"native delete undo restores order hints");
     check(!itemVisible(p.document().presentation.webPresentation,"subunits","S")&&!itemVisible(p.document().presentation.webPresentation,"regions","R"),"delete undo restores only affected presentation");
     check(p.redo()&&!p.index().objects.count(territorialRef("S")),"delete redo");
     auto invalid=PresentationCommandProcessor::apply(p,SetBatchVisibility{{territorialRef("missing")},false});check(invalid==PresentationResult::InvalidArguments,"invalid atomic rejection");

@@ -14,7 +14,7 @@ PresentationResult PresentationCommandProcessor::apply(Project& project,const Pr
     try {
         auto d=project.document();auto& p=d.presentation.webPresentation;
         auto targetGroup=[&](const ObjectRef& ref){auto i=project.index().objects.find(ref);require(i!=project.index().objects.end());return ref.domain=="territorial"?territorialGroup(d,ref.id):contentGroup(d,ref);};
-        auto set=[&](const ObjectRef& ref,bool visible){auto g=targetGroup(ref);if(visible)p.hiddenItems[g].erase(ref.id);else p.hiddenItems[g].insert(ref.id);};
+        auto set=[&](const ObjectRef& ref,bool visible){auto g=targetGroup(ref);if(visible)p.eraseHiddenItem(g,ref.id);else p.hiddenItems[g].insert(ref.id);};
         std::visit([&](const auto& a){using T=std::decay_t<decltype(a)>;
             if constexpr(std::is_same_v<T,SetPresentationVisibility>) {
                 require(group(a.key)||a.key=="basemapLabels"||a.key=="countryFlags"||a.key=="subunitLabels"||a.key=="subunitFlags"||a.key=="regionLabels"||a.key=="regionFlags");
@@ -39,7 +39,10 @@ PresentationResult PresentationCommandProcessor::apply(Project& project,const Pr
                 p.distributionSettings=a.settings;
             }
         },action);
-        validatePresentation(d);normalizePresentation(d);
+        validatePresentation(d);
+        // A true no-op must not prune retained web rank hints as a side effect.
+        if(p==project.document().presentation.webPresentation)return PresentationResult::NoOp;
+        normalizePresentation(d);
         if(p==project.document().presentation.webPresentation)return PresentationResult::NoOp;
         require(project.presentationRevision_!=std::numeric_limits<std::uint64_t>::max());
         auto next=std::make_shared<const detail::DocumentState>(std::move(d));
