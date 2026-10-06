@@ -1,0 +1,665 @@
+{
+  "schema": "pando-m977-pending-input-corpus",
+  "version": 1,
+  "features": [
+    {
+      "id": "target",
+      "bounds": [
+        -5,
+        0,
+        0,
+        10
+      ]
+    },
+    {
+      "id": "donor",
+      "bounds": [
+        0,
+        0,
+        10,
+        10
+      ]
+    }
+  ],
+  "points": [
+    [
+      2,
+      2
+    ],
+    [
+      4,
+      2
+    ],
+    [
+      4,
+      4
+    ]
+  ],
+  "cases": [
+    {
+      "id": "two-pending-empty-switch-desktop",
+      "scenario": "two-pending-empty-switch",
+      "profile": {
+        "id": "desktop",
+        "width": 1024,
+        "height": 768,
+        "pointerType": "mouse"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 1024,
+          "height": 768
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false
+      },
+      "stages": [
+        "activation",
+        "firstPending",
+        "secondPending",
+        "held",
+        "ready",
+        "switch",
+        "cancelSwitch",
+        "switchAgain",
+        "confirmSwitch"
+      ]
+    },
+    {
+      "id": "pending-ready-switch-history-desktop",
+      "scenario": "pending-ready-switch-history",
+      "profile": {
+        "id": "desktop",
+        "width": 1024,
+        "height": 768,
+        "pointerType": "mouse"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 1024,
+          "height": 768
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false
+      },
+      "stages": [
+        "activation",
+        "firstPending",
+        "held",
+        "ready",
+        "firstReady",
+        "secondReady",
+        "undoDraft",
+        "redoDraft",
+        "switch",
+        "cancelSwitch",
+        "switchAgain",
+        "confirmSwitch"
+      ]
+    },
+    {
+      "id": "ready-same-method-desktop",
+      "scenario": "ready-same-method",
+      "profile": {
+        "id": "desktop",
+        "width": 1024,
+        "height": 768,
+        "pointerType": "mouse"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 1024,
+          "height": 768
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false
+      },
+      "stages": [
+        "activation",
+        "held",
+        "ready",
+        "firstReady",
+        "secondReady",
+        "sameMethod"
+      ]
+    },
+    {
+      "id": "pending-switch-desktop",
+      "scenario": "pending-switch",
+      "profile": {
+        "id": "desktop",
+        "width": 1024,
+        "height": 768,
+        "pointerType": "mouse"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 1024,
+          "height": 768
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false
+      },
+      "stages": [
+        "activation",
+        "switchPending",
+        "afterLateCompletion"
+      ]
+    },
+    {
+      "id": "held-clear-desktop",
+      "scenario": "held-clear",
+      "profile": {
+        "id": "desktop",
+        "width": 1024,
+        "height": 768,
+        "pointerType": "mouse"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 1024,
+          "height": 768
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false
+      },
+      "stages": [
+        "activation",
+        "held",
+        "afterAction",
+        "afterLateCompletion"
+      ]
+    },
+    {
+      "id": "held-back-desktop",
+      "scenario": "held-back",
+      "profile": {
+        "id": "desktop",
+        "width": 1024,
+        "height": 768,
+        "pointerType": "mouse"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 1024,
+          "height": 768
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false
+      },
+      "stages": [
+        "activation",
+        "held",
+        "afterAction",
+        "afterLateCompletion",
+        "tapAfterBack"
+      ]
+    },
+    {
+      "id": "held-supersede-desktop",
+      "scenario": "held-supersede",
+      "profile": {
+        "id": "desktop",
+        "width": 1024,
+        "height": 768,
+        "pointerType": "mouse"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 1024,
+          "height": 768
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false
+      },
+      "stages": [
+        "activation",
+        "held",
+        "afterAction",
+        "afterLateCompletion"
+      ]
+    },
+    {
+      "id": "two-pending-empty-switch-mobile-360",
+      "scenario": "two-pending-empty-switch",
+      "profile": {
+        "id": "mobile-360",
+        "width": 360,
+        "height": 800,
+        "pointerType": "touch"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          180,
+          400
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 360,
+          "height": 800
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": true
+      },
+      "stages": [
+        "activation",
+        "firstPending",
+        "secondPending",
+        "held",
+        "ready",
+        "switch",
+        "cancelSwitch",
+        "switchAgain",
+        "confirmSwitch"
+      ]
+    },
+    {
+      "id": "pending-ready-switch-history-mobile-360",
+      "scenario": "pending-ready-switch-history",
+      "profile": {
+        "id": "mobile-360",
+        "width": 360,
+        "height": 800,
+        "pointerType": "touch"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          180,
+          400
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 360,
+          "height": 800
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": true
+      },
+      "stages": [
+        "activation",
+        "firstPending",
+        "held",
+        "ready",
+        "firstReady",
+        "secondReady",
+        "undoDraft",
+        "redoDraft",
+        "switch",
+        "cancelSwitch",
+        "switchAgain",
+        "confirmSwitch"
+      ]
+    },
+    {
+      "id": "ready-same-method-mobile-360",
+      "scenario": "ready-same-method",
+      "profile": {
+        "id": "mobile-360",
+        "width": 360,
+        "height": 800,
+        "pointerType": "touch"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          180,
+          400
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 360,
+          "height": 800
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": true
+      },
+      "stages": [
+        "activation",
+        "held",
+        "ready",
+        "firstReady",
+        "secondReady",
+        "sameMethod"
+      ]
+    },
+    {
+      "id": "pending-switch-mobile-360",
+      "scenario": "pending-switch",
+      "profile": {
+        "id": "mobile-360",
+        "width": 360,
+        "height": 800,
+        "pointerType": "touch"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          180,
+          400
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 360,
+          "height": 800
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": true
+      },
+      "stages": [
+        "activation",
+        "switchPending",
+        "afterLateCompletion"
+      ]
+    },
+    {
+      "id": "held-clear-mobile-360",
+      "scenario": "held-clear",
+      "profile": {
+        "id": "mobile-360",
+        "width": 360,
+        "height": 800,
+        "pointerType": "touch"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          180,
+          400
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 360,
+          "height": 800
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": true
+      },
+      "stages": [
+        "activation",
+        "held",
+        "afterAction",
+        "afterLateCompletion"
+      ]
+    },
+    {
+      "id": "held-back-mobile-360",
+      "scenario": "held-back",
+      "profile": {
+        "id": "mobile-360",
+        "width": 360,
+        "height": 800,
+        "pointerType": "touch"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          180,
+          400
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 360,
+          "height": 800
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": true
+      },
+      "stages": [
+        "activation",
+        "held",
+        "afterAction",
+        "afterLateCompletion",
+        "tapAfterBack"
+      ]
+    },
+    {
+      "id": "held-supersede-mobile-360",
+      "scenario": "held-supersede",
+      "profile": {
+        "id": "mobile-360",
+        "width": 360,
+        "height": 800,
+        "pointerType": "touch"
+      },
+      "view": {
+        "kind": "flat",
+        "scale": 1000,
+        "translate": [
+          180,
+          400
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          0,
+          0
+        ],
+        "size": {
+          "width": 360,
+          "height": 800
+        },
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": true
+      },
+      "stages": [
+        "activation",
+        "held",
+        "afterAction",
+        "afterLateCompletion"
+      ]
+    }
+  ],
+  "tapPointIndexes": {
+    "firstPending": 0,
+    "secondPending": 1,
+    "firstReady": 1,
+    "secondReady": 2,
+    "tapAfterBack": 0
+  }
+}

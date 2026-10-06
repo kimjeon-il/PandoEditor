@@ -1,0 +1,120 @@
+name: M9.7.7 pending-input observations
+
+on:
+  push:
+    branches: [codex/m97-web-editing-parity]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-pending-runtime:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Verify immutable source closure and collector contracts
+        run: node --test tools/m977-pending-input/sources.test.mjs tools/m977-pending-input/runtime.test.mjs tools/m977-pending-input/suite.test.mjs tools/m977-pending-input/browser-runner.test.mjs tools/m97/river-report-transfer.test.mjs
+      - name: Install native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - name: Build the production-linked public controller probe
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(qmake -query QT_VERSION)" = '6.8.3'
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+          cmake --build build --target m977_pending_input_probe --parallel 2
+      - name: Verify real native stimulus and difference-report contracts
+        env:
+          PANDO_M977_NATIVE_PROBE: ${{ github.workspace }}/build/app/m977_pending_input_probe
+        run: node --test tools/m977-pending-input/native.test.mjs tools/m977-pending-input/compare.test.mjs
+      - name: Preserve exact compiled probe identity
+        run: |
+          mkdir -p evidence/m977-runtime
+          ln build/app/m977_pending_input_probe evidence/m977-runtime/
+          printf '%s\n' "$GITHUB_SHA" > evidence/m977-runtime/COMMIT
+          printf '%s\n' "$GITHUB_RUN_ID" > evidence/m977-runtime/RUN_ID
+          qmake -query QT_VERSION > evidence/m977-runtime/QT_VERSION
+          (cd evidence/m977-runtime && sha256sum m977_pending_input_probe > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m977-runtime-${{ github.sha }}
+          path: evidence/m977-runtime
+          retention-days: 14
+
+  actual-pending-observations:
+    needs: native-pending-runtime
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Install matching native runtime dependencies
+        run: sudo apt-get update && sudo apt-get install -y libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: m977-runtime-${{ github.sha }}
+          path: m977-runtime
+      - name: Verify exact native runtime and source identity
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(cat m977-runtime/COMMIT)" = "$GITHUB_SHA"
+          test "$(cat m977-runtime/RUN_ID)" = "$GITHUB_RUN_ID"
+          test "$(cat m977-runtime/QT_VERSION)" = '6.8.3'
+          test "$(qmake -query QT_VERSION)" = '6.8.3'
+          (cd m977-runtime && sha256sum -c SHA256SUMS)
+          chmod +x m977-runtime/m977_pending_input_probe
+      - name: Install unchanged pinned official Chromium runtime
+        run: |
+          npm ci --prefix tools/m97/river/browser --ignore-scripts --registry=https://registry.npmjs.org
+          node tools/m97/river/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Capture same-commit Chromium desktop and 360px contexts
+        run: node --max-old-space-size=512 tools/m977-pending-input/browser-runner.mjs evidence/chromium
+      - name: Preserve differences and unsupported observations without a parity waiver
+        run: |
+          export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
+          node tools/m977-pending-input/compare.mjs --capture \
+            evidence/chromium/suite.json.gz \
+            evidence/chromium/browser-report.json \
+            evidence/chromium/capture-verification.json \
+            evidence/native.json \
+            evidence/comparison.json \
+            --native-binary "$PWD/m977-runtime/m977_pending_input_probe" \
+            --native-commit "$(cat m977-runtime/COMMIT)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m977-pending-input-${{ github.sha }}
+          path: evidence
+          retention-days: 14

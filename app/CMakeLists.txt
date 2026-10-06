@@ -887,3 +887,20 @@ if(BUILD_TESTING)
     set_tests_properties(m975_geometry_provenance_codec_tests PROPERTIES TIMEOUT 180
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()
+
+# Independent pending-input observation route; existing parity gates stay intact.
+if(BUILD_TESTING)
+    add_executable(m977_pending_input_probe ../tests/m977_pending_input_probe.cpp)
+    target_link_libraries(m977_pending_input_probe PRIVATE pandoeditor_editor)
+    qt_add_resources(m977_pending_input_probe sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME m977_pending_input_contract COMMAND "${M974_NODE_EXECUTABLE}" --test
+        "${PROJECT_SOURCE_DIR}/tools/m977-pending-input/sources.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-pending-input/runtime.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-pending-input/suite.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-pending-input/browser-runner.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-pending-input/native.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-pending-input/compare.test.mjs")
+    set_tests_properties(m977_pending_input_contract PROPERTIES TIMEOUT 180
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;PANDO_M977_NATIVE_PROBE=$<TARGET_FILE:m977_pending_input_probe>")
+endif()

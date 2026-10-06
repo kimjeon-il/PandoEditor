@@ -1,0 +1,14 @@
+{
+  "schema": "pando-m977-pending-input-source-addendum",
+  "version": 1,
+  "behavioralCommit": "ad78780f79f4f38fcd7c2a3c2fb1fe0ba8e37c32",
+  "baseSourceHistoryManifestSha256": "200cf832af6d359c3d97cf48e323f9802dcaeb8107dd2ca42d558c84ad40f18e",
+  "supplementary": {
+    "path": "assets/js/modules/tool-controller.js",
+    "file": "tool-controller.js",
+    "bytes": 6649,
+    "sha256": "bdb4c3f582899ba5d7d63beaac1be2a1e9c49d33fbf3f66486ac98b86688e039",
+    "blob": "e841223c2c6ba6232476726039eed02f955a5f1c"
+  },
+  "corpusSha256": "bd04977d758ee29b607ffae8b8be69fb86156b26f169efb11ea2a7cec9f29fed"
+}
