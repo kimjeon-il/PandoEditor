@@ -1,5 +1,5 @@
 // Only this authenticated-byte path can label the web observation authoritative.
-// Full parity still fails, and clean native CI provenance is a separate requirement.
+// Matching settled outcomes cannot establish full parity; clean native CI provenance is separate.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {gunzipSync} from 'node:zlib';

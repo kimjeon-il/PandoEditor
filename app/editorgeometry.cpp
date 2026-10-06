@@ -362,12 +362,16 @@ bool EditorController::requestGeometryPreview()
         if(edit.job)jobs_->cancel(edit.job->id());
         const auto request=edit.request;
         edit.error.clear();edit.boundaryImpactConfirmation=false;edit.boundaryImpactsApproved=false;
+        // Canonical preview currentness is independent of preparation owners.
+        // Match the pinned web request-time primary ID value (including empty),
+        // so membership-only changes and an away/back round trip remain valid.
+        if(edit.tool=="boundary")edit.boundaryPreviewSelectionId=selectedId();
         edit.job=jobs_->submit(edit.base,"territorial:geometry-edit",
             std::move(task),
             [this,request](std::uint64_t id,JobDisposition disposition,PrepareResult result){
                 if(!geometryEdit_||!geometryEdit_->job||geometryEdit_->job->id()!=id)return;
                 auto& current=*geometryEdit_;current.job.reset();
-                if(current.request!=request||disposition!=JobDisposition::Accepted||!current.base.matches(project_)||(current.tool=="boundary"&&!boundaryGeometryReady())) {
+                if(current.request!=request||disposition!=JobDisposition::Accepted||!current.base.matches(project_)||(current.tool=="boundary"&&(!boundaryGeometryReady()||current.boundaryPreviewSelectionId!=selectedId()))) {
                     current.error=QStringLiteral("초안 또는 문서가 변경되어 계산 결과를 폐기했습니다.");
                 } else if(!result.ok()||!result.preview) {
                     current.error=QString::fromStdString(result.detail.empty()?"GEOMETRY_PREPARATION_FAILED":result.detail);
@@ -412,6 +416,13 @@ bool EditorController::confirmGeometryEdit()
     if(geometryEdit_&&geometryEdit_->territorySelection)return applyTerritorySelection();
     if(geometryEdit_&&geometryEdit_->tool=="boundary") {
         if(!boundaryGeometryReady()||!geometryEdit_->preview)return false;
+        if(geometryEdit_->boundaryPreviewSelectionId!=selectedId()) {
+            // The initial Apply currentness check discards only this preview;
+            // the independently owned prepared boundary remains editable.
+            CommandProcessor::cancel(*geometryEdit_->preview);geometryEdit_->preview.reset();
+            geometryEdit_->boundaryImpactConfirmation=false;geometryEdit_->boundaryImpactsApproved=false;geometryEdit_->stage="selection";
+            geometryEdit_->error=QStringLiteral("선택이 변경되어 미리보기를 폐기했습니다.");emit geometryEditChanged();return false;
+        }
         if(!geometryEdit_->boundaryImpactsApproved) {
             const auto mutation=std::get_if<ApplyTerritorialMutation>(&geometryEdit_->preview->change().request().args.action);
             if(mutation&&std::any_of(mutation->plan.impacts.begin(),mutation->plan.impacts.end(),[](const auto& impact){return impact.kind=="clip-child"||impact.kind=="remove-child"||impact.kind=="ownership-change";})) {

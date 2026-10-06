@@ -1,0 +1,64 @@
+// Actual Chromium capture is available only in authorized exact-commit CI.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import http from 'node:http';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {createRequire} from 'node:module';
+import {gzipSync} from 'node:zlib';
+import {createSessionReplacementSuite,verifySessionReplacementSuite,verifySessionReplacementReport,captureBinding,runtimePin} from './suite.mjs';
+import {sha256} from '../m974-snap-boundary/sources.mjs';
+import {writeBoundedJsonArtifact} from '../m97/river/browser/report-transfer.mjs';
+
+export async function runSessionReplacementBrowser({suite,baseUrl}){
+ const digest=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+ const require=(condition,message)=>{if(!condition)throw Error(message);},sourceHashes={};
+ require(typeof process==='undefined'&&typeof document==='object'&&typeof Worker==='function','Actual browser context required');
+ for(const [name,source]of Object.entries(suite.sources)){const response=await fetch(new URL(name,baseUrl));require(response.ok,'Missing production source '+name);sourceHashes[name]=await digest(await response.text());require(sourceHashes[name]===await digest(source),'Unchanged pinned source '+name);}
+ for(const row of suite.manifest.sources)require(sourceHashes[row.path]===row.sha256,'Original source manifest '+row.path);
+ require(await digest(suite.runtime.source)===suite.runtime.sha256,'Lifecycle runtime hash');require(await digest(suite.sessionRuntime.source)===suite.sessionRuntime.sha256,'Session replacement runtime hash');
+ for(const vendor of ['polygon-clipping.min.js','d3.min.js'])await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=new URL('assets/js/vendor/'+vendor,baseUrl);script.onload=resolve;script.onerror=()=>reject(Error('Vendor failed '+vendor));document.head.append(script);});
+ await import(new URL('assets/js/modules/polygon-geometry.js',baseUrl));const modules=await Promise.all(suite.manifest.entrypoints.map(name=>import(new URL('assets/js/modules/'+name+'.js',baseUrl))));
+ const api={...Object.assign({},...modules),...globalThis.PandoLabPolygonGeometry,d3:globalThis.d3,clipper:globalThis.polygonClipping},runtime=(0,eval)(suite.runtime.source),replacement=(0,eval)(suite.sessionRuntime.source);
+ const loaded={api,runtime,sourceTexts:suite.sources,createWorker:()=>new Worker(new URL('assets/js/workers/map-edit-worker.js',baseUrl))},cases=[];
+ for(const definition of suite.cases)cases.push(await replacement.runBoundarySessionReplacementCase(loaded,structuredClone(definition)));
+ return {schema:'pando-m977-boundary-session-replacement-web',version:1,state:'complete',identity:suite.identity,sourceHashes,runtime:{userAgent:navigator.userAgent,node:typeof process!=='undefined',document:typeof document==='object',worker:typeof Worker==='function'},cases,limits:structuredClone(suite.identity.limits)};
+}
+export function createSessionReplacementPage(suite){
+ verifySessionReplacementSuite(suite);const encoded=gzipSync(JSON.stringify(suite),{level:9,mtime:0}).toString('base64');
+ return `<!doctype html><meta charset="utf-8"><title>M9.7.7 boundary session replacement diagnostic</title><pre id="status">Starting</pre><script type="module">
+try{const bytes=Uint8Array.from(atob('${encoded}'),c=>c.charCodeAt(0));const suite=JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+const run=${runSessionReplacementBrowser.toString()};globalThis.__m977SessionReplacementReport=await run({suite,baseUrl:new URL('/production/',location.href)});globalThis.__m977SessionReplacementSummary={state:'complete',cases:globalThis.__m977SessionReplacementReport.cases.length};}
+catch(error){globalThis.__m977SessionReplacementSummary={state:'failed',error:String(error),stack:error.stack};}document.querySelector('#status').textContent=JSON.stringify(globalThis.__m977SessionReplacementSummary,null,2);
+</script>`;
+}
+export async function exportSessionReplacementReport(page,destination,runtime){
+ try{const metadata=await page.evaluate(async runtime=>{const report=globalThis.__m977SessionReplacementReport;if(report?.state!=='complete')throw Error('Complete actual boundary capture required');report.runtime={...report.runtime,...runtime};const text=globalThis.__m977SessionReplacementExport=JSON.stringify(report),bytes=new TextEncoder().encode(text);return {characters:text.length,bytes:bytes.length,sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(byte=>byte.toString(16).padStart(2,'0')).join('')};},runtime);
+  return await writeBoundedJsonArtifact(metadata,request=>page.evaluate(({offset,maximum})=>{const text=globalThis.__m977SessionReplacementExport;if(typeof text!=='string')throw Error('Frozen raw export required');let next=Math.min(offset+maximum,text.length);if(next<text.length&&text.charCodeAt(next-1)>=0xd800&&text.charCodeAt(next-1)<=0xdbff)next--;return {offset,text:text.slice(offset,next),next};},request),destination);
+ }finally{await page.evaluate(()=>{delete globalThis.__m977SessionReplacementExport;}).catch(()=>{});}
+}
+export function verifySessionReplacementCI(env,head){assert.equal(env.GITHUB_ACTIONS,'true','Actual boundary capture requires authorized exact-commit CI');assert.match(env.GITHUB_SHA||'',/^[a-f0-9]{40}$/);assert.match(env.GITHUB_RUN_ID||'',/^\d+$/);assert.equal(head,env.GITHUB_SHA,'Exact CI checkout SHA');}
+export function verifyExactTrackedHarness(root,files,harnessDirectory=fileURLToPath(new URL('./',import.meta.url))){
+ for(const [name,expected]of Object.entries(files)){
+  const file=path.resolve(harnessDirectory,name),relative=path.relative(root,file);assert.ok(relative&&!relative.startsWith('..')&&!path.isAbsolute(relative),'Harness file must belong to exact checkout');
+  const committed=execFileSync('git',['-C',root,'show','HEAD:'+relative],{stdio:['ignore','pipe','pipe']});assert.equal(sha256(committed),expected,'Harness must match committed HEAD blob '+relative);assert.equal(sha256(fs.readFileSync(file)),expected,'Working harness must match exact HEAD '+relative);
+ }
+}
+async function main(){
+ assert.equal(process.env.GITHUB_ACTIONS,'true','Actual boundary capture requires authorized exact-commit CI');
+ const root=fileURLToPath(new URL('../../',import.meta.url)),head=execFileSync('git',['-C',root,'rev-parse','HEAD'],{encoding:'utf8'}).trim();verifySessionReplacementCI(process.env,head);
+ assert.equal(execFileSync('git',['-C',root,'diff','HEAD','--'],{encoding:'utf8'}),'','Browser capture requires clean exact-commit tracked sources');
+ const output=process.argv[2];assert.ok(output,'Output directory required');const suite=createSessionReplacementSuite({commit:head,runId:process.env.GITHUB_RUN_ID}),suiteText=JSON.stringify(suite),html=createSessionReplacementPage(suite);verifyExactTrackedHarness(root,suite.harnessFiles);
+ fs.mkdirSync(output,{recursive:true});fs.writeFileSync(path.join(output,'suite.json.gz'),gzipSync(suiteText,{level:9,mtime:0}));
+ const require=createRequire(new URL('../m97/river/browser/package.json',import.meta.url)),{chromium}=require('@playwright/test'),playwright=require('@playwright/test/package.json').version,browsers=JSON.parse(fs.readFileSync(path.join(path.dirname(require.resolve('playwright-core/package.json')),'browsers.json'))),pin=browsers.browsers.find(row=>row.name==='chromium');
+ assert.equal(playwright,runtimePin.playwright);assert.equal(pin.revision,runtimePin.revision);assert.equal(pin.browserVersion,runtimePin.chromium);
+ const server=http.createServer((req,res)=>{if(req.url==='/'){res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html);return;}const key=req.url?.startsWith('/production/')?req.url.slice(12):null;if(!key||!Object.hasOwn(suite.sources,key)){res.writeHead(404);res.end();return;}res.setHeader('Content-Type','text/javascript; charset=utf-8');res.end(suite.sources[key]);});
+ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});let browser;
+ try{browser=await chromium.launch({headless:true});const page=await browser.newPage(),cdp=await page.context().newCDPSession(page),version=await cdp.send('Browser.getVersion');assert.equal(browser.version(),runtimePin.chromium);assert.equal(version.jsVersion,runtimePin.v8);
+  fs.writeFileSync(path.join(output,'cdp-runtime.json'),JSON.stringify(version,null,2));await page.goto('http://127.0.0.1:'+server.address().port+'/');await page.waitForFunction(()=>['complete','failed'].includes(globalThis.__m977SessionReplacementSummary?.state),{},{timeout:180000});const summary=await page.evaluate(()=>globalThis.__m977SessionReplacementSummary);fs.writeFileSync(path.join(output,'browser-summary.json'),JSON.stringify(summary,null,2));assert.equal(summary.state,'complete',JSON.stringify(summary));
+  const transfer=await exportSessionReplacementReport(page,path.join(output,'browser-report.json'),{playwright,browserVersion:browser.version(),chromiumRevision:pin.revision,cdp:version,ci:{commit:head,runId:process.env.GITHUB_RUN_ID}});fs.writeFileSync(path.join(output,'report-transfer.json'),JSON.stringify(transfer,null,2));
+  const text=fs.readFileSync(path.join(output,'browser-report.json'),'utf8');verifySessionReplacementReport(suite,JSON.parse(text));fs.writeFileSync(path.join(output,'browser-report.json.gz'),gzipSync(text,{level:9,mtime:0}));fs.writeFileSync(path.join(output,'capture-verification.json'),JSON.stringify(captureBinding(suiteText,text),null,2));fs.writeFileSync(path.join(output,'cases.json'),JSON.stringify(suite.cases));console.log(JSON.stringify(summary));
+ }catch(error){fs.writeFileSync(path.join(output,'failure.txt'),String(error)+'\n'+error.stack);throw error;}finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
+}
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(error=>{console.error(error);process.exitCode=1;});

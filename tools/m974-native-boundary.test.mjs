@@ -103,7 +103,7 @@ test('descendant Undo mapping cannot erase an unrelated native document change',
 function delayedPair(){
  const [b,n]=pair();b.case=n.case=b.input.id=n.input.id='root-stale-preview';for(const r of [b,n]){r.input.scenario='stale-preview';r.input.expected.confirm=false;}
  for(const name of ['preview','cancel','impactCancel','confirm','undo','redo']){b.stages[name]={observed:false,reason:'A real worker reply was rejected after cancellation or a stale session/revision.'};n.stages[name]={observed:false,reason:'The actual native workflow did not reach this stage.'};}
- b.stages.settled=copy(b.stages.before);b.stages.settled.outcome={ok:false};n.stages.settled=copy(n.stages.before);n.stages.settled.outcome={ok:false};
+ b.stages.settled=copy(b.stages.before);b.stages.settled.outcome={ok:false};n.stages.settled=copy(n.stages.before);n.stages.settled.outcome={ok:false};n.stages.settled.edit={active:true,calculating:false,previewReady:false,boundaryStatus:'error'};b.stages.settled.preparation={status:'error'};
  b.stages.delayed=copy(b.stages.drag);b.stages.delayed.outcome={actualWorkerResultHeld:true};n.stages.delayed=copy(n.stages.drag);n.stages.delayed.edit.calculating=true;n.stages.delayed.outcome={workerCompleted:true};
  n.stages.settled.selectionItems=[{domain:'territorial',id:'B'}];n.stages.settled.selection={domain:'territorial',id:'B'};n.stages.settled.outcome.trigger='selection revision change before preview delivery';b.stages.settled.selection=copy(b.stages.pending.selection);
  n.observationLimits.completedWorkerOwnerDeliveryWithheld=true;n.deliveryBarrier={mechanism:'native-worker-completed-owner-delivery-withheld',timeoutMs:30000,completed:true,ownerEventsProcessed:false};n.replayGestures=[];
@@ -116,7 +116,7 @@ test('processing owner events defeats withheld-delivery observation',()=>{const 
 test('delayed stage must preserve native canonical bytes',()=>{const [b,n]=delayedPair();n.stages.delayed.state.nativeCanonicalDocument.entities[0].properties.name='changed';assert.equal(compareBoundaryCase(b,n).passed,false);});
 test('complete corpus envelope must identify the native workflow schema',()=>{const [b,n]=pair();const r=compareBoundaryObservations([b],{rows:[n]},{expectedCaseIds:['root-triple']});assert.equal(r.passed,false);assert.match(JSON.stringify(r.differences),/schema/i);});
 test('valid native workflow envelope passes a explicitly bounded test corpus',()=>{const [b,n]=pair();assert.equal(compareBoundaryObservations([b],{schema:'pando-m974-native-boundary-workflows',version:1,rows:[n]},{expectedCaseIds:['root-triple']}).passed,true);});
-test('late stale worker result must not reopen a preview despite unchanged canonical bytes',()=>{const [b,n]=delayedPair();n.stages.settled.edit={active:true,calculating:false,previewReady:true,boundaryStatus:'ready'};const r=compareBoundaryCase(b,n);assert.equal(r.passed,false);assert.match(JSON.stringify(r.differences),/settled|preview/i);});
+test('legacy receipt must not claim rejected outcome while a preview survives',()=>{const [b,n]=delayedPair();n.stages.settled.edit={active:true,calculating:false,previewReady:true,boundaryStatus:'ready'};const r=compareBoundaryCase(b,n);assert.equal(r.passed,false);assert.match(JSON.stringify(r.differences),/settled|preview/i);});
 
 const identityFixture=()=>{const expected={expectedCommit:'a'.repeat(40),expectedRunId:'123'};const identity={commit:expected.expectedCommit,runId:expected.expectedRunId};return {expected,suite:{...identity,identity:copy(identity)},browser:{identity:copy(identity)}};};
 test('capture identity requires caller pinned commit and run',()=>{const {suite,browser}=identityFixture();assert.throws(()=>verifyBoundaryCaptureIdentity(suite,browser,{}),/commit|run/i);});
@@ -181,4 +181,20 @@ test('replay snapshots authenticate bytes history and selection for both sides o
 });
 test('replay must retain exact initial bytes and explicit unchanged status',()=>{
  for(const side of ['before','after'])for(const mutate of [s=>s.unchangedFromBefore=false,s=>{const bytes=Buffer.concat([Buffer.from(s.canonicalBytesBase64,'base64'),Buffer.from(' ')]);s.canonicalBytesBase64=bytes.toString('base64');s.documentSha256=createHash('sha256').update(bytes).digest('hex');}])bad((b,n)=>mutate(n.replayGestures[0][side].state),/replay|bytes|unchanged/i);
+});
+
+test('non-equivalent legacy selection reports actual successful preview rather than requiring stale-project rejection',()=>{
+ const [b,n]=delayedPair();b.stages.settled.preparation={status:'ready'};n.stages.settled.edit={active:true,calculating:false,previewReady:true,boundaryStatus:'ready'};n.stages.settled.outcome.ok=true;
+ const r=compareBoundaryCase(b,n);assert.equal(r.passed,false);assert.ok(r.unobserved.some(x=>x.scope==='settled selection parity after different stale-response stimuli'));
+ assert.deepEqual(r.differences,[{field:'settled.outcome.ok',web:false,native:true},{field:'settled.nonEquivalentStimuli.previewReady',web:false,native:true}]);
+});
+test('legacy native outcome cannot lie about a surviving preview',()=>{
+ const [b,n]=delayedPair();b.stages.settled.preparation={status:'ready'};n.stages.settled.edit={active:true,calculating:false,previewReady:true,boundaryStatus:'ready'};
+ const r=compareBoundaryCase(b,n);assert.ok(r.differences.some(d=>/outcome.*actual|actual.*outcome/.test(d.error||'')));
+});
+
+test('legacy selection-only settlement preserves exact authenticated bytes and unchanged flag',()=>{
+ for(const mutate of [s=>s.unchangedFromBefore=false,s=>{const bytes=Buffer.concat([Buffer.from(s.canonicalBytesBase64,'base64'),Buffer.from(' ')]);s.canonicalBytesBase64=bytes.toString('base64');s.documentSha256=createHash('sha256').update(bytes).digest('hex');s.unchangedFromBefore=false;}]){
+  const [b,n]=delayedPair();mutate(n.stages.settled.state);const result=compareBoundaryCase(b,n);assert.equal(result.passed,false);assert.ok(result.differences.some(d=>/settled/.test(d.field)));
+ }
 });

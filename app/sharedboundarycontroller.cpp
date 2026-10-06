@@ -41,12 +41,12 @@ bool EditorController::beginSharedBoundaryGeometry(){
         geometryEdit_->boundaryInitialSelection=selection_;
         auto entered=selection_;entered.setMany(selected.owners,selected.owners.back(),"map");applySelection(std::move(entered));
     }
-    geometryEdit_->boundarySelectionRevision=selection_.revision();prepareBoundaryGeometry();return true;
+    prepareBoundaryGeometry();return true;
 }
 bool EditorController::boundaryGeometryReady() const {
     return geometryEdit_&&geometryEdit_->tool=="boundary"&&geometryEdit_->boundaryStatus=="ready"
         &&geometryEdit_->boundarySession&&geometryEdit_->boundarySession->valid()
-        &&geometryEdit_->base.matches(project_)&&geometryEdit_->boundarySelectionRevision==selection_.revision();
+        &&geometryEdit_->base.matches(project_);
 }
 void EditorController::prepareBoundaryGeometry(){
     if(!geometryEdit_||geometryEdit_->tool!="boundary")return;
@@ -59,7 +59,9 @@ void EditorController::prepareBoundaryGeometry(){
     connect(watcher,&QFutureWatcherBase::finished,this,[this,watcher,cancelled,generation,epoch,sourceEpoch]{
         auto result=watcher->result();watcher->deleteLater();if(cancelled->load()||!geometryEdit_||geometryEdit_->tool!="boundary"||geometryEdit_->generation!=generation||geometryEdit_->computationEpoch!=epoch)return;
         const bool sourcesCurrent=!snapProvider_||snapProvider_->completeWorkerOperation(project_.snapshot(),sourceEpoch);
-        auto& current=*geometryEdit_;if(!sourcesCurrent||!current.base.matches(project_)||current.boundarySelectionRevision!=selection_.revision()){current.boundaryStatus="error";current.error="BOUNDARY_STALE_PREPARATION";}
+        // Fixed owners/auto-seed belong to this session. Ambient selection does
+        // not change preparation identity; document/source epochs still do.
+        auto& current=*geometryEdit_;if(!sourcesCurrent||!current.base.matches(project_)){current.boundaryStatus="error";current.error="BOUNDARY_STALE_PREPARATION";}
         else if(!result||!result->valid()){current.boundaryStatus="error";current.error=result?QString::fromStdString(result->error()):QStringLiteral("BOUNDARY_PREPARATION_FAILED");}
         else{current.boundaryOwners.clear();for(const auto& [id,geometry]:result->drafts())current.boundaryOwners.push_back(territorialRef(id));current.boundarySession=std::move(result);current.boundaryStatus="ready";current.error.clear();}
         emit geometryEditChanged();
@@ -68,12 +70,18 @@ void EditorController::prepareBoundaryGeometry(){
     emit geometryEditChanged();
 }
 bool EditorController::geometryRetryBoundaryPreparation(){
-    if(!geometryEdit_||geometryEdit_->tool!="boundary"||geometryEdit_->boundaryStatus!="error"||!geometryEdit_->base.matches(project_)||geometryEdit_->boundarySelectionRevision!=selection_.revision())return false;
+    if(!geometryEdit_||geometryEdit_->tool!="boundary"||geometryEdit_->boundaryStatus!="error"||!geometryEdit_->base.matches(project_))return false;
     prepareBoundaryGeometry();return true;
 }
 
 bool EditorController::geometryConfirmBoundaryImpacts(){
     if(!boundaryGeometryReady()||!geometryEdit_->preview||!geometryEdit_->boundaryImpactConfirmation)return false;
+    // Web validation after the impact decision keeps the preview on rejection,
+    // but the decision is closed and must be requested again before applying.
+    if(geometryEdit_->boundaryPreviewSelectionId!=selectedId()) {
+        geometryEdit_->boundaryImpactConfirmation=false;
+        geometryEdit_->error=QStringLiteral("선택이 변경되어 변경을 적용하지 않았습니다.");emit geometryEditChanged();return false;
+    }
     geometryEdit_->boundaryImpactsApproved=true;geometryEdit_->boundaryImpactConfirmation=false;
     return confirmGeometryEdit();
 }

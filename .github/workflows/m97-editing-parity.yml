@@ -64,9 +64,9 @@ jobs:
         run: |
           mkdir -p evidence/m974-runtime
           df -h .
-          ln build/app/m974_snap_probe build/app/m974_snap_provider_probe build/app/m974_boundary_probe build/app/m974_snap_order_tests evidence/m974-runtime/
+          ln build/app/m974_snap_probe build/app/m974_snap_provider_probe build/app/m974_boundary_probe build/app/m974_snap_order_tests build/app/m977_boundary_session_replacement_probe evidence/m974-runtime/
           printf '%s\n' "$GITHUB_SHA" > evidence/m974-runtime/COMMIT
-          (cd evidence/m974-runtime && sha256sum m974_snap_probe m974_snap_provider_probe m974_boundary_probe m974_snap_order_tests > SHA256SUMS)
+          (cd evidence/m974-runtime && sha256sum m974_snap_probe m974_snap_provider_probe m974_boundary_probe m974_snap_order_tests m977_boundary_session_replacement_probe > SHA256SUMS)
       - uses: actions/upload-artifact@v4
         with:
           name: m974-runtime-${{ github.sha }}
@@ -365,8 +365,9 @@ jobs:
           test "$(cat m974-runtime/COMMIT)" = "$GITHUB_SHA"
           (cd m974-runtime && sha256sum -c SHA256SUMS)
           test "$(qmake -query QT_VERSION)" = '6.8.3'
-          chmod +x m974-runtime/m974_snap_probe m974-runtime/m974_snap_provider_probe m974-runtime/m974_boundary_probe m974-runtime/m974_snap_order_tests
+          chmod +x m974-runtime/m974_snap_probe m974-runtime/m974_snap_provider_probe m974-runtime/m974_boundary_probe m974-runtime/m974_snap_order_tests m974-runtime/m977_boundary_session_replacement_probe
           node --test tools/m974-native-*.test.mjs tools/m974-snap-boundary/*.test.mjs
+          M977_SESSION_REPLACEMENT_PROBE="$PWD/m974-runtime/m977_boundary_session_replacement_probe" node --test tools/m977-boundary-session-replacement/*.test.mjs tools/m977-boundary-session-integration.test.mjs
       - name: Install pinned official browser runtime
         run: |
           npm ci --prefix tools/m97/river/browser --ignore-scripts --registry=https://registry.npmjs.org
@@ -377,6 +378,7 @@ jobs:
           node --max-old-space-size=512 tools/m974-snap-boundary/supplemental-browser-runner.mjs evidence/supplemental-chromium
           node --max-old-space-size=512 tools/m974-snap-boundary/source-order-v2-browser-runner.mjs evidence/source-order-chromium
           node --max-old-space-size=512 tools/m974-snap-boundary/source-history-browser-runner.mjs evidence/source-history-chromium
+          node --max-old-space-size=512 tools/m977-boundary-session-replacement/browser-runner.mjs evidence/boundary-session-chromium
       - name: Compare native snap against actual Chromium
         run: |
           export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
@@ -391,19 +393,29 @@ jobs:
             --provider-probe "$PWD/m974-runtime/m974_snap_provider_probe" \
             --commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" \
             --output evidence/native-snap
-      - name: Compare native boundary workflows against actual Chromium
+      - name: Validate boundary observable contracts and matched replacement sessions
         run: |
           export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"
           mkdir -p evidence/native-boundary
           m974-runtime/m974_boundary_probe < tests/fixtures/web-m974/boundary-cases.json > evidence/native-boundary/observations.json
           python tests/m974_boundary_delivery_tests.py --observations evidence/native-boundary/observations.json
-          node tools/m974-native-boundary.mjs \
-            --browser-directory evidence/snap-boundary-chromium \
-            --native-file evidence/native-boundary/observations.json \
-            --output-file evidence/native-boundary/comparison.json \
+          m974-runtime/m977_boundary_session_replacement_probe < evidence/boundary-session-chromium/cases.json > evidence/native-boundary/session-observations.json
+          # Preserve the original raw false comparison. Require only the explicitly
+          # bounded 30 legacy observable contracts plus 2 matched replacement cases.
+          node tools/m977-boundary-session-replacement/gate.mjs \
+            --legacy-browser-directory evidence/snap-boundary-chromium \
+            --legacy-native-file evidence/native-boundary/observations.json \
+            --session-suite evidence/boundary-session-chromium/suite.json.gz \
+            --session-browser-report evidence/boundary-session-chromium/browser-report.json \
+            --session-binding evidence/boundary-session-chromium/capture-verification.json \
+            --session-native-file evidence/native-boundary/session-observations.json \
+            --output-file evidence/native-boundary/matched-coverage.json \
+            --legacy-output-file evidence/native-boundary/comparison.json \
+            --session-output-file evidence/native-boundary/session-comparison.json \
             --expected-commit "$GITHUB_SHA" --expected-run-id "$GITHUB_RUN_ID" \
             --native-commit "$(cat m974-runtime/COMMIT)" \
-            --native-binary-sha256 "$(sha256sum m974-runtime/m974_boundary_probe | cut -d ' ' -f 1)"
+            --legacy-native-binary-sha256 "$(sha256sum m974-runtime/m974_boundary_probe | cut -d ' ' -f 1)" \
+            --session-native-binary-sha256 "$(sha256sum m974-runtime/m977_boundary_session_replacement_probe | cut -d ' ' -f 1)"
       - name: Compare native threshold helpers against actual Chromium
         run: |
           export LD_LIBRARY_PATH="$(qmake -query QT_INSTALL_LIBS):${LD_LIBRARY_PATH:-}"

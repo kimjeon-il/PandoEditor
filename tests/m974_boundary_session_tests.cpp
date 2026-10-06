@@ -8,7 +8,11 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QSemaphore>
+#include <QThreadPool>
+#include <QtConcurrent/QtConcurrentRun>
 #include <limits>
+#include <stdexcept>
 using namespace pandoeditor;
 namespace {
 Geometry polygon(Ring ring) { Geometry g;g.polygons={{std::move(ring)}};return g; }
@@ -34,6 +38,32 @@ bool sameGeometry(const Geometry& a,const Geometry& b) {
     for(std::size_t p=0;p<a.polygons.size();++p){if(a.polygons[p].size()!=b.polygons[p].size())return false;for(std::size_t r=0;r<a.polygons[p].size();++r){if(a.polygons[p][r].size()!=b.polygons[p][r].size())return false;for(std::size_t v=0;v<a.polygons[p][r].size();++v)if(a.polygons[p][r][v].x!=b.polygons[p][r][v].x||a.polygons[p][r][v].y!=b.polygons[p][r][v].y)return false;}}return true;
 }
 Geometry geometry(const ProjectDocument& d,const char* id) {return *d.geometries.get(staticGeometryBinding(d,id).geometryRef);}
+// Occupy the actual pool before dispatch. No completed result is relabeled as
+// CPU-in-flight, and the production scheduler/session is never replaced.
+struct QueuedBoundaryWork {
+    QSemaphore entered,release;
+    int previous=QThreadPool::globalInstance()->maxThreadCount();
+    QFuture<void> blocker;
+    bool active=true;
+    QueuedBoundaryWork() {
+        if(!QThreadPool::globalInstance()->waitForDone(30000))throw std::runtime_error("prior worker did not finish");
+        QThreadPool::globalInstance()->setMaxThreadCount(1);
+        blocker=QtConcurrent::run([this]{entered.release();release.acquire();});
+        if(!entered.tryAcquire(1,30000))throw std::runtime_error("pool barrier did not start");
+    }
+    void unblock(){if(active){active=false;release.release();blocker.waitForFinished();}}
+    ~QueuedBoundaryWork(){unblock();QThreadPool::globalInstance()->waitForDone(30000);QThreadPool::globalInstance()->setMaxThreadCount(previous);}
+};
+QSet<QString> targetIds(EditorController& c) {
+    QSet<QString> ids;for(const auto& ref:c.geometryEditState()["targets"].toList())ids.insert(ref.toMap()["id"].toString());return ids;
+}
+void addParent(ProjectDocument& d) {
+    d.geometries.insert({"P",1},box(-1,-1,4,4));appendTerritory(d,{"P","Parent","",UnitKind::General,false},{"P",1});d.presentation.objectStyles[territorialRef("P")]={};
+}
+bool moveOriginalNode(EditorController& c,const ProjectDocument& d,Point from={1,1},Point to={1,1.1}) {
+    MapProjection projection;projection.rebuild(d);const auto a=projection.project(from),b=projection.project(to);
+    return c.geometrySelectNearest(a.x,a.y,.001)&&c.geometryMoveSelectedVertex(b.x,b.y,0);
+}
 }
 class M974BoundarySessionTests:public QObject {
     Q_OBJECT
@@ -100,9 +130,95 @@ private slots:
         QVERIFY(c.geometryBeginVertexDrag());QVERIFY(c.geometryMoveSelectedVertex(next.x,next.y,0));c.geometryEndVertexDrag(true);QCOMPARE(c.geometryDraftPaths(),paths);QVERIFY(!c.geometryEditState().value("canUndo").toBool());
         c.cancelGeometryEdit();QCOMPARE(c.documentBytes(),before);QVERIFY(!c.canUndo());
     }
-    void cancelledAndSelectionStalePreparationCannotReopen() {
-        QTemporaryDir dir;const auto d=triple();EditorController c({false,dir.filePath("private.json")});QVERIFY(open(c,d,dir));QVERIFY(select(c,{"A","B","C"}));const auto before=c.documentBytes();QVERIFY(c.beginSharedBoundaryGeometry());c.cancelGeometryEdit();QTest::qWait(100);QVERIFY(!c.geometryEditState().value("active").toBool());
-        QVERIFY(c.beginSharedBoundaryGeometry());c.selectCountry("U");QTRY_COMPARE_WITH_TIMEOUT(c.geometryEditState().value("boundaryStatus").toString(),QString("error"),3000);QVERIFY(c.geometryDraftPaths().isEmpty());QVERIFY(!c.requestGeometryPreview());QCOMPARE(c.documentBytes(),before);
+    void fixedPreparationOwnersSurviveAmbientSelection_data() {
+        QTest::addColumn<QString>("mode");QTest::addColumn<bool>("queued");QTest::addColumn<QString>("ambient");
+        for(const auto* mode:{"root","child","auto-child"})for(bool queued:{true,false})for(const auto* ambient:{"C","U",""})
+            QTest::newRow(qPrintable(QString("%1-%2-%3").arg(mode,queued?"queued":"ready",ambient)))<<QString(mode)<<queued<<QString(ambient);
+    }
+    void fixedPreparationOwnersSurviveAmbientSelection() {
+        QFETCH(QString,mode);QFETCH(bool,queued);QFETCH(QString,ambient);
+        auto d=triple();if(mode!="root"){addParent(d);for(const auto* id:{"A","B","C"})staticParentRelation(d,id).parentId="P";}
+        QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});QVERIFY(open(c,d,dir));
+        if(mode=="auto-child")QVERIFY(select(c,{"A"}));else QVERIFY(select(c,{"A","B","C"}));
+        const auto before=c.documentBytes();const auto revision=c.revision();std::unique_ptr<QueuedBoundaryWork> barrier;
+        if(queued)barrier=std::make_unique<QueuedBoundaryWork>();QVERIFY(c.beginSharedBoundaryGeometry());
+        if(!queued)QTRY_COMPARE_WITH_TIMEOUT(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"),3000);
+        const auto targets=targetIds(c);QCOMPARE(targets,QSet<QString>({"A","B","C"}));if(ambient.isEmpty())c.clearSelection();else c.selectCountry(ambient);
+        if(queued){QCOMPARE(c.geometryEditState()["boundaryStatus"].toString(),QString("preparing"));barrier->unblock();}
+        QTRY_COMPARE_WITH_TIMEOUT(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"),3000);
+        QCOMPARE(targetIds(c),targets);QCOMPARE(c.selectedId(),ambient);QCOMPARE(c.documentBytes(),before);QCOMPARE(c.revision(),revision);QVERIFY(!c.canUndo());
+        QVERIFY(moveOriginalNode(c,d));QVERIFY(c.geometryUndoDraft());QVERIFY(c.geometryRedoDraft());QVERIFY(c.requestGeometryPreview());
+        QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState()["previewReady"].toBool(),5000);QVERIFY(c.confirmGeometryEdit());
+        const auto after=c.documentBytes();const auto result=projectcodec::decode(after);for(const auto* id:{"A","B","C"})QVERIFY(!sameGeometry(geometry(result,id),geometry(d,id)));
+        QVERIFY(sameGeometry(geometry(result,"U"),geometry(d,"U")));if(mode!="root")QVERIFY(sameGeometry(geometry(result,"P"),geometry(d,"P")));
+        c.undo();QCOMPARE(c.documentBytes(),before);c.redo();QCOMPARE(c.documentBytes(),after);
+    }
+    void preparationRetryRetainsFailedOwnersAfterSelectionChange() {
+        QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});QVERIFY(open(c,triple(),dir));QVERIFY(select(c,{"A","B","U"}));const auto before=c.documentBytes();
+        QVERIFY(c.beginSharedBoundaryGeometry());QTRY_COMPARE_WITH_TIMEOUT(c.geometryEditState()["boundaryStatus"].toString(),QString("error"),3000);
+        const auto targets=targetIds(c);c.selectCountry("C");QVERIFY(c.geometryRetryBoundaryPreparation());
+        QTRY_COMPARE_WITH_TIMEOUT(c.geometryEditState()["boundaryStatus"].toString(),QString("error"),3000);QCOMPARE(targetIds(c),targets);QCOMPARE(c.documentBytes(),before);QVERIFY(!c.canUndo());
+    }
+    void previewUsesRequestTimePrimaryIdentity_data() {
+        QTest::addColumn<QString>("phase");QTest::addColumn<QString>("change");
+        for(const auto* phase:{"queued","completed-undelivered","apply"})for(const auto* change:{"membership","order","primary","roundtrip","clear"})
+            QTest::newRow(qPrintable(QString("%1-%2").arg(phase,change)))<<QString(phase)<<QString(change);
+    }
+    void previewUsesRequestTimePrimaryIdentity() {
+        QFETCH(QString,phase);QFETCH(QString,change);QTemporaryDir dir;const auto d=triple();EditorController c({false,dir.filePath("private.json")});QVERIFY(open(c,d,dir));QVERIFY(select(c,{"A","B","C"}));
+        const auto before=c.documentBytes();QVERIFY(c.beginSharedBoundaryGeometry());QTRY_COMPARE_WITH_TIMEOUT(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"),3000);QVERIFY(moveOriginalNode(c,d));
+        std::unique_ptr<QueuedBoundaryWork> barrier;if(phase=="queued")barrier=std::make_unique<QueuedBoundaryWork>();QVERIFY(c.requestGeometryPreview());
+        if(phase=="apply")QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState()["previewReady"].toBool(),5000);
+        else if(phase=="completed-undelivered"){QVERIFY(QThreadPool::globalInstance()->waitForDone(30000));QVERIFY(c.geometryEditState()["calculating"].toBool());}
+        if(change=="clear")c.clearSelection();else if(change=="order")QVERIFY(c.setSelection({QVariantMap{{"domain","territorial"},{"id","C"}},QVariantMap{{"domain","territorial"},{"id","A"}},QVariantMap{{"domain","territorial"},{"id","B"}}},{{"domain","territorial"},{"id","C"}}));else {c.selectCountry(change=="membership"?"C":"U");if(change=="roundtrip")c.selectCountry("C");}
+        if(barrier)barrier->unblock();QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState()["calculating"].toBool(),5000);
+        const bool accepted=change=="membership"||change=="order"||change=="roundtrip";QCOMPARE(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"));
+        QCOMPARE(c.geometryEditState()["previewReady"].toBool(),phase=="apply"||accepted);QCOMPARE(c.documentBytes(),before);QVERIFY(!c.canUndo());QCOMPARE(c.confirmGeometryEdit(),accepted);
+        if(accepted){const auto after=c.documentBytes();QVERIFY(after!=before);c.undo();QCOMPARE(c.documentBytes(),before);c.redo();QCOMPARE(c.documentBytes(),after);}
+        else {QVERIFY(!c.geometryEditState()["previewReady"].toBool());QCOMPARE(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"));QCOMPARE(c.documentBytes(),before);QVERIFY(!c.canUndo());QVERIFY(moveOriginalNode(c,d));}
+    }
+    void impactConfirmationRechecksRequestPrimary_data() {
+        QTest::addColumn<QString>("change");for(const auto* change:{"membership","primary","roundtrip"})QTest::newRow(change)<<QString(change);
+    }
+    void impactConfirmationRechecksRequestPrimary() {
+        QFETCH(QString,change);auto d=triple();d.geometries.insert({"nested",1},box(.7,.2,.3,.6));appendTerritory(d,{"nested","Nested","",UnitKind::General,false},{"nested",1},"A");d.presentation.objectStyles[territorialRef("nested")]={};
+        QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});QVERIFY(open(c,d,dir));QVERIFY(select(c,{"A","B"}));const auto before=c.documentBytes();
+        QVERIFY(c.beginSharedBoundaryGeometry());QTRY_COMPARE_WITH_TIMEOUT(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"),3000);QVERIFY(moveOriginalNode(c,d,{1,.5},{.8,.5}));QVERIFY(c.requestGeometryPreview());QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState()["previewReady"].toBool(),5000);
+        QVERIFY(!c.confirmGeometryEdit());QVERIFY(c.geometryEditState()["boundaryImpactConfirmation"].toBool());c.selectCountry(change=="membership"?"B":"U");if(change=="roundtrip")c.selectCountry("B");
+        const bool accepted=change!="primary";QCOMPARE(c.geometryConfirmBoundaryImpacts(),accepted);
+        if(accepted){QVERIFY(c.documentBytes()!=before);c.undo();QCOMPARE(c.documentBytes(),before);}
+        else {QCOMPARE(c.documentBytes(),before);QVERIFY(!c.canUndo());QCOMPARE(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"));QVERIFY(c.geometryEditState()["previewReady"].toBool());QVERIFY(!c.geometryEditState()["boundaryImpactConfirmation"].toBool());c.selectCountry("B");QVERIFY(!c.confirmGeometryEdit());QVERIFY(c.geometryConfirmBoundaryImpacts());}
+    }
+    void realDocumentChangesStillInvalidateBoundary_data() {
+        QTest::addColumn<QString>("phase");QTest::addColumn<QString>("change");
+        for(const auto* phase:{"prepare-queued","ready","preview-queued","apply"})for(const auto* change:{"property","lock","parent"})
+            QTest::newRow(qPrintable(QString("%1-%2").arg(phase,change)))<<QString(phase)<<QString(change);
+    }
+    void realDocumentChangesStillInvalidateBoundary() {
+        QFETCH(QString,phase);QFETCH(QString,change);auto d=triple();addParent(d);for(const auto* id:{"A","B","C"})staticParentRelation(d,id).parentId="P";
+        // A valid ancestor tree permits a real later parent change without an
+        // overlapping unrelated root that would invalidate the initial preview.
+        d.geometries.insert({"G",1},box(-2,-2,6,6));appendTerritory(d,{"G","Grandparent","",UnitKind::General,false},{"G",1});d.presentation.objectStyles[territorialRef("G")]={};staticParentRelation(d,"P").parentId="G";
+        QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});QVERIFY(open(c,d,dir));QVERIFY(select(c,{"A","B","C"}));const auto before=c.documentBytes();
+        std::unique_ptr<QueuedBoundaryWork> barrier;if(phase=="prepare-queued")barrier=std::make_unique<QueuedBoundaryWork>();QVERIFY(c.beginSharedBoundaryGeometry());
+        if(phase!="prepare-queued")QTRY_COMPARE_WITH_TIMEOUT(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"),3000);
+        if(phase=="preview-queued"||phase=="apply"){QVERIFY(moveOriginalNode(c,d));if(phase=="preview-queued")barrier=std::make_unique<QueuedBoundaryWork>();QVERIFY(c.requestGeometryPreview());if(phase=="apply")QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState()["previewReady"].toBool(),5000);}
+        c.selectCountry("C");if(change=="property"){c.setNameDraft("Changed C");QVERIFY(c.commitObjectField("name"));}else if(change=="lock")QVERIFY(c.toggleObjectLock());else {QVERIFY(c.changeSelectedParent("G"));QVERIFY(c.confirmStructureMutation());}
+        const auto mutated=c.documentBytes();QVERIFY(mutated!=before);if(barrier)barrier->unblock();QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState()["calculating"].toBool(),5000);
+        QCOMPARE(c.geometryEditState()["boundaryStatus"].toString(),QString("error"));QVERIFY(!c.requestGeometryPreview());QVERIFY(!c.confirmGeometryEdit());QVERIFY(!c.geometryRetryBoundaryPreparation());QCOMPARE(c.documentBytes(),mutated);
+        c.cancelGeometryEdit();c.undo();QCOMPARE(c.documentBytes(),before);QVERIFY(!c.canUndo());
+    }
+    void cancelledWorkCannotOverwriteReenteredOrReplacedSession_data() {
+        QTest::addColumn<bool>("preview");QTest::addColumn<bool>("replace");for(bool preview:{false,true})for(bool replace:{false,true})QTest::newRow(qPrintable(QString("%1-%2").arg(preview?"preview":"preparation",replace?"replace":"reenter")))<<preview<<replace;
+    }
+    void cancelledWorkCannotOverwriteReenteredOrReplacedSession() {
+        QFETCH(bool,preview);QFETCH(bool,replace);QTemporaryDir dir;auto d=triple();EditorController c({false,dir.filePath("private.json")});QVERIFY(open(c,d,dir));QVERIFY(select(c,{"A","B","C"}));QVERIFY(c.beginSharedBoundaryGeometry());
+        if(preview){QTRY_COMPARE_WITH_TIMEOUT(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"),3000);QVERIFY(moveOriginalNode(c,d));QVERIFY(c.requestGeometryPreview());}
+        QVERIFY(QThreadPool::globalInstance()->waitForDone(30000));QVERIFY(c.geometryEditState()["calculating"].toBool());QVERIFY(!c.openFile(QUrl::fromLocalFile(dir.filePath("input.json"))));c.cancelGeometryEdit();
+        if(replace){d.units.back().name="Replacement unrelated";QVERIFY(open(c,d,dir));}const auto before=c.documentBytes();QVERIFY(select(c,{"A","B"}));QVERIFY(c.beginSharedBoundaryGeometry());
+        QTRY_COMPARE_WITH_TIMEOUT(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"),3000);QVERIFY(QThreadPool::globalInstance()->waitForDone(30000));QCoreApplication::sendPostedEvents();QCoreApplication::processEvents();
+        QCOMPARE(targetIds(c),QSet<QString>({"A","B"}));QVERIFY(!c.geometryEditState()["previewReady"].toBool());QCOMPARE(c.documentBytes(),before);QVERIFY(!c.canUndo());
+        MapProjection projection;projection.rebuild(d);QVERIFY(handle(c,projection,{1,1})["fixed"].toBool());
     }
     void disjointAdjacentPairsValidButIsolatedOwnerRejected() {
         auto d=triple();d.geometries.insert({"V",1},box(6,0,1,1));appendTerritory(d,{"V","V","",UnitKind::General,false},{"V",1});d.presentation.objectStyles[territorialRef("V")]={};

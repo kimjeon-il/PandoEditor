@@ -126,7 +126,7 @@ QJsonObject run(const QJsonObject& definition){
             auto limits=output["observationLimits"].toObject();limits["completedWorkerOwnerDeliveryWithheld"]=true;output["observationLimits"]=limits;
             observeStage("delayed",{{"ok",true},{"workerCompleted",true},{"ownerDeliveryWithheld",true}});
         };
-        if(entered&&(scenario=="pending-cancel"||scenario=="stale-preparation")){holdCompletedDelivery();if(scenario=="pending-cancel")controller.cancelGeometryEdit();else controller.selectCountry(other);settle(controller);drain();observeStage("settled",{{"ok",false},{"trigger",scenario=="pending-cancel"?"cancelGeometryEdit before owner delivery":"selection revision change before owner delivery"}});}
+        if(entered&&(scenario=="pending-cancel"||scenario=="stale-preparation")){holdCompletedDelivery();if(scenario=="pending-cancel")controller.cancelGeometryEdit();else controller.selectCountry(other);settle(controller);drain();observeStage("settled",{{"ok",controller.geometryEditState().value("boundaryStatus").toString()=="ready"},{"trigger",scenario=="pending-cancel"?"cancelGeometryEdit before owner delivery":"selection revision change before owner delivery"}});}
         else if(!entered){observeStage("settled",{{"ok",false}});}
         else {
             settle(controller);const bool prepared=controller.geometryEditState().value("boundaryStatus").toString()=="ready";observeStage("prepared",{{"ok",prepared}});output["topologyHelper"]=topologyHelper(source.snapshot(),helperOwners,definition);
@@ -144,7 +144,7 @@ QJsonObject run(const QJsonObject& definition){
                         if(!scenario.isEmpty()) {
                             if(scenario=="stale-move")stages["delayed"]=unobserved("Native boundary-move is synchronous; no completed boundary-move worker reply exists to withhold.");
                             else holdCompletedDelivery();
-                            if(scenario=="pending-preview-cancel")controller.cancelGeometryEdit();else controller.selectCountry(other);settle(controller);drain();observeStage("settled",{{"ok",false},{"trigger",scenario=="pending-preview-cancel"?"cancelGeometryEdit before preview delivery":"selection revision change before preview delivery"}});if(scenario=="stale-move")output["scenarioLimit"]="Native node fan-out is synchronous; asynchronous web boundary-move response interception has no native counterpart.";
+                            if(scenario=="pending-preview-cancel")controller.cancelGeometryEdit();else controller.selectCountry(other);settle(controller);drain();observeStage("settled",{{"ok",controller.geometryEditState().value("previewReady").toBool()},{"trigger",scenario=="pending-preview-cancel"?"cancelGeometryEdit before preview delivery":"selection revision change before preview delivery"}});if(scenario=="stale-move")output["scenarioLimit"]="Native node fan-out is synchronous; asynchronous web boundary-move response interception has no native counterpart.";
                         } else {
                             settle(controller);const bool preview=controller.geometryEditState().value("previewReady").toBool();
                             if(!preview){stages["preview"]=unobserved("The actual controller created no canonical preview for this move.");observeStage("settled",{{"ok",false}});}

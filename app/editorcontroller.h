@@ -710,7 +710,7 @@ private:
         QString boundaryStatus;
         std::string boundaryAutoSeed;
         bool boundaryImpactConfirmation=false,boundaryImpactsApproved=false;
-        std::uint64_t boundarySelectionRevision=0;
+        QString boundaryPreviewSelectionId;
         std::optional<pandoeditor::CoastlineIntent> coastIntent;
         std::optional<pandoeditor::Geometry> dragBefore;
         bool objectDragMoved=false;

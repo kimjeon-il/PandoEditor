@@ -922,3 +922,21 @@ if(BUILD_TESTING)
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;M977_BOUNDARY_PROBE=$<TARGET_FILE:m977_boundary_timing_probe>")
 endif()
+
+# Two matched public session-replacement cases. Recorded legacy limits remain explicit.
+if(BUILD_TESTING)
+    add_executable(m977_boundary_session_replacement_probe ../tests/m977_boundary_session_replacement_probe.cpp)
+    target_link_libraries(m977_boundary_session_replacement_probe PRIVATE pandoeditor_editor)
+    qt_add_resources(m977_boundary_session_replacement_probe sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME m977_boundary_session_replacement_contract COMMAND "${M974_NODE_EXECUTABLE}" --test
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-session-replacement/runtime.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-session-replacement/suite.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-session-replacement/browser-runner.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-session-replacement/native.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-session-replacement/gate.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-session-integration.test.mjs")
+    set_tests_properties(m977_boundary_session_replacement_contract PROPERTIES TIMEOUT 180
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;M977_SESSION_REPLACEMENT_PROBE=$<TARGET_FILE:m977_boundary_session_replacement_probe>")
+endif()

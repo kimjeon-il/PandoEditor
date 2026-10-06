@@ -112,7 +112,7 @@ export function compareBoundaryCase(web,native){
  check('case.schema',()=>{object(web,'browser case');object(native,'native case');assert.equal(native.case,web.case,'case identity');assert.equal(native.error,undefined,'native probe error');assert.equal(web.input?.id,web.case);diff('input',web.input,native.input);bool(web.entry?.ok,'web entry result');bool(native.entry?.ok,'native entry result');diff('entry.ok',web.entry.ok,native.entry.ok);});
  if(!web||!native)return {case:web?.case,passed:false,rawParity:false,differences,unobserved};
  const staleSelectionStimulus=['root-stale-preparation','root-stale-move','root-stale-preview'].includes(web.case);
- if(staleSelectionStimulus)unobserved.push({case:web.case,scope:'settled selection parity after different stale-response stimuli',reason:'Browser generation/stateRevision invalidation has no public native equivalent during active geometry editing; native uses real selectCountry(C). Side-specific selection transitions and identical canonical/history rejection are required. This is mechanism coverage, not web selection parity.'});
+ if(staleSelectionStimulus)unobserved.push({case:web.case,scope:'settled selection parity after different stale-response stimuli',reason:'Browser generation/stateRevision invalidation has no public native equivalent during active geometry editing; native uses real selectCountry(C). Side-specific selection transitions and unchanged canonical/history state are required. Actual settled outcomes remain raw differences: selection membership alone can preserve native preparation/preview while the web generation/revision stimulus rejects its operation. This is mechanism coverage, not equivalent stale-project input or web selection parity.'});
  const selectionInputGap=web.case==='missing-selected-owner'||web.case==='mixed-domain-selection';
  if(selectionInputGap)unobserved.push({case:web.case,scope:'selection arrays for absent-object input references',reason:'Native setSelection sanitizes absent refs; the web selection stores them. Both real entrypoints must reject and preserve canonical state/history. This is not equivalent selection-state input.'});
  const inputGap=INPUT_GAPS.has(web.case)&&native.stages?.drag?.observed===false&&native.stages.drag.reason===INPUT_REASON;
@@ -161,10 +161,17 @@ export function compareBoundaryCase(web,native){
     diff('settled.selection.nativeInputGapPreserved',selectionReceipt(native.stages.prepared,true),selectionReceipt(n,true));
    }
    if(name==='settled'){
-    bool(n.edit?.active,'settled session state');if(n.edit.active){assert.equal(n.edit.calculating,false,'settled worker must not be calculating');assert.equal(n.edit.previewReady,false,'settled failure must not reopen preview');}
+    bool(n.edit?.active,'settled session state');if(n.edit.active){assert.equal(n.edit.calculating,false,'settled worker must not be calculating');if(!staleSelectionStimulus)assert.equal(n.edit.previewReady,false,'settled failure must not reopen preview');}
+    if(staleSelectionStimulus){
+     assert.equal(n.edit.active,true,'public selection must retain the boundary session');bool(n.edit.previewReady,'actual native preview outcome');assert.ok(['ready','error'].includes(n.edit.boundaryStatus),'actual native preparation outcome');
+     assert.equal(n.outcome.ok,web.input.scenario==='stale-preparation'?n.edit.boundaryStatus==='ready':n.edit.previewReady,'native outcome must reflect actual preparation or preview');
+     diff('settled.nonEquivalentStimuli.boundaryStatus',w.preparation?.status??null,n.edit.boundaryStatus);
+     diff('settled.nonEquivalentStimuli.previewReady',!!w.state.preview,n.edit.previewReady);
+     diff('settled.native.selectionOnly.canonical',nativeCanonical(native.stages.before),nativeCanonical(n));diff('settled.native.selectionOnly.history',history(native.stages.before.state,true),history(ns,true));
+     assert.equal(ns.canonicalBytesBase64,native.stages.before.state.canonicalBytesBase64,'selection-only settled exact canonical bytes');assert.equal(ns.documentSha256,native.stages.before.state.documentSha256,'selection-only settled canonical hash');assert.equal(ns.unchangedFromBefore,true,'selection-only settled unchanged canonical status');
+    }
     if(w.outcome?.ok===true&&!inputGap)assert.equal(n.edit.active,false,'confirmed workflow must exit session');
     if(['pending-cancel','pending-preview-cancel'].includes(web.input.scenario))assert.equal(n.edit.active,false,'cancelled workflow reopened session');
-    if(['stale-preparation','stale-move','stale-preview'].includes(web.input.scenario)&&n.edit.active)assert.equal(n.edit.boundaryStatus,'error','stale workflow did not reject delivery');
    }
    if(name==='drag')for(const field of ['changed','coordinate'])diff(`drag.${field}`,required(outcome(w),field),required(outcome(n),field));
    if(name==='pending'&&native.entry.ok){assert.equal(n.edit?.active,true,'pending active state');assert.equal(n.edit?.calculating,true,'pending calculating state');assert.equal(n.edit?.boundaryStatus,'preparing','pending preparation state');}

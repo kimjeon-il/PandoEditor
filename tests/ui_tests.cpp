@@ -208,7 +208,40 @@ private slots:
         QVERIFY(click("geometryConfirmTerritoryChange"));
         QCOMPARE(editor.geometryEditState().value("activeMethod").toString(),QString("line"));
         QCOMPARE(editor.geometryEditState().value("parts").toList().size(),1);QVERIFY(unchanged());
+        // A ready drawing tool owns input even before its first point, so a
+        // different method must use the same visible Cancel/Confirm workflow.
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.geometryEditState().value("selectionPending").toBool(),10000);
+        const auto emptyLineDraft=editor.geometryDraftPaths();
+        for(const auto& path:emptyLineDraft)QVERIFY(path.toMap().value("vertices").toList().isEmpty());
+        const auto archivedBeforeEmptySwitch=editor.geometryEditState().value("parts").toList();
+        QVERIFY(click("geometryMethod_line"));
+        QVERIFY(editor.geometryEditState().value("confirmationKind").toString().isEmpty());
+        QCOMPARE(editor.geometryDraftPaths(),emptyLineDraft);
         QVERIFY(click("geometryMethod_polygon"));
+        QCOMPARE(editor.geometryEditState().value("confirmationKind").toString(),QString("method"));
+        QCOMPARE(editor.geometryEditState().value("activeMethod").toString(),QString("line"));
+        QCOMPARE(editor.geometryEditState().value("requestedMethod").toString(),QString("polygon"));
+        QVERIFY(visualItem(window->contentItem(),"geometryTerritoryChangeMessage")->isVisible());
+        QVERIFY(visualItem(window->contentItem(),"geometryCancelTerritoryChange")->isVisible());
+        QVERIFY(visualItem(window->contentItem(),"geometryCancelTerritoryChange")->isEnabled());
+        QVERIFY(visualItem(window->contentItem(),"geometryConfirmTerritoryChange")->isVisible());
+        QVERIFY(visualItem(window->contentItem(),"geometryConfirmTerritoryChange")->isEnabled());
+        QVERIFY(!visualItem(window->contentItem(),"geometryMethod_polygon")->isEnabled());
+        QVERIFY(capture(window).save(QDir::tempPath()+"/m977-ui-"+QString::number(width)+"-empty-line-prompt.png"));
+        QVERIFY(click("geometryCancelTerritoryChange"));
+        QVERIFY(editor.geometryEditState().value("confirmationKind").toString().isEmpty());
+        QCOMPARE(editor.geometryEditState().value("activeMethod").toString(),QString("line"));
+        QCOMPARE(editor.geometryEditState().value("requestedMethod").toString(),QString("line"));
+        QCOMPARE(editor.geometryDraftPaths(),emptyLineDraft);
+        QCOMPARE(editor.geometryEditState().value("parts").toList(),archivedBeforeEmptySwitch);QVERIFY(unchanged());
+        QVERIFY(click("geometryMethod_polygon"));
+        QCOMPARE(editor.geometryEditState().value("confirmationKind").toString(),QString("method"));
+        QCOMPARE(editor.geometryEditState().value("activeMethod").toString(),QString("line"));
+        QVERIFY(click("geometryConfirmTerritoryChange"));
+        QVERIFY(editor.geometryEditState().value("confirmationKind").toString().isEmpty());
+        QCOMPARE(editor.geometryEditState().value("activeMethod").toString(),QString("polygon"));
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.geometryEditState().value("selectionPending").toBool(),10000);
+        QCOMPARE(editor.geometryEditState().value("parts").toList(),archivedBeforeEmptySwitch);QVERIFY(unchanged());
         // Two further drawings accumulate on the actual remainder. Removing the
         // middle one must preserve the first and newest stable part IDs.
         for(const double x:{12.,16.}) {
