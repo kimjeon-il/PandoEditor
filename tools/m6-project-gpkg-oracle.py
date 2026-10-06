@@ -37,7 +37,7 @@ with tempfile.TemporaryDirectory() as temporary:
         state = json.loads(database.execute(
             "select json_value from pandolab_project_settings where setting_key='project_state'"
         ).fetchone()[0])
-        assert state["format"] == "pandoeditor-project" and state["version"] == 9
+        assert state["format"] == "pandoeditor-project" and state["version"] == 10
         assert state["timelineRecords"]["schemaVersion"] == 1
         assert len(state["timelineRecords"]["lifetimes"]) == 3
         assert {unit["id"] for unit in state["units"]} == {"A", "B", "C"}

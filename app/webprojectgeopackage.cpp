@@ -26,7 +26,7 @@ std::vector<GisGeoPackageLayer> webVectors(const ProjectDocument& d,const V& sta
         layer.collection.features.push_back({id,std::move(shape),props.encode().toStdString()});
     };
     auto json=[](const V& value){return V::str(value.encode().toStdString());};
-    const std::initializer_list<const char*> territorial={"id","name","entity_kind","parent_id","valid_from","valid_to","color","style_key","source_library_id","source_geometry_version","metadata_json","properties_json"};
+    const std::initializer_list<const char*> territorial={"id","name","entity_kind","parent_id","valid_from","valid_to","color","style_key","source_entity_id","source_geometry_version","metadata_json","properties_json"};
     for(const auto* name:{"entities","regions"}) {
         auto& layer=table(name,"MULTIPOLYGON",territorial);
         for(const auto& entity:field(state,"territorialEntities").array) {
@@ -40,7 +40,7 @@ std::vector<GisGeoPackageLayer> webVectors(const ProjectDocument& d,const V& sta
             auto row=webjson::obj({{"id",V::str(id)},{"name",text(field(p,"name"))},{"entity_kind",V::str(kind)},
                 {"parent_id",V::str(parent.parentId)},{"valid_from",V::str("")},{"valid_to",V::str("")},
                 {"color",text(field(style,"color"))},{"style_key",text(field(style,"key"))},
-                {"source_library_id",text(field(p,"sourceLibraryId"))},{"source_geometry_version",text(field(p,"sourceGeometryVersion"))},
+                {"source_entity_id",text(field(p,"sourceEntityId"))},{"source_geometry_version",text(field(p,"sourceGeometryVersion"))},
                 {"metadata_json",json(field(p,"metadata"))},{"properties_json",json(p)}});
             add(layer,id,*d.geometries.get(staticGeometryBinding(d,id).geometryRef),std::move(row));
         }

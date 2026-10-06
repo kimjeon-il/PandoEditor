@@ -58,7 +58,7 @@ private slots:
     const auto input=dir.filePath("input.pando.json"),saved=dir.filePath("saved.pando.json");write(input,projectcodec::encode(source));
     EditorController editor(EditorControllerConfig{false,dir.filePath("private.json")});
     QVERIFY(editor.openFile(QUrl::fromLocalFile(input)));editor.selectCountry("A");editor.setColor("#123456");
-    QVERIFY(editor.saveFile(QUrl::fromLocalFile(saved)));QCOMPARE(QJsonDocument::fromJson(read(saved)).object()["version"].toInt(),9);
+    QVERIFY(editor.saveFile(QUrl::fromLocalFile(saved)));QCOMPARE(QJsonDocument::fromJson(read(saved)).object()["version"].toInt(),10);
     editor.setColor("#654321");const auto previous=editor.documentBytes();editor.setColor("#abcdef");const auto future=editor.documentBytes();editor.undo();QVERIFY(editor.canUndo());QVERIFY(editor.canRedo());QVERIFY(editor.dirty());
     const auto bytes=editor.documentBytes();const auto selection=editor.primaryObject();const auto paths=editor.paths();
     QCOMPARE(bytes,previous);const auto instance=editor.projectInstanceId();const auto documentId=editor.documentId();

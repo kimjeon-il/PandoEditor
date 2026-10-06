@@ -1,6 +1,6 @@
 {
   "format": "pandolab-project-state",
-  "schemaVersion": 9,
+  "schemaVersion": 10,
   "version": "0.34.0",
   "savedAt": "2026-10-04T00:00:00.000Z",
   "baseDataset": "external-territorial-entities",
@@ -19,7 +19,7 @@
     ]
   },
   "territorialModel": {
-    "schemaVersion": 5,
+    "schemaVersion": 6,
     "coastlineAuthority": "territorialEntities",
     "storage": "territorialEntities",
     "kinds": [
@@ -369,7 +369,7 @@
       "id": "A",
       "geometry": null,
       "properties": {
-        "schemaVersion": 5,
+        "schemaVersion": 6,
         "entityKind": "general",
         "name": "A 영토",
         "style": {
@@ -386,7 +386,7 @@
           "originalName": "A Territory"
         },
         "sourceFolderId": "exchange",
-        "sourceLibraryId": "timeline-test",
+        "sourceEntityId": "timeline-test",
         "sourceGeometryVersion": "source-1"
       }
     },
@@ -395,7 +395,7 @@
       "id": "B",
       "geometry": null,
       "properties": {
-        "schemaVersion": 5,
+        "schemaVersion": 6,
         "entityKind": "general",
         "name": "B 영토",
         "style": {
@@ -412,7 +412,7 @@
           "originalName": "B Territory"
         },
         "sourceFolderId": "exchange",
-        "sourceLibraryId": "timeline-test",
+        "sourceEntityId": "timeline-test",
         "sourceGeometryVersion": "source-1"
       }
     },
@@ -421,7 +421,7 @@
       "id": "C",
       "geometry": null,
       "properties": {
-        "schemaVersion": 5,
+        "schemaVersion": 6,
         "entityKind": "general",
         "name": "C 영토",
         "style": {
@@ -438,7 +438,7 @@
           "originalName": "C Territory"
         },
         "sourceFolderId": "exchange",
-        "sourceLibraryId": "timeline-test",
+        "sourceEntityId": "timeline-test",
         "sourceGeometryVersion": "source-1"
       }
     },
@@ -447,7 +447,7 @@
       "id": "R",
       "geometry": null,
       "properties": {
-        "schemaVersion": 5,
+        "schemaVersion": 6,
         "entityKind": "regional",
         "name": "R 영토",
         "style": {
@@ -464,7 +464,7 @@
           "originalName": "R Territory"
         },
         "sourceFolderId": "exchange",
-        "sourceLibraryId": "timeline-test",
+        "sourceEntityId": "timeline-test",
         "sourceGeometryVersion": "source-1"
       }
     }

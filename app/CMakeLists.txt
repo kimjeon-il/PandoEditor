@@ -415,7 +415,7 @@ if(BUILD_TESTING)
     add_executable(timeline_project_tests ../tests/timeline_project_tests.cpp)
     target_link_libraries(timeline_project_tests PRIVATE pandoeditor_editor)
     target_compile_definitions(timeline_project_tests PRIVATE
-        PANDOEDITOR_TIMELINE_PROJECT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-project-v9.json")
+        PANDOEDITOR_TIMELINE_PROJECT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-project-v10.json")
     add_test(NAME timeline_project_tests COMMAND timeline_project_tests)
     add_executable(timeline_editor_persistence_tests ../tests/timeline_editor_persistence_tests.cpp)
     target_link_libraries(timeline_editor_persistence_tests PRIVATE pandoeditor_editor Qt6::Test)

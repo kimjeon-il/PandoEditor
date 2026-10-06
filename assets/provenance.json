@@ -12,6 +12,6 @@
     "AUT",
     "SVK"
   ],
-  "transformation": "Select ADM0_A3; retain every geometry coordinate; normalize Polygon to MultiPolygon; use NAME_KO; assign initial colors. Emit native v9 identities, unbounded timeline records and immutable geometry archive.",
-  "outputSha256": "137172468487B91E69A450209AB11DCFFB58DFA9BCC2DC775419F005D3F45B85"
+  "transformation": "Select ADM0_A3; retain every geometry coordinate; normalize Polygon to MultiPolygon; use NAME_KO; assign initial colors. Emit native v10 identities, unbounded timeline records and immutable geometry archive.",
+  "outputSha256": "2EF612CED1692C1F90FA4EFA1D55FDE0352AED1900E18B7177A582620B6B80DD"
 }

@@ -62,7 +62,7 @@ function normalizedProperties(feature, type) {
     notes: text(source.notes),
     metadata: source.metadata && typeof source.metadata === 'object' ? clone(source.metadata) : {},
     sourceFolderId: text(source.sourceFolderId),
-    sourceLibraryId: text(source.sourceLibraryId),
+    sourceEntityId: text(source.sourceEntityId),
     sourceGeometryVersion: text(source.sourceGeometryVersion),
   };
   delete properties.metadata.legacyTerritorialPartition;
@@ -245,7 +245,7 @@ export function createTerritorialFeature({
   notes = '',
   metadata = {},
   sourceFolderId = '',
-  sourceLibraryId = '',
+  sourceEntityId = '',
   sourceGeometryVersion = '',
 }) {
   if (unitType === TERRITORIAL_UNIT_TYPES.SUBUNIT) {
@@ -272,7 +272,7 @@ export function createTerritorialFeature({
       notes,
       metadata,
       sourceFolderId,
-      sourceLibraryId,
+      sourceEntityId,
       sourceGeometryVersion,
     },
     geometry,
@@ -301,7 +301,7 @@ export function createCountryTerritorialAdapter(feature, override = {}) {
       validFrom: normalizeTemporalInterval(properties.validFrom, properties.validTo).validFrom,
       validTo: normalizeTemporalInterval(properties.validFrom, properties.validTo).validTo,
       metadata: { adapter: 'countriesData' },
-      sourceLibraryId: '',
+      sourceEntityId: '',
       sourceGeometryVersion: '',
     },
     geometry: feature.geometry,

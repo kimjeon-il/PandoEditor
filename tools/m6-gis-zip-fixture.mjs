@@ -45,7 +45,7 @@ const state = {
   territorialUnits: [{
     id: 'sub:1', geometry: square(0),
     properties: { unitType: 'subunit', name: 'Subdivision', sovereignId: 'AAA', parentId: 'AAA',
-      sourceLibraryId: 'history:1', style: { color: '#123456' } },
+      sourceEntityId: 'history:1', style: { color: '#123456' } },
   }],
   genericFeatures: [{ type: 'Feature', id: 'generic:1', properties: { name: 'Generic' },
     geometry: { type: 'Point', coordinates: [1, 1] } }],

@@ -52,7 +52,7 @@ QString quote(const std::string& raw) {
 std::vector<Table> tables() {
     const std::vector<Column> territorial={{"id"},{"name"},{"type"},{"parent_id"},
         {"sovereign_id"},{"valid_from"},{"valid_to"},{"color"},{"style_key"},
-        {"source_library_id"},{"source_geometry_version"},{"metadata_json"},{"properties_json"}};
+        {"source_entity_id"},{"source_geometry_version"},{"metadata_json"},{"properties_json"}};
     const std::vector<Column> generic={{"id"},{"name"},{"role"},{"owner_id"},
         {"parent_id"},{"topology_group"},{"land_binding"},{"color"},{"notes"},
         {"locked","INTEGER"},{"properties_json"}};
@@ -64,7 +64,7 @@ std::vector<Table> tables() {
         {"layer_metadata_json"},{"entry_metadata_json"}};
     return {
         {"countries","countries","MULTIPOLYGON",{{"pandolab_id"},{"pandolab_name"},
-            {"valid_from"},{"valid_to"},{"source_library_id"},{"source_geometry_version"}}},
+            {"valid_from"},{"valid_to"},{"source_entity_id"},{"source_geometry_version"}}},
         {"subunits","subunits","MULTIPOLYGON",territorial},
         {"regions","regions","MULTIPOLYGON",territorial},
         {"generic_features_point","genericFeatures","POINT",generic},
