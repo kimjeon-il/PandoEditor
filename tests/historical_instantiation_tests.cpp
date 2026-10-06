@@ -40,6 +40,8 @@ int main() {
     assert(p.index().objects.count(territorialRef("historical-country:H")));
     const auto& added=p.document().units.at(p.index().objects.at(territorialRef("historical-country:H")));
     assert(added.libraryOrigin&&added.libraryOrigin->libraryId==added.id);
+    assert(added.sourceEntityId==added.libraryOrigin->libraryId);
+    assert(added.sourceGeometryVersion==added.libraryOrigin->geometryVersionId);
     assert(*added.libraryOrigin->referenceDate=="1945");
     assert(catalog.get("historical-country:H")->geometryVersions.front().geometry.polygons.front().front().front().x==20);
     assert(p.undo()&&p.document().units.size()==1&&!p.index().objects.count(territorialRef("historical-country:H")));

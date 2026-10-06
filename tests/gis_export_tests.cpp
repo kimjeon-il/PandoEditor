@@ -16,7 +16,9 @@ ProjectDocument document() {
     ProjectDocument doc({{"A","Alpha",{{{{0,0},{4,0},{4,4},{0,4},{0,0}},
         {{1,1},{1,2},{2,2},{2,1},{1,1}}}},0x123456}},
         {{"countries","Countries"}});
-    doc.units.front().libraryOrigin=LibraryOrigin{"historical-country:A","v1","1945","archive","2","high","year",false,{}};
+    doc.units.front().sourceEntityId="state:A";
+    doc.units.front().sourceGeometryVersion="v1";
+    assert(!doc.units.front().libraryOrigin);
     DistributionLayer language;language.id="lang:1";language.unit="%";language.name="Language";
     doc.distributionLayers.push_back(language);
     DistributionEntry entry;entry.id="entry:1";entry.layerId=language.id;
@@ -61,7 +63,7 @@ int main(int argc,char** argv) {
         "2026-09-25T00:00:00.000Z");
     const auto archive=parseGisGeoJsonZip(zip);
     assert(archive.webManifest&&archive.layers.size()==4);
-    assert(archive.layers.front().collection.features.front().propertiesJson.find("historical-country:A")!=std::string::npos);
+    assert(archive.layers.front().collection.features.front().propertiesJson.find("state:A")!=std::string::npos);
     assert(archive.layers[2].distributionType.empty());
     const auto raw=readGisZipArchive(std::string_view(zip.constData(),std::size_t(zip.size())));
     assert(raw.entries.back().path=="manifest.json");
@@ -79,6 +81,8 @@ int main(int argc,char** argv) {
     assert(parsed.layers.front().tableName=="countries");
     assert(parsed.layers.front().collection.features.size()==1);
     assert(parsed.layers.front().collection.features.front().id=="A");
+    assert(parsed.layers.front().collection.features.front().propertiesJson.find("state:A")!=std::string::npos);
+    assert(parsed.layers.front().collection.features.front().propertiesJson.find("v1")!=std::string::npos);
     assert(doc.units.size()==snapshot&&doc.distributionEntries.front().territory==territorialRef("A"));
     assert(rejected([&]{exportGisGeoPackage(doc,{"regions"});}));
 }

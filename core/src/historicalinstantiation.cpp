@@ -131,6 +131,8 @@ void applyHistoricalInstantiation(ProjectDocument& document,const HistoricalInst
         unit.id=selection.libraryId;unit.kind=kind;unit.name=addition.asIndependentCountry?addition.countryName:selection.name;
         unit.baseName=kind==UnitKind::General?unit.name:"";
         unit.nameExplicit=true;
+        unit.sourceEntityId=selection.libraryId;
+        unit.sourceGeometryVersion=selection.geometryVersionId;
         unit.libraryOrigin=LibraryOrigin{selection.libraryId,selection.geometryVersionId,
             addition.referenceDate,selection.sourceId,"2",selection.certainty,selection.datePrecision,
             selection.partial,selection.missingSourceIds};
