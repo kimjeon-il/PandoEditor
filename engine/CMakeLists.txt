@@ -21,6 +21,8 @@ add_library(pandoeditor_map_engine STATIC
     src/mapscenebuilder.cpp
     src/geometrysnap.cpp
     src/sharedboundary.cpp
+    src/territoryselection.cpp
+    include/pandoeditor/map/territoryselection.h
 )
 add_library(Pandoeditor::MapEngine ALIAS pandoeditor_map_engine)
 
@@ -39,6 +41,9 @@ set_source_files_properties(src/geometrysnap.cpp src/sharedboundary.cpp PROPERTI
     "$<$<CXX_COMPILER_ID:MSVC>:/fp:strict>;$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffp-contract=off>")
 
 if(BUILD_TESTING)
+    add_executable(territory_selection_engine_tests ../tests/territory_selection_engine_tests.cpp)
+    target_link_libraries(territory_selection_engine_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME territory_selection_engine_tests COMMAND territory_selection_engine_tests)
     add_executable(m976_shared_boundary_engine_tests ../tests/m976_shared_boundary_engine_tests.cpp)
     target_link_libraries(m976_shared_boundary_engine_tests PRIVATE Pandoeditor::MapEngine)
     add_test(NAME m976_shared_boundary_engine_tests COMMAND m976_shared_boundary_engine_tests)

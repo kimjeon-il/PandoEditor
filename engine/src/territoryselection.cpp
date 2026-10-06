@@ -1,8 +1,4 @@
-#include "territoryselection.h"
-#include "geometrycalculator.h"
-#include "geometryruntime_p.h"
-#include "riverpartitioncalculator.h"
-#include "splitgeometrynormalizer.h"
+#include <pandoeditor/map/territoryselection.h>
 #include <algorithm>
 #include <cctype>
 #include <set>
@@ -38,33 +34,33 @@ struct CalculationCancelled {};
 void checkpoint(const GeometryCancellation& cancelled) {
     if(cancelled&&cancelled())throw CalculationCancelled{};
 }
-MaybeGeometry calculate(GeometryOperation operation,std::vector<Geometry> operands,const GeometryCancellation& cancelled,bool riverDerived=false) {
+MaybeGeometry calculate(GeometryOperation operation,std::vector<Geometry> operands,const TerritorySelectionCalculators& calculators,const GeometryCancellation& cancelled,bool riverDerived=false) {
     checkpoint(cancelled);
     if(operands.empty())return {};
     if(operands.size()==1)return std::move(operands.front());
     // The approved web component plan wraps only operands actually entering a
     // Boolean operation. Its one-operand identity path above stays byte-exact.
-    for(auto& operand:operands){auto wrapped=wrapSplitGeometry(operand,cancelled);if(wrapped.status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};if(!wrapped.succeeded())throw std::runtime_error(wrapped.detail);operand=std::move(wrapped.geometry);}
+    for(auto& operand:operands){auto wrapped=calculators.wrap(operand,cancelled);if(wrapped.status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};if(!wrapped.succeeded())throw std::runtime_error(wrapped.detail);operand=std::move(wrapped.geometry);}
     GeometryOperationRequest request{operation,{},{}};request.operands=std::move(operands);
     GeometryOperationStatus status;Geometry geometry;std::string detail;
-    if(riverDerived){auto result=calculateRiverGeometryIntermediate(request,cancelled);status=result.status;geometry=std::move(result.geometry);detail=std::move(result.detail);}
-    else{auto result=calculateGeometry(request,cancelled);status=result.status;geometry=std::move(result.geometry);detail=std::move(result.detail);}
+    if(riverDerived){auto result=calculators.clipRiverIntermediate(request,cancelled);status=result.status;geometry=std::move(result.geometry);detail=std::move(result.detail);}
+    else{auto result=calculators.clip(request,cancelled);status=result.status;geometry=std::move(result.geometry);detail=std::move(result.detail);}
     if(status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};checkpoint(cancelled);
     if(status==GeometryOperationStatus::Empty)return {};
     if(status!=GeometryOperationStatus::Completed)throw std::runtime_error(detail.empty()?"TERRITORY_SELECTION_CALCULATION_FAILED":detail);
-    auto normalized=normalizeSplitClippedGeometry(geometry,cancelled);
+    auto normalized=calculators.normalizeClipped(geometry,cancelled);
     if(normalized.status==GeometryOperationStatus::Cancelled)throw CalculationCancelled{};checkpoint(cancelled);
     if(!normalized.succeeded())throw std::runtime_error(normalized.detail);
     if(normalized.status==GeometryOperationStatus::Empty)return {};
     return std::move(normalized.geometry);
 }
-MaybeGeometry unite(std::vector<Geometry> geometries,const GeometryCancellation& cancelled,bool riverDerived=false) {
-    return calculate(GeometryOperation::Union,std::move(geometries),cancelled,riverDerived);
+MaybeGeometry unite(std::vector<Geometry> geometries,const TerritorySelectionCalculators& calculators,const GeometryCancellation& cancelled,bool riverDerived=false) {
+    return calculate(GeometryOperation::Union,std::move(geometries),calculators,cancelled,riverDerived);
 }
-MaybeGeometry difference(const MaybeGeometry& base,const MaybeGeometry& removed,const GeometryCancellation& cancelled,bool riverDerived=false) {
+MaybeGeometry difference(const MaybeGeometry& base,const MaybeGeometry& removed,const TerritorySelectionCalculators& calculators,const GeometryCancellation& cancelled,bool riverDerived=false) {
     checkpoint(cancelled);
     if(!base||!removed)return base;
-    return calculate(GeometryOperation::Difference,{*base,*removed},cancelled,riverDerived);
+    return calculate(GeometryOperation::Difference,{*base,*removed},calculators,cancelled,riverDerived);
 }
 const std::vector<TerritorySelectionComponent>& activeItems(const State& state) {
     static const std::vector<TerritorySelectionComponent> empty;
@@ -88,18 +84,18 @@ bool riverDerived(const State& state) {
         return part.component&&part.component->usesRiverBoundary;
     });
 }
-void prepare(State& state,const GeometryCancellation& cancelled) {
+void prepare(State& state,const TerritorySelectionCalculators& calculators,const GeometryCancellation& cancelled) {
     checkpoint(cancelled);
     const bool normalize=riverDerived(state);
     std::vector<Geometry> archived;
     for(const auto& part:state.parts){checkpoint(cancelled);archived.push_back(part.geometry);}
-    state.archivedGeometry=unite(std::move(archived),cancelled,normalize);
+    state.archivedGeometry=unite(std::move(archived),calculators,cancelled,normalize);
     if(!state.baseSourceGeometry) {
         std::vector<Geometry> source;
         for(const auto& feature:state.sources){checkpoint(cancelled);source.push_back(feature.geometry);}
-        state.baseSourceGeometry=unite(std::move(source),cancelled,normalize);
+        state.baseSourceGeometry=unite(std::move(source),calculators,cancelled,normalize);
     }
-    state.workingSourceGeometry=difference(state.baseSourceGeometry,state.archivedGeometry,cancelled,normalize);
+    state.workingSourceGeometry=difference(state.baseSourceGeometry,state.archivedGeometry,calculators,cancelled,normalize);
     state.components.clear();state.componentFeatures.clear();
     for(const auto& source:state.sources) {
         checkpoint(cancelled);
@@ -108,7 +104,7 @@ void prepare(State& state,const GeometryCancellation& cancelled) {
         for(std::size_t originalIndex=0;originalIndex<source.geometry.polygons.size();++originalIndex) {
             checkpoint(cancelled);
             Geometry original;original.type="Polygon";original.polygons={source.geometry.polygons[originalIndex]};
-            const auto remainder=difference(original,state.archivedGeometry,cancelled,normalize);
+            const auto remainder=difference(original,state.archivedGeometry,calculators,cancelled,normalize);
             if(!remainder)continue;
             for(std::size_t fragment=0;fragment<remainder->polygons.size();++fragment) {
                 checkpoint(cancelled);
@@ -126,15 +122,15 @@ void prepare(State& state,const GeometryCancellation& cancelled) {
         if(!feature.source.geometry.polygons.empty())state.componentFeatures.push_back(std::move(feature));
     }
     if(state.activePhase==Phase::Candidate||state.activePhase==Phase::Components)
-        state.currentGeometry=unite(operands(state),cancelled,normalize);
+        state.currentGeometry=unite(operands(state),calculators,cancelled,normalize);
     std::vector<Geometry> combined;
     if(state.archivedGeometry)combined.push_back(*state.archivedGeometry);
     if(state.currentGeometry)combined.push_back(*state.currentGeometry);
-    state.combinedGeometry=unite(std::move(combined),cancelled,normalize);
+    state.combinedGeometry=unite(std::move(combined),calculators,cancelled,normalize);
     // Deliberate web rule: live component selection does not consume the working
     // remainder. Components change workingSourceGeometry only once archived.
     state.remainingGeometry=state.activePhase==Phase::Components?state.workingSourceGeometry
-        :difference(state.workingSourceGeometry,state.currentGeometry,cancelled,normalize);
+        :difference(state.workingSourceGeometry,state.currentGeometry,calculators,cancelled,normalize);
 }
 void clear(State& state) {
     state.currentGeometry.reset();state.candidates.clear();state.selectedCandidateIds.clear();
@@ -239,12 +235,12 @@ bool TerritorySelection::setCandidates(std::vector<TerritorySelectionCandidate> 
     state_.activePhase=Phase::Candidate;nextId_=sequence;return touch();
 }
 TerritorySelectionDraftResult prepareTerritoryPolygonCandidates(const Geometry& drawn,
-    const Geometry& workingSource,const Geometry& target,const GeometryCancellation& cancelled) {
+    const Geometry& workingSource,const Geometry& target,const TerritorySelectionCalculators& calculators,const GeometryCancellation& cancelled) {
     TerritorySelectionDraftResult result;
     try {
         checkpoint(cancelled);validate(drawn);validate(workingSource);validate(target);
-        auto transfer=calculate(GeometryOperation::Intersection,{drawn,workingSource},cancelled);
-        transfer=difference(transfer,target,cancelled);checkpoint(cancelled);
+        auto transfer=calculate(GeometryOperation::Intersection,{drawn,workingSource},calculators,cancelled);
+        transfer=difference(transfer,target,calculators,cancelled);checkpoint(cancelled);
         result.status=transfer?GeometryOperationStatus::Completed:GeometryOperationStatus::Empty;
         if(transfer)result.candidates.push_back({{},std::move(*transfer),{}});
     } catch(const CalculationCancelled&) {result.status=GeometryOperationStatus::Cancelled;}
@@ -355,7 +351,7 @@ std::vector<std::string> TerritorySelection::donorIds() const {
     return result;
 }
 namespace {
-std::vector<TerritorySelectionRiverSliverContext> sliverContext(const State& state,const GeometryCancellation& cancelled) {
+std::vector<TerritorySelectionRiverSliverContext> sliverContext(const State& state,const TerritorySelectionCalculators& calculators,const GeometryCancellation& cancelled) {
     struct Group {TerritorySelectionRiverSliverContext context;std::set<std::pair<std::string,std::string>> seen;std::vector<Geometry> cells;};
     std::vector<Group> groups;
     std::vector<TerritorySelectionComponent> selected;
@@ -379,7 +375,7 @@ std::vector<TerritorySelectionRiverSliverContext> sliverContext(const State& sta
     std::vector<TerritorySelectionRiverSliverContext> result;
     for(auto& group:groups) {
         for(const auto& cell:group.cells) {
-            auto remaining=difference(cell,state.combinedGeometry,cancelled,true);
+            auto remaining=difference(cell,state.combinedGeometry,calculators,cancelled,true);
             if(remaining)group.context.unselectedGeometries.push_back(std::move(*remaining));
         }
         result.push_back(std::move(group.context));
@@ -388,11 +384,11 @@ std::vector<TerritorySelectionRiverSliverContext> sliverContext(const State& sta
 }
 }
 TerritorySelectionDerivedResult rebuildTerritorySelection(const TerritorySelectionState& input,
-    const GeometryCancellation& cancelled) {
+    const TerritorySelectionCalculators& calculators,const GeometryCancellation& cancelled) {
     TerritorySelectionDerivedResult result;result.inputRevision=input.revision;
     try {
-        checkpoint(cancelled);auto next=input;prepare(next,cancelled);
-        auto context=sliverContext(next,cancelled);checkpoint(cancelled);
+        checkpoint(cancelled);auto next=input;prepare(next,calculators,cancelled);
+        auto context=sliverContext(next,calculators,cancelled);checkpoint(cancelled);
         result.componentFeatures=std::move(next.componentFeatures);result.components=std::move(next.components);
         result.baseSourceGeometry=std::move(next.baseSourceGeometry);result.workingSourceGeometry=std::move(next.workingSourceGeometry);
         result.archivedGeometry=std::move(next.archivedGeometry);result.currentGeometry=std::move(next.currentGeometry);

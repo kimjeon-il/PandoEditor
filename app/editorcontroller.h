@@ -6,7 +6,7 @@
 #include "projectcodec.h"
 #include "../platform/screencolorpicker.h"
 #include "commandjobrunner.h"
-#include "territoryselection.h"
+#include <pandoeditor/map/territoryselection.h>
 #include "territorialgeometry.h"
 #include <pandoeditor/map/sharedboundary.h>
 #include <atomic>

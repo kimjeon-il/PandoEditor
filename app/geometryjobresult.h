@@ -1,7 +1,7 @@
 #pragma once
 #include "territorialgeometry.h"
 #include <pandoeditor/map/geometrysnap.h>
-#include "territoryselection.h"
+#include <pandoeditor/map/territoryselection.h>
 #include "riverselectionpreparation.h"
 #include <string>
 #include <variant>

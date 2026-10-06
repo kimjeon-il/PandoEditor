@@ -1,10 +1,11 @@
+#include "territoryselectionruntime.h"
 #include "territorialgeometry.h"
 #include "geometrycalculator.h"
 #include "splitgeometrynormalizer.h"
 #include "geometryruntime_p.h"
 #include "riverpartitioncalculator.h"
 #include "riverareacalculator.h"
-#include "territoryselection.h"
+#include <pandoeditor/map/territoryselection.h>
 #include "retainedreferencerewriter.h"
 #include <pandoeditor/project.h>
 #include <pandoeditor/geometrypredicates.h>
@@ -136,7 +137,7 @@ PrepareResult prepareDrawnTerritoryAnnex(const ProjectSnapshot& snapshot,
             if(!united.succeeded())throw std::runtime_error(token.cancelled()?"CANCELLED":united.detail);
             workingSource=united.geometry;
         }
-        const auto candidates=prepareTerritoryPolygonCandidates(input.selection,workingSource,geometry(input.target),[&]{return token.cancelled();});
+        const auto candidates=prepareTerritoryPolygonCandidates(input.selection,workingSource,geometry(input.target),territorySelectionCalculators(),[&]{return token.cancelled();});
         if(!candidates.succeeded()||candidates.candidates.empty())
             throw std::runtime_error(token.cancelled()?"CANCELLED":candidates.detail.empty()?"NO_TRANSFERABLE_SELECTION":candidates.detail);
         auto annex=input;annex.selection=candidates.candidates.front().geometry;annex.donors.clear();

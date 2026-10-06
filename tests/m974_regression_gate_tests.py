@@ -55,5 +55,15 @@ class RequiredStage4Tests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "missing regression gates"):
                 AUDIT.audit(xml, log)
 
+    def test_pure_selection_target_cannot_be_omitted(self):
+        name = "territory_selection_engine_tests"
+        names = AUDIT.REQUIRED | STAGE4 | {f"other-{index}" for index in range(100)}
+        with tempfile.TemporaryDirectory() as directory:
+            xml, log = self.fixture(Path(directory), names | {name})
+            self.assertEqual(AUDIT.audit(xml, log), (len(names | {name}), 0, 0))
+            xml, log = self.fixture(Path(directory), names - {name})
+            with self.assertRaisesRegex(ValueError, "missing regression gates"):
+                AUDIT.audit(xml, log)
+
 if __name__ == "__main__":
     unittest.main()

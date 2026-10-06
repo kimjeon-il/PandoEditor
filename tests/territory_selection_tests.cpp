@@ -1,10 +1,29 @@
-#include "territoryselection.h"
+#include "territoryselectionruntime.h"
+#include <pandoeditor/map/territoryselection.h>
 #include "geometrycalculator.h"
+#include "geometryruntime_p.h"
+#include "splitgeometrynormalizer.h"
 #include <pandoeditor/geometrypredicates.h>
 #include <QtTest>
 #include <limits>
+#include <cstring>
 using namespace pandoeditor;
 namespace {
+bool exactCoordinate(double left,double right) {return std::memcmp(&left,&right,sizeof(double))==0;}
+bool exactGeometry(const Geometry& left,const Geometry& right) {
+    const auto exactRing=[](const Ring& a,const Ring& b) {
+        if(a.size()!=b.size())return false;
+        for(std::size_t i=0;i<a.size();++i)if(!exactCoordinate(a[i].x,b[i].x)||!exactCoordinate(a[i].y,b[i].y))return false;
+        return true;
+    };
+    if(left.type!=right.type||!exactRing(left.points,right.points)||left.lines.size()!=right.lines.size()||left.polygons.size()!=right.polygons.size())return false;
+    for(std::size_t i=0;i<left.lines.size();++i)if(!exactRing(left.lines[i],right.lines[i]))return false;
+    for(std::size_t p=0;p<left.polygons.size();++p) {
+        if(left.polygons[p].size()!=right.polygons[p].size())return false;
+        for(std::size_t r=0;r<left.polygons[p].size();++r)if(!exactRing(left.polygons[p][r],right.polygons[p][r]))return false;
+    }
+    return true;
+}
 Geometry box(double x,double y,double right,double top) {
     Geometry g;g.type="Polygon";
     g.polygons={{{{x,y},{x,top},{right,top},{right,y},{x,y}}}};
@@ -55,20 +74,20 @@ QStringList candidateIndexes(const QJsonArray& ids) {
 // Oracle replay adapter only. Production has a single deferred implementation;
 // these legacy serial sequences explicitly calculate and install after each edit.
 class SynchronousSelection final:public TerritorySelection {
-    bool refresh(bool changed) {return changed&&installDerived(rebuildTerritorySelection(state()));}
+    bool refresh(bool changed) {return changed&&installDerived(rebuildTerritorySelection(state(),territorySelectionCalculators()));}
 public:
     using TerritorySelection::TerritorySelection;
     bool resetSources(std::vector<TerritorySelectionSource> items) {return refresh(TerritorySelection::resetSources(std::move(items)));}
     TerritoryMethodChange requestMethod(TerritorySelectionMethod method,bool work=false) {
         const auto result=TerritorySelection::requestMethod(method,work);
-        if(result!=TerritoryMethodChange::Rejected&&!derivedReady()&&!installDerived(rebuildTerritorySelection(state())))return TerritoryMethodChange::Rejected;
+        if(result!=TerritoryMethodChange::Rejected&&!derivedReady()&&!installDerived(rebuildTerritorySelection(state(),territorySelectionCalculators())))return TerritoryMethodChange::Rejected;
         return result;
     }
     bool confirmMethodChange() {return refresh(TerritorySelection::confirmMethodChange());}
     bool setCandidates(std::vector<TerritorySelectionCandidate> items) {return refresh(TerritorySelection::setCandidates(std::move(items)));}
     bool setDrawnPolygon(const Geometry& drawn,const Geometry& target) {
         if(!state().workingSourceGeometry)return false;
-        auto result=prepareTerritoryPolygonCandidates(drawn,*state().workingSourceGeometry,target);
+        auto result=prepareTerritoryPolygonCandidates(drawn,*state().workingSourceGeometry,target,territorySelectionCalculators());
         return result.succeeded()&&setCandidates(std::move(result.candidates));
     }
     bool toggleCandidate(const std::string& id) {return refresh(TerritorySelection::toggleCandidate(id));}
@@ -96,6 +115,43 @@ class TerritorySelectionTests:public QObject {
         return {};
     }
 private slots:
+    void runtimeFactoryExactlyForwardsActualKernels() {
+        const auto& runtime=territorySelectionCalculators();
+        QVERIFY(runtime.clip&&runtime.clipRiverIntermediate&&runtime.wrap&&runtime.normalizeClipped);
+        const auto donor=box(-0.0,0,1,1),piece=box(0,0,1-1e-15,1);
+        GeometryOperationRequest ordered{GeometryOperation::Union,{},{}};ordered.operands={donor,box(2,0,3,1),box(4,0,5,1)};
+        const std::vector<GeometryOperationRequest> requests{
+            ordered,{GeometryOperation::Intersection,donor,box(0.5,0,2,1)},
+            {GeometryOperation::Intersection,donor,box(4,0,5,1)},
+            {GeometryOperation::Difference,donor,piece}
+        };
+        for(const auto& request:requests)for(const bool cancelled:{false,true}) {
+            const GeometryCancellation cancellation=cancelled?GeometryCancellation{[]{return true;}}:GeometryCancellation{};
+            const auto direct=calculateGeometry(request,cancellation),adapted=runtime.clip(request,cancellation);
+            QCOMPARE(adapted.status,direct.status);QCOMPARE(adapted.detail,direct.detail);QVERIFY(exactGeometry(adapted.geometry,direct.geometry));
+            const auto river=calculateRiverGeometryIntermediate(request,cancellation);const auto riverAdapted=runtime.clipRiverIntermediate(request,cancellation);
+            QCOMPARE(riverAdapted.status,river.status);QCOMPARE(riverAdapted.detail,river.detail);QVERIFY(exactGeometry(riverAdapted.geometry,river.geometry));
+            if(cancelled) {QCOMPARE(adapted.status,GeometryOperationStatus::Cancelled);QCOMPARE(riverAdapted.status,GeometryOperationStatus::Cancelled);}
+            if(!cancelled&&request.operation==GeometryOperation::Difference) {QCOMPARE(direct.status,GeometryOperationStatus::Failed);QCOMPARE(river.status,GeometryOperationStatus::Completed);}
+        }
+        Geometry crossing;crossing.type="Polygon";crossing.polygons={{{{179,-2},{179,2},{-179,2},{-179,-2},{179,-2}}}};
+        Geometry degenerate;degenerate.type="Polygon";degenerate.polygons={{{{0,0},{1,1},{0,0}}}};
+        for(const auto& input:{donor,crossing,Geometry{},degenerate})for(const bool cancelled:{false,true}) {
+            const auto before=input;
+            const GeometryCancellation cancellation=cancelled?GeometryCancellation{[]{return true;}}:GeometryCancellation{};
+            const auto wrapped=wrapSplitGeometry(input,cancellation),normalized=normalizeSplitClippedGeometry(input,cancellation);
+            const auto adaptedWrap=runtime.wrap(input,cancellation),adaptedNormalize=runtime.normalizeClipped(input,cancellation);
+            QCOMPARE(adaptedWrap.status,wrapped.status);QCOMPARE(adaptedWrap.detail,wrapped.detail);QVERIFY(exactGeometry(adaptedWrap.geometry,wrapped.geometry));
+            QCOMPARE(adaptedNormalize.status,normalized.status);QCOMPARE(adaptedNormalize.detail,normalized.detail);QVERIFY(exactGeometry(adaptedNormalize.geometry,normalized.geometry));
+            QVERIFY(exactGeometry(input,before));
+            if(cancelled) {QCOMPARE(adaptedWrap.status,GeometryOperationStatus::Cancelled);QCOMPARE(adaptedNormalize.status,GeometryOperationStatus::Cancelled);}
+            if(!cancelled&&input.polygons.empty()) {QCOMPARE(adaptedWrap.status,GeometryOperationStatus::Empty);QCOMPARE(adaptedNormalize.status,GeometryOperationStatus::Empty);}
+            // Mutation observability remains on the unchanged direct API.
+            if(wrapped.succeeded())QVERIFY(wrapped.inputUnchanged);
+            if(normalized.succeeded())QVERIFY(normalized.inputUnchanged);
+        }
+        QVERIFY(exactGeometry(donor,box(-0.0,0,1,1))&&exactGeometry(piece,box(0,0,1-1e-15,1)));
+    }
     void approvedDatelineSelectionSubtractsInWrappedLongitudeSpace() {
         Geometry raw;raw.type="Polygon";raw.polygons={{{{179,-2},{179,2},{-179,2},{-179,-2},{179,-2}}}};
         Geometry selected=box(179,0,180,2);selected.type="MultiPolygon";selected.polygons.push_back(box(-180,0,-179,2).polygons.front());
@@ -158,7 +214,7 @@ private slots:
         TerritorySelection selection;QVERIFY(selection.resetSources({source("donor",box(0,0,10,10))}));
         QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Line),TerritoryMethodChange::Activated);
         QVERIFY(selection.setCandidates({{"first",box(0,0,5,10),50.},{"second",box(5,0,10,10),50.}}));
-        auto stale=rebuildTerritorySelection(selection.state());QVERIFY(stale.succeeded());
+        auto stale=rebuildTerritorySelection(selection.state(),territorySelectionCalculators());QVERIFY(stale.succeeded());
         const auto first=selection.state().candidates[0].id,second=selection.state().candidates[1].id;
         const auto oldRevision=selection.state().revision;
         QVERIFY(selection.toggleCandidate(second));QVERIFY(selection.toggleCandidate(first));QVERIFY(selection.toggleCandidate(first));
@@ -166,7 +222,7 @@ private slots:
         QCOMPARE(selection.state().selectedCandidateIds,(std::vector<std::string>{second,first}));
         QVERIFY(!selection.installDerived(stale));QVERIFY(!selection.derivedReady());
         QCOMPARE(selection.archiveReadiness(),TerritoryArchiveReadiness::CalculationPending);
-        auto latest=rebuildTerritorySelection(selection.state());QVERIFY(latest.succeeded());
+        auto latest=rebuildTerritorySelection(selection.state(),territorySelectionCalculators());QVERIFY(latest.succeeded());
         QVERIFY(selection.installDerived(std::move(latest)));QVERIFY(selection.derivedReady());
         QCOMPARE(planarArea(*selection.state().currentGeometry),100.);
         QCOMPARE(selection.state().selectedCandidateIds,(std::vector<std::string>{second,first}));
@@ -174,7 +230,7 @@ private slots:
         QVERIFY(!selection.installDerived(std::move(stale)));QVERIFY(selection.lastError().empty());
         QVERIFY(selection.toggleCandidate(first));QVERIFY(selection.toggleCandidate(second));
         QVERIFY(selection.state().selectedCandidateIds.empty());QVERIFY(!selection.state().currentGeometry);
-        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state())));
+        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state(),territorySelectionCalculators())));
         QVERIFY(!selection.state().currentGeometry);QVERIFY(!selection.state().combinedGeometry);
         QCOMPARE(planarArea(*selection.state().remainingGeometry),100.);
     }
@@ -182,25 +238,25 @@ private slots:
         TerritorySelection selection;QVERIFY(selection.resetSources({source("donor",withIsland())}));
         QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Polygon),TerritoryMethodChange::Activated);
         QVERIFY(selection.setCandidates({{"piece",box(0,0,4,4),16.}}));
-        const auto beforeClear=rebuildTerritorySelection(selection.state());QVERIFY(beforeClear.succeeded());
+        const auto beforeClear=rebuildTerritorySelection(selection.state(),territorySelectionCalculators());QVERIFY(beforeClear.succeeded());
         QVERIFY(selection.clearCurrent());QVERIFY(!selection.installDerived(beforeClear));
-        const auto cleared=rebuildTerritorySelection(selection.state());QVERIFY(cleared.succeeded());
+        const auto cleared=rebuildTerritorySelection(selection.state(),territorySelectionCalculators());QVERIFY(cleared.succeeded());
         QVERIFY(selection.resetSources({source("other",box(20,0,22,2))}));
         QVERIFY(selection.state().revision>cleared.inputRevision);QVERIFY(!selection.installDerived(cleared));
-        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state())));
+        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state(),territorySelectionCalculators())));
         QCOMPARE(selection.state().components.size(),std::size_t(1));
         QCOMPARE(selection.state().components[0].countryId,std::string("other"));
         QCOMPARE(planarArea(*selection.state().remainingGeometry),4.);
     }
     void pendingComponentsRetainLookupAndMethodRequestThroughInstallation() {
         TerritorySelection selection;QVERIFY(selection.resetSources({source("donor",withIsland())}));
-        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state())));
+        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state(),territorySelectionCalculators())));
         QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Components),TerritoryMethodChange::Activated);
         QVERIFY(!selection.derivedReady());QCOMPARE(selection.activeComponents().size(),std::size_t(2));
         QVERIFY(selection.toggleComponent("component:donor:1:0"));
-        const auto first=rebuildTerritorySelection(selection.state());
+        const auto first=rebuildTerritorySelection(selection.state(),territorySelectionCalculators());
         QVERIFY(selection.toggleComponent("component:donor:0:0"));QVERIFY(!selection.installDerived(first));
-        auto pending=rebuildTerritorySelection(selection.state());QVERIFY(pending.succeeded());
+        auto pending=rebuildTerritorySelection(selection.state(),territorySelectionCalculators());QVERIFY(pending.succeeded());
         QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Line),TerritoryMethodChange::AwaitingComponentArchive);
         QVERIFY(!selection.addPart());QVERIFY(selection.installDerived(std::move(pending)));
         QCOMPARE(selection.state().requestedMethod,TerritorySelectionMethod::Line);
@@ -209,11 +265,11 @@ private slots:
         QVERIFY(selection.addPart());QVERIFY(!selection.derivedReady());QVERIFY(selection.state().components.empty());
         QCOMPARE(selection.state().parts[0].component->key,std::string("component:donor:0:0"));
         QCOMPARE(selection.state().parts[1].component->key,std::string("component:donor:1:0"));
-        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state())));QVERIFY(!selection.state().workingSourceGeometry);
+        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state(),territorySelectionCalculators())));QVERIFY(!selection.state().workingSourceGeometry);
         const auto firstPart=selection.state().parts[0].id,secondPart=selection.state().parts[1].id;
-        QVERIFY(selection.removePart(firstPart));const auto staleRemoval=rebuildTerritorySelection(selection.state());
+        QVERIFY(selection.removePart(firstPart));const auto staleRemoval=rebuildTerritorySelection(selection.state(),territorySelectionCalculators());
         QVERIFY(selection.removePart(secondPart));QVERIFY(selection.state().componentSnapshots.empty());
-        QVERIFY(!selection.installDerived(staleRemoval));QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state())));
+        QVERIFY(!selection.installDerived(staleRemoval));QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state(),territorySelectionCalculators())));
         QCOMPARE(planarArea(*selection.state().workingSourceGeometry),104.);QVERIFY(!selection.state().archivedGeometry);
         QCOMPARE(selection.state().components[1].sourcePolygonIndex,std::size_t(1));
     }
@@ -222,10 +278,10 @@ private slots:
         QCOMPARE(selection.requestMethod(TerritorySelectionMethod::Line),TerritoryMethodChange::Activated);
         QVERIFY(selection.setCandidates({{"first",box(0,0,5,10),50.},{"second",box(5,0,10,10),50.}}));
         QVERIFY(selection.toggleCandidate(selection.state().candidates[1].id));
-        int checkpoints=0;const auto complete=rebuildTerritorySelection(selection.state(),[&]{++checkpoints;return false;});
+        int checkpoints=0;const auto complete=rebuildTerritorySelection(selection.state(),territorySelectionCalculators(),[&]{++checkpoints;return false;});
         QVERIFY(complete.succeeded());QVERIFY(checkpoints>10);
         for(const int stop:{1,checkpoints/2,checkpoints}) {
-            int calls=0;auto cancelled=rebuildTerritorySelection(selection.state(),[&]{return ++calls>=stop;});
+            int calls=0;auto cancelled=rebuildTerritorySelection(selection.state(),territorySelectionCalculators(),[&]{return ++calls>=stop;});
             QCOMPARE(cancelled.status,GeometryOperationStatus::Cancelled);
             QCOMPARE(cancelled.inputRevision,selection.state().revision);
             QVERIFY(cancelled.components.empty());QVERIFY(cancelled.componentFeatures.empty());
@@ -242,26 +298,26 @@ private slots:
         QVERIFY(selection.toggleCandidate(selection.state().candidates[1].id));
         const auto ids=selection.state().selectedCandidateIds;
         auto invalid=selection.state();invalid.candidates[0].geometry.polygons[0][0][0].x=std::numeric_limits<double>::infinity();
-        auto failed=rebuildTerritorySelection(invalid);QCOMPARE(failed.status,GeometryOperationStatus::Failed);
+        auto failed=rebuildTerritorySelection(invalid,territorySelectionCalculators());QCOMPARE(failed.status,GeometryOperationStatus::Failed);
         QVERIFY(!failed.detail.empty());QVERIFY(failed.components.empty());QVERIFY(!failed.baseSourceGeometry);
         QVERIFY(!selection.installDerived(std::move(failed)));QVERIFY(!selection.lastError().empty());
         QCOMPARE(selection.state().selectedCandidateIds,ids);QVERIFY(!selection.derivedReady());
-        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state())));QVERIFY(selection.lastError().empty());
+        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state(),territorySelectionCalculators())));QVERIFY(selection.lastError().empty());
         QCOMPARE(planarArea(*selection.state().currentGeometry),100.);
     }
     void polygonPreprocessingCancellationAndFailureAreExplicit() {
         const auto drawn=box(-2,-2,20,20),working=withIsland(),target=box(0,0,2,10);
-        int checkpoints=0;const auto complete=prepareTerritoryPolygonCandidates(drawn,working,target,[&]{++checkpoints;return false;});
+        int checkpoints=0;const auto complete=prepareTerritoryPolygonCandidates(drawn,working,target,territorySelectionCalculators(),[&]{++checkpoints;return false;});
         QVERIFY(complete.succeeded());QCOMPARE(complete.candidates.size(),std::size_t(1));
         QCOMPARE(planarArea(complete.candidates[0].geometry),84.);QVERIFY(checkpoints>3);
         for(const int stop:{1,checkpoints/2,checkpoints}) {
-            int calls=0;const auto cancelled=prepareTerritoryPolygonCandidates(drawn,working,target,[&]{return ++calls>=stop;});
+            int calls=0;const auto cancelled=prepareTerritoryPolygonCandidates(drawn,working,target,territorySelectionCalculators(),[&]{return ++calls>=stop;});
             QCOMPARE(cancelled.status,GeometryOperationStatus::Cancelled);QVERIFY(cancelled.candidates.empty());
         }
         auto invalid=drawn;invalid.type="LineString";
-        const auto failed=prepareTerritoryPolygonCandidates(invalid,working,target);
+        const auto failed=prepareTerritoryPolygonCandidates(invalid,working,target,territorySelectionCalculators());
         QCOMPARE(failed.status,GeometryOperationStatus::Failed);QVERIFY(!failed.detail.empty());QVERIFY(failed.candidates.empty());
-        const auto empty=prepareTerritoryPolygonCandidates(box(30,30,40,40),working,target);
+        const auto empty=prepareTerritoryPolygonCandidates(box(30,30,40,40),working,target,territorySelectionCalculators());
         QCOMPARE(empty.status,GeometryOperationStatus::Empty);QVERIFY(empty.succeeded());QVERIFY(empty.candidates.empty());
     }
     void realWebCandidateGeometryAndOrderedSelectionReplay() {
@@ -497,11 +553,11 @@ private slots:
         state.parts.push_back({"river-archive",TerritorySelectionMethod::Components,archived.geometry,archived});
         const auto strict=calculateGeometry({GeometryOperation::Difference,state.sources[0].geometry,archived.geometry});
         QCOMPARE(strict.status,GeometryOperationStatus::Failed);
-        const auto river=rebuildTerritorySelection(state);QVERIFY2(river.succeeded(),river.detail.c_str());
+        const auto river=rebuildTerritorySelection(state,territorySelectionCalculators());QVERIFY2(river.succeeded(),river.detail.c_str());
         QVERIFY(!river.workingSourceGeometry);QVERIFY(river.components.empty());
         state.parts[0].component.reset();
-        const auto ordinary=rebuildTerritorySelection(state);QCOMPARE(ordinary.status,GeometryOperationStatus::Failed);
-        const auto cancelled=rebuildTerritorySelection(state,[]{return true;});QCOMPARE(cancelled.status,GeometryOperationStatus::Cancelled);
+        const auto ordinary=rebuildTerritorySelection(state,territorySelectionCalculators());QCOMPARE(ordinary.status,GeometryOperationStatus::Failed);
+        const auto cancelled=rebuildTerritorySelection(state,territorySelectionCalculators(),[]{return true;});QCOMPARE(cancelled.status,GeometryOperationStatus::Cancelled);
     }
     void emptyRiverInstallationDoesNotClaimReady() {
         SynchronousSelection selection;QVERIFY(selection.resetSources({source("donor",box(0,0,10,10))}));
@@ -533,7 +589,7 @@ private slots:
         QVERIFY(selection.setRiverStatus(TerritoryRiverStatus::SourceError,"missing source"));
         QCOMPARE(selection.state().riverDetail,std::string("missing source"));
         QCOMPARE(selection.state().parts[0].id,archivedId);QCOMPARE(selection.state().componentSnapshots.size(),std::size_t(1));
-        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state())));
+        QVERIFY(selection.installDerived(rebuildTerritorySelection(selection.state(),territorySelectionCalculators())));
         QCOMPARE(selection.state().riverDetail,std::string("missing source"));
     }
     void riverSlotsRequirePreparedCellsAndRetainSnapshotContext() {

@@ -1,3 +1,4 @@
+#include "territoryselectionruntime.h"
 #include "editorcontroller.h"
 #include "geometrysnapprovider.h"
 #include "geometrycalculator.h"
@@ -127,7 +128,7 @@ void EditorController::scheduleTerritorySelection(bool requestPreview){
         const bool workerOperation=componentRequest||selectionRequest;
         const auto sourceEpoch=workerOperation&&snapProvider_?snapProvider_->beginWorkerOperation(project_.snapshot()):0;
         if(workerOperation)++current.territoryWorkerRequests;
-        current.job=jobs_->submitGeometry(current.base,workerOperation?"territorial:selection":"territorial:selection-local",[state](const ProjectSnapshot&,const JobToken& token)->GeometryJobResult{return rebuildTerritorySelection(state,[&token]{return token.cancelled();});},
+        current.job=jobs_->submitGeometry(current.base,workerOperation?"territorial:selection":"territorial:selection-local",[state](const ProjectSnapshot&,const JobToken& token)->GeometryJobResult{return rebuildTerritorySelection(state,territorySelectionCalculators(),[&token]{return token.cancelled();});},
         [this,generation,epoch,requestPreview,componentRequest,workerOperation,sourceEpoch](std::uint64_t id,JobDisposition disposition,GeometryJobResult result){
             const auto* derived=std::get_if<TerritorySelectionDerivedResult>(&result);
             const bool fulfilled=disposition==JobDisposition::Accepted&&derived&&derived->succeeded();
@@ -214,7 +215,7 @@ bool EditorController::geometryFinishTerritoryDraft(){
     edit.job=jobs_->submitGeometry(edit.base,countedWorkerOperation?"territorial:selection-drawn":"territorial:selection-draft",[state,target,draft,line,view,splitMode](const ProjectSnapshot&,const JobToken& token)->GeometryJobResult {
         const auto cancelled=[&token]{return token.cancelled();};
         if(state.activeMethod==TerritorySelectionMethod::Polygon){
-            if(!splitMode)return prepareTerritoryPolygonCandidates(draft,*state.workingSourceGeometry,target,cancelled);
+            if(!splitMode)return prepareTerritoryPolygonCandidates(draft,*state.workingSourceGeometry,target,territorySelectionCalculators(),cancelled);
             TerritorySelectionDraftResult out;auto drawn=wrapSplitGeometry(draft,cancelled),source=wrapSplitGeometry(*state.workingSourceGeometry,cancelled);
             if(!drawn.succeeded()||!source.succeeded()){out.status=!drawn.succeeded()?drawn.status:source.status;out.detail=!drawn.succeeded()?drawn.detail:source.detail;return out;}
             auto clipped=calculateGeometry({GeometryOperation::Intersection,drawn.geometry,source.geometry},cancelled);out.status=clipped.status;out.detail=clipped.detail;

@@ -1,6 +1,7 @@
 #pragma once
 #include <pandoeditor/geometryoperations.h>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -96,13 +97,21 @@ struct TerritorySelectionDraftResult {
         return status==GeometryOperationStatus::Completed||status==GeometryOperationStatus::Empty;
     }
 };
+using TerritoryGeometryTransform = std::function<GeometryOperationResult(
+    const Geometry&, const GeometryCancellation&)>;
+struct TerritorySelectionCalculators {
+    GeometryCalculator clip;
+    GeometryCalculator clipRiverIntermediate;
+    TerritoryGeometryTransform wrap;
+    TerritoryGeometryTransform normalizeClipped;
+};
 // Run in the calculation worker. Cancellation is cooperative between polygons
 // and clipping operations, not interruption of a synchronous clipper call.
 TerritorySelectionDerivedResult rebuildTerritorySelection(const TerritorySelectionState&,
-    const GeometryCancellation& cancelled={});
+    const TerritorySelectionCalculators&,const GeometryCancellation& cancelled={});
 // Produces exactly one drawn candidate, even for disconnected transfer.
 TerritorySelectionDraftResult prepareTerritoryPolygonCandidates(const Geometry& drawn,
-    const Geometry& workingSource,const Geometry& target,const GeometryCancellation& cancelled={});
+    const Geometry& workingSource,const Geometry& target,const TerritorySelectionCalculators&,const GeometryCancellation& cancelled={});
 // A value for integration into the existing GeometryEditSession. It owns no project,
 // history, stages, worker identity, preview or UI. Inputs/outputs are copied
 // geometry snapshots; const access prevents mutation of the original source.

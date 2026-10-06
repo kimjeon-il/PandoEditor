@@ -2,7 +2,7 @@
 #include <pandoeditor/commands.h>
 #include <pandoeditor/jobs.h>
 #include <pandoeditor/geometryoperations.h>
-#include "territoryselection.h"
+#include <pandoeditor/map/territoryselection.h>
 
 // Worker entry point: calculation and candidate preparation only, never commit.
 pandoeditor::PrepareResult prepareTerritorialGeometry(
