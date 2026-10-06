@@ -66,6 +66,7 @@ HistoricalInstantiationPlan planHistorical(const ProjectSnapshot& project,
     // plan; CommandProcessor repeats this against a candidate at prepare time.
     auto candidate=project.document();
     applyHistoricalInstantiation(candidate,plan);
+    reconcileGeometryProvenance(project.document(),candidate);
     validateDocument(candidate);
     return plan;
 }

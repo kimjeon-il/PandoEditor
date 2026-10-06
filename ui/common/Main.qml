@@ -46,7 +46,7 @@ ApplicationWindow {
         leftPadding: 8
         rightPadding: 8
         verticalAlignment: Text.AlignVCenter
-        text:expanded?editor.documentNotice:(editor.dirty?"● 미저장":"● 저장됨")+"   |   "+(editor.projectionMode==="globe"?"지구본":"평면지도")+"   |   "+(editor.objectProperties.displayName||"선택 없음")+"   ·   Qt v9"
+        text:expanded?editor.documentNotice:(editor.dirty?"● 미저장":"● 저장됨")+"   |   "+(editor.projectionMode==="globe"?"지구본":"평면지도")+"   |   "+(editor.objectProperties.displayName||"선택 없음")+"   ·   Qt v10"
         color:window.uiColors.muted
         Accessible.description:editor.documentNotice
         wrapMode: expanded ? Text.Wrap : Text.NoWrap

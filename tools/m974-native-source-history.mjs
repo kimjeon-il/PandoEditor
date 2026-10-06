@@ -8,10 +8,21 @@ import {fileURLToPath} from 'node:url';
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const keys=(value,expected,label)=>assert.deepEqual(Object.keys(value).sort(),[...expected].sort(),label);
 export const requiredNativeCases=Object.freeze(['no-query-retains','ready-boundary-worker-observes-deletion','pending-boundary-cancel-rebases-on-next-query','stopped-worker-ignores-root-delete-undo','settled-boundary-error-retains-history','split-setup-only','annex-setup-only','split-components-ready','annex-components-ready','component-timer-only-cancel','component-request-pending-cancel']);
+function assertNativeProjectFormat(document){
+ assert.equal(document.format,'pandoeditor-project');assert.ok(document.version===9||document.version===10,'supported native project version (9 or 10)');
+ if(document.version===9){assert.ok(!Object.hasOwn(document,'geometryProvenance'),'native v9 must not carry the v10 provenance marker');return;}
+ const provenance=document.geometryProvenance;assert.ok(provenance&&typeof provenance==='object'&&!Array.isArray(provenance),'native v10 provenance object required');
+ assert.deepEqual(Object.keys(provenance).sort(),['schemaVersion','originalArchive','inlineAllocations','opaqueBaseline','opaqueUncertain'].sort(),'native v10 provenance format fields');
+ assert.equal(provenance.schemaVersion,1,'native v10 provenance schema');
+ for(const key of ['originalArchive','inlineAllocations','opaqueBaseline'])assert.ok(Array.isArray(provenance[key]),'native v10 provenance '+key+' array');
+ assert.equal(typeof provenance.opaqueUncertain,'boolean','native v10 provenance uncertainty flag');
+ // Ownership semantics remain the production codec's responsibility. The full
+ // canonical-byte equality below still includes every ledger and archive row.
+}
 function canonicalNative(row,side){
  const text=row[side+'DocumentBytesBase64'];assert.equal(typeof text,'string');assert.ok(text.length>0&&text.length<8*1024*1024,'bounded canonical observation');
  const bytes=Buffer.from(text,'base64');assert.equal(bytes.toString('base64'),text,'canonical base64');assert.equal(digest(bytes),row[side+'DocumentSha256'],'canonical hash');
- const document=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));assert.equal(document.format,'pandoeditor-project');assert.equal(document.version,9);
+ const document=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));assertNativeProjectFormat(document);
  const geometry=ref=>{const found=document.geometries.filter(item=>item.id===ref.id&&item.version===ref.version);assert.equal(found.length,1,'one immutable geometry reference');return found[0].geojson;};
  const sources=document.units.map(unit=>{const bindings=document.timelineRecords.geometryBindings.filter(item=>item.entityId===unit.id&&item.validFrom===null&&item.validTo===null);assert.equal(bindings.length,1,'one static geometry binding');return {domain:'territorial',id:unit.id,geometry:geometry(bindings[0].geometryRef)};});
  for(const feature of document.content.genericFeatures)sources.push({domain:'generic',id:feature.id,geometry:geometry(feature.geometryRef)});

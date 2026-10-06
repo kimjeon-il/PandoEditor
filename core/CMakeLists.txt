@@ -11,6 +11,7 @@ add_library(pandoeditor_core STATIC
     src/presentation.cpp
     src/presentationcommands.cpp
     src/document.cpp
+    src/geometryprovenance.cpp
     src/temporal.cpp
     src/timeline-records.cpp
     src/timeline-storage.cpp
@@ -38,6 +39,9 @@ target_link_libraries(pandoeditor_core PUBLIC ZLIB::ZLIB)
 set_target_properties(pandoeditor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_TESTING)
+    add_executable(geometry_provenance_tests ../tests/geometry_provenance_tests.cpp)
+    target_link_libraries(geometry_provenance_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME geometry_provenance_tests COMMAND geometry_provenance_tests)
     add_executable(m72_geobounds_tests ../tests/m72_geobounds_tests.cpp)
     target_link_libraries(m72_geobounds_tests PRIVATE Pandoeditor::Core)
     add_test(NAME m72_geobounds_tests COMMAND m72_geobounds_tests)

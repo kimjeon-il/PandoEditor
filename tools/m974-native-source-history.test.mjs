@@ -24,3 +24,25 @@ test('fixed paired collection succeeds and keeps unpaired evidence explicitly se
 });
 
 test('comparison uses resolved browser indicator rather than the first raw candidate',()=>{const [w,n]=structuredClone(pair());w.stages.final.indicator={...w.stages.final.indicator,ownerIds:['gb']};assert.equal(api.compareSourceHistoryCase(w,n).passed,false);});
+
+// Retain the original native-v9 cases above. These variants exercise current
+// native-v10 bytes without changing any pinned browser or M972–4 fixtures.
+function rewriteCanonical(native,mutate,sides=['before','after']) {
+ for(const side of sides){const document=JSON.parse(Buffer.from(native[side+'DocumentBytesBase64'],'base64'));mutate(document);const bytes=Buffer.from(JSON.stringify(document));native[side+'DocumentBytesBase64']=bytes.toString('base64');native[side+'DocumentSha256']=digest(bytes);}
+}
+function versionedPair(version) {
+ const [web,native]=structuredClone(pair());rewriteCanonical(native,document=>{document.version=version;if(version===10)document.geometryProvenance={schemaVersion:1,originalArchive:[],inlineAllocations:[],opaqueBaseline:[],opaqueUncertain:false};});return [web,native];
+}
+test('native v10 format retains exact canonical history and source checks',()=>{const result=api.compareSourceHistoryCase(...versionedPair(10));assert.equal(result.passed,true,result.differences.join('\n'));assert.equal(result.rawParity,false);});
+test('native document version marker rejects unsupported and mistyped values',()=>{for(const version of [0,8,11,9.5,'9','10',null]){const result=api.compareSourceHistoryCase(...versionedPair(version));assert.equal(result.passed,false,'unexpected native version '+JSON.stringify(version));}});
+test('native v10 requires its complete typed provenance format marker',()=>{
+ const mutations=[d=>delete d.geometryProvenance,d=>d.geometryProvenance=null,d=>d.geometryProvenance=[],d=>d.geometryProvenance={},d=>d.geometryProvenance.schemaVersion=2,d=>d.geometryProvenance.schemaVersion='1',d=>d.geometryProvenance.opaqueUncertain='false',d=>delete d.geometryProvenance.opaqueUncertain,d=>d.geometryProvenance.future=true];
+ for(const key of ['originalArchive','inlineAllocations','opaqueBaseline'])mutations.push(d=>delete d.geometryProvenance[key],d=>d.geometryProvenance[key]={});
+ for(const mutate of mutations){const [web,native]=versionedPair(10);rewriteCanonical(native,mutate);assert.equal(api.compareSourceHistoryCase(web,native).passed,false);}
+});
+test('native project format marker remains required in both supported versions',()=>{for(const version of [9,10])for(const mutate of [d=>delete d.format,d=>d.format='other',d=>d.format=10]){const [web,native]=versionedPair(version);rewriteCanonical(native,mutate);assert.equal(api.compareSourceHistoryCase(web,native).passed,false);}});
+test('native v9 cannot smuggle the native-v10 provenance marker',()=>{const [web,native]=versionedPair(9);rewriteCanonical(native,d=>d.geometryProvenance={schemaVersion:1,originalArchive:[],inlineAllocations:[],opaqueBaseline:[],opaqueUncertain:false});assert.equal(api.compareSourceHistoryCase(web,native).passed,false);});
+test('native v10 still authenticates geometry and the entire restored ledger',()=>{
+ const [web,native]=versionedPair(10);rewriteCanonical(native,d=>d.geometries[0].geojson.coordinates[0][1][0]=1);assert.equal(api.compareSourceHistoryCase(web,native).passed,false);
+ const [otherWeb,otherNative]=versionedPair(10);rewriteCanonical(otherNative,d=>d.geometryProvenance.opaqueUncertain=true,['after']);assert.equal(api.compareSourceHistoryCase(otherWeb,otherNative).passed,false);
+});

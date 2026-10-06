@@ -96,6 +96,7 @@ GisTerritorialImportPlan planTerritorialGisImport(const ProjectSnapshot& project
         std::move(source),target,std::move(ids)),std::move(units),std::move(replacements)};
     auto candidate=project.document();
     applyTerritorialGisImport(candidate,plan);
+    reconcileGeometryProvenance(project.document(),candidate);
     validateDocument(candidate);
     for(std::size_t i=0;i<candidate.units.size();++i)if(isRootGeneral(candidate,candidate.units[i]))
         for(std::size_t j=i+1;j<candidate.units.size();++j)if(isRootGeneral(candidate,candidate.units[j])) {
@@ -204,6 +205,7 @@ GisDistributionImportPlan planDistributionGisImport(const ProjectSnapshot& proje
         GisImportKind::Distribution,std::move(source),GisExchangeTarget::Distribution,
         std::move(ids)),std::move(layers),std::move(entries)};
     auto candidate=project.document();applyDistributionGisImport(candidate,plan);
+    reconcileGeometryProvenance(project.document(),candidate);
     validateDocument(candidate);
     return plan;
 }
@@ -251,6 +253,7 @@ GisGenericImportPlan planGenericGisImport(const ProjectSnapshot& project,std::st
         std::move(features)};
     auto candidate=project.document();
     applyGenericGisImport(candidate,plan);
+    reconcileGeometryProvenance(project.document(),candidate);
     validateDocument(candidate);
     return plan;
 }

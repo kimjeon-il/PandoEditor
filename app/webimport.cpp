@@ -11,7 +11,7 @@ FileKind classify(const QByteArray& bytes) {
     losslessjson::require(format!=value.object.end()&&format->second.kind==losslessjson::Value::String,"UNSUPPORTED_FORMAT");
     if(format->second.string=="pandoeditor-project") {
         const auto version=value.object.find("version");
-        losslessjson::require(version!=value.object.end()&&version->second.kind==losslessjson::Value::Number&&version->second.raw=="9","UNSUPPORTED_VERSION: expected Qt v9");
+        losslessjson::require(version!=value.object.end()&&version->second.kind==losslessjson::Value::Number&&(version->second.raw=="9"||version->second.raw=="10"),"UNSUPPORTED_VERSION: expected Qt v9 or v10");
         return FileKind::QtProject;
     }
     losslessjson::require(format->second.string=="pandolab-project-state"||format->second.string=="pandolab-autosave-full"||format->second.string=="pandolab-autosave-delta","UNSUPPORTED_FORMAT");

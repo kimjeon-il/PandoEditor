@@ -189,8 +189,14 @@ private slots:
         // Changing a method with a live drawing asks before discarding it, while
         // the archived first part remains independently owned by the session.
         QVERIFY(click("geometryMethod_polygon"));
+        QCOMPARE(editor.geometryEditState().value("activeMethod").toString(),QString("polygon"));
+        // Method activation rebuilds the remaining source before drawing accepts input.
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.geometryEditState().value("selectionPending").toBool(),10000);
         tap({11,1});tap({12,1});
         const auto draftBeforeSameMethod=editor.geometryDraftPaths();
+        int draftPointCount=0;
+        for(const auto& path:draftBeforeSameMethod)draftPointCount+=path.toMap().value("vertices").toList().size();
+        QCOMPARE(draftPointCount,2);
         QVERIFY(click("geometryMethod_polygon"));
         QCOMPARE(editor.geometryDraftPaths(),draftBeforeSameMethod);QVERIFY(unchanged());
         QVERIFY(click("geometryMethod_line"));
@@ -982,7 +988,7 @@ private slots:
         QCOMPARE(editor.nameDraft(),QString("uncommitted")); QVERIFY(!editor.canUndo());
         QVERIFY(clickControl(window,"cancelUnsaved"));
         auto notice=visualItem(window->contentItem(),"documentFormatNotice"); QVERIFY(notice);
-        QVERIFY(notice->property("text").toString().contains("Qt v9"));
+        QVERIFY(notice->property("text").toString().contains("Qt v10"));
         QVERIFY(clickControl(window,"documentFormatNotice"));
         QVERIFY(notice->property("expanded").toBool());
         window->setProperty("allowClose",true); window->close();

@@ -2,6 +2,7 @@
 #include <pandoeditor/presentation.h>
 #include <pandoeditor/temporal.h>
 #include <pandoeditor/geometry-types.h>
+#include <pandoeditor/geometryprovenance.h>
 #include <pandoeditor/timeline-records.h>
 #include <cstdint>
 #include <map>
@@ -145,6 +146,7 @@ struct ProjectDocument {
     std::vector<GenericFeature> genericFeatures;
     PhysicalDataSettings physicalData;
     GeometryStore geometries;
+    GeometryProvenance geometryProvenance;
     TimelineRecords timelineRecords;
     PresentationState presentation;
     std::vector<PreservedExtension> extensions;

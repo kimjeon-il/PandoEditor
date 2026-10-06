@@ -30,7 +30,7 @@ Build a reproducible production-source editing oracle and differential contract 
 - Known mismatches require narrow case/field expectations; unrelated failures and unexpected passes fail the baseline gate.
 - Hash verification covers every transitive production dependency before import or VM evaluation.
 - Ring starting vertex/winding normalization cannot conceal changed geometry; refs and created/deleted identities stay exact.
-- Preserve the native v9 model, M9.2–M9.6 changes and existing test coverage.
+- Preserve native model semantics, M9.2–M9.6 changes and existing coverage. The approved M9.7.5 persistence change writes native v10 ownership provenance, retains native v9 reads, and keeps web exchange at v9; see `m975-current-model-bridge.md`.
 
 ## Boundaries
 

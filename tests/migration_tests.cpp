@@ -32,7 +32,7 @@ private slots:
         document.units.front().libraryOrigin=origin;
         Project project;project.replace(document);
         const auto saved=projectcodec::encode(project);
-        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),9);
+        QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),10);
         const auto reopened=projectcodec::decode(saved);
         QVERIFY(reopened.units.front().libraryOrigin.has_value());
         const auto& actual=*reopened.units.front().libraryOrigin;
@@ -171,7 +171,7 @@ private slots:
         using namespace pandoeditor;auto d=projectcodec::decode(sample());const auto geometry=staticGeometryBinding(d,d.units.front().id).geometryRef;appendTerritory(d,{"S","Child","",UnitKind::General},geometry,d.units.front().id);d.presentation.objectStyles[territorialRef("S")]={0,1,false};d.presentation.webPresentation.objectStyles[territorialPresentationKey("S")].opacity=1.;d.presentation.webPresentation.styles["countries"].opacity=0.7;d.presentation.webPresentation.overlayOrder={"genericFeatures","regions","subunits","distributions"};Project p;p.replace(d);const auto bytes=projectcodec::encode(p);const auto reopened=projectcodec::decode(bytes);QCOMPARE(*reopened.presentation.webPresentation.objectStyles.at(territorialPresentationKey("S")).opacity,1.);QCOMPARE(reopened.presentation.webPresentation.overlayOrder,d.presentation.webPresentation.overlayOrder);
     }
     void v9StaticDefaultsRemainExactAfterSaving() {
-        using namespace pandoeditor;Project p;p.replace(projectcodec::decode(sample()));const auto saved=projectcodec::encode(p);const auto reopened=projectcodec::decode(saved);QCOMPARE(reopened.units.size(),std::size_t(5));QCOMPARE(reopened.timelineRecords.lifetimes.size(),std::size_t(5));for(const auto& u:reopened.units){QVERIFY(u.kind==UnitKind::General);QVERIFY(!staticLifetime(reopened,u.id).validity.from);QVERIFY(staticParentRelation(reopened,u.id).parentId.empty());QVERIFY(reopened.geometries.get(staticGeometryBinding(reopened,u.id).geometryRef));}QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),9);
+        using namespace pandoeditor;Project p;p.replace(projectcodec::decode(sample()));const auto saved=projectcodec::encode(p);const auto reopened=projectcodec::decode(saved);QCOMPARE(reopened.units.size(),std::size_t(5));QCOMPARE(reopened.timelineRecords.lifetimes.size(),std::size_t(5));for(const auto& u:reopened.units){QVERIFY(u.kind==UnitKind::General);QVERIFY(!staticLifetime(reopened,u.id).validity.from);QVERIFY(staticParentRelation(reopened,u.id).parentId.empty());QVERIFY(reopened.geometries.get(staticGeometryBinding(reopened,u.id).geometryRef));}QCOMPARE(QJsonDocument::fromJson(saved).object()["version"].toInt(),10);
     }
     void v9PreservesAllPropertiesAndCoordinates() {
         using namespace pandoeditor;auto d=projectcodec::decode(sample());d.units.front().name=" exact name ";d.units.front().notes="memo\nsecond line";d.units.front().nameExplicit=true;d.units.front().metadata=R"({"source":{"id":"original"},"ordered":[3,1,2]})";d.presentation.objectStyles[territorialRef(d.units.front().id)]={0x12abcd,0.625,true};d.presentation.userLayers.front().opacity=0.375;Project p;p.replace(d);const auto bytes=projectcodec::encode(p);const auto reopened=projectcodec::decode(bytes);QCOMPARE(reopened.units.front().name,d.units.front().name);QCOMPARE(reopened.units.front().notes,d.units.front().notes);QCOMPARE(reopened.units.front().metadata,losslessjson::parse(QByteArray::fromStdString(d.units.front().metadata)).encode().toStdString());QCOMPARE(reopened.geometries.get(staticGeometryBinding(reopened,reopened.units.front().id).geometryRef)->polygons.size(),d.geometries.get(staticGeometryBinding(d,d.units.front().id).geometryRef)->polygons.size());Project second;second.replace(reopened);QCOMPARE(projectcodec::encode(second),bytes);
@@ -212,7 +212,7 @@ private slots:
         QVERIFY_EXCEPTION_THROWN(projectcodec::decode(R"({"format":"pandoeditor-project","version":3.00000000000000000000001})"),std::invalid_argument);
     }
     void legacyVersionsRejectAndCurrentVersionSaves() {
-        auto root=QJsonDocument::fromJson(sample()).object();for(int version=1;version<9;++version){root["version"]=version;QVERIFY_EXCEPTION_THROWN(projectcodec::decode(QJsonDocument(root).toJson()),std::invalid_argument);}root["version"]=9;pandoeditor::Project p;p.replace(projectcodec::decode(QJsonDocument(root).toJson()));QCOMPARE(QJsonDocument::fromJson(projectcodec::encode(p)).object()["version"].toInt(),9);
+        auto root=QJsonDocument::fromJson(sample()).object();for(int version=1;version<9;++version){root["version"]=version;QVERIFY_EXCEPTION_THROWN(projectcodec::decode(QJsonDocument(root).toJson()),std::invalid_argument);}root["version"]=9;pandoeditor::Project p;p.replace(projectcodec::decode(QJsonDocument(root).toJson()));QCOMPARE(QJsonDocument::fromJson(projectcodec::encode(p)).object()["version"].toInt(),10);
     }
     void duplicateKeysRejected() {
         for (const auto& bytes:{QByteArray(R"({"version":1,"version":2})"),

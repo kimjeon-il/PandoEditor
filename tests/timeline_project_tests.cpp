@@ -58,8 +58,8 @@ int main(int argc,char** argv) {
             pandoeditor::Project project;project.replace(std::move(candidate.document));
             const auto encoded=projectcodec::encode(project.snapshot());
             const auto native=QJsonDocument::fromJson(encoded).object();
-            if(native.value("version").toInt()!=9 || !native.value("timelineRecords").isObject())
-                throw std::runtime_error("production native codec omitted timeline records/version 9");
+            if(native.value("version").toInt()!=10 || !native.value("timelineRecords").isObject())
+                throw std::runtime_error("production native codec omitted timeline records/version 10");
             auto reopened=projectcodec::decode(fileRoundTrip(encoded,"native.pando.json"));
             pandoeditor::Project second;second.replace(std::move(reopened));
             if(projectcodec::encode(second.snapshot())!=encoded)
@@ -77,10 +77,19 @@ int main(int argc,char** argv) {
     }
     QFile content(QFileInfo(QStringLiteral(PANDOEDITOR_TIMELINE_PROJECT_FIXTURES)).dir().filePath("timeline-exchange/content.json"));
     if(!content.open(QIODevice::ReadOnly))return 2;
-    const auto numericFixture=webimport::prepare(content.readAll()).document;
+    const auto contentBytes=content.readAll();
+    const auto numericFixture=webimport::prepare(contentBytes).document;
+    // Opaque numeric payloads are source data at import, not untracked edits to a
+    // decoded clean provenance ledger. Preserve the original lexical tokens.
+    auto numericDocument=[&](const std::string& payload,bool source) {
+        auto root=losslessjson::parse(contentBytes);const auto value=losslessjson::parse(QByteArray::fromStdString(payload));
+        if(source)root.object.at("labels").array.front().object.at("source").object["details"]=value;
+        else root.object.at("territorialEntities").array.front().object.at("properties").object["metadata"]=value;
+        return webimport::prepare(root.encode()).document;
+    };
     for(const auto* token:{"9007199254740993","1e400","0.123456789012345678901"})for(bool source:{false,true}) {
-        auto document=numericFixture;const std::string payload=std::string("{\"nested\":[{\"number\":")+token+"}]}";
-        if(source)document.labels.front().source.details=payload;else document.units.front().metadata=payload;
+        const std::string payload=std::string("{\"nested\":[{\"number\":")+token+"}]}";
+        auto document=numericDocument(payload,source);
         pandoeditor::Project project;project.replace(document);
         const auto bytes=projectcodec::encode(project);
         pandoeditor::Project reopened;reopened.replace(projectcodec::decode(fileRoundTrip(bytes,"precision.pando.json")));
@@ -90,7 +99,7 @@ int main(int argc,char** argv) {
         if(projectcodec::encode(reopened)!=bytes){++failures;std::cerr<<"FAIL numeric rejection atomicity\n";}
     }
     for(const auto* token:{"0.1","1.2300e+02","9007199254740994"}) {
-        auto document=numericFixture;document.units.front().metadata=std::string("{\"number\":")+token+"}";
+        auto document=numericDocument(std::string("{\"number\":")+token+"}",false);
         pandoeditor::Project project;project.replace(document);
         try{(void)projectcodec::encodeWeb(project.snapshot());}catch(const std::exception& e){++failures;std::cerr<<"FAIL representable numeric export "<<token<<": "<<e.what()<<'\n';}
     }

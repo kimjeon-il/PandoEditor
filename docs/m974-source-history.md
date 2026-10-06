@@ -41,5 +41,6 @@ These are not passes and must remain visible in later parity acceptance:
 - GPU error-recovery mesh rebuild and rollback after an external Worker commit have no established native counterpart. Ordinary adaptive quality changes and ordinary preview cancel must not be used as fabricated rebase hooks.
 - Native scheduling rejects revision-stale work before completion; the web can fulfill territorial read-only work, observe current sources, and then reject. Post-success/cancel browser diagnostics document this distinction rather than claiming native equality.
 - Existing projection, typed-invalid-state, full DOM/GPU, presentation and private-history observation limits from the preceding checkpoint remain.
+- M9.7.5 UI diagnostics additionally measured polygon taps rejected while native selectionPending is true (desktop and 360px mobile). A ready-state test precondition does not close this production input-continuity gap; see `m975-current-model-bridge.md` for the reproduction and required actual-web comparison before M9.7.7 acceptance.
 
 Later engine/presentation integration must resolve or explicitly retain these limits. This patch neither changes the approved web behavior nor advances the source oracle to current main.

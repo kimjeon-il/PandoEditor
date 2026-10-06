@@ -59,7 +59,7 @@ for(const [name,input] of [['static',staticProject],['complex',json('complex')],
   }
   if(name==='complex')assert.throws(()=>prepareProjectForActivation(after));
   else prepareProjectForActivation(after);
-  console.log('PASS real web -> app QFile/native v9 -> app encodeWeb -> real web: '+name);passed++;
+  console.log('PASS real web -> app QFile/native v10 -> app encodeWeb -> real web: '+name);passed++;
 }
 const deltaRejected=native(delta,'delta-without-baseline');assert.equal(deltaRejected.status,1,'native import must reject a delta with no matching baseline');assert.match(deltaRejected.stderr,/BASE_DATA_REQUIRED/);passed++;
 const changedBaseline=structuredClone(baseline);changedBaseline[0].properties.name+=' changed source';

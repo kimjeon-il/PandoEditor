@@ -1,6 +1,6 @@
 # M9.7.5 recovery checkpoint (work in progress)
 
-This checkpoint restores the pre-reset M9.7.5 model-exchange work. It is not a completed parity gate or a release.
+This document records recovery checkpoints d7b13d39 and 395c1d70, which restored the pre-reset M9.7.5 model-exchange work. Their pending-work notes describe that recovery point, not a final parity result. Subsequent native-v10 ownership and acceptance scope are documented in `m975-current-model-bridge.md`.
 
 ## Verified baseline and restoration
 
@@ -31,3 +31,6 @@ The strict exchange comparator intentionally exposes the known archive growth fr
 Generated fixtures were reconstructed with exact original guards: v1 canonical manifest `6e7401e03d8fda69c634bce19a35e412c6b829c14daeac0fc5a2bfd4f1e8d931`, v2 canonical manifest `c0211b9af824c1a84d9a6b691eaa92802bb7bcbb42a222b6e0633afe9368f031`, v2 file SHA-256 `fbc90d137703b4647823b6c85157636baf44f73b1a687fe51083c6f555d0f6e7`, supplemental source manifest `0e7168846663110be98ae216baf7030d7d983756ad15113f4e54f269139dd104`. The four original preimage-error records hash to `cd7a61f8dbb2bb39cdc31603a84f9ab69809ca7819b2197dd687529b1d4b38b5`; their exact 53-byte stderr strings were reconstructed from the original throw/output statements. The retained v1 input archive hash is `a912ea04767ae650874c976d9870bfe2cd601321886da35673c14f30eed239c8`. These records document the original failures; the fresh native verification above uses the approved v2 inputs and does not claim to fix those earlier projection gaps.
 
 A separate temporary data-only recovery workflow restores the existing full-regression dataset closure from the two already pinned Pando commits. Its immutable inventory contains 11 source files (30,878,542 bytes); files are checked against tracked path/mode/blob, size and available source SHA-256s, then uploaded as bounded source chunks. It does not build application or portable outputs. Remove the temporary fixture recovery workflow after verified restoration; it is not a product feature or a replacement for the normal regression gate.
+
+
+Full source restoration subsequently succeeded in Actions run [37383437656](https://github.com/kimjeon-il/PandoEditor/actions/runs/37383437656) at `395c1d70def1443028c5317a68820c90b4c509f8`. The downloaded closure was independently rechecked locally: all 11 files and 30,878,542 bytes match exact source Git blobs, modes, sizes and known SHA-256s. Archive SHA-256: `5539c2c6a06f135aae4bd0199d6f744e01c0bebdaa653e5e3d9bff00204f0cbf`. The full historical pilot digest is now verified as `f10f9bd59cc0d12bb767e97d534aa8cc859b18c56f3c9c357c87bef2d253d29b`. Temporary data recovery workflow and helpers are removed after restoration; the pinned inventory remains available in that recovery commit. This restores test inputs, not a product parity pass.

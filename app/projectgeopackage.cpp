@@ -144,7 +144,9 @@ QByteArray exportProjectGeoPackage(const Project& project) {
         QSqlQuery source(db);
         require(source.prepare("INSERT INTO pandolab_source_info VALUES ('source',?)"),
                 "PROJECT_GPKG_WRITE_FAILED");
-        source.addBindValue(QStringLiteral("{\"format\":\"pandoeditor-project\",\"version\":9}"));
+        auto sourceMarker=V::obj();sourceMarker.object["format"]=V::str("pandoeditor-project");
+        sourceMarker.object["version"]=member(root,"version");
+        source.addBindValue(QString::fromUtf8(sourceMarker.encode()));
         require(source.exec(),"PROJECT_GPKG_WRITE_FAILED");
         QSqlQuery asset(db);
         require(asset.prepare("INSERT INTO pandolab_country_assets VALUES (?,?,?)"),
@@ -191,7 +193,7 @@ QByteArray readProjectGeoPackage(const QString& filePath) {
     require(root.kind==V::Object,"UNSUPPORTED_PROJECT_GPKG_STATE");
     const auto native=root.object.count("format")&&
         root.object.at("format").kind==V::String&&root.object.at("format").string=="pandoeditor-project";
-    if(native)require(member(root,"version").kind==V::Number&&member(root,"version").raw=="9",
+    if(native)require(member(root,"version").kind==V::Number&&(member(root,"version").raw=="9"||member(root,"version").raw=="10"),
                       "UNSUPPORTED_PROJECT_GPKG_STATE");
     std::map<std::string,Asset> assets;
     QSqlQuery rows(db);
@@ -219,7 +221,9 @@ QByteArray readProjectGeoPackage(const QString& filePath) {
     {
         QSqlQuery source(db);require(source.exec("SELECT json_value FROM pandolab_source_info WHERE info_key='source'")&&source.next(),"MISSING_PROJECT_GPKG_SOURCE");
         const auto marker=losslessjson::parse(source.value(0).toString().toUtf8());
-        require(marker.encode()==QByteArray("{\"format\":\"pandoeditor-project\",\"version\":9}"),"PROJECT_GPKG_SOURCE_MISMATCH");
+        auto expectedMarker=V::obj();expectedMarker.object["format"]=V::str("pandoeditor-project");
+        expectedMarker.object["version"]=member(root,"version");
+        require(marker.encode()==expectedMarker.encode(),"PROJECT_GPKG_SOURCE_MISMATCH");
     }
     Project candidate;candidate.replace(projectcodec::decode(root.encode()));
     if(!isStaticTimeline(candidate.document()))require(vectors.layers.empty(),"PROJECT_GPKG_TIMELINE_VECTORS");

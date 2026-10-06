@@ -851,3 +851,13 @@ if(BUILD_TESTING)
     set_tests_properties(m975_model_exchange_probe_contract PROPERTIES TIMEOUT 180
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()
+
+if(BUILD_TESTING)
+    add_executable(m975_geometry_provenance_codec_tests ../tests/m975_geometry_provenance_codec_tests.cpp)
+    target_link_libraries(m975_geometry_provenance_codec_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(m975_geometry_provenance_codec_tests PRIVATE
+        M975_OWNERSHIP_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m975-model-exchange")
+    add_test(NAME m975_geometry_provenance_codec_tests COMMAND m975_geometry_provenance_codec_tests -o -,txt)
+    set_tests_properties(m975_geometry_provenance_codec_tests PROPERTIES TIMEOUT 180
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+endif()

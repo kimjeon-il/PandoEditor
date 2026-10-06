@@ -153,6 +153,7 @@ DocumentIndex validateDocument(const ProjectDocument& d) {
             idx.dependents[ref].push_back({"extension",e.id});
         }
     }
+    validateGeometryProvenance(d);
     return idx;
 }
 std::vector<CountryView> countryViews(const ProjectDocument& d) {

@@ -11,14 +11,52 @@
 #include <QJsonArray>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QSignalSpy>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QUuid>
+#include <QSet>
 #include <future>
 #include <functional>
+#include <map>
+#include <algorithm>
 
 using namespace pandoeditor;
 namespace {
 QByteArray read(const QString& path){QFile file(path);if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("fixture read");return file.readAll();}
 void write(const QString& path,const QByteArray& bytes){QFile file(path);if(!file.open(QIODevice::WriteOnly)||file.write(bytes)!=bytes.size())throw std::runtime_error("fixture write");}
+class PackageDatabase {
+public:
+    const QString name=QUuid::createUuid().toString();QSqlDatabase db;
+    explicit PackageDatabase(const QString& path) {db=QSqlDatabase::addDatabase("QSQLITE",name);db.setDatabaseName(path);if(!db.open())throw std::runtime_error("package database open");}
+    ~PackageDatabase(){db.close();db={};QSqlDatabase::removeDatabase(name);}
+};
+std::map<QString,QByteArray> packageRows(const QString& path) {
+    PackageDatabase connection(path);QSqlQuery query(connection.db);std::map<QString,QByteArray> rows;
+    for(const auto& pair:{std::pair{"project_state","SELECT json_value FROM pandolab_project_settings WHERE setting_key='project_state'"},
+                         std::pair{"source","SELECT json_value FROM pandolab_source_info WHERE info_key='source'"},
+                         std::pair{"asset_count","SELECT COUNT(*) FROM pandolab_country_assets"}}) {
+        if(!query.exec(pair.second)||!query.next())throw std::runtime_error("package row missing");rows[pair.first]=query.value(0).toString().toUtf8();
+    }return rows;
+}
+void replacePackageRow(const QString& path,const QString& key,const QByteArray& bytes) {
+    PackageDatabase connection(path);QSqlQuery query(connection.db);
+    const auto statement=key=="source"?"UPDATE pandolab_source_info SET json_value=? WHERE info_key='source'":"UPDATE pandolab_project_settings SET json_value=? WHERE setting_key='project_state'";
+    if(!query.prepare(statement))throw std::runtime_error("package row prepare");query.addBindValue(QString::fromUtf8(bytes));
+    if(!query.exec()||query.numRowsAffected()!=1)throw std::runtime_error("package row update");
+}
+QString packageError(const QString& path) {try{readProjectGeoPackage(path);}catch(const std::invalid_argument& error){return QString::fromUtf8(error.what());}return {};}
 ProjectDocument fixture(const char* kind){return webimport::prepare(read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/"+kind+".json")).document;}
+QByteArray inlineOnlyWebFixture() {
+    auto root=QJsonDocument::fromJson(read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/content.json")).object();
+    // This test input deliberately stores these two shapes only inline. The
+    // original content fixture archives both, so it cannot exercise derivation.
+    const QSet<QString> inlineOnly{"web-label:22000000-0000-4000-8000-000000000001","web-genericFeatures:22000000-0000-4000-8000-000000000002"};
+    QJsonArray archive;int removed=0;
+    for(const auto& row:root["geometries"].toArray()) {if(inlineOnly.contains(row.toObject()["id"].toString()))++removed;else archive.append(row);}
+    if(removed!=2)throw std::runtime_error("inline-only test input changed");root["geometries"]=archive;return QJsonDocument(root).toJson(QJsonDocument::Compact);
+}
+ProjectDocument derivedFixture(){return webimport::prepare(inlineOnlyWebFixture()).document;}
 const std::string contentId="97050000-0000-4000-8000-000000000001";
 const std::string distributionLayerId="97050000-0000-4000-8000-000000000002";
 Geometry inlineShape(const QString& domain,double offset=0) {
@@ -54,6 +92,174 @@ void visibilityBoundaryData() {
 class TimelineEditorPersistenceTests final:public QObject {
  Q_OBJECT
 private slots:
+ void nativeVersionClassificationAndSaveNotice() {
+    for(int version:{9,10}) {
+        const auto bytes=QJsonDocument(QJsonObject{{"format","pandoeditor-project"},{"version",version}}).toJson();
+        QString error;try{QCOMPARE(webimport::classify(bytes),webimport::FileKind::QtProject);}
+        catch(const std::invalid_argument& failure){error=QString::fromUtf8(failure.what());}
+        QVERIFY2(error.isEmpty(),qPrintable(error));
+    }
+    for(const auto version:{QJsonValue(8),QJsonValue(11),QJsonValue("10"),QJsonValue(10.5),QJsonValue()}) {
+        const auto bytes=QJsonDocument(QJsonObject{{"format","pandoeditor-project"},{"version",version}}).toJson();
+        QVERIFY_EXCEPTION_THROWN(webimport::classify(bytes),std::invalid_argument);
+    }
+ }
+ void nativeSaveCompatibilityNotice() {
+    EditorController editor;
+    QVERIFY(editor.documentNotice().contains("Qt v10"));
+    QVERIFY(editor.documentNotice().contains(QStringLiteral("이전 앱에서는 열 수 없습니다")));
+ }
+ void webImportPreviewNamesNative10AndWeb9() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());const auto path=dir.filePath("web.json");
+    write(path,read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/static.json"));
+    EditorController editor({false,dir.filePath("private.json")});
+    QVERIFY(editor.prepareWebImport(QUrl::fromLocalFile(path)));QTRY_VERIFY(editor.hasWebImportPreview());
+    QVERIFY(editor.webImportSummary().contains(QStringLiteral("웹 v9 → 앱 v10")));
+ }
+ void existingNative9FilesRemainUnchangedUntilExplicitSave() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());
+    for(const auto* name:{"static","content"}) {
+        const auto old=read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/../native-v9/"+name+".pando.json");
+        const auto oldRoot=QJsonDocument::fromJson(old).object();QCOMPARE(oldRoot["version"].toInt(),9);QVERIFY(!oldRoot.contains("geometryProvenance"));
+        const auto source=dir.filePath(QString(name)+"-v9.json"),saved=dir.filePath(QString(name)+"-v10.json");write(source,old);
+        EditorController editor({false,dir.filePath(QString(name)+"-private.json")});QVERIFY(editor.openFile(QUrl::fromLocalFile(source)));
+        QCOMPARE(read(source),old);QVERIFY(!editor.dirty());
+        QVERIFY(editor.saveFile(QUrl::fromLocalFile(saved)));const auto migrated=QJsonDocument::fromJson(read(saved)).object();
+        QCOMPARE(migrated["version"].toInt(),10);QCOMPARE(migrated["geometries"],oldRoot["geometries"]);
+        const auto ledger=migrated["geometryProvenance"].toObject();QCOMPARE(ledger["originalArchive"].toArray().size(),oldRoot["geometries"].toArray().size());
+        QVERIFY(ledger["inlineAllocations"].toArray().isEmpty());QVERIFY(!ledger["opaqueUncertain"].toBool());
+        QCOMPARE(read(source),old);EditorController reopened({false,dir.filePath(QString(name)+"-reopened-private.json")});
+        QVERIFY(reopened.openFile(QUrl::fromLocalFile(saved)));QCOMPARE(reopened.documentBytes(),read(saved));
+    }
+ }
+ void immutableSnapshotWorkerAutosaveRetainsNative10LedgerAndReads9() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());Project project;project.replace(derivedFixture());
+    const auto frozen=project.snapshot();const auto expected=projectcodec::encode(frozen);const auto root=QJsonDocument::fromJson(expected).object();
+    QCOMPARE(root["version"].toInt(),10);QVERIFY(!root["geometryProvenance"].toObject()["inlineAllocations"].toArray().isEmpty());
+    ProjectAutosave autosave(dir.filePath("autosave.json"),dir.filePath("view.json"));QSignalSpy saved(&autosave,&ProjectAutosave::saved),failed(&autosave,&ProjectAutosave::saveFailed);
+    autosave.scheduleDocument(frozen);QVERIFY(project.setMemo("A","edited after queued snapshot"));
+    // Let the production timer dispatch QtConcurrent::run; flushNow alone would
+    // exercise the synchronous fallback rather than the immutable worker path.
+    QTRY_COMPARE_WITH_TIMEOUT(saved.count(),1,5000);QCOMPARE(failed.count(),0);
+    const auto envelope=QJsonDocument::fromJson(read(autosave.projectPath())).object();
+    QCOMPARE(envelope["format"].toString(),QString("pandoeditor-autosave"));QCOMPARE(envelope["version"].toInt(),1);
+    QCOMPARE(QByteArray::fromBase64(envelope["project"].toString().toLatin1()),expected);
+    QCOMPARE(autosave.restoreDocument(),expected);Project restored;restored.replace(projectcodec::decode(autosave.restoreDocument()));
+    QCOMPARE(projectcodec::encode(restored),expected);QCOMPARE(projectcodec::encode(frozen),expected);QVERIFY(projectcodec::encode(project)!=expected);
+    const auto old=read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/../native-v9/content.pando.json");
+    autosave.scheduleDocument(old);QTRY_COMPARE_WITH_TIMEOUT(saved.count(),2,5000);QCOMPARE(failed.count(),0);QCOMPARE(autosave.restoreDocument(),old);
+    Project migrated;migrated.replace(projectcodec::decode(autosave.restoreDocument()));const auto migratedRoot=QJsonDocument::fromJson(projectcodec::encode(migrated)).object();
+    QCOMPARE(migratedRoot["version"].toInt(),10);QVERIFY(migratedRoot["geometryProvenance"].toObject()["inlineAllocations"].toArray().isEmpty());
+    QCOMPARE(migratedRoot["geometries"],QJsonDocument::fromJson(old).object()["geometries"]);
+ }
+ void inlineAllocationFatesSurviveFilesAutosaveAndGeoPackage_data() {
+    QTest::addColumn<QString>("fate");
+    for(const auto* fate:{"owner-deleted","owner-rebound","promoted-then-deleted"})QTest::newRow(fate)<<QString(fate);
+ }
+ void inlineAllocationFatesSurviveFilesAutosaveAndGeoPackage() {
+    QFETCH(QString,fate);QTemporaryDir dir;QVERIFY(dir.isValid());Project project;project.replace(derivedFixture());
+    const auto initial=project.snapshot();auto label=project.document().labels.front();const auto oldRef=label.geometry;
+    const auto apply=[&](ContentEdit edit) {
+        CommandArguments args;args.action=std::move(edit);auto prepared=CommandProcessor::prepare(project,CommandProcessor::makeRequest(project,"content.edit",args));
+        if(!prepared.ok())return prepared.detail;const auto result=CommandProcessor::confirm(project,*prepared.preview);return result.changed()?std::string{}:(result.detail.empty()?std::string("content edit did not apply"):result.detail);
+    };
+    if(fate=="promoted-then-deleted") {
+        PlaceLabel adopter;adopter.id="22000000-0000-4000-8000-000000000009";adopter.name="Native adopter";adopter.geometry=oldRef;
+        QVERIFY(apply({{"label",adopter.id},adopter,{},true}).empty());
+        QVERIFY(project.document().geometryProvenance.inlineAllocations.at(oldRef).promoted);
+        QVERIFY(apply({{"label",adopter.id},{},{}}).empty());
+    }
+    const auto beforeLast=projectcodec::encode(project);
+    if(fate=="owner-rebound") {
+        label.geometry={oldRef.id,2};Geometry replacement{"Point",{{126,36}},{},{}};
+        QVERIFY(apply({{"label",label.id},label,std::make_pair(label.geometry,replacement)}).empty());
+    } else QVERIFY(apply({{"label",label.id},{},{}}).empty());
+    const auto expected=projectcodec::encode(project);QVERIFY(project.document().geometries.get(oldRef));
+    QCOMPARE(project.document().geometryProvenance.inlineAllocations.at(oldRef).promoted,fate=="promoted-then-deleted");
+    QVERIFY(project.undo());QCOMPARE(projectcodec::encode(project),beforeLast);QVERIFY(project.redo());QCOMPARE(projectcodec::encode(project),expected);
+    const auto file=dir.filePath("ownership.json");write(file,expected);Project reopened;reopened.replace(projectcodec::decode(read(file)));QCOMPARE(projectcodec::encode(reopened),expected);
+    EditorController editor({false,dir.filePath("private.json")});QVERIFY(editor.openFile(QUrl::fromLocalFile(file)));QCOMPARE(editor.documentBytes(),expected);
+    ProjectAutosave autosave(dir.filePath("autosave.json"),dir.filePath("view.json"));autosave.scheduleDocument(project.snapshot());QVERIFY(autosave.flushNow());
+    Project recovered;recovered.replace(projectcodec::decode(autosave.restoreDocument()));QCOMPARE(projectcodec::encode(recovered),expected);
+    const auto gpkg=dir.filePath("ownership.gpkg");write(gpkg,exportProjectGeoPackage(project));Project packaged;packaged.replace(projectcodec::decode(readProjectGeoPackage(gpkg)));QCOMPARE(projectcodec::encode(packaged),expected);
+    const auto web=QJsonDocument::fromJson(projectcodec::encodeWeb(reopened.snapshot())).object();QCOMPARE(web["schemaVersion"].toInt(),9);
+    bool emitted=false;for(const auto& row:web["geometries"].toArray())if(row.toObject()["id"].toString()==QString::fromStdString(oldRef.id)&&row.toObject()["version"].toInt()==int(oldRef.version))emitted=true;
+    QCOMPARE(emitted,fate=="promoted-then-deleted");
+    for(const auto& [ref,geometry]:initial.document().geometries.versions())QVERIFY(project.document().geometries.get(ref)==geometry);
+ }
+ void historicalBindingPromotionPersistsWithoutRelaxingEditorActivation() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());
+    auto web=QJsonDocument::fromJson(read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/complex.json")).object();
+    auto generic=QJsonDocument::fromJson(inlineOnlyWebFixture()).object()["genericFeatures"].toArray().first().toObject();
+    generic["geometry"]=QJsonObject{{"type","Polygon"},{"coordinates",QJsonArray{QJsonArray{QJsonArray{30,30},QJsonArray{32,30},QJsonArray{32,32},QJsonArray{30,30}}}}};
+    auto properties=generic["properties"].toObject(),source=properties["source"].toObject();source["sourceType"]="Polygon";properties["source"]=source;generic["properties"]=properties;
+    web["genericFeatures"]=QJsonArray{generic};Project imported;imported.replace(projectcodec::decodeWeb(QJsonDocument(web).toJson()));
+    QVERIFY(!isStaticTimeline(imported.document()));auto candidate=imported.document();const auto ref=candidate.genericFeatures.front().geometry;
+    QVERIFY(!candidate.geometryProvenance.inlineAllocations.at(ref).promoted);
+    auto historical=std::find_if(candidate.timelineRecords.geometryBindings.begin(),candidate.timelineRecords.geometryBindings.end(),[](const auto& binding){return binding.validity.to.has_value();});
+    QVERIFY(historical!=candidate.timelineRecords.geometryBindings.end());historical->geometryRef=ref;
+    // Exercise the shared transition on rich storage, not the static-only UI
+    // command entry point. Noncurrent typed adoption must still be semantic.
+    reconcileGeometryProvenance(imported.document(),candidate);QVERIFY(candidate.geometryProvenance.inlineAllocations.at(ref).promoted);
+    Project rich;rich.replace(candidate);const auto expected=projectcodec::encode(rich);const auto path=dir.filePath("rich.json");write(path,expected);
+    Project reopened;reopened.replace(projectcodec::decode(read(path)));QCOMPARE(projectcodec::encode(reopened),expected);QVERIFY(!isStaticTimeline(reopened.document()));
+    ProjectAutosave autosave(dir.filePath("autosave.json"),dir.filePath("view.json"));autosave.scheduleDocument(rich.snapshot());QVERIFY(autosave.flushNow());QCOMPARE(autosave.restoreDocument(),expected);
+    const auto package=dir.filePath("rich.gpkg");write(package,exportProjectGeoPackage(rich));Project packaged;packaged.replace(projectcodec::decode(readProjectGeoPackage(package)));QCOMPARE(projectcodec::encode(packaged),expected);
+    EditorController editor({false,dir.filePath("private.json")});const auto before=editor.documentBytes();const auto instance=editor.projectInstanceId();
+    QVERIFY(!editor.openFile(QUrl::fromLocalFile(path)));QCOMPARE(editor.documentBytes(),before);QCOMPARE(editor.projectInstanceId(),instance);
+    QVERIFY(!editor.openProjectGeoPackage(QUrl::fromLocalFile(package)));QCOMPARE(editor.documentBytes(),before);QCOMPARE(editor.projectInstanceId(),instance);
+ }
+ void nativeGeoPackageVersionAndMarkerAgreement() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());Project source;source.replace(derivedFixture());const auto expected=projectcodec::encode(source);
+    const auto path=dir.filePath("native10.gpkg");write(path,exportProjectGeoPackage(source));
+    const auto rows=packageRows(path);const auto root=QJsonDocument::fromJson(rows.at("project_state")).object();
+    QCOMPARE(root["version"].toInt(),10);QCOMPARE(QJsonDocument::fromJson(rows.at("source")).object(),(QJsonObject{{"format","pandoeditor-project"},{"version",10}}));
+    QCOMPARE(root["geometryProvenance"],QJsonDocument::fromJson(expected).object()["geometryProvenance"]);
+    QCOMPARE(root["geometries"],QJsonDocument::fromJson(expected).object()["geometries"]);QVERIFY(rows.at("asset_count")=="1");
+    Project restored;restored.replace(projectcodec::decode(readProjectGeoPackage(path)));QCOMPARE(projectcodec::encode(restored),expected);
+    const auto web=dir.filePath("web-inline-only.gpkg");QVERIFY(QFile::copy(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/content.gpkg",web));
+    replacePackageRow(web,"project_state",inlineOnlyWebFixture());Project imported;imported.replace(projectcodec::decode(readProjectGeoPackage(web)));
+    QCOMPARE(projectcodec::encode(imported),expected);
+    const auto wrong10=dir.filePath("native10-marker9.gpkg");QVERIFY(QFile::copy(path,wrong10));
+    replacePackageRow(wrong10,"source",QJsonDocument(QJsonObject{{"format","pandoeditor-project"},{"version",9}}).toJson());
+    QCOMPARE(packageError(wrong10),QString("PROJECT_GPKG_SOURCE_MISMATCH"));
+    // Reuse the genuine v9 writer's payload, never strip provenance from v10.
+    // Its static vectors have the same semantic document and no spooled assets.
+    const auto old=read(QStringLiteral(PANDOEDITOR_EXCHANGE_FIXTURES)+"/../native-v9/static.pando.json");Project oldProject;oldProject.replace(projectcodec::decode(old));
+    const auto oldPath=dir.filePath("native9.gpkg");write(oldPath,exportProjectGeoPackage(oldProject));
+    replacePackageRow(oldPath,"project_state",old);replacePackageRow(oldPath,"source",QJsonDocument(QJsonObject{{"format","pandoeditor-project"},{"version",9}}).toJson());
+    const auto oldBytes=read(oldPath);Project oldReopened;oldReopened.replace(projectcodec::decode(readProjectGeoPackage(oldPath)));
+    QCOMPARE(projectcodec::encode(oldReopened),projectcodec::encode(oldProject));QCOMPARE(read(oldPath),oldBytes);
+    replacePackageRow(oldPath,"source",QJsonDocument(QJsonObject{{"format","pandoeditor-project"},{"version",10}}).toJson());
+    QCOMPARE(packageError(oldPath),QString("PROJECT_GPKG_SOURCE_MISMATCH"));
+ }
+ void invalidProvenanceAndGeoPackageMarkersKeepActiveStateAtomic() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());Project source;source.replace(derivedFixture());const auto valid=projectcodec::encode(source);const auto root=QJsonDocument::fromJson(valid).object();
+    QCOMPARE(root["version"].toInt(),10);QVERIFY(!root["geometryProvenance"].toObject()["inlineAllocations"].toArray().isEmpty());
+    const auto target=dir.filePath("active.json"),invalidPath=dir.filePath("invalid.json");write(target,valid);
+    EditorController editor({false,dir.filePath("private.json")});QVERIFY(editor.openFile(QUrl::fromLocalFile(target)));editor.selectCountry("A");
+    editor.setColor("#123456");editor.setColor("#654321");editor.undo();editor.setNameDraft("keep pending draft");
+    const auto before=editor.documentBytes();const auto revision=editor.revision();const auto selection=editor.primaryObject();const auto fileName=editor.fileName();const auto instance=editor.projectInstanceId();
+    const auto assertUnchanged=[&] {
+        QCOMPARE(editor.documentBytes(),before);QCOMPARE(editor.revision(),revision);QCOMPARE(editor.primaryObject(),selection);
+        QCOMPARE(editor.fileName(),fileName);QCOMPARE(editor.projectInstanceId(),instance);QCOMPARE(editor.nameDraft(),QString("keep pending draft"));
+        QVERIFY(editor.dirty());QVERIFY(editor.canUndo());QVERIFY(editor.canRedo());QVERIFY(editor.hasFile());QCOMPARE(read(target),valid);
+    };
+    const std::vector<std::function<void(QJsonObject&)>> changes={
+        [](auto& value){value.remove("geometryProvenance");},
+        [](auto& value){auto ledger=value["geometryProvenance"].toObject();ledger["schemaVersion"]=2;value["geometryProvenance"]=ledger;},
+        [](auto& value){auto ledger=value["geometryProvenance"].toObject();auto rows=ledger["inlineAllocations"].toArray();auto row=rows[0].toObject();row["geometrySha256"]=QString(64,'0');rows[0]=row;ledger["inlineAllocations"]=rows;value["geometryProvenance"]=ledger;},
+        [](auto& value){auto content=value["content"].toObject();auto labels=content["labels"].toArray();auto label=labels[0].toObject();auto source=label["source"].toObject();source["details"]=QJsonObject{{"unexpected","opaque dependency"}};label["source"]=source;labels[0]=label;content["labels"]=labels;value["content"]=content;}
+    };
+    for(const auto& change:changes) {
+        auto invalid=root;change(invalid);write(invalidPath,QJsonDocument(invalid).toJson());
+        QVERIFY(!editor.openFile(QUrl::fromLocalFile(invalidPath)));assertUnchanged();
+    }
+    const auto gpkg=dir.filePath("wrong-marker.gpkg");write(gpkg,exportProjectGeoPackage(source));
+    replacePackageRow(gpkg,"source",QJsonDocument(QJsonObject{{"format","pandoeditor-project"},{"version",9}}).toJson());
+    QCOMPARE(packageError(gpkg),QString("PROJECT_GPKG_SOURCE_MISMATCH"));QVERIFY(!editor.openProjectGeoPackage(QUrl::fromLocalFile(gpkg)));assertUnchanged();
+    editor.discardPendingEdits();QVERIFY(editor.save());QCOMPARE(read(target),before);QCOMPARE(read(invalidPath),QJsonDocument([&]{auto value=root;changes.back()(value);return value;}()).toJson());
+ }
  void webVisibilityImportRejectsUnsupportedNamespacesAtomically_data() {visibilityBoundaryData();}
  void webVisibilityImportRejectsUnsupportedNamespacesAtomically() {
     QFETCH(QString,key);QFETCH(bool,item);
@@ -217,7 +423,7 @@ private slots:
     const auto input=dir.filePath("input.pando.json"),saved=dir.filePath("saved.pando.json");write(input,projectcodec::encode(source));
     EditorController editor(EditorControllerConfig{false,dir.filePath("private.json")});
     QVERIFY(editor.openFile(QUrl::fromLocalFile(input)));editor.selectCountry("A");editor.setColor("#123456");
-    QVERIFY(editor.saveFile(QUrl::fromLocalFile(saved)));QCOMPARE(QJsonDocument::fromJson(read(saved)).object()["version"].toInt(),9);
+    QVERIFY(editor.saveFile(QUrl::fromLocalFile(saved)));QCOMPARE(QJsonDocument::fromJson(read(saved)).object()["version"].toInt(),10);
     editor.setColor("#654321");editor.setColor("#abcdef");editor.undo();QVERIFY(editor.canUndo());QVERIFY(editor.canRedo());QVERIFY(editor.dirty());
     const auto bytes=editor.documentBytes();const auto selection=editor.primaryObject();const auto paths=editor.paths();
     const auto rejected=dir.filePath("rejected.json");Project complex;complex.replace(fixture("complex"));write(rejected,projectcodec::encode(complex));

@@ -1,5 +1,6 @@
 #include "projectcodec.h"
 #include <pandoeditor/timeline-storage.h>
+#include <pandoeditor/geometryprovenance.h>
 #include "webjson.h"
 #include "builtinworldpolicy.h"
 #include <pandoeditor/objectproperties.h>
@@ -10,6 +11,7 @@
 #include <QImageReader>
 #include <QSvgRenderer>
 #include <climits>
+#include <algorithm>
 #include <limits>
 #include <set>
 
@@ -61,9 +63,12 @@ void validateEmbeddedFlag(const std::string& value) {
     require(size.isValid()&&qint64(size.width())*size.height()<=16ll*1024*1024,"INVALID_EMBEDDED_FLAG_IMAGE: pixel limit");
     require(!reader.read().isNull(),"INVALID_EMBEDDED_FLAG_IMAGE");
 }
-void validateWebObjectIds(const ProjectDocument& d) {
+bool webObjectId(const std::string& id) {
     static const QRegularExpression pattern(QStringLiteral("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"));
-    const auto rows=[&](const auto& values){for(const auto& value:values)require(pattern.match(QString::fromStdString(value.id)).hasMatch(),"INVALID_WEB_OBJECT_UUID");};
+    return pattern.match(QString::fromStdString(id)).hasMatch();
+}
+void validateWebObjectIds(const ProjectDocument& d) {
+    const auto rows=[&](const auto& values){for(const auto& value:values)require(webObjectId(value.id),"INVALID_WEB_OBJECT_UUID");};
     rows(d.labels);rows(d.hydro);rows(d.genericFeatures);rows(d.distributionLayers);rows(d.distributionEntries);
 }
 bool boolean(const V& v) { require(v.kind==V::Bool,"INVALID_JSON: expected boolean"); return v.raw=="true"; }
@@ -180,6 +185,80 @@ V geometryValue(const Geometry& g) {
     else if (g.type=="MultiPolygon") for (const auto& p:g.polygons) c.array.push_back(polygonValue(p));
     else require(false,"INVALID_GEOMETRY: unsupported GeoJSON kind");
     return object({{"type",V::str(g.type)},{"coordinates",c}});
+}
+std::string sha256(const QByteArray& bytes) {
+    return QCryptographicHash::hash(bytes,QCryptographicHash::Sha256).toHex().toStdString();
+}
+bool hasUnpromotedInlineAllocations(const GeometryProvenance& provenance) {
+    return std::any_of(provenance.inlineAllocations.begin(),provenance.inlineAllocations.end(),
+                       [](const auto& entry){return !entry.second.promoted;});
+}
+std::string opaqueSha256(const std::string& payload) {
+    // Lossless parsing orders object keys but preserves scalar tokens and arrays.
+    return sha256(losslessjson::parse(QByteArray::fromStdString(payload)).encode());
+}
+void validateProvenanceDigests(const ProjectDocument& d) {
+    static const QRegularExpression digest(QStringLiteral("^[0-9a-f]{64}$"));
+    for(const auto& [ref,allocation]:d.geometryProvenance.inlineAllocations) {
+        // Ledger creators must be exact UUIDs. The inherited web matcher uses
+        // '$', which also matches before a terminal LF; do not broaden that
+        // separate web compatibility boundary while validating native evidence.
+        require(allocation.createdFor.id.size()==36&&webObjectId(allocation.createdFor.id),
+                "INVALID_GEOMETRY_PROVENANCE: invalid creator UUID");
+        require(digest.match(QString::fromStdString(allocation.geometrySha256)).hasMatch(),
+                "INVALID_GEOMETRY_PROVENANCE: invalid geometry hash");
+        const auto shape=d.geometries.get(ref);
+        require(shape&&sha256(geometryValue(*shape).encode())==allocation.geometrySha256,
+                "INVALID_GEOMETRY_PROVENANCE: geometry hash mismatch");
+    }
+    for(const auto& [path,hash]:d.geometryProvenance.opaqueBaseline)
+        require(digest.match(QString::fromStdString(hash)).hasMatch(),
+                "INVALID_GEOMETRY_PROVENANCE: invalid opaque hash");
+    if(d.geometryProvenance.opaqueUncertain||!hasUnpromotedInlineAllocations(d.geometryProvenance))return;
+    for(const auto& [path,value]:geometryProvenanceOpaqueSlots(d)) {
+        const auto baseline=d.geometryProvenance.opaqueBaseline.find(path);
+        require(baseline!=d.geometryProvenance.opaqueBaseline.end()&&baseline->second==opaqueSha256(value),
+                "INVALID_GEOMETRY_PROVENANCE: opaque baseline mismatch");
+    }
+}
+void readGeometryProvenance(const V& value,ProjectDocument& d) {
+    unknown(d,10,value,"/geometryProvenance",{"schemaVersion","originalArchive","inlineAllocations","opaqueBaseline","opaqueUncertain"});
+    require(integer(field(value,"schemaVersion"))==1,"INVALID_GEOMETRY_PROVENANCE: unsupported schema version");
+    auto& provenance=d.geometryProvenance;
+    for(const auto& row:array(field(value,"originalArchive")))
+        require(provenance.originalArchive.insert(geometryRef(row,d,"/geometryProvenance/originalArchive")).second,
+                "INVALID_GEOMETRY_PROVENANCE: duplicate original ref");
+    for(const auto& row:array(field(value,"inlineAllocations"))) {
+        unknown(d,10,row,"/geometryProvenance/inlineAllocations",{"ref","createdFor","geometrySha256","promoted"});
+        const auto geometry=geometryRef(field(row,"ref"),d,"/geometryProvenance/inlineAllocations/ref");
+        InlineGeometryAllocation allocation{ref(field(row,"createdFor"),d,"/geometryProvenance/inlineAllocations/createdFor"),
+                                            str(field(row,"geometrySha256")),boolean(field(row,"promoted"))};
+        require(provenance.inlineAllocations.emplace(geometry,std::move(allocation)).second,
+                "INVALID_GEOMETRY_PROVENANCE: duplicate allocation ref");
+    }
+    for(const auto& row:array(field(value,"opaqueBaseline"))) {
+        unknown(d,10,row,"/geometryProvenance/opaqueBaseline",{"path","sha256"});
+        require(provenance.opaqueBaseline.emplace(str(field(row,"path")),str(field(row,"sha256"))).second,
+                "INVALID_GEOMETRY_PROVENANCE: duplicate opaque slot");
+    }
+    provenance.opaqueUncertain=boolean(field(value,"opaqueUncertain"));
+    validateProvenanceDigests(d);
+    // Seal only the clean slots whose digests were actually verified above.
+    // All-promoted ledgers need no omission authority and may have stale hashes;
+    // caching their unchecked current bytes could authorize a later raw demotion.
+    if(!provenance.opaqueUncertain&&hasUnpromotedInlineAllocations(provenance))
+        GeometryProvenanceCodecAccess::sealVerifiedOpaqueBaseline(d);
+}
+V geometryProvenanceValue(const GeometryProvenance& provenance) {
+    V originals=V::arr(),allocations=V::arr(),opaque=V::arr();
+    for(const auto& ref:provenance.originalArchive)originals.array.push_back(geometryRefValue(ref));
+    for(const auto& [ref,allocation]:provenance.inlineAllocations)
+        allocations.array.push_back(object({{"ref",geometryRefValue(ref)},{"createdFor",refValue(allocation.createdFor)},
+            {"geometrySha256",V::str(allocation.geometrySha256)},{"promoted",V::boolean(allocation.promoted)}}));
+    for(const auto& [path,hash]:provenance.opaqueBaseline)
+        opaque.array.push_back(object({{"path",V::str(path)},{"sha256",V::str(hash)}}));
+    return object({{"schemaVersion",V::num(1)},{"originalArchive",originals},{"inlineAllocations",allocations},
+                   {"opaqueBaseline",opaque},{"opaqueUncertain",V::boolean(provenance.opaqueUncertain)}});
 }
 Validity recordInterval(const V& v) {
     const auto endpoint=[](const V& value)->std::optional<std::string>{if(value.kind==V::Null)return {};const auto text=str(value);(void)parseTemporal(text);return text;};
@@ -476,7 +555,7 @@ V extensionValue(const PreservedExtension& e) {
 pandoeditor::ProjectDocument decode(const QByteArray& data) {
     const auto root=losslessjson::parse(data);
     require(str(field(root,"format"))=="pandoeditor-project","UNSUPPORTED_FORMAT: expected Qt project");
-    const auto schema=integer(field(root,"version"));require(schema==9,"UNSUPPORTED_VERSION: expected Qt v9");
+    const auto schema=integer(field(root,"version"));require(schema==9||schema==10,"UNSUPPORTED_VERSION: expected Qt v9 or v10");
     ProjectDocument d;d.documentId=str(field(root,"documentId"));readExtensions(field(root,"extensions"),d);
     d.exchangeMetadata=field(root,"exchangeMetadata").encode().toStdString();validateExchangeMetadata(d);
     for(const auto& v:array(field(root,"units"))) {
@@ -488,9 +567,16 @@ pandoeditor::ProjectDocument decode(const QByteArray& data) {
     }
     restoreArchive(root,d);
     readPresentation(field(root,"presentation"),d);
-        readContent(field(root,"content"),d);
+    readContent(field(root,"content"),d);
+    if(schema==9) {
         unknown(d,9,root,"",{"format","version","documentId","units","timelineRecords","geometries","presentation","extensions","content","exchangeMetadata"});
-
+        // Legacy files contain no trustworthy origin information: every row is semantic.
+        for(const auto& [ref,shape]:d.geometries.versions())d.geometryProvenance.originalArchive.insert(ref);
+    } else {
+        unknown(d,10,root,"",{"format","version","documentId","units","timelineRecords","geometries","presentation","extensions","content","exchangeMetadata","geometryProvenance"});
+        require(root.object.count("geometryProvenance"),"INVALID_GEOMETRY_PROVENANCE: missing ledger");
+        readGeometryProvenance(field(root,"geometryProvenance"),d);
+    }
     validateDocument(d);return d;
 }
 
@@ -498,7 +584,7 @@ QByteArray encode(const pandoeditor::Project& project) {
     return encode(project.snapshot());
 }
 QByteArray encode(const pandoeditor::ProjectSnapshot& snapshot) {
-    const auto& d=snapshot.document(); validateDocument(d);validateExchangeMetadata(d);
+    const auto& d=snapshot.document(); validateDocument(d);validateExchangeMetadata(d);validateProvenanceDigests(d);
     V units=V::arr(),geometries=V::arr(),layers=V::arr(),membership=V::arr(),styles=V::obj(),extensions=V::arr();
     for (const auto& u:d.units) {
         auto value=object({{"id",V::str(u.id)},{"kind",V::str(u.kind==UnitKind::General?"general":"regional")},{"name",V::str(u.name)},{"baseName",V::str(u.baseName)},{"nameExplicit",V::boolean(u.kind==UnitKind::General?u.nameExplicit&&!u.name.empty():u.nameExplicit)},{"notes",V::str(u.kind==UnitKind::General?trimWebText(u.notes):u.notes)},{"locked",V::boolean(u.locked)},{"libraryOrigin",V{}},{"metadata",nativeIdentityMetadata(u.metadata)},{"sourceFolderId",V::str(u.sourceFolderId)},{"sourceLibraryId",V::str(u.sourceLibraryId)},{"sourceGeometryVersion",V::str(u.sourceGeometryVersion)}});
@@ -523,9 +609,10 @@ QByteArray encode(const pandoeditor::ProjectSnapshot& snapshot) {
     for(const auto& [owner,s]:web.labelSettings){V value=object({{"ref",refValue(owner)},{"pinned",V::boolean(s.pinned)},{"collisionGroup",V::str(s.collisionGroup)}});if(s.priority)value.object["priority"]=V::num(*s.priority);if(s.minZoom)value.object["minZoom"]=V::num(*s.minZoom);if(s.maxZoom)value.object["maxZoom"]=V::num(*s.maxZoom);if(s.manualPosition){V point=V::arr();point.array={V::num(s.manualPosition->x),V::num(s.manualPosition->y)};value.object["manualPosition"]=point;}labelSettings.array.push_back(std::move(value));}
     auto distributionSettings=object({{"renderMode",V::str(web.distributionSettings.renderMode==DistributionRenderMode::Single?"single":"overlap")},{"activeLayerId",V::str(web.distributionSettings.activeLayerId)},{"boundaryVisible",V::boolean(web.distributionSettings.boundaryVisible)}});
     auto webValue=object({{"visibility",visibility},{"hiddenItems",hidden},{"styles",groups},{"objectStyles",overrides},{"objectOrder",order},{"overlayOrder",overlayOrder},{"labelSettings",labelSettings},{"distributionSettings",distributionSettings}});
-    auto root=object({{"format",V::str("pandoeditor-project")},{"version",V::num(9)},{"documentId",V::str(d.documentId)},{"units",units},{"timelineRecords",timelineRecordsValue(d.timelineRecords)},{"geometries",geometries},{"presentation",object({{"userLayers",layers},{"membership",membership},{"objectStyles",styles},{"webPresentation",webValue}})},{"extensions",extensions}});
+    auto root=object({{"format",V::str("pandoeditor-project")},{"version",V::num(10)},{"documentId",V::str(d.documentId)},{"units",units},{"timelineRecords",timelineRecordsValue(d.timelineRecords)},{"geometries",geometries},{"presentation",object({{"userLayers",layers},{"membership",membership},{"objectStyles",styles},{"webPresentation",webValue}})},{"extensions",extensions}});
     root.object["exchangeMetadata"]=jsonObject(d.exchangeMetadata);
     root.object["content"]=contentValue(d);
+    root.object["geometryProvenance"]=geometryProvenanceValue(d.geometryProvenance);
     auto bytes=root.encode()+"\n";
     require(bytes.size()<=256ll*1024*1024,"LIMIT_EXCEEDED: encoded JSON exceeds 256 MiB");
     return bytes;
@@ -563,11 +650,18 @@ V webSourceValue(const SourceProvenance& value){auto result=sourceValue(value);r
 GeometryRef inlineGeometry(ProjectDocument& d,const std::string& domain,const std::string& id,const V& value) {
     const auto shape=geometry(value,d,9,"/"+domain+"/geometry");
     const GeometryRef ref{"web-"+domain+":"+id,1};
-    // Reopening a web exchange uses the same immutable archive version when an
-    // inline non-territorial feature also names its canonical stored shape.
-    if(const auto existing=d.geometries.get(ref)){require(geometryValue(*existing).encode()==geometryValue(shape).encode(),"GEOMETRY_ARCHIVE_CONFLICT");return ref;}
-    for(const auto& [candidate,stored]:d.geometries.versions())if(geometryValue(*stored).encode()==geometryValue(shape).encode())return candidate;
-    d.geometries.insert(ref,shape);return ref;
+    // Only incoming archive rows may be reused. Another inline owner's newly
+    // synthesized allocation is not an identity carrier in the web format.
+    const auto& originals=d.geometryProvenance.originalArchive;
+    if(originals.count(ref)) {
+        require(geometryValue(*d.geometries.get(ref)).encode()==geometryValue(shape).encode(),"GEOMETRY_ARCHIVE_CONFLICT");return ref;
+    }
+    for(const auto& candidate:originals)
+        if(geometryValue(*d.geometries.get(candidate)).encode()==geometryValue(shape).encode())return candidate;
+    d.geometries.insert(ref,shape);
+    const auto nativeDomain=domain=="hydroEdits"?"hydro":domain=="genericFeatures"?"generic":domain;
+    d.geometryProvenance.inlineAllocations.emplace(ref,InlineGeometryAllocation{{nativeDomain,id},sha256(geometryValue(shape).encode()),false});
+    return ref;
 }
 V labelSettingsValue(const LabelSettings& settings) {
     V result=object({{"pinned",V::boolean(settings.pinned)},{"collisionGroup",V::str(settings.collisionGroup)}});
@@ -612,6 +706,7 @@ ProjectDocument decodeWeb(const QByteArray& bytes) {
         u.metadata=metadata.encode().toStdString();const auto& style=field(p,"style");unknown(d,9,style,"/entity/style",{"color"});ObjectStyle nativeStyle{0,1,false};if(style.object.count("color")){nativeStyle.color=color(field(style,"color"));nativeStyle.explicitColor=true;}require(d.presentation.objectStyles.emplace(owner,nativeStyle).second,"DUPLICATE_ENTITY_ID");d.units.push_back(std::move(u));
     }
     restoreArchive(root,d);
+    for(const auto& [ref,shape]:d.geometries.versions())d.geometryProvenance.originalArchive.insert(ref);
     for(const auto& row:array(field(root,"labels"))) {
         unknown(d,9,row,"/labels",{"id","name","kind","notes","coordinates","territorialUnitId","source"});PlaceLabel label;label.id=str(field(row,"id"));label.name=str(field(row,"name"));label.kind=str(field(row,"kind"));label.notes=optionalText(row,"notes");label.geometry=inlineGeometry(d,"label",label.id,object({{"type",V::str("Point")},{"coordinates",field(row,"coordinates")}}));const auto parent=optionalText(row,"territorialUnitId");if(!parent.empty())label.territory=territorialRef(parent);if(row.object.count("source"))label.source=webSource(field(row,"source"),d);d.labels.push_back(std::move(label));
     }
@@ -626,10 +721,17 @@ ProjectDocument decodeWeb(const QByteArray& bytes) {
     for(const auto& row:array(field(root,"distributionEntries"))) {
         unknown(d,9,row,"/distributionEntries",{"id","schemaVersion","layerId","mode","territorialUnitId","geometry","value","certainty","validFrom","validTo","metadata"});require(integer(field(row,"schemaVersion"))==3,"UNSUPPORTED_DISTRIBUTION_VERSION");DistributionEntry v;v.id=str(field(row,"id"));v.layerId=str(field(row,"layerId"));v.value=number(field(row,"value"));v.certainty=str(field(row,"certainty"));v.validity=recordInterval(row);v.metadata=jsonObject(field(row,"metadata").encode().toStdString()).encode().toStdString();const auto mode=str(field(row,"mode"));require(mode=="territorial"||mode=="geometry","INVALID_DISTRIBUTION_MODE");if(mode=="territorial"){require(field(row,"geometry").kind==V::Null,"INVALID_DISTRIBUTION_GEOMETRY");v.territory=territorialRef(str(field(row,"territorialUnitId")));}else{require(optionalText(row,"territorialUnitId").empty(),"INVALID_DISTRIBUTION_TERRITORY");v.geometry=inlineGeometry(d,"distributionEntry",v.id,field(row,"geometry"));}d.distributionEntries.push_back(std::move(v));
     }
-    readWebPresentation(root,d);validateWebObjectIds(d);validateDocument(d);return d;
+    readWebPresentation(root,d);validateWebObjectIds(d);
+    for(const auto& [path,value]:geometryProvenanceOpaqueSlots(d))d.geometryProvenance.opaqueBaseline.emplace(path,opaqueSha256(value));
+    // A newly created ledger must be saveable before this candidate can activate.
+    validateProvenanceDigests(d);
+    GeometryProvenanceCodecAccess::sealVerifiedOpaqueBaseline(d);
+    validateDocument(d);return d;
 }
 QByteArray encodeWeb(const ProjectSnapshot& snapshot) {
-    const auto& d=snapshot.document();validateDocument(d);
+    const auto& d=snapshot.document();validateDocument(d);validateProvenanceDigests(d);
+    require(!d.geometryProvenance.opaqueUncertain||!hasUnpromotedInlineAllocations(d.geometryProvenance),
+            "UNSUPPORTED_WEB_EXPORT: opaque geometry dependencies");
     for(const auto& [key,value]:d.presentation.webPresentation.visibility)if(!webLayerVisibilityKey(key))throw std::invalid_argument("UNSUPPORTED_WEB_EXPORT: layerVisibility/"+key);
     for(const auto& [key,value]:d.presentation.webPresentation.hiddenItems)if(!webItemVisibilityKey(key))throw std::invalid_argument("UNSUPPORTED_WEB_EXPORT: itemVisibility/"+key);
     for(const auto& [owner,symbol]:d.symbols)
@@ -642,7 +744,11 @@ QByteArray encodeWeb(const ProjectSnapshot& snapshot) {
         if(!u.baseName.empty()||!u.nameExplicit)metadata.object["nameSource"]=object({{"baseName",V::str(u.baseName)},{"nameExplicit",V::boolean(u.nameExplicit)}});if(u.libraryOrigin)metadata.object["libraryOrigin"]=libraryOriginValue(*u.libraryOrigin);
         const auto& style=d.presentation.objectStyles.at(owner);require(style.opacity==1,"UNSUPPORTED_WEB_EXPORT: native entity opacity");V color=V::obj();if(style.explicitColor)color.object["color"]=colorValue(style.color);
         units.array.push_back(object({{"type",V::str("Feature")},{"id",V::str(u.id)},{"geometry",V{}},{"properties",object({{"schemaVersion",V::num(5)},{"entityKind",V::str(u.kind==UnitKind::General?"general":"regional")},{"name",V::str(u.name)},{"notes",V::str(u.notes)},{"locked",V::boolean(u.locked)},{"style",color},{"metadata",metadata},{"sourceFolderId",V::str(u.sourceFolderId)},{"sourceLibraryId",V::str(u.sourceLibraryId)},{"sourceGeometryVersion",V::str(u.sourceGeometryVersion)}})}}));}
-    for(const auto& [ref,shape]:d.geometries.versions())archive.array.push_back(object({{"id",V::str(ref.id)},{"version",V::num(ref.version)},{"geojson",geometryValue(*shape)}}));
+    for(const auto& [ref,shape]:d.geometries.versions()) {
+        const auto allocation=d.geometryProvenance.inlineAllocations.find(ref);
+        if(allocation!=d.geometryProvenance.inlineAllocations.end()&&!allocation->second.promoted)continue;
+        archive.array.push_back(object({{"id",V::str(ref.id)},{"version",V::num(ref.version)},{"geojson",geometryValue(*shape)}}));
+    }
     for(const auto& label:d.labels){const auto shape=d.geometries.get(label.geometry);require(shape&&shape->type=="Point","INVALID_LABEL_GEOMETRY");labels.array.push_back(object({{"id",V::str(label.id)},{"name",V::str(label.name)},{"kind",V::str(label.kind)},{"notes",V::str(label.notes)},{"coordinates",pointValue(shape->points.at(0))},{"territorialUnitId",V::str(label.territory?label.territory->id:"")},{"source",webSourceValue(label.source)}}));}
     auto feature=[&](const auto& value,V props){return object({{"type",V::str("Feature")},{"id",V::str(value.id)},{"geometry",geometryValue(*d.geometries.get(value.geometry))},{"properties",props}});};
     for(const auto& value:d.genericFeatures){require(value.fallbackOnly,"UNSUPPORTED_WEB_EXPORT: generic direct creation");generic.array.push_back(feature(value,object({{"schemaVersion",V::num(2)},{"name",V::str(value.name)},{"notes",V::str(value.notes)},{"color",colorValue(value.color)},{"locked",V::boolean(value.locked)},{"source",webSourceValue(value.source)}})));}
@@ -664,6 +770,13 @@ QByteArray encodeWeb(const ProjectSnapshot& snapshot) {
     };
     requirePreservedInlineRefs(d.labels,restored.labels);requirePreservedInlineRefs(d.hydro,restored.hydro);
     requirePreservedInlineRefs(d.genericFeatures,restored.genericFeatures);requirePreservedInlineRefs(d.distributionEntries,restored.distributionEntries);
+    for(const auto& ref:restored.geometryProvenance.originalArchive) {
+        const auto before=d.geometries.get(ref),after=restored.geometries.get(ref);
+        require(before&&after&&geometryValue(*before).encode()==geometryValue(*after).encode(),
+                "UNSUPPORTED_WEB_EXPORT: semantic geometry archive loss");
+    }
+    require(restored.geometryProvenance.originalArchive.size()==archive.array.size(),
+            "UNSUPPORTED_WEB_EXPORT: semantic geometry archive loss");
     return bytes;
 }
 

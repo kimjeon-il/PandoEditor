@@ -1180,6 +1180,7 @@ PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const Com
         }
         checkEffects(project,candidate,request);
         normalizePresentation(candidate);
+        reconcileGeometryProvenance(project.document(),candidate);
         // Full candidate validation and all derived allocations precede preview.
         std::shared_ptr<const detail::DocumentState> after;
         try { after=std::make_shared<const detail::DocumentState>(std::move(candidate)); }
@@ -1282,7 +1283,7 @@ CommandResult CommandProcessor::confirm(Project& project,CommandPreview& preview
 bool semanticallyEqual(const ProjectDocument& a,const ProjectDocument& b)
 {
     if(&a==&b) return true;
-    return a.documentId==b.documentId && a.exchangeMetadata==b.exchangeMetadata && sameContent(a,b) &&
+    return a.documentId==b.documentId && a.exchangeMetadata==b.exchangeMetadata && a.geometryProvenance==b.geometryProvenance && sameContent(a,b) &&
         same(a.units,b.units,[](const auto& x,const auto& y) {
             return x.id==y.id && x.name==y.name && x.baseName==y.baseName && x.nameExplicit==y.nameExplicit && x.notes==y.notes && x.kind==y.kind &&
                 x.locked==y.locked && x.libraryOrigin==y.libraryOrigin && x.metadata==y.metadata &&

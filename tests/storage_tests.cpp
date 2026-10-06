@@ -128,9 +128,9 @@ private slots:
         QFile file(path); QVERIFY(file.open(QIODevice::WriteOnly)); file.write(original); file.close();
         EditorController editor; QVERIFY(editor.openFile(QUrl::fromLocalFile(path)));
         QCOMPARE(readFile(path),original); QVERIFY(!editor.dirty());
-        QVERIFY(editor.documentNotice().contains("Qt v9"));
+        QVERIFY(editor.documentNotice().contains("Qt v10"));
         QVERIFY(editor.saveFile(QUrl::fromLocalFile(path)));
-        QCOMPARE(QJsonDocument::fromJson(readFile(path)).object()["version"].toInt(),9);
+        QCOMPARE(QJsonDocument::fromJson(readFile(path)).object()["version"].toInt(),10);
         auto extended=original; extended.insert(extended.indexOf('{')+1,"\"future\":{\"x\":true},");
         QVERIFY(file.open(QIODevice::WriteOnly)); file.write(extended); file.close();
         editor.selectCountry("DEU");editor.setNameDraft("safe name");editor.setColorDraft("#123456");
