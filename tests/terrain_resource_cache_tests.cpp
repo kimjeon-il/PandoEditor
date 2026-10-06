@@ -19,6 +19,28 @@ private slots:
   QCOMPARE(state.publish({c},true),QVariantList{c});
  }
 
+ void replacedSourceReleasesOldProtectionAndPending(){
+  QTemporaryDir dir;QVERIFY(dir.isValid());QDir(dir.path()).mkpath("terrain/v0.12.6/0");
+  QImage tile(16,16,QImage::Format_ARGB32);tile.fill(QColor(240,60,20));
+  QVERIFY(tile.save(dir.path()+"/terrain/v0.12.6/0/0-0.webp","webp"));
+  QJsonArray levels;for(int i=0;i<5;++i)levels.append(QJsonObject{{"id",i},{"width",1024},{"height",1024},{"columns",1},{"rows",1},{"tileSize",1024}});
+  const auto manifest=QJsonDocument(QJsonObject{{"version","0.12.6"},{"crs","EPSG:4326"},{"tileFormat","lossless WebP RGBA"},{"gutter",1},{"levels",levels}}).toJson();
+  auto old=std::make_shared<TerrainTileProvider>(manifest,dir.path());
+  auto next=std::make_shared<TerrainTileProvider>(manifest,dir.path());
+  TerrainImageBridge bridge;bridge.setSource(old);
+  TerrainTileSpec resident;resident.path=dir.path()+"/terrain/v0.12.6/0/0-0.webp";
+  old->protectVisible({resident});QVERIFY(!old->loadTile(resident).isNull());
+  old->setCacheBudget(0);QVERIFY(old->resourceCacheSnapshot().protectedBytes>0);
+  TerrainTileSpec pending;pending.level=1;pending.path=dir.path()+"/terrain/v0.12.6/1/0-0.webp";
+  old->protectVisible({pending});QCOMPARE(old->resourceCacheSnapshot().pendingCount,std::size_t(1));
+  const auto epoch=bridge.sourceEpoch();bridge.setSource(next);
+  QCOMPARE(bridge.sourceEpoch(),epoch+1);
+  QCOMPARE(old->resourceCacheSnapshot().pendingCount,std::size_t(0));
+  QCOMPARE(old->resourceCacheSnapshot().protectedBytes,std::size_t(0));
+  QCOMPARE(old->cachedBytes(),std::size_t(0));
+  QCOMPARE(next->resourceCacheSnapshot().pendingCount,std::size_t(0));
+ }
+
  void sharedVariantsAndSoftProtection(){
   QTemporaryDir dir;QVERIFY(dir.isValid());QDir(dir.path()).mkpath("terrain/v0.12.6/0");
   QImage tile(16,16,QImage::Format_ARGB32);tile.fill(QColor(240,60,20));
@@ -31,6 +53,8 @@ private slots:
   QCOMPARE(qRed(gray.pixel(0,0)),qGreen(gray.pixel(0,0)));QVERIFY(qRed(color.pixel(0,0))!=qGreen(color.pixel(0,0)));
   QCOMPARE(provider.resourceCacheSnapshot().residentCount,std::size_t(2));
   TerrainImageBridge bridge;bridge.setSource(owned);
+  const auto sourceEpoch=bridge.sourceEpoch();QSignalSpy sourceChanges(&bridge,&TerrainImageBridge::sourceChanged);
+  bridge.setSource(owned);QCOMPARE(bridge.sourceEpoch(),sourceEpoch);QCOMPARE(sourceChanges.count(),0);
   const auto hits=provider.resourceCacheSnapshot().hitCount;
   GeographicImageItem first,wrapped;first.setTerrainBridge(&bridge);wrapped.setTerrainBridge(&bridge);
   first.setTerrainTile({{"level",0},{"column",0},{"row",0}});

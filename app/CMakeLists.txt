@@ -72,6 +72,9 @@ add_library(pandoeditor_editor STATIC
     ../renderer/canonicalpacket.cpp ../renderer/canonicalpacket.h
     ../renderer/countrymesh.cpp ../renderer/countrymesh.h
     ../renderer/terrainprovider.cpp ../renderer/terrainprovider.h
+    ../renderer/terrainrendercontract.cpp ../renderer/terrainrendercontract.h
+    ../renderer/terrainlandmaskitem.cpp ../renderer/terrainlandmaskitem.h
+    ../renderer/scenegraph/terrainmaterial.cpp ../renderer/scenegraph/terrainmaterial.h
     ../renderer/uploadscheduler.cpp ../renderer/uploadscheduler.h
     ../renderer/maprenderitem.cpp ../renderer/maprenderitem.h
     ../renderer/geographicimagemesh.cpp ../renderer/geographicimagemesh.h
@@ -91,7 +94,14 @@ qt_add_shaders(pandoeditor_editor m73_map_shaders
         "${PROJECT_SOURCE_DIR}/renderer/shaders/stroke.vert"
         "${PROJECT_SOURCE_DIR}/renderer/shaders/stroke.frag"
         "${PROJECT_SOURCE_DIR}/renderer/shaders/point.vert"
-        "${PROJECT_SOURCE_DIR}/renderer/shaders/point.frag")
+        "${PROJECT_SOURCE_DIR}/renderer/shaders/point.frag"
+        "${PROJECT_SOURCE_DIR}/renderer/shaders/terrain.vert"
+        "${PROJECT_SOURCE_DIR}/renderer/shaders/terrain.frag")
+qt_add_resources(pandoeditor_editor terrain_dem_metadata
+    PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
+    FILES "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.13.3/manifest.json"
+          "${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-terrain-dem-c3c18d1.json"
+          "${PROJECT_SOURCE_DIR}/assets/world/terrain-dem-provenance-c3c18d1.json")
 qt_add_resources(pandoeditor_editor m4_geometry
     PREFIX "/geometry" BASE "${PROJECT_SOURCE_DIR}/assets/geometry"
     FILES "${PROJECT_SOURCE_DIR}/assets/geometry/polygon-clipping-0.15.7.js"
@@ -202,6 +212,8 @@ if(BUILD_TESTING)
     set_tests_properties(gis_failure_matrix_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     find_package(Python3 COMPONENTS Interpreter QUIET)
     if(Python3_Interpreter_FOUND)
+        add_test(NAME terrain_dem_acquisition_tests
+            COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/test_acquire_terrain_dem.py")
         add_test(NAME m6_gpkg_web_fixture
             COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/m6-gpkg-fixture-oracle.py")
     endif()
@@ -305,6 +317,27 @@ if(BUILD_TESTING)
     add_executable(terrain_resource_cache_tests ../tests/terrain_resource_cache_tests.cpp)
     target_link_libraries(terrain_resource_cache_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME terrain_resource_cache_tests COMMAND terrain_resource_cache_tests)
+    add_executable(terrain_dem_provider_tests ../tests/terrain_dem_provider_tests.cpp
+        ../renderer/terrainprovider.cpp)
+    target_include_directories(terrain_dem_provider_tests PRIVATE ../renderer)
+    target_link_libraries(terrain_dem_provider_tests PRIVATE Pandoeditor::MapEngine Qt6::Gui)
+    add_test(NAME terrain_dem_provider_tests COMMAND terrain_dem_provider_tests
+        "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.13.3/manifest.json")
+    add_executable(terrain_render_contract_tests ../tests/terrain_render_contract_tests.cpp
+        ../renderer/terrainrendercontract.cpp)
+    target_link_libraries(terrain_render_contract_tests PRIVATE Qt6::Test Qt6::Gui)
+    add_test(NAME terrain_render_contract_tests COMMAND terrain_render_contract_tests -o -,txt)
+    add_executable(terrain_gpu_display_tests ../tests/terrain_gpu_display_tests.cpp)
+    target_link_libraries(terrain_gpu_display_tests PRIVATE pandoeditor_editor Qt6::Test Qt6::Quick)
+    qt_add_resources(terrain_gpu_display_tests terrain_gpu_fixture PREFIX "/tests"
+        BASE "${PROJECT_SOURCE_DIR}/tests" FILES "${PROJECT_SOURCE_DIR}/tests/terrain_gpu_display_fixture.qml")
+    option(PANDOEDITOR_REGISTER_TERRAIN_GPU_DISPLAY "Register actual RHI terrain display execution" OFF)
+    if(PANDOEDITOR_REGISTER_TERRAIN_GPU_DISPLAY)
+        add_test(NAME terrain_gpu_display_tests COMMAND terrain_gpu_display_tests
+            "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.13.3/manifest.json" -o -,txt)
+        set_tests_properties(terrain_gpu_display_tests PROPERTIES
+            ENVIRONMENT "PANDOEDITOR_TERRAIN_GPU_DISPLAY=1" LABELS "hardware;terrain-display" TIMEOUT 180)
+    endif()
     add_executable(resource_cache_diagnostics_tests ../tests/resource_cache_diagnostics_tests.cpp)
     target_link_libraries(resource_cache_diagnostics_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME resource_cache_diagnostics_tests COMMAND resource_cache_diagnostics_tests)
@@ -404,6 +437,8 @@ if(BUILD_TESTING)
     add_test(NAME m72_mapprojection_lifetime_tests COMMAND m72_mapprojection_lifetime_tests)
     find_program(PANDOEDITOR_M72_NODE_EXECUTABLE NAMES node)
     if(PANDOEDITOR_M72_NODE_EXECUTABLE)
+        add_test(NAME terrain_dem_source_contract COMMAND "${PANDOEDITOR_M72_NODE_EXECUTABLE}"
+            --test "${PROJECT_SOURCE_DIR}/tools/terrain-dem-contract.test.mjs")
         add_test(NAME m72_packet_corpus
             COMMAND "${CMAKE_COMMAND}" -E env
                 "M72_PACKET_PROBE=$<TARGET_FILE:m72_packet_corpus_probe>"

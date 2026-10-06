@@ -3,6 +3,7 @@
 #include "gpumapitem.h"
 #include "referenceimageitem.h"
 #include "geographicimageitem.h"
+#include "terrainlandmaskitem.h"
 #include "referenceimagelibrary.h"
 #include <QFontDatabase>
 #include <QGuiApplication>
@@ -28,6 +29,7 @@ void registerWindowsFrameType()
     qmlRegisterType<GpuMapItem>("Pandoeditor.Windowing", 1, 0, "GpuMapItem");
     qmlRegisterType<ReferenceImageItem>("Pandoeditor.Windowing", 1, 0, "ReferenceImageItem");
     qmlRegisterType<GeographicImageItem>("Pandoeditor.Windowing", 1, 0, "GeographicImageItem");
+    qmlRegisterType<TerrainLandMaskItem>("Pandoeditor.Windowing", 1, 0, "TerrainLandMaskItem");
     qmlRegisterType<ReferenceImageLibrary>("Pandoeditor.Windowing", 1, 0, "ReferenceImageLibrary");
 }
 

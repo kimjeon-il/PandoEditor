@@ -9,3 +9,13 @@ manifest hashes. The app must never substitute another dataset silently.
 
 The exact blob and SHA-256 identities are in `manifest.json`. See the upstream
 world-map repository's Natural Earth and hydro notices for source attribution.
+
+The optional DEM relief assets are unmodified Git blobs from
+`kimjeon-il/world-map-terrain-v0.13.0@c3c18d167dae2dd9639844e5174dd68f745c6832`.
+Its 0.13.3 manifest and tint accompany 1,280 DEM tiles in `terrain/v0.13.0`.
+The DEM source is NOAA ETOPO 2022; the color tint is Natural Earth raster.
+The exact per-file Git blob IDs, sizes and SHA-256 hashes are recorded in
+`terrain-dem-provenance-c3c18d1.json` and
+`physical-inventory-terrain-dem-c3c18d1.json`. These optional data remain
+separate from the pinned world/hydro inventory. A 1 m encoded height spacing
+is the storage interval, not the accuracy of the original elevation source.

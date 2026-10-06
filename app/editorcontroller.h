@@ -574,7 +574,9 @@ private:
     void ensureHydroBootstrap();
     void requestPhysicalAsset(const QString& relativePath);
     QString physicalAssetPath(const QString& relativePath) const;
+    QString verifiedPhysicalAssetPath(const QString& relativePath) const;
     bool physicalAssetReady(const QString& relativePath) const;
+    std::vector<std::shared_ptr<TerrainTileProvider>> distinctTerrainProviders() const;
     void loadAppearancePreferences();
     bool saveAppearancePreferences() const;
     ScreenColorPicker screenColorPicker_;
@@ -816,6 +818,7 @@ private:
     QString physicalRoot_,physicalError_;
     int physicalActive_=0,physicalQueued_=0;
     std::shared_ptr<TerrainTileProvider> terrainProvider_;
+    std::shared_ptr<TerrainTileProvider> terrainRasterProvider_,terrainDemProvider_;
     std::unique_ptr<TerrainImageBridge> terrainResourceBridge_;
     TerrainDisplayState terrainDisplay_;
     std::weak_ptr<TerrainTileProvider> terrainDisplaySource_;

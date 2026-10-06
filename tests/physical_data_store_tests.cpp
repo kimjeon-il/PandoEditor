@@ -42,7 +42,30 @@ private slots:
     void verifiedDownloadRetryPartPromotionOfflineReuseAndQuarantine();
     void checksumFailureKeepsNoPromotedFileAndCleanupKeepsCurrentVersion();
     void pinnedInventoryAndViewportSelectionAreLazy();
+    void datasetRootsAreIndependentAndStillHashVerified();
+    void pinnedTerrainMetadataSeedsAndRejectsAlteredBytes();
 };
+
+void PhysicalDataStoreTests::pinnedTerrainMetadataSeedsAndRejectsAlteredBytes() {
+    QFile inventoryFile(QStringLiteral(PHYSICAL_INVENTORY));QVERIFY(inventoryFile.open(QIODevice::ReadOnly));
+    const auto inventory=parsePhysicalInventory(inventoryFile.readAll());QVERIFY(inventory.valid());
+    const auto found=std::find_if(inventory.assets.begin(),inventory.assets.end(),[](const auto& asset) {
+        return asset.path=="terrain/v0.12.6/manifest.json";
+    });
+    QVERIFY(found!=inventory.assets.end());
+    QFile manifest(QDir(QFileInfo(QStringLiteral(PHYSICAL_INVENTORY)).absolutePath()).filePath(found->path));
+    QVERIFY(manifest.open(QIODevice::ReadOnly));const auto bytes=manifest.readAll();
+    // Independent immutable c0bd31d Git blob identity, also pinned by WorldDataset.
+    QCOMPARE(bytes.size(),qsizetype(2024));
+    QCOMPARE(hash(bytes),QString("093ae0f088622e2867cad5f318749c47e28776a870e6467d00c31ef810d8690f"));
+    QTemporaryDir root;QVERIFY(root.isValid());PhysicalDataStore store(root.path());
+    QVERIFY(store.installVerified(*found,bytes));
+    QVERIFY(!store.resolveExisting(*found).isEmpty());
+    auto altered=bytes;altered[0]='!';
+    QVERIFY(!store.installVerified(*found,altered));
+    QFile preserved(store.resolveExisting(*found));QVERIFY(preserved.open(QIODevice::ReadOnly));
+    QCOMPARE(preserved.readAll(),bytes);
+}
 
 void PhysicalDataStoreTests::inventoryRejectsEscapesAndParsesIdentity() {
         const auto good=parsePhysicalInventory(R"({"schema":"pandoeditor-physical-inventory","version":1,"dataset":"terrain","datasetVersion":"v1","baseUrl":"https://example.invalid/data/","assets":[{"path":"0/0-0.webp","bytes":3,"sha256":"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"}]})");
@@ -82,6 +105,32 @@ void PhysicalDataStoreTests::checksumFailureKeepsNoPromotedFileAndCleanupKeepsCu
         QVERIFY(store.cleanupVersions("terrain","v2"));
         QVERIFY(!QDir(QDir(dir.path()).filePath("terrain/v1")).exists());
         QVERIFY(QDir(QDir(dir.path()).filePath("terrain/v2")).exists());
+}
+void PhysicalDataStoreTests::datasetRootsAreIndependentAndStillHashVerified() {
+    QTemporaryDir cache,world,dem;QVERIFY(cache.isValid());QVERIFY(world.isValid());QVERIFY(dem.isValid());
+    const QByteArray bytes="independently verified data";
+    PhysicalAssetSpec terrain{"terrain-dem","c3c18d1","terrain/v0.13.0/0/0-0.webp",bytes.size(),hash(bytes),QUrl("https://example.invalid/tile")};
+    auto hydro=terrain;hydro.dataset="world";hydro.version="c0bd31d1";hydro.path="hydro/v0.13.0/shards/s0.bin";
+    const auto put=[&](const QString& root,const PhysicalAssetSpec& asset,const QByteArray& value) {
+        const auto path=QDir(root).filePath(asset.dataset+'/'+asset.version+'/'+asset.path);
+        if(!QDir().mkpath(QFileInfo(path).absolutePath()))return QString();
+        QFile file(path);if(!file.open(QIODevice::WriteOnly)||file.write(value)!=value.size())return QString();
+        return path;
+    };
+    const auto terrainPath=put(dem.path(),terrain,bytes),hydroPath=put(world.path(),hydro,bytes);
+    QVERIFY(!terrainPath.isEmpty());QVERIFY(!hydroPath.isEmpty());
+    PhysicalDataStore store(cache.path());store.setExternalRoot(world.path());
+    store.setExternalDatasetRoot("terrain-dem",dem.path());
+    QCOMPARE(store.resolveExisting(terrain),terrainPath);QCOMPARE(store.resolveExisting(hydro),hydroPath);
+    QVERIFY(store.installVerified(terrain,bytes));
+    QCOMPARE(put(dem.path(),terrain,QByteArray(bytes.size(),'x')),terrainPath);
+    QCOMPARE(store.resolveExisting(terrain),store.cachePath(terrain));
+    QFile preserved(terrainPath);QVERIFY(preserved.open(QIODevice::ReadOnly));
+    QCOMPARE(preserved.readAll(),QByteArray(bytes.size(),'x')); // External corrupt bytes remain untouched.
+    preserved.close();
+    QVERIFY(QFile::remove(store.cachePath(terrain)));QVERIFY(store.resolveExisting(terrain).isEmpty());
+    QCOMPARE(store.resolveExisting(hydro),hydroPath);
+    store.setExternalDatasetRoot("terrain-dem",{});QVERIFY(store.resolveExisting(terrain).isEmpty());
 }
 void PhysicalDataStoreTests::pinnedInventoryAndViewportSelectionAreLazy() {
     QFile inventoryFile(QStringLiteral(PHYSICAL_INVENTORY));QVERIFY(inventoryFile.open(QIODevice::ReadOnly));

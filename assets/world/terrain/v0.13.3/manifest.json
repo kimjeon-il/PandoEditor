@@ -1,0 +1,141 @@
+{
+  "version": "0.13.3",
+  "representation": "dem-relief-v1",
+  "dataset": "ETOPO 2022 30 arc-second Ice Surface",
+  "crs": "EPSG:4326",
+  "heightDatum": "EGM2008 (EPSG:3855)",
+  "sourceCrs": "EPSG:9518",
+  "extent": [
+    -180,
+    -90,
+    180,
+    90
+  ],
+  "registration": "cell-center",
+  "sourceGridOrigin": [
+    -180,
+    90
+  ],
+  "sourceResolutionDegrees": [
+    0.008333333333333333,
+    0.008333333333333333
+  ],
+  "tileFormat": "lossless WebP RGBA",
+  "channels": {
+    "r": "encoded elevation high byte",
+    "g": "encoded elevation low byte",
+    "b": "precomputed hillshade",
+    "a": "255"
+  },
+  "elevation": {
+    "encode": "round(meters)+12000",
+    "decode": "R*256+G-12000",
+    "biasMeters": 12000,
+    "spacingMeters": 1,
+    "validEncodedRange": [
+      0,
+      65535
+    ]
+  },
+  "shade": {
+    "azimuthDegrees": 315,
+    "altitudeDegrees": 45,
+    "ambient": 0.42,
+    "diffuse": 0.58,
+    "polarFallbackDegrees": 89.5,
+    "quantizationStep": 4
+  },
+  "gutter": 1,
+  "tileSize": 1024,
+  "levels": [
+    {
+      "id": 0,
+      "width": 1350,
+      "height": 675,
+      "columns": 2,
+      "rows": 1,
+      "tileSize": 1024
+    },
+    {
+      "id": 1,
+      "width": 2700,
+      "height": 1350,
+      "columns": 3,
+      "rows": 2,
+      "tileSize": 1024
+    },
+    {
+      "id": 2,
+      "width": 5400,
+      "height": 2700,
+      "columns": 6,
+      "rows": 3,
+      "tileSize": 1024
+    },
+    {
+      "id": 3,
+      "width": 10800,
+      "height": 5400,
+      "columns": 11,
+      "rows": 6,
+      "tileSize": 1024
+    },
+    {
+      "id": 4,
+      "width": 21600,
+      "height": 10800,
+      "columns": 22,
+      "rows": 11,
+      "tileSize": 1024
+    },
+    {
+      "id": 5,
+      "width": 43200,
+      "height": 21600,
+      "columns": 43,
+      "rows": 22,
+      "tileSize": 1024
+    }
+  ],
+  "urlTemplate": "https://kimjeon-il.github.io/world-map-terrain-v0.13.0/terrain/v0.13.0/{level}/{column}-{row}.webp",
+  "tint": {
+    "algorithm": "canonical-land-average-nearest-fill-v2",
+    "validCells": 2842697,
+    "regionalFillCells": 5545911,
+    "sourceEntry": "HYP_HR/HYP_HR.tif",
+    "iceSourceSha256": "04fd2303d5f0ece2cf482af19d06731d745db9690501d7b0a2a4b7fe23a7726f",
+    "landMaskSourceSha256": "7a70ea46df0511c30701863c2f9d30dea5b2731f4f46e0e0a5d236945d52b797",
+    "url": "https://kimjeon-il.github.io/world-map-terrain-v0.13.0/terrain/v0.13.3/tint.webp",
+    "width": 4096,
+    "height": 2048,
+    "sha256": "1ae4c70e05494917c11d3c6b32869db61bf4f9e7e4b0239f9b4bd2b9bec582f3"
+  },
+  "sources": [
+    {
+      "url": "https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/30s/30s_surface_elev_gtif/ETOPO_2022_v1_30s_N90W180_surface.tif",
+      "sha256": "8630abc401cc6bdd30b507a68d3eb9eda5b65f5636f7199e4b1eefd476b5a9e2",
+      "bytes": 1585813987,
+      "nodata": -99999,
+      "dtype": "float32",
+      "width": 43200,
+      "height": 21600
+    },
+    {
+      "url": "https://naturalearth.s3.amazonaws.com/10m_raster/HYP_HR.zip",
+      "sha256": "29ba984a14d96c3d745065b096eccf0a21207718d8549341c955c64b150e3e09",
+      "bytes": 87235359
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/693f11422f4e08d2da4566b854dda53eb7c39fb3/geojson/ne_10m_glaciated_areas.geojson",
+      "sha256": "04fd2303d5f0ece2cf482af19d06731d745db9690501d7b0a2a4b7fe23a7726f",
+      "bytes": 5876193
+    },
+    {
+      "role": "canonical-country-land-mask",
+      "path": "countries-ne-5.1.1.geojson",
+      "sha256": "7a70ea46df0511c30701863c2f9d30dea5b2731f4f46e0e0a5d236945d52b797",
+      "bytes": 12415784
+    }
+  ],
+  "assetsSha256": "622a6d272bdda6b507a1f4ba49794fe9ef41aca06f29d8b38e24114caa50d023"
+}

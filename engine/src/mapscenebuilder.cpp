@@ -341,6 +341,63 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             scene->worldCountries.push_back(std::move(base));
         }
     }
+    // Prepare physical ownership before paint visibility removes any packets.
+    // A removed/replaced/Regional owner must never expose its old base mesh slot.
+    auto land=std::make_shared<PhysicalLandMaskPacket>();land->worldBase=worldBase_;
+    std::set<std::string> immutableLandOwners;
+    if(worldBase_&&worldBase_->mesh) {
+        for(std::size_t slot=0;slot<worldBase_->ranges.size();++slot) {
+            const auto& range=worldBase_->ranges[slot];
+            if(worldBase_->startupPreview()) {land->baseSlots.push_back(slot);continue;}
+            const auto unit=std::find_if(doc.units.begin(),doc.units.end(),
+                [&](const auto& value){return value.id==range.ownerId;});
+            if(unit!=doc.units.end()&&unit->kind==UnitKind::General&&
+               staticGeometryBinding(doc,unit->id).geometryRef==GeometryRef{range.geometryId,1}) {
+                land->baseSlots.push_back(slot);immutableLandOwners.insert(unit->id);
+            }
+        }
+    }
+    for(const auto& unit:doc.units) {
+        if(unit.kind!=UnitKind::General||immutableLandOwners.count(unit.id))continue;
+        const auto object=territorialRef(unit.id);
+        const auto ref=staticGeometryBinding(doc,unit.id).geometryRef;
+        const auto shape=doc.geometries.get(ref);
+        if(!shape)throw std::invalid_argument("land mask has dangling geometry ref");
+        if(!polygon(*shape))continue;
+        PolygonDrawPacket packet;packet.key="physical-land:"+unit.id;
+        packet.object=object;packet.geometry=ref;packet.geometryRevision=ref.version;
+        packet.lod=int(RenderLod::High);packet.preparationPolicy=ProjectionPreparationPolicy::Geographic;
+        const PolygonDrawPacket* retained=nullptr;
+        if(previous&&previous->physicalLandMask&&
+           (!geometryChanged||!geometryChanged->count(object))) {
+            const auto& old=previous->physicalLandMask->polygons;
+            const auto found=std::find_if(old.begin(),old.end(),[&](const auto& value) {
+                return value.object==object&&value.geometry==ref;
+            });
+            if(found!=old.end())retained=&*found;
+        }
+        if(retained)packet.geometryPacket=retained->geometryPacket;
+        else {
+            markGeometryWork();
+            packet.geometryPacket=cache_.polygon(object,ref,*shape,packet.lod,packet.preparationPolicy);
+        }
+        land->polygons.push_back(std::move(packet));
+    }
+    const auto sameLand=[&] {
+        if(!previous||!previous->physicalLandMask)return false;
+        const auto& old=*previous->physicalLandMask;
+        if(old.worldBase!=land->worldBase||old.baseSlots!=land->baseSlots||
+           old.polygons.size()!=land->polygons.size())return false;
+        for(std::size_t i=0;i<land->polygons.size();++i) {
+            const auto& a=old.polygons[i];const auto& b=land->polygons[i];
+            if(a.object!=b.object||!(a.geometry==b.geometry)||
+               a.geometryPacket.positions!=b.geometryPacket.positions||
+               a.geometryPacket.indices!=b.geometryPacket.indices||
+               a.geometryPacket.globeIndices!=b.geometryPacket.globeIndices)return false;
+        }
+        return true;
+    };
+    scene->physicalLandMask=sameLand()?previous->physicalLandMask:std::move(land);
     if(changed)appendUnchangedScenePackets(*scene,*previous,*changed);
     auto add=[&](const ObjectRef& object,std::uint32_t color,double opacity=1) {
         if(changed&&!changed->count(object))return;
@@ -377,7 +434,14 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             draw.drawOrder=mapRenderOrder(doc,object,RenderPrimitiveRole::Fill);
             draw.order=orderValue(draw.drawOrder);
             if(const auto old=previous?retained(previous->polygons):nullptr)draw.geometryPacket=old->geometryPacket;
-            else {markGeometryWork();draw.geometryPacket=cache_.polygon(object,*ref,*shape,lod,preparation);}
+            else {
+                const auto& physical=scene->physicalLandMask->polygons;
+                const auto prepared=std::find_if(physical.begin(),physical.end(),[&](const auto& value) {
+                    return value.object==object&&value.geometry==*ref;
+                });
+                if(prepared!=physical.end())draw.geometryPacket=prepared->geometryPacket;
+                else {markGeometryWork();draw.geometryPacket=cache_.polygon(object,*ref,*shape,lod,preparation);}
+            }
             const auto index=scene->polygons.size();scene->polygons.push_back(std::move(draw));
             scene->drawSequence.push_back({PrimitiveKind::Polygon,index,scene->polygons.back().drawOrder,layerOrder,layerOpacity});
             bool boundary=true;
@@ -540,6 +604,17 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             return rank(a)<rank(b);
         });
     std::uint64_t geometry=basis,presentation=basis,selection=basis,dataset=basis;
+    // Hidden geometry and classification still change the physical scene.
+    // Keep this reproducible across independent full/delta preparations; the
+    // shared packet address separately authenticates retained render resources.
+    mix(geometry,std::string("physical-land"));
+    mix(geometry,scene->physicalLandMask->baseSlots.size());
+    for(const auto slot:scene->physicalLandMask->baseSlots)mix(geometry,slot);
+    mix(geometry,scene->physicalLandMask->polygons.size());
+    for(const auto& landPolygon:scene->physicalLandMask->polygons) {
+        mix(geometry,landPolygon.object.domain);mix(geometry,landPolygon.object.id);
+        mix(geometry,landPolygon.geometry.id);mix(geometry,landPolygon.geometry.version);
+    }
     mix(geometry,static_cast<std::uint64_t>(quality_.backgroundLod));
     mix(geometry,static_cast<std::uint64_t>(view.mode));
     // Immutable resource identity remains significant when numeric revisions coincide.

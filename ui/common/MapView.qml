@@ -108,6 +108,30 @@ Rectangle {
         // terrain and reference images to preserve destination-color blending.
         layer.enabled: gpuMapRenderer.rendererReady
         Rectangle { anchors.fill: parent; color: view.color; z: -1 }
+        TerrainLandMaskItem {
+            id: physicalLandMask
+            objectName: "physicalLandMask"
+            anchors.fill: parent
+            sceneBridge: editor.mapSceneBridge
+            textureSource: physicalLandTexture
+            originX: view.originX; originY: view.originY; mapScale: view.mapScale
+            mapCosLatitude: editor.hydroProjection.cosLatitude
+            mapMinX: editor.hydroProjection.minX
+            mapMaxLatitude: editor.hydroProjection.maxLatitude
+        }
+        ShaderEffectSource {
+            id: physicalLandTexture
+            objectName: "physicalLandTexture"
+            // No display node: terrain's render-thread consumer updates this
+            // offscreen pass before sampling the current physical geometry.
+            width: 0; height: 0
+            sourceItem: physicalLandMask
+            sourceRect: Qt.rect(0, 0, view.width, view.height)
+            textureSize: Qt.size(Math.ceil(view.width * Screen.devicePixelRatio),
+                                 Math.ceil(view.height * Screen.devicePixelRatio))
+            hideSource: true
+            live: true; smooth: false; mipmap: false; recursive: false
+        }
     Repeater {
         model: editor.terrainTiles
         delegate: GeographicImageItem {
@@ -115,6 +139,7 @@ Rectangle {
             anchors.fill: parent
             sceneBridge: editor.mapSceneBridge
             terrainBridge: editor.terrainResourceBridge
+            landMaskSource: physicalLandMask
             terrainTile: ({level: modelData.level, column: modelData.column, row: modelData.row})
             smooth: true
             west: modelData.west; east: modelData.east

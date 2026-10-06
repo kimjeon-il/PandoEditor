@@ -61,6 +61,8 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     }
     terrainResourceBridge_=std::make_unique<TerrainImageBridge>(this);
     connect(this,&EditorController::terrainChanged,this,[this]{terrainResourceBridge_->setSource(terrainProvider_);});
+    connect(terrainResourceBridge_.get(),&TerrainImageBridge::displayBackingChanged,
+        this,&EditorController::renderQualityChanged);
     QFile anchorFile(QStringLiteral(":/world/country-label-anchors-v0.10.1.json"));
     labelAnchors_=std::make_unique<CountryLabelAnchors>(
         anchorFile.open(QIODevice::ReadOnly)?anchorFile.readAll():QByteArray{},this);
@@ -264,21 +266,33 @@ void EditorController::noteAppliedImpact(const pandoeditor::ChangeImpact& impact
 }
 
 void EditorController::initializePhysicalData() {
-    QFile inventoryFile(QStringLiteral(":/world/physical-inventory-c0bd31d1.json"));
+    QFile inventoryFile(QDir(worldDataRoot_).filePath("physical-inventory-c0bd31d1.json"));
     if(!inventoryFile.open(QIODevice::ReadOnly))return;
     const auto inventory=parsePhysicalInventory(inventoryFile.readAll());
     if(!inventory.valid()){physicalError_=inventory.error;return;}
     physicalStore_=std::make_unique<PhysicalDataStore>(QString(),3,2,this);
     physicalStore_->setExternalRoot(qEnvironmentVariable("PANDOEDITOR_WORLD_DATA_ROOT"));
+    physicalStore_->setExternalDatasetRoot("terrain-dem",qEnvironmentVariable("PANDOEDITOR_TERRAIN_DEM_DATA_ROOT"));
     physicalStore_->cleanupVersions(inventory.dataset,inventory.version);
     physicalRoot_=QDir(physicalStore_->root()).filePath(inventory.dataset+'/'+inventory.version);
     for(const auto& asset:inventory.assets)physicalAssets_.insert(asset.path,asset);
+    QFile demInventoryFile(QStringLiteral(":/world/physical-inventory-terrain-dem-c3c18d1.json"));
+    if(demInventoryFile.open(QIODevice::ReadOnly)) {
+        const auto dem=parsePhysicalInventory(demInventoryFile.readAll());
+        if(dem.valid()&&dem.dataset=="terrain-dem"&&dem.version=="c3c18d1"&&dem.assets.size()==1282) {
+            for(const auto& asset:dem.assets) {
+                if(physicalAssets_.contains(asset.path)){physicalError_="physical dataset path collision";return;}
+                physicalAssets_.insert(asset.path,asset);
+            }
+        } else physicalError_=dem.valid()?QStringLiteral("DEM inventory identity mismatch"):dem.error;
+    }
     const auto seed=[this](const QString& relative,const QString& resource) {
         const auto found=physicalAssets_.constFind(relative);if(found==physicalAssets_.cend())return;
         QFile file(resource);if(file.open(QIODevice::ReadOnly))physicalStore_->installVerified(*found,file.readAll());
     };
-    seed("terrain/v0.12.6/manifest.json",":/world/terrain/v0.12.6/manifest.json");
-    seed("hydro/v0.13.1/manifest.json",":/world/hydro/v0.13.1/manifest.json");
+    seed("terrain/v0.12.6/manifest.json",QDir(worldDataRoot_).filePath("terrain/v0.12.6/manifest.json"));
+    seed("hydro/v0.13.1/manifest.json",QDir(worldDataRoot_).filePath("hydro/v0.13.1/manifest.json"));
+    seed("terrain/v0.13.3/manifest.json",":/world/terrain/v0.13.3/manifest.json");
     connect(physicalStore_.get(),&PhysicalDataStore::activityChanged,this,[this](int active,int queued) {
         physicalActive_=active;physicalQueued_=queued;emit terrainChanged();emit stateChanged();
     });
@@ -304,8 +318,11 @@ QString EditorController::physicalAssetPath(const QString& relativePath) const {
     return existing.isEmpty()?physicalStore_->cachePath(*found):existing;
 }
 bool EditorController::physicalAssetReady(const QString& relativePath) const {
-    if(!physicalStore_)return false;const auto found=physicalAssets_.constFind(relativePath);
-    return found!=physicalAssets_.cend()&&!physicalStore_->resolveExisting(*found).isEmpty();
+    return !verifiedPhysicalAssetPath(relativePath).isEmpty();
+}
+QString EditorController::verifiedPhysicalAssetPath(const QString& relativePath) const {
+    if(!physicalStore_)return {};const auto found=physicalAssets_.constFind(relativePath);
+    return found!=physicalAssets_.cend()?physicalStore_->resolveExisting(*found):QString{};
 }
 void EditorController::requestPhysicalAsset(const QString& relativePath) {
     if(!physicalStore_)return;
@@ -339,9 +356,56 @@ void EditorController::scheduleDerivedLabelAnchor(const pandoeditor::ObjectRef& 
     if(geometry)labelAnchors_->recompute(text(owner.id),*geometry,binding);
     else labelAnchors_->invalidateOwner(text(owner.id));
 }
+std::vector<std::shared_ptr<TerrainTileProvider>> EditorController::distinctTerrainProviders() const {
+    std::vector<std::shared_ptr<TerrainTileProvider>> result;
+    std::set<const TerrainTileProvider*> seen;
+    for(const auto& source:{terrainProvider_,terrainRasterProvider_,terrainDemProvider_})
+        if(source&&seen.insert(source.get()).second)result.push_back(source);
+    return result;
+}
 QVariantMap EditorController::renderQuality() const {
     resourceCoordinator_.setDomain("geometry",packetCache_.resourceCacheSnapshot());
-    resourceCoordinator_.setDomain("terrain",terrainProvider_?terrainProvider_->resourceCacheSnapshot():pandoeditor::ResourceCacheSnapshot{},"bounded",{{"assetPending",terrainAssetPending_},{"pendingKind","requested payloads not yet decoded"}});
+    pandoeditor::ResourceCacheSnapshot terrainCache;
+    terrainCache.scopeEpoch=0; // Each independent provider's epoch is reported below.
+    terrainCache.retiredBytes=0;
+    QVariantList terrainSources;
+    for(const auto& source:distinctTerrainProviders()) {
+        const auto cache=source->resourceCacheSnapshot();
+        terrainCache.budgetBytes+=cache.budgetBytes;
+        terrainCache.residentCount+=cache.residentCount;terrainCache.residentBytes+=cache.residentBytes;
+        terrainCache.activeBytes+=cache.activeBytes;terrainCache.protectedBytes+=cache.protectedBytes;
+        if(terrainCache.retiredBytes&&cache.retiredBytes)*terrainCache.retiredBytes+=*cache.retiredBytes;
+        else terrainCache.retiredBytes.reset();
+        terrainCache.pendingCount+=cache.pendingCount;
+        terrainCache.pendingEstimatedBytes+=cache.pendingEstimatedBytes;
+        terrainCache.pendingUnknownCount+=cache.pendingUnknownCount;
+        terrainCache.evictableBytes+=cache.evictableBytes;
+        // Spare capacity in one cache cannot relieve pressure in another cache.
+        terrainCache.overBudgetBytes+=cache.overBudgetBytes;
+        terrainCache.protectedOverBudgetBytes+=cache.protectedOverBudgetBytes;
+        terrainCache.hitCount+=cache.hitCount;terrainCache.missCount+=cache.missCount;
+        terrainCache.evictionCount+=cache.evictionCount;terrainCache.evictionBytes+=cache.evictionBytes;
+        terrainCache.invalidationCount+=cache.invalidationCount;
+        terrainCache.staleCompletionCount+=cache.staleCompletionCount;
+        terrainCache.failureCount+=cache.failureCount;terrainCache.trimBlockedCount+=cache.trimBlockedCount;
+        for(std::size_t i=0;i<terrainCache.protectionCounts.size();++i)
+            terrainCache.protectionCounts[i]+=cache.protectionCounts[i];
+        ResourceCacheCoordinator sourceDiagnostics;
+        sourceDiagnostics.setDomain("source",cache,"bounded",{
+            {"representation",source->isDem()?"dem-relief-v1":"raster"},
+            {"version",source->manifestVersion()},{"active",source==terrainProvider_},
+            {"rasterSource",source==terrainRasterProvider_},{"demSource",source==terrainDemProvider_}});
+        terrainSources.append(sourceDiagnostics.snapshot().value("source"));
+    }
+    const auto displayBackingBytes=terrainResourceBridge_?terrainResourceBridge_->displayBackingBytes():0;
+    const auto displayBackingCount=terrainResourceBridge_?terrainResourceBridge_->displayBackingCount():0;
+    resourceCoordinator_.setDomain("terrain",terrainCache,"bounded",{
+        {"budgetScope","per distinct provider"},{"providerCount",terrainSources.size()},
+        {"sources",terrainSources},{"assetPending",terrainAssetPending_},
+        {"pendingKind","requested payloads not yet decoded"},
+        {"displayBackingBytes",qulonglong(displayBackingBytes)},
+        {"displayBackingCount",qulonglong(displayBackingCount)},
+        {"displayBackingScope","Extra GUI raster image storage; separate from raw cache, excludes staging and GPU textures"}});
     resourceCoordinator_.setDomain("hydro",hydroRuntime_.resourceCacheSnapshot(),"bounded",{{"activeFrameBytes",qulonglong(hydroRuntime_.activeFrameBytes())},{"frameBytesAvailable",true}});
     resourceCoordinator_.setDomain("world",worldResources_.snapshot(),worldResources_.compatibilityBudget()?"compatibilityWorkingSet":"bounded");
     auto labels=labelEngine_.resourceCacheSnapshot();QVariantMap labelExtra;
@@ -396,7 +460,12 @@ QVariantMap EditorController::renderQuality() const {
         {"lastEditRetainedGeometries",qulonglong(lastEditRetainedGeometries_)},
         {"lastEditEstimatedNewGeometryBytes",qulonglong(lastEditNewGeometryBytes_)},
         {"terrainCacheBudgetBytes",qulonglong(profile.terrainCacheBudgetBytes)},
-        {"terrainCacheBytes",qulonglong(terrainProvider_?terrainProvider_->cachedBytes():0)},
+        {"terrainCacheBudgetScope","per distinct provider"},
+        {"terrainAggregateCacheBudgetBytes",qulonglong(terrainCache.budgetBytes)},
+        {"terrainCacheProviderCount",terrainSources.size()},
+        {"terrainCacheBytes",qulonglong(terrainCache.residentBytes)},
+        {"terrainDisplayBackingBytes",qulonglong(displayBackingBytes)},
+        {"terrainDisplayBackingCount",qulonglong(displayBackingCount)},
         {"hydroCacheBytes",qulonglong(hydroRuntime_.cachedBytes())},
         {"builtinHydroGpuRevision",qulonglong(builtinHydroRevision_)},
         {"builtinHydroGpuFeatures",qulonglong(builtinHydroScene_?builtinHydroScene_->features.size():0)},
@@ -418,7 +487,7 @@ void EditorController::recordMapFrame(double milliseconds) {
         const auto profile=quality_.profile();
         packetCache_.setBudget(profile.renderPacketCacheBudgetBytes);
         hydroRuntime_.setCacheBudget(profile.hydroCacheBudgetBytes);
-        if(terrainProvider_)terrainProvider_->setCacheBudget(profile.terrainCacheBudgetBytes);
+        for(const auto& source:distinctTerrainProviders())source->setCacheBudget(profile.terrainCacheBudgetBytes);
         invalidateViewportResources(ViewportResourceKind::Labels);
         emit renderQualityChanged();refreshTypedScene();
     }

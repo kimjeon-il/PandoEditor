@@ -2,6 +2,7 @@
 /build*/
 /out/
 /dist/
+__pycache__/
 /*.png
 CMakeUserPresets.json
 

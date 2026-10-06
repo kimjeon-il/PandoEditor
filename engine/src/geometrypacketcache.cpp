@@ -116,6 +116,10 @@ void GeometryPacketCache::setActiveScene(const std::shared_ptr<const RenderScene
     std::map<GeometryPacketCacheKey,const void*> active;
     if(scene) {
         for(const auto& p:scene->polygons)active[{p.object,p.geometry,PrimitiveKind::Polygon,p.lod,p.preparationPolicy}]=p.geometryPacket.positions.get();
+        // Hidden land participates in the physical pass. Identical fill/mask
+        // packets share one key and backing allocation, counted exactly once.
+        if(scene->physicalLandMask)for(const auto& p:scene->physicalLandMask->polygons)
+            active[{p.object,p.geometry,PrimitiveKind::Polygon,p.lod,p.preparationPolicy}]=p.geometryPacket.positions.get();
         for(const auto& p:scene->strokes)active[{p.object,p.geometry,PrimitiveKind::Stroke,p.lod,p.preparationPolicy}]=p.geometryPacket.startsEnds.get();
         for(const auto& p:scene->points)active[{p.object,p.geometry,PrimitiveKind::Point,p.lod,p.preparationPolicy}]=p.geometryPacket.positions.get();
     }

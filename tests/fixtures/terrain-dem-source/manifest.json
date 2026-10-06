@@ -1,0 +1,10 @@
+{
+  "schema": "pandoeditor-fixed-web-source-v1",
+  "sourceRepository": "https://github.com/kimjeon-il/world-map.git",
+  "sourceCommit": "5649c307da24d0965d63bc8c00206aed9b9d3438",
+  "sourcePath": "assets/js/modules/terrain-dem-shaders.js",
+  "file": "terrain-dem-shaders.js",
+  "gitBlob": "aa160eb0b32b19c379f3f75a99bf2fcf70ceac13",
+  "bytes": 4275,
+  "sha256": "00cc3c301c9a31b5e05bb091c9db0568b6ef69292310f7190ad1b724fefb4c85"
+}

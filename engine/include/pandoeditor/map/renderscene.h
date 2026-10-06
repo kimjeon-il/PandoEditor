@@ -50,6 +50,14 @@ struct WorldCountryDraw {
     RenderStyle fill,boundary;
 };
 
+// Physical land ownership is independent of paint visibility, opacity and
+// interaction overlays. Buffers remain geographic and shared with fill packets.
+struct PhysicalLandMaskPacket {
+    std::shared_ptr<const WorldBaseFrame> worldBase;
+    std::vector<std::size_t> baseSlots;
+    std::vector<PolygonDrawPacket> polygons;
+};
+
 struct RenderScene {
     // Shared by interaction copies of one preparation. Current view/culling
     // live in MapFrame, which retains this exact snapshot on camera changes.
@@ -66,6 +74,7 @@ struct RenderScene {
     std::vector<PointDrawPacket> points;
     std::vector<SceneDrawRef> drawSequence;
     std::shared_ptr<const WorldBaseFrame> worldBase;
+    std::shared_ptr<const PhysicalLandMaskPacket> physicalLandMask;
     std::vector<WorldCountryDraw> worldCountries;
     WorldRenderPlan worldPlan;
     InteractionRenderPacket interaction;

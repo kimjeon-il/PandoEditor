@@ -64,6 +64,11 @@ PhysicalDataStore::PhysicalDataStore(QString root,int concurrency,int retries,QO
     :QObject(parent),root_(root.isEmpty()?defaultRoot():QFileInfo(root).absoluteFilePath()),
      maximumConcurrent_(std::max(1,concurrency)),maximumRetries_(std::max(0,retries)) {QDir().mkpath(root_);}
 void PhysicalDataStore::setExternalRoot(QString root) {externalRoot_=root.isEmpty()?QString():QFileInfo(root).absoluteFilePath();}
+void PhysicalDataStore::setExternalDatasetRoot(const QString& dataset,QString root) {
+    if(!segmentPattern.match(dataset).hasMatch())return;
+    if(root.isEmpty())externalDatasetRoots_.remove(dataset);
+    else externalDatasetRoots_.insert(dataset,QFileInfo(root).absoluteFilePath());
+}
 bool PhysicalDataStore::validAsset(const PhysicalAssetSpec& asset) {
     return segmentPattern.match(asset.dataset).hasMatch()&&segmentPattern.match(asset.version).hasMatch()&&
         safePath(asset.path)&&asset.bytes>0&&digestPattern.match(asset.sha256).hasMatch()&&
@@ -75,9 +80,10 @@ QString PhysicalDataStore::cachePath(const PhysicalAssetSpec& asset) const {
     return contained(root_,path)?QDir::cleanPath(path):QString();
 }
 QString PhysicalDataStore::externalPath(const PhysicalAssetSpec& asset) const {
-    if(externalRoot_.isEmpty()||!validAsset(asset))return {};
-    const auto path=QDir(externalRoot_).filePath(asset.dataset+'/'+asset.version+'/'+asset.path);
-    return contained(externalRoot_,path)?QDir::cleanPath(path):QString();
+    const auto root=externalDatasetRoots_.value(asset.dataset,externalRoot_);
+    if(root.isEmpty()||!validAsset(asset))return {};
+    const auto path=QDir(root).filePath(asset.dataset+'/'+asset.version+'/'+asset.path);
+    return contained(root,path)?QDir::cleanPath(path):QString();
 }
 QString PhysicalDataStore::resolveExisting(const PhysicalAssetSpec& asset) const {
     const auto external=externalPath(asset);if(!external.isEmpty()&&verified(external,asset))return external;

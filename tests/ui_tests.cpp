@@ -18,6 +18,8 @@
 #include <functional>
 #include <QFile>
 #include <QDir>
+#include <QStandardPaths>
+#include <QUuid>
 #include <algorithm>
 #include <cmath>
 #ifdef Q_OS_WIN
@@ -526,6 +528,79 @@ private slots:
         window.resize(700,760);QCoreApplication::processEvents();
         QCOMPARE(flag->width(),80.);QCOMPARE(flag->height(),60.);
         window.close();
+    }
+    void terrainSourceCacheLifecycle() {
+        // Windows ignores XDG overrides. A fresh Qt test namespace prevents
+        // physical-data initialization from touching the user's cache.
+        struct TestNamespace {
+            QString applicationName=QCoreApplication::applicationName();
+            bool testMode=QStandardPaths::isTestModeEnabled();
+            TestNamespace() {
+                QStandardPaths::setTestModeEnabled(true);
+                QCoreApplication::setApplicationName("terrain-lifecycle-"+
+                    QUuid::createUuid().toString(QUuid::WithoutBraces));
+            }
+            ~TestNamespace() {
+                QCoreApplication::setApplicationName(applicationName);
+                QStandardPaths::setTestModeEnabled(testMode);
+            }
+        } testNamespace;
+        QTemporaryDir directory;QVERIFY(directory.isValid());
+        EditorControllerConfig config;config.bootstrapWorld=true;
+        config.worldDataRoot=QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR);
+        config.appearancePath=directory.filePath("appearance.json");
+        EditorController editor(config);
+        QSignalSpy bootstrapErrors(&editor,&EditorController::errorOccurred);
+        connect(&editor,&EditorController::worldStatusChanged,&editor,[&editor] {
+            qInfo() << "Terrain lifecycle bootstrap" << editor.worldStatus()
+                    << editor.terrainDataStatus();
+        });
+        QVERIFY(editor.setTerrainMode("none"));
+        QTRY_VERIFY2_WITH_TIMEOUT(editor.terrainDataStatus().value("available").toBool(),
+            qPrintable(QString("world=%1 terrain=%2 errors=%3")
+                .arg(editor.worldStatus(),QString::fromUtf8(QJsonDocument::fromVariant(editor.terrainDataStatus()).toJson(QJsonDocument::Compact)),
+                     QString::number(bootstrapErrors.count()))),30000);
+        const auto quality=editor.renderQuality();
+        const auto terrain=quality.value("resourceCaches").toMap().value("terrain").toMap();
+        const auto sources=terrain.value("sources").toList();
+        QCOMPARE(sources.size(),2); // Active raster aliases the retained raster provider.
+        QCOMPARE(terrain.value("providerCount").toInt(),2);
+        QCOMPARE(quality.value("terrainCacheProviderCount").toInt(),2);
+        QCOMPARE(terrain.value("budgetScope").toString(),QString("per distinct provider"));
+        qulonglong budget=0,resident=0;int active=0,dem=0,raster=0;
+        for(const auto& row:sources) {
+            const auto source=row.toMap();
+            QCOMPARE(source.value("budgetBytes").toULongLong(),quality.value("terrainCacheBudgetBytes").toULongLong());
+            budget+=source.value("budgetBytes").toULongLong();
+            resident+=source.value("residentBytes").toULongLong();
+            active+=source.value("active").toBool();
+            dem+=source.value("demSource").toBool();raster+=source.value("rasterSource").toBool();
+            QCOMPARE(source.value("protectedBytes").toULongLong(),qulonglong(0));
+            QCOMPARE(source.value("pendingCount").toULongLong(),qulonglong(0));
+        }
+        QCOMPARE(active,1);QCOMPARE(dem,1);QCOMPARE(raster,1);
+        QCOMPARE(terrain.value("budgetBytes").toULongLong(),budget);
+        QCOMPARE(quality.value("terrainAggregateCacheBudgetBytes").toULongLong(),budget);
+        QCOMPARE(terrain.value("residentBytes").toULongLong(),resident);
+        QCOMPARE(quality.value("terrainCacheBytes").toULongLong(),resident);
+        QCOMPARE(resident,qulonglong(0)); // Terrain-off does not decode the DEM base or tint.
+        QCOMPARE(quality.value("terrainDisplayBackingBytes").toULongLong(),qulonglong(0));
+        QVERIFY(editor.terrainDataStatus().value("demMetadataReady").toBool());
+        QVERIFY(!editor.terrainDataStatus().value("fallbackReason").toString().isEmpty());
+        QVERIFY(editor.newProject()); // Cancels all previous source ownership before rebootstrap.
+        const auto clearedQuality=editor.renderQuality();
+        const auto cleared=clearedQuality.value("resourceCaches").toMap().value("terrain").toMap();
+        QCOMPARE(cleared.value("sources").toList().size(),0);
+        QCOMPARE(cleared.value("providerCount").toInt(),0);
+        QCOMPARE(cleared.value("budgetBytes").toULongLong(),qulonglong(0));
+        QCOMPARE(cleared.value("residentBytes").toULongLong(),qulonglong(0));
+        QCOMPARE(cleared.value("protectedBytes").toULongLong(),qulonglong(0));
+        QCOMPARE(cleared.value("pendingCount").toULongLong(),qulonglong(0));
+        QCOMPARE(cleared.value("assetPending").toInt(),0);
+        QCOMPARE(editor.terrainDataStatus().value("missingTiles").toInt(),0);
+        QVERIFY(!editor.terrainDataStatus().value("demMetadataReady").toBool());
+        QVERIFY(editor.terrainTiles().isEmpty());
+        QVERIFY(!editor.terrainProviderSnapshot());
     }
     void canonicalWorldShellCapture() {
         EditorControllerConfig config;config.bootstrapWorld=true;config.worldDataRoot=QStringLiteral(PANDOEDITOR_WORLD_ASSET_DIR);

@@ -50,29 +50,58 @@ QVariantMap EditorController::hydroDataStatus() const {
     const auto inspected=inspectHydroData(displayText(settings.source));return QVariantMap{{"ready",inspected.ready},{"root",inspected.root},{"version",inspected.version},{"dataset",inspected.dataset},{"error",inspected.error}};
 }
 QVariantMap EditorController::terrainDataStatus() const {
+    const auto demMetadataError=terrainDemProvider_?terrainDemProvider_->error():QString{};
+    const auto demDecodeError=terrainDemProvider_?terrainDemProvider_->decodeError():QString{};
+    const bool fallback=terrainProvider_&&terrainProvider_!=terrainDemProvider_;
+    const auto fallbackReason=!fallback?QString{}:!demMetadataError.isEmpty()?demMetadataError:
+        !demDecodeError.isEmpty()?demDecodeError:
+        terrainDemProvider_&&terrainDemProvider_->available()?QStringLiteral("DEM base data is not ready"):
+        QStringLiteral("DEM metadata is unavailable");
+    const auto activeError=terrainProvider_?(!terrainProvider_->decodeError().isEmpty()?
+        terrainProvider_->decodeError():terrainProvider_->error()):QStringLiteral("Terrain package not installed");
+    const auto demError=!demMetadataError.isEmpty()?demMetadataError:demDecodeError;
     return {{"available",terrainProvider_&&terrainProvider_->available()},
-            {"version",QStringLiteral("0.12.6")},
+            {"version",terrainProvider_?terrainProvider_->manifestVersion():QString{}},
+            {"representation",terrainProvider_&&terrainProvider_->isDem()?"dem-relief-v1":"raster"},
+            {"demMetadataReady",terrainDemProvider_&&terrainDemProvider_->available()},
+            {"demMetadataError",demMetadataError},{"demDecodeError",demDecodeError},
+            {"fallbackReason",fallbackReason},
+            {"demCpuTilesReady",terrainProvider_&&terrainProvider_->isDem()&&!terrainTiles_.empty()},
             {"missingTiles",terrainMissingTiles_},
             {"activeDownloads",physicalActive_},{"queuedDownloads",physicalQueued_},
-            {"error",!physicalError_.isEmpty()?physicalError_:(terrainProvider_?terrainProvider_->error():
-                QStringLiteral("Terrain package not installed"))}};
+            {"error",fallback&&!demError.isEmpty()?demError:!activeError.isEmpty()?activeError:physicalError_}};
 }
 void EditorController::executeTerrainResources(const ViewportResourceRequest& request) {
     if(terrainMode_=="none") {
-        if(terrainProvider_)terrainProvider_->protectVisible({});
-        terrainDisplay_.reset();terrainAssetPending_=0;
-        if(!terrainTiles_.isEmpty()){terrainTiles_.clear();emit terrainChanged();}
+        for(const auto& source:distinctTerrainProviders())source->protectVisible({});
+        const bool changed=!terrainTiles_.isEmpty()||terrainAssetPending_!=0||terrainMissingTiles_!=0;
+        terrainDisplay_.reset();terrainDisplaySource_.reset();
+        terrainAssetPending_=0;terrainMissingTiles_=0;terrainTiles_.clear();
+        if(changed)emit terrainChanged();
         return;
     }
     if(!terrainProvider_||!terrainProvider_->available()||!validMapViewState(request.view))return;
+    if(terrainDemProvider_&&terrainDemProvider_->available()) {
+        bool baseReady=true;
+        for(const QString& path:{QStringLiteral("terrain/v0.13.0/0/0-0.webp"),
+            QStringLiteral("terrain/v0.13.0/0/1-0.webp"),QStringLiteral("terrain/v0.13.3/tint.webp")}) {
+            if(!physicalAssetReady(path)){baseReady=false;requestPhysicalAsset(path);}
+        }
+        if(baseReady)baseReady=!terrainDemProvider_->loadTint().isNull()&&
+            !terrainDemProvider_->loadTile(0,0,0).isNull()&&
+            !terrainDemProvider_->loadTile(0,1,0).isNull();
+        const auto next=baseReady?terrainDemProvider_:terrainRasterProvider_;
+        if(next&&next!=terrainProvider_) {
+            terrainProvider_=next;emit terrainChanged();
+        }
+    }
     if(terrainDisplaySource_.lock()!=terrainProvider_){terrainDisplay_.reset();terrainDisplaySource_=terrainProvider_;}
     QVariantList visible;
     int missing=0;terrainAssetPending_=0;
     const auto tileSpecs=terrainProvider_->tilesForView(request.view);
     terrainProvider_->protectVisible(tileSpecs,terrainMode_=="gray");
     for(const auto& tile:tileSpecs) {
-        const auto relative=QString("terrain/v0.12.6/%1/%2-%3.webp")
-            .arg(tile.level).arg(tile.column).arg(tile.row);
+        const auto relative=terrainProvider_->relativeTilePath(tile);
         if(!physicalAssetReady(relative)){
             ++missing;++terrainAssetPending_;requestPhysicalAsset(relative);continue;
         }

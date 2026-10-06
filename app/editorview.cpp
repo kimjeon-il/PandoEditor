@@ -121,7 +121,11 @@ bool EditorController::setTerrainMode(const QString& value)
     if(mode==terrainMode_)return true;
     if(terrainProvider_&&mode!="none")terrainProvider_->switchVisibleVariant(mode=="gray");
     terrainMode_=mode;
-    if(mode=="none"&&terrainProvider_)terrainProvider_->protectVisible({});
+    if(mode=="none") {
+        for(const auto& source:distinctTerrainProviders())source->protectVisible({});
+        terrainDisplay_.reset();terrainDisplaySource_.reset();
+        terrainAssetPending_=0;terrainMissingTiles_=0;terrainTiles_.clear();
+    }
     invalidateViewportResources(ViewportResourceKind::Terrain);
     emit terrainChanged();return true;
 }

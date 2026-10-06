@@ -14,15 +14,28 @@
 TerrainTileProvider::TerrainTileProvider(const QByteArray& pinned,const QString& root,
                                          std::function<QString(const QString&)> resolver)
     :root_(root),assetResolver_(std::move(resolver)) {
-    QFile installed(QDir(root_).filePath("terrain/v0.12.6/manifest.json"));
+    const auto object=QJsonDocument::fromJson(pinned).object();
+    version_=object.value("version").toString();
+    dem_=version_==QStringLiteral("0.13.3")&&object.value("representation")==QStringLiteral("dem-relief-v1");
+    const auto manifestPath=QString("terrain/v%1/manifest.json").arg(version_);
+    const auto resolved=assetResolver_?assetResolver_(manifestPath):QString{};
+    QFile installed(resolved.isEmpty()?QDir(root_).filePath(manifestPath):resolved);
     if(installed.exists()&&(!installed.open(QIODevice::ReadOnly)||installed.readAll()!=pinned))
         {error_=QStringLiteral("Terrain manifest identity mismatch");return;}
-    const auto object=QJsonDocument::fromJson(pinned).object();
-    if(object.value("version").toString()!=QStringLiteral("0.12.6")||
+    if((!dem_&&version_!=QStringLiteral("0.12.6"))||
        object.value("crs").toString()!=QStringLiteral("EPSG:4326")||
        object.value("tileFormat").toString()!=QStringLiteral("lossless WebP RGBA")||
        object.value("gutter").toInt()!=1){
         error_=QStringLiteral("Unsupported terrain dataset");return;
+    }
+    if(dem_) {
+        const auto elevation=object.value("elevation").toObject(),tint=object.value("tint").toObject();
+        if(elevation.value("decode")!="R*256+G-12000"||elevation.value("biasMeters").toInt()!=12000||
+           elevation.value("spacingMeters").toInt()!=1||tint.value("width").toInt()!=4096||
+           tint.value("height").toInt()!=2048||tint.value("sha256")!=
+             "1ae4c70e05494917c11d3c6b32869db61bf4f9e7e4b0239f9b4bd2b9bec582f3") {
+            error_=QStringLiteral("Unsupported DEM encoding or tint identity");return;
+        }
     }
     for(const auto& value:object.value("levels").toArray()) {
         const auto level=value.toObject();
@@ -33,16 +46,63 @@ TerrainTileProvider::TerrainTileProvider(const QByteArray& pinned,const QString&
            result.width<1||result.height<1||result.tileSize!=1024) {
             error_=QStringLiteral("Invalid terrain level grid");return;
         }
+        if(dem_&&(result.id>=6||result.width!=(1350<<result.id)||result.height!=(675<<result.id)||
+            result.columns!=(result.width+1023)/1024||result.rows!=(result.height+1023)/1024)) {
+            error_=QStringLiteral("Invalid DEM level grid");return;
+        }
         levels_.push_back(result);
     }
-    if(levels_.size()!=5){error_=QStringLiteral("Incomplete terrain pyramid");return;}
+    if(levels_.size()!=std::size_t(dem_?6:5)){error_=QStringLiteral("Incomplete terrain pyramid");return;}
     available_=true;
 }
 
 QString TerrainTileProvider::tilePath(int level,int column,int row) const {
-    const auto relative=QString("terrain/v0.12.6/%1/%2-%3.webp").arg(level).arg(column).arg(row);
-    if(assetResolver_)if(const auto resolved=assetResolver_(relative);!resolved.isEmpty())return resolved;
+    TerrainTileSpec spec;spec.level=level;spec.column=column;spec.row=row;
+    const auto relative=relativeTilePath(spec);
+    // An installed verifier's refusal is authoritative, including corrupt
+    // files already present under root_. Do not read them through a fallback.
+    if(assetResolver_)return assetResolver_(relative);
     return QDir(root_).filePath(relative);
+}
+QString TerrainTileProvider::decodeError() const {
+    std::lock_guard lock(mutex_);return decodeFailureReason_;
+}
+// Called while mutex_ protects decoder/cache state. A different successful
+// asset must not erase the reason a current optional source fell back.
+void TerrainTileProvider::recordDecodeFailure(const QString& path,const QString& reason) const {
+    if(failedDecodes_!=std::numeric_limits<std::uint64_t>::max())++failedDecodes_;
+    decodeFailurePath_=path;decodeFailureReason_=QString("Terrain decode failed: %1 (%2)").arg(path,reason);
+}
+void TerrainTileProvider::clearDecodeFailure(const QString& path) const {
+    if(decodeFailurePath_==path){decodeFailurePath_.clear();decodeFailureReason_.clear();}
+}
+
+QString TerrainTileProvider::relativeTilePath(const TerrainTileSpec& spec) const {
+    return QString("terrain/v%1/%2/%3-%4.webp").arg(dem_?"0.13.0":"0.12.6")
+        .arg(spec.level).arg(spec.column).arg(spec.row);
+}
+QSize TerrainTileProvider::levelSize(int level) const {
+    return level>=0&&level<int(levels_.size())?QSize(levels_[level].width,levels_[level].height):QSize{};
+}
+QImage TerrainTileProvider::loadTint() const {
+    if(!available_||!dem_)return {};
+    const QString relative="terrain/v0.13.3/tint.webp";
+    const auto path=assetResolver_?assetResolver_(relative):QDir(root_).filePath(relative);
+    if(path.isEmpty())return {};
+    std::lock_guard lock(mutex_);const CacheKey key{path,false};policy_.touch(key);
+    if(const auto found=images_.find(key);found!=images_.end())return found->second.image;
+    QImageReader reader(path,"webp");
+    if(reader.size()!=QSize(4096,2048)){
+        recordDecodeFailure(path,QString("expected 4096x2048 tint; %1").arg(reader.errorString()));return {};}
+    auto image=reader.read();if(image.isNull()){recordDecodeFailure(path,reader.errorString());return {};}
+    clearDecodeFailure(path);
+    image=image.convertToFormat(QImage::Format_RGBA8888);
+    const auto bytes=std::size_t(image.sizeInBytes());
+    auto inserted=images_.emplace(key,CachedImage{image,bytes});
+    try {if(!policy_.admit(key,bytes)){images_.erase(inserted.first);return {};}}
+    catch(...){images_.erase(inserted.first);throw;}
+    policy_.setProtection(key,pandoeditor::ResourceProtection::Visible,!visible_.empty());
+    trim();return image;
 }
 
 std::vector<TerrainTileSpec> TerrainTileProvider::tilesForView(const MapViewState& view) const {
@@ -93,19 +153,31 @@ QImage TerrainTileProvider::loadTile(const TerrainTileSpec& spec,bool grayMode) 
        spec.column<0||spec.column>=levels_[spec.level].columns||
        spec.row<0||spec.row>=levels_[spec.level].rows)return {};
     const auto expected=tilePath(spec.level,spec.column,spec.row);
+    if(expected.isEmpty())return {};
     if(spec.path!=expected)return {};
     std::lock_guard lock(mutex_);
-    const CacheKey key{expected,grayMode};
+    const CacheKey key{expected,dem_?false:grayMode};
     policy_.touch(key);
     if(auto found=images_.find(key);found!=images_.end()){const auto image=found->second.image;finishPending(key);return image;}
     QImageReader reader(expected,"webp");
     auto image=reader.read();
-    if(image.isNull()){if(failedDecodes_!=std::numeric_limits<std::uint64_t>::max())++failedDecodes_;return {};}
-    if(grayMode) {
+    if(image.isNull()){recordDecodeFailure(expected,reader.errorString());return {};}
+    if(dem_) {
+        const auto& grid=levels_[spec.level];
+        const QSize size(std::min(grid.tileSize,grid.width-spec.column*grid.tileSize)+2,
+                         std::min(grid.tileSize,grid.height-spec.row*grid.tileSize)+2);
+        if(image.size()!=size){recordDecodeFailure(expected,"DEM dimensions/gutter mismatch");return {};}
+        image=image.convertToFormat(QImage::Format_RGBA8888);
+        for(int y=0;y<image.height();++y){const auto* row=image.constScanLine(y);
+            for(int x=0;x<image.width();++x)if(row[x*4+3]!=255){recordDecodeFailure(expected,"DEM A channel must be 255");return {};}}
+    }
+    clearDecodeFailure(expected);
+    if(grayMode&&!dem_) {
         image=image.convertToFormat(QImage::Format_ARGB32);
         for(int y=0;y<image.height();++y)for(int x=0;x<image.width();++x) {
-            const auto pixel=image.pixel(x,y);const auto gray=qGray(pixel);
-            image.setPixel(x,y,qRgba(gray,gray,gray,qAlpha(pixel)));
+            // Raster A stores Gray Earth, not coverage or transparency.
+            const auto gray=qAlpha(image.pixel(x,y));
+            image.setPixel(x,y,qRgba(gray,gray,gray,255));
         }
     }
     const auto bytes=std::size_t(image.sizeInBytes());
@@ -127,6 +199,7 @@ void TerrainTileProvider::setCacheBudget(std::size_t bytes) {
 }
 void TerrainTileProvider::protectVisible(const std::vector<TerrainTileSpec>& tiles,bool gray) {
     std::lock_guard lock(mutex_);
+    if(dem_)gray=false;
     displayGray_=gray;
     if(tiles.empty()){visible_.clear();fallback_.clear();pending_.clear();}
     else {
@@ -153,7 +226,9 @@ void TerrainTileProvider::trim() const {
 
 void TerrainTileProvider::applyProtection() const {
     for(const auto& entry:images_) {
-        policy_.setProtection(entry.first,pandoeditor::ResourceProtection::Visible,visible_.count(entry.first)!=0);
+        const bool tint=dem_&&entry.first.first.endsWith("/terrain/v0.13.3/tint.webp");
+        policy_.setProtection(entry.first,pandoeditor::ResourceProtection::Visible,
+            visible_.count(entry.first)!=0||(tint&&!visible_.empty()));
         policy_.setProtection(entry.first,pandoeditor::ResourceProtection::Fallback,fallback_.count(entry.first)!=0);
     }
 }
@@ -166,6 +241,7 @@ void TerrainTileProvider::finishPending(const CacheKey& key) const {
 
 void TerrainTileProvider::switchVisibleVariant(bool gray) {
     std::lock_guard lock(mutex_);
+    if(dem_)return; // DEM bytes are decoded once; gray/color are material state.
     std::set<CacheKey> next;for(const auto& key:visible_)next.insert({key.first,gray});
     if(next==visible_&&displayGray_==gray)return;
     displayGray_=gray;

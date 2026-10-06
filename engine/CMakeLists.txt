@@ -45,6 +45,9 @@ set_source_files_properties(src/geometrysnap.cpp src/sharedboundary.cpp src/edit
     "$<$<CXX_COMPILER_ID:MSVC>:/fp:strict>;$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffp-contract=off>")
 
 if(BUILD_TESTING)
+    add_executable(terrain_land_mask_tests ../tests/terrain_land_mask_tests.cpp)
+    target_link_libraries(terrain_land_mask_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME terrain_land_mask_tests COMMAND terrain_land_mask_tests)
     add_executable(edit_coordinate_tests ../tests/edit_coordinate_tests.cpp)
     target_link_libraries(edit_coordinate_tests PRIVATE Pandoeditor::MapEngine)
     target_compile_options(edit_coordinate_tests PRIVATE

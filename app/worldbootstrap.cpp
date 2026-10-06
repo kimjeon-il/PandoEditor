@@ -4,6 +4,8 @@
 #include <QFutureWatcher>
 #include <QtConcurrent>
 #include <stdexcept>
+#include <QFile>
+#include <QDir>
 
 namespace {
 struct RecoveredStartup {
@@ -173,13 +175,22 @@ void EditorController::startWorldBootstrap() {
             worldRanges_=worldBase_->ranges;
             projection_=*prepared.projection;
             try {
-                WorldDataset source;
+                WorldDataset source(worldDataRoot_);
                 const auto terrainRoot=!physicalRoot_.isEmpty()?physicalRoot_:source.optionalDataRoot();
                 terrainProvider_=std::make_shared<TerrainTileProvider>(
                     source.read("terrain"),terrainRoot,[this](const QString& relative) {
-                        return physicalAssetPath(relative);
+                        return verifiedPhysicalAssetPath(relative);
                     });
                 terrainProvider_->setCacheBudget(quality_.profile().terrainCacheBudgetBytes);
+                terrainRasterProvider_=terrainProvider_;
+                QFile demManifest(QStringLiteral(":/world/terrain/v0.13.3/manifest.json"));
+                if(physicalStore_&&demManifest.open(QIODevice::ReadOnly)) {
+                    terrainDemProvider_=std::make_shared<TerrainTileProvider>(demManifest.readAll(),
+                        QDir(physicalStore_->root()).filePath("terrain-dem/c3c18d1"),
+                        [this](const QString& relative){return verifiedPhysicalAssetPath(relative);});
+                    terrainDemProvider_->setCacheBudget(quality_.profile().terrainCacheBudgetBytes);
+                    if(!terrainDemProvider_->available())physicalError_=terrainDemProvider_->error();
+                }
             } catch(const std::exception&) {
                 terrainProvider_.reset(); // The optional terrain channel is unavailable.
             }
@@ -261,7 +272,11 @@ void EditorController::cancelWorldBootstrap() {
     worldBase_.reset();worldResources_.reset();worldRanges_.clear();
     worldReloading_[0]=worldReloading_[1]=false;worldReloadFailed_[0]=worldReloadFailed_[1]=false;
     worldFocusDetail_=false;worldDetailCanonical_=false;
-    terrainTiles_.clear();terrainProvider_.reset();worldHydroNotice_.clear();
+    for(const auto& source:distinctTerrainProviders())source->protectVisible({});
+    terrainTiles_.clear();terrainDisplay_.reset();terrainDisplaySource_.reset();
+    terrainAssetPending_=0;terrainMissingTiles_=0;
+    terrainProvider_.reset();terrainRasterProvider_.reset();terrainDemProvider_.reset();
+    worldHydroNotice_.clear();
     emit terrainChanged();
     worldStatus_=QStringLiteral("disabled");emit worldStatusChanged();
 }

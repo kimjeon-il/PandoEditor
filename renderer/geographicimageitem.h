@@ -19,8 +19,11 @@ class GeographicImageItem : public QQuickItem {
     Q_PROPERTY(double north READ north WRITE setNorth NOTIFY changed)
     Q_PROPERTY(QString colorMode READ colorMode WRITE setColorMode NOTIFY changed)
     Q_PROPERTY(bool smooth READ smooth WRITE setSmooth NOTIFY changed)
+    Q_PROPERTY(bool landPass READ landPass WRITE setLandPass NOTIFY changed)
+    Q_PROPERTY(QQuickItem* landMaskSource READ landMaskSource WRITE setLandMaskSource NOTIFY changed)
 public:
     explicit GeographicImageItem(QQuickItem* parent=nullptr);
+    ~GeographicImageItem() override;
     QObject* sceneBridge() const{return bridge_;} void setSceneBridge(QObject*);
     QObject* terrainBridge() const {return terrainBridge_;}
     void setTerrainBridge(QObject*);
@@ -33,6 +36,9 @@ public:
     double north() const{return north_;} void setNorth(double);
     QString colorMode() const{return colorMode_;} void setColorMode(QString);
     bool smooth() const{return smooth_;} void setSmooth(bool);
+    bool landPass() const{return landPass_;} void setLandPass(bool);
+    QQuickItem* landMaskSource() const{return landMaskSource_;}
+    void setLandMaskSource(QQuickItem*);
 signals:
     void changed();
 protected:
@@ -41,10 +47,16 @@ private:
     void refresh();
     QPointer<MapSceneBridge> bridge_;
     QPointer<TerrainImageBridge> terrainBridge_;
+    QPointer<QQuickItem> landMaskSource_;
     QVariantMap terrainTile_;
     QUrl source_;
     QImage image_;
+    QImage rasterDisplayImage_;
+    qint64 rasterSourceKey_=0;
+    bool rasterDisplayGray_=false;
+    TerrainImageFrame terrainFrame_;
     double west_=-180,south_=-90,east_=180,north_=90;
     QString colorMode_=QStringLiteral("color");
     bool smooth_=true;
+    bool landPass_=false;
 };

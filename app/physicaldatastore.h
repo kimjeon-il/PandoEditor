@@ -7,6 +7,7 @@
 #include <QString>
 #include <QUrl>
 #include <QVector>
+#include <QHash>
 
 struct PhysicalAssetSpec {
     QString dataset,version,path;
@@ -29,6 +30,7 @@ public:
                                QObject* parent=nullptr);
     QString root() const {return root_;}
     void setExternalRoot(QString root);
+    void setExternalDatasetRoot(const QString& dataset,QString root);
     QString cachePath(const PhysicalAssetSpec&) const;
     QString resolveExisting(const PhysicalAssetSpec&) const;
     bool installVerified(const PhysicalAssetSpec&,const QByteArray& bytes);
@@ -48,6 +50,7 @@ private:
     void pump();
     void start(Job job);
     QString root_,externalRoot_;
+    QHash<QString,QString> externalDatasetRoots_;
     int maximumConcurrent_=3,maximumRetries_=2,active_=0;
     QQueue<Job> queue_;
     QSet<QString> pending_;
