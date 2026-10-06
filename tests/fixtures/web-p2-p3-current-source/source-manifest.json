@@ -1,0 +1,62 @@
+{
+  "schema": "pandoeditor-p2-p3-terrain-current-web-source",
+  "version": 1,
+  "webCommit": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+  "precedingContractCommits": [
+    "e1ae1fab1f195aba898e59066812322c5d1b30a6",
+    "8d449c41341bf5f8c61c0631a4a55fa14ff4ec36"
+  ],
+  "sourceBytes": "exact Git blobs; no newline conversion",
+  "executionBoundary": "Node synthetic fetch/GL/upload mocks only; no browser, hardware GPU, native App or process benchmark",
+  "files": [
+    {
+      "path": "assets/js/modules/gpu-terrain-preparation.js",
+      "gitBlob": "c5e627849ef379fc8c1e46fc0a6f4bc1c2505bb8",
+      "bytes": 28661,
+      "sha256": "4571462c8460a4ff637886d740424ca0af0f57c522e6f1c67ca23f976b5b0490"
+    },
+    {
+      "path": "assets/js/modules/map-visual-frame.js",
+      "gitBlob": "40a7f1ebe2a627e68b9554588ab9f4135f0230b9",
+      "bytes": 8717,
+      "sha256": "4333648377219ad4395a9573b32e1f1db86f494029656929def0785264a81489"
+    },
+    {
+      "path": "assets/js/modules/gpu-upload-scheduler.js",
+      "gitBlob": "da60b4ce3b2980a56207f09f20c19784e2bf927e",
+      "bytes": 3183,
+      "sha256": "665504d0b7fbffdf4a781935f3531dd7ad7bc247c5ef8edc6fdf3414ffbe8dd8"
+    },
+    {
+      "path": "assets/js/modules/app-environment.js",
+      "gitBlob": "ba00abff71d4e422e0665917671e4f59b4383c85",
+      "bytes": 30012,
+      "sha256": "1aea2d8a08ffd588b0c65c6ba11879e84f89ba86103862a317000b24c04ad4f9"
+    },
+    {
+      "path": "assets/js/modules/app-workspace-surfaces.js",
+      "gitBlob": "45e01ca7c2288dff486389d892f5a88116644763",
+      "bytes": 37143,
+      "sha256": "50fbe410a16fd2ce5169a44306c5993a3cdeab8f131cdb35ccd36605b13b49b8"
+    },
+    {
+      "path": "tests/unit/gpu-terrain-preparation.test.mjs",
+      "gitBlob": "c9df4d567f268c0b6b954e849b95326f267beb6d",
+      "bytes": 31955,
+      "sha256": "7e12b305af0b19e9a59cf2314dd0eec54ce6e8fa0110396d1460dfc8ce255794"
+    },
+    {
+      "path": "tests/unit/gpu-upload-staging.test.mjs",
+      "gitBlob": "8a3fa8bbf9cd53d28a17d49c1bce38e2f1272305",
+      "bytes": 3961,
+      "sha256": "30675a6878ec11bcd76a493fdb16891fec8e32017b8a27a977f07d8c905725c3"
+    },
+    {
+      "path": "assets/js/modules/mesh-spatial-blocks.js",
+      "gitBlob": "05ec53595f0855bc0057f3a3658a91d6a9b1da95",
+      "bytes": 6923,
+      "sha256": "5d1f88d7ffea45b3cd2b7677ea189b229085e8359dd1175f814f0db81b7ddee6"
+    }
+  ],
+  "historicalSourceCommit": "fa37a222fb7a577de860b4e3902fafbc36b29c22"
+}

@@ -190,6 +190,7 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         reprojectLabelPlacements();
         scheduleViewportResources();
         emit viewStateChanged();
+        emit terrainChanged(); // Expose current scale/DPR demand, including terrain-off.
     });
     if(autosave_) {
         connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {

@@ -10,6 +10,32 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <tuple>
+
+namespace {
+constexpr double terrainPi=3.141592653589793238462643383279502884;
+constexpr double terrainRadians=terrainPi/180;
+double wrappedLongitude(double longitude) {
+    return std::remainder(longitude,360.);
+}
+std::pair<double,double> demandCenter(const MapViewState& view) {
+    // Native flat pan moves translation, whereas Web supplies its geographic
+    // viewport center. Normalize that representation at the provider boundary.
+    if(view.mode==ProjectionMode::Flat) {
+        const auto point=unprojectFlat(view.viewportWidth/2,view.viewportHeight/2,view);
+        return {point.x,point.y};
+    }
+    // Native projectPoint uses center + rotation; Web's D3 rotation has the
+    // opposite sign. Demand must follow the native projected camera center.
+    return {view.centerLongitude+view.rotationLongitude,
+        std::clamp(view.centerLatitude+view.rotationLatitude,-90.,90.)};
+}
+double greatCircleDistance(double longitude,double latitude,double otherLongitude,double otherLatitude) {
+    const double a=latitude*terrainRadians,b=otherLatitude*terrainRadians;
+    const double delta=wrappedLongitude(otherLongitude-longitude)*terrainRadians;
+    return std::acos(std::clamp(std::sin(a)*std::sin(b)+std::cos(a)*std::cos(b)*std::cos(delta),-1.,1.));
+}
+}
 
 TerrainTileProvider::TerrainTileProvider(const QByteArray& pinned,const QString& root,
                                          std::function<QString(const QString&)> resolver)
@@ -105,46 +131,103 @@ QImage TerrainTileProvider::loadTint() const {
     trim();return image;
 }
 
-std::vector<TerrainTileSpec> TerrainTileProvider::tilesForView(const MapViewState& view) const {
-    if(!available_||!validMapViewState(view))return {};
-    int level=0;
-    if(view.mode==ProjectionMode::Flat) {
-        // Display selection only; source terrain resolution remains unchanged.
-        const auto pixelsAcrossWorld=std::abs(view.scale)*2*3.14159265358979323846;
-        while(level+1<int(levels_.size())&&pixelsAcrossWorld>levels_[level].width*1.6)
-            ++level;
-    }
+int TerrainTileProvider::targetLevelForView(const MapViewState& view,bool mobileLayout) const {
+    if(!available_||!validMapViewState(view))return -1;
+    // MapViewState.scale is already CSS pixels. Backing/frame DPR and country
+    // mesh quality are not terrain source-resolution inputs.
+    const double sourceDpr=std::min(mobileLayout?2.:3.,std::max(1.,view.devicePixelRatio));
+    const double requiredWidth=1.12*std::max(1.,2*terrainPi*view.scale*sourceDpr);
+    for(const auto& level:levels_)if(level.width>=requiredWidth)return level.id;
+    return levels_.back().id;
+}
+
+TerrainTileSpec TerrainTileProvider::tileSpec(int level,int column,int row) const {
+    const auto& grid=levels_[level];
+    const auto left=column*grid.tileSize,right=std::min(grid.width,(column+1)*grid.tileSize);
+    const auto top=row*grid.tileSize,bottom=std::min(grid.height,(row+1)*grid.tileSize);
+    return {level,column,row,0,-180.+360.*left/grid.width,90.-180.*bottom/grid.height,
+        -180.+360.*right/grid.width,90.-180.*top/grid.height,tilePath(level,column,row)};
+}
+
+std::vector<TerrainTileSpec> TerrainTileProvider::visibleTargetSpecs(const MapViewState& view,int level) const {
     const auto& grid=levels_[level];
     std::vector<TerrainTileSpec> result;
-    const auto northSouth=[&] {
-        if(view.mode==ProjectionMode::Globe)return std::pair<double,double>{-90,90};
-        const auto upper=unprojectFlat(0,0,view).y;
-        const auto lower=unprojectFlat(view.viewportWidth,view.viewportHeight,view).y;
-        return std::pair<double,double>{std::max(-90.,std::min(upper,lower)),
-                                        std::min(90.,std::max(upper,lower))};
-    }();
-    const auto lonMin=view.mode==ProjectionMode::Globe?-180.:
-        std::min(unprojectFlat(0,0,view).x,
-                 unprojectFlat(view.viewportWidth,view.viewportHeight,view).x);
-    const auto lonMax=view.mode==ProjectionMode::Globe?180.:
-        std::max(unprojectFlat(0,0,view).x,
-                 unprojectFlat(view.viewportWidth,view.viewportHeight,view).x);
+    const auto center=demandCenter(view);
+    const double scale=std::max(1.,view.scale);
+    const double halfLongitude=view.viewportWidth/scale*90/terrainPi;
+    const double halfLatitude=view.viewportHeight/scale*90/terrainPi;
+    const double globeRadius=std::asin(std::min(1.,std::hypot(view.viewportWidth,view.viewportHeight)*.5/scale));
     for(int row=0;row<grid.rows;++row)for(int column=0;column<grid.columns;++column) {
-        const auto tileLeft=column*grid.tileSize;
-        const auto tileRight=std::min(grid.width,(column+1)*grid.tileSize);
-        const auto tileTop=row*grid.tileSize;
-        const auto tileBottom=std::min(grid.height,(row+1)*grid.tileSize);
-        const auto west=-180.+360.*tileLeft/grid.width;
-        const auto east=-180.+360.*tileRight/grid.width;
-        const auto north=90.-180.*tileTop/grid.height;
-        const auto south=90.-180.*tileBottom/grid.height;
-        if(south>northSouth.second||north<northSouth.first)continue;
-        for(int copy=-1;copy<=1;++copy) {
-            if(east+360*copy<lonMin||west+360*copy>lonMax)continue;
-            TerrainTileSpec spec{level,column,row,copy*360,west,south,east,north,
-                tilePath(level,column,row)};
-            result.push_back(std::move(spec));
-        }
+        // Form bounds before asking an installed verifier for an asset path:
+        // selecting a view must not resolve all fine-level world assets.
+        const double west=-180.+360.*column*grid.tileSize/grid.width;
+        const double east=-180.+360.*std::min(grid.width,(column+1)*grid.tileSize)/grid.width;
+        const double north=90.-180.*row*grid.tileSize/grid.height;
+        const double south=90.-180.*std::min(grid.height,(row+1)*grid.tileSize)/grid.height;
+        const double longitude=(west+east)/2,latitude=(north+south)/2;
+        const double halfLon=(east-west)/2,halfLat=(north-south)/2;
+        const bool visible=view.mode==ProjectionMode::Flat
+            ? std::abs(wrappedLongitude(longitude-center.first))<=halfLongitude+halfLon+2
+                &&std::abs(latitude-center.second)<=halfLatitude+halfLat+2
+            : greatCircleDistance(center.first,center.second,longitude,latitude)
+                <=globeRadius+std::hypot(halfLon,halfLat)*terrainRadians+.04;
+        if(visible)result.push_back(tileSpec(level,column,row));
+    }
+    return result;
+}
+
+TerrainDemandPlan TerrainTileProvider::planForView(const MapViewState& view,bool mobileLayout) const {
+    TerrainDemandPlan plan;plan.targetLevel=targetLevelForView(view,mobileLayout);
+    if(plan.targetLevel<0)return plan;
+    const auto& base=levels_.front();
+    for(int row=0;row<base.rows;++row)for(int column=0;column<base.columns;++column)
+        plan.baseTiles.push_back(tileSpec(base.id,column,row));
+    plan.targetTiles=visibleTargetSpecs(view,plan.targetLevel);
+    const auto& grid=levels_[plan.targetLevel];
+    std::set<std::pair<int,int>> seen;
+    for(const auto& spec:plan.targetTiles)seen.insert({spec.column,spec.row});
+    for(const auto& spec:plan.targetTiles)
+        for(int row=std::max(0,spec.row-1);row<=std::min(grid.rows-1,spec.row+1);++row)
+            for(int column=std::max(0,spec.column-1);column<=std::min(grid.columns-1,spec.column+1);++column)
+                if(seen.insert({column,row}).second)plan.prefetchTiles.push_back(tileSpec(grid.id,column,row));
+    const auto center=demandCenter(view);
+    std::set<std::tuple<int,int,int>> requested;
+    const auto add=[&](const TerrainTileSpec& spec,double priority) {
+        if(requested.insert({spec.level,spec.column,spec.row}).second)plan.requests.push_back({spec,priority});
+    };
+    for(const auto& spec:plan.baseTiles)add(spec,50000);
+    for(const auto& spec:plan.targetTiles) {
+        const double longitude=(spec.west+spec.east)/2,latitude=(spec.north+spec.south)/2;
+        const double distance=view.mode==ProjectionMode::Flat
+            ? std::hypot(wrappedLongitude(longitude-center.first),latitude-center.second)*terrainRadians
+            : greatCircleDistance(center.first,center.second,longitude,latitude);
+        add(spec,30000-distance*1000);
+    }
+    for(const auto& spec:plan.prefetchTiles)add(spec,1000);
+    std::sort(plan.requests.begin(),plan.requests.end(),[](const auto& left,const auto& right) {
+        if(left.priority!=right.priority)return left.priority>right.priority;
+        const auto key=[](const TerrainTileSpec& spec) {
+            return QString("%1/%2-%3").arg(spec.level).arg(spec.column).arg(spec.row);
+        };
+        return key(left.spec)<key(right.spec);
+    });
+    return plan;
+}
+
+std::vector<TerrainTileSpec> TerrainTileProvider::tilesForView(const MapViewState& view,bool mobileLayout) const {
+    const int level=targetLevelForView(view,mobileLayout);
+    if(level<0)return {};
+    auto targets=visibleTargetSpecs(view,level);
+    if(view.mode==ProjectionMode::Globe)return targets;
+    const auto center=demandCenter(view);
+    const double halfLongitude=view.viewportWidth/std::max(1.,view.scale)*90/terrainPi;
+    const auto offsets=visibleFlatWorldOffsets(view);
+    std::vector<TerrainTileSpec> result;
+    // Draw offsets follow the shared native projection snapshot. They never
+    // become distinct asset/cache keys, and enumeration stays bounded at three.
+    for(const auto& tile:targets)for(double offset:offsets) {
+        if(tile.east+offset<center.first-halfLongitude-2||tile.west+offset>center.first+halfLongitude+2)continue;
+        auto replica=tile;replica.worldOffsetDegrees=int(offset);result.push_back(std::move(replica));
     }
     return result;
 }

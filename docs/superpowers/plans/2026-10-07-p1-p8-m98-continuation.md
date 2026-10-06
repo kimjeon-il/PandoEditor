@@ -10,8 +10,8 @@ User rulings: use the same branch; the fixed Web behavior takes precedence over 
 
 ## Execution order
 
-- [ ] P1: preserve the verified 1,282-file DEM inventory; finish bootstrap lifecycle, decoder/fallback, physical land mask and actual Windows RHI display tests.
-- [ ] P2: independent scale/DPR/layout terrain demand, using the fixed Web LOD formula.
+- [x] P1: verified 1,282-file DEM inventory, bootstrap lifecycle, decoder/fallback, physical land mask and actual Windows RHI display mechanism checkpoint. See `docs/terrain-integration-validation.md` for synthetic-pixel/real-data evidence boundaries.
+- [x] P2: independent scale/DPR/layout terrain demand, using the fixed Web LOD formula. Native44/44, current Web synthetic53/53, actual Windows QML/DPR/layout4/4 Qt rows. See `docs/terrain-p2-validation.md`.
 - [ ] P3: progressive coverage and bounded resource ownership, with separate CPU/upload/submission/display state and authenticated current-frame receipts.
 - [ ] P4: registered deterministic terrain gates, negative/mutation tests and separate actual RHI evidence.
 - [ ] P5: audit all 64 review decisions and production generator/source provenance. Preserve the fixed production `empty-v1` manifest; actual populated-data application is blocked while its immutable output is absent.

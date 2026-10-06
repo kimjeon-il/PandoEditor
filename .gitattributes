@@ -50,3 +50,5 @@ tests/fixtures/lineage-v10-content/** -text
 assets/world/terrain/v0.13.3/** -text
 assets/world/physical-inventory-terrain-dem-c3c18d1.json -text
 assets/world/terrain-dem-provenance-c3c18d1.json -text
+tests/fixtures/web-p2-p3-terrain-source/** -text
+tests/fixtures/web-p2-p3-current-source/** -text

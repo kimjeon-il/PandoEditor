@@ -24,6 +24,11 @@ Rectangle {
     readonly property real mapScale: Number.isFinite(cameraState.mapScale) ? cameraState.mapScale : 1
     readonly property real originX: Number.isFinite(cameraState.originX) ? cameraState.originX : 0
     readonly property real originY: Number.isFinite(cameraState.originY) ? cameraState.originY : 0
+    readonly property var mapWindow: view.Window.window
+    readonly property real layoutWindowWidth: mapWindow ? mapWindow.width : 800
+    readonly property real windowDevicePixelRatio: view.Screen.devicePixelRatio
+    onLayoutWindowWidthChanged: syncViewport()
+    onWindowDevicePixelRatioChanged: syncViewport()
     signal objectActivated()
     signal selectionNavigationStarted()
     signal selectionPointerChanged(bool down)
@@ -74,7 +79,8 @@ Rectangle {
     function invalidatePick() { editor.closeObjectChooser() }
     function syncViewport() {
         if (width <= 0 || height <= 0) return
-        editor.resizeMapCamera(width,height)
+        editor.setTerrainLayoutWidth(layoutWindowWidth)
+        editor.resizeMapCamera(width,height,windowDevicePixelRatio)
     }
     onWidthChanged: { invalidatePick(); syncViewport() }
     onHeightChanged: { invalidatePick(); syncViewport() }

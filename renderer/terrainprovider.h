@@ -20,6 +20,19 @@ struct TerrainTileSpec {
     QString path;
 };
 
+struct TerrainTileDemand {
+    TerrainTileSpec spec;
+    double priority=0;
+};
+
+// A value snapshot of geographic demand, with canonical asset identities.
+// Planning neither decodes bytes nor changes cache/protection/request state.
+struct TerrainDemandPlan {
+    int targetLevel=-1;
+    std::vector<TerrainTileSpec> baseTiles,targetTiles,prefetchTiles;
+    std::vector<TerrainTileDemand> requests;
+};
+
 class TerrainTileProvider final {
 public:
     // A separate immutable manifest selects raster or DEM; sources never alias.
@@ -34,7 +47,9 @@ public:
     QSize levelSize(int level) const;
     QString relativeTilePath(const TerrainTileSpec& spec) const;
     QImage loadTint() const;
-    std::vector<TerrainTileSpec> tilesForView(const MapViewState& view) const;
+    int targetLevelForView(const MapViewState& view,bool mobileLayout=false) const;
+    TerrainDemandPlan planForView(const MapViewState& view,bool mobileLayout=false) const;
+    std::vector<TerrainTileSpec> tilesForView(const MapViewState& view,bool mobileLayout=false) const;
     QImage loadTile(const TerrainTileSpec& spec,bool gray=false) const;
     QImage loadTile(int level,int column,int row,bool gray=false) const;
     void setCacheBudget(std::size_t bytes);
@@ -53,6 +68,8 @@ private:
     void trim() const;
     void applyProtection() const;
     void finishPending(const CacheKey&) const;
+    TerrainTileSpec tileSpec(int level,int column,int row) const;
+    std::vector<TerrainTileSpec> visibleTargetSpecs(const MapViewState& view,int level) const;
     QString tilePath(int level,int column,int row) const;
     void recordDecodeFailure(const QString& path,const QString& reason) const;
     void clearDecodeFailure(const QString& path) const;

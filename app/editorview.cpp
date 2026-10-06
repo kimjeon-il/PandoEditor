@@ -246,6 +246,18 @@ bool EditorController::resizeMapCamera(double width,double height,double deviceP
     return publishCameraView();
 }
 
+bool EditorController::setTerrainLayoutWidth(double width)
+{
+    if(!std::isfinite(width)||width<=0)return false;
+    const bool oldMobile=terrainLayoutWidth_<=799;
+    if(terrainLayoutWidth_==width)return true;
+    terrainLayoutWidth_=width;
+    if(oldMobile!=(terrainLayoutWidth_<=799))
+        invalidateViewportResources(ViewportResourceKind::Terrain);
+    emit terrainChanged();
+    return true;
+}
+
 bool EditorController::zoomMapCameraAt(double factor,double x,double y)
 {
     if(!std::isfinite(factor)||factor<=0||!std::isfinite(x)||!std::isfinite(y))return false;

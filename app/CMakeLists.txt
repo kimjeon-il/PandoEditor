@@ -323,6 +323,12 @@ if(BUILD_TESTING)
     target_link_libraries(terrain_dem_provider_tests PRIVATE Pandoeditor::MapEngine Qt6::Gui)
     add_test(NAME terrain_dem_provider_tests COMMAND terrain_dem_provider_tests
         "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.13.3/manifest.json")
+    add_executable(terrain_lod_demand_tests ../tests/terrain_lod_demand_tests.cpp ../renderer/terrainprovider.cpp)
+    target_include_directories(terrain_lod_demand_tests PRIVATE ../renderer)
+    target_link_libraries(terrain_lod_demand_tests PRIVATE Pandoeditor::MapEngine Qt6::Gui)
+    add_test(NAME terrain_lod_demand_tests COMMAND terrain_lod_demand_tests
+        "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.13.3/manifest.json"
+        "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.12.6/manifest.json")
     add_executable(terrain_render_contract_tests ../tests/terrain_render_contract_tests.cpp
         ../renderer/terrainrendercontract.cpp)
     target_link_libraries(terrain_render_contract_tests PRIVATE Qt6::Test Qt6::Gui)

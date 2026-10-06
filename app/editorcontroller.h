@@ -300,6 +300,7 @@ public:
     Q_INVOKABLE bool publishMapView(const QVariantMap& view);
     Q_INVOKABLE bool setProjectionMode(const QString& mode);
     Q_INVOKABLE bool resizeMapCamera(double width,double height,double devicePixelRatio=1);
+    Q_INVOKABLE bool setTerrainLayoutWidth(double width);
     Q_INVOKABLE bool zoomMapCameraAt(double factor,double x,double y);
     Q_INVOKABLE void beginMapCameraPan();
     Q_INVOKABLE bool updateMapCameraPan(double deltaX,double deltaY);
@@ -803,6 +804,9 @@ private:
     QVariantMap appearanceOrigin_;
     bool appearancePreviewOpen_=false;
     QString terrainMode_=QStringLiteral("gray");
+    // CSS window width determines Web's source DPR cap independently of the
+    // map panel, native input mode and country mesh quality.
+    double terrainLayoutWidth_=800;
     std::shared_ptr<const WorldBaseFrame> worldBase_;
     WorldResourceCache worldResources_;
     mutable ResourceCacheCoordinator resourceCoordinator_;

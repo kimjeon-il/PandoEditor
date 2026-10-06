@@ -76,8 +76,10 @@ HEAD and is not final-commit aggregate acceptance.
 
 ## Remaining stages
 
-P2/P3 LOD, progressive displayed coverage, resource admission and upload scheduling
-remain pending. The current CPU-ready bootstrap/old handoff does not prove them.
+P2 LOD/demand mechanisms have a separate executed checkpoint in
+`terrain-p2-validation.md`. P3 progressive displayed coverage, resource admission
+and upload scheduling remain pending. The current CPU-ready bootstrap/old handoff
+does not prove them.
 P4 and M9.8 functional/structural/physical-device acceptance remain pending.
 Future source changes require affected checks to run again; P1's result cannot
 certify a later candidate or replace final same-commit/fixture evidence.

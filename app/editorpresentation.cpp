@@ -50,6 +50,9 @@ QVariantMap EditorController::hydroDataStatus() const {
     const auto inspected=inspectHydroData(displayText(settings.source));return QVariantMap{{"ready",inspected.ready},{"root",inspected.root},{"version",inspected.version},{"dataset",inspected.dataset},{"error",inspected.error}};
 }
 QVariantMap EditorController::terrainDataStatus() const {
+    const auto& terrainView=sceneBridge_.viewState();
+    const bool mobileLayout=terrainLayoutWidth_<=799;
+    const double sourceDpr=std::min(mobileLayout?2.:3.,std::max(1.,terrainView.devicePixelRatio));
     const auto demMetadataError=terrainDemProvider_?terrainDemProvider_->error():QString{};
     const auto demDecodeError=terrainDemProvider_?terrainDemProvider_->decodeError():QString{};
     const bool fallback=terrainProvider_&&terrainProvider_!=terrainDemProvider_;
@@ -61,6 +64,9 @@ QVariantMap EditorController::terrainDataStatus() const {
         terrainProvider_->decodeError():terrainProvider_->error()):QStringLiteral("Terrain package not installed");
     const auto demError=!demMetadataError.isEmpty()?demMetadataError:demDecodeError;
     return {{"available",terrainProvider_&&terrainProvider_->available()},
+            {"targetLevel",terrainProvider_?terrainProvider_->targetLevelForView(terrainView,mobileLayout):-1},
+            {"sourceDevicePixelRatio",sourceDpr},{"layoutWidth",terrainLayoutWidth_},
+            {"mobileLayout",mobileLayout},
             {"version",terrainProvider_?terrainProvider_->manifestVersion():QString{}},
             {"representation",terrainProvider_&&terrainProvider_->isDem()?"dem-relief-v1":"raster"},
             {"demMetadataReady",terrainDemProvider_&&terrainDemProvider_->available()},
@@ -98,7 +104,7 @@ void EditorController::executeTerrainResources(const ViewportResourceRequest& re
     if(terrainDisplaySource_.lock()!=terrainProvider_){terrainDisplay_.reset();terrainDisplaySource_=terrainProvider_;}
     QVariantList visible;
     int missing=0;terrainAssetPending_=0;
-    const auto tileSpecs=terrainProvider_->tilesForView(request.view);
+    const auto tileSpecs=terrainProvider_->tilesForView(request.view,terrainLayoutWidth_<=799);
     terrainProvider_->protectVisible(tileSpecs,terrainMode_=="gray");
     for(const auto& tile:tileSpecs) {
         const auto relative=terrainProvider_->relativeTilePath(tile);

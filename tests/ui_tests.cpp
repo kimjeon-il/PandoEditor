@@ -22,6 +22,7 @@
 #include <QUuid>
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #ifdef Q_OS_WIN
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -587,6 +588,23 @@ private slots:
         QCOMPARE(quality.value("terrainDisplayBackingBytes").toULongLong(),qulonglong(0));
         QVERIFY(editor.terrainDataStatus().value("demMetadataReady").toBool());
         QVERIFY(!editor.terrainDataStatus().value("fallbackReason").toString().isEmpty());
+        const auto contentBeforeDemand=editor.documentBytes();
+        const bool dirtyBeforeDemand=editor.dirty(),undoBeforeDemand=editor.canUndo(),redoBeforeDemand=editor.canRedo();
+        QVERIFY(editor.publishMapView({{"viewportWidth",390.},{"viewportHeight",600.},
+            {"scale",177.45},{"devicePixelRatio",3.}}));
+        QVERIFY(editor.setTerrainLayoutWidth(799));
+        QCOMPARE(editor.terrainDataStatus().value("sourceDevicePixelRatio").toDouble(),2.);
+        QCOMPARE(editor.terrainDataStatus().value("targetLevel").toInt(),1);
+        QVERIFY(editor.setTerrainLayoutWidth(800));
+        QCOMPARE(editor.terrainDataStatus().value("sourceDevicePixelRatio").toDouble(),3.);
+        QCOMPARE(editor.terrainDataStatus().value("targetLevel").toInt(),2);
+        QCOMPARE(editor.mapViewState().value("viewportWidth").toDouble(),390.);
+        QVERIFY(!editor.setTerrainLayoutWidth(0));
+        QVERIFY(!editor.setTerrainLayoutWidth(std::numeric_limits<double>::quiet_NaN()));
+        QCOMPARE(editor.terrainDataStatus().value("layoutWidth").toDouble(),800.);
+        QCOMPARE(editor.documentBytes(),contentBeforeDemand);
+        QCOMPARE(editor.dirty(),dirtyBeforeDemand);
+        QCOMPARE(editor.canUndo(),undoBeforeDemand);QCOMPARE(editor.canRedo(),redoBeforeDemand);
         QVERIFY(editor.newProject()); // Cancels all previous source ownership before rebootstrap.
         const auto clearedQuality=editor.renderQuality();
         const auto cleared=clearedQuality.value("resourceCaches").toMap().value("terrain").toMap();
@@ -613,6 +631,24 @@ private slots:
         auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
         window->resize(1280,800);exposeForTest(window);
         QTRY_COMPARE_WITH_TIMEOUT(editor.worldStatus(),QString("canonical"),30000);
+        // WindowsFrame's initial native-frame refresh can resize the first
+        // exposed window under fractional DPR. Set the test's CSS client size
+        // after that initialization; never compare against the old request.
+        window->resize(1280,800);QCoreApplication::processEvents();
+        QTRY_COMPARE(window->width(),1280);
+        QTRY_COMPARE(editor.terrainDataStatus().value("layoutWidth").toDouble(),1280.);
+        QCOMPARE(editor.mapViewState().value("devicePixelRatio").toDouble(),window->devicePixelRatio());
+        window->resize(799,800);QCoreApplication::processEvents();
+        QTRY_COMPARE(window->width(),799);
+        QTRY_COMPARE(editor.terrainDataStatus().value("layoutWidth").toDouble(),799.);
+        QVERIFY(editor.terrainDataStatus().value("mobileLayout").toBool());
+        window->resize(800,800);QCoreApplication::processEvents();
+        QTRY_COMPARE(window->width(),800);
+        QTRY_COMPARE(editor.terrainDataStatus().value("layoutWidth").toDouble(),800.);
+        QVERIFY(!editor.terrainDataStatus().value("mobileLayout").toBool());
+        qInfo()<<"P2 actual window demand"<<window->width()<<"DPR"<<window->devicePixelRatio()
+               <<"map DPR"<<editor.mapViewState().value("devicePixelRatio")<<"799/800 cases=2";
+        window->resize(1280,800);QCoreApplication::processEvents();
         QVERIFY(editor.countryRows().size()>200);
         editor.beginAppearancePreview();QVERIFY(editor.previewAppearance({{"theme","light"}}));
         editor.selectCountry("DEU");QCOMPARE(editor.selectedId(),QString("DEU"));
