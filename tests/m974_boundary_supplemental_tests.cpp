@@ -1,4 +1,4 @@
-#include "sharedboundary.h"
+#include <pandoeditor/map/sharedboundary.h>
 #include "territorialgeometry.h"
 #include "territorial_fixture.h"
 #include "projectcodec.h"

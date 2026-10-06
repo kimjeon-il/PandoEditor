@@ -726,7 +726,7 @@ endif()
 
 target_sources(pandoeditor_editor PRIVATE
     geometrysnapprovider.cpp geometrysnapprovider.h
-    sharedboundary.cpp sharedboundary.h sharedboundarycontroller.cpp)
+    sharedboundarycontroller.cpp)
 if(BUILD_TESTING)
     add_executable(m974_snap_provider_tests ../tests/m974_snap_provider_tests.cpp)
     target_link_libraries(m974_snap_provider_tests PRIVATE pandoeditor_editor Qt6::Test)
@@ -756,8 +756,6 @@ if(BUILD_TESTING)
     target_link_libraries(m974_snap_provider_probe PRIVATE pandoeditor_editor)
     add_test(NAME m974_snap_provider_probe_contract COMMAND m974_snap_provider_probe --self-test)
 endif()
-set_source_files_properties(sharedboundary.cpp PROPERTIES COMPILE_OPTIONS
-    "$<$<CXX_COMPILER_ID:MSVC>:/fp:strict>;$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffp-contract=off>")
 if(BUILD_TESTING)
     add_executable(m974_snap_benchmark ../tests/m974_snap_benchmark.cpp)
     target_link_libraries(m974_snap_benchmark PRIVATE pandoeditor_editor)

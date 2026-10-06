@@ -20,6 +20,7 @@ add_library(pandoeditor_map_engine STATIC
     src/geometrypacketcache.cpp
     src/mapscenebuilder.cpp
     src/geometrysnap.cpp
+    src/sharedboundary.cpp
 )
 add_library(Pandoeditor::MapEngine ALIAS pandoeditor_map_engine)
 
@@ -34,10 +35,13 @@ target_link_libraries(pandoeditor_map_engine PUBLIC Pandoeditor::Core Threads::T
 set_target_properties(pandoeditor_map_engine PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # JavaScript's specified intermediate operations must not be fused on native targets.
-set_source_files_properties(src/geometrysnap.cpp PROPERTIES COMPILE_OPTIONS
+set_source_files_properties(src/geometrysnap.cpp src/sharedboundary.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:MSVC>:/fp:strict>;$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffp-contract=off>")
 
 if(BUILD_TESTING)
+    add_executable(m976_shared_boundary_engine_tests ../tests/m976_shared_boundary_engine_tests.cpp)
+    target_link_libraries(m976_shared_boundary_engine_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME m976_shared_boundary_engine_tests COMMAND m976_shared_boundary_engine_tests)
     add_executable(m974_snap_tests ../tests/m974_snap_tests.cpp)
     target_link_libraries(m974_snap_tests PRIVATE Pandoeditor::MapEngine)
     add_test(NAME m974_snap_tests COMMAND m974_snap_tests)

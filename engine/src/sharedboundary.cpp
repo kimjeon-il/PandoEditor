@@ -1,4 +1,4 @@
-#include "sharedboundary.h"
+#include <pandoeditor/map/sharedboundary.h>
 #include <algorithm>
 #include <array>
 #include <cmath>

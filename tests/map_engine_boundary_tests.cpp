@@ -13,6 +13,7 @@
 #include <pandoeditor/map/renderquality.h>
 #include <pandoeditor/map/renderscene.h>
 #include <pandoeditor/map/scenepatch.h>
+#include <pandoeditor/map/sharedboundary.h>
 #include <pandoeditor/map/viewportresourcescheduler.h>
 
 #include <cassert>
@@ -37,5 +38,9 @@ int main() {
     geometrysnap::Index snapIndex;
     geometrysnap::Request snapRequest;
     assert(snapIndex.prepareAndCollect(project.snapshot(),snapRequest).candidates.empty());
+    const pandoeditor::ProjectDocument boundaryDocument({},{});
+    const auto boundary=sharedboundary::Session::prepare(boundaryDocument,
+        pandoeditor::validateDocument(boundaryDocument),{});
+    assert(!boundary->valid()&&boundary->error()=="BOUNDARY_REQUIRES_TWO_OWNERS");
     return 0;
 }

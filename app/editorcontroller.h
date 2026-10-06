@@ -8,7 +8,7 @@
 #include "commandjobrunner.h"
 #include "territoryselection.h"
 #include "territorialgeometry.h"
-#include "sharedboundary.h"
+#include <pandoeditor/map/sharedboundary.h>
 #include <atomic>
 #include "platformstorage.h"
 #include "autosavecoordinator.h"
