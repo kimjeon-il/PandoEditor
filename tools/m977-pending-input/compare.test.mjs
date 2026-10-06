@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {loadPendingNodeSources,readPendingSources} from './sources.mjs';
 import {runPendingInputCase} from './runtime.mjs';
 const mod=await import('./compare.mjs').catch(error=>{if(error.code!=='ERR_MODULE_NOT_FOUND')throw error;return {};});
@@ -15,7 +16,7 @@ test('matched real native and Node runs observe empty-ready decisions while reta
  const loaded=await loadPendingNodeSources();
  try{
   const web=[];for(const definition of loaded.bundle.corpus.cases)web.push(await runPendingInputCase(loaded,definition,loaded.bundle.corpus));
-  const run=spawnSync(probe,[new URL('../../tests/fixtures/web-m977-pending-input/corpus.json',import.meta.url).pathname],{encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024,env:{...process.env,QT_QPA_PLATFORM:'offscreen',QT_QUICK_BACKEND:'software'}});
+  const run=spawnSync(probe,[fileURLToPath(new URL('../../tests/fixtures/web-m977-pending-input/corpus.json',import.meta.url))],{encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024,env:{...process.env,QT_QPA_PLATFORM:'offscreen',QT_QUICK_BACKEND:'software'}});
   assert.ifError(run.error);assert.equal(run.status,0,run.stderr);const native=JSON.parse(run.stdout);
   const result=mod.comparePendingCollections(loaded.bundle,{cases:web},native,{mode:'node-diagnostic'});
   assert.equal(result.integrityPassed,true);assert.equal(result.rawParity,false);assert.equal(result.gateAcceptance,false);assert.equal(result.pairedCases,14);assert.equal(result.requestedStages,86);assert.equal(result.pairedStages,86);assert.equal(result.unsupportedStages.length,0);assert.equal(result.actualChromium,false);

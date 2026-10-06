@@ -196,3 +196,82 @@ Final frozen-pair execution/CI evidence is kept externally so recording its SHA
 does not change the commit being verified. This checkpoint does not assert an
 unexecuted final run or a later Linux result. Full CTest, renderer/GPU audit,
 T3/T4/UI, main merge, deployment and portable packaging were not executed.
+
+## Country-lineage integration checkpoint (2026-10-07, Windows)
+
+This checkpoint integrates `codex/country-lineage-storage` at
+`4006e41745c9f03a70eea21de22411f3954cbbf8` into the latest app main base
+`a751d5f16da6b604d95435c9a29adef7a2f3ab38`. The user explicitly selected the
+current Web contract where older instructions differ: project/native 10,
+territorial model/identity 6 and `sourceEntityId`. The existing native geometry
+provenance ledger is retained. Retired native/Web 9 and retired source field
+layouts reject atomically; no migration or compatibility reader was added.
+`territorial-source-contract.md` records the current wire contract. Temporal
+meaning, archive ownership and static activation policy are unchanged.
+
+- Fixed Web candidate: `ebcfae4d27b29cbbea6416a7045a4806930204be`.
+- App/Web timeline contract Git bytes: SHA256
+  `6faaa45917b6322d6cbb94bfa85c6eb10518a17e2400b62adea42b49f91e66cc`.
+- Immutable exchange manifest: SHA256
+  `852af3bf7f59cab73a44862c91eb1d60e9db45f8e0ee561f9a265a702b93721c`.
+- Fixed production source manifest: SHA256
+  `d6a128f9f9a9ce6b81590d0c768a5f3d2911906eec537d7e1abf7b1db69aebdd`.
+- Exact upstream files: nine fixture/expected files, thirty production
+  serializer/GIS Worker/dependency files. The separate lineage content inputs
+  declare their original branch blobs or the four explicit input-field changes;
+  their expected values are not generated from the app output.
+
+Executed Windows Release build uses Qt 6.8.3 / MinGW 13.1, Node 24.21.0,
+offscreen QPA and software Qt Quick. Validation programs explicitly undefine
+NDEBUG; the app retains normal Release compilation. Original geometry resource
+blobs are embedded as LF, with Git attributes protecting their exact bytes.
+Historical expected/source snapshots and other feature oracle pins remain
+unchanged. Current Web exchange uses the new fixed snapshot, rather than an
+unrelated historical oracle.
+
+The actual production Web10 matrix completed 16/16 cases, failure/mismatch/skip
+0: Web→App→Web 6/6, App→Web→App 6/6 and invalid calendar rejection 4/4. All
+24/24 native traces and 28/28 processes completed; each mandatory intermediate
+native JSON, native package reopen, Web JSON export and activation receipt was
+checked. Actual Web serializer/SQL WASM GIS Worker and native codecs were used.
+Literal output is compared before production reader normalization. The original
+nameExplicit checker failure and partial traces are retained, separately from
+the corrected actual runs. The upstream expected bytes were not changed.
+
+The matrix corpus contains no populated inline-content or flag rows; it is not
+proof of populated coverage in those domains. Separate native content/ownership
+and project/editor suites executed that coverage, including native-only field
+preservation and explicit Web-export refusal, atomic read/restore/activation
+failures, and static edit/Undo/Redo archive preservation. The timeline editor
+suite completed 108 Qt cases without failures or skips. Actual current-input
+M977 lifecycle/input groups completed 2/2 with exit 0, retaining all stage/raw
+hash, geometry/opaque ownership and archive-ledger checks. Their historical
+Web9 lifecycle observations are explicitly projected across the four declared
+input-field boundaries; they are not current Web10 browser execution evidence.
+The independent typed native mapping also rejects 119 field/inventory/period
+mutations, including a corrupt native label name with an unchanged Web receipt.
+
+Actual M32 process PID 3716 completed 2525/2525 comparisons, exit 0, mismatch 0
+(`m32-premerge.json`). Its property/temporal feature source pins remain historical
+and are not substituted for the current Web10 exchange oracle. The workflow's
+already corrected root property_probe path, error propagation and probe_only
+selection are retained.
+
+Evidence root: `D:/Codex/evidence/p1-p8-m98-20261006`. The initial interrupted
+diagnostic and subsequent 177-group run (170 pass, seven fail, exit 8) are retained
+as failures. Targeted reruns correct Windows path/UTF-8 test launch handling,
+isolate Windows test data, wait for delivered touch samples and configure the
+installed offscreen font directory without disabling behavioral assertions or
+warning checks. Passed broad groups are not rerun merely to replace this history.
+The final coverage union is 179/179 registered groups passed, failures/skips 0
+(`lineage-final-regression-coverage.json`): the 170 initial passes plus the four
+corrected non-UI groups, three corrected UI groups and two current-input M977
+groups. This is explicitly a union of actual executions, not a single fresh
+all-green full run. Final property UI log records 53 Qt cases, failure/skip 0;
+the three-group UI CTest rerun exits 0.
+
+The commit containing this checkpoint is the candidate for a further immutable
+commit-pair execution. That exact SHA and its actual results are recorded
+externally after commit in `lineage-final-commit-pair.json`; this text alone does
+not assert that an unexecuted later run passed. No renderer/GPU/device performance,
+P1–P8/M9.8 implementation completion, deployment or portable packaging is claimed.

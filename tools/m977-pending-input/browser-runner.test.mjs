@@ -6,13 +6,14 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 const mod=await import('./browser-runner.mjs').catch(error=>{if(error.code!=='ERR_MODULE_NOT_FOUND')throw error;return {};});
 const head='a'.repeat(40),env={GITHUB_ACTIONS:'true',GITHUB_SHA:head,GITHUB_RUN_ID:'123456789'};
 test('actual browser execution requires exact CI head and run before side effects',()=>{
  assert.equal(typeof mod.verifyPendingCI,'function','Separate CI-only launch guard required');assert.doesNotThrow(()=>mod.verifyPendingCI(env,head));
  for(const [bad,checkout]of [[{},head],[{...env,GITHUB_ACTIONS:'false'},head],[{...env,GITHUB_SHA:'main'},head],[{...env,GITHUB_RUN_ID:'local'},head],[env,'b'.repeat(40)]])assert.throws(()=>mod.verifyPendingCI(bad,checkout));
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'m977-no-launch-')),output=path.join(dir,'must-not-exist');
- try{const child=spawnSync(process.execPath,[new URL('./browser-runner.mjs',import.meta.url).pathname,output],{env:{...process.env,GITHUB_ACTIONS:'false'},encoding:'utf8',timeout:10000});assert.notEqual(child.status,0);assert.match(child.stderr,/authorized exact-commit CI/);assert.equal(fs.existsSync(output),false);}finally{fs.rmSync(dir,{recursive:true,force:true});}
+ try{const child=spawnSync(process.execPath,[fileURLToPath(new URL('./browser-runner.mjs',import.meta.url)),output],{env:{...process.env,GITHUB_ACTIONS:'false'},encoding:'utf8',timeout:10000});assert.notEqual(child.status,0);assert.match(child.stderr,/authorized exact-commit CI/);assert.equal(fs.existsSync(output),false);}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 test('row context options match both actual viewport and pointer capability profiles',()=>{
  assert.equal(typeof mod.pendingContextOptions,'function');

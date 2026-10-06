@@ -221,7 +221,7 @@ private slots:
             QCOMPARE(restored.worldStatus(),QStringLiteral("recovery-failed"));
             QCOMPARE(errors.count(),1);
             const auto message=errors.first().first().toString();
-            QVERIFY2(message.contains("UNSUPPORTED_VERSION")&&message.contains("Qt v9"),qPrintable(message));
+            QVERIFY2(message.contains("UNSUPPORTED_VERSION")&&message.contains("Qt v10"),qPrintable(message));
             QCOMPARE(restored.documentBytes(),initialDocument);
             QCOMPARE(restored.projectInstanceId(),initialInstance);
             // Observe beyond the configured debounce to catch an accidental rewrite.

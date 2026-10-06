@@ -290,6 +290,8 @@ if(BUILD_TESTING)
     if(M972_NODE_EXECUTABLE)
         add_test(NAME m972_river_oracle_contract COMMAND "${M972_NODE_EXECUTABLE}" --test
             "${PROJECT_SOURCE_DIR}/tools/m97/river-kernel.test.mjs")
+        set_tests_properties(m972_river_oracle_contract PROPERTIES
+            ENVIRONMENT "PANDOEDITOR_PYTHON_EXECUTABLE=${Python3_EXECUTABLE}")
         add_test(NAME m972_river_synthetic_browser_baseline COMMAND "${M972_NODE_EXECUTABLE}"
             "${PROJECT_SOURCE_DIR}/tools/m97/river/differential.mjs" --native "$<TARGET_FILE:m972_river_probe>" --synthetic)
         add_test(NAME m972_river_full_source_browser_baseline COMMAND "${M972_NODE_EXECUTABLE}" --max-old-space-size=256
@@ -482,12 +484,22 @@ if(BUILD_TESTING)
     add_executable(timeline_project_tests ../tests/timeline_project_tests.cpp)
     target_link_libraries(timeline_project_tests PRIVATE pandoeditor_editor)
     target_compile_definitions(timeline_project_tests PRIVATE
-        PANDOEDITOR_TIMELINE_PROJECT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-project-v9.json")
+        PANDOEDITOR_TIMELINE_PROJECT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-project-v10.json")
     add_test(NAME timeline_project_tests COMMAND timeline_project_tests)
+    if(PANDOEDITOR_M72_NODE_EXECUTABLE)
+        add_test(NAME web_v10_exchange_source_contract
+            COMMAND "${PANDOEDITOR_M72_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/web-v10-exchange-oracle.mjs" --verify-only)
+        add_test(NAME web_v10_exchange_oracle_unit
+            COMMAND "${PANDOEDITOR_M72_NODE_EXECUTABLE}" --test "${PROJECT_SOURCE_DIR}/tests/fixtures/web-v10-exchange/oracle.test.mjs")
+        add_test(NAME web_v10_production_codec_cross_exchange
+            COMMAND "${PANDOEDITOR_M72_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/web-v10-exchange-oracle.mjs"
+                --native "$<TARGET_FILE:timeline_project_tests>" "${PROJECT_BINARY_DIR}/test-results/web-v10-exchange")
+        set_tests_properties(web_v10_production_codec_cross_exchange PROPERTIES TIMEOUT 180)
+    endif()
     add_executable(timeline_editor_persistence_tests ../tests/timeline_editor_persistence_tests.cpp)
     target_link_libraries(timeline_editor_persistence_tests PRIVATE pandoeditor_editor Qt6::Test)
     target_compile_definitions(timeline_editor_persistence_tests PRIVATE
-        PANDOEDITOR_EXCHANGE_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-exchange")
+        PANDOEDITOR_EXCHANGE_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/web-v10-exchange")
     qt_add_resources(timeline_editor_persistence_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     qt_add_resources(timeline_editor_persistence_tests flag_fixtures PREFIX "/defaults/flags"
@@ -870,7 +882,7 @@ if(BUILD_TESTING)
     add_executable(m975_model_exchange_probe ../tests/m975_model_exchange_probe.cpp)
     target_link_libraries(m975_model_exchange_probe PRIVATE pandoeditor_editor)
     target_compile_definitions(m975_model_exchange_probe PRIVATE
-        M975_EXCHANGE_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-exchange")
+        M975_EXCHANGE_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/web-v10-exchange")
     qt_add_resources(m975_model_exchange_probe sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME m975_model_exchange_probe_contract COMMAND m975_model_exchange_probe --self-test)

@@ -4,8 +4,28 @@ import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {boundaryTimingCases,runBoundaryTimingCase} from './runtime.mjs';
 import {loadSourceHistoryNodeSources} from '../m974-snap-boundary/source-history-sources.mjs';
-import {verifyNativeTiming,compareTimingObservations} from './compare.mjs';
+import {verifyNativeFixedBoundaryInput,verifyNativeTiming,compareTimingObservations} from './compare.mjs';
 const probe=process.env.M977_BOUNDARY_PROBE;
+// Protocol-only canonical receipts. These are never native or browser captures.
+function syntheticCanonicalSource(definition){
+ const ids=definition.features.map(f=>f.id),geometry=f=>({type:'Polygon',coordinates:[structuredClone(f.ring)]});
+ return {nativeCanonicalDocument:{
+  units:ids.map(id=>({id,kind:'general',name:id,baseName:id,nameExplicit:true,locked:false,libraryOrigin:null,metadata:{},notes:'',sourceFolderId:'',sourceGeometryVersion:'',sourceEntityId:''})),
+  timelineRecords:{schemaVersion:1,lifetimes:ids.map(id=>({id:'lifetime:'+id,entityId:id,validFrom:null,validTo:null})),parentRelations:ids.map(id=>({id:'parent:'+id,entityId:id,parentId:'',coverageMode:'explicit',validFrom:null,validTo:null})),geometryBindings:ids.map(id=>({id:'geometry:'+id,entityId:id,geometryRef:{id,version:1},validFrom:null,validTo:null}))},
+  geometries:definition.features.map(f=>({id:f.id,version:1,geojson:geometry(f)})),presentation:{objectStyles:{territorial:Object.fromEntries(ids.map(id=>[id,{color:null,opacity:1}]))}},content:{distributionEntries:[]},
+ },document:{entities:definition.features.map(f=>({id:f.id,parentId:'',coverageMode:'explicit',entityKind:'general',geometry:geometry(f),properties:{schemaVersion:5,entityKind:'general',name:f.id,parentId:'',coverageMode:'explicit',style:{},locked:false,validFrom:null,validTo:null,notes:'',metadata:{},sourceFolderId:'',sourceLibraryId:'',sourceGeometryVersion:''}})),distributionEntries:[]}};
+}
+test('synthetic canonical source accepts current native field with unchanged historical flattened receipts',()=>{
+ for(const definition of boundaryTimingCases()){const state=syntheticCanonicalSource(definition);assert.equal(verifyNativeFixedBoundaryInput(state,definition),state);}
+});
+test('synthetic canonical source rejects legacy and mixed native fields',()=>{
+ const definition=boundaryTimingCases()[0];
+ for(const replace of [false,true]){const state=syntheticCanonicalSource(definition),unit=state.nativeCanonicalDocument.units[0];unit.sourceLibraryId=unit.sourceEntityId;if(replace)delete unit.sourceEntityId;assert.throws(()=>verifyNativeFixedBoundaryInput(state,definition));}
+});
+test('synthetic canonical source rejects changed provenance and flattened source field aliases',()=>{
+ const definition=boundaryTimingCases()[0],state=syntheticCanonicalSource(definition);state.nativeCanonicalDocument.units[0].sourceEntityId='forged-source';assert.throws(()=>verifyNativeFixedBoundaryInput(state,definition));
+ const flattened=syntheticCanonicalSource(definition),p=flattened.document.entities[0].properties;p.sourceEntityId=p.sourceLibraryId;delete p.sourceLibraryId;assert.throws(()=>verifyNativeFixedBoundaryInput(flattened,definition));
+});
 test('native public-controller timing and truthful comparison', {skip:!probe}, async()=>{
  const cases=boundaryTimingCases(),result=spawnSync(probe,[],{input:JSON.stringify(cases),encoding:'utf8',timeout:180000,maxBuffer:32*1024*1024});assert.equal(result.status,0,result.stderr);const receipt=JSON.parse(result.stdout);verifyNativeTiming(cases,receipt);
  const loaded=await loadSourceHistoryNodeSources();

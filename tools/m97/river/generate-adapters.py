@@ -48,7 +48,7 @@ def generated():
                RIVER/'adapted/planar-graph-faces.js':originals['planar-graph-faces.js']}
     manifest={'webCommit':'53dbd3c1e84f04cf0332adc1b7a32f290b2a4f47','originalSha256':PINS,
       'syntaxReplacements':[{'before':a,'after':b} for a,b in replacements],
-      'generatedSha256':{str(path.relative_to(ROOT)):sha256(data).hexdigest() for path,data in outputs.items()}}
+      'generatedSha256':{path.relative_to(ROOT).as_posix():sha256(data).hexdigest() for path,data in outputs.items()}}
     outputs[RIVER/'provenance.json']=(json.dumps(manifest,indent=2)+'\n').encode()
     return outputs
 

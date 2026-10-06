@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {readPendingSources} from './sources.mjs';
 const probe=process.env.PANDO_M977_NATIVE_PROBE;
 const bundle=readPendingSources();
@@ -8,7 +9,7 @@ let report;
 export function collectNative(){
  if(report)return structuredClone(report);
  assert.ok(probe,'PANDO_M977_NATIVE_PROBE must name the actual compiled public-controller probe');
- const run=spawnSync(probe,[new URL('../../tests/fixtures/web-m977-pending-input/corpus.json',import.meta.url).pathname],{encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024,env:{...process.env,QT_QPA_PLATFORM:'offscreen',QT_QUICK_BACKEND:'software'}});
+ const run=spawnSync(probe,[fileURLToPath(new URL('../../tests/fixtures/web-m977-pending-input/corpus.json',import.meta.url))],{encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024,env:{...process.env,QT_QPA_PLATFORM:'offscreen',QT_QUICK_BACKEND:'software'}});
  assert.ifError(run.error);assert.equal(run.status,0,run.stderr);report=JSON.parse(run.stdout);return structuredClone(report);
 }
 test('actual native stimulus uses every declared tap index across both profiles',{skip:!probe},()=>{

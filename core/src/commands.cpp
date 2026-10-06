@@ -1008,9 +1008,9 @@ ChangeImpact calculateChangeImpact(const ProjectDocument& before,const ProjectDo
         });
     const bool unitPresentation=!same(before.units,after.units,[](const auto& x,const auto& y) {
         return std::tie(x.id,x.name,x.notes,x.kind,x.locked,x.baseName,x.nameExplicit,x.libraryOrigin,
-                        x.metadata,x.sourceFolderId,x.sourceLibraryId,x.sourceGeometryVersion)==
+                        x.metadata,x.sourceFolderId,x.sourceEntityId,x.sourceGeometryVersion)==
             std::tie(y.id,y.name,y.notes,y.kind,y.locked,y.baseName,y.nameExplicit,y.libraryOrigin,
-                     y.metadata,y.sourceFolderId,y.sourceLibraryId,y.sourceGeometryVersion);
+                     y.metadata,y.sourceFolderId,y.sourceEntityId,y.sourceGeometryVersion);
     });
     const bool contentPresentation=
         !same(before.countryDetails,after.countryDetails,[](const auto& x,const auto& y) {
@@ -1292,7 +1292,7 @@ bool semanticallyEqual(const ProjectDocument& a,const ProjectDocument& b)
         same(a.units,b.units,[](const auto& x,const auto& y) {
             return x.id==y.id && x.name==y.name && x.baseName==y.baseName && x.nameExplicit==y.nameExplicit && x.notes==y.notes && x.kind==y.kind &&
                 x.locked==y.locked && x.libraryOrigin==y.libraryOrigin && x.metadata==y.metadata &&
-                x.sourceFolderId==y.sourceFolderId && x.sourceLibraryId==y.sourceLibraryId && x.sourceGeometryVersion==y.sourceGeometryVersion;
+                x.sourceFolderId==y.sourceFolderId && x.sourceEntityId==y.sourceEntityId && x.sourceGeometryVersion==y.sourceGeometryVersion;
         }) && a.timelineRecords.schemaVersion==b.timelineRecords.schemaVersion &&
         same(a.timelineRecords.lifetimes,b.timelineRecords.lifetimes,[](const auto& x,const auto& y){return x.id==y.id&&x.entityId==y.entityId&&sameValidity(x.validity,y.validity);}) &&
         same(a.timelineRecords.geometryBindings,b.timelineRecords.geometryBindings,[](const auto& x,const auto& y){return x.id==y.id&&x.entityId==y.entityId&&sameValidity(x.validity,y.validity)&&x.geometryRef==y.geometryRef;}) &&

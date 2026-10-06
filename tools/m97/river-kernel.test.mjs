@@ -45,7 +45,8 @@ test('river original sources, exact defaults and 18 real-algorithm synthetic cas
   assertBehavior(cases.map(oracle.observe),cases);
 });
 test('six-expression syntax bridge and immutable resources regenerate exactly',()=>{
-  const run=spawnSync('python3',[path.join(root,'tools/m97/river/test-adapters.py')],{encoding:'utf8'});
+  const run=spawnSync(process.env.PANDOEDITOR_PYTHON_EXECUTABLE||'python3',[path.join(root,'tools/m97/river/test-adapters.py')],{encoding:'utf8'});
+  assert.ifError(run.error);
   assert.equal(run.status,0,run.stdout+run.stderr);
 });
 test('official browser gate is pinned, original-source only and parses without launching',()=>{

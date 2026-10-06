@@ -12,7 +12,7 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 // display receipt. Exact rings/order/versions remain observable here.
 export function verifyNativeFixedBoundaryInput(state,definition){
  const ids=definition.features.map(f=>f.id),canonical=state.nativeCanonicalDocument;
- assert.deepEqual(canonical.units,ids.map(id=>({id,kind:'general',name:id,baseName:id,nameExplicit:true,locked:false,libraryOrigin:null,metadata:{},notes:'',sourceFolderId:'',sourceGeometryVersion:'',sourceLibraryId:''})),'canonical source unit identities and metadata');
+ assert.deepEqual(canonical.units,ids.map(id=>({id,kind:'general',name:id,baseName:id,nameExplicit:true,locked:false,libraryOrigin:null,metadata:{},notes:'',sourceFolderId:'',sourceGeometryVersion:'',sourceEntityId:''})),'canonical source unit identities and metadata');
  assert.deepEqual(canonical.timelineRecords,{schemaVersion:1,
   lifetimes:ids.map(id=>({id:'lifetime:'+id,entityId:id,validFrom:null,validTo:null})),
   parentRelations:ids.map(id=>({id:'parent:'+id,entityId:id,parentId:'',coverageMode:'explicit',validFrom:null,validTo:null})),

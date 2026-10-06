@@ -19,6 +19,8 @@ tests/fixtures/web-timeline/*.mjs text eol=lf
 # M9.7.2 originals, generated compatibility resources, and
 # compact fixtures are SHA-256 verified. Preserve their bytes on Windows too.
 assets/geometry/river/** text eol=lf
+assets/geometry/split-corrections/** text eol=lf
+assets/geometry/cut/** text eol=lf
 tests/fixtures/web-m972-river/** text eol=lf
 # Existing source files reused by the new river provenance manifest.
 tests/fixtures/web-hydro/source/earcut.min.js text eol=lf
@@ -32,3 +34,16 @@ tests/fixtures/web-m97/source/assets/js/modules/map-edit-country-commands.js tex
 
 # Approved 6c3f930 river-removal source overlay remains byte-identical.
 tests/fixtures/web-m97/selection-removal-correction-source/** text eol=lf
+
+# Manifested text fixtures and verifier source fingerprints use Git LF bytes.
+tests/fixtures/**/*.json text eol=lf
+tests/fixtures/**/*.ndjson text eol=lf
+tests/fixtures/**/*.mjs text eol=lf
+tests/fixtures/**/*.js text eol=lf
+tools/**/*.mjs text eol=lf
+tools/m977-pending-lifecycle/*.json text eol=lf
+tests/m977-pending-lifecycle-integration.test.mjs text eol=lf
+
+# Current Web10 fixture/source snapshots carry exact Git-byte manifests.
+tests/fixtures/web-v10-exchange/** -text
+tests/fixtures/lineage-v10-content/** -text

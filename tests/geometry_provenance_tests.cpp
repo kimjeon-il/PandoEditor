@@ -216,7 +216,7 @@ void presentationRebaseAndStalePreviewDoNotMutateOwnership() {
 void splitUsesEmptySiblingOpaqueDefaults() {
     auto d=fixture();d.geometries.insert({"country",1},polygon());d.units.push_back({"country","Country","",UnitKind::General});
     d.units.back().metadata="{\"ownerRelative\":9007199254740993}";d.units.back().sourceFolderId="folder";
-    d.units.back().sourceLibraryId="library";d.units.back().sourceGeometryVersion="version";
+    d.units.back().sourceEntityId="library";d.units.back().sourceGeometryVersion="version";
     d.presentation.objectStyles[territorialRef("country")]={};addStaticTerritorialRecords(d,"country",{"country",1});seal(d);
     Project p;p.replace(d);const Geometry left{"Polygon",{},{},{{{{0,0},{2,0},{2,4},{0,4},{0,0}}}}};
     const Geometry right{"Polygon",{},{},{{{{2,0},{4,0},{4,4},{2,4},{2,0}}}}};
@@ -225,7 +225,7 @@ void splitUsesEmptySiblingOpaqueDefaults() {
     auto preview=CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"territorial.geometry.commit",args));
     if(!preview.preview)throw std::runtime_error("split failed: "+preview.detail);
     CHECK(CommandProcessor::confirm(p,*preview.preview).changed());const auto& sibling=p.document().units.back();
-    CHECK(sibling.id=="sibling"&&sibling.metadata=="{}"&&sibling.sourceFolderId.empty()&&sibling.sourceLibraryId.empty()&&sibling.sourceGeometryVersion.empty());
+    CHECK(sibling.id=="sibling"&&sibling.metadata=="{}"&&sibling.sourceFolderId.empty()&&sibling.sourceEntityId.empty()&&sibling.sourceGeometryVersion.empty());
     CHECK(p.document().units.front().metadata==d.units.front().metadata);CHECK(!p.document().geometryProvenance.opaqueUncertain);
     CHECK(!promoted(p.document()));CHECK(p.document().geometryProvenance.inlineAllocations.size()==1);
 }

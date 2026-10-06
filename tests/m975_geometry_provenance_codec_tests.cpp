@@ -17,7 +17,7 @@ QByteArray readFile(const QString& path) {
 void writeFile(const QString& path,const QByteArray& bytes) {
     QFile file(path);if(!file.open(QIODevice::WriteOnly)||file.write(bytes)!=bytes.size())throw std::runtime_error("fixture write failed");
 }
-V source() { return losslessjson::parse(readFile(QStringLiteral(M975_OWNERSHIP_FIXTURES)+"/m975-annex-full-recursive.json")); }
+V source() { return losslessjson::parse(readFile(QStringLiteral(M975_OWNERSHIP_FIXTURES)+"/../lineage-v10-content/ownership-static.web10.json")); }
 V refValue(const std::string& id,unsigned version=1) {auto value=V::obj();value.object={{"id",V::str(id)},{"version",V::num(version)}};return value;}
 V rowValue(const std::string& id,const V& shape,unsigned version=1) {auto value=refValue(id,version);value.object["geojson"]=shape;return value;}
 V labelShape(const V& label) {auto shape=V::obj();shape.object={{"type",V::str("Point")},{"coordinates",label.object.at("coordinates")}};return shape;}
@@ -81,13 +81,11 @@ private slots:
         input.object["geometries"].array.push_back(rowValue("web-label:"+label.object.at("id").string,shape));
         checkError([&]{projectcodec::decodeWeb(input.encode());},"GEOMETRY_ARCHIVE_CONFLICT");
     }
-    void nativeNineInputTreatsEveryArchivedRowAsSemantic() {
+    void retiredNativeNineRejectsWithoutChangingTheOriginalFile() {
         const auto legacy=losslessjson::parse(readFile(QStringLiteral(M975_OWNERSHIP_FIXTURES)+"/../native-v9/content.pando.json"));
         QTemporaryDir dir;QVERIFY(dir.isValid());const auto path=dir.filePath("legacy.json");writeFile(path,legacy.encode());
-        Project reopened;reopened.replace(projectcodec::decode(readFile(path)));QCOMPARE(readFile(path),legacy.encode());
-        const auto saved=losslessjson::parse(projectcodec::encode(reopened));QCOMPARE(saved.object.at("version").raw,QByteArray("10"));QVERIFY(saved.object.count("geometryProvenance"));
-        const auto& ledger=saved.object.at("geometryProvenance");QVERIFY(ledger.object.at("inlineAllocations").array.empty());QCOMPARE(ledger.object.at("originalArchive").array.size(),legacy.object.at("geometries").array.size());
-        QVERIFY(archive(losslessjson::parse(projectcodec::encodeWeb(reopened.snapshot())))==archive(legacy));
+        checkError([&]{projectcodec::decode(readFile(path));},"UNSUPPORTED_VERSION");
+        QCOMPARE(readFile(path),legacy.encode());
     }
 
     void everyInlineDomainHasExactCreationProvenance_data() {
@@ -120,7 +118,8 @@ private slots:
     void malformedNativeTenLedgerRejectsBeforeActivation_data() {
         QTest::addColumn<QString>("mutation");QTest::addColumn<QString>("expected");
         for(const auto* name:{"missing","schema","duplicate-original","duplicate-allocation","overlap","missing-target","creator-domain","creator-id","wrong-deterministic-ref","bad-shape-hash","wrong-shape-hash","bad-opaque-hash","duplicate-opaque-slot","stale-opaque","new-opaque"})QTest::newRow(name)<<QString(name)<<QString("INVALID_GEOMETRY_PROVENANCE");
-        for(const auto* name:{"root-field","ledger-field","allocation-field","creator-field","ref-field","baseline-field","v9-with-ledger"})QTest::newRow(name)<<QString(name)<<QString("UNSUPPORTED_FIELD");
+        for(const auto* name:{"root-field","ledger-field","allocation-field","creator-field","ref-field","baseline-field","retired-source-field"})QTest::newRow(name)<<QString(name)<<QString("UNSUPPORTED_FIELD");
+        QTest::newRow("v9-with-ledger")<<QString("v9-with-ledger")<<QString("UNSUPPORTED_VERSION");
         QTest::newRow("native-version")<<QString("native-version")<<QString("UNSUPPORTED_VERSION");
         QTest::newRow("untyped-promoted")<<QString("untyped-promoted")<<QString("INVALID_JSON");
     }
@@ -149,6 +148,7 @@ private slots:
         else if(mutation=="creator-field")allocations.front().object["createdFor"].object["mystery"]=V::boolean(true);
         else if(mutation=="ref-field")allocations.front().object["ref"].object["mystery"]=V::boolean(true);
         else if(mutation=="baseline-field")baselines.front().object["mystery"]=V::boolean(true);
+        else if(mutation=="retired-source-field")value.object["units"].array.front().object["sourceLibraryId"]=V::str("retired");
         else if(mutation=="v9-with-ledger")value.object["version"]=V::num(9);
         else if(mutation=="native-version")value.object["version"]=V::num(11);
         else if(mutation=="untyped-promoted")allocations.front().object["promoted"]=V::str("false");

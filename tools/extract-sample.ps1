@@ -19,7 +19,7 @@ New-Item -ItemType Directory -Force -Path $assetDir | Out-Null
 $units = @($countries | ForEach-Object { [ordered]@{
     id=$_.id; name=$_.name; notes=''; kind='general'; locked=$false;
     baseName=$_.name; nameExplicit=$false; libraryOrigin=$null; metadata=@{};
-    sourceFolderId=''; sourceLibraryId=''; sourceGeometryVersion=''
+    sourceFolderId=''; sourceEntityId=''; sourceGeometryVersion=''
 } })
 $lifetimes = @($units | ForEach-Object { [ordered]@{id="lifetime:$($_.id)"; entityId=$_.id; validFrom=$null; validTo=$null} })
 $bindings = @($units | ForEach-Object { [ordered]@{id="geometry:$($_.id)"; entityId=$_.id; validFrom=$null; validTo=$null; geometryRef=@{id="territorial-geometry:$($_.id)"; version=1}} })
@@ -27,9 +27,10 @@ $parents = @($units | ForEach-Object { [ordered]@{id="parent:$($_.id)"; entityId
 $styles = [ordered]@{}
 foreach ($country in $countries) { $styles[$country.id]=@{color=$country.color; opacity=1} }
 $document = [ordered]@{
-    format='pandoeditor-project'; version=9; documentId='pandoeditor-sample'; exchangeMetadata=@{}; units=$units
+    format='pandoeditor-project'; version=10; documentId='pandoeditor-sample'; exchangeMetadata=@{}; units=$units
     timelineRecords=[ordered]@{schemaVersion=1; lifetimes=$lifetimes; geometryBindings=$bindings; parentRelations=$parents}
     geometries=@($countries | ForEach-Object { [ordered]@{id="territorial-geometry:$($_.id)"; version=1; geojson=$_.geometry} })
+    geometryProvenance=@{schemaVersion=1;originalArchive=@($countries | ForEach-Object { @{id="territorial-geometry:$($_.id)";version=1} });inlineAllocations=@();opaqueBaseline=@();opaqueUncertain=$false}
     presentation=@{
         userLayers=@(@{id='countries';name='Countries';visible=$true;locked=$false;opacity=1})
         membership=@($units | ForEach-Object { @{ref=@{domain='territorial';id=$_.id};layerId='countries'} })
@@ -48,7 +49,7 @@ $provenance = [ordered]@{
     termsUrl='https://www.naturalearthdata.com/about/terms-of-use/'
     license='Public domain'
     countryIds=$ids
-    transformation='Select ADM0_A3; retain every geometry coordinate; normalize Polygon to MultiPolygon; use NAME_KO; assign initial colors. Emit native v9 identities, unbounded timeline records and immutable geometry archive.'
+    transformation='Select ADM0_A3; retain every geometry coordinate; normalize Polygon to MultiPolygon; use NAME_KO; assign initial colors. Emit native v10 identities, unbounded timeline records and immutable geometry archive.'
     outputSha256=(Get-FileHash -LiteralPath (Join-Path $assetDir 'sample.pando.json') -Algorithm SHA256).Hash
 }
 $provenance | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $assetDir 'provenance.json') -Encoding utf8NoBOM

@@ -1,0 +1,244 @@
+{
+  "schema": "pando-web-v10-source-snapshot",
+  "version": 1,
+  "repository": "https://github.com/kimjeon-il/world-map",
+  "sourceCommit": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+  "entrypoints": [
+    "assets/js/modules/project-serializer.js",
+    "assets/js/modules/project-state.js",
+    "tests/helpers/timeline-project.mjs",
+    "tests/fixtures/timeline-storage-cases.mjs",
+    "tests/helpers/production-geopackage.mjs",
+    "tests/fixtures/generate-timeline-exchange.mjs",
+    "package.json"
+  ],
+  "additionalWorkerDependencies": [
+    "assets/js/workers/gis-gpkg-worker.js",
+    "assets/js/gis-adapters.js",
+    "assets/js/build-meta.js",
+    "assets/js/vendor/sql/sql-wasm.js",
+    "assets/js/vendor/sql/sql-wasm.wasm",
+    "assets/js/vendor/sql/LICENSE.txt"
+  ],
+  "sources": [
+    {
+      "sourcePath": "assets/js/build-meta.js",
+      "file": "source/assets/js/build-meta.js",
+      "bytes": 499,
+      "gitBlob": "f97bd530707e0c72bc1660a255049a91bebd66a1",
+      "sha256": "68be98b45713f04615238656704f629de8486380601807808913e2f2d3394eb8"
+    },
+    {
+      "sourcePath": "assets/js/gis-adapters.js",
+      "file": "source/assets/js/gis-adapters.js",
+      "bytes": 10643,
+      "gitBlob": "ed79016c8922898e060bf7a53a74400c359fb8fb",
+      "sha256": "10fd7bc55aba4a5705b46b2a25e288ddda457185b79d8f458a1a5517e0632499"
+    },
+    {
+      "sourcePath": "assets/js/modules/color-adapter.js",
+      "file": "source/assets/js/modules/color-adapter.js",
+      "bytes": 3536,
+      "gitBlob": "8d4ac6ba743179e56f244781be612067057e8066",
+      "sha256": "4ceddf070464808bddf451542561ce047e25794c290cdf7f29f44e22514170a2"
+    },
+    {
+      "sourcePath": "assets/js/modules/country-default-colors.js",
+      "file": "source/assets/js/modules/country-default-colors.js",
+      "bytes": 4736,
+      "gitBlob": "6f355d0b06e6f286c457a9c4ad286485ba4e1756",
+      "sha256": "46e2e18f2fb78058edd7d990ecc99d9a81cb087dc3f0ca2de55f7771d5660730"
+    },
+    {
+      "sourcePath": "assets/js/modules/distribution-model.js",
+      "file": "source/assets/js/modules/distribution-model.js",
+      "bytes": 8195,
+      "gitBlob": "78b8a02e75dd48633eb41d69cb65b12418d2adcb",
+      "sha256": "f1e3f765e839699d199edb18c55533486e966ffc85c849471edbcf8fab4a2c8d"
+    },
+    {
+      "sourcePath": "assets/js/modules/geometry-version-store.js",
+      "file": "source/assets/js/modules/geometry-version-store.js",
+      "bytes": 4468,
+      "gitBlob": "72de730052a0a76e9096c412349af04428b50ba1",
+      "sha256": "517fdac775cac9c19125eb0cce27e0d50b18e4dcca2e97d52a6fcb1e67295d40"
+    },
+    {
+      "sourcePath": "assets/js/modules/geometry-versions.js",
+      "file": "source/assets/js/modules/geometry-versions.js",
+      "bytes": 2257,
+      "gitBlob": "cc4d3c2954dae1e93b5326aee96f59d2daeac649",
+      "sha256": "e28a1992e25049a32ef8accd7a1e5bfa4871a85556c0a6aa5a6cbef61f27333a"
+    },
+    {
+      "sourcePath": "assets/js/modules/polygon-geometry.js",
+      "file": "source/assets/js/modules/polygon-geometry.js",
+      "bytes": 10152,
+      "gitBlob": "15f0ae1ee1873e42452778ca8b5e0f604ef5c925",
+      "sha256": "a645827c46f7c62dbf929f850c67f350516669dfeafe5c637aec6c67efcfebf4"
+    },
+    {
+      "sourcePath": "assets/js/modules/project-invariants.js",
+      "file": "source/assets/js/modules/project-invariants.js",
+      "bytes": 9068,
+      "gitBlob": "881b3f7330360d4b377205967983c3b799da45c0",
+      "sha256": "477045232dc260c25500622bd298430360eb0480c010c2fae23d56b6022eb61d"
+    },
+    {
+      "sourcePath": "assets/js/modules/project-serializer.js",
+      "file": "source/assets/js/modules/project-serializer.js",
+      "bytes": 5376,
+      "gitBlob": "61cd82e9cf1b4abe19fee325db47a1d2b09b6ea9",
+      "sha256": "f6265da67b488a4805c4711450d93bc27745c24434fcf3fa9fb7b42ec845a80e"
+    },
+    {
+      "sourcePath": "assets/js/modules/project-state.js",
+      "file": "source/assets/js/modules/project-state.js",
+      "bytes": 21535,
+      "gitBlob": "a49338f6febe7228e2622de72e8554af179a2c5e",
+      "sha256": "906155d90a712b0a2dca2d0ba15456420986a2014109c92c26c79b6fa6f10098"
+    },
+    {
+      "sourcePath": "assets/js/modules/source-provenance.js",
+      "file": "source/assets/js/modules/source-provenance.js",
+      "bytes": 3202,
+      "gitBlob": "ff47ef958294b8a2286a38e083dc0810d8a89fa3",
+      "sha256": "4fa2497d2b6bef1b55c8dcb052675c65a706dae51ef6c73923a28ecc202b8aaa"
+    },
+    {
+      "sourcePath": "assets/js/modules/temporal.js",
+      "file": "source/assets/js/modules/temporal.js",
+      "bytes": 4550,
+      "gitBlob": "34ef7a8bc1cba4cf9c550dc93be8882f5c9b6aa7",
+      "sha256": "cac4c811c98077407438d470e367143ffe015219de5c932785264859c17e0dcf"
+    },
+    {
+      "sourcePath": "assets/js/modules/terrain-manifest.js",
+      "file": "source/assets/js/modules/terrain-manifest.js",
+      "bytes": 4885,
+      "gitBlob": "419ca1b7e155eb2cd7c81f0ef57a5732084b9416",
+      "sha256": "33f6395d07f6cc421ed2703e994c860dcb05f744d544f94eab7f0edca84ccaf1"
+    },
+    {
+      "sourcePath": "assets/js/modules/territorial-edit-plan.js",
+      "file": "source/assets/js/modules/territorial-edit-plan.js",
+      "bytes": 27125,
+      "gitBlob": "dfb240378d670e6899a6729f0ebe397e30052138",
+      "sha256": "290c3b01d3c4318c560706d49e58a88157339b4060ef145a8758fd2bef2f5f47"
+    },
+    {
+      "sourcePath": "assets/js/modules/territorial-entity-store.js",
+      "file": "source/assets/js/modules/territorial-entity-store.js",
+      "bytes": 14575,
+      "gitBlob": "a7a68fa64aeae35991c15f391971a8900b05a9c7",
+      "sha256": "84ca468be080b50530b8bb9d0b2b561be5736adc101e8b7e606fa93fff50d369"
+    },
+    {
+      "sourcePath": "assets/js/modules/territorial-units.js",
+      "file": "source/assets/js/modules/territorial-units.js",
+      "bytes": 8508,
+      "gitBlob": "321d54edf95eff28e0e3ec43f52badb607a122b1",
+      "sha256": "bfa1c5bebaf71baf190dc3ad9b59335f00a704dfd771f4f767a134af590d9f41"
+    },
+    {
+      "sourcePath": "assets/js/modules/timeline-records.js",
+      "file": "source/assets/js/modules/timeline-records.js",
+      "bytes": 7840,
+      "gitBlob": "f1353d9fb7d5f0a8d323452d63126d887577cc3f",
+      "sha256": "9d9c41fd2f7850d3c230889f651196e7255ffc00c097f3d8be7e85670ef20020"
+    },
+    {
+      "sourcePath": "assets/js/modules/timeline-static-view.js",
+      "file": "source/assets/js/modules/timeline-static-view.js",
+      "bytes": 1903,
+      "gitBlob": "ed75e50ebeb71af7a94533cbcc9988451a70c1ae",
+      "sha256": "a9bc7d9cfca65c962a48cde62d5dd5cbbc4020f5168f290350b29d0dcb29b1da"
+    },
+    {
+      "sourcePath": "assets/js/modules/timeline-storage.js",
+      "file": "source/assets/js/modules/timeline-storage.js",
+      "bytes": 2118,
+      "gitBlob": "e9691031f9ba2e7b7e4c72633c9066a9c8412b4b",
+      "sha256": "c56738d103b67f6ba8584e79781a0fe0d2d0d7511b1a2292b0d841a1dae6aa5a"
+    },
+    {
+      "sourcePath": "assets/js/modules/version-contract.js",
+      "file": "source/assets/js/modules/version-contract.js",
+      "bytes": 896,
+      "gitBlob": "cef2b0390eb46673e3bf1928ad50c3a9eb151449",
+      "sha256": "ca866c1a1933c8dfe47f2b86b69268c20781027b501fbe7b263fd96eccc6341b"
+    },
+    {
+      "sourcePath": "assets/js/vendor/sql/LICENSE.txt",
+      "file": "source/assets/js/vendor/sql/LICENSE.txt",
+      "bytes": 2199,
+      "gitBlob": "d5c3c98341738da8ae57423fd52e7d4b9dd9ba4c",
+      "sha256": "60a3f6e4d7b29b4321359e683b36cf198d24f58e24582070f56e6fa89d5ee2be"
+    },
+    {
+      "sourcePath": "assets/js/vendor/sql/sql-wasm.js",
+      "file": "source/assets/js/vendor/sql/sql-wasm.js",
+      "bytes": 46535,
+      "gitBlob": "9c88ff7a2101f22e1d933187b500ffe1454cb5cf",
+      "sha256": "f1c84000dbc856c9d87f4f3aabc4d3654bd436165db4be3da13751db3a9c20d7"
+    },
+    {
+      "sourcePath": "assets/js/vendor/sql/sql-wasm.wasm",
+      "file": "source/assets/js/vendor/sql/sql-wasm.wasm",
+      "bytes": 658410,
+      "gitBlob": "f6487ca37a0d13d27420a6b6c7d6d2b516a1108e",
+      "sha256": "38c14f6e379210bc942bdc4ebca44e7bfdb4318ecc1c72ca666a28fdce96670a"
+    },
+    {
+      "sourcePath": "assets/js/workers/gis-gpkg-worker.js",
+      "file": "source/assets/js/workers/gis-gpkg-worker.js",
+      "bytes": 18773,
+      "gitBlob": "90505635df06ce9a84c540c84cafad5a57c7b2db",
+      "sha256": "5b66634a80244f376eb227db1d55048d50dccede0da682ef98f3aeab4fbcc26b"
+    },
+    {
+      "sourcePath": "package.json",
+      "file": "source/package.json",
+      "bytes": 7873,
+      "gitBlob": "c0d51186be3de72fb777caac74baef288d144390",
+      "sha256": "7943b027419aed9d334cd775e508a43da53429fc05030477b946018cb9b28414"
+    },
+    {
+      "sourcePath": "tests/fixtures/generate-timeline-exchange.mjs",
+      "file": "source/tests/fixtures/generate-timeline-exchange.mjs",
+      "bytes": 5283,
+      "gitBlob": "0ab4a0995db6e5f9587fcf3b2f1de2d161f651e4",
+      "sha256": "14b9e77f9cb800968987f5370ba67b36822711f3e51dea7dc14f2920f6fe3128"
+    },
+    {
+      "sourcePath": "tests/fixtures/timeline-storage-cases.mjs",
+      "file": "source/tests/fixtures/timeline-storage-cases.mjs",
+      "bytes": 639,
+      "gitBlob": "adc1cd7f0f0566d290e77e0a3aa69aefc2eeeb89",
+      "sha256": "ca5e184390c2fa4ea88fe95686c329b790c32b2d8b990aea6e93b0ad353fc08f"
+    },
+    {
+      "sourcePath": "tests/helpers/production-geopackage.mjs",
+      "file": "source/tests/helpers/production-geopackage.mjs",
+      "bytes": 2223,
+      "gitBlob": "4afaef3967c62867a87c70d5f278581276e52961",
+      "sha256": "06646bab2bd180bb9fd8e343359da39c907afae32b41f1130705076e26912efd"
+    },
+    {
+      "sourcePath": "tests/helpers/timeline-project.mjs",
+      "file": "source/tests/helpers/timeline-project.mjs",
+      "bytes": 3504,
+      "gitBlob": "176bbab5ec2481d8a4f9568fff14a7fd466b007a",
+      "sha256": "21bff1d316f4d1ad42ae5e2c6ee7ddc0c2de2f9059f3f7b90df01d7e2adb4c4a"
+    }
+  ],
+  "fileCount": 30,
+  "totalBytes": 901506,
+  "sqlWasm": {
+    "sourcePath": "assets/js/vendor/sql/sql-wasm.wasm",
+    "gitBlob": "f6487ca37a0d13d27420a6b6c7d6d2b516a1108e",
+    "sha256": "38c14f6e379210bc942bdc4ebca44e7bfdb4318ecc1c72ca666a28fdce96670a",
+    "verifiedExistingWebCheckoutBytes": true
+  },
+  "policy": "Every snapshot file is exact fixed Git blob bytes. No production module adapter, mock or source rewrite."
+}

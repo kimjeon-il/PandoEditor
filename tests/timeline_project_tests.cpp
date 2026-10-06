@@ -99,7 +99,7 @@ static int traceFile(const char* kind,const char* inputPath,const char* outputPa
 }
 
 static int contentIntervalErrors() {
-    QFile file(QFileInfo(QStringLiteral(PANDOEDITOR_TIMELINE_PROJECT_FIXTURES)).dir().filePath("timeline-exchange/content.json"));
+    QFile file(QFileInfo(QStringLiteral(PANDOEDITOR_TIMELINE_PROJECT_FIXTURES)).dir().filePath("lineage-v10-content/content.json"));
     if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("content interval fixture read");
     const auto seed=QJsonDocument::fromJson(file.readAll()).object();int processed=0,failures=0;
     for(const auto* slot:{"distributionLayers","distributionEntries"})for(const auto* endpoint:{"validFrom","validTo"})for(const auto* value:{"","  "}) {
@@ -130,6 +130,29 @@ int main(int argc,char** argv) {
     if(!file.open(QIODevice::ReadOnly))return 2;
     const auto cases=QJsonDocument::fromJson(file.readAll()).array();
     int failures=0;
+    // Current provenance is independent of the project instance identity.
+    // Both retired versions and a retired field must reject before publication.
+    {
+        auto root=cases.first().toObject()["project"].toObject();
+        for (bool retiredField : {false,true}) {
+            auto invalid=root;
+            if (retiredField) {
+                auto rows=invalid["territorialEntities"].toArray();auto row=rows.first().toObject();auto p=row["properties"].toObject();
+                p["sourceLibraryId"]="retired";row["properties"]=p;rows[0]=row;invalid["territorialEntities"]=rows;
+            } else invalid["schemaVersion"]=9;
+            bool refused=false;try{(void)webimport::prepare(QJsonDocument(invalid).toJson());}catch(const std::invalid_argument&){refused=true;}
+            if(!refused){++failures;std::cerr<<"FAIL retired web source/version accepted\n";}
+        }
+        auto document=webimport::prepare(QJsonDocument(root).toJson()).document;
+        document.units.front().sourceEntityId="state:KOR";document.units.front().sourceGeometryVersion="current";
+        pandoeditor::Project source;source.replace(document);
+        const auto encoded=projectcodec::encode(source);
+        auto reopened=projectcodec::decode(fileRoundTrip(encoded,"source-provenance.pando.json"));
+        if(reopened.units.front().sourceEntityId!="state:KOR" || reopened.units.front().sourceGeometryVersion!="current") {++failures;std::cerr<<"FAIL source entity/version lost\n";}
+        auto native=QJsonDocument::fromJson(encoded).object();native["version"]=9;
+        bool refused=false;try{(void)projectcodec::decode(QJsonDocument(native).toJson());}catch(const std::invalid_argument&){refused=true;}
+        if(!refused){++failures;std::cerr<<"FAIL retired native version accepted\n";}
+    }
     for(const auto& value:cases) {
         const auto row=value.toObject();const auto name=row.value("name").toString();
         const bool valid=row.value("expected").toString()=="OK";
@@ -157,7 +180,7 @@ int main(int argc,char** argv) {
             } else std::cout << "PASS rejection " << name.toStdString() << '\n';
         }
     }
-    QFile content(QFileInfo(QStringLiteral(PANDOEDITOR_TIMELINE_PROJECT_FIXTURES)).dir().filePath("timeline-exchange/content.json"));
+    QFile content(QFileInfo(QStringLiteral(PANDOEDITOR_TIMELINE_PROJECT_FIXTURES)).dir().filePath("lineage-v10-content/content.json"));
     if(!content.open(QIODevice::ReadOnly))return 2;
     const auto contentBytes=content.readAll();
     const auto numericFixture=webimport::prepare(contentBytes).document;

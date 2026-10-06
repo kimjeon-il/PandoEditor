@@ -2,6 +2,7 @@
 #include "referenceimagelibrary.h"
 #include "ui_navigation.h"
 #include "windowsframe.h"
+#include <QDir>
 #include <QFile>
 #include <QGuiApplication>
 #include <QImage>
@@ -528,6 +529,15 @@ private slots:
 
 int main(int argc,char** argv)
 {
+#ifdef Q_OS_WIN
+    // The offscreen font database still populates its font directory even when
+    // application fonts are registered. Point it at installed fonts before Qt
+    // initializes the platform, retaining the strict per-test warning policy.
+    if(qEnvironmentVariable("QT_QPA_PLATFORM")=="offscreen"&&qEnvironmentVariableIsEmpty("QT_QPA_FONTDIR")) {
+        const QDir fonts(qEnvironmentVariable("WINDIR")+"/Fonts");
+        if(fonts.exists())qputenv("QT_QPA_FONTDIR",QFile::encodeName(fonts.absolutePath()));
+    }
+#endif
     QTemporaryDir dataHome;qputenv("XDG_DATA_HOME",dataHome.path().toUtf8());
     QQuickStyle::setStyle("Basic");QGuiApplication app(argc,argv);registerWindowsFrameType();
     EditDisplayUiTests tests;return QTest::qExec(&tests,argc,argv);

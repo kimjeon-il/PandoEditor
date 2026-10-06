@@ -83,7 +83,7 @@ ProjectDocument observedFixture(const QJsonObject& stage) {
         unit.id=row["id"].toString().toStdString();unit.name=properties["name"].toString().toStdString();unit.notes=properties["notes"].toString().toStdString();unit.locked=properties["locked"].toBool();
         unit.kind=row["entityKind"]=="regional"?UnitKind::Regional:UnitKind::General;
         unit.metadata=QJsonDocument(properties["metadata"].toObject()).toJson(QJsonDocument::Compact).toStdString();
-        unit.sourceFolderId=properties["sourceFolderId"].toString().toStdString();unit.sourceLibraryId=properties["sourceLibraryId"].toString().toStdString();unit.sourceGeometryVersion=properties["sourceGeometryVersion"].toString().toStdString();
+        unit.sourceFolderId=properties["sourceFolderId"].toString().toStdString();unit.sourceEntityId=properties["sourceLibraryId"].toString().toStdString();unit.sourceGeometryVersion=properties["sourceGeometryVersion"].toString().toStdString();
         const GeometryRef geometry{"observed-"+unit.id,1};document.geometries.insert(geometry,observedGeometry(row["geometry"].toObject()));
         appendTerritory(document,unit,geometry,row["parentId"].toString().toStdString(),row["coverageMode"].toString().toStdString());
         const auto color=properties["style"].toObject()["color"].toString();bool valid=false;const auto rgb=color.mid(1).toUInt(&valid,16);document.presentation.objectStyles[territorialRef(unit.id)]={valid?rgb:0,1,valid};
@@ -169,7 +169,7 @@ private slots:
             QVERIFY2(project.index().objects.count(territorialRef(id)),id.c_str());const auto& actual=project.document().units.at(project.index().objects.at(territorialRef(id)));
             QCOMPARE(actual.name,properties["name"].toString().toStdString());QCOMPARE(actual.notes,properties["notes"].toString().toStdString());QCOMPARE(actual.locked,properties["locked"].toBool());
             QCOMPARE(QJsonDocument::fromJson(QByteArray::fromStdString(actual.metadata)).object(),properties["metadata"].toObject());
-            QCOMPARE(actual.sourceFolderId,properties["sourceFolderId"].toString().toStdString());QCOMPARE(actual.sourceLibraryId,properties["sourceLibraryId"].toString().toStdString());QCOMPARE(actual.sourceGeometryVersion,properties["sourceGeometryVersion"].toString().toStdString());
+            QCOMPARE(actual.sourceFolderId,properties["sourceFolderId"].toString().toStdString());QCOMPARE(actual.sourceEntityId,properties["sourceLibraryId"].toString().toStdString());QCOMPARE(actual.sourceGeometryVersion,properties["sourceGeometryVersion"].toString().toStdString());
             QCOMPARE(staticParentRelation(project.document(),id).parentId,row["parentId"].toString().toStdString());QCOMPARE(staticParentRelation(project.document(),id).coverageMode,row["coverageMode"].toString().toStdString());
             const auto& nativeGeometry=*project.document().geometries.get(staticGeometryBinding(project.document(),id).geometryRef);
             QVERIFY2(sameObservedCoverage(nativeGeometry,observedGeometry(row["geometry"].toObject())),id.c_str());

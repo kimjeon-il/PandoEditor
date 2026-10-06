@@ -3,29 +3,80 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
-import {readLifecycleSources,sha256} from './sources.mjs';
+import {readLifecycleSources,sha256,projectCurrentLifecycleInput} from './sources.mjs';
 import {verifyWebLifecycleCase,rawChanges} from './contract.mjs';
 import {accountWebNativeExchange} from '../m975-model-exchange/ownership-accounting.mjs';
 import {exactGeometryBoundary} from '../m97/split-differential.mjs';
 import {verifyEditEffect} from '../m975-model-exchange/edit-effects.mjs';
+import {compareFullWebProject,compareNativeStorage} from '../web-v10-exchange-oracle.mjs';
+import {isDeepStrictEqual} from 'node:util';
+import {parseTemporal} from '../../tests/fixtures/web-v10-exchange/source/assets/js/modules/temporal.js';
 const root=fileURLToPath(new URL('../../',import.meta.url));
+function currentWeb(raw){
+ const p=JSON.parse(raw);assert.equal(p.format,'pandolab-project-state');assert.equal(p.schemaVersion,10);assert.equal(p.territorialModel.schemaVersion,6);
+ for(const row of p.territorialEntities){assert.equal(row.properties.schemaVersion,6);assert.ok(Object.hasOwn(row.properties,'sourceEntityId'));assert.equal(Object.hasOwn(row.properties,'sourceLibraryId'),false);}
+ return p;
+}
+export function verifyCurrentLifecycleWeb(raw,expected){const actual=currentWeb(raw);compareFullWebProject(actual,expected,'literal current lifecycle interchange before any reader');return actual;}
+// Independent wire mappings from the explicit Web input. Accounting below
+// authenticates geometry ownership and opaque tokens; it does not authenticate
+// these typed fields. Compare them before excluding inline domains from the
+// shared territorial checker. No expected value comes from the native receipt.
+export function compareCurrentInlineStorage(content,fixed){
+ const clone=value=>structuredClone(value),territory=id=>id?{domain:'territorial',id}:null;
+ const endpoint=value=>{const t=parseTemporal(value);if(!t)return null;assert.equal(t.canonical,value,'explicit canonical temporal input');return {text:value,precision:t.precision};};
+ const validity=row=>({from:endpoint(row.validFrom),to:endpoint(row.validTo)});
+ const source=p=>{assert.equal(p.schemaVersion,1);const {schemaVersion,...fields}=p;return clone(fields);};
+ const original=[...fixed.geometries].sort((a,b)=>Buffer.compare(Buffer.from(a.id),Buffer.from(b.id))||a.version-b.version);
+ const geometryRef=(domain,id,shape)=>{if(shape===null)return null;const preferred={id:'web-'+domain+':'+id,version:1},exact=original.find(g=>g.id===preferred.id&&g.version===preferred.version),matching=exact||original.find(g=>isDeepStrictEqual(g.geojson,shape));return matching?{id:matching.id,version:matching.version}:preferred;};
+ const common=(row,p,domain,shape)=>({id:row.id,name:p.name??'',notes:p.notes??'',geometryRef:geometryRef(domain,row.id,shape),source:source(p.source)});
+ const expected={
+  labels:fixed.labels.map(row=>({...common(row,row,'label',{type:'Point',coordinates:row.coordinates}),kind:row.kind,territory:territory(row.territorialUnitId)})),
+  hydro:fixed.hydroEdits.map(row=>{const p=row.properties;return {...common(row,p,'hydroEdits',row.geometry),kind:p.category,color:p.editorColor.toLowerCase(),locked:p.locked,sourceFeatureId:p.sourceFeatureId||null};}),
+  genericFeatures:fixed.genericFeatures.map(row=>{const p=row.properties;return {...common(row,p,'genericFeatures',row.geometry),color:p.color.toLowerCase(),locked:p.locked,fallbackOnly:true};}),
+  distributionLayers:fixed.distributionLayers.map(row=>{assert.ok(['auto','manual'].includes(row.valueScale.mode));return {id:row.id,name:row.name,unit:row.unit,valueScale:row.valueScale.mode==='manual'?{mode:'manual',min:row.valueScale.min,max:row.valueScale.max}:{mode:'auto'},color:row.color.toLowerCase(),locked:row.locked,parentId:row.parentId||null,groups:clone(row.groups),validity:validity(row),metadata:clone(row.metadata)};}),
+  distributionEntries:fixed.distributionEntries.map(row=>{assert.ok(['territorial','geometry'].includes(row.mode));return {id:row.id,layerId:row.layerId,territory:row.mode==='territorial'?territory(row.territorialUnitId):null,geometryRef:geometryRef('distributionEntry',row.id,row.mode==='territorial'?null:row.geometry),value:row.value,certainty:row.certainty,validity:validity(row),metadata:clone(row.metadata)};}),
+ };
+ for(const [key,rows]of Object.entries(expected))assert.deepEqual(content[key],rows,'literal complete native typed inline storage '+key);
+ return expected;
+}
+export function verifyCurrentNativeInput(nativeRaw,webRaw,inputRaw){
+ const fixed=currentWeb(inputRaw),web=verifyCurrentLifecycleWeb(webRaw,fixed),native=JSON.parse(nativeRaw);
+ compareCurrentInlineStorage(native.content,fixed);
+ const accounting=accountWebNativeExchange({sourceWebRaw:inputRaw,nativeRaw,webOutputRaw:webRaw,expectedWebSchemaVersion:10});
+ // The shared native checker supports territorial/header storage. The existing
+ // complete typed mapping above authenticates every excluded inline field;
+ // accounting checks full archive, ledger, ownership and raw opaque owner slots.
+ const n=structuredClone(native),w=structuredClone(web),excluded=['labels','hydro','genericFeatures','distributionLayers','distributionEntries'];
+ assert.deepEqual(Object.keys(n.content).sort(),[...excluded,'countryDetails','symbols','physicalData'].sort());
+ for(const key of excluded)n.content[key]=[];
+ for(const key of ['labels','hydroEdits','genericFeatures','distributionLayers','distributionEntries'])w[key]=[];
+ const derived=new Set(native.geometryProvenance.inlineAllocations.filter(a=>!a.promoted).map(a=>JSON.stringify([a.ref.id,a.ref.version])));
+ n.geometries=n.geometries.filter(g=>!derived.has(JSON.stringify([g.id,g.version])));
+ for(const u of n.units)assert.deepEqual(Object.keys(u).sort(),['id','kind','name','baseName','nameExplicit','locked','libraryOrigin','metadata','notes','sourceFolderId','sourceEntityId','sourceGeometryVersion'].sort());
+ assert.deepEqual(n.content.physicalData,{dataset:'',version:'',source:'',hiddenHydroIds:[]});assert.deepEqual(n.presentation.userLayers,[]);assert.deepEqual(n.presentation.membership,[]);
+ compareNativeStorage(n,w,'current lifecycle territorial/header fields with complete accounting');return accounting;
+}
 export function decodeBlob(value){
  assert.equal(typeof value?.base64,'string');const bytes=Buffer.from(value.base64,'base64');assert.equal(bytes.toString('base64'),value.base64);assert.equal(bytes.length,value.bytes);assert.equal(sha256(bytes),value.sha256);return {bytes,document:JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))};
 }
 export function collectNativeCapture(binary,bundle=readLifecycleSources()){
- const before=sha256(fs.readFileSync(binary));const run=spawnSync(binary,[fileURLToPath(new URL('corpus.json',import.meta.url)),path.join(root,bundle.corpus.fixture.path)],{encoding:'utf8',timeout:120000,maxBuffer:32*1024*1024,env:{...process.env,QT_QPA_PLATFORM:'offscreen',QT_QUICK_BACKEND:'software'}});assert.ifError(run.error);assert.equal(run.status,0,run.stderr);assert.equal(sha256(fs.readFileSync(binary)),before,'native binary stable during collection');return {report:JSON.parse(run.stdout),raw:run.stdout,stderr:run.stderr,binarySha256:before,rawSha256:sha256(run.stdout),rawBytes:Buffer.byteLength(run.stdout)};
+ const before=sha256(fs.readFileSync(binary));const run=spawnSync(binary,[path.join(root,bundle.currentInput.corpusPath),path.join(root,bundle.currentInput.corpus.fixture.path)],{encoding:'utf8',timeout:120000,maxBuffer:32*1024*1024,env:{...process.env,QT_QPA_PLATFORM:'offscreen',QT_QUICK_BACKEND:'software'}});assert.ifError(run.error);assert.equal(run.status,0,run.stderr);assert.equal(sha256(fs.readFileSync(binary)),before,'native binary stable during collection');return {report:JSON.parse(run.stdout),raw:run.stdout,stderr:run.stderr,binarySha256:before,rawSha256:sha256(run.stdout),rawBytes:Buffer.byteLength(run.stdout)};
 }
 export function collectNative(binary,bundle=readLifecycleSources()){return collectNativeCapture(binary,bundle).report;}
 export function verifyNativeLifecycleReport(bundle,report){
- assert.equal(report.schema,'pando-m977-native-pending-lifecycle');assert.equal(report.version,1);assert.deepEqual(report.runtime,{compiledQt:'6.8.3',qt:'6.8.3'});assert.equal(report.corpusSha256,bundle.corpusSha256);assert.equal(report.fixtureSha256,bundle.corpus.fixture.sha256);assert.deepEqual(report.cases.map(r=>r.case),bundle.corpus.cases.map(d=>d.id));
+ assert.equal(report.schema,'pando-m977-native-pending-lifecycle');assert.equal(report.version,1);assert.deepEqual(report.runtime,{compiledQt:'6.8.3',qt:'6.8.3'});assert.equal(report.corpusSha256,bundle.currentInput.corpusSha256);assert.equal(report.fixtureSha256,bundle.currentInput.corpus.fixture.sha256);assert.deepEqual(report.cases.map(r=>r.case),bundle.corpus.cases.map(d=>d.id));
  for(const [index,row]of report.cases.entries()){
   const def=bundle.corpus.cases[index];assert.deepEqual(row.input,def);assert.deepEqual(row.stageOrder,def.stages);assert.deepEqual(Object.keys(row.stages).sort(),[...def.stages].sort());assert.deepEqual(row.errors,[]);
   assert.ok(row.events.length>0,'actual public signals required');row.events.forEach((e,i)=>{assert.equal(e.sequence,i);assert.ok(def.stages.includes(e.phase));assert.equal(typeof e.state.active,'boolean');});let eventCount=0;
   for(const name of def.stages){const s=row.stages[name];assert.ok(Number.isSafeInteger(s.eventCount)&&s.eventCount>=eventCount&&s.eventCount<=row.events.length);eventCount=s.eventCount;if(eventCount)assert.deepEqual(s.state,row.events[eventCount-1].state,'public state belongs to latest ordered signal '+name);}
-  const before=row.stages.before,applied=row.stages.applied;const base=decodeBlob(before.document),edited=decodeBlob(applied.document);assert.notDeepEqual(edited.bytes,base.bytes,'real native Apply changes document');assert.equal(base.document.version,10);assert.deepEqual(decodeBlob(before.web).document,JSON.parse(bundle.fixtureRaw),'exact same imported fixture');accountWebNativeExchange({sourceWebRaw:bundle.fixtureRaw,nativeRaw:base.bytes.toString('utf8'),webOutputRaw:decodeBlob(before.web).bytes.toString('utf8'),caseId:def.id,stage:'before'});
+  const before=row.stages.before,applied=row.stages.applied;const base=decodeBlob(before.document),edited=decodeBlob(applied.document);assert.notDeepEqual(edited.bytes,base.bytes,'real native Apply changes document');assert.equal(base.document.version,10);verifyCurrentNativeInput(base.bytes.toString('utf8'),decodeBlob(before.web).bytes.toString('utf8'),bundle.currentInput.fixtureRaw);
   verifyEditEffect({operation:'annex',full:false},decodeBlob(before.web).document,decodeBlob(applied.web).document);
   for(const [name,s]of Object.entries(row.stages)){
    assert.equal(s.observed,true);const isEdited=['applied','redo'].includes(name);assert.deepEqual(decodeBlob(s.document).bytes,isEdited?edited.bytes:base.bytes,'exact full native snapshot '+name);assert.deepEqual(decodeBlob(s.web).bytes,decodeBlob(isEdited?applied.web:before.web).bytes,'full raw native export follows canonical state '+name);const nativeDocument=decodeBlob(s.document).document,webDocument=decodeBlob(s.web).document;assert.deepEqual(webDocument.timelineRecords,nativeDocument.timelineRecords,'native exported reference graph is actual native graph');assert.deepEqual(webDocument.territorialEntities.map(f=>f.id),nativeDocument.units.map(u=>u.id));for(const row of webDocument.geometries)assert.deepEqual(row,nativeDocument.geometries.find(g=>g.id===row.id&&g.version===row.version),'native export geometry identity/value');if(s.state.active)assert.deepEqual(s.selection.state,s.state,'owned public selection uses same state');
+   assert.deepEqual(Object.keys(nativeDocument).sort(),Object.keys(base.document).sort(),'complete native field inventory '+name);
+   for(const key of Object.keys(base.document))if(!['geometries','timelineRecords'].includes(key))assert.deepEqual(nativeDocument[key],base.document[key],'partial annex preserves every other native field, including full ledger '+name+'/'+key);
+   for(const key of ['lifetimes','parentRelations'])assert.deepEqual(nativeDocument.timelineRecords[key],base.document.timelineRecords[key],'partial annex retains native '+key+' '+name);
    assert.deepEqual(s.history,isEdited?{canUndo:true,canRedo:false}:name==='undo'?{canUndo:false,canRedo:true}:{canUndo:false,canRedo:false});assert.equal(s.revision,before.revision+({applied:1,undo:2,redo:3}[name]||0));
    assert.equal(s.state.error||'','');assert.equal(s.state.selectionPending===true,s.state.selectionPending||false);
    assert.deepEqual(s.projectedVertices,s.draftPaths.flatMap(p=>p.vertices.map(v=>[v.x,v.y])));const {cosLatitude,minX,maxLatitude}=row.projection;
@@ -53,7 +104,7 @@ export function compareLifecycle(bundle,web,native){
  for(const [i,def]of bundle.corpus.cases.entries()){
   const w=verifyWebLifecycleCase(bundle,def,web.cases[i]),n=native.cases[i];cases.push({case:def.id,paired:verifyPairedLifecycle(bundle,w,n),stages:def.stages.length,webRawHistory:{undoEqual:w.stages.undo.canonical===w.stages.before.canonical,redoEqual:w.stages.redo.canonical===w.stages.applied.canonical,undoDifferences:rawChanges(JSON.parse(w.stages.before.canonical),JSON.parse(w.stages.undo.canonical)),redoDifferences:rawChanges(JSON.parse(w.stages.applied.canonical),JSON.parse(w.stages.redo.canonical))},crossEngineRaw:Object.fromEntries(def.stages.map(name=>[name,rawChanges(JSON.parse(w.stages[name].canonical),decodeBlob(n.stages[name].web).document)]))});
  }
- return {schema:'pando-m977-pending-lifecycle-comparison',version:1,functionalLifecycleContractsPassed:true,pairedSemanticContractsPassed:true,rawParity:false,actualBrowser:false,cases};
+ return {schema:'pando-m977-pending-lifecycle-comparison',version:1,functionalLifecycleContractsPassed:true,pairedSemanticContractsPassed:true,rawParity:false,actualBrowser:false,currentInput:bundle.currentInput.provenance,currentCorpusSha256:bundle.currentInput.corpusSha256,webLifecycleContract:'historical Web9 observations projected across four explicit input boundaries; not current Web10 production lifecycle evidence',cases};
 }
 
 // Reuse the accepted exact dyadic boundary comparison. This ignores only polygon
@@ -68,7 +119,7 @@ export function verifyPairedLifecycle(bundle,web,native){
   assert.equal(w.draftUndo>0,n.state.canUndoDraft===true,'same draft Undo '+name);assert.equal(w.draftRedo>0,n.state.canRedo===true,'same draft Redo '+name);assert.deepEqual(w.coordinates,n.coordinates,'same exact public draft '+name);
   assert.deepEqual({canUndo:w.history.undo>0,canRedo:w.history.redo>0},n.history,'same project history '+name);assert.equal(w.revision-web.stages.before.revision,n.revision-native.stages.before.revision,'same revision transitions '+name);
   const phase=w.pending?'preparing':w.phase,otherPhase=n.state.selectionPending?'preparing':n.state.selectionPhase==='candidates'?'candidate':n.state.selectionPhase||null;assert.equal(phase,otherPhase,'documented public phase spelling '+name);
-  const a=JSON.parse(w.canonical),b=decodeBlob(n.web).document;assert.deepEqual(Object.keys(a).sort(),Object.keys(b).sort(),'same whole interchange field inventory '+name);
+  const a=projectCurrentLifecycleInput(JSON.parse(w.canonical)),b=currentWeb(decodeBlob(n.web).bytes.toString('utf8'));assert.deepEqual(Object.keys(a).sort(),Object.keys(b).sort(),'same whole interchange field inventory after declared input projection '+name);
   for(const key of Object.keys(a)){
    if(key==='geometries')continue;
    if(key==='itemVisibility'&&['undo','redo'].includes(name)){
@@ -85,5 +136,5 @@ export function verifyPairedLifecycle(bundle,web,native){
  }
  assert.deepEqual(web.inputs.map(t=>t.coordinate),native.inputs.map(t=>t.coordinate),'shared ordered stimuli');
  for(const [i,w]of web.inputs.entries()){const n=native.inputs[i];assert.equal(w.stage,n.stage);assert.deepEqual(w.roundTrip,w.coordinate,'actual web inverse equals common intended input');assert.deepEqual(n.roundTrip,n.coordinate,'actual native inverse equals common intended input');assert.deepEqual(w.roundTrip,n.roundTrip);for(const t of [w,n]){assert.ok(t.screen[0]>=0&&t.screen[0]<def.profile.width&&t.screen[1]>=0&&t.screen[1]<def.profile.height,'actual observed screen point is in viewport');}}
- return {stages:def.stages.length,archiveGeometries,candidateGeometries,partGeometries,exactSharedInput:true,exactSharedBoundary:true,exactReferencesAndHistory:true,rawParity:false,representationRules:['existing exactGeometryBoundary','JSON object key insertion order','six enumerated empty web itemVisibility groups after history','preparing versus drawing+selectionPending','candidate versus candidates','ephemeral candidate/part IDs paired by ordered exact geometry']};
+ return {stages:def.stages.length,archiveGeometries,candidateGeometries,partGeometries,exactSharedInput:true,exactSharedBoundary:true,exactReferencesAndHistory:true,rawParity:false,representationRules:['historical Web9 lifecycle to explicit Web10 input: project9->10, model5->6, identity5->6, sourceLibraryId->sourceEntityId','existing exactGeometryBoundary','JSON object key insertion order','six enumerated empty web itemVisibility groups after history','preparing versus drawing+selectionPending','candidate versus candidates','ephemeral candidate/part IDs paired by ordered exact geometry']};
 }

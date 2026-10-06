@@ -178,7 +178,7 @@ private slots:
     }
     void webImportPreviewUnaffectedBySelection(){
         QTemporaryDir dir;EditorController editor;
-        QVERIFY(editor.prepareWebImport(QUrl::fromLocalFile(QString(WEB_IMPORT_FIXTURES)+"/../timeline-exchange/static.json")));
+        QVERIFY(editor.prepareWebImport(QUrl::fromLocalFile(QString(WEB_IMPORT_FIXTURES)+"/../web-v10-exchange/static.json")));
         QTRY_VERIFY_WITH_TIMEOUT(editor.hasWebImportPreview(),10000);
         const auto hash=editor.webImportHash();editor.selectCountry(editor.countryRows().front().toMap()["id"].toString());
         editor.setSearchQuery("국가");QVERIFY(editor.hasWebImportPreview());QCOMPARE(editor.webImportHash(),hash);

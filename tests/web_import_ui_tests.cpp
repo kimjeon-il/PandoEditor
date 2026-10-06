@@ -39,7 +39,7 @@ private slots:
         auto picker=window->findChild<QObject*>("webOpenDialog");QVERIFY(picker);QVERIFY(QMetaObject::invokeMethod(picker,"reject"));
         QTest::qWait(150);QCOMPARE(editor.nameDraft(),QString("Focus pending"));QCOMPARE(editor.revision(),qulonglong(0));
         field->forceActiveFocus();
-        QVERIFY(QMetaObject::invokeMethod(window,"beginWebImport",Q_ARG(QVariant,QUrl::fromLocalFile(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../timeline-exchange/static.json"))));
+        QVERIFY(QMetaObject::invokeMethod(window,"beginWebImport",Q_ARG(QVariant,QUrl::fromLocalFile(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../web-v10-exchange/static.json"))));
         QTRY_VERIFY(editor.hasWebImportPreview());QCOMPARE(editor.revision(),qulonglong(0));QCOMPARE(editor.nameDraft(),QString("Focus pending"));
         auto dialog=window->findChild<QObject*>("webImportDialog");QVERIFY(dialog);
         // The offscreen platform keeps the dismissed native chooser's window
@@ -66,7 +66,7 @@ private slots:
         auto revision=editor.revision();auto name=editor.selectedName();
         // The file dialog callback and tests share the same QML entry. Opening
         // it must not turn a pending field into a committed edit.
-        QVERIFY(QMetaObject::invokeMethod(window,"beginWebImport",Q_ARG(QVariant,QUrl::fromLocalFile(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../timeline-exchange/static.json"))));
+        QVERIFY(QMetaObject::invokeMethod(window,"beginWebImport",Q_ARG(QVariant,QUrl::fromLocalFile(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../web-v10-exchange/static.json"))));
         QTRY_VERIFY(editor.hasWebImportPreview());
         auto report=window->findChild<QObject*>("webImportDialog");QVERIFY(report);QTRY_VERIFY(report->property("visible").toBool());
         QCOMPARE(editor.revision(),revision);QCOMPARE(editor.nameDraft(),QString("uncommitted name"));QVERIFY(editor.canRedo());
@@ -76,7 +76,7 @@ private slots:
         click(window,item(window->contentItem(),"cancelWebImport"));
         QVERIFY(!editor.hasWebImportPreview());QCOMPARE(editor.revision(),revision);QCOMPARE(editor.selectedName(),name);
         QCOMPARE(editor.nameDraft(),QString("uncommitted name"));QVERIFY(editor.canRedo());
-        QVERIFY(QMetaObject::invokeMethod(window,"beginWebImport",Q_ARG(QVariant,QUrl::fromLocalFile(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../timeline-exchange/static.json"))));
+        QVERIFY(QMetaObject::invokeMethod(window,"beginWebImport",Q_ARG(QVariant,QUrl::fromLocalFile(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../web-v10-exchange/static.json"))));
         QTRY_VERIFY(editor.hasWebImportPreview());QTest::qWait(150);
         click(window,item(window->contentItem(),"discardAndWebImport"));
         QTRY_COMPARE(editor.countryRows().size(),qsizetype(2));QVERIFY(editor.selectionItems().isEmpty());QCOMPARE(editor.objectProperties().value("count").toInt(),0);QCOMPARE(editor.revision(),qulonglong(0));QVERIFY(editor.dirty());

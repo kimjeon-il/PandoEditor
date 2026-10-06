@@ -79,16 +79,12 @@ jobs:
         if: ${{ inputs.probe_only != true }}
         run: |
           node tools/verify-release-assets.mjs --root . --out build/source-assets.json
-      - uses: actions/checkout@v4
+      - name: Exercise fixed Web10 production codecs and native file exchange
         if: ${{ inputs.probe_only != true }}
-        with:
-          repository: kimjeon-il/world-map
-          ref: 788f43fd27062851bdadf7fa6964819d43534685
-          path: web-reference
-          persist-credentials: false
-      - name: Exercise actual web and native file exchange
-        if: ${{ inputs.probe_only != true }}
-        run: node tools/timeline-exchange-oracle.mjs build/app/timeline_project_tests web-reference build/exchange-evidence
+        run: |
+          node tools/web-v10-exchange-oracle.mjs --verify-only
+          node --test tests/fixtures/web-v10-exchange/oracle.test.mjs
+          node tools/web-v10-exchange-oracle.mjs --native build/app/timeline_project_tests build/exchange-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -42,8 +42,8 @@ GisGeoJsonCollection exportGisDocumentLayer(const ProjectDocument& document,
                 {"parent_id",V::str(relation.parentId)},
                 {"valid_from",nullable(staticLifetime(document,unit.id).validity.from)},{"valid_to",nullable(staticLifetime(document,unit.id).validity.to)},
                 {"color",V::str(color(effectiveObjectColor(document,ref)))},
-                {"source_library_id",unit.libraryOrigin?V::str(unit.libraryOrigin->libraryId):V{}},
-                {"source_geometry_version",unit.libraryOrigin?V::str(unit.libraryOrigin->geometryVersionId):V{}}
+                {"source_entity_id",unit.sourceEntityId.empty()?V{}:V::str(unit.sourceEntityId)},
+                {"source_geometry_version",unit.sourceGeometryVersion.empty()?V{}:V::str(unit.sourceGeometryVersion)}
             });
             append(out,unit.id,geometry(document,staticGeometryBinding(document,unit.id).geometryRef),std::move(properties));
         }

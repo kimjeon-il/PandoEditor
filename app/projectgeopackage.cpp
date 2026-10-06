@@ -193,7 +193,7 @@ QByteArray readProjectGeoPackage(const QString& filePath) {
     require(root.kind==V::Object,"UNSUPPORTED_PROJECT_GPKG_STATE");
     const auto native=root.object.count("format")&&
         root.object.at("format").kind==V::String&&root.object.at("format").string=="pandoeditor-project";
-    if(native)require(member(root,"version").kind==V::Number&&(member(root,"version").raw=="9"||member(root,"version").raw=="10"),
+    if(native)require(member(root,"version").kind==V::Number&&member(root,"version").raw==QByteArray::number(projectcodec::ProjectVersion),
                       "UNSUPPORTED_PROJECT_GPKG_STATE");
     std::map<std::string,Asset> assets;
     QSqlQuery rows(db);

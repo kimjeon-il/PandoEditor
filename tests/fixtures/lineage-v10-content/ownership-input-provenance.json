@@ -1,0 +1,17 @@
+{
+  "kind": "explicit-test-input-port-not-production-migration",
+  "originalCommit": "a751d5f16da6b604d95435c9a29adef7a2f3ab38",
+  "originalPath": "tests/fixtures/web-m975-model-exchange/m975-annex-full-recursive.json",
+  "originalSha256": "20b66ff8e6511b7e415d2a31954a4c061ffb342a230781ce9795b5d008720a26",
+  "currentContractWebCommit": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+  "input": "ownership-static.web10.json",
+  "sha256": "ead39754232d18c34098a2415f719dfab7d10cee332c7e4d95aba3d83428b16f",
+  "changedFields": [
+    "schemaVersion",
+    "territorialModel.schemaVersion",
+    "territorialEntities[].properties.schemaVersion",
+    "territorialEntities[].properties.sourceLibraryId -> sourceEntityId"
+  ],
+  "expectedGenerated": false,
+  "independentWebValidation": "PASS: fixed Web production prepareProjectForStorage; all non-archive fields exact, archive keyed by ID/version with coordinates exact"
+}

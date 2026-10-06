@@ -401,7 +401,7 @@ void verifyResult(const QJsonObject& result, const QJsonObject& expected, const 
 }
 
 int selfTest() {
-    const auto content = readFile(QStringLiteral(M975_EXCHANGE_FIXTURES "/content.json"));
+    const auto content = readFile(QStringLiteral(M975_EXCHANGE_FIXTURES "/../lineage-v10-content/content.json"));
     const auto complex = readFile(QStringLiteral(M975_EXCHANGE_FIXTURES "/complex.json"));
     Project source;
     source.replace(webimport::prepare(content).document);
@@ -489,7 +489,7 @@ int selfTest() {
         require(rejected["canonicalUnchanged"].toBool()&&rejected["historyUnchanged"].toBool(),"Rejected activation changed controller");
     });
     test("raw-delta-import-refusal", [&] {
-        const QByteArray input="{\n  \"format\": \"pandolab-autosave-delta\",\n  \"schemaVersion\": 9,\n  \"changedEntities\": [],\n  \"removedEntityIds\": [\"donor\"]\n}\n";
+        const QByteArray input="{\n  \"format\": \"pandolab-autosave-delta\",\n  \"schemaVersion\": 10,\n  \"changedEntities\": [],\n  \"removedEntityIds\": [\"donor\"]\n}\n";
         auto expected=request(input,"reject");expected["expectedError"]="BASE_DATA_REQUIRED";
         validateRequest(expected,input);
         QTemporaryDir directory;const auto result=run(input,expected,directory.path());verifyResult(result,expected,input);
@@ -507,7 +507,7 @@ int selfTest() {
         value["actions"]=QJsonArray{QJsonObject{{"op","observe"},{"stage","before"}},QJsonObject{{"op","select"},{"id","target"}},QJsonObject{{"op","begin"},{"tool","annex"}},QJsonObject{{"op","provider"},{"id","donor"}},QJsonObject{{"op","advance"}},QJsonObject{{"op","method"},{"method","components"}},QJsonObject{{"op","component"},{"all",true}},QJsonObject{{"op","advance"}},QJsonObject{{"op","confirm"},{"expectAccepted",false},{"stage","rejected"}}};return value;
     };
     test("commit-refusal-current-error", [&] {
-        const auto bytes=readFile(QStringLiteral(M975_EXCHANGE_FIXTURES "/../web-m975-model-exchange/m975-annex-rejected-deleted-reference.json"));const auto expected=rejectedAnnexRequest(bytes);
+        const auto bytes=readFile(QStringLiteral(M975_EXCHANGE_FIXTURES "/../lineage-v10-content/annex-rejected-deleted-reference.web10.json"));const auto expected=rejectedAnnexRequest(bytes);
         QTemporaryDir directory;const auto result=run(bytes,expected,directory.path());verifyResult(result,expected,bytes);
         const auto errors=result["stages"].toObject()["rejected"].toObject()["errors"].toArray();
         require(!errors.empty(),"Expected commit rejection lacks current action error");bool token=false;

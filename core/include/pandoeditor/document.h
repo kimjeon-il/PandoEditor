@@ -97,7 +97,7 @@ struct TerritorialUnit {
     bool nameExplicit=true;
     std::optional<LibraryOrigin> libraryOrigin;
     // Additional supported annotation metadata, lossless through the codec.
-    std::string metadata="{}", sourceFolderId, sourceLibraryId, sourceGeometryVersion;
+    std::string metadata="{}", sourceFolderId, sourceEntityId, sourceGeometryVersion;
 };
 struct Layer {
     std::string id, name;

@@ -43,7 +43,9 @@ void stateCopy(const QString& original,const QString& path,const std::function<v
 }
 int main(int argc,char** argv){
     QCoreApplication app(argc,argv);
-    const auto web=QString::fromUtf8(WEB_GPKG_FIXTURE)+"/../timeline-exchange/content.gpkg";
+    // This content corpus is the preserved lineage-branch synthetic fixture.
+    // Actual fixed-Web production exchanges live separately in web-v10-exchange.
+    const auto web=QString::fromUtf8(WEB_GPKG_FIXTURE)+"/../lineage-v10-content/content.gpkg";
     Project webProject;webProject.replace(projectcodec::decode(readProjectGeoPackage(web)));
     const auto& webDocument=webProject.document();
     assert(webProject.country("A")&&webProject.country("A")->name=="A 영토");
@@ -52,7 +54,7 @@ int main(int argc,char** argv){
     assert(webDocument.symbols.at(territorialRef("A")).embeddedDataUrl.find("data:image/svg+xml;base64,")==0);
     assert(webDocument.exchangeMetadata.find("web-worker")!=std::string::npos);
     QTemporaryDir directory;assert(directory.isValid());
-    // The actual Worker stores the embedded flag in project_state. Add a valid
+    // This synthetic Worker fixture stores the embedded flag in project_state. Add a valid
     // optional spool row before corrupting it, so every UPDATE affects a row.
     const auto webWithAsset=directory.filePath("web-with-asset.gpkg");assert(QFile::copy(web,webWithAsset));
     update(webWithAsset,[&](QSqlDatabase& db){
@@ -93,6 +95,7 @@ int main(int argc,char** argv){
     stateCopy(web,unknown,[](V& root){root.object["future"]=V::boolean(true);});assert(rejected([&]{readProjectGeoPackage(unknown);}));
     Project source;source.replace(ProjectDocument({{"A","Alpha",{{{{0,0},{2,0},{2,2},{0,2},{0,0}}}},0x123456},{"B","Beta",{{{{3,0},{5,0},{5,2},{3,2},{3,0}}}},0x654321},{"C","Gamma",{{{{6,0},{8,0},{8,2},{6,2},{6,0}}}},0xabcdef}},{{"countries","Countries"}}));
     auto doc=source.document();doc.units.front().libraryOrigin=LibraryOrigin{"history:A","v1","1945","archive","2","high","year",false,{}};
+    doc.units.front().sourceEntityId="catalog:A";doc.units.front().sourceGeometryVersion="source-v2";
     doc.symbols[territorialRef("B")].policy=FlagPolicy::None;doc.symbols[territorialRef("C")]=webDocument.symbols.at(territorialRef("A"));source.replace(doc);
     const auto original=projectcodec::encode(source),bytes=exportProjectGeoPackage(source);
     const auto path=argc==3&&QString::fromLocal8Bit(argv[1])=="--emit"?QDir(QString::fromLocal8Bit(argv[2])).filePath("project.gpkg"):directory.filePath("project.gpkg");

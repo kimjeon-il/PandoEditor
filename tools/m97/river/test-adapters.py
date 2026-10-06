@@ -7,7 +7,7 @@ module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 first=module.generated();second=module.generated()
 assert first==second
 for path,data in first.items():assert path.read_bytes()==data,str(path)
-original=(module.RIVER/'original/river-territory-partition.js').read_text()
+original=(module.RIVER/'original/river-territory-partition.js').read_text(encoding='utf-8')
 assert len(module.replacements)==6
 for before,_ in module.replacements:
     for broken in [original.replace(before,'',1),original+before]:
@@ -17,7 +17,7 @@ for before,_ in module.replacements:
 assert (module.RIVER/'original/planar-graph-faces.js').read_bytes()==(module.RIVER/'adapted/planar-graph-faces.js').read_bytes()
 with tempfile.TemporaryDirectory() as temp:
     copied=Path(temp)/'river';shutil.copytree(module.RIVER,copied);module.RIVER=copied
-    with (copied/'original/river-territory-partition.js').open('a') as f:f.write('\n// upstream drift\n')
+    with (copied/'original/river-territory-partition.js').open('a',encoding='utf-8') as f:f.write('\n// upstream drift\n')
     try:module.generated()
     except ValueError as e:assert 'ORIGINAL_HASH_MISMATCH' in str(e)
     else:raise AssertionError('Original hash drift accepted')

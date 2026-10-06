@@ -18,7 +18,7 @@ const cases=timelineStorageCases().map(row=>{
  if(row.name==='missing geometries collection')delete project.geometries;
  return {name:row.name,expected:row.expected,project};
 });
-fs.writeFileSync(path.join(root,'tests/fixtures/timeline-project-v9.json'),JSON.stringify(cases,null,2)+'\n');
+fs.writeFileSync(path.join(root,'tests/fixtures/timeline-project-v10.json'),JSON.stringify(cases,null,2)+'\n');
 const destination=path.join(root,'tests/fixtures/timeline-exchange');fs.mkdirSync(destination,{recursive:true});
 for(const kind of ['static','complex'])for(const extension of ['json','gpkg','expected.json'])
  fs.copyFileSync(path.join(webRoot,'tests/fixtures/timeline-exchange',kind+'.'+extension),path.join(destination,kind+'.'+extension));
@@ -36,6 +36,6 @@ fs.writeFileSync(path.join(destination,'content.json'),JSON.stringify(content,nu
 const file=await productionGeoPackage('write',new ArrayBuffer(0),content);
 fs.writeFileSync(path.join(destination,'content.gpkg'),new Uint8Array(file.buffer));
 const sha=spawnSync('git',['rev-parse','HEAD'],{cwd:webRoot,encoding:'utf8'}).stdout.trim();
-fs.writeFileSync(path.join(destination,'provenance.json'),JSON.stringify({webCommit:sha,projectSchemaVersion:9,timelineSchemaVersion:1,
+fs.writeFileSync(path.join(destination,'provenance.json'),JSON.stringify({webCommit:sha,projectSchemaVersion:10,timelineSchemaVersion:1,
  generator:'tools/generate-timeline-project-fixtures.mjs',fixtureCases:cases.length},null,2)+'\n');
 console.log(cases.length+' production-header/owner fixtures and three actual web Worker GeoPackages generated from '+sha);

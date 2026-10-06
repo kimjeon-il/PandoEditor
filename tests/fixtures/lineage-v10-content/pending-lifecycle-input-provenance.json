@@ -1,0 +1,21 @@
+{
+  "kind": "explicit-test-input-port-not-production-migration",
+  "notWebCandidateFixture": true,
+  "originalCommit": "a751d5f16da6b604d95435c9a29adef7a2f3ab38",
+  "originalPath": "tests/fixtures/web-m975-model-exchange/m975-annex-partial-refs.json",
+  "originalBytes": 15217,
+  "originalSha256": "e5fa646e6c6dcf7ca054c2b57368e7e4b1d8a89c108deebb2a33ff4729302cf0",
+  "currentContractWebCommit": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+  "input": "tests/fixtures/lineage-v10-content/pending-lifecycle-static.web10.json",
+  "bytes": 15213,
+  "sha256": "7e877534e99459c4e989adb02c6e81f9a6338cae4657cf38301b66af3f2c466d",
+  "changedFields": [
+    "schemaVersion:9->10",
+    "territorialModel.schemaVersion:5->6",
+    "territorialEntities[].properties.schemaVersion:5->6",
+    "territorialEntities[].properties.sourceLibraryId->sourceEntityId"
+  ],
+  "expectedGenerated": false,
+  "independentWebValidation": "fixed Web10 production prepareProjectForStorage; literal full project checked against input; no native process",
+  "historicalLifecycleEvidence": "pinned Web9 runtime retained; four-boundary projection compares the same explicit input; does not claim Web10 production lifecycle execution"
+}

@@ -1,0 +1,97 @@
+{
+  "schema": "pando-web-v10-exchange-fixtures",
+  "version": 1,
+  "repository": "https://github.com/kimjeon-il/world-map",
+  "sourceCommit": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+  "projectSchemaVersion": 10,
+  "territorialModelSchemaVersion": 6,
+  "timelineSchemaVersion": 1,
+  "cases": [
+    "static",
+    "complex",
+    "calendar-boundaries"
+  ],
+  "files": [
+    {
+      "sourcePath": "tests/fixtures/timeline-exchange/static.json",
+      "file": "static.json",
+      "bytes": 9074,
+      "gitBlob": "3c590551ebc85751b81277fc73d97f096fefa8a9",
+      "sha256": "4eb296c89212a454ef088d561be88835c2bd00c561dc2bf5c3afaba90da4e9b2"
+    },
+    {
+      "sourcePath": "tests/fixtures/timeline-exchange/static.gpkg",
+      "file": "static.gpkg",
+      "bytes": 69632,
+      "gitBlob": "c9310c90c3f9fa791fb9077e53a27c8fb4c930d4",
+      "sha256": "b4e2e73f9f437416b1379145475970ba94454c14fb2671107cdbc2801ea17fd1"
+    },
+    {
+      "sourcePath": "tests/fixtures/timeline-exchange/static.expected.json",
+      "file": "static.expected.json",
+      "bytes": 7404,
+      "gitBlob": "ed400ee984f62507bdd6d1590a9a278510b7087a",
+      "sha256": "92e6b86f85cf8ec7c659cd5413f0917dae2a4969681b600ca1869048b2646755"
+    },
+    {
+      "sourcePath": "tests/fixtures/timeline-exchange/complex.json",
+      "file": "complex.json",
+      "bytes": 10056,
+      "gitBlob": "af02f972dedb1cb4d8627a9a1bbd86be57dd4eb2",
+      "sha256": "195b558da3bbc90ab0d7906114e02ae32f732a25a9fe38a9dbd996721cc9ed8b"
+    },
+    {
+      "sourcePath": "tests/fixtures/timeline-exchange/complex.gpkg",
+      "file": "complex.gpkg",
+      "bytes": 57344,
+      "gitBlob": "83afb90f10f445baf790063ec183680b8d7b6696",
+      "sha256": "af5a8fc15b2546bbd0d5b75c8364140eae8c9e84e68b1b944ed6c435b16e98e0"
+    },
+    {
+      "sourcePath": "tests/fixtures/timeline-exchange/complex.expected.json",
+      "file": "complex.expected.json",
+      "bytes": 8386,
+      "gitBlob": "f398731ad5afef93179ae39b648a5ff23db67043",
+      "sha256": "ef30727fbb8b6891674b0f14e55653534f42faaa06a1537293e5aa4f3510a45a"
+    },
+    {
+      "sourcePath": "tests/fixtures/timeline-exchange/calendar-boundaries.json",
+      "file": "calendar-boundaries.json",
+      "bytes": 10069,
+      "gitBlob": "e7baaf91753aa266633782af2adbde3a276b469e",
+      "sha256": "db5a5cf9dd8d5be13ea4b8168cba719e937c77922948dcbbf0c3aec7f5f100b2"
+    },
+    {
+      "sourcePath": "tests/fixtures/timeline-exchange/calendar-boundaries.gpkg",
+      "file": "calendar-boundaries.gpkg",
+      "bytes": 57344,
+      "gitBlob": "d4b327df4ec1cb9bcb8dd51621049a4654fa0935",
+      "sha256": "9bb46ae86a16a1b817cc9ad607f921cf76c02de40beda2097cdfdada98db1ea3"
+    },
+    {
+      "sourcePath": "tests/fixtures/timeline-exchange/calendar-boundaries.expected.json",
+      "file": "calendar-boundaries.expected.json",
+      "bytes": 8399,
+      "gitBlob": "6b4da589dc5da05ddaee72ba8727e8e847064080",
+      "sha256": "445a877e23372bded7ead7121f5fc641330d4a43c4bc5c001d3c91ab38a19f3a"
+    }
+  ],
+  "fileCount": 9,
+  "totalBytes": 237708,
+  "sourceManifest": {
+    "file": "source-manifest.json",
+    "bytes": 10198,
+    "sha256": "d6a128f9f9a9ce6b81590d0c768a5f3d2911906eec537d7e1abf7b1db69aebdd"
+  },
+  "upstreamReadme": {
+    "sourcePath": "tests/fixtures/timeline-exchange/README.md",
+    "file": "UPSTREAM-README.md",
+    "bytes": 4158,
+    "gitBlob": "ecc6f54519d5da1cf1bf3ae9c988fd93d08ca1a7",
+    "sha256": "f845d26ff56fa67153cba06cb18d70c20d254c7820433a6b8c4aa6564eb374c6"
+  },
+  "expectedPolicy": "Independent expected files copied verbatim from fixed Web Git blobs; never generated from native or serializer output.",
+  "normalizations": [
+    "Identity rows keyed by id; archive rows keyed by (id,version); timeline record rows keyed by id. Nested arrays and coordinates remain exact."
+  ]
+}

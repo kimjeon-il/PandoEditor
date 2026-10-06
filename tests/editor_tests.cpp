@@ -44,7 +44,7 @@ int main(int argc,char** argv)
             check(!editor.openFile(invalid)); check(editor.colors()==before && editor.dirty() && editor.canUndo());
         };
         reject("broken");
-        auto root=QJsonDocument::fromJson(sample).object(); root["version"]=99; reject(QJsonDocument(root).toJson());
+        auto root=QJsonDocument::fromJson(sample).object(); root["version"]=109; reject(QJsonDocument(root).toJson());
         root=QJsonDocument::fromJson(sample).object();
         auto units=root["units"].toArray(); auto c=units[1].toObject(); c["id"]=units[0].toObject()["id"]; units[1]=c; root["units"]=units; reject(QJsonDocument(root).toJson());
         root=QJsonDocument::fromJson(sample).object();

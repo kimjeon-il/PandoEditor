@@ -6,12 +6,15 @@
 #include <QTemporaryDir>
 #include <QDirIterator>
 #include <QStandardPaths>
+#include <QUuid>
 #include <QThreadPool>
 #include <thread>
 using namespace pandoeditor;
 using river_controller_fixture::FixtureCopy;
 class RiverSelectionControllerTests:public QObject {
  Q_OBJECT
+ QString originalApplicationName_;
+ bool originalTestMode_=false;
 static QUrl writeProject(const QString& path,int donors=1,double left=80,double bottom=30,const QString& manifest={}) {
  ProjectDocument d;d.documentId="river-cache-fixture";
  const auto add=[&](const std::string& id,double x){Geometry g;g.type="Polygon";g.polygons={{{{x,bottom},{x+.1,bottom},{x+.1,bottom+.1},{x,bottom+.1},{x,bottom}}}};GeometryRef r{id,1};d.geometries.insert(r,g);appendTerritory(d,{id,id,"",UnitKind::General,false},r);d.presentation.objectStyles[territorialRef(id)]={};};
@@ -30,6 +33,23 @@ static bool startComponents(EditorController& controller,const QStringList& dono
  return advanceComponents(controller);
 }
 private slots:
+ void init() {
+#ifdef Q_OS_WIN
+  // XDG_DATA_HOME does not redirect QStandardPaths on Windows. Keep cache
+  // promotion/blocker tests in a fresh test namespace, away from user data.
+  originalApplicationName_=QCoreApplication::applicationName();
+  originalTestMode_=QStandardPaths::isTestModeEnabled();
+  QStandardPaths::setTestModeEnabled(true);
+  QCoreApplication::setApplicationName("river-test-"+QUuid::createUuid().toString(QUuid::WithoutBraces));
+  qInfo()<<"ISOLATED_TEST_DATA_ROOT"<<QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+#endif
+ }
+ void cleanup() {
+#ifdef Q_OS_WIN
+  QCoreApplication::setApplicationName(originalApplicationName_);
+  QStandardPaths::setTestModeEnabled(originalTestMode_);
+#endif
+ }
  void actualSerbiaPostSourceCancellationSuppressesStaleWork_data() {
   QTest::addColumn<QString>("change");QTest::addColumn<int>("postSourceDelayMs");QTest::newRow("cancel-session")<<QString("cancel")<<100;QTest::newRow("replace-donor-epoch")<<QString("donor")<<100;QTest::newRow("cancel-session-long-computation-window")<<QString("cancel")<<1000;QTest::newRow("replace-donor-epoch-long-computation-window")<<QString("donor")<<1000;
  }
@@ -40,7 +60,7 @@ private slots:
   QVERIFY(!serbia.polygons.empty());QTemporaryDir dir;const auto url=writeProject(dir.filePath("real-serbia-cancel.json"),2,80,30,full);
   changeProject(url,[&](ProjectDocument& d){d.geometries.insert({"donor0",2},serbia);staticGeometryBinding(d,"donor0").geometryRef={"donor0",2};auto replacement=*d.geometries.get({"donor1",1});for(auto& polygon:replacement.polygons)for(auto& ring:polygon)for(auto& point:ring){point.x+=90;point.y-=90;}d.geometries.insert({"donor1",2},replacement);staticGeometryBinding(d,"donor1").geometryRef={"donor1",2};d.presentation.webPresentation.visibility["rivers"]=false;d.presentation.webPresentation.visibility["lakes"]=false;});
   EditorController c({false,dir.filePath("private.json")});QVERIFY(c.openFile(url));QVERIFY(startComponents(c));auto* provider=qobject_cast<HydroRuntimeProvider*>(c.hydroSource());QVERIFY(provider);QVERIFY(!provider->queryLogicalRivers(riverPartitionQueryBounds(serbia)).empty());
-  QTRY_COMPARE_WITH_TIMEOUT(QThreadPool::globalInstance()->activeThreadCount(),0,15000);const auto baseline=provider->resourceCacheSnapshot();QCOMPARE(baseline.pendingCount,std::size_t(0));const auto identity=*provider->sourceIdentity();const auto bytes=c.documentBytes();const auto revision=c.revision(),presentation=c.presentationRevision();QVERIFY(!c.canUndo());
+  QTRY_COMPARE_WITH_TIMEOUT(QThreadPool::globalInstance()->activeThreadCount(),0,15000);QTRY_COMPARE_WITH_TIMEOUT(provider->resourceCacheSnapshot().pendingCount,std::size_t(0),15000);const auto baseline=provider->resourceCacheSnapshot();const auto identity=*provider->sourceIdentity();const auto bytes=c.documentBytes();const auto revision=c.revision(),presentation=c.presentationRevision();QVERIFY(!c.canUndo());
   QSignalSpy jobChanged(&c,&EditorController::jobChanged);QVERIFY(c.geometryToggleRiverBoundaries(true));QElapsedTimer elapsed;elapsed.start();bool copied=false,postSource=false;qint64 sourceCompletedMs=-1;
   while(elapsed.elapsed()<15000){const auto resources=provider->resourceCacheSnapshot();const auto state=c.geometryEditState();if(state["riverSourceDispatches"].toInt()==1&&resources.pendingCount>baseline.pendingCount)copied=true;if(copied&&resources.pendingCount==baseline.pendingCount&&resources.failureCount==baseline.failureCount&&provider->cachedPackCount()>0&&state["riverStatus"].toString()=="pending"&&QThreadPool::globalInstance()->activeThreadCount()>0){postSource=true;sourceCompletedMs=elapsed.elapsed();break;}if(state["riverStatus"].toString()=="ready"||state["riverStatus"].toString()=="sourceError"||state["riverStatus"].toString()=="error")break;QCoreApplication::processEvents(QEventLoop::AllEvents,1);std::this_thread::yield();}
   QVERIFY2(copied&&postSource,"required real Serbia source-completion/still-running computation window was not observed");

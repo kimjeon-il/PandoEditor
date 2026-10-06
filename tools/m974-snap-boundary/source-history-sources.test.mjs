@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {readPinnedSources,entrypoints,sha256} from './sources.mjs';
 import {selectionEntrypoints} from '../m97/web-selection.mjs';
@@ -79,7 +80,7 @@ test('source-history browser page embeds portable runtime and refuses local capt
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'m974-source-history-refusal-'));
  try{
   const destination=path.join(dir,'must-not-create'),env={...process.env};delete env.GITHUB_ACTIONS;
-  const result=spawnSync(process.execPath,[new URL('./source-history-browser-runner.mjs',import.meta.url).pathname,destination],{env,encoding:'utf8'});
+  const result=spawnSync(process.execPath,[fileURLToPath(new URL('./source-history-browser-runner.mjs',import.meta.url)),destination],{env,encoding:'utf8'});
   assert.notEqual(result.status,0);assert.match(result.stderr,/authorized exact-commit CI/);assert.equal(fs.existsSync(destination),false);
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });

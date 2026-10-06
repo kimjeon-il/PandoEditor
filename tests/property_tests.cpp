@@ -192,7 +192,7 @@ private slots:
   QVERIFY_EXCEPTION_THROWN(projectcodec::decode(QJsonDocument(obj).toJson()),std::invalid_argument);
  }
  void cleanWebImportPreservesSemanticsAndCanEdit() {
-  QFile f(QStringLiteral(M32_FIXTURES)+"/../timeline-exchange/static.json");QVERIFY(f.open(QIODevice::ReadOnly));const auto input=f.readAll();
+  QFile f(QStringLiteral(M32_FIXTURES)+"/../web-v10-exchange/static.json");QVERIFY(f.open(QIODevice::ReadOnly));const auto input=f.readAll();
   auto candidate=webimport::prepare(input);Project p;p.replace(candidate.document);
   const auto child=territorialRef("B"),region=territorialRef("R");
   pandoeditor::TerritorialColorEdit reset{{child},{}};QVERIFY(run(p,"territorial.color.reset",reset).ok());
@@ -206,7 +206,7 @@ private slots:
   QVERIFY_EXCEPTION_THROWN(webimport::prepare(QJsonDocument(opaque).toJson()),std::invalid_argument);
  }
  void importedUnitsAppearWithoutNativeReopen() {
-  EditorController c;QVERIFY(c.prepareWebImport(QUrl::fromLocalFile(QStringLiteral(M32_FIXTURES)+"/../timeline-exchange/static.json")));
+  EditorController c;QVERIFY(c.prepareWebImport(QUrl::fromLocalFile(QStringLiteral(M32_FIXTURES)+"/../web-v10-exchange/static.json")));
   QTRY_VERIFY_WITH_TIMEOUT(c.hasWebImportPreview(),5000);QVERIFY(c.confirmWebImport(c.webImportHash(),"discard"));
   QCOMPARE(c.objectRows().size(),qsizetype(4));QVERIFY(c.selectObject({{"domain","territorial"},{"type","general"},{"id","B"}}));
   c.setNameDraft("Imported child");QVERIFY(c.commitObjectField("name"));QCOMPARE(c.selectedName(),QString("Imported child"));

@@ -1,0 +1,22 @@
+{
+  "kind": "declared-lineage-contract-input",
+  "notWebCandidateFixture": true,
+  "files": [
+    {
+      "path": "content.json",
+      "sourcePath": "tests/fixtures/timeline-exchange/content.json",
+      "sourceCommit": "4006e41745c9f03a70eea21de22411f3954cbbf8",
+      "bytes": 11886,
+      "sha256": "bfec28cfb5d4c4f992f3a2774dc81296621886f3d88672afa8a329081a25c982",
+      "gitBlob": "6c6a4aee4d3a785ec96bf0d6ab61c77b59e7ae29"
+    },
+    {
+      "path": "content.gpkg",
+      "sourcePath": "tests/fixtures/timeline-exchange/content.gpkg",
+      "sourceCommit": "4006e41745c9f03a70eea21de22411f3954cbbf8",
+      "bytes": 81920,
+      "sha256": "91d6b4d8c41c9eae53c9ac67a42761f0753cb92f567f204e9d2d4a13ebc579ed",
+      "gitBlob": "c02b503ada31064f4b61961dc1863822895bffba"
+    }
+  ]
+}

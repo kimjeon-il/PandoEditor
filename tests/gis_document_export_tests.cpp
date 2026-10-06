@@ -7,7 +7,9 @@ using namespace pandoeditor;
 int main(int argc,char** argv) {
     QCoreApplication app(argc,argv);
     ProjectDocument doc({{"A","Alpha",{{{{0,0},{4,0},{4,4},{0,4},{0,0}}}},0x123456}},{{"countries","Countries"}});
-    doc.units.front().libraryOrigin=LibraryOrigin{"historical-country:A","v-1945","1945","archive","2","medium","year",false,{}};
+    doc.units.front().sourceEntityId="state:A";
+    doc.units.front().sourceGeometryVersion="v-1945";
+    assert(!doc.units.front().libraryOrigin);
     DistributionLayer layer;layer.id="language:1";layer.unit="language";layer.name="L";
     doc.distributionLayers.push_back(layer);
     DistributionEntry entry;entry.id="entry:1";entry.layerId=layer.id;
@@ -21,7 +23,7 @@ int main(int argc,char** argv) {
     const auto countries=exportGisDocumentLayer(doc,"countries");
     assert(countries.features.size()==1);
     const auto json=exportGisGeoJson(countries);
-    assert(json.contains("historical-country:A")&&json.contains("v-1945"));
+    assert(json.contains("state:A")&&json.contains("v-1945"));
     assert(!json.contains("pandolab_project_settings")&&!json.contains("pandolab_country_assets"));
     const auto distribution=exportGisDocumentLayer(doc,"distributions");
     assert(distribution.features.size()==1);

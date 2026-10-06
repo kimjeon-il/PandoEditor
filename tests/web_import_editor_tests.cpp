@@ -7,7 +7,7 @@
 namespace {
 QByteArray bytes(const QString& path) {QFile f(path);if(!f.open(QIODevice::ReadOnly))return {};return f.readAll();}
 void write(const QString& path,const QByteArray& data) {QFile f(path);if(!f.open(QIODevice::WriteOnly)||f.write(data)!=data.size())throw std::runtime_error("fixture write");}
-QByteArray source() {return bytes(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../timeline-exchange/static.json");}
+QByteArray source() {return bytes(QStringLiteral(WEB_IMPORT_FIXTURES)+"/../web-v10-exchange/static.json");}
 QString first(EditorController& c) {return c.countryRows().first().toMap()["id"].toString();}
 }
 class WebImportEditorTests:public QObject {
@@ -56,7 +56,10 @@ private slots:
  }
  void malformedDeltaAndSourceOverwriteAreRejected() {
     QTemporaryDir d;auto path=d.filePath("source.json");write(path,source());EditorController c;c.selectCountry(first(c));c.setNameDraft("keep");
-    auto delta=d.filePath("delta.json");write(delta,R"({"format":"pandolab-autosave-delta","schemaVersion":9})");
+    auto retired=d.filePath("retired-delta.json");write(retired,R"({"format":"pandolab-autosave-delta","schemaVersion":9})");
+    QVERIFY(c.prepareWebImport(QUrl::fromLocalFile(retired)));QTRY_VERIFY(!c.webImportBusy());QVERIFY(!c.hasWebImportPreview());QVERIFY(c.webImportError().contains("UNSUPPORTED_VERSION"));
+    QCOMPARE(c.nameDraft(),QString("keep"));
+    auto delta=d.filePath("delta.json");write(delta,R"({"format":"pandolab-autosave-delta","schemaVersion":10})");
     QVERIFY(c.prepareWebImport(QUrl::fromLocalFile(delta)));QTRY_VERIFY(!c.webImportBusy());QVERIFY(!c.hasWebImportPreview());QVERIFY(c.webImportError().contains("BASE_DATA_REQUIRED"));
     QCOMPARE(c.nameDraft(),QString("keep"));QVERIFY(c.prepareWebImport(QUrl::fromLocalFile(path)));QTRY_VERIFY(c.hasWebImportPreview());
     QVERIFY(!c.confirmWebImport(c.webImportHash(),"save",QUrl::fromLocalFile(path)));QCOMPARE(bytes(path),source());

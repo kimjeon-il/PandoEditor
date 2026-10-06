@@ -579,7 +579,7 @@ private slots:
     void splitSiblingUsesFreshCreationDefaults() {
         auto document=fixture();auto& source=document.units.at(validateDocument(document).objects.at(territorialRef("S")));
         source.notes="source notes";source.baseName="source base";source.metadata="{\"origin\":true}";
-        source.sourceFolderId="folder";source.sourceLibraryId="library";source.sourceGeometryVersion="version";
+        source.sourceFolderId="folder";source.sourceEntityId="library";source.sourceGeometryVersion="version";
         document.presentation.objectStyles[territorialRef("S")]={0xff00ff,.4,true};
         Project project;project.replace(document);const auto before=projectcodec::encode(project);
         auto prepared=prepare(project,SplitTerritorialIntent{territorialRef("S"),rectangle(3.5,2,.5,2),"fresh","Fresh sibling"});
@@ -587,7 +587,7 @@ private slots:
         QVERIFY(CommandProcessor::confirm(project,*prepared.preview).ok());
         const auto& created=project.document().units.at(project.index().objects.at(territorialRef("fresh")));
         QCOMPARE(created.notes,std::string());QCOMPARE(created.baseName,std::string());QCOMPARE(created.metadata,std::string("{}"));
-        QCOMPARE(created.sourceFolderId,std::string());QCOMPARE(created.sourceLibraryId,std::string());QCOMPARE(created.sourceGeometryVersion,std::string());
+        QCOMPARE(created.sourceFolderId,std::string());QCOMPARE(created.sourceEntityId,std::string());QCOMPARE(created.sourceGeometryVersion,std::string());
         QVERIFY(!created.libraryOrigin);QVERIFY(!created.locked);
         const auto style=project.document().presentation.objectStyles.at(territorialRef("fresh"));QVERIFY(!style.explicitColor);QCOMPARE(style.opacity,1.);
         QCOMPARE(staticParentRelation(project.document(),"fresh").parentId,std::string("P"));

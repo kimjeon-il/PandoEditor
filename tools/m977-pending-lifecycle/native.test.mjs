@@ -2,6 +2,57 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {collectNative as collectFreshNative,verifyNativeLifecycleReport} from './compare.mjs';
 import {readLifecycleSources} from './sources.mjs';
+test('current Web10 lifecycle input is an explicit four-boundary port of the immutable historical input',async()=>{
+ const {projectCurrentLifecycleInput}=await import('./sources.mjs'),bundle=readLifecycleSources();
+ assert.equal(typeof projectCurrentLifecycleInput,'function');
+ assert.deepEqual(JSON.parse(bundle.currentInput.fixtureRaw),projectCurrentLifecycleInput(JSON.parse(bundle.fixtureRaw)));
+ assert.equal(bundle.currentInput.provenance.notWebCandidateFixture,true);
+ assert.equal(bundle.currentInput.provenance.expectedGenerated,false);
+ assert.deepEqual(bundle.currentInput.corpus.cases,bundle.corpus.cases);
+ const {prepareProjectForStorage}=await import('../../tests/fixtures/web-v10-exchange/source/assets/js/modules/project-state.js');
+ const fixed=JSON.parse(bundle.currentInput.fixtureRaw),prepared=prepareProjectForStorage(fixed);
+ const {compareFullWebProject}=await import('../web-v10-exchange-oracle.mjs');compareFullWebProject(prepared,fixed,'independent fixed Web10 production reader');
+});
+test('current Web10 literal lifecycle output rejects retired source aliases and coherent field loss',async()=>{
+ const {verifyCurrentLifecycleWeb}=await import('./compare.mjs'),bundle=readLifecycleSources();
+ assert.equal(typeof verifyCurrentLifecycleWeb,'function');const fixed=JSON.parse(bundle.currentInput.fixtureRaw);
+ assert.doesNotThrow(()=>verifyCurrentLifecycleWeb(JSON.stringify(fixed),fixed));
+ for(const mutate of [p=>p.schemaVersion=9,p=>p.territorialModel.schemaVersion=5,p=>{p.territorialEntities[0].properties.sourceLibraryId='';},p=>delete p.territorialEntities[0].properties.sourceEntityId,p=>p.genericFeatures[0].properties.source.details.nested.reverse(),p=>p.geometries.pop()]){const p=structuredClone(fixed);mutate(p);assert.throws(()=>verifyCurrentLifecycleWeb(JSON.stringify(p),fixed));}
+});
+test('current Web10 synthetic native storage accounts full archive, inline creator and opaque ledger without native execution',async()=>{
+ const {verifyCurrentNativeInput}=await import('./compare.mjs'),{losslessCanonical,accountWebNativeExchange}=await import('../m975-model-exchange/ownership-accounting.mjs'),{sha256}=await import('./sources.mjs');
+ const fixed=JSON.parse(readLifecycleSources().currentInput.fixtureRaw),label=fixed.labels[0];fixed.territorialEntities=[];fixed.timelineRecords={schemaVersion:1,lifetimes:[],parentRelations:[],geometryBindings:[]};fixed.labels=[{...label,territorialUnitId:''}];fixed.genericFeatures=[];fixed.hydroEdits=[];fixed.distributionLayers=[];fixed.distributionEntries=[];
+ fixed.geometries=[{id:'independent-original',version:1,geojson:{type:'Point',coordinates:[7,8]}}];
+ const shape={type:'Point',coordinates:label.coordinates},ref={id:'web-label:'+label.id,version:1},source=structuredClone(label.source);delete source.schemaVersion;
+ const exchangeMetadata=Object.fromEntries(['version','savedAt','baseDataset','landObjectModel','territorialModel','distributionModel','sourceInfo','physicalSourceInfo','physicalSettings'].map(key=>[key,fixed[key]]));
+ const native={format:'pandoeditor-project',version:10,documentId:'synthetic-verifier-only',units:[],timelineRecords:fixed.timelineRecords,geometries:[...fixed.geometries,{...ref,geojson:shape}],presentation:{userLayers:[],membership:[],objectStyles:{territorial:{}}},extensions:[],exchangeMetadata,content:{labels:[{id:label.id,name:label.name,kind:label.kind,notes:label.notes,geometryRef:ref,territory:null,source}],hydro:[],genericFeatures:[],distributionLayers:[],distributionEntries:[],countryDetails:[],symbols:[],physicalData:{dataset:'',version:'',source:'',hiddenHydroIds:[]}},geometryProvenance:{schemaVersion:1,originalArchive:[{id:'independent-original',version:1}],inlineAllocations:[{ref,createdFor:{domain:'label',id:label.id},geometrySha256:sha256(losslessCanonical(JSON.stringify(shape))),promoted:false}],opaqueBaseline:[{path:'/exchangeMetadata',sha256:sha256(losslessCanonical(JSON.stringify(exchangeMetadata)))},{path:'/labels/'+label.id+'/source/details',sha256:sha256(losslessCanonical(JSON.stringify(source.details)))}],opaqueUncertain:false}};
+ const raw=JSON.stringify(fixed),args={sourceWebRaw:raw,nativeRaw:JSON.stringify(native),webOutputRaw:raw,browserInputRaw:raw,expectedWebSchemaVersion:10};
+ assert.equal(accountWebNativeExchange(args).rows.length,2);
+ assert.throws(()=>accountWebNativeExchange({...args,expectedWebSchemaVersion:undefined}),'historical default remains Web9');
+ for(const key of ['sourceWebRaw','webOutputRaw','browserInputRaw'])assert.throws(()=>accountWebNativeExchange({...args,[key]:raw.replace('"schemaVersion":10','"schemaVersion":9')}),'retired root token rejected at '+key);
+ const receipt=verifyCurrentNativeInput(JSON.stringify(native),raw,raw);assert.equal(receipt.rows.length,2);assert.equal(receipt.files.sourceWebSha256,sha256(raw));assert.equal(receipt.files.webOutputSha256,sha256(raw));
+ for(const mutate of [n=>n.content.labels[0].name='corrupted',n=>n.version=9,n=>n.geometryProvenance.originalArchive=[],n=>n.geometryProvenance.inlineAllocations[0].geometrySha256='0'.repeat(64),n=>n.geometryProvenance.opaqueBaseline.pop(),n=>n.content.labels[0].source.details.nested.reverse(),n=>n.geometries.push({id:'unaccounted',version:1,geojson:shape}),n=>n.units.push({id:'unrequested',sourceLibraryId:''})]){const n=structuredClone(native);mutate(n);assert.throws(()=>verifyCurrentNativeInput(JSON.stringify(n),raw,raw));}
+});
+test('current Web10 typed inline native fields reject each single-field mutation independently of Web receipts',async()=>{
+ const {compareCurrentInlineStorage}=await import('./compare.mjs');assert.equal(typeof compareCurrentInlineStorage,'function');
+ const p=JSON.parse(readLifecycleSources().currentInput.fixtureRaw),id=n=>'97500000-0000-4000-8000-'+String(n).padStart(12,'0');
+ const source={kind:'user',dataset:'m975-exchange',version:'9',sourceId:'original',sourceFormat:'geojson',sourceType:'Point',importedAt:'2026-10-05',details:{provider:'new-valid-v9',nested:[{order:2},{order:1}]}};
+ const validity={from:null,to:null},content={
+  labels:[{id:id(2),name:'서울',kind:'city',notes:'M975 source retained',geometryRef:{id:'web-label:'+id(2),version:1},territory:{domain:'territorial',id:'target'},source}],
+  hydro:[{id:id(4),name:'Saved water',notes:'retained',geometryRef:{id:'web-hydroEdits:'+id(4),version:1},source:{...source,sourceType:'LineString'},kind:'river',color:'#123456',locked:false,sourceFeatureId:'water-original'}],
+  genericFeatures:[{id:id(3),name:'Fallback point',notes:'ordered provenance',geometryRef:{id:'web-genericFeatures:'+id(3),version:1},source,color:'#123456',locked:false,fallbackOnly:true}],
+  distributionLayers:[{id:id(1),name:'Exchange',unit:'',valueScale:{mode:'auto'},color:'#8c68d8',locked:false,parentId:null,groups:['second','first'],validity,metadata:{origin:'M975'}}],
+  distributionEntries:['donor','child-left','child-right'].map((owner,i)=>({id:id(100+i),layerId:id(1),territory:{domain:'territorial',id:owner},geometryRef:null,value:0.5+i,certainty:'unknown',validity,metadata:{index:i}})),
+ };
+ assert.doesNotThrow(()=>compareCurrentInlineStorage(content,p));
+ const leaves=(value,prefix=[])=>value&&typeof value==='object'?Object.entries(value).flatMap(([key,v])=>leaves(v,[...prefix,key])):[prefix];let mutations=0;
+ for(const path of leaves(content)){const bad=structuredClone(content);let owner=bad;for(const key of path.slice(0,-1))owner=owner[key];const key=path.at(-1),value=owner[key];owner[key]=typeof value==='boolean'?!value:typeof value==='number'?value+0.25:typeof value==='string'?value+'-corrupted':'corrupted';assert.throws(()=>compareCurrentInlineStorage(bad,p),path.join('/'));mutations++;}
+ for(const collection of Object.keys(content))for(const mutate of [rows=>rows.pop(),rows=>rows.push(structuredClone(rows[0])),rows=>rows[0].unexpected=true]){const bad=structuredClone(content);mutate(bad[collection]);assert.throws(()=>compareCurrentInlineStorage(bad,p),collection+' exact inventory');mutations++;}
+ const reordered=structuredClone(content);reordered.distributionEntries.reverse();assert.throws(()=>compareCurrentInlineStorage(reordered,p));mutations++;
+ const dated=structuredClone(p),native=structuredClone(content);dated.distributionLayers[0].validFrom='+12000-02';dated.distributionLayers[0].validTo='+12000-02-28';dated.distributionLayers[0].valueScale={mode:'manual',min:0,max:100};native.distributionLayers[0].validity={from:{text:'+12000-02',precision:'month'},to:{text:'+12000-02-28',precision:'date'}};native.distributionLayers[0].valueScale={mode:'manual',min:0,max:100};assert.doesNotThrow(()=>compareCurrentInlineStorage(native,dated));
+ for(const mutate of [n=>n.distributionLayers[0].validity.from.text='+12000-03',n=>n.distributionLayers[0].validity.from.precision='date',n=>n.distributionLayers[0].validity.to.text='+12000-02-27',n=>n.distributionLayers[0].validity.to.precision='month',n=>n.distributionLayers[0].valueScale.min=1,n=>n.distributionLayers[0].valueScale.max=101]){const bad=structuredClone(native);mutate(bad);assert.throws(()=>compareCurrentInlineStorage(bad,dated));mutations++;}
+ console.log('current Web10 typed inline single-field/inventory mutation guards: '+mutations);
+});
 const binary=process.env.M977_PENDING_LIFECYCLE_PROBE;
 let captured;const collectNative=(binary,bundle)=>structuredClone(captured??=collectFreshNative(binary,bundle));
 test('native matched pending-input tail includes every real lifecycle stage and exact history snapshots',()=>{

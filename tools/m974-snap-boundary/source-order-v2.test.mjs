@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {loadNodeSources,readPinnedSources,sha256} from './sources.mjs';
 import {runtimePin} from './protocol.mjs';
 const mod=await import('./source-order-v2.mjs').catch(error=>{if(error.code!=='ERR_MODULE_NOT_FOUND')throw error;return {};});
@@ -101,7 +102,7 @@ test('browser page contains only portable runtime and CLI refuses non-CI launch 
  const html=browser.createSourceOrderPage(await mod.createSourceOrderSuite(options));
  assert.ok(html.includes('DecompressionStream'));assert.ok(html.includes('__m974SourceOrderReport'));assert.ok(!html.includes('node:'));
  const env={...process.env};delete env.GITHUB_ACTIONS;
- const result=spawnSync(process.execPath,[new URL('./source-order-v2-browser-runner.mjs',import.meta.url).pathname,'/tmp/source-order-should-not-launch'],{env,encoding:'utf8'});
+ const result=spawnSync(process.execPath,[fileURLToPath(new URL('./source-order-v2-browser-runner.mjs',import.meta.url)),'/tmp/source-order-should-not-launch'],{env,encoding:'utf8'});
  assert.notEqual(result.status,0);assert.match(result.stderr,/authorized exact-commit CI/);
  assert.equal(fs.existsSync('/tmp/source-order-should-not-launch'),false);
 });

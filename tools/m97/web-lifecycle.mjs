@@ -15,7 +15,7 @@ export function verifyLifecycleSources({ root = resolve(fixtureRoot, 'lifecycle-
   if (failures.length) throw Error(`Lifecycle source verification failed: ${failures.join('; ')}`);
   const listed = new Set(manifest.sources.map(source => source.path));
   for (const entry of readdirSync(root, { recursive: true, withFileTypes: true })) {
-    const path = relative(root, resolve(entry.parentPath, entry.name));
+    const path = relative(root, resolve(entry.parentPath, entry.name)).split('\\').join('/');
     if (/\.(?:js|mjs|cjs)$/.test(path) && !listed.has(path)) throw Error(`Unlisted executable source: ${path}`);
   }
   if (JSON.stringify(JSON.parse(readFileSync(resolve(root, 'package.json')))) !== '{"type":"module"}') {

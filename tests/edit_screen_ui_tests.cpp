@@ -196,14 +196,20 @@ private slots:
         QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));
         const auto original=ui.editor.geometryDraftPaths();const auto start=ui.atVertex(0);
         ui.tap(start,touch);QCOMPARE(ui.editor.geometryEditState()["selectedVertex"].toInt(),0);
-        ui.press(start,touch);ui.move(start+QPoint(24,25),touch);ui.move(start+QPoint(34,35),touch);
-        QVERIFY(ui.activeDrag());QVERIFY(ui.editor.geometryDraftPaths()!=original);
+        ui.press(start,touch);ui.move(start+QPoint(24,25),touch);
+        // Touch delivery can wait for a frame. Activate on the first move so
+        // the next sample tests movement rather than becoming the grab sample.
+        QTRY_VERIFY(ui.activeDrag());ui.move(start+QPoint(34,35),touch);
+        QVERIFY(ui.activeDrag());QTRY_VERIFY(ui.editor.geometryDraftPaths()!=original);
         const auto beforeCamera=ui.editor.geometryDraftPaths();
         QVERIFY(ui.changeCamera());QCOMPARE(ui.editor.geometryDraftPaths(),beforeCamera);
         const QPoint destination=start+QPoint(54,62);
         const auto input=ui.overlayAt(destination);
         const auto expected=ui.projection.project(ui.projection.unproject(input.x,input.y));
-        ui.move(destination,touch);ui.release(destination,touch);
+        ui.move(destination,touch);
+        QTRY_COMPARE(ui.vertices().front().toMap()["x"].toDouble(),expected.x);
+        QTRY_COMPARE(ui.vertices().front().toMap()["y"].toDouble(),expected.y);
+        ui.release(destination,touch);
         const auto moved=ui.vertices().front().toMap();
         QCOMPARE(moved["x"].toDouble(),expected.x);QCOMPARE(moved["y"].toDouble(),expected.y);
         QCOMPARE(ui.vertices().back(),original.front().toMap()["vertices"].toList().back());
@@ -223,10 +229,14 @@ private slots:
         QVERIFY(ui.editor.geometrySetMoveMode(true));
         const auto original=ui.editor.geometryDraftPaths();const auto vertices=ui.vertices();
         const QPoint start=(ui.atVertex(0)+ui.atVertex(1))/2;
-        ui.press(start,touch);ui.move(start+QPoint(23,24),touch);ui.move(start+QPoint(33,34),touch);
-        QVERIFY(ui.activeDrag());QVERIFY(ui.editor.geometryDraftPaths()!=original);
+        ui.press(start,touch);ui.move(start+QPoint(23,24),touch);
+        QTRY_VERIFY(ui.activeDrag());ui.move(start+QPoint(33,34),touch);
+        QVERIFY(ui.activeDrag());QTRY_VERIFY(ui.editor.geometryDraftPaths()!=original);
         QVERIFY(ui.changeCamera());
+        QVERIFY(ui.activeDrag());
+        const auto previousTranslation=ui.activeDrag()->property("activeTranslation").value<QVector2D>();
         const QPoint destination=start+QPoint(47,58);ui.move(destination,touch);
+        QTRY_VERIFY(ui.activeDrag()&&ui.activeDrag()->property("activeTranslation").value<QVector2D>()!=previousTranslation);
         auto* drag=ui.activeDrag();QVERIFY(drag);
         const auto delta=drag->property("activeTranslation").value<QVector2D>();
         QVERIFY(!delta.isNull());
@@ -248,8 +258,11 @@ private slots:
         // Returning a real object drag to zero keeps its existing no-op Undo
         // policy and preserves the earlier Redo entry.
         const QPoint noOp=ui.map->mapToScene(QPointF(180,160)).toPoint();
-        ui.press(noOp,touch);ui.move(noOp+QPoint(23,24),touch);ui.move(noOp+QPoint(35,38),touch);
+        ui.press(noOp,touch);ui.move(noOp+QPoint(23,24),touch);
+        QTRY_VERIFY(ui.activeDrag());ui.move(noOp+QPoint(35,38),touch);
+        QTRY_VERIFY(ui.activeDrag()&&!ui.activeDrag()->property("activeTranslation").value<QVector2D>().isNull());
         QVERIFY(ui.activeDrag());ui.move(noOp,touch);QVERIFY(ui.activeDrag());
+        QTRY_VERIFY(ui.activeDrag()&&ui.activeDrag()->property("activeTranslation").value<QVector2D>().isNull());
         QVERIFY(ui.activeDrag()->property("activeTranslation").value<QVector2D>().isNull());
         ui.release(noOp,touch);QCOMPARE(ui.editor.geometryDraftPaths(),original);
         QVERIFY(!ui.editor.geometryEditState()["canUndo"].toBool());
@@ -303,8 +316,9 @@ private slots:
         QPoint first=ui.atVertex(0);const QPoint second=ui.atVertex(1);
         QTest::touchEvent(ui.window,Ui::device()).press(0,first,ui.window).commit();
         if(activeFirst){
-            ui.move(first+QPoint(24,25),true);ui.move(first+QPoint(44,45),true);
-            QVERIFY(ui.activeDrag());QVERIFY(ui.editor.geometryDraftPaths()!=original);
+            ui.move(first+QPoint(24,25),true);QTRY_VERIFY(ui.activeDrag());
+            ui.move(first+QPoint(44,45),true);
+            QVERIFY(ui.activeDrag());QTRY_VERIFY(ui.editor.geometryDraftPaths()!=original);
             first+=QPoint(44,45);
         }
         const auto beforeTakeover=ui.editor.geometryDraftPaths();
@@ -330,7 +344,8 @@ private slots:
         // dragging accepts any map point, so start the retry visibly on-map.
         const QPoint retry=ui.map->mapToScene(QPointF(180,160)).toPoint();
         QVERIFY(QRect(QPoint(),ui.window->size()).contains(retry+QPoint(39,42)));
-        ui.press(retry,true);ui.move(retry+QPoint(22,25),true);ui.move(retry+QPoint(39,42),true);
+        ui.press(retry,true);ui.move(retry+QPoint(22,25),true);QTRY_VERIFY(ui.activeDrag());
+        ui.move(retry+QPoint(39,42),true);QTRY_VERIFY(ui.editor.geometryDraftPaths()!=original);
         QVERIFY2(ui.activeDrag(),qPrintable(QString("single-touch retry at %1,%2; map %3x%4")
             .arg(retry.x()).arg(retry.y()).arg(ui.map->width()).arg(ui.map->height())));
         ui.release(retry+QPoint(39,42),true);

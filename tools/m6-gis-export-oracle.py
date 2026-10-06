@@ -37,7 +37,8 @@ def main(executable):
             }
             country = json.loads(bundle.read("countries.geojson"))["features"][0]
             assert len(country["geometry"]["coordinates"][0]) == 2
-            assert country["properties"]["source_library_id"] == "historical-country:A"
+            assert country["properties"]["source_entity_id"] == "state:A"
+            assert country["properties"]["source_geometry_version"] == "v1"
             distribution = json.loads(bundle.read("distributions.geojson"))["features"][0]
             assert distribution["properties"]["source_mode"] == "territorial"
             assert distribution["properties"]["territorial_unit_id"] == "A"
@@ -57,7 +58,7 @@ def main(executable):
             assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
             assert db.execute("PRAGMA application_id").fetchone()[0] == 1196444487
             assert db.execute("SELECT srs_id FROM gpkg_geometry_columns WHERE table_name='countries'").fetchone()[0] == 4326
-            assert db.execute("SELECT pandolab_id,source_library_id FROM countries").fetchone() == ("A", "historical-country:A")
+            assert db.execute("SELECT pandolab_id,source_entity_id,source_geometry_version FROM countries").fetchone() == ("A", "state:A", "v1")
             blob = db.execute("SELECT geom FROM countries").fetchone()[0]
             assert blob[:2] == b"GP" and blob[3] == 1
             assert struct.unpack_from("<I", blob, 4)[0] == 4326

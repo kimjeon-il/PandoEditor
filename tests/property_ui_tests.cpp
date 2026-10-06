@@ -202,7 +202,8 @@ private slots:
             const int signalsBefore=presentation.count();
             if(mobile) {
                 QTest::touchEvent(h.window,device).press(0,pos,h.window).commit();
-                QTest::touchEvent(h.window,device).move(0,pos+delta/2,h.window).commit();QTest::qWait(20);
+                QTest::touchEvent(h.window,device).move(0,pos+delta/2,h.window).commit();
+                QTRY_VERIFY(drag->property("active").toBool());
                 QTest::touchEvent(h.window,device).move(0,pos+delta,h.window).commit();QTest::qWait(20);
             } else {
                 QTest::mousePress(h.window,Qt::LeftButton,Qt::NoModifier,pos);
@@ -210,6 +211,7 @@ private slots:
                 QTest::mouseMove(h.window,pos+delta,20);
             }
             QTRY_VERIFY(drag->property("active").toBool());
+            QTRY_VERIFY(drag->property("activeTranslation").value<QVector2D>().lengthSquared()>4);
             const auto translation=drag->property("activeTranslation").value<QVector2D>();
             QVERIFY(translation.lengthSquared()>4);
             QCOMPARE(presentation.count(),signalsBefore); // One command on release, never during the gesture.
@@ -391,9 +393,11 @@ private slots:
         const auto before=h.editor.documentBytes();QSignalSpy presentation(&h.editor,&EditorController::presentationChanged);
         QTest::touchEvent(h.window,device).press(0,pos,h.window).commit();
         QTest::touchEvent(h.window,device).move(0,pos+QPoint(25,20),h.window).commit();QTest::qWait(20);
-        QTest::touchEvent(h.window,device).move(0,pos+QPoint(60,40),h.window).commit();QTest::qWait(20);
+        // Qt may defer touch delivery until the next frame. Observe activation
+        // before the second movement so it cannot become the activation sample.
         QTRY_VERIFY(drag->property("active").toBool());
-        QVERIFY(drag->property("activeTranslation").value<QVector2D>().lengthSquared()>4);
+        QTest::touchEvent(h.window,device).move(0,pos+QPoint(60,40),h.window).commit();QTest::qWait(20);
+        QTRY_VERIFY(drag->property("activeTranslation").value<QVector2D>().lengthSquared()>4);
         if(ending==1){
             QVERIFY(drag->setProperty("enabled",false));
             QTest::touchEvent(h.window,device).release(0,pos+QPoint(60,40),h.window).commit();
@@ -416,10 +420,13 @@ private slots:
         // A fresh gesture after each interrupted/no-op path must still work.
         QTRY_VERIFY(placedLabel(h.window->contentItem(),"A"));
         label=placedLabel(h.window->contentItem(),"A");
+        auto* nextDrag=labelDragHandler(label);QVERIFY(nextDrag);
         const auto nextPos=label->mapToScene(QPointF(label->width()/2,label->height()/2)).toPoint();
         QTest::touchEvent(h.window,device).press(0,nextPos,h.window).commit();
         QTest::touchEvent(h.window,device).move(0,nextPos+QPoint(20,-15),h.window).commit();QTest::qWait(20);
+        QTRY_VERIFY(nextDrag->property("active").toBool());
         QTest::touchEvent(h.window,device).move(0,nextPos+QPoint(35,-25),h.window).commit();QTest::qWait(20);
+        QTRY_VERIFY(nextDrag->property("activeTranslation").value<QVector2D>().lengthSquared()>4);
         QTest::touchEvent(h.window,device).release(0,nextPos+QPoint(35,-25),h.window).commit();
         QTRY_VERIFY_WITH_TIMEOUT(settings(h.editor).pinned,1000);
         QVERIFY(settings(h.editor).manualPosition);QCOMPARE(presentation.count(),1);

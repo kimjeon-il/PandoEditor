@@ -18,7 +18,7 @@ else:
         inputs = json.load(stream)
     inputs = inputs if isinstance(inputs, list) else inputs['cases']
     inputs = [row for row in inputs if row.get('scenario')]
-    result = subprocess.run([args.probe], input=json.dumps(inputs), text=True,
+    result = subprocess.run([args.probe], input=json.dumps(inputs), text=True, encoding='utf-8',
                             capture_output=True, timeout=180, check=True)
     receipt = json.loads(result.stdout)
 rows = {row['input'].get('scenario'): row for row in receipt['rows']}

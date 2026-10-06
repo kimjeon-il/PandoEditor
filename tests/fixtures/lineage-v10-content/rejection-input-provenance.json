@@ -1,0 +1,12 @@
+{
+  "kind": "explicit-test-input-port-not-production-migration",
+  "originalCommit": "a751d5f16da6b604d95435c9a29adef7a2f3ab38",
+  "originalPath": "tests/fixtures/web-m975-model-exchange/m975-annex-rejected-deleted-reference.json",
+  "originalSha256": "4cfbf26cdf82fc2e9ef63e3f38bd635267deb2b95df89dcf726882b14d075d97",
+  "sha256": "46e02321e5038824e911d101023ba915d9e12421ecfd134561cdb42a696a6d6e",
+  "expectedGenerated": false,
+  "changedFields": [
+    "project and territorial schema numbers",
+    "sourceLibraryId -> sourceEntityId"
+  ]
+}

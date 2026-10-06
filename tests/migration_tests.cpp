@@ -212,7 +212,7 @@ private slots:
         QVERIFY_EXCEPTION_THROWN(projectcodec::decode(R"({"format":"pandoeditor-project","version":3.00000000000000000000001})"),std::invalid_argument);
     }
     void legacyVersionsRejectAndCurrentVersionSaves() {
-        auto root=QJsonDocument::fromJson(sample()).object();for(int version=1;version<9;++version){root["version"]=version;QVERIFY_EXCEPTION_THROWN(projectcodec::decode(QJsonDocument(root).toJson()),std::invalid_argument);}root["version"]=9;pandoeditor::Project p;p.replace(projectcodec::decode(QJsonDocument(root).toJson()));QCOMPARE(QJsonDocument::fromJson(projectcodec::encode(p)).object()["version"].toInt(),10);
+        auto root=QJsonDocument::fromJson(sample()).object();for(int version=1;version<10;++version){root["version"]=version;QVERIFY_EXCEPTION_THROWN(projectcodec::decode(QJsonDocument(root).toJson()),std::invalid_argument);}root["version"]=10;pandoeditor::Project p;p.replace(projectcodec::decode(QJsonDocument(root).toJson()));QCOMPARE(QJsonDocument::fromJson(projectcodec::encode(p)).object()["version"].toInt(),10);
     }
     void duplicateKeysRejected() {
         for (const auto& bytes:{QByteArray(R"({"version":1,"version":2})"),
