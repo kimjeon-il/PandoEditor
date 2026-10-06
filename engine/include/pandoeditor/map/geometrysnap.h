@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-// App-only adapter of the pinned web snap contracts. This helper never edits Project.
+// Qt-free adapter of the pinned web snap contracts. This helper never edits Project.
 namespace geometrysnap {
 using pandoeditor::Point;
 using SourceRanks=std::map<pandoeditor::ObjectRef,std::uint64_t>;

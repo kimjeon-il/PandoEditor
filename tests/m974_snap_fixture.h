@@ -1,5 +1,5 @@
 #pragma once
-#include "geometrysnap.h"
+#include <pandoeditor/map/geometrysnap.h>
 #include "territorial_fixture.h"
 #include <QJsonArray>
 #include <QJsonObject>

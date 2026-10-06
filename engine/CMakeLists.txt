@@ -1,3 +1,6 @@
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 add_library(pandoeditor_map_engine STATIC
     src/resourcecachepolicy.cpp
     src/engine.cpp
@@ -16,6 +19,7 @@ add_library(pandoeditor_map_engine STATIC
     src/scenepatch.cpp
     src/geometrypacketcache.cpp
     src/mapscenebuilder.cpp
+    src/geometrysnap.cpp
 )
 add_library(Pandoeditor::MapEngine ALIAS pandoeditor_map_engine)
 
@@ -26,10 +30,17 @@ target_include_directories(pandoeditor_map_engine PRIVATE
     "${PROJECT_SOURCE_DIR}/third_party/earcut"
 )
 target_compile_features(pandoeditor_map_engine PUBLIC cxx_std_17)
-target_link_libraries(pandoeditor_map_engine PUBLIC Pandoeditor::Core)
+target_link_libraries(pandoeditor_map_engine PUBLIC Pandoeditor::Core Threads::Threads)
 set_target_properties(pandoeditor_map_engine PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+# JavaScript's specified intermediate operations must not be fused on native targets.
+set_source_files_properties(src/geometrysnap.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:MSVC>:/fp:strict>;$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffp-contract=off>")
+
 if(BUILD_TESTING)
+    add_executable(m974_snap_tests ../tests/m974_snap_tests.cpp)
+    target_link_libraries(m974_snap_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME m974_snap_tests COMMAND m974_snap_tests)
     add_executable(resource_cache_policy_tests ../tests/resource_cache_policy_tests.cpp)
     target_link_libraries(resource_cache_policy_tests PRIVATE Pandoeditor::MapEngine)
     add_test(NAME resource_cache_policy_tests COMMAND resource_cache_policy_tests)

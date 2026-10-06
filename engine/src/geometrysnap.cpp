@@ -1,4 +1,4 @@
-#include "geometrysnap.h"
+#include <pandoeditor/map/geometrysnap.h>
 #include <pandoeditor/geobounds.h>
 #include <pandoeditor/spatialindex.h>
 #include <algorithm>

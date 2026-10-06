@@ -1,4 +1,4 @@
-#include "geometrysnap.h"
+#include <pandoeditor/map/geometrysnap.h>
 #include "territorial_fixture.h"
 #include <cmath>
 #include <cstdio>
@@ -117,5 +117,30 @@ void rejectNonprogressingSource(){
 
 void rejectUnsupportedNodeKeyMagnitude(){for(const double value:{1e13,-1e13,1e15,1e20,std::numeric_limits<double>::max()}){bool rejected=false;try{nodeKey({value,0});}catch(const std::invalid_argument&){rejected=true;}require(rejected,"unsupported node-key magnitude silently overflowed");}require(nodeKey({540,-540})=="540.0000000,-540.0000000","supported shifted node-key changed");}
 
+void sourceRanksSnapshotMismatch(){
+ ProjectDocument d;d.documentId="rank-snapshot";add(d,"owner",polygon({{0,0},{1,0},{1,1},{0,0}}));Project p;p.replace(d);const auto snapshot=p.snapshot();Index index;index.prepare(snapshot);Request q;q.coordinate={0,0};q.margin=1;q.sourceRanks=std::make_shared<SourceRanks>(SourceRanks{{territorialRef("owner"),0}});q.sourceRanksInstance=snapshot.instanceId();q.sourceRanksRevision=snapshot.revision();
+ const auto reject=[&](){bool rejected=false;try{index.collect(q);}catch(const std::invalid_argument& e){rejected=std::string(e.what())=="snap source-order snapshot does not match geometry snapshot";}require(rejected,"mismatched source-rank snapshot accepted");};
+ q.sourceRanksInstance="another-instance";reject();q.sourceRanksInstance=snapshot.instanceId();++q.sourceRanksRevision;reject();q.sourceRanksRevision=snapshot.revision();
+ require(!index.prepareAndCollect(snapshot,q).candidates.empty(),"matching source-rank snapshot rejected");
 }
-int main(){int failed=0;for(const auto& test:std::vector<std::pair<const char*,void(*)()>>{{"reject-unsupported-node-key",rejectUnsupportedNodeKeyMagnitude},{"reject-nonprogressing-source",rejectNonprogressingSource},{"reject-nonfinite-source",rejectNonfiniteSource},{"source-cache-lifetime",sourceCacheLifetime},{"far-out-finite-query",farOutFiniteQuery},{"strict-intersection-threshold",strictIntersectionThreshold},{"mutation-order",mutationOrder},{"local-work-bound",localWorkBound},{"segment-query-order",segmentQueryOrder},{"overlap-and-exclusion",overlapAndExclusion},{"atomic-preparation",atomicPreparation},{"numeric",numeric},{"resolver",resolver},{"candidates",candidates},{"conservative-dateline",conservativeDateline},{"insertion-order",insertionOrder}}){try{test.second();std::printf("PASS %s\n",test.first);}catch(const std::exception& e){++failed;std::fprintf(stderr,"FAIL %s: %s\n",test.first,e.what());}}return failed?1:0;}
+
+void sourceRanksMissing(){
+ ProjectDocument d;d.documentId="rank-missing";const auto g=polygon({{0,0},{1,0},{1,1},{0,0}});add(d,"z",g);add(d,"a",g,true);Project p;p.replace(d);const auto snapshot=p.snapshot();Index index;index.prepare(snapshot);Request q;q.coordinate={0,0};q.margin=1;q.sourceRanksInstance=snapshot.instanceId();q.sourceRanksRevision=snapshot.revision();
+ require(index.collect(q).candidates.front().ownerIds==std::vector<std::string>{"z"},"absent rank map lost insertion-order fallback");
+ for(const auto& ranks:std::vector<SourceRanks>{{},{ {territorialRef("z"),0} }}){q.sourceRanks=std::make_shared<SourceRanks>(ranks);bool rejected=false;try{index.collect(q);}catch(const std::invalid_argument& e){rejected=std::string(e.what())=="canonical snap source has no insertion rank";}require(rejected,"explicit rank map with missing nearby owner accepted");}
+}
+
+void sourceRanksDuplicate(){
+ ProjectDocument d;d.documentId="rank-duplicate";const auto g=polygon({{0,0},{1,0},{1,1},{0,0}});add(d,"z",g);add(d,"a",g,true);Project p;p.replace(d);const auto snapshot=p.snapshot();Index index;index.prepare(snapshot);Request q;q.coordinate={0,0};q.margin=1;q.sourceRanksInstance=snapshot.instanceId();q.sourceRanksRevision=snapshot.revision();q.sourceRanks=std::make_shared<SourceRanks>(SourceRanks{{territorialRef("z"),7},{{"generic","a"},7}});
+ bool rejected=false;try{index.collect(q);}catch(const std::invalid_argument& e){rejected=std::string(e.what())=="canonical snap sources have duplicate insertion ranks";}require(rejected,"duplicate nearby insertion ranks accepted");
+ q.sourceRanks=std::make_shared<SourceRanks>(SourceRanks{{territorialRef("z"),8},{{"generic","a"},7}});require(index.collect(q).candidates.front().ownerIds==std::vector<std::string>{"a"},"valid rank map failed after duplicate rejection");
+}
+
+void sourceRanksHighOrder(){
+ ProjectDocument d;d.documentId="rank-high";const auto g=polygon({{0,0},{1,0},{1,1},{0,0}});add(d,"first",g);add(d,"middle",g,true);add(d,"a",g,true);add(d,"z",g,true);Project p;p.replace(d);const auto snapshot=p.snapshot();Index index;Request q;q.coordinate={0,0};q.margin=1;q.sourceRanksInstance=snapshot.instanceId();q.sourceRanksRevision=snapshot.revision();const auto maximum=std::numeric_limits<std::uint64_t>::max();q.sourceRanks=std::make_shared<SourceRanks>(SourceRanks{{territorialRef("first"),0},{{"generic","middle"},std::uint64_t{1}<<63},{{"generic","a"},maximum},{{"generic","z"},maximum-1}});
+ const auto batch=index.prepareAndCollect(snapshot,q);require(batch.candidates.front().ownerIds==std::vector<std::string>{"first"},"high unsigned insertion ranks changed first duplicate-vertex owner");std::vector<std::string> edgeOwners;for(const auto& candidate:batch.candidates)if(candidate.kind=="edge"&&(edgeOwners.empty()||edgeOwners.back()!=candidate.ownerIds.front()))edgeOwners.push_back(candidate.ownerIds.front());
+ require(edgeOwners==std::vector<std::string>{"first","middle","z","a"},"low and adjacent high uint64 ranks were narrowed, rounded or reordered");
+}
+
+}
+int main(){int failed=0;for(const auto& test:std::vector<std::pair<const char*,void(*)()>>{{"source-ranks-snapshot-mismatch",sourceRanksSnapshotMismatch},{"source-ranks-missing",sourceRanksMissing},{"source-ranks-duplicate",sourceRanksDuplicate},{"source-ranks-high-order",sourceRanksHighOrder},{"reject-unsupported-node-key",rejectUnsupportedNodeKeyMagnitude},{"reject-nonprogressing-source",rejectNonprogressingSource},{"reject-nonfinite-source",rejectNonfiniteSource},{"source-cache-lifetime",sourceCacheLifetime},{"far-out-finite-query",farOutFiniteQuery},{"strict-intersection-threshold",strictIntersectionThreshold},{"mutation-order",mutationOrder},{"local-work-bound",localWorkBound},{"segment-query-order",segmentQueryOrder},{"overlap-and-exclusion",overlapAndExclusion},{"atomic-preparation",atomicPreparation},{"numeric",numeric},{"resolver",resolver},{"candidates",candidates},{"conservative-dateline",conservativeDateline},{"insertion-order",insertionOrder}}){try{test.second();std::printf("PASS %s\n",test.first);}catch(const std::exception& e){++failed;std::fprintf(stderr,"FAIL %s: %s\n",test.first,e.what());}}return failed?1:0;}

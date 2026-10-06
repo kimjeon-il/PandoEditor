@@ -725,23 +725,14 @@ if(BUILD_TESTING)
 endif()
 
 target_sources(pandoeditor_editor PRIVATE
-    geometrysnap.cpp geometrysnap.h
     geometrysnapprovider.cpp geometrysnapprovider.h
     sharedboundary.cpp sharedboundary.h sharedboundarycontroller.cpp)
-if(BUILD_TESTING)
-    add_executable(m974_snap_tests ../tests/m974_snap_tests.cpp)
-    target_link_libraries(m974_snap_tests PRIVATE pandoeditor_editor)
-    add_test(NAME m974_snap_tests COMMAND m974_snap_tests)
-endif()
 if(BUILD_TESTING)
     add_executable(m974_snap_provider_tests ../tests/m974_snap_provider_tests.cpp)
     target_link_libraries(m974_snap_provider_tests PRIVATE pandoeditor_editor Qt6::Test)
     add_test(NAME m974_snap_provider_tests COMMAND m974_snap_provider_tests -o -,txt)
 endif()
 target_sources(pandoeditor_editor PRIVATE editorsnapping.cpp)
-# JavaScript's specified intermediate operations must not be fused on native targets.
-set_source_files_properties(geometrysnap.cpp PROPERTIES COMPILE_OPTIONS
-    "$<$<CXX_COMPILER_ID:MSVC>:/fp:strict>;$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffp-contract=off>")
 if(BUILD_TESTING)
     add_executable(m974_snap_probe ../tests/m974_snap_probe.cpp)
     target_link_libraries(m974_snap_probe PRIVATE pandoeditor_editor)

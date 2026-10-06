@@ -1,6 +1,7 @@
 #include <pandoeditor/map/countryculling.h>
 #include <pandoeditor/map/builtinhydrochannel.h>
 #include <pandoeditor/map/geometrypacketcache.h>
+#include <pandoeditor/map/geometrysnap.h>
 #include <pandoeditor/map/labelengine.h>
 #include <pandoeditor/map/mapscenebuilder.h>
 #include <pandoeditor/map/mapcamera.h>
@@ -31,5 +32,10 @@ int main() {
 
     RenderQualityProfile quality;
     assert(quality.backgroundLod==RenderLod::High);
+
+    pandoeditor::Project project;
+    geometrysnap::Index snapIndex;
+    geometrysnap::Request snapRequest;
+    assert(snapIndex.prepareAndCollect(project.snapshot(),snapRequest).candidates.empty());
     return 0;
 }

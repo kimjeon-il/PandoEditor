@@ -1,5 +1,5 @@
 #pragma once
-#include "geometrysnap.h"
+#include <pandoeditor/map/geometrysnap.h>
 #include <QObject>
 #include <QString>
 #include <QPointer>

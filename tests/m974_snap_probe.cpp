@@ -1,4 +1,4 @@
-#include "geometrysnap.h"
+#include <pandoeditor/map/geometrysnap.h>
 #include "m974_snap_fixture.h"
 #include "territorial_fixture.h"
 #include <QCoreApplication>

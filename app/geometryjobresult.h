@@ -1,6 +1,6 @@
 #pragma once
 #include "territorialgeometry.h"
-#include "geometrysnap.h"
+#include <pandoeditor/map/geometrysnap.h>
 #include "territoryselection.h"
 #include "riverselectionpreparation.h"
 #include <string>
