@@ -99,9 +99,19 @@ const scenarios=[
  [{op:'field',ids:['A'],field:'notes',value:'  raw\nnotes  '},{op:'field',ids:['A'],field:'name',value:'Next'},{op:'undo'},{op:'redo'}]
 ];
 for(const ops of scenarios)add({kind:'scenario',ops},originalScenario(ops));
-const child=spawnSync(process.argv[2],[],{input:JSON.stringify(cases),encoding:'utf8',maxBuffer:32*1024*1024});if(child.status!==0)throw new Error(child.stderr||`probe exit ${child.status}`);const actual=JSON.parse(child.stdout);
-if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify({cases,expected,actual}));
-assert.equal(actual.length,cases.length);const failures=[];
+const executable=process.argv[2], exists=!!executable&&fs.existsSync(executable);
+const report={executable,executableExists:exists,expectedCaseCount:2525,generatedCaseCount:cases.length,
+ processedCaseCount:0,mismatchCount:null,complete:false,sourceCommit:manifest.commit,temporalCommit:temporalManifest.commit,
+ verifiedSourceBlobs:Object.keys(manifest.blobs).length,temporalBlob:temporalManifest.blob};
+const writeReport=()=>{if(process.argv[3])fs.writeFileSync(process.argv[3],JSON.stringify(report));};
+writeReport();assert.ok(exists,'M32 executable missing');assert.equal(cases.length,report.expectedCaseCount,'M32 required cases omitted');
+report.executableSha256=crypto.createHash('sha256').update(fs.readFileSync(executable)).digest('hex');
+const child=spawnSync(executable,[],{input:JSON.stringify(cases),encoding:'utf8',timeout:120000,maxBuffer:32*1024*1024});
+Object.assign(report,{pid:child.pid,exitCode:child.status,signal:child.signal,processError:child.error?.message});writeReport();
+if(child.error)throw child.error;if(child.status!==0)throw new Error(child.stderr||`probe exit ${child.status}`);
+const actual=JSON.parse(child.stdout);assert.ok(Array.isArray(actual),'M32 result must be an array');
+report.processedCaseCount=actual.length;writeReport();assert.equal(actual.length,cases.length,'M32 process ended before all cases');const failures=[];
 for(let i=0;i<cases.length;++i){try{assert.deepEqual(actual[i],expected[i]);}catch(e){failures.push(i);console.error('MISMATCH',i,JSON.stringify(cases[i]),e.message.slice(0,450));}}
+Object.assign(report,{mismatchCount:failures.length,complete:true,cases,expected,actual});writeReport();
 assert.equal(failures.length,0,`Source/native differences: ${failures.join(',')}`);
 console.log(`Pinned property source ${manifest.commit}: ${Object.keys(manifest.blobs).length} blob hashes verified; temporal source ${temporalManifest.commit}: ${temporalManifest.blob} verified; ${cases.length} comparisons passed (math, whitespace, temporal intervals, real metadata/batch/history handlers).`);

@@ -64,7 +64,17 @@ jobs:
             if grep -q SKIP build/flags.txt; then exit 1; fi
             node tools/flag-layout-web-oracle.mjs ./build/engine/flag_layout_probe | tee build/flag-layout.txt
           fi
-          node tools/m32-property-oracle.mjs ./build/property_probe | tee build/property-oracle.txt
+          test -x ./build/property_probe
+          node tools/m32-property-oracle.mjs ./build/property_probe build/property-oracle.json | tee build/property-oracle.txt
+          python3 - <<'PY'
+          import json
+          with open('build/property-oracle.json') as source:
+              report = json.load(source)
+          assert report['executableExists'] and report['pid'] > 0 and report['exitCode'] == 0
+          assert report['complete'] and report['expectedCaseCount'] == report['generatedCaseCount'] == report['processedCaseCount'] == 2525
+          assert report['mismatchCount'] == 0
+          print('M32: native process completed 2525/2525 cases, 0 mismatches')
+          PY
       - name: Verify saved sample assets
         if: ${{ inputs.probe_only != true }}
         run: |
@@ -91,4 +101,5 @@ jobs:
             build/flags.txt
             build/flag-layout.txt
             build/property-oracle.txt
+            build/property-oracle.json
           retention-days: 14
