@@ -1,4 +1,6 @@
 #include "cutgeometrycalculator.h"
+#include "territorycutadapter.h"
+#include <cstring>
 #include <QtTest>
 #include <QFile>
 #include <QJsonDocument>
@@ -11,11 +13,46 @@ QJsonArray corpus() {
     if(!file.open(QIODevice::ReadOnly))return {};
     return QJsonDocument::fromJson(file.readAll()).array();
 }
+Geometry decodedGeometry(const QJsonObject& value) {
+    Geometry geometry;geometry.type=value["type"].toString().toStdString();auto polygons=value["coordinates"].toArray();if(geometry.type=="Polygon")polygons=QJsonArray{polygons};
+    for(const auto& polygon:polygons){Polygon rings;for(const auto& ring:polygon.toArray()){Ring points;for(const auto& point:ring.toArray()){const auto xy=point.toArray();points.push_back({xy[0].toDouble(),xy[1].toDouble()});}rings.push_back(std::move(points));}geometry.polygons.push_back(std::move(rings));}return geometry;
+}
+TerritoryCutRequest typedRequest(const QJsonObject& input) {
+    TerritoryCutRequest r;r.source=decodedGeometry(input["source"].toObject());
+    for(const auto& point:input["coords"].toArray()){const auto xy=point.toArray();r.coordinates.push_back({xy[0].toDouble(),xy[1].toDouble()});}
+    const auto view=input["view"].toObject();r.view.mode=view["kind"].toString()=="globe"?ProjectionMode::Globe:ProjectionMode::Flat;
+    r.view.scale=view["scale"].toDouble();const auto t=view["translate"].toArray(),a=view["rotate"].toArray(),c=view["center"].toArray();
+    r.view.translateX=t[0].toDouble();r.view.translateY=t[1].toDouble();r.view.rotationLongitude=a[0].toDouble();r.view.rotationLatitude=a[1].toDouble();r.view.rotationRoll=a[2].toDouble();
+    r.view.centerLongitude=c[0].toDouble();r.view.centerLatitude=c[1].toDouble();const auto size=view["size"].toObject();r.view.viewportWidth=size["width"].toDouble();r.view.viewportHeight=size["height"].toDouble();r.coarsePointer=view["coarsePointer"].toBool();return r;
+}
+bool exactGeometry(const Geometry& a,const Geometry& b) {
+    if(a.type!=b.type||a.polygons.size()!=b.polygons.size())return false;
+    for(std::size_t p=0;p<a.polygons.size();++p){if(a.polygons[p].size()!=b.polygons[p].size())return false;
+        for(std::size_t r=0;r<a.polygons[p].size();++r){if(a.polygons[p][r].size()!=b.polygons[p][r].size())return false;
+            for(std::size_t i=0;i<a.polygons[p][r].size();++i){const auto& l=a.polygons[p][r][i];const auto& v=b.polygons[p][r][i];if(std::memcmp(&l.x,&v.x,sizeof(double))||std::memcmp(&l.y,&v.y,sizeof(double)))return false;}}}
+    return true;
+}
 QJsonObject payload() {return corpus()[0].toObject()["payload"].toObject();}
 }
 class CutGeometryCalculatorTests : public QObject {
     Q_OBJECT
 private slots:
+    void typedAdapterMatchesActualOwnedKernelResults() {
+        auto cases=corpus();auto pending=payload();pending["coords"]=QJsonArray{QJsonArray{1,2}};cases.append(QJsonObject{{"payload",pending}});
+        for(const auto& row:cases) {
+            const auto input=row.toObject()["payload"].toObject();const auto raw=prepareCutGeometry(input);QVERIFY2(raw.succeeded(),qPrintable(raw.detail));
+            const auto typed=prepareTerritoryLineCandidates(typedRequest(input));
+            if(!raw.result["valid"].toBool()){QCOMPARE(typed.status,GeometryOperationStatus::Empty);QCOMPARE(typed.detail,raw.result["message"].toString().toStdString());QVERIFY(typed.candidates.empty());continue;}
+            const auto candidates=raw.result["split"].toObject()["candidates"].toArray();
+            QCOMPARE(typed.status,candidates.empty()?GeometryOperationStatus::Empty:GeometryOperationStatus::Completed);QCOMPARE(typed.candidates.size(),std::size_t(candidates.size()));QVERIFY(typed.detail.empty());
+            for(int i=0;i<candidates.size();++i){const auto candidate=candidates[i].toObject();const auto& actual=typed.candidates[std::size_t(i)];
+                QCOMPARE(actual.id,candidate["id"].toString().toStdString());QVERIFY(actual.area);QCOMPARE(*actual.area,candidate["area"].toDouble());QVERIFY(exactGeometry(actual.geometry,decodedGeometry(candidate["geometry"].toObject())));}
+        }
+        int checks=0;QVERIFY(prepareCutGeometry(payload(),[&]{++checks;return false;}).succeeded());
+        for(int stop=1;stop<=checks;++stop){int polls=0;const auto result=prepareTerritoryLineCandidates(typedRequest(payload()),[&]{return ++polls>=stop;});
+            QCOMPARE(result.status,GeometryOperationStatus::Cancelled);QCOMPARE(polls,stop);QVERIFY(result.detail.empty());QVERIFY(result.candidates.empty());}
+    }
+
     void orderedFullWorkerResultMatchesRecordedNodeCases_data() {
         QTest::addColumn<QJsonObject>("input");QTest::addColumn<QJsonObject>("expected");
         const auto rows=corpus();QCOMPARE(rows.size(),6);

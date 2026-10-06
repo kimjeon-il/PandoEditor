@@ -258,9 +258,94 @@ void valueOwnershipNeedsNoRuntime() {
     require(selection.cancelMethodChange()&&!selection.state().methodChangeConfirmation,"pure confirmation cancellation");
     require(selection.toggleCandidate(ids.front())&&selection.state().selectedCandidateIds.empty(),"pure candidate toggle");
 }
+// Scripted callbacks expose the legacy split-draft branch's transport and
+// failure boundaries. They are not substitutes for actual clipping parity.
+void splitDraftUsesOrderedBinaryPipeline() {
+    const auto drawn=box(-0.0),source=box(4),wrappedDrawn=box(8),wrappedSource=box(12),clipped=box(16);
+    auto normalized=box(20);normalized.type="MultiPolygon";normalized.polygons.push_back(box(24).polygons.front());
+    const auto beforeDrawn=drawn,beforeSource=source;
+    Calls calls;auto runtime=forbidden(calls);std::vector<std::string> order;int polls=0;
+    const GeometryCancellation cancelled=[&]{++polls;return true;};
+    runtime.wrap=[&](const Geometry& g,const GeometryCancellation& c) {
+        require(bool(c),"split cancellation callback lost");++calls.wrap;
+        require(exact(g,calls.wrap==1?drawn:source),"split wrap input order");
+        order.push_back(calls.wrap==1?"drawn":"source");return completed(calls.wrap==1?wrappedDrawn:wrappedSource);
+    };
+    runtime.clip=[&](const GeometryOperationRequest& r,const GeometryCancellation& c) {
+        ++calls.clip;require(bool(c),"split clip cancellation callback lost");
+        require(r.operation==GeometryOperation::Intersection&&r.operands.empty()&&exact(r.left,wrappedDrawn)&&exact(r.right,wrappedSource),"split binary wrapped intersection changed");
+        order.push_back("clip");return completed(clipped);
+    };
+    runtime.normalizeClipped=[&](const Geometry& g,const GeometryCancellation& c) {
+        ++calls.normalize;require(bool(c)&&exact(g,clipped),"split normalization input changed");order.push_back("normalize");return completed(normalized);
+    };
+    const auto result=prepareSplitPolygonCandidates(drawn,source,runtime,cancelled);
+    require(order==std::vector<std::string>{"drawn","source","clip","normalize"},"split draft order changed");
+    require(result.status==Status::Completed&&result.detail.empty()&&result.candidates.size()==1&&result.candidates.front().id.empty()&&!result.candidates.front().area&&exact(result.candidates.front().geometry,normalized),"split candidate shape changed");
+    require(calls.wrap==2&&calls.clip==1&&calls.normalize==1&&calls.river==0&&polls==0,"split added a callback or cancellation checkpoint");
+    require(exact(drawn,beforeDrawn)&&exact(source,beforeSource),"split draft mutated inputs");
+    // The existing branch trusts runtime callbacks, with no GeometryStore check.
+    Geometry invalid;invalid.type="Point";invalid.points={{0,0}};
+    Calls invalidCalls;const auto trusted=inert(invalidCalls,normalized);
+    const auto accepted=prepareSplitPolygonCandidates(invalid,Geometry{},trusted);
+    require(accepted.status==Status::Completed&&invalidCalls.wrap==2&&invalidCalls.clip==1&&invalidCalls.normalize==1,"split introduced upfront validation");
+}
+void splitDraftWrapStatusesKeepFirstPrecedence() {
+    const auto a=box(0),b=box(4),sentinel=box(8);
+    for(const auto first:{Status::Completed,Status::Empty,Status::Cancelled,Status::Failed})
+    for(const auto second:{Status::Completed,Status::Empty,Status::Cancelled,Status::Failed}) {
+        Calls calls;auto runtime=inert(calls,sentinel);
+        runtime.wrap=[&](const Geometry&,const GeometryCancellation&) {++calls.wrap;return GeometryOperationResult{calls.wrap==1?first:second,sentinel,calls.wrap==1?"first":"second"};};
+        const auto result=prepareSplitPolygonCandidates(a,b,runtime);
+        const bool firstFailed=first==Status::Cancelled||first==Status::Failed;
+        const bool secondFailed=second==Status::Cancelled||second==Status::Failed;
+        require(calls.wrap==2,"returned first wrap failure suppressed source wrap");
+        if(firstFailed||secondFailed) {
+            require(result.status==(firstFailed?first:second)&&result.detail==(firstFailed?"first":"second")&&result.candidates.empty(),"split first-failing wrap precedence/detail changed");
+            require(calls.clip==0&&calls.normalize==0,"failed wrap entered clip");
+        } else require(result.status==Status::Completed&&calls.clip==1&&calls.normalize==1&&result.candidates.size()==1,"wrap Empty became an early draft Empty");
+        require(calls.river==0,"split draft entered river clip");
+    }
+}
+void splitDraftClipAndNormalizeStatusesForwardExactly() {
+    const auto a=box(0),b=box(4),sentinel=box(8);
+    for(const bool normalizeStage:{false,true})
+    for(const auto status:{Status::Completed,Status::Empty,Status::Cancelled,Status::Failed})
+    for(const std::string& detail:{std::string{},std::string{"stage-detail"}}) {
+        Calls calls;auto runtime=inert(calls,sentinel);
+        if(normalizeStage)runtime.normalizeClipped=[&](const Geometry&,const GeometryCancellation&) {++calls.normalize;return GeometryOperationResult{status,sentinel,detail};};
+        else runtime.clip=[&](const GeometryOperationRequest&,const GeometryCancellation&) {++calls.clip;return GeometryOperationResult{status,sentinel,detail};};
+        const auto result=prepareSplitPolygonCandidates(a,b,runtime);
+        const bool completedStatus=status==Status::Completed;
+        require(result.status==status&&result.detail==(normalizeStage||!completedStatus?detail:std::string{})&&result.candidates.size()==(completedStatus?1u:0u),"split stage status/detail/candidate mapping changed");
+        require(calls.wrap==2&&calls.clip==1&&calls.normalize==(normalizeStage||completedStatus?1:0)&&calls.river==0,"split Empty/failure entered later normalization");
+    }
+}
+void splitDraftExceptionsEscapeImmediately() {
+    const auto a=box(0),b=box(4),sentinel=box(8);
+    for(const int stage:{0,1,2,3}) {
+        Calls calls;auto runtime=inert(calls,sentinel);
+        runtime.wrap=[&](const Geometry& g,const GeometryCancellation&) {++calls.wrap;if(calls.wrap==stage+1)throw std::runtime_error("split-exception");return completed(g);};
+        if(stage==2)runtime.clip=[&](const GeometryOperationRequest&,const GeometryCancellation&)->GeometryOperationResult {++calls.clip;throw std::runtime_error("split-exception");};
+        if(stage==3)runtime.normalizeClipped=[&](const Geometry&,const GeometryCancellation&)->GeometryOperationResult {++calls.normalize;throw std::runtime_error("split-exception");};
+        bool threw=false;
+        try {(void)prepareSplitPolygonCandidates(a,b,runtime);}catch(const std::runtime_error& error){threw=std::string(error.what())=="split-exception";}
+        require(threw,"split swallowed adapter exception into draft result");
+        require(calls.wrap==(stage==0?1:2)&&calls.clip==(stage>=2?1:0)&&calls.normalize==(stage==3?1:0),"exception unwinding called a later stage");
+    }
+    Calls calls;auto runtime=inert(calls,sentinel);
+    runtime.wrap=[&](const Geometry& g,const GeometryCancellation&) {++calls.wrap;if(calls.wrap==2)throw std::runtime_error("source-exception");return GeometryOperationResult{Status::Failed,g,"first-failure"};};
+    bool threw=false;try {(void)prepareSplitPolygonCandidates(a,b,runtime);}catch(const std::runtime_error& error){threw=std::string(error.what())=="source-exception";}
+    require(threw&&calls.wrap==2&&calls.clip==0,"first returned failure hid second thrown exception");
+}
+
 }
 int main() {
     const std::pair<const char*,void(*)()> cases[]={
+        {"split draft ordered binary pipeline",splitDraftUsesOrderedBinaryPipeline},
+        {"split draft wrap precedence",splitDraftWrapStatusesKeepFirstPrecedence},
+        {"split draft stage status forwarding",splitDraftClipAndNormalizeStatusesForwardExactly},
+        {"split draft exception escape",splitDraftExceptionsEscapeImmediately},
         {"empty and one source identity",emptyAndOneSourceAreExact},
         {"ordered polygon pipeline",orderedPolygonPipeline},
         {"empty stage policies",emptyStagesPreservePolicy},

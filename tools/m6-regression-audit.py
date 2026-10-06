@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 REQUIRED = {
+    "territory_cut_adapter_tests",
     "territorial_preview_engine_tests",
     "territory_selection_engine_tests",
     "m976_shared_boundary_engine_tests",

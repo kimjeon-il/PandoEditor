@@ -115,6 +115,42 @@ class TerritorySelectionTests:public QObject {
         return {};
     }
 private slots:
+    void splitPolygonDraftMatchesOriginalRuntimeSequence() {
+        const auto legacy=[](const Geometry& draft,const Geometry& workingSource,const GeometryCancellation& cancelled) {
+            TerritorySelectionDraftResult out;auto drawn=wrapSplitGeometry(draft,cancelled),source=wrapSplitGeometry(workingSource,cancelled);
+            if(!drawn.succeeded()||!source.succeeded()){out.status=!drawn.succeeded()?drawn.status:source.status;out.detail=!drawn.succeeded()?drawn.detail:source.detail;return out;}
+            auto clipped=calculateGeometry({GeometryOperation::Intersection,drawn.geometry,source.geometry},cancelled);out.status=clipped.status;out.detail=clipped.detail;
+            if(clipped.succeeded()&&clipped.status!=GeometryOperationStatus::Empty){auto normalized=normalizeSplitClippedGeometry(clipped.geometry,cancelled);out.status=normalized.status;out.detail=normalized.detail;if(normalized.succeeded()&&normalized.status!=GeometryOperationStatus::Empty)out.candidates.push_back({{},std::move(normalized.geometry),{}});}return out;
+        };
+        const Geometry empty{"MultiPolygon",{},{},{}};
+        auto malformed=box(0,0,3,3);malformed.polygons.front().front()[1].x=std::numeric_limits<double>::quiet_NaN();
+        const std::vector<std::pair<Geometry,Geometry>> cases{
+            {box(-0.0,1,3,4),box(0,0,10,10)},
+            {box(20,20,25,25),box(0,0,10,10)},
+            {box(178,-2,182,2),box(177,-3,183,3)},
+            {withIsland(),box(0,0,20,10)},
+            {empty,box(0,0,10,10)},{box(0,0,3,3),empty},{malformed,box(0,0,10,10)}
+        };
+        for(const auto& inputs:cases)for(const bool cancelled:{false,true}) {
+            const GeometryCancellation stop=[cancelled]{return cancelled;};
+            const auto expected=legacy(inputs.first,inputs.second,stop);
+            const auto actual=prepareSplitPolygonCandidates(inputs.first,inputs.second,territorySelectionCalculators(),stop);
+            QCOMPARE(actual.status,expected.status);QCOMPARE(actual.detail,expected.detail);QCOMPARE(actual.candidates.size(),expected.candidates.size());
+            for(std::size_t i=0;i<actual.candidates.size();++i) {
+                QCOMPARE(actual.candidates[i].id,expected.candidates[i].id);QCOMPARE(actual.candidates[i].area,expected.candidates[i].area);
+                QVERIFY(exactGeometry(actual.candidates[i].geometry,expected.candidates[i].geometry));
+            }
+        }
+        int checks=0;const auto completed=prepareSplitPolygonCandidates(cases[0].first,cases[0].second,territorySelectionCalculators(),[&]{++checks;return false;});
+        QVERIFY(completed.succeeded());QVERIFY(checks>0);
+        for(int boundary=1;boundary<=checks;++boundary) {
+            int firstChecks=0,secondChecks=0;
+            const auto expected=legacy(cases[0].first,cases[0].second,[&]{return ++firstChecks>=boundary;});
+            const auto actual=prepareSplitPolygonCandidates(cases[0].first,cases[0].second,territorySelectionCalculators(),[&]{return ++secondChecks>=boundary;});
+            QCOMPARE(actual.status,expected.status);QCOMPARE(actual.detail,expected.detail);QCOMPARE(secondChecks,firstChecks);QVERIFY(actual.candidates.empty());
+        }
+    }
+
     void runtimeFactoryExactlyForwardsActualKernels() {
         const auto& runtime=territorySelectionCalculators();
         QVERIFY(runtime.clip&&runtime.clipRiverIntermediate&&runtime.wrap&&runtime.normalizeClipped);

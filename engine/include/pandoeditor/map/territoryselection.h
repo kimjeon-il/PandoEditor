@@ -112,6 +112,10 @@ TerritorySelectionDerivedResult rebuildTerritorySelection(const TerritorySelecti
 // Produces exactly one drawn candidate, even for disconnected transfer.
 TerritorySelectionDraftResult prepareTerritoryPolygonCandidates(const Geometry& drawn,
     const Geometry& workingSource,const Geometry& target,const TerritorySelectionCalculators&,const GeometryCancellation& cancelled={});
+// Split drawing preserves the controller's binary intersection and exception
+// boundaries; callbacks own validation and cancellation checks.
+TerritorySelectionDraftResult prepareSplitPolygonCandidates(const Geometry& drawn,
+    const Geometry& workingSource,const TerritorySelectionCalculators&,const GeometryCancellation& cancelled={});
 // A value for integration into the existing GeometryEditSession. It owns no project,
 // history, stages, worker identity, preview or UI. Inputs/outputs are copied
 // geometry snapshots; const access prevents mutation of the original source.

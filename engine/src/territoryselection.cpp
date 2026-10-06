@@ -247,6 +247,13 @@ TerritorySelectionDraftResult prepareTerritoryPolygonCandidates(const Geometry& 
     catch(const std::exception& error) {result.status=GeometryOperationStatus::Failed;result.detail=error.what();}
     return result;
 }
+TerritorySelectionDraftResult prepareSplitPolygonCandidates(const Geometry& draft,
+    const Geometry& workingSource,const TerritorySelectionCalculators& calculators,const GeometryCancellation& cancelled) {
+    TerritorySelectionDraftResult out;auto drawn=calculators.wrap(draft,cancelled),source=calculators.wrap(workingSource,cancelled);
+    if(!drawn.succeeded()||!source.succeeded()){out.status=!drawn.succeeded()?drawn.status:source.status;out.detail=!drawn.succeeded()?drawn.detail:source.detail;return out;}
+    auto clipped=calculators.clip({GeometryOperation::Intersection,drawn.geometry,source.geometry},cancelled);out.status=clipped.status;out.detail=clipped.detail;
+    if(clipped.succeeded()&&clipped.status!=GeometryOperationStatus::Empty){auto normalized=calculators.normalizeClipped(clipped.geometry,cancelled);out.status=normalized.status;out.detail=normalized.detail;if(normalized.succeeded()&&normalized.status!=GeometryOperationStatus::Empty)out.candidates.push_back({{},std::move(normalized.geometry),{}});}return out;
+}
 bool TerritorySelection::toggleCandidate(const std::string& id) {
     if(state_.activePhase!=Phase::Candidate||std::none_of(state_.candidates.begin(),state_.candidates.end(),
         [&](const auto& item){return item.id==id;}))return false;

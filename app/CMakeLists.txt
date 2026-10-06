@@ -56,6 +56,7 @@ add_library(pandoeditor_editor STATIC
     riverareacalculator.cpp riverareacalculator.h
     territorialgeometry.cpp territorialgeometry.h
     territoryselectionruntime.cpp territoryselectionruntime.h
+    territorycutadapter.cpp territorycutadapter.h
     territorialpreviewruntime.cpp territorialpreviewruntime.h
     editorpresentation.cpp
     webimport.cpp retainedreferencerewriter.cpp editorwebimport.cpp editorstructure.cpp
@@ -658,6 +659,12 @@ target_sources(pandoeditor_editor PRIVATE cutgeometrycalculator.cpp cutgeometryc
 qt_add_resources(M973_CUT_RESOURCES "${PROJECT_SOURCE_DIR}/resources/m973_cut.qrc")
 target_sources(pandoeditor_editor PRIVATE ${M973_CUT_RESOURCES})
 if(BUILD_TESTING)
+    add_executable(territory_cut_adapter_tests ../tests/territory_cut_adapter_tests.cpp
+        territorycutadapter.cpp commandjobrunner.cpp commandjobrunner.h)
+    target_include_directories(territory_cut_adapter_tests PRIVATE .)
+    target_link_libraries(territory_cut_adapter_tests PRIVATE Pandoeditor::MapEngine Qt6::Test Qt6::Concurrent)
+    add_test(NAME territory_cut_adapter_tests COMMAND territory_cut_adapter_tests -o -,txt)
+    set_tests_properties(territory_cut_adapter_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(cut_geometry_calculator_tests ../tests/cut_geometry_calculator_tests.cpp)
     target_link_libraries(cut_geometry_calculator_tests PRIVATE pandoeditor_editor Qt6::Test)
     target_compile_definitions(cut_geometry_calculator_tests PRIVATE M973_CUT_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m97/cut-corpus.json")

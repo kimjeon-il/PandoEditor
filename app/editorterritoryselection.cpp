@@ -3,10 +3,7 @@
 #include "editorcontroller.h"
 #include "geometrysnapprovider.h"
 #include "geometrycalculator.h"
-#include "cutgeometrycalculator.h"
-#include "splitgeometrynormalizer.h"
-#include <QJsonArray>
-#include <QJsonObject>
+#include "territorycutadapter.h"
 #include <pandoeditor/geometrypredicates.h>
 #include <algorithm>
 #include <cmath>
@@ -25,20 +22,6 @@ TerritorySelectionMethod methodValue(const QString& value) {
 }
 bool selected(const std::vector<std::string>& ids,const std::string& id){return std::find(ids.begin(),ids.end(),id)!=ids.end();}
 bool pointInRing(const Ring& ring,Point point){bool inside=false;for(std::size_t i=0,j=ring.size()?ring.size()-1:0;i<ring.size();j=i++) {const auto a=ring[i],b=ring[j];if((a.y>point.y)!=(b.y>point.y)&&point.x<(b.x-a.x)*(point.y-a.y)/(b.y-a.y)+a.x)inside=!inside;}return inside;}
-QJsonObject cutGeometryJson(const Geometry& value) {
-    QJsonArray polygons;for(const auto& polygon:value.polygons){QJsonArray rings;for(const auto& ring:polygon){QJsonArray points;for(const auto& point:ring)points.append(QJsonArray{point.x,point.y});rings.append(points);}polygons.append(rings);}
-    return {{"type",QString::fromStdString(value.type)},{"coordinates",value.type=="Polygon"?polygons[0].toArray():polygons}};
-}
-Geometry cutGeometryValue(const QJsonObject& value) {
-    Geometry geometry;geometry.type=value["type"].toString().toStdString();auto polygons=value["coordinates"].toArray();if(geometry.type=="Polygon")polygons=QJsonArray{polygons};
-    for(const auto& polygon:polygons){Polygon rings;for(const auto& ring:polygon.toArray()){Ring points;for(const auto& point:ring.toArray()){const auto xy=point.toArray();if(xy.size()!=2)throw std::runtime_error("INVALID_CUT_COORDINATE");points.push_back({xy[0].toDouble(),xy[1].toDouble()});}rings.push_back(std::move(points));}geometry.polygons.push_back(std::move(rings));}return geometry;
-}
-QJsonObject cutViewJson(const MapViewState& view,bool touch) {
-    return {{"kind",view.mode==ProjectionMode::Globe?"globe":"flat"},{"scale",view.scale},
-      {"translate",QJsonArray{view.translateX,view.translateY}},{"rotate",QJsonArray{view.rotationLongitude,view.rotationLatitude,view.rotationRoll}},
-      {"center",QJsonArray{view.centerLongitude,view.centerLatitude}},{"size",QJsonObject{{"width",view.viewportWidth},{"height",view.viewportHeight}}},
-      {"snapDistance",QJsonObject{{"mouse",10},{"touch",18}}},{"coarsePointer",touch}};
-}
 bool containsPoint(const Geometry& geometry,Point point){for(const auto& polygon:geometry.polygons){if(polygon.empty()||!pointInRing(polygon.front(),point))continue;bool hole=false;for(std::size_t i=1;i<polygon.size();++i)if(pointInRing(polygon[i],point))hole=true;if(!hole)return true;}return false;}
 }
 bool EditorController::territoryGeometryReady() const {
@@ -206,30 +189,20 @@ bool EditorController::geometryFinishTerritoryDraft(){
     if(edit.lineDraft.empty()&&edit.draft.polygons.empty()&&!edit.territorySelection->state().parts.empty()){if(!edit.territorySelection->finishArchivedDraft())return false;scheduleTerritorySelection();return true;}
     const auto state=edit.territorySelection->state();if(!state.workingSourceGeometry)return false;
     const auto ref=objectGeometry(edit.base.document(),edit.base.index(),edit.target);if(!ref)return false;const auto target=*edit.base.document().geometries.get(*ref);
-    const auto draft=edit.draft;const auto line=edit.lineDraft;const auto view=cutViewJson(camera_.view(),mobileMode_);const bool splitMode=bool(edit.splitIntent);cancelTerritoryCalculation(true,false);edit.selectionPending=true;const auto generation=edit.generation,epoch=edit.computationEpoch,request=edit.request;
+    const auto draft=edit.draft;const auto line=edit.lineDraft;const TerritoryCutRequest cutRequest{*state.workingSourceGeometry,line,camera_.view(),mobileMode_};const bool splitMode=bool(edit.splitIntent);cancelTerritoryCalculation(true,false);edit.selectionPending=true;const auto generation=edit.generation,epoch=edit.computationEpoch,request=edit.request;
     // Root polygon clipping is local in the web workflow. A line maps to the
     // cut client; only the child direct polygon path counts territorial-drawn.
     const bool countedWorkerOperation=state.activeMethod==TerritorySelectionMethod::Polygon&&splitMode&&!staticParentRelation(edit.base.document(),edit.target.id).parentId.empty();
     const bool workerOperation=state.activeMethod==TerritorySelectionMethod::Line||countedWorkerOperation;
     const auto sourceEpoch=workerOperation&&snapProvider_?snapProvider_->beginWorkerOperation(project_.snapshot()):0;
     if(countedWorkerOperation)++edit.territoryWorkerRequests;
-    edit.job=jobs_->submitGeometry(edit.base,countedWorkerOperation?"territorial:selection-drawn":"territorial:selection-draft",[state,target,draft,line,view,splitMode](const ProjectSnapshot&,const JobToken& token)->GeometryJobResult {
+    edit.job=jobs_->submitGeometry(edit.base,countedWorkerOperation?"territorial:selection-drawn":"territorial:selection-draft",[state,target,draft,cutRequest,splitMode](const ProjectSnapshot&,const JobToken& token)->GeometryJobResult {
         const auto cancelled=[&token]{return token.cancelled();};
         if(state.activeMethod==TerritorySelectionMethod::Polygon){
             if(!splitMode)return prepareTerritoryPolygonCandidates(draft,*state.workingSourceGeometry,target,territorySelectionCalculators(),cancelled);
-            TerritorySelectionDraftResult out;auto drawn=wrapSplitGeometry(draft,cancelled),source=wrapSplitGeometry(*state.workingSourceGeometry,cancelled);
-            if(!drawn.succeeded()||!source.succeeded()){out.status=!drawn.succeeded()?drawn.status:source.status;out.detail=!drawn.succeeded()?drawn.detail:source.detail;return out;}
-            auto clipped=calculateGeometry({GeometryOperation::Intersection,drawn.geometry,source.geometry},cancelled);out.status=clipped.status;out.detail=clipped.detail;
-            if(clipped.succeeded()&&clipped.status!=GeometryOperationStatus::Empty){auto normalized=normalizeSplitClippedGeometry(clipped.geometry,cancelled);out.status=normalized.status;out.detail=normalized.detail;if(normalized.succeeded()&&normalized.status!=GeometryOperationStatus::Empty)out.candidates.push_back({{},std::move(normalized.geometry),{}});}return out;
+            return prepareSplitPolygonCandidates(draft,*state.workingSourceGeometry,territorySelectionCalculators(),cancelled);
         }
-        QJsonArray points;for(const auto& point:line)points.append(QJsonArray{point.x,point.y});
-        auto calculated=prepareCutGeometry({{"source",cutGeometryJson(*state.workingSourceGeometry)},{"coords",points},{"view",view},{"buildPreview",true}},cancelled);
-        TerritorySelectionDraftResult out;
-        if(calculated.status==CutGeometryStatus::Cancelled){out.status=GeometryOperationStatus::Cancelled;return out;}
-        if(!calculated.succeeded()){out.detail=calculated.detail.toStdString();return out;}
-        if(!calculated.result["valid"].toBool()){out.status=GeometryOperationStatus::Empty;out.detail=calculated.result["message"].toString().toStdString();return out;}
-        for(const auto& row:calculated.result["split"].toObject()["candidates"].toArray()){const auto item=row.toObject();out.candidates.push_back({item["id"].toString().toStdString(),cutGeometryValue(item["geometry"].toObject()),item["area"].toDouble()});}
-        out.status=out.candidates.empty()?GeometryOperationStatus::Empty:GeometryOperationStatus::Completed;return out;
+        return prepareTerritoryLineCandidates(cutRequest,cancelled);
     },[this,generation,epoch,request,workerOperation,countedWorkerOperation,sourceEpoch](std::uint64_t id,JobDisposition disposition,GeometryJobResult result){
         const auto* draft=std::get_if<TerritorySelectionDraftResult>(&result);
         const bool fulfilled=disposition==JobDisposition::Accepted&&draft&&(countedWorkerOperation?draft->status==GeometryOperationStatus::Completed:draft->succeeded());
