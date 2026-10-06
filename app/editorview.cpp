@@ -1,4 +1,5 @@
 #include "editorcontroller.h"
+#include <pandoeditor/map/editcoordinates.h>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -10,6 +11,20 @@
 #include <cmath>
 
 namespace {
+// Match MapView's existing finite display fallbacks without consulting the
+// live camera. Every geographic/pixel operation remains in the pure helpers.
+MapCameraDisplay editDisplaySnapshot(const QVariantMap& state)
+{
+    const auto finite=[&](const char* key,double fallback) {
+        bool ok=false;const auto value=state.value(key).toDouble(&ok);
+        return ok&&std::isfinite(value)?value:fallback;
+    };
+    MapCameraDisplay display;
+    display.originX=finite("originX",0);display.originY=finite("originY",0);
+    display.mapScale=finite("mapScale",1);
+    return display;
+}
+
 bool updateFinite(const QVariantMap& values,const char* key,double& target)
 {
     if(!values.contains(key))return true;
@@ -151,6 +166,44 @@ QVariantMap EditorController::mapViewState() const
         {"zoom",display.zoom},{"flatZoom",display.flatZoom},{"globeZoom",display.globeZoom},
         {"panX",display.panX},{"panY",display.panY},{"fitScale",display.fitScale},
         {"mapScale",display.mapScale},{"originX",display.originX},{"originY",display.originY}};
+}
+
+QPointF EditorController::editMapPointToScreen(double x,double y,const QVariantMap& state) const
+{
+    const auto point=pandoeditor::map::editMapToScreen({x,y},editDisplaySnapshot(state));
+    return {point.x,point.y};
+}
+
+double EditorController::editPixelLengthToMap(double pixels,const QVariantMap& state) const
+{
+    return pandoeditor::map::editPixelRadiusToMap(pixels,editDisplaySnapshot(state));
+}
+
+QPointF EditorController::editLabelDragToMap(double x,double y,double deltaX,double deltaY,const QVariantMap& state) const
+{
+    const auto point=pandoeditor::map::editLabelDragToMap({x,y},{deltaX,deltaY},editDisplaySnapshot(state));
+    return {point.x,point.y};
+}
+
+QRectF EditorController::editMapRectToScreen(const QRectF& rect,const QVariantMap& state) const
+{
+    const auto screen=pandoeditor::map::editMapRectToScreen({rect.x(),rect.y(),rect.width(),rect.height()},editDisplaySnapshot(state));
+    return {screen.x,screen.y,screen.width,screen.height};
+}
+
+QPointF EditorController::editMapDragPosition(double x,double y,double deltaX,double deltaY,const QVariantMap& state) const
+{
+    const auto point=pandoeditor::map::editMapDragPosition({x,y},{deltaX,deltaY},editDisplaySnapshot(state));
+    return {point.x,point.y};
+}
+
+QVariantMap EditorController::editMapRectGeographicBounds(const QRectF& rect,const QVariantMap& state) const
+{
+    MapCameraMetrics metrics;
+    metrics.cosLatitude=state.value("cosLatitude").toDouble();
+    metrics.minX=state.value("minX").toDouble();metrics.maxLatitude=state.value("maxLatitude").toDouble();
+    const auto bounds=pandoeditor::map::editMapRectGeographicBounds({rect.x(),rect.y(),rect.width(),rect.height()},metrics);
+    return {{"west",bounds.west},{"east",bounds.east},{"north",bounds.north},{"south",bounds.south}};
 }
 
 bool EditorController::publishMapView(const QVariantMap& values)

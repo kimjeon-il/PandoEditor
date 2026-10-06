@@ -129,10 +129,12 @@ Rectangle {
         model: referenceImages.images
         delegate: ReferenceImageItem {
             required property var modelData
-            x: view.originX + modelData.x * view.mapScale
-            y: view.originY + modelData.y * view.mapScale
-            width: modelData.width * view.mapScale
-            height: modelData.height * view.mapScale
+            objectName: "referenceImageOverlay"
+            readonly property rect screenRect: editor.editMapRectToScreen(Qt.rect(modelData.x, modelData.y, modelData.width, modelData.height), view.cameraState)
+            x: screenRect.x
+            y: screenRect.y
+            width: screenRect.width
+            height: screenRect.height
             source: modelData.source
             opacity: modelData.opacity
             visible: modelData.visible && !view.globeMode
@@ -156,10 +158,10 @@ Rectangle {
                         referenceImages.beginGesture(parent.modelData.id)
                     } else referenceImages.commitGesture()
                 }
-                onActiveTranslationChanged: if(active) referenceImages.updateGesture({
-                    "x":startX+activeTranslation.x/view.mapScale,
-                    "y":startY+activeTranslation.y/view.mapScale
-                })
+                onActiveTranslationChanged: if(active) {
+                    const position=editor.editMapDragPosition(startX,startY,activeTranslation.x,activeTranslation.y,view.cameraState)
+                    referenceImages.updateGesture({"x":position.x,"y":position.y})
+                }
             }
             PinchHandler {
                 enabled: !parent.modelData.locked && !view.geometryEditing
@@ -204,10 +206,12 @@ Rectangle {
             source: modelData.source
             visible: modelData.visible && view.globeMode
             opacity: modelData.opacity
-            west: (modelData.x + editor.hydroProjection.minX) / editor.hydroProjection.cosLatitude
-            east: (modelData.x + modelData.width + editor.hydroProjection.minX) / editor.hydroProjection.cosLatitude
-            north: editor.hydroProjection.maxLatitude - modelData.y
-            south: editor.hydroProjection.maxLatitude - modelData.y - modelData.height
+            objectName: "referenceImageGeographicOverlay"
+            readonly property var geographicBounds: editor.editMapRectGeographicBounds(Qt.rect(modelData.x, modelData.y, modelData.width, modelData.height), editor.hydroProjection)
+            west: geographicBounds.west
+            east: geographicBounds.east
+            north: geographicBounds.north
+            south: geographicBounds.south
             z: 0.5
         }
     }
@@ -381,10 +385,10 @@ Rectangle {
                     placedLabel.discardLabelDrag()
                     // Publishing presentation rebuilds these delegates. Finish
                     // Qt's pointer delivery before allowing this handler to die.
-                    if(commit && delta.x*delta.x+delta.y*delta.y>4)
-                        placedLabelRepeater.enqueueDrag(editor.projectInstanceId,parent.modelData.ref,
-                            (parent.labelX+delta.x-view.originX)/view.mapScale,
-                            (parent.labelY+delta.y-view.originY)/view.mapScale)
+                    if(commit && delta.x*delta.x+delta.y*delta.y>4) {
+                        const position=editor.editLabelDragToMap(parent.labelX,parent.labelY,delta.x,delta.y,view.cameraState)
+                        placedLabelRepeater.enqueueDrag(editor.projectInstanceId,parent.modelData.ref,position.x,position.y)
+                    }
                 }
             }
         }
@@ -590,7 +594,7 @@ Rectangle {
                 transform: Scale { xScale: view.mapScale; yScale: view.mapScale }
                 ShapePath {
                     strokeColor: modelData.removed ? "#dc2626" : modelData.selectionKind === "part" ? "#7c3aed" : modelData.selectionKind === "candidate" || modelData.selectionKind === "component" ? (modelData.selected ? "#059669" : "#2563eb") : modelData.created ? "#059669" : "#d97706"
-                    strokeWidth: (modelData.selected ? 3 : 2) / view.mapScale
+                    strokeWidth: editor.editPixelLengthToMap(modelData.selected ? 3 : 2, view.cameraState)
                     fillColor: modelData.hole || modelData.line ? "#00000000" : modelData.selectionKind === "part" ? "#407c3aed" : modelData.selectionKind === "candidate" || modelData.selectionKind === "component" ? (modelData.selected ? "#7010b981" : "#202563eb") : modelData.created ? "#6010b981" : "#60f59e0b"
                     fillRule: ShapePath.OddEvenFill; joinStyle: ShapePath.RoundJoin
                     PathSvg { path: modelData.path }
@@ -600,8 +604,10 @@ Rectangle {
                 model: view.territorySelectionEditing ? (view.territoryDrawing ? (modelData.vertices || []) : []) : editor.geometryEditState.choosingProviders || editor.geometryEditState.stage === "setup" || editor.geometryEditState.previewReady ? [] : modelData.vertices
                 delegate: Rectangle {
                     required property var modelData
-                    x: view.originX + modelData.x * view.mapScale - width / 2
-                    y: view.originY + modelData.y * view.mapScale - height / 2
+                    objectName: "geometryEditVertex"
+                    readonly property point screenPoint: editor.editMapPointToScreen(modelData.x, modelData.y, view.cameraState)
+                    x: screenPoint.x - width / 2
+                    y: screenPoint.y - height / 2
                     width: 10; height: 10; radius: 5
                     color: modelData.fixed || modelData.locked ? "#9ca3af" : editor.geometryEditState.selectedVertex === modelData.vertex ? "#b45309" : "#ffffff"
                     border.color: "#92400e"; border.width: 2
@@ -613,8 +619,9 @@ Rectangle {
         objectName: "geometrySnapIndicator"
         z: editor.layers.length + 8; width: 14; height: 14; radius: 7
         visible: view.geometryEditing && Number.isFinite(editor.geometryEditState.snapX) && Number.isFinite(editor.geometryEditState.snapY)
-        x: view.originX + editor.geometryEditState.snapX * view.mapScale - width/2
-        y: view.originY + editor.geometryEditState.snapY * view.mapScale - height/2
+        readonly property point screenPoint: editor.editMapPointToScreen(editor.geometryEditState.snapX, editor.geometryEditState.snapY, view.cameraState)
+        x: screenPoint.x - width/2
+        y: screenPoint.y - height/2
         color: "#22ffffff"; border.color: "#f59e0b"; border.width: 2
     }
     Row {

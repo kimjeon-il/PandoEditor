@@ -63,7 +63,8 @@ struct Harness {
             for(const auto& e:errors)warnings<<e.toString();
         });
         engine.rootContext()->setContextProperty("editor",&editor);
-        engine.load(QUrl("qrc:/common/Main.qml"));
+        const auto root=qEnvironmentVariable("M974_TEST_UI_ROOT");
+        engine.load(root.isEmpty()?QUrl("qrc:/common/Main.qml"):QUrl::fromLocalFile(root+"/common/Main.qml"));
         if(!engine.rootObjects().isEmpty())window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());
         if(window){window->resize(mobile?360:1100,mobile?640:760);window->show();QTest::qWait(150);window->grabWindow();}
     }
@@ -305,6 +306,48 @@ private slots:
                 QVERIFY(std::abs(pinned.manualPosition->y-point.y)<1e-6);
             }
         }
+        QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
+    }
+    void labelReleaseCapturesCameraBeforeQueuedFlush_data(){modes();}
+    void labelReleaseCapturesCameraBeforeQueuedFlush(){
+        QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);QVERIFY(h.editor.setProjectionMode("flat"));
+        QTRY_VERIFY(placedLabel(h.window->contentItem(),"A"));
+        auto* label=placedLabel(h.window->contentItem(),"A");auto* drag=labelDragHandler(label);QVERIFY(drag);
+        const auto pos=label->mapToScene(QPointF(label->width()/2,label->height()/2)).toPoint();
+        const double labelX=label->property("labelX").toDouble(),labelY=label->property("labelY").toDouble();
+        QSignalSpy presentation(&h.editor,&EditorController::presentationChanged);
+        const auto revision=h.editor.revision();
+        // Synchronous real pointer delivery leaves Qt.callLater pending, so a
+        // later camera genuinely intervenes before the presentation command.
+        ulong timestamp=1000;
+        const auto mouse=[&](QEvent::Type type,QPoint point,Qt::MouseButton button,Qt::MouseButtons buttons){
+            QMouseEvent event(type,QPointF(point),QPointF(h.window->mapToGlobal(point)),button,buttons,Qt::NoModifier);
+            event.setTimestamp(timestamp+=20);QCoreApplication::sendEvent(h.window,&event);
+        };
+        mouse(QEvent::MouseButtonPress,pos,Qt::LeftButton,Qt::LeftButton);
+        mouse(QEvent::MouseMove,pos+QPoint(25,20),Qt::NoButton,Qt::LeftButton);
+        mouse(QEvent::MouseMove,pos+QPoint(60,40),Qt::NoButton,Qt::LeftButton);
+        QVERIFY(drag->property("active").toBool());
+        const auto delta=drag->property("activeTranslation").value<QVector2D>();QVERIFY(delta.lengthSquared()>4);
+        const auto releaseCamera=h.editor.mapViewState(),projection=h.editor.hydroProjection();
+        const double x=(labelX+delta.x()-releaseCamera["originX"].toDouble())/releaseCamera["mapScale"].toDouble();
+        const double y=(labelY+delta.y()-releaseCamera["originY"].toDouble())/releaseCamera["mapScale"].toDouble();
+        const Point expected{(x+projection["minX"].toDouble())/projection["cosLatitude"].toDouble(),
+            projection["maxLatitude"].toDouble()-y};
+        mouse(QEvent::MouseButtonRelease,pos+QPoint(60,40),Qt::LeftButton,Qt::NoButton);
+        QVERIFY(!drag->property("active").toBool());QCOMPARE(presentation.count(),0);QVERIFY(!settings(h.editor).pinned);
+        h.editor.beginMapCameraPan();QVERIFY(h.editor.updateMapCameraPan(39.,-23.));h.editor.endMapCameraPan();
+        QVERIFY(h.editor.zoomMapCameraAt(1.4,120.,160.));
+        const auto laterCamera=h.editor.mapViewState();QVERIFY(laterCamera!=releaseCamera);
+        const double lateX=(labelX+delta.x()-laterCamera["originX"].toDouble())/laterCamera["mapScale"].toDouble();
+        const double lateY=(labelY+delta.y()-laterCamera["originY"].toDouble())/laterCamera["mapScale"].toDouble();
+        QVERIFY(std::abs(lateX-x)+std::abs(lateY-y)>1e-6);QCOMPARE(presentation.count(),0);
+        QTRY_VERIFY_WITH_TIMEOUT(settings(h.editor).pinned,1000);
+        const auto pinned=settings(h.editor);QVERIFY(pinned.manualPosition);
+        QVERIFY(std::abs(pinned.manualPosition->x-expected.x)<1e-6);
+        QVERIFY(std::abs(pinned.manualPosition->y-expected.y)<1e-6);
+        QCOMPARE(presentation.count(),1);QCOMPARE(h.editor.mapViewState(),laterCamera);
+        QCOMPARE(h.editor.revision(),revision);QVERIFY(!h.editor.canUndo());QVERIFY(!h.editor.canRedo());
         QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
     }
     void labelReleasedBeforeProjectReplacementCannotPinReusedId(){

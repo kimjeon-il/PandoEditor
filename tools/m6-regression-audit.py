@@ -11,6 +11,7 @@ REQUIRED = {
     "edit_geometry_tests",
     "edit_screen_controller_tests",
     "edit_screen_ui_tests",
+    "edit_display_ui_tests",
     "territory_cut_adapter_tests",
     "territorial_preview_engine_tests",
     "territory_selection_engine_tests",

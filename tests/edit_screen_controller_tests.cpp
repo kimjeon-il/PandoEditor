@@ -212,6 +212,50 @@ bool changeCamera(Pair& pair, int event) {
 class EditScreenControllerTests : public QObject {
     Q_OBJECT
 private slots:
+    void displayAdaptersAreInvokable() {
+        const auto& meta=EditorController::staticMetaObject;
+        for(const char* signature:{"editMapPointToScreen(double,double,QVariantMap)",
+                                   "editPixelLengthToMap(double,QVariantMap)",
+                                   "editLabelDragToMap(double,double,double,double,QVariantMap)",
+                                   "editMapRectToScreen(QRectF,QVariantMap)",
+                                   "editMapDragPosition(double,double,double,double,QVariantMap)",
+                                   "editMapRectGeographicBounds(QRectF,QVariantMap)"})
+            QVERIFY2(meta.indexOfMethod(signature)>=0,signature);
+    }
+    void displayAdaptersUseOnlySuppliedSnapshots() {
+        EditorController editor({false,QString()});
+        const QVariantMap camera{{"originX",123.4},{"originY",-98.125},{"mapScale",3.7},{"devicePixelRatio",3.}};
+        const QVariantMap projection{{"cosLatitude",.17364817766693041},{"minX",21.31415926535898},{"maxLatitude",88.}};
+        const QRectF rect(.1,18,12.25,9.5);
+        const auto before=editor.documentBytes();const auto liveCamera=editor.mapViewState();
+        const auto preparation=editor.renderQuality()["scenePreparationCount"];
+        QSignalSpy geometry(&editor,&EditorController::geometryChanged),edit(&editor,&EditorController::geometryEditChanged);
+        const auto check=[&] {
+            const auto point=editor.editMapPointToScreen(rect.x(),rect.y(),camera);
+            if(!QTest::qCompare(comparable(point.x()),comparable(123.4+rect.x()*3.7),"screen x","old screen x",__FILE__,__LINE__))return false;
+            if(!QTest::qCompare(comparable(point.y()),comparable(-98.125+rect.y()*3.7),"screen y","old screen y",__FILE__,__LINE__))return false;
+            const auto screen=editor.editMapRectToScreen(rect,camera);
+            if(!QTest::qCompare(screen,QRectF(point,QSizeF(rect.width()*3.7,rect.height()*3.7)),"screen rect","old screen rect",__FILE__,__LINE__))return false;
+            const auto label=editor.editLabelDragToMap(937.5638261969304,18,-495.95395331482916,9.5,camera);
+            if(!QTest::qCompare(comparable(label.x()),comparable((937.5638261969304-495.95395331482916-123.4)/3.7),"label x","old label x",__FILE__,__LINE__))return false;
+            const auto drag=editor.editMapDragPosition(rect.x(),rect.y(),-7.25,9.5,camera);
+            if(!QTest::qCompare(drag,QPointF(rect.x()-7.25/3.7,rect.y()+9.5/3.7),"drag","old drag",__FILE__,__LINE__))return false;
+            const auto bounds=editor.editMapRectGeographicBounds(rect,projection);
+            const QVariantMap expected{{"west",(rect.x()+21.31415926535898)/.17364817766693041},
+                {"east",(rect.x()+rect.width()+21.31415926535898)/.17364817766693041},
+                {"north",88.-rect.y()},{"south",88.-rect.y()-rect.height()}};
+            return QTest::qCompare(comparable(bounds),comparable(expected),"bounds","old bounds",__FILE__,__LINE__);
+        };
+        QVERIFY(check());QCOMPARE(editor.editPixelLengthToMap(3,camera),3./3.7);
+        QCOMPARE(editor.mapViewState(),liveCamera);QCOMPARE(editor.renderQuality()["scenePreparationCount"],preparation);
+        QVERIFY(editor.setProjectionMode("flat"));QVERIFY(editor.resizeMapCamera(913,587));
+        QVERIFY(editor.zoomMapCameraAt(1.7,211,139));
+        editor.beginMapCameraPan();QVERIFY(editor.updateMapCameraPan(-19,37));editor.endMapCameraPan();
+        QVERIFY(check());QCOMPARE(editor.documentBytes(),before);QCOMPARE(geometry.count(),0);QCOMPARE(edit.count(),0);
+        // The old QML view properties use finite fallbacks for display state.
+        const auto nan=std::numeric_limits<double>::quiet_NaN();
+        QCOMPARE(editor.editMapPointToScreen(5,7,{{"originX",nan},{"originY",nan},{"mapScale",nan}}),QPointF(5,7));
+    }
     void screenEntrypointsAreInvokable() {
         const auto& meta = EditorController::staticMetaObject;
         for (const auto* signature : {

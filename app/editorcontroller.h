@@ -33,6 +33,7 @@
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
+#include <QRectF>
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QHash>
@@ -225,6 +226,14 @@ public:
     QVariantList placedLabels() const {return placedLabels_;}
     QAbstractItemModel* placedLabelModel() {return &placedLabelModel_;}
     Q_INVOKABLE bool setLabelPinned(const QVariantMap& ref,bool pinned,double longitude=0,double latitude=0,bool hasPosition=false);
+    // Explicit snapshots keep QML bindings reactive and queued label releases
+    // independent of later camera movement. These adapters never read camera_.
+    Q_INVOKABLE QPointF editMapPointToScreen(double x,double y,const QVariantMap& cameraState) const;
+    Q_INVOKABLE double editPixelLengthToMap(double pixels,const QVariantMap& cameraState) const;
+    Q_INVOKABLE QPointF editLabelDragToMap(double x,double y,double deltaX,double deltaY,const QVariantMap& cameraState) const;
+    Q_INVOKABLE QRectF editMapRectToScreen(const QRectF& rect,const QVariantMap& cameraState) const;
+    Q_INVOKABLE QPointF editMapDragPosition(double x,double y,double deltaX,double deltaY,const QVariantMap& cameraState) const;
+    Q_INVOKABLE QVariantMap editMapRectGeographicBounds(const QRectF& rect,const QVariantMap& projectionState) const;
     Q_INVOKABLE bool setLabelMapPosition(const QVariantMap& ref,double mapX,double mapY);
     Q_INVOKABLE bool resetLabelPosition(const QVariantMap& ref);
     Q_INVOKABLE bool configureHydroData(const QUrl& path);
