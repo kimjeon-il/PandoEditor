@@ -21,6 +21,8 @@ add_library(pandoeditor_map_engine STATIC
     src/mapscenebuilder.cpp
     src/geometrysnap.cpp
     src/sharedboundary.cpp
+    src/territorialpreview.cpp
+    include/pandoeditor/map/territorialpreview.h
     src/territoryselection.cpp
     include/pandoeditor/map/territoryselection.h
 )
@@ -41,6 +43,9 @@ set_source_files_properties(src/geometrysnap.cpp src/sharedboundary.cpp PROPERTI
     "$<$<CXX_COMPILER_ID:MSVC>:/fp:strict>;$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffp-contract=off>")
 
 if(BUILD_TESTING)
+    add_executable(territorial_preview_engine_tests ../tests/territorial_preview_engine_tests.cpp)
+    target_link_libraries(territorial_preview_engine_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME territorial_preview_engine_tests COMMAND territorial_preview_engine_tests)
     add_executable(territory_selection_engine_tests ../tests/territory_selection_engine_tests.cpp)
     target_link_libraries(territory_selection_engine_tests PRIVATE Pandoeditor::MapEngine)
     add_test(NAME territory_selection_engine_tests COMMAND territory_selection_engine_tests)
