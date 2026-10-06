@@ -1,5 +1,6 @@
 #include "editorcontroller.h"
 #include "geometrysnapprovider.h"
+#include <pandoeditor/map/editcoordinates.h>
 #include <cmath>
 #include <algorithm>
 using namespace pandoeditor;
@@ -26,17 +27,14 @@ Point EditorController::snappedGeometryPoint(double x,double y,double tolerance,
         }
     }
     const auto& candidates=snapProvider_->candidates(project_.snapshot(),request,edit.tool,margin,edit.generation);
-    const Point screen{display.originX+x*display.mapScale,display.originY+y*display.mapScale};
+    const auto screen=map::editMapToScreen({x,y},display);
+    const auto metrics=mapCameraMetrics();
     // The active edit overlay uses MapProjection coordinates and the camera's
     // display transform. Rank candidates in that same visible pixel space;
     // mixing it with the geographic renderer's view gives latitude-dependent
     // distances even when the pointer is directly over a visible edit vertex.
-    const auto project=[this,display](Point point)->std::optional<Point>{
-        if(!std::isfinite(point.x)||!std::isfinite(point.y)||point.y < -90||point.y > 90)return {};
-        const auto local=projection_.project(point);
-        const Point projected{display.originX+local.x*display.mapScale,display.originY+local.y*display.mapScale};
-        if(!std::isfinite(projected.x)||!std::isfinite(projected.y))return {};
-        return projected;
+    const auto project=[metrics,display](Point point)->std::optional<Point>{
+        return map::editSnapPointToScreen(point,metrics,display);
     };
     const auto type=pointerType.isEmpty()?(mobileMode_?std::string("touch"):std::string("mouse")):pointerType.toStdString();
     const auto result=geometrysnap::resolveSnap(raw,screen,candidates,project,type,edit.snapExcludedNodeKey.toStdString());

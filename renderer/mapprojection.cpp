@@ -1,4 +1,5 @@
 #include "mapprojection.h"
+#include <pandoeditor/map/editcoordinates.h>
 #include <QVariantMap>
 #include <algorithm>
 #include <cmath>
@@ -84,7 +85,7 @@ void MapProjection::rebuild(const std::vector<pandoeditor::CountryView>& countri
         for(const auto& p:c.polygons)for(const auto& r:p){
             bool first=true;
             for(auto v:r){
-                const double x=v.x*cosLatitude-minX,y=maxLat-v.y;
+                const auto point=project(v);const double x=point.x,y=point.y;
                 left=std::min(left,x);right=std::max(right,x);top=std::min(top,y);bottom=std::max(bottom,y);
                 path+=QString("%1%2 %3 ").arg(first?"M":"L").arg(x,0,'g',17).arg(y,0,'g',17);first=false;
             }
@@ -94,5 +95,9 @@ void MapProjection::rebuild(const std::vector<pandoeditor::CountryView>& countri
             {"left",left},{"top",top},{"width",right-left},{"height",bottom-top}});
     }
 }
-pandoeditor::Point MapProjection::project(pandoeditor::Point point) const{return {point.x*cosLatitude-minX,maxLatitude-point.y};}
-pandoeditor::Point MapProjection::unproject(double x,double y) const{return {(x+minX)/cosLatitude,maxLatitude-y};}
+pandoeditor::Point MapProjection::project(pandoeditor::Point point) const {
+    return pandoeditor::map::editGeographicToMap(point,{width,height,cosLatitude,minX,maxLatitude});
+}
+pandoeditor::Point MapProjection::unproject(double x,double y) const {
+    return pandoeditor::map::editMapToGeographic({x,y},{width,height,cosLatitude,minX,maxLatitude});
+}

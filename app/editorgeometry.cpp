@@ -4,7 +4,7 @@
 #include "territorialgeometry.h"
 #include "geometrycalculator.h"
 #include <pandoeditor/commands.h>
-#include <pandoeditor/geometrypredicates.h>
+#include <pandoeditor/map/editgeometry.h>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -20,41 +20,6 @@ Ring* openPath(Geometry& g,int path) {
 bool samePoint(Point a,Point b) { return a.x==b.x&&a.y==b.y; }
 void closeRing(Ring& ring) { if(ring.size()>1&&!samePoint(ring.front(),ring.back())) ring.push_back(ring.front()); }
 void openRing(Ring& ring) { if(ring.size()>1&&samePoint(ring.front(),ring.back())) ring.pop_back(); }
-double distanceSquared(Point a,Point b) { const auto x=a.x-b.x,y=a.y-b.y;return x*x+y*y; }
-double segmentDistanceSquared(Point point,Point a,Point b,double& t) {
-    const auto dx=b.x-a.x,dy=b.y-a.y,denominator=dx*dx+dy*dy;
-    t=denominator?std::clamp(((point.x-a.x)*dx+(point.y-a.y)*dy)/denominator,0.,1.):0.;
-    return distanceSquared(point,{a.x+dx*t,a.y+dy*t});
-}
-double orientation(Point a,Point b,Point c) { return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x); }
-bool properIntersection(Point a,Point b,Point c,Point d) {
-    const auto ab1=orientation(a,b,c),ab2=orientation(a,b,d),cd1=orientation(c,d,a),cd2=orientation(c,d,b);
-    return (ab1>0&&ab2<0||ab1<0&&ab2>0)&&(cd1>0&&cd2<0||cd1<0&&cd2>0);
-}
-bool selfIntersects(const Ring& ring) {
-    if(ring.size()<4)return false;const auto edgeCount=ring.size()-1;
-    for(std::size_t a=0;a<edgeCount;++a)for(std::size_t b=a+1;b<edgeCount;++b) {
-        if(b==a+1||(a==0&&b+1==edgeCount))continue;
-        if(properIntersection(ring[a],ring[a+1],ring[b],ring[b+1]))return true;
-    }
-    return false;
-}
-bool validGeometry(const Geometry& geometry,std::string* detail=nullptr) {
-    try {
-        GeometryStore check;check.insert({"geometry-edit",1},geometry);
-        for(const auto& polygon:geometry.polygons) {
-            if(polygon.empty()||selfIntersects(polygon.front()))throw std::invalid_argument("INVALID_GEOMETRY: self intersection");
-            Geometry outer{"Polygon",{}, {}, {{polygon.front()}}};
-            for(std::size_t hole=1;hole<polygon.size();++hole) {
-                if(selfIntersects(polygon[hole]))throw std::invalid_argument("INVALID_GEOMETRY: self intersection");
-                Geometry inner{"Polygon",{}, {}, {{polygon[hole]}}};
-                if(!geometryContains(outer,inner))throw std::invalid_argument("INVALID_GEOMETRY: hole outside exterior");
-            }
-        }
-        return true;
-    }
-    catch(const std::exception& error) { if(detail)*detail=error.what();return false; }
-}
 }
 
 QVariantMap EditorController::geometryEditState() const
@@ -208,20 +173,13 @@ bool EditorController::geometrySelectNearest(double x,double y,double tolerance)
     if(!geometryEdit_||geometryEdit_->preview||!std::isfinite(x)||!std::isfinite(y)||tolerance<0)return false;
     if(geometryEdit_->tool=="boundary") {
         if(!boundaryGeometryReady()||geometryEdit_->job)return false;
-        auto& edit=*geometryEdit_;double best=tolerance*tolerance;int found=-1;const auto& nodes=edit.boundarySession->nodes();
-        for(std::size_t i=0;i<nodes.size();++i){if(!edit.boundarySession->canMove(i))continue;const auto distance=distanceSquared(projection_.project(nodes[i].coordinate),{x,y});if(distance<=best){best=distance;found=int(i);}}
+        auto& edit=*geometryEdit_;
+        const auto found=map::nearestMovableBoundaryNode(*edit.boundarySession,{x,y},tolerance,mapCameraMetrics());
         edit.polygon=edit.ring=0;edit.vertex=found;emit geometryEditChanged();return found>=0;
     }
-    const auto point=projection_.unproject(x,y);auto& edit=*geometryEdit_;double best=tolerance*tolerance;int bestPolygon=-1,bestRing=-1,bestVertex=-1;
-    if(!isArea(edit.draft)) {
-        for(int p=0;auto path=openPath(edit.draft,p);++p)for(std::size_t v=0;v<path->size();++v){const auto d=distanceSquared(projection_.project((*path)[v]),{x,y});if(d<=best){best=d;bestPolygon=p;bestVertex=int(v);}}
-        edit.polygon=bestPolygon;edit.ring=0;edit.vertex=bestVertex;emit geometryEditChanged();return bestVertex>=0;
-    }
-    for(std::size_t p=0;p<edit.draft.polygons.size();++p)for(std::size_t r=0;r<edit.draft.polygons[p].size();++r) {
-        const auto& ring=edit.draft.polygons[p][r];const auto limit=ring.size()>1&&samePoint(ring.front(),ring.back())?ring.size()-1:ring.size();
-        for(std::size_t v=0;v<limit;++v){const auto candidate=distanceSquared(point,ring[v]);if(candidate<=best){best=candidate;bestPolygon=int(p);bestRing=int(r);bestVertex=int(v);}}
-    }
-    edit.polygon=bestPolygon;edit.ring=bestRing;edit.vertex=bestVertex;emit geometryEditChanged();return bestVertex>=0;
+    auto& edit=*geometryEdit_;
+    const auto hit=map::nearestEditVertex(edit.draft,{x,y},tolerance,mapCameraMetrics());
+    edit.polygon=hit.polygon;edit.ring=hit.ring;edit.vertex=hit.vertex;emit geometryEditChanged();return hit.vertex>=0;
 }
 
 bool EditorController::geometryMoveSelectedVertex(double x,double y,double tolerance,const QString& pointerType)
@@ -274,17 +232,10 @@ bool EditorController::geometryBeginObjectDrag(){
 bool EditorController::geometryTranslateObject(double dx,double dy){
     if(!geometryEdit_||geometryEdit_->tool!="move"||!geometryEdit_->dragBefore||
        !std::isfinite(dx)||!std::isfinite(dy))return false;
-    const auto origin=projection_.unproject(0,0),destination=projection_.unproject(dx,dy);
-    const double longitude=destination.x-origin.x,latitude=destination.y-origin.y;
-    if(!std::isfinite(longitude)||!std::isfinite(latitude))return false;
-    auto translated=*geometryEdit_->dragBefore;
-    auto move=[&](Point& point){point.x+=longitude;point.y+=latitude;
-        return std::isfinite(point.x)&&std::isfinite(point.y)&&point.x>=-180&&point.x<=180&&point.y>=-90&&point.y<=90;};
-    for(auto& point:translated.points)if(!move(point))return false;
-    for(auto& line:translated.lines)for(auto& point:line)if(!move(point))return false;
-    for(auto& polygon:translated.polygons)for(auto& ring:polygon)for(auto& point:ring)if(!move(point))return false;
-    geometryEdit_->draft=std::move(translated);
-    geometryEdit_->objectDragMoved=longitude!=0||latitude!=0;
+    auto translated=map::translateEditGeometry(*geometryEdit_->dragBefore,{dx,dy},mapCameraMetrics());
+    if(!translated)return false;
+    geometryEdit_->draft=std::move(translated->geometry);
+    geometryEdit_->objectDragMoved=translated->moved;
     ++geometryEdit_->request;emit geometryEditChanged();return true;
 }
 void EditorController::geometryEndObjectDrag(bool cancel){
@@ -300,14 +251,13 @@ bool EditorController::geometryInsertNearest(double x,double y,double tolerance)
     if(geometryEdit_&&geometryEdit_->tool=="boundary")return false;
     if(geometryEdit_&&geometryEdit_->territorySelection)return false;
     if(!geometryEdit_||geometryEdit_->preview||!std::isfinite(x)||!std::isfinite(y)||tolerance<0)return false;
-    auto& edit=*geometryEdit_;const auto point=projection_.unproject(x,y);double best=tolerance*tolerance;int foundP=-1,foundR=-1,foundV=-1;Point inserted;
-    if(!isArea(edit.draft)) {
-        if(edit.draft.type=="Point"||edit.draft.type=="MultiPoint")return false;
-        for(std::size_t p=0;p<edit.draft.lines.size();++p){const auto& path=edit.draft.lines[p];for(std::size_t v=1;v<path.size();++v){double t=0;const auto d=segmentDistanceSquared({x,y},projection_.project(path[v-1]),projection_.project(path[v]),t);if(d<=best){best=d;foundP=int(p);foundV=int(v);inserted={path[v-1].x+(path[v].x-path[v-1].x)*t,path[v-1].y+(path[v].y-path[v-1].y)*t};}}}
-        if(foundV<0)return false;edit.undo.push_back(edit.draft);edit.redo.clear();auto& path=edit.draft.lines[foundP];path.insert(path.begin()+foundV,inserted);edit.polygon=foundP;edit.ring=0;edit.vertex=foundV;++edit.request;emit geometryEditChanged();return true;
-    }
-    for(std::size_t p=0;p<edit.draft.polygons.size();++p)for(std::size_t r=0;r<edit.draft.polygons[p].size();++r){const auto& ring=edit.draft.polygons[p][r];for(std::size_t v=1;v<ring.size();++v){double t=0;const auto d=segmentDistanceSquared(point,ring[v-1],ring[v],t);if(d<=best){best=d;foundP=int(p);foundR=int(r);foundV=int(v);inserted={ring[v-1].x+(ring[v].x-ring[v-1].x)*t,ring[v-1].y+(ring[v].y-ring[v-1].y)*t};}}}
-    if(foundV<0)return false;edit.undo.push_back(edit.draft);edit.redo.clear();auto& ring=edit.draft.polygons[foundP][foundR];ring.insert(ring.begin()+foundV,inserted);edit.polygon=foundP;edit.ring=foundR;edit.vertex=foundV;++edit.request;emit geometryEditChanged();return true;
+    auto& edit=*geometryEdit_;
+    const auto hit=map::nearestEditSegment(edit.draft,{x,y},tolerance,mapCameraMetrics());
+    if(!hit)return false;
+    edit.undo.push_back(edit.draft);edit.redo.clear();
+    auto& path=isArea(edit.draft)?edit.draft.polygons[hit->index.polygon][hit->index.ring]:edit.draft.lines[hit->index.polygon];
+    path.insert(path.begin()+hit->index.vertex,hit->coordinate);
+    edit.polygon=hit->index.polygon;edit.ring=hit->index.ring;edit.vertex=hit->index.vertex;++edit.request;emit geometryEditChanged();return true;
 }
 
 bool EditorController::geometryDeleteSelectedVertex()
@@ -350,7 +300,7 @@ bool EditorController::requestGeometryPreview()
     if(!geometryEdit_||geometryEdit_->preview||!geometryEdit_->base.matches(project_))return false;
     if(geometryEdit_->stage=="setup")return false;
     if(geometryEdit_->annexIntent&&geometryEdit_->choosingProviders)return false;
-    if(geometryEdit_->tool!="split"&&geometryEdit_->tool!="merge"&&geometryEdit_->tool!="boundary"&&!validGeometry(geometryEdit_->draft,&validationDetail)){geometryEdit_->error=validationDetail.empty()?QStringLiteral("닫힌 유효 폴리곤이 필요합니다."):QStringLiteral("닫힌 유효 폴리곤이 필요합니다: %1").arg(QString::fromStdString(validationDetail));emit geometryEditChanged();return false;}
+    if(geometryEdit_->tool!="split"&&geometryEdit_->tool!="merge"&&geometryEdit_->tool!="boundary"&&!map::validateEditGeometry(geometryEdit_->draft,&validationDetail)){geometryEdit_->error=validationDetail.empty()?QStringLiteral("닫힌 유효 폴리곤이 필요합니다."):QStringLiteral("닫힌 유효 폴리곤이 필요합니다: %1").arg(QString::fromStdString(validationDetail));emit geometryEditChanged();return false;}
     auto& edit=*geometryEdit_;
     if(edit.content) {
         if(!contentSession_||!contentSession_->base.matches(project_))return false;
@@ -397,7 +347,7 @@ bool EditorController::requestGeometryPreview()
         // Preparation stays an immutable view of the canonical source. The
         // detached owner payload alone travels into the preview calculation.
         edit.boundarySession->resetDraft();edit.draft=edit.boundarySession->drafts().at(edit.target.id);edit.vertex=-1;
-        for(const auto& draft:drafts)if(!validGeometry(draft.geometry,&validationDetail)){edit.error=QString::fromStdString(validationDetail);emit geometryEditChanged();return false;}
+        for(const auto& draft:drafts)if(!map::validateEditGeometry(draft.geometry,&validationDetail)){edit.error=QString::fromStdString(validationDetail);emit geometryEditChanged();return false;}
         return schedule([drafts](const ProjectSnapshot& snapshot,const JobToken& token){
             PrepareResult failed;failed.error=CommandError::PrepareFailed;if(token.cancelled())return failed;
             auto planned=CommandProcessor::planTerritorial(snapshot,SharedBoundaryIntent{drafts});

@@ -6,6 +6,8 @@ add_library(pandoeditor_map_engine STATIC
     src/engine.cpp
     src/mapviewstate.cpp
     src/mapcamera.cpp
+    src/editcoordinates.cpp
+    src/editgeometry.cpp
     src/mappicker.cpp
     src/viewportresourcescheduler.cpp
     src/builtinhydrochannel.cpp
@@ -39,10 +41,18 @@ target_link_libraries(pandoeditor_map_engine PUBLIC Pandoeditor::Core Threads::T
 set_target_properties(pandoeditor_map_engine PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # JavaScript's specified intermediate operations must not be fused on native targets.
-set_source_files_properties(src/geometrysnap.cpp src/sharedboundary.cpp PROPERTIES COMPILE_OPTIONS
+set_source_files_properties(src/geometrysnap.cpp src/sharedboundary.cpp src/editcoordinates.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:MSVC>:/fp:strict>;$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffp-contract=off>")
 
 if(BUILD_TESTING)
+    add_executable(edit_coordinate_tests ../tests/edit_coordinate_tests.cpp)
+    target_link_libraries(edit_coordinate_tests PRIVATE Pandoeditor::MapEngine)
+    target_compile_options(edit_coordinate_tests PRIVATE
+        "$<$<CXX_COMPILER_ID:MSVC>:/fp:strict>" "$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-ffp-contract=off>")
+    add_test(NAME edit_coordinate_tests COMMAND edit_coordinate_tests)
+    add_executable(edit_geometry_tests ../tests/edit_geometry_tests.cpp)
+    target_link_libraries(edit_geometry_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME edit_geometry_tests COMMAND edit_geometry_tests)
     add_executable(territorial_preview_engine_tests ../tests/territorial_preview_engine_tests.cpp)
     target_link_libraries(territorial_preview_engine_tests PRIVATE Pandoeditor::MapEngine)
     add_test(NAME territorial_preview_engine_tests COMMAND territorial_preview_engine_tests)
