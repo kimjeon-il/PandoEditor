@@ -6,6 +6,7 @@
 #include "territorycutadapter.h"
 #include <pandoeditor/geometrypredicates.h>
 #include <pandoeditor/map/editgeometry.h>
+#include <pandoeditor/map/editcoordinates.h>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -223,6 +224,11 @@ bool EditorController::geometryRemoveTerritoryPart(const QString& id){if(!geomet
 bool EditorController::geometryUndoTerritoryPart(){if(!geometryEdit_||!geometryEdit_->territorySelection||geometryEdit_->stage!="selection"||geometryEdit_->applying||geometryEdit_->sourceChange||geometryEdit_->territorySelection->state().methodChangeConfirmation)return false;const auto parts=geometryEdit_->territorySelection->state().parts.size();if(!geometryEdit_->territorySelection->undoPart())return false;if(parts!=geometryEdit_->territorySelection->state().parts.size())geometryEdit_->territoryComponentSourcePrepared=false;scheduleTerritorySelection();return true;}
 bool EditorController::geometryConfirmTerritoryChange(){if(!geometryEdit_||!geometryEdit_->territorySelection||geometryEdit_->applying)return false;auto& edit=*geometryEdit_;if(edit.sourceChange)return toggleTerritorySource(*edit.sourceChange,true);if(!edit.territorySelection->confirmMethodChange())return false;cancelTerritoryCalculation();edit.draft={"Polygon",{},{},{}};edit.lineDraft.clear();edit.undo.clear();edit.redo.clear();scheduleTerritorySelection(false);return true;}
 bool EditorController::geometryCancelTerritoryChange(){if(!geometryEdit_||!geometryEdit_->territorySelection)return false;if(geometryEdit_->sourceChange){geometryEdit_->sourceChange.reset();emit geometryEditChanged();return true;}const auto ok=geometryEdit_->territorySelection->cancelMethodChange();emit geometryEditChanged();return ok;}
+bool EditorController::geometryPickTerritorySelectionScreen(double x,double y){
+    const auto display=camera_.display();
+    const auto point=map::editScreenToMap({x,y},display);
+    return geometryPickTerritorySelection(point.x,point.y);
+}
 bool EditorController::geometryPickTerritorySelection(double x,double y){if(!geometryEdit_||!geometryEdit_->territorySelection||!std::isfinite(x)||!std::isfinite(y))return false;const auto point=projection_.unproject(x,y);const auto& selection=*geometryEdit_->territorySelection;if(selection.state().activePhase==TerritorySelectionPhase::Candidate){for(const auto& item:selection.state().candidates)if(map::editGeometryContainsPoint(item.geometry,point))return geometryToggleTerritoryCandidate(QString::fromStdString(item.id));}else if(selection.state().activePhase==TerritorySelectionPhase::Components){for(const auto& item:selection.activeComponents())if(map::editGeometryContainsPoint(item.geometry,point))return geometryToggleTerritoryComponent(QString::fromStdString(item.key));}return false;}
 bool EditorController::advanceTerritoryStage(){
     if(!territorySelectionState().value("canAdvance").toBool())return false;auto& edit=*geometryEdit_;

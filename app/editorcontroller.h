@@ -369,6 +369,7 @@ public:
     Q_INVOKABLE QVariantMap geometrySnapState() const;
     Q_INVOKABLE void clearGeometrySnapIndicator();
     Q_INVOKABLE bool geometryHoverSnap(double x,double y,const QString& pointerType=QStringLiteral("mouse"));
+    Q_INVOKABLE bool geometryHoverSnapScreen(double x,double y,const QString& pointerType=QStringLiteral("mouse"));
     Q_INVOKABLE bool geometryRetryBoundaryPreparation();
     Q_INVOKABLE bool geometryConfirmBoundaryImpacts();
     Q_INVOKABLE void geometryCancelBoundaryImpacts();
@@ -397,13 +398,19 @@ public:
     Q_INVOKABLE bool geometryAddPoint(double x,double y,double tolerance=0,const QString& pointerType=QString());
     Q_INVOKABLE bool geometrySelectNearest(double x,double y,double tolerance);
     Q_INVOKABLE bool geometryMoveSelectedVertex(double x,double y,double tolerance=0,const QString& pointerType=QString());
+    // QML pointer input is in logical screen pixels; legacy APIs above retain map coordinates.
+    Q_INVOKABLE bool geometryAddPointScreen(double x,double y,double radiusPixels=0,const QString& pointerType=QString());
+    Q_INVOKABLE bool geometrySelectNearestScreen(double x,double y,double radiusPixels);
+    Q_INVOKABLE bool geometryMoveSelectedVertexScreen(double x,double y,double radiusPixels=0,const QString& pointerType=QString());
     Q_INVOKABLE bool geometryBeginVertexDrag();
     Q_INVOKABLE void geometryEndVertexDrag(bool cancel=false);
     Q_INVOKABLE bool geometrySetMoveMode(bool enabled);
     Q_INVOKABLE bool geometryBeginObjectDrag();
     Q_INVOKABLE bool geometryTranslateObject(double dx,double dy);
+    Q_INVOKABLE bool geometryTranslateObjectScreen(double deltaX,double deltaY);
     Q_INVOKABLE void geometryEndObjectDrag(bool cancel=false);
     Q_INVOKABLE bool geometryInsertNearest(double x,double y,double tolerance);
+    Q_INVOKABLE bool geometryInsertNearestScreen(double x,double y,double radiusPixels);
     Q_INVOKABLE bool geometryDeleteSelectedVertex();
     Q_INVOKABLE bool geometryUndoDraft();
     Q_INVOKABLE bool geometryRedoDraft();
@@ -425,6 +432,7 @@ public:
     Q_INVOKABLE bool geometryConfirmTerritoryChange();
     Q_INVOKABLE bool geometryCancelTerritoryChange();
     Q_INVOKABLE bool geometryPickTerritorySelection(double x,double y);
+    Q_INVOKABLE bool geometryPickTerritorySelectionScreen(double x,double y);
 
     Q_INVOKABLE bool confirmGeometryEdit();
     Q_INVOKABLE void cancelGeometryEdit();

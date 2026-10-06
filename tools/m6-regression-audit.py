@@ -9,6 +9,8 @@ from pathlib import Path
 REQUIRED = {
     "edit_coordinate_tests",
     "edit_geometry_tests",
+    "edit_screen_controller_tests",
+    "edit_screen_ui_tests",
     "territory_cut_adapter_tests",
     "territorial_preview_engine_tests",
     "territory_selection_engine_tests",

@@ -424,10 +424,8 @@ Rectangle {
                     return
                 }
                 if (state.stage !== "selection") return
-                const x=(eventPoint.position.x-view.originX)/view.mapScale
-                const y=(eventPoint.position.y-view.originY)/view.mapScale
-                if (state.selectionPhase === "drawing") editor.geometryAddPoint(x,y,(eventPoint.device && eventPoint.device.pointerType === PointerDevice.Finger ? 18 : 10)/view.mapScale, eventPoint.device && eventPoint.device.pointerType === PointerDevice.Finger ? "touch" : "mouse")
-                else if (state.selectionPhase === "candidates" || state.selectionPhase === "components") editor.geometryPickTerritorySelection(x,y)
+                if (state.selectionPhase === "drawing") editor.geometryAddPointScreen(eventPoint.position.x,eventPoint.position.y,eventPoint.device && eventPoint.device.pointerType === PointerDevice.Finger ? 18 : 10, eventPoint.device && eventPoint.device.pointerType === PointerDevice.Finger ? "touch" : "mouse")
+                else if (state.selectionPhase === "candidates" || state.selectionPhase === "components") editor.geometryPickTerritorySelectionScreen(eventPoint.position.x,eventPoint.position.y)
                 return
             }
             if (state.stage === "setup" || state.previewReady) return
@@ -435,16 +433,13 @@ Rectangle {
                 editor.geometryToggleProvider(editor.pickObjectScreen(eventPoint.position.x,eventPoint.position.y,view.globeMode?view.globeZoom:view.zoom))
                 return
             }
-            const x=(eventPoint.position.x-view.originX)/view.mapScale
-            const y=(eventPoint.position.y-view.originY)/view.mapScale
-            if (editor.geometryEditState.tool === "draw" || editor.geometryEditState.tool === "annex" || editor.geometryEditState.tool === "split") editor.geometryAddPoint(x,y,(eventPoint.device && eventPoint.device.pointerType === PointerDevice.Finger ? 18 : 10)/view.mapScale, eventPoint.device && eventPoint.device.pointerType === PointerDevice.Finger ? "touch" : "mouse")
-            else if (editor.geometryEditState.tool !== "move") editor.geometrySelectNearest(x,y,(editor.mobileMode?18:10)/view.mapScale)
+            if (editor.geometryEditState.tool === "draw" || editor.geometryEditState.tool === "annex" || editor.geometryEditState.tool === "split") editor.geometryAddPointScreen(eventPoint.position.x,eventPoint.position.y,eventPoint.device && eventPoint.device.pointerType === PointerDevice.Finger ? 18 : 10, eventPoint.device && eventPoint.device.pointerType === PointerDevice.Finger ? "touch" : "mouse")
+            else if (editor.geometryEditState.tool !== "move") editor.geometrySelectNearestScreen(eventPoint.position.x,eventPoint.position.y,editor.mobileMode?18:10)
         }
         onDoubleTapped: function(eventPoint) {
             if (!view.territorySelectionEditing && editor.geometryEditState.stage !== "setup" && !editor.geometryEditState.previewReady && !editor.geometryEditState.choosingProviders && editor.geometryEditState.tool !== "draw" && editor.geometryEditState.tool !== "move" && editor.geometryEditState.tool !== "boundary")
-                editor.geometryInsertNearest((eventPoint.position.x-view.originX)/view.mapScale,
-                                             (eventPoint.position.y-view.originY)/view.mapScale,
-                                             (editor.mobileMode?18:10)/view.mapScale)
+                editor.geometryInsertNearestScreen(eventPoint.position.x,eventPoint.position.y,
+                                                   editor.mobileMode?18:10)
         }
     }
     HoverHandler {
@@ -471,9 +466,8 @@ Rectangle {
                 if (touchOwnsSnap && mouseDeviceAtTouch===point.device &&
                     mousePointAtTouch.x===point.position.x && mousePointAtTouch.y===point.position.y) return
                 resetEditingPointer()
-                editor.geometryHoverSnap((point.position.x-view.originX)/view.mapScale,
-                                         (point.position.y-view.originY)/view.mapScale,
-                                         point.device && point.device.pointerType === PointerDevice.Finger ? "touch" : "mouse")
+                editor.geometryHoverSnapScreen(point.position.x,point.position.y,
+                                               point.device && point.device.pointerType === PointerDevice.Finger ? "touch" : "mouse")
                 return
             }
             const ref=editor.pickObjectScreen(point.position.x,point.position.y,view.globeMode?view.globeZoom:view.zoom)
@@ -513,10 +507,9 @@ Rectangle {
             else { editor.geometryEndVertexDrag(false); editor.endMapInteraction() }
         }
         onActiveTranslationChanged: if (active) {
-            editor.geometryMoveSelectedVertex((centroid.position.x-view.originX)/view.mapScale,
-                                              (centroid.position.y-view.originY)/view.mapScale,
-                                              (centroid.device && centroid.device.pointerType === PointerDevice.Finger ? 18 : 10)/view.mapScale,
-                                              centroid.device && centroid.device.pointerType === PointerDevice.Finger ? "touch" : "mouse")
+            editor.geometryMoveSelectedVertexScreen(centroid.position.x,centroid.position.y,
+                                                    centroid.device && centroid.device.pointerType === PointerDevice.Finger ? 18 : 10,
+                                                    centroid.device && centroid.device.pointerType === PointerDevice.Finger ? "touch" : "mouse")
         }
     }
     DragHandler {
@@ -529,7 +522,7 @@ Rectangle {
             else { editor.geometryEndObjectDrag(false); editor.endMapInteraction() }
         }
         onActiveTranslationChanged: if (active)
-            editor.geometryTranslateObject(activeTranslation.x/view.mapScale,activeTranslation.y/view.mapScale)
+            editor.geometryTranslateObjectScreen(activeTranslation.x,activeTranslation.y)
     }
     DragHandler {
         id: geometryTwoFingerPan

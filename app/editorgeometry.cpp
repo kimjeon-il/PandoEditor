@@ -4,6 +4,7 @@
 #include "territorialgeometry.h"
 #include "geometrycalculator.h"
 #include <pandoeditor/commands.h>
+#include <pandoeditor/map/editcoordinates.h>
 #include <pandoeditor/map/editgeometry.h>
 #include <algorithm>
 #include <cmath>
@@ -145,6 +146,13 @@ bool EditorController::beginGeometryDraw()
     emit geometryEditChanged();return true;
 }
 
+bool EditorController::geometryAddPointScreen(double x,double y,double radiusPixels,const QString& pointerType)
+{
+    const auto display=camera_.display();
+    const auto point=map::editScreenToMap({x,y},display);
+    return geometryAddPoint(point.x,point.y,map::editPixelRadiusToMap(radiusPixels,display),pointerType);
+}
+
 bool EditorController::geometryAddPoint(double x,double y,double tolerance,const QString& pointerType)
 {
     if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->stage=="setup"||geometryEdit_->choosingProviders||!std::isfinite(x)||!std::isfinite(y))return false;
@@ -167,6 +175,13 @@ bool EditorController::geometryAddPoint(double x,double y,double tolerance,const
     if(ring.size()>=3)closeRing(ring);edit.vertex=int(ring.size())-2;++edit.request;emit geometryEditChanged();return true;
 }
 
+bool EditorController::geometrySelectNearestScreen(double x,double y,double radiusPixels)
+{
+    const auto display=camera_.display();
+    const auto point=map::editScreenToMap({x,y},display);
+    return geometrySelectNearest(point.x,point.y,map::editPixelRadiusToMap(radiusPixels,display));
+}
+
 bool EditorController::geometrySelectNearest(double x,double y,double tolerance)
 {
     if(geometryEdit_&&geometryEdit_->territorySelection)return false;
@@ -180,6 +195,13 @@ bool EditorController::geometrySelectNearest(double x,double y,double tolerance)
     auto& edit=*geometryEdit_;
     const auto hit=map::nearestEditVertex(edit.draft,{x,y},tolerance,mapCameraMetrics());
     edit.polygon=hit.polygon;edit.ring=hit.ring;edit.vertex=hit.vertex;emit geometryEditChanged();return hit.vertex>=0;
+}
+
+bool EditorController::geometryMoveSelectedVertexScreen(double x,double y,double radiusPixels,const QString& pointerType)
+{
+    const auto display=camera_.display();
+    const auto point=map::editScreenToMap({x,y},display);
+    return geometryMoveSelectedVertex(point.x,point.y,map::editPixelRadiusToMap(radiusPixels,display),pointerType);
 }
 
 bool EditorController::geometryMoveSelectedVertex(double x,double y,double tolerance,const QString& pointerType)
@@ -229,6 +251,11 @@ bool EditorController::geometryBeginObjectDrag(){
     geometryEdit_->dragBefore=geometryEdit_->draft;
     geometryEdit_->objectDragMoved=false;return true;
 }
+bool EditorController::geometryTranslateObjectScreen(double deltaX,double deltaY){
+    const auto display=camera_.display();
+    const auto delta=map::editScreenDeltaToMap({deltaX,deltaY},display);
+    return geometryTranslateObject(delta.x,delta.y);
+}
 bool EditorController::geometryTranslateObject(double dx,double dy){
     if(!geometryEdit_||geometryEdit_->tool!="move"||!geometryEdit_->dragBefore||
        !std::isfinite(dx)||!std::isfinite(dy))return false;
@@ -244,6 +271,13 @@ void EditorController::geometryEndObjectDrag(bool cancel){
     else if(geometryEdit_->objectDragMoved){geometryEdit_->undo.push_back(*geometryEdit_->dragBefore);geometryEdit_->redo.clear();}
     geometryEdit_->dragBefore.reset();geometryEdit_->objectDragMoved=false;
     ++geometryEdit_->request;emit geometryEditChanged();
+}
+
+bool EditorController::geometryInsertNearestScreen(double x,double y,double radiusPixels)
+{
+    const auto display=camera_.display();
+    const auto point=map::editScreenToMap({x,y},display);
+    return geometryInsertNearest(point.x,point.y,map::editPixelRadiusToMap(radiusPixels,display));
 }
 
 bool EditorController::geometryInsertNearest(double x,double y,double tolerance)

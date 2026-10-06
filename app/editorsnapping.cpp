@@ -56,6 +56,11 @@ QVariantMap EditorController::geometrySnapState() const {
     if(snapProvider_){const auto& d=snapProvider_->diagnostics();state["nearbyObjects"]=qulonglong(d.nearbyObjects);state["visitedSegments"]=qulonglong(d.visitedSegments);state["intersectionTests"]=qulonglong(d.intersectionTests);state["geometryIndexBuilds"]=qulonglong(d.geometryIndexBuilds);}
     return state;
 }
+bool EditorController::geometryHoverSnapScreen(double x,double y,const QString& pointerType) {
+    const auto display=camera_.display();
+    const auto point=map::editScreenToMap({x,y},display);
+    return geometryHoverSnap(point.x,point.y,pointerType);
+}
 bool EditorController::geometryHoverSnap(double x,double y,const QString& pointerType) {
     if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->choosingProviders||geometryEdit_->stage=="setup"||!std::isfinite(x)||!std::isfinite(y))return false;
     if(geometryEdit_->territorySelection&&(geometryEdit_->stage!="selection"||geometryEdit_->territorySelection->state().activePhase!=TerritorySelectionPhase::Drawing))return false;
