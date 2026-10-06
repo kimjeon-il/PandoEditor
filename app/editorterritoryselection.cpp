@@ -177,7 +177,12 @@ bool EditorController::geometrySelectTerritoryMethod(const QString& name){
     if(!geometryEdit_||!geometryEdit_->territorySelection||geometryEdit_->stage!="selection"||geometryEdit_->applying||geometryEdit_->sourceChange)return false;
     const auto method=methodValue(name);if(method==TerritorySelectionMethod::None)return false;auto& edit=*geometryEdit_;
     if(edit.territorySelection->state().activeMethod==method&&edit.territorySelection->state().activePhase!=TerritorySelectionPhase::None){if(!edit.error.isEmpty())scheduleTerritorySelection();return true;}
-    const auto result=edit.territorySelection->requestMethod(method,!edit.lineDraft.empty()||!edit.draft.polygons.empty());
+    const auto& state=edit.territorySelection->state();
+    // The web drawing tool is active even with zero points. Native exposes its
+    // preparing phase as Drawing plus selectionPending, so exclude that phase.
+    const bool drawingInputActive=!edit.selectionPending&&state.activePhase==TerritorySelectionPhase::Drawing&&
+        (state.activeMethod==TerritorySelectionMethod::Polygon||state.activeMethod==TerritorySelectionMethod::Line);
+    const auto result=edit.territorySelection->requestMethod(method,drawingInputActive||!edit.lineDraft.empty()||!edit.draft.polygons.empty());
     if(result==TerritoryMethodChange::Rejected)return false;
     if(result==TerritoryMethodChange::Activated){cancelTerritoryCalculation();edit.draft={"Polygon",{},{},{}};edit.lineDraft.clear();edit.undo.clear();edit.redo.clear();scheduleTerritorySelection(false);}
     else if(result==TerritoryMethodChange::AwaitingComponentArchive)scheduleTerritorySelection();

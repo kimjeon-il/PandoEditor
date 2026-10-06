@@ -8,6 +8,7 @@
 #include <QJSValue>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQmlExpression>
 #include <QQuickStyle>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -92,12 +93,8 @@ struct Ui {
         engine.rootContext()->setContextProperty("editor",&editor);
         const auto root=qEnvironmentVariable("M974_TEST_UI_ROOT");
         if(referenceComponent) {
-            // Exercise the exact production reference-image delegates and
-            // handlers, without the unrelated reference-menu Repeater. Full
-            // Main.qml fixture import via library.importImage reproduces a
-            // crash in legacy and migrated QML alongside the warning that the
-            // Menu delegate is not an Item. No FileDialog interaction is tested.
-            // Keep this explicitly component-level, not full import-flow parity.
+            // Keep a narrow first-event adapter check using the exact production
+            // delegates. The full-Main tests below also exercise the real menus.
             QFile source(root.isEmpty()?QString(":/common/MapView.qml"):root+"/common/MapView.qml");
             if(!source.open(QIODevice::ReadOnly))return false;
             const auto qml=source.readAll();
@@ -139,6 +136,12 @@ Window {
         window->resize(width+29,789);QTest::qWait(40);
         window->resize(width,760);QTest::qWait(40);window->grabWindow();return panned&&zoomed;
     }
+    QVariant evaluate(QObject* scope,const QString& expression)
+    {
+        QQmlExpression call(QQmlEngine::contextForObject(scope),scope,expression);
+        const auto result=call.evaluate();if(call.hasError())warnings.append(call.error().toString());
+        return result.metaType()==QMetaType::fromType<QJSValue>()?result.value<QJSValue>().toVariant():result;
+    }
     ReferenceImageLibrary* library() const {return window->findChild<ReferenceImageLibrary*>();}
     QString addImage()
     {
@@ -162,7 +165,16 @@ Window {
     }
     QQuickItem* reference(bool globe=false) const
     {return navigationItem(map,globe?"referenceImageGeographicOverlay":"referenceImageOverlay");}
-    ~Ui(){if(window){QTest::mouseMove(window,QPoint(-100,-100));window->setProperty("allowClose",true);window->close();}}
+    void stop()
+    {
+        if(window) {
+            QTest::mouseMove(window,QPoint(-100,-100));window->setProperty("allowClose",true);
+            window->close();delete window;window=nullptr;map=nullptr;
+        }
+        QCoreApplication::sendPostedEvents(nullptr,QEvent::DeferredDelete);
+        QCoreApplication::processEvents();
+    }
+    ~Ui(){stop();}
 };
 
 void widths()
@@ -174,6 +186,7 @@ void widths()
 class EditDisplayUiTests:public QObject {
     Q_OBJECT
 private slots:
+    void init(){QTest::failOnWarning();}
     void displayAdaptersAreInvokable()
     {
         const auto& meta=EditorController::staticMetaObject;
@@ -238,7 +251,7 @@ private slots:
     void referenceRectTracksCameraWithoutChangingRecords_data(){widths();}
     void referenceRectTracksCameraWithoutChangingRecords()
     {
-        QFETCH(int,width);Ui ui(width);QVERIFY2(ui.start(true),qPrintable(ui.warnings.join('\n')));
+        QFETCH(int,width);Ui ui(width);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));
         QVERIFY(!ui.addImage().isEmpty());auto* image=ui.reference();QVERIFY(image);QVERIFY(image->isVisible());
         const auto records=ui.library()->images();const auto data=records.front().toMap();
         QCOMPARE(itemRect(image,ui.map),screenRect(data,ui.editor.mapViewState()));
@@ -282,10 +295,8 @@ private slots:
         QCOMPARE(eventRecord["x"].toDouble(),data["x"].toDouble()+eventDelta.x()/eventCamera["mapScale"].toDouble());
         QCOMPARE(eventRecord["y"].toDouble(),data["y"].toDouble()+eventDelta.y()/eventCamera["mapScale"].toDouble());
         QObject::disconnect(connection);
-        // The first images publication recreates the production delegate in
-        // legacy and migrated QML. Release/history and repeated mid-drag updates
-        // remain blocked by that pre-existing lifetime issue. Restore through
-        // the library's existing cancellation API, not a synthetic UI commit.
+        // Keep cancellation coverage separate from the full-Main real-release
+        // lifecycle test below. No direct commit substitutes for pointer release.
         ui.library()->cancelGesture();
         QTest::mouseRelease(ui.window,Qt::LeftButton,Qt::NoModifier,position+QPoint(52,31));
         QCOMPARE(ui.library()->images(),records);
@@ -293,10 +304,175 @@ private slots:
         QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
     }
 
+    void referenceDragSurvivesUpdatesAndRelease_data(){widths();}
+    void referenceDragSurvivesUpdatesAndRelease()
+    {
+        QFETCH(int,width);Ui ui(width);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));
+        const auto id=ui.addImage();QVERIFY(!id.isEmpty());auto* library=ui.library();
+        QPointer<QQuickItem> image=ui.reference(),geographic=ui.reference(true);QVERIFY(image);QVERIFY(geographic);
+        QPointer<QObject> drag=dragHandler(image);QVERIFY(drag);
+        QSignalSpy destroyed(drag,&QObject::destroyed);
+        QSignalSpy imageDestroyed(image,&QObject::destroyed);
+        QSignalSpy history(library,&ReferenceImageLibrary::historyChanged);
+        QSignalSpy images(library,&ReferenceImageLibrary::imagesChanged);
+        QSignalSpy geometry(&ui.editor,&EditorController::geometryChanged);
+        QSignalSpy edits(&ui.editor,&EditorController::geometryEditChanged);
+        const auto canonical=ui.editor.documentBytes();
+        const auto preparations=ui.editor.renderQuality()["scenePreparationCount"];
+        for(int gesture=0;gesture<2;++gesture) {
+            const auto before=library->images();const auto data=before.front().toMap();
+            const auto startCamera=ui.editor.mapViewState();
+            const int historyBefore=history.count(),imagesBefore=images.count();
+            const auto position=image->mapToScene(QPointF(image->width()*.25,image->height()*.25)).toPoint();
+            const QPoint offsets[]={{42,25},{57,35},{69,43}};
+            QVERIFY(QRect(QPoint(),ui.window->size()).contains(position+offsets[2]));
+            QTest::mousePress(ui.window,Qt::LeftButton,Qt::NoModifier,position);
+            QTest::mouseMove(ui.window,position+QPoint(20,12),20);
+            QVERIFY(drag&&drag->property("active").toBool());
+            QCOMPARE(ui.editor.mapViewState(),startCamera);
+            for(int event=0;event<3;++event) {
+                if(event==1) {
+                    ui.editor.beginMapCameraPan();QVERIFY(ui.editor.updateMapCameraPan(-8.,7.));ui.editor.endMapCameraPan();
+                    QVERIFY(ui.editor.zoomMapCameraAt(1.13,140.,170.));
+                }
+                const auto expectedCamera=ui.editor.mapViewState();
+                QTest::mouseMove(ui.window,position+offsets[event],20);
+                QCoreApplication::sendPostedEvents(nullptr,QEvent::DeferredDelete);QTest::qWait(25);
+                QVERIFY2(drag&&image,"Reference-image delegate/DragHandler was destroyed during a preview update");
+                QCOMPARE(ui.reference(),image.data());QCOMPARE(ui.reference(true),geographic.data());QCOMPARE(dragHandler(image),drag.data());
+                QVERIFY(drag->property("active").toBool());QCOMPARE(destroyed.count(),0);QCOMPARE(imageDestroyed.count(),0);
+                QCOMPARE(images.count(),imagesBefore+event+1);QCOMPARE(history.count(),historyBefore);
+                const auto camera=ui.editor.mapViewState();QCOMPARE(camera,expectedCamera);
+                const auto delta=drag->property("activeTranslation").value<QVector2D>();QVERIFY(delta.lengthSquared()>4);
+                const auto moved=library->images().front().toMap();
+                QCOMPARE(moved["x"].toDouble(),data["x"].toDouble()+delta.x()/camera["mapScale"].toDouble());
+                QCOMPARE(moved["y"].toDouble(),data["y"].toDouble()+delta.y()/camera["mapScale"].toDouble());
+                QCOMPARE(itemRect(image,ui.map),screenRect(moved,camera));
+            }
+            QVERIFY(ui.editor.mapViewState()["mapScale"]!=startCamera["mapScale"]);
+            const auto finalRecords=library->images();QVERIFY(finalRecords!=before);
+            QTest::mouseRelease(ui.window,Qt::LeftButton,Qt::NoModifier,position+offsets[2]);
+            QCoreApplication::sendPostedEvents(nullptr,QEvent::DeferredDelete);QTest::qWait(25);
+            QVERIFY(drag&&!drag->property("active").toBool());QCOMPARE(history.count(),historyBefore+1);
+            QCOMPARE(library->images(),finalRecords);
+            QVERIFY(library->undo());QCOMPARE(library->images(),before);
+            QVERIFY(library->redo());QCOMPARE(library->images(),finalRecords);
+            QCOMPARE(history.count(),historyBefore+3);QCOMPARE(destroyed.count(),0);QCOMPARE(imageDestroyed.count(),0);
+            QCOMPARE(ui.reference(),image.data());QCOMPARE(ui.reference(true),geographic.data());QCOMPARE(dragHandler(image),drag.data());
+        }
+        QCOMPARE(ui.editor.documentBytes(),canonical);QCOMPARE(ui.editor.renderQuality()["scenePreparationCount"],preparations);
+        QCOMPARE(geometry.count(),0);QCOMPARE(edits.count(),0);QVERIFY(!ui.editor.canUndo());
+        ui.stop();QVERIFY(!drag);QVERIFY(!image);QVERIFY(!geographic);
+        QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
+    void referenceMenusKeepActionsOrderAndSafeOwnership_data(){widths();}
+    void referenceMenusKeepActionsOrderAndSafeOwnership()
+    {
+        QFETCH(int,width);Ui ui(width);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));
+        const auto firstId=ui.addImage();QVERIFY(!firstId.isEmpty());auto* library=ui.library();
+        auto* menu=ui.window->findChild<QObject*>("referenceImageMenu");QVERIFY(menu);
+        QCOMPARE(menu->property("count").toInt(),5);
+        QPointer<QObject> firstMenu=qvariant_cast<QObject*>(ui.evaluate(menu,"menuAt(4)"));QVERIFY(firstMenu);
+        QCOMPARE(modelData(firstMenu)["id"].toString(),firstId);QCOMPARE(firstMenu->property("count").toInt(),8);
+        QCOMPARE(ui.evaluate(menu,"itemAt(0).text").toString(),QString::fromUtf8("이미지 추가…"));
+        QCOMPARE(ui.evaluate(menu,"itemAt(1).text").toString(),QString::fromUtf8("배치 되돌리기"));
+        QCOMPARE(ui.evaluate(menu,"itemAt(2).text").toString(),QString::fromUtf8("배치 다시 실행"));
+        const auto trigger=[&](QObject* target,int index) {ui.evaluate(target,QString("itemAt(%1).triggered()").arg(index));QCoreApplication::sendPostedEvents(nullptr,QEvent::DeferredDelete);QTest::qWait(15);};
+        trigger(firstMenu,0);QVERIFY(!library->images().front().toMap()["visible"].toBool());
+        trigger(menu,1);QVERIFY(library->images().front().toMap()["visible"].toBool());
+        trigger(menu,2);QVERIFY(!library->images().front().toMap()["visible"].toBool());trigger(firstMenu,0);
+        trigger(firstMenu,1);QVERIFY(library->images().front().toMap()["locked"].toBool());
+        for(int index=3;index<8;++index)QVERIFY(!ui.evaluate(firstMenu,QString("itemAt(%1).enabled").arg(index)).toBool());
+        trigger(firstMenu,1);QVERIFY(!library->images().front().toMap()["locked"].toBool());
+        QPointer<QObject> blend=qvariant_cast<QObject*>(ui.evaluate(firstMenu,"menuAt(2)"));QVERIFY(blend);
+        QCOMPARE(blend->property("count").toInt(),4);
+        const QStringList modes={"normal","multiply","screen","difference"};
+        for(int i=0;i<modes.size();++i) {trigger(blend,i);QCOMPARE(library->images().front().toMap()["blend"].toString(),modes[i]);}
+        trigger(firstMenu,3);QCOMPARE(library->images().front().toMap()["opacity"].toDouble(),.9);
+        trigger(firstMenu,4);QCOMPARE(library->images().front().toMap()["opacity"].toDouble(),1.);
+        QVERIFY(library->importImage(QUrl::fromLocalFile(ui.files.filePath("reference.png")),"second"));
+        QCoreApplication::sendPostedEvents(nullptr,QEvent::DeferredDelete);QTest::qWait(20);
+        const auto secondId=library->images().back().toMap()["id"].toString();
+        QCOMPARE(menu->property("count").toInt(),6);
+        const auto menuId=[&](int index) {return ui.evaluate(menu,QString("menuAt(%1).modelData.id").arg(index)).toString();};
+        QCOMPARE(menuId(4),firstId);QCOMPARE(menuId(5),secondId);
+        trigger(firstMenu,5);QCOMPARE(library->images().back().toMap()["id"].toString(),firstId);
+        QCOMPARE(menuId(4),secondId);QCOMPARE(menuId(5),firstId);QVERIFY(firstMenu);QVERIFY(blend);
+        trigger(firstMenu,6);QCOMPARE(menuId(4),firstId);QCOMPARE(menuId(5),secondId);
+        trigger(firstMenu,7);QVERIFY(!firstMenu);QVERIFY(!blend);QCOMPARE(menu->property("count").toInt(),5);
+        QCOMPARE(menuId(4),secondId);QCOMPARE(library->images().size(),1);
+        QVERIFY(library->removeImage(secondId));
+        QVERIFY(library->importImage(QUrl::fromLocalFile(ui.files.filePath("reference.png")),"reimported"));
+        QCoreApplication::sendPostedEvents(nullptr,QEvent::DeferredDelete);QTest::qWait(20);
+        const auto reimported=library->images().front().toMap()["id"].toString();QVERIFY(reimported!=firstId);
+        QVERIFY(ui.reference());QVERIFY(ui.reference(true));
+        QCOMPARE(menu->property("count").toInt(),5);QCOMPARE(menuId(4),reimported);
+        QPointer<QObject> finalMenu=qvariant_cast<QObject*>(ui.evaluate(menu,"menuAt(4)"));QVERIFY(finalMenu);
+        ui.evaluate(menu,"open()");QTest::qWait(20);ui.evaluate(menu,"close()");
+        ui.stop();QVERIFY(!finalMenu);
+        QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
+    void referenceDragLeavesOutsideAndLockedMapPanning_data(){widths();}
+    void referenceDragLeavesOutsideAndLockedMapPanning()
+    {
+        QFETCH(int,width);Ui ui(width);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));
+        const auto id=ui.addImage();QVERIFY(!id.isEmpty());auto* library=ui.library();
+        QSignalSpy history(library,&ReferenceImageLibrary::historyChanged);
+        for(const bool locked:{false,true}) {
+            if(locked)QVERIFY(library->updateImage(id,{{"locked",true}}));
+            const auto records=library->images();const auto before=ui.editor.mapViewState();const int historyBefore=history.count();
+            const auto position=locked?ui.reference()->mapToScene({20,20}).toPoint():ui.map->mapToScene({35,330}).toPoint();
+            QTest::mousePress(ui.window,Qt::LeftButton,Qt::NoModifier,position);
+            QTest::mouseMove(ui.window,position+QPoint(22,15),20);
+            QTest::mouseMove(ui.window,position+QPoint(48,29),20);
+            QTest::mouseRelease(ui.window,Qt::LeftButton,Qt::NoModifier,position+QPoint(48,29));
+            QVERIFY(ui.editor.mapViewState()["panX"]!=before["panX"]);
+            QCOMPARE(library->images(),records);QCOMPARE(history.count(),historyBefore);
+        }
+        ui.stop();QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
+    void referenceActiveDragCancellationRestoresWithoutHistory_data(){widths();}
+    void referenceActiveDragCancellationRestoresWithoutHistory()
+    {
+        QFETCH(int,width);Ui ui(width);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));
+        QVERIFY(!ui.addImage().isEmpty());auto* library=ui.library();
+        const auto records=library->images();QPointer<QObject> drag=dragHandler(ui.reference());QVERIFY(drag);
+        QSignalSpy history(library,&ReferenceImageLibrary::historyChanged);
+        const auto position=ui.reference()->mapToScene({30,30}).toPoint();
+        for(const bool reenableBeforeRelease:{false,true}) {
+            history.clear();
+            QTest::mousePress(ui.window,Qt::LeftButton,Qt::NoModifier,position);
+            QTest::mouseMove(ui.window,position+QPoint(22,15),20);
+            QTest::mouseMove(ui.window,position+QPoint(48,29),20);
+            QVERIFY(drag&&drag->property("active").toBool());QVERIFY(library->images()!=records);
+            ui.editor.selectCountry("A");QVERIFY(ui.editor.beginGeometryDraw());
+            QTRY_VERIFY(!drag->property("enabled").toBool());
+            if(reenableBeforeRelease) {
+                ui.editor.cancelGeometryEdit();QVERIFY(drag->property("enabled").toBool());
+            }
+            QTest::mouseRelease(ui.window,Qt::LeftButton,Qt::NoModifier,position+QPoint(48,29));
+            QCoreApplication::sendPostedEvents(nullptr,QEvent::DeferredDelete);QTest::qWait(25);
+            QCOMPARE(library->images(),records);QCOMPARE(history.count(),0);
+            if(!reenableBeforeRelease)ui.editor.cancelGeometryEdit();
+            QTest::qWait(25);QVERIFY(drag->property("enabled").toBool());
+            QTest::mousePress(ui.window,Qt::LeftButton,Qt::NoModifier,position);
+            QTest::mouseMove(ui.window,position+QPoint(22,15),20);
+            QTest::mouseMove(ui.window,position+QPoint(48,29),20);
+            QVERIFY(drag->property("active").toBool());
+            QTest::mouseRelease(ui.window,Qt::LeftButton,Qt::NoModifier,position+QPoint(48,29));
+            QCOMPARE(history.count(),1);QVERIFY(library->images()!=records);
+            QVERIFY(library->undo());QCOMPARE(library->images(),records);
+        }
+        ui.stop();QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
     void referenceCancelLockAndGeometryGuards_data(){widths();}
     void referenceCancelLockAndGeometryGuards()
     {
-        QFETCH(int,width);Ui ui(width);QVERIFY2(ui.start(true),qPrintable(ui.warnings.join('\n')));
+        QFETCH(int,width);Ui ui(width);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));
         const auto id=ui.addImage();QVERIFY(!id.isEmpty());auto* library=ui.library();
         const auto canonical=ui.editor.documentBytes();
         const auto original=library->images();QSignalSpy history(library,&ReferenceImageLibrary::historyChanged);
@@ -327,7 +503,7 @@ private slots:
     void referenceGlobeBoundsTrackGeographicSnapshot_data(){widths();}
     void referenceGlobeBoundsTrackGeographicSnapshot()
     {
-        QFETCH(int,width);Ui ui(width);QVERIFY2(ui.start(true),qPrintable(ui.warnings.join('\n')));
+        QFETCH(int,width);Ui ui(width);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));
         QVERIFY(!ui.addImage().isEmpty());const auto records=ui.library()->images();const auto data=records.front().toMap();
         QVERIFY(ui.editor.setProjectionMode("globe"));QTRY_VERIFY(ui.reference(true));
         auto* image=ui.reference(true);QVERIFY(image->isVisible());QVERIFY(!ui.reference()->isVisible());

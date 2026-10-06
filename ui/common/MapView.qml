@@ -1,4 +1,5 @@
 import QtQuick
+import QtQml.Models
 import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
@@ -126,10 +127,22 @@ Rectangle {
     ReferenceImageLibrary { id: referenceImages }
 
     Repeater {
-        model: referenceImages.images
+        model: referenceImages.imageModel
         delegate: ReferenceImageItem {
             required property var modelData
             objectName: "referenceImageOverlay"
+            // Keep the handler's native type so the map's pan handler cannot
+            // take over this image drag as a different handler type.
+            property real dragStartX: 0
+            property real dragStartY: 0
+            property bool dragPending: false
+            property bool dragCanceled: false
+            property int dragSequence: 0
+            function cancelDrag(sequence) {
+                if (!dragPending || (sequence !== undefined && sequence !== dragSequence)) return
+                dragPending=false
+                referenceImages.cancelGesture()
+            }
             readonly property rect screenRect: editor.editMapRectToScreen(Qt.rect(modelData.x, modelData.y, modelData.width, modelData.height), view.cameraState)
             x: screenRect.x
             y: screenRect.y
@@ -150,16 +163,35 @@ Rectangle {
             DragHandler {
                 enabled: !parent.modelData.locked && !view.geometryEditing
                 target: null
-                property real startX: 0
-                property real startY: 0
                 onActiveChanged: {
                     if (active) {
-                        startX=parent.modelData.x; startY=parent.modelData.y
-                        referenceImages.beginGesture(parent.modelData.id)
-                    } else referenceImages.commitGesture()
+                        // A queued rollback must finish before a later gesture
+                        // starts, even if no event-loop turn separated them.
+                        parent.cancelDrag()
+                        parent.dragStartX=parent.modelData.x; parent.dragStartY=parent.modelData.y
+                        parent.dragPending=referenceImages.beginGesture(parent.modelData.id)
+                        if(parent.dragPending) {
+                            ++parent.dragSequence
+                            parent.dragCanceled=false
+                        }
+                    }
                 }
-                onActiveTranslationChanged: if(active) {
-                    const position=editor.editMapDragPosition(startX,startY,activeTranslation.x,activeTranslation.y,view.cameraState)
+                onCanceled: parent.cancelDrag()
+                onEnabledChanged: if(!enabled && parent.dragPending) {
+                    parent.dragCanceled=true
+                    // Rollback publishes modelData. Finish this enabled binding
+                    // first, and never let its deferred work cancel a later drag.
+                    Qt.callLater(parent.cancelDrag,parent.dragSequence)
+                }
+                onGrabChanged: function(transition, point) {
+                    if(transition!==PointerDevice.UngrabExclusive || !parent.dragPending) return
+                    const commit=enabled && !parent.dragCanceled && point.state===EventPoint.Released
+                    parent.dragPending=false
+                    if(commit) referenceImages.commitGesture()
+                    else referenceImages.cancelGesture()
+                }
+                onActiveTranslationChanged: if(active && parent.dragPending && !parent.dragCanceled) {
+                    const position=editor.editMapDragPosition(parent.dragStartX,parent.dragStartY,activeTranslation.x,activeTranslation.y,view.cameraState)
                     referenceImages.updateGesture({"x":position.x,"y":position.y})
                 }
             }
@@ -198,7 +230,7 @@ Rectangle {
         }
     }
     Repeater {
-        model: referenceImages.images
+        model: referenceImages.imageModel
         delegate: GeographicImageItem {
             required property var modelData
             anchors.fill: parent
@@ -279,16 +311,30 @@ Rectangle {
     }
     Menu {
         id: referenceImageMenu
+        objectName: "referenceImageMenu"
         y: referenceImageButton.y + referenceImageButton.height
         MenuItem { text: "이미지 추가…"; onTriggered: referenceImageOpen.open() }
         MenuItem { text: "배치 되돌리기"; enabled: referenceImages.canUndo; onTriggered: referenceImages.undo() }
         MenuItem { text: "배치 다시 실행"; enabled: referenceImages.canRedo; onTriggered: referenceImages.redo() }
         MenuSeparator {}
-        Repeater {
-            model: referenceImages.images
+        Instantiator {
+            model: referenceImages.imageModel
+            onObjectAdded: (index, object) => referenceImageMenu.insertMenu(index + 4, object)
+            onObjectRemoved: (index, object) => referenceImageMenu.removeMenu(object)
             delegate: Menu {
                 id: imageMenu
                 required property var modelData
+                required property int index
+                onIndexChanged: {
+                    if(index<0) return
+                    // Instantiator retains moved objects without re-emitting
+                    // objectAdded. Move the existing submenu with its image id.
+                    for(let position=4;position<referenceImageMenu.count;++position) {
+                        if(referenceImageMenu.menuAt(position)!==imageMenu) continue
+                        referenceImageMenu.moveItem(position,index+4)
+                        break
+                    }
+                }
                 title: modelData.name + (modelData.locked ? "  🔒" : "")
                 MenuItem { text: imageMenu.modelData.visible ? "숨기기" : "표시"; onTriggered: referenceImages.updateImage(imageMenu.modelData.id,{"visible":!imageMenu.modelData.visible}) }
                 MenuItem { text: imageMenu.modelData.locked ? "잠금 해제" : "잠금"; onTriggered: referenceImages.updateImage(imageMenu.modelData.id,{"locked":!imageMenu.modelData.locked}) }

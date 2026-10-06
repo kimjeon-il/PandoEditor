@@ -1,0 +1,133 @@
+name: M9.7.7 boundary timing diagnostics
+
+on:
+  push:
+    branches: [codex/m97-web-editing-parity]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-boundary-timing:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+      - name: Record the exact committed source bytes before building
+        run: |
+          mkdir -p evidence
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code HEAD --
+          printf '%s\n' "$GITHUB_SHA" > evidence/COMMIT
+          printf '%s\n' "$GITHUB_RUN_ID" > evidence/RUN_ID
+          git rev-parse 'HEAD^{tree}' > evidence/SOURCE_TREE
+          git ls-files -z | xargs -0 sha256sum > evidence/source-SHA256SUMS
+      - name: Verify integration and existing aggregate omission protection
+        run: |
+          node --test tools/m977-boundary-integration.test.mjs
+          python3 tests/m974_regression_gate_tests.py
+      - name: Install native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - name: Build only the production-linked native diagnostic target
+        run: |
+          test "$(qmake -query QT_VERSION)" = '6.8.3'
+          qmake -query QT_VERSION > evidence/QT_VERSION
+          node --version > evidence/NODE_VERSION
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON 2>&1 | tee evidence/native-configure.log
+          cmake --build build --target m977_boundary_timing_probe --parallel 2 2>&1 | tee evidence/native-build.log
+          sha256sum build/app/m977_boundary_timing_probe > evidence/native-SHA256SUMS
+      - name: Run the registered contract with the real native target
+        run: |
+          ctest --test-dir build --output-on-failure --no-tests=error \
+            -R '^m977_boundary_timing_contract$' \
+            --output-junit "$GITHUB_WORKSPACE/evidence/native-ctest.xml" 2>&1 | tee evidence/native-ctest.log
+      - name: Preserve detailed native test output even after failure
+        if: always()
+        run: |
+          mkdir -p evidence
+          if test -f build/Testing/Temporary/LastTest.log; then
+            cp build/Testing/Temporary/LastTest.log evidence/native-ctest-details.log
+          fi
+      - name: Install unchanged pinned official Chromium runtime
+        run: |
+          npm ci --prefix tools/m97/river/browser --ignore-scripts --registry=https://registry.npmjs.org
+          node tools/m97/river/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Capture exact-commit actual Chromium timing observations
+        run: node --max-old-space-size=512 tools/m977-boundary-adoption/browser-runner.mjs evidence/chromium
+      - name: Replay the captured exact inputs through this job's native binary
+        run: |
+          sha256sum -c evidence/native-SHA256SUMS
+          build/app/m977_boundary_timing_probe < evidence/chromium/cases.json > evidence/native-report.json 2> evidence/native-stderr.log
+      - name: Retain the observed differences without a parity waiver
+        run: |
+          node tools/m977-boundary-adoption/compare-browser.mjs \
+            evidence/chromium/suite.json.gz \
+            evidence/chromium/browser-report.json \
+            evidence/chromium/capture-verification.json \
+            evidence/native-report.json \
+            evidence/comparison.json
+      - name: Bind native build and all observation bytes to this exact CI checkout
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code HEAD --
+          sha256sum -c evidence/source-SHA256SUMS > evidence/source-verification.log
+          sha256sum -c evidence/native-SHA256SUMS > evidence/native-verification.log
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          evidence = Path('evidence')
+          assert os.environ['GITHUB_ACTIONS'] == 'true'
+          commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert commit == os.environ['GITHUB_SHA'] == (evidence / 'COMMIT').read_text().strip()
+          run_id = os.environ['GITHUB_RUN_ID']
+          assert run_id.isdigit() and run_id == (evidence / 'RUN_ID').read_text().strip()
+          assert (evidence / 'QT_VERSION').read_text().strip() == '6.8.3'
+          files = [
+              'evidence/source-SHA256SUMS', 'build/app/m977_boundary_timing_probe',
+              'evidence/native-configure.log', 'evidence/native-build.log',
+              'evidence/native-ctest.log', 'evidence/native-ctest.xml',
+              'evidence/native-ctest-details.log',
+              'evidence/chromium/cases.json', 'evidence/native-report.json',
+              'evidence/chromium/suite.json.gz', 'evidence/chromium/browser-report.json',
+              'evidence/chromium/capture-verification.json',
+              'evidence/chromium/report-transfer.json', 'evidence/chromium/cdp-runtime.json',
+              'evidence/comparison.json',
+          ]
+          receipt = {
+              'schema': 'pando-m977-boundary-native-build-provenance', 'version': 1,
+              'commit': commit, 'runId': run_id,
+              'sourceTree': (evidence / 'SOURCE_TREE').read_text().strip(),
+              'nativeTarget': 'm977_boundary_timing_probe',
+              'cleanExactCommitCIBuild': True, 'rawParity': False, 'parityAccepted': False,
+              'files': {name: {'sha256': hashlib.sha256(Path(name).read_bytes()).hexdigest(),
+                               'bytes': Path(name).stat().st_size} for name in files},
+          }
+          (evidence / 'native-build-provenance.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: m977-boundary-timing-${{ github.sha }}
+          path: evidence
+          retention-days: 14

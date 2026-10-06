@@ -34,7 +34,13 @@ ReferenceWarpMode warpMode(const QString &mode)
 }
 }
 
-ReferenceImageLibrary::ReferenceImageLibrary(QObject *parent) : QObject(parent) { reload(); }
+ReferenceImageLibrary::ReferenceImageLibrary(QObject *parent) : QObject(parent), imageModel_(this)
+{
+    // Publish model changes before consumers of the existing images API observe
+    // each preview, cancellation, reload, or history transition.
+    connect(this, &ReferenceImageLibrary::imagesChanged, this, [this] { imageModel_.setRows(images()); });
+    reload();
+}
 
 QString ReferenceImageLibrary::directory() const
 {

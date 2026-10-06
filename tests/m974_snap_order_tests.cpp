@@ -122,7 +122,8 @@ private slots:
   provider->notifyWorkerStopped();QVERIFY(controller.geometrySelectTerritoryMethod("components"));QTRY_VERIFY_WITH_TIMEOUT(!controller.geometryEditState().value("calculating").toBool(),5000);QVERIFY(provider->sourceRanks()!=initialRanks);
   const auto readyRanks=provider->sourceRanks();provider->notifyWorkerStopped();
   QVERIFY(controller.geometrySelectTerritoryMethod("line"));QTRY_VERIFY_WITH_TIMEOUT(!controller.geometryEditState().value("calculating").toBool(),5000);QCOMPARE(provider->sourceRanks(),readyRanks);
-  QVERIFY(controller.geometrySelectTerritoryMethod("components"));QTRY_VERIFY_WITH_TIMEOUT(!controller.geometryEditState().value("calculating").toBool(),5000);QCOMPARE(provider->sourceRanks(),readyRanks);
+  QVERIFY(controller.geometrySelectTerritoryMethod("components"));QCOMPARE(controller.geometryEditState().value("confirmationKind").toString(),QString("method"));QCOMPARE(controller.geometryEditState().value("activeMethod").toString(),QString("line"));
+  QVERIFY(controller.geometryConfirmTerritoryChange());QTRY_VERIFY_WITH_TIMEOUT(!controller.geometryEditState().value("calculating").toBool(),5000);QCOMPARE(controller.geometryEditState().value("activeMethod").toString(),QString("components"));QCOMPARE(provider->sourceRanks(),readyRanks);
   controller.cancelGeometryEdit();
  }
  void sourceChangeWhileComponentRequestPending(){

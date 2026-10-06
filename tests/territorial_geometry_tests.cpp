@@ -125,6 +125,60 @@ private slots:
         QVERIFY(c.geometryToggleTerritoryComponent(second));QTRY_VERIFY_WITH_TIMEOUT(c.geometryEditState().value("previewReady").toBool(),10000);
         QCOMPARE(c.geometryEditState().value("activeMethod").toString(),QString("components"));QVERIFY(c.geometryEditState().value("parts").toList().isEmpty());c.cancelGeometryEdit();
     }
+    void emptyReadyDrawingMethodChangeRequiresConfirmation_data() {
+        QTest::addColumn<bool>("mobile");QTest::addColumn<QString>("method");QTest::addColumn<QString>("nextMethod");
+        for(const bool mobile:{false,true})for(const auto method:{QString("polygon"),QString("line")}) {
+            const auto name=(mobile?QString("mobile-"):QString("desktop-"))+method;
+            QTest::newRow(qPrintable(name))<<mobile<<method<<(method=="polygon"?QString("line"):QString("polygon"));
+        }
+    }
+    void emptyReadyDrawingMethodChangeRequiresConfirmation() {
+        QFETCH(bool,mobile);QFETCH(QString,method);QFETCH(QString,nextMethod);
+        QTemporaryDir dir;Project source;source.replace(ProjectDocument({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}}));
+        QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();
+        EditorController c({mobile,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(file.fileName())));c.selectCountry("A");
+        const auto before=c.documentBytes();const auto revision=c.revision();
+        QVERIFY(c.beginAnnexGeometry());QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","B"}}));QVERIFY(c.geometryAdvanceStage());QVERIFY(c.geometrySelectTerritoryMethod(method));
+        QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);
+        const auto ready=c.geometryEditState();const auto emptyPaths=c.geometryDraftPaths();
+        QCOMPARE(ready.value("activeMethod").toString(),method);QCOMPARE(ready.value("selectionPhase").toString(),QString("drawing"));
+        for(const auto& path:emptyPaths)QVERIFY(path.toMap().value("vertices").toList().isEmpty());
+        QVERIFY(!ready.value("canUndoDraft").toBool());QVERIFY(!ready.value("canRedo").toBool());
+        QSignalSpy sameMethodChanges(&c,&EditorController::geometryEditChanged);
+        QVERIFY(c.geometrySelectTerritoryMethod(method));QCOMPARE(sameMethodChanges.size(),0);QCOMPARE(c.geometryDraftPaths(),emptyPaths);
+        QCOMPARE(c.geometryEditState().value("activeMethod").toString(),method);QVERIFY(c.geometryEditState().value("confirmationKind").toString().isEmpty());
+        // The native return convention reports an accepted request; the public
+        // state, rather than that boolean, distinguishes a pending decision.
+        QVERIFY(c.geometrySelectTerritoryMethod(nextMethod));
+        QCOMPARE(c.geometryEditState().value("confirmationKind").toString(),QString("method"));
+        QCOMPARE(c.geometryEditState().value("activeMethod").toString(),method);QCOMPARE(c.geometryEditState().value("requestedMethod").toString(),nextMethod);
+        QVERIFY(!c.geometryEditState().value("selectionPending").toBool());QCOMPARE(c.geometryDraftPaths(),emptyPaths);
+        QVERIFY(!c.geometryAddPoint(4,2,0,mobile?"touch":"mouse"));
+        QVERIFY(c.geometryCancelTerritoryChange());QCOMPARE(c.geometryEditState().value("activeMethod").toString(),method);
+        QCOMPARE(c.geometryEditState().value("requestedMethod").toString(),method);QVERIFY(c.geometryEditState().value("confirmationKind").toString().isEmpty());QCOMPARE(c.geometryDraftPaths(),emptyPaths);
+        QVERIFY(c.geometrySelectTerritoryMethod(nextMethod));QCOMPARE(c.geometryEditState().value("confirmationKind").toString(),QString("method"));
+        QVERIFY(c.geometryConfirmTerritoryChange());QCOMPARE(c.geometryEditState().value("activeMethod").toString(),nextMethod);
+        QVERIFY(c.geometryEditState().value("confirmationKind").toString().isEmpty());QVERIFY(c.geometryEditState().value("selectionPending").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);
+        for(const auto& path:c.geometryDraftPaths())QVERIFY(path.toMap().value("vertices").toList().isEmpty());
+        QVERIFY(!c.geometryEditState().value("canUndoDraft").toBool());QVERIFY(!c.geometryEditState().value("canRedo").toBool());
+        QCOMPARE(c.documentBytes(),before);QCOMPARE(c.revision(),revision);QVERIFY(!c.canUndo());QVERIFY(!c.canRedo());c.cancelGeometryEdit();
+    }
+    void emptyPreparingDrawingMethodCanBeSuperseded_data() {emptyReadyDrawingMethodChangeRequiresConfirmation_data();}
+    void emptyPreparingDrawingMethodCanBeSuperseded() {
+        QFETCH(bool,mobile);QFETCH(QString,method);QFETCH(QString,nextMethod);
+        QTemporaryDir dir;Project source;source.replace(ProjectDocument({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}}));
+        QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();
+        EditorController c({mobile,dir.filePath("private.json")});QVERIFY(c.openFile(QUrl::fromLocalFile(file.fileName())));c.selectCountry("A");const auto before=c.documentBytes();
+        QVERIFY(c.beginAnnexGeometry());QVERIFY(c.geometryToggleProvider({{"domain","territorial"},{"id","B"}}));QVERIFY(c.geometryAdvanceStage());QVERIFY(c.geometrySelectTerritoryMethod(method));
+        QVERIFY(c.geometryEditState().value("selectionPending").toBool());QVERIFY(!c.geometryAddPoint(2,2,0,mobile?"touch":"mouse"));
+        QVERIFY(c.geometrySelectTerritoryMethod(method));QVERIFY(c.geometryEditState().value("confirmationKind").toString().isEmpty());
+        QVERIFY(c.geometrySelectTerritoryMethod(nextMethod));QCOMPARE(c.geometryEditState().value("activeMethod").toString(),nextMethod);QVERIFY(c.geometryEditState().value("confirmationKind").toString().isEmpty());
+        QTRY_VERIFY_WITH_TIMEOUT(!c.geometryEditState().value("calculating").toBool(),10000);
+        QCOMPARE(c.geometryEditState().value("activeMethod").toString(),nextMethod);
+        for(const auto& path:c.geometryDraftPaths())QVERIFY(path.toMap().value("vertices").toList().isEmpty());
+        QCOMPARE(c.documentBytes(),before);QVERIFY(!c.canUndo());QVERIFY(!c.canRedo());c.cancelGeometryEdit();
+    }
     void emptyPolygonTransferPreservesEditableDraft() {
         QTemporaryDir dir;Project source;source.replace(ProjectDocument({{"A","A",square(0,0,10).polygons,0xabcdef},{"B","B",square(10,0,10).polygons,0x123456}},{{"countries","Countries"}}));
         QFile file(dir.filePath("input.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(source));file.close();

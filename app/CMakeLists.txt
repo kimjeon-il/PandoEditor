@@ -17,7 +17,7 @@ qt_add_executable(pandoeditor main.cpp)
 add_library(pandoeditor_editor STATIC
     referencewarp.cpp referencewarp.h
     referencetracing.cpp referencetracing.h
-    referenceimagelibrary.cpp referenceimagelibrary.h
+    referenceimagelibrary.cpp referenceimagelibrary.h referenceimagemodel.h
     defaultflagresolver.cpp defaultflagresolver.h
     hydrodataprovider.cpp hydrodataprovider.h
     historicallibraryloader.cpp historicallibraryloader.h
@@ -903,4 +903,22 @@ if(BUILD_TESTING)
         "${PROJECT_SOURCE_DIR}/tools/m977-pending-input/compare.test.mjs")
     set_tests_properties(m977_pending_input_contract PROPERTIES TIMEOUT 180
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;PANDO_M977_NATIVE_PROBE=$<TARGET_FILE:m977_pending_input_probe>")
+endif()
+
+# Observation-only boundary timing route; known divergences remain explicit.
+if(BUILD_TESTING)
+    add_executable(m977_boundary_timing_probe ../tools/m977-boundary-adoption/native-probe.cpp)
+    target_include_directories(m977_boundary_timing_probe PRIVATE "${PROJECT_SOURCE_DIR}/tests")
+    target_link_libraries(m977_boundary_timing_probe PRIVATE pandoeditor_editor)
+    qt_add_resources(m977_boundary_timing_probe sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME m977_boundary_timing_contract COMMAND "${M974_NODE_EXECUTABLE}" --test
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-adoption/runtime.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-adoption/suite.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-adoption/browser-runner.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-adoption/native.test.mjs"
+        "${PROJECT_SOURCE_DIR}/tools/m977-boundary-integration.test.mjs")
+    set_tests_properties(m977_boundary_timing_contract PROPERTIES TIMEOUT 180
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;M977_BOUNDARY_PROBE=$<TARGET_FILE:m977_boundary_timing_probe>")
 endif()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "referencewarp.h"
+#include "referenceimagemodel.h"
 #include <QJsonObject>
 #include <QObject>
 #include <QUrl>
@@ -11,6 +12,7 @@ class ReferenceImageLibrary : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QVariantList images READ images NOTIFY imagesChanged)
+    Q_PROPERTY(QAbstractItemModel *imageModel READ imageModel CONSTANT)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY historyChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY historyChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
@@ -18,6 +20,7 @@ public:
     explicit ReferenceImageLibrary(QObject *parent = nullptr);
 
     QVariantList images() const;
+    QAbstractItemModel *imageModel() { return &imageModel_; }
     bool canUndo() const { return !undo_.isEmpty(); }
     bool canRedo() const { return !redo_.isEmpty(); }
     QString lastError() const { return lastError_; }
@@ -59,6 +62,7 @@ private:
     static QJsonObject json(const Record &record);
     static std::optional<Record> record(const QJsonObject &json);
     const Record *find(const QString &id) const;
+    ReferenceImageModel imageModel_;
     State state_;
     QVector<State> undo_, redo_;
     std::optional<State> gestureBefore_;
