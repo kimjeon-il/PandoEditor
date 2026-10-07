@@ -31,7 +31,7 @@ public:
         std::memcpy(bytes->data(),matrix.constData(),64);
         static_assert(sizeof(QVector4D)==16,"std140 vec4 layout requires four floats");
         const QVector4D vectors[]{material->flat0,material->flat1,material->globe0,
-            material->globe1,material->color,material->effects};
+            material->globe1,material->color,material->effects,material->strokeOptions};
         std::memcpy(bytes->data()+64,vectors,
                     std::min<std::size_t>(std::size_t(bytes->size()-64),sizeof(vectors)));
         // Qt item opacity composes with per-packet alpha.
@@ -88,4 +88,6 @@ void MapMaterial::setStyle(const RenderStyle& style,float pointRadius) {
                     float((style.color>>8)&255)/255*weight,
                     float(style.color&255)/255*weight,alpha);
     effects=QVector4D(std::max(0.f,style.width),style.dashOn,style.dashOff,pointRadius);
+    if(primitive==MapPrimitive::Stroke)effects.setW(blend==BlendMode::Multiply?1.f:0.f);
+    strokeOptions={style.join==mapstyle::Join::Miter?1.f:0.f,style.cap==mapstyle::Cap::Round?1.f:0.f,style.antiAlias?1.f:0.f,4.f};
 }

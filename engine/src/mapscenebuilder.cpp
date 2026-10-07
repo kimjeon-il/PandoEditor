@@ -314,6 +314,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             WorldCountryDraw base;base.id=range.ownerId;
             base.fill.color=0xa8c7db;base.boundary.color=0x61778a;
             base.boundary.width=float(mapstyle::baseStroke(mapstyle::BaseRole::Country).width);
+            base.boundary.cap=mapstyle::Cap::Butt;
             if(!worldBase_->startupPreview()) {
                 const auto unit=std::find_if(doc.units.begin(),doc.units.end(),
                     [&](const auto& value){return value.id==range.ownerId;});
@@ -470,6 +471,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
                         const auto policy=mapstyle::baseStroke(role);
                         stroke.style.width=float(policy.width);
                         stroke.style.dashOn=float(policy.dashOn);stroke.style.dashOff=float(policy.dashOff);
+                        stroke.style.cap=policy.cap;stroke.style.join=policy.join;stroke.style.antiAlias=policy.antiAlias;
                         break;
                     }
                 stroke.drawOrder=mapRenderOrder(doc,object,RenderPrimitiveRole::Boundary);
@@ -637,6 +639,10 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             mix(presentation,packet.key);mix(presentation,packet.style.color);
             mixDouble(presentation,packet.style.alpha);mixDouble(presentation,packet.style.fillAlpha);
             mixDouble(presentation,packet.style.width);
+            mixDouble(presentation,packet.style.dashOn);mixDouble(presentation,packet.style.dashOff);
+            mix(presentation,static_cast<std::uint64_t>(packet.style.cap));
+            mix(presentation,static_cast<std::uint64_t>(packet.style.join));
+            mix(presentation,packet.style.antiAlias?1:0);
             mix(presentation,static_cast<std::uint64_t>(packet.style.blendMode));
             mix(presentation,order.pass);mix(presentation,order.group);mixDouble(presentation,order.object);
             mix(presentation,command.layerOrder);mixDouble(presentation,command.layerOpacity);
@@ -656,6 +662,9 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             mix(geometry,world.id);mix(geometry,static_cast<std::uint64_t>(command.primitive));
             mix(presentation,world.id);mix(presentation,style.color);
             mixDouble(presentation,style.alpha);mixDouble(presentation,style.width);
+            mixDouble(presentation,style.dashOn);mixDouble(presentation,style.dashOff);
+            mix(presentation,static_cast<std::uint64_t>(style.cap));
+            mix(presentation,static_cast<std::uint64_t>(style.join));mix(presentation,style.antiAlias?1:0);
             mix(presentation,order.pass);mix(presentation,order.group);
             mixDouble(presentation,order.object);mix(presentation,command.layerOrder);
             mixDouble(presentation,command.layerOpacity);

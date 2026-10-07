@@ -2,6 +2,7 @@
 #include "mapmaterial.h"
 #include "resourceidentity.h"
 #include "../interactionrenderstyle.h"
+#include "../stroketopology.h"
 #include <QSGGeometryNode>
 #include <QSGGeometry>
 #include <QElapsedTimer>
@@ -15,18 +16,56 @@
 
 namespace {
 struct FillVertex {float x,y;};
-struct StrokeVertex {float ax,ay,bx,by,side,endpoint,width;};
+struct StrokeVertex {float ax,ay,bx,by,side,endpoint,width,px,py,nx,ny,phase,flags,kind;};
+constexpr std::size_t strokeVertices=12,strokeIndices=18;
+// Three bounded quads per original segment: body, start join/cap, end cap.
+// Unused patches are explicitly discarded, never uninitialized. Preparation
+// occurs only on actual geometry admission, not view/style updates.
+void writeStroke(StrokeVertex* vertices,std::uint32_t* indices,const std::vector<float>& values,
+                 const std::vector<float>* widths=nullptr,std::size_t vertexOffset=0) {
+    const auto count=values.size()/4;
+    for(std::size_t i=0;i<count*strokeVertices;++i)vertices[i]={0,0,0,0,0,0,0,0,0,0,0,0,0,-1};
+    for(std::size_t i=0;i<count*3;++i) {
+        const auto base=std::uint32_t(vertexOffset+i*4);
+        const std::uint32_t quad[]{base,base+1,base+2,base+2,base+1,base+3};
+        std::memcpy(indices+i*6,quad,sizeof(quad));
+    }
+    const bool variable=widths&&widths->size()==count*2;
+    for(const auto& s:stroke::chains(values)) {
+        const auto i=s.input;const float wa=variable?widths->at(i*2):0,wb=variable?widths->at(i*2+1):0;
+        for(int j=0;j<4;++j) {
+            vertices[i*12+j]={s.start[0],s.start[1],s.end[0],s.end[1],(j%2)?1.f:-1.f,(j/2)?1.f:0.f,
+                (j/2)?wb:wa,s.previous[0],s.previous[1],s.next[0],s.next[1],s.phase,float(s.flags),0};
+            const float kind=(s.flags&1)?1.f:2.f;
+            vertices[i*12+4+j]={s.start[0],s.start[1],s.end[0],s.end[1],(j%2)?1.f:-1.f,(j/2)?1.f:-1.f,
+                wa,s.previous[0],s.previous[1],s.end[0],s.end[1],s.phase,float(s.flags),kind};
+            if(!(s.flags&2))vertices[i*12+8+j]={s.end[0],s.end[1],s.end[0],s.end[1],(j%2)?1.f:-1.f,(j/2)?1.f:-1.f,
+                wb,s.start[0],s.start[1],s.end[0],s.end[1],s.phase,float(s.flags),3};
+        }
+    }
+}
+template<class Mesh>std::vector<float> worldSegments(const Mesh& mesh,std::size_t start,std::size_t count) {
+    std::vector<float> result;result.reserve(count*2);
+    for(std::size_t i=0;i<count;++i) {
+        const auto v=std::size_t(mesh.lineIndices[start+i]);
+        result.push_back(float(double(mesh.positionsMicrodegrees[v*2])/1000000.0));
+        result.push_back(float(double(mesh.positionsMicrodegrees[v*2+1])/1000000.0));
+    }
+    return result;
+}
 struct PointVertex {float longitude,latitude,cornerX,cornerY;};
 
 const QSGGeometry::AttributeSet& attributes(MapPrimitive primitive) {
     static QSGGeometry::Attribute fill[]{QSGGeometry::Attribute::create(0,2,QSGGeometry::FloatType,true)};
     static QSGGeometry::Attribute stroke[]{QSGGeometry::Attribute::create(0,4,QSGGeometry::FloatType,true),
         QSGGeometry::Attribute::create(1,2,QSGGeometry::FloatType),
-        QSGGeometry::Attribute::create(2,1,QSGGeometry::FloatType)};
+        QSGGeometry::Attribute::create(2,1,QSGGeometry::FloatType),
+        QSGGeometry::Attribute::create(3,4,QSGGeometry::FloatType),
+        QSGGeometry::Attribute::create(4,3,QSGGeometry::FloatType)};
     static QSGGeometry::Attribute point[]{QSGGeometry::Attribute::create(0,2,QSGGeometry::FloatType,true),
         QSGGeometry::Attribute::create(1,2,QSGGeometry::FloatType)};
     static const QSGGeometry::AttributeSet fillSet{1,sizeof(FillVertex),fill};
-    static const QSGGeometry::AttributeSet strokeSet{3,sizeof(StrokeVertex),stroke};
+    static const QSGGeometry::AttributeSet strokeSet{5,sizeof(StrokeVertex),stroke};
     static const QSGGeometry::AttributeSet pointSet{2,sizeof(PointVertex),point};
     return primitive==MapPrimitive::Fill?fillSet:primitive==MapPrimitive::Stroke?strokeSet:pointSet;
 }
@@ -223,7 +262,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         auto* material=node->mapMaterial();
         const auto oldFlat0=material->flat0,oldFlat1=material->flat1;
         const auto oldGlobe0=material->globe0,oldGlobe1=material->globe1;
-        const auto oldColor=material->color,oldEffects=material->effects;
+        const auto oldColor=material->color,oldEffects=material->effects,oldStroke=material->strokeOptions;
         material->setView(view,flat.originX,flat.originY,flat.mapScale,
                           flat.cosLatitude,flat.minX,flat.maxLatitude,float(world));
         material->setStyle(style,kind==MapPrimitive::Point&&interaction?-6.f:
@@ -232,7 +271,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
            oldGlobe0!=material->globe0||oldGlobe1!=material->globe1) {
             ++stats.viewUniformUpdateCount;node->markDirty(QSGNode::DirtyMaterial);
         }
-        if(oldColor!=material->color||oldEffects!=material->effects) {
+        if(oldColor!=material->color||oldEffects!=material->effects||oldStroke!=material->strokeOptions) {
             ++stats.materialUpdateCount;node->markDirty(QSGNode::DirtyMaterial);
         }
         stats.geometryBytes+=node->bytes;
@@ -307,7 +346,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         const auto& mesh=*scene->worldBase->mesh;
         const auto start=mesh.countryBoundaryRanges.at(country*2);
         const auto count=mesh.countryBoundaryRanges.at(country*2+1);
-        if(!count||count/2>std::size_t(INT_MAX/4))return;
+        if(!count||count/2>std::size_t(INT_MAX/strokeIndices))return;
         MapResourceIdentity resource;resource.buffers[0]=scene->worldBase->mesh;
         resource.object={"territorial",scene->worldCountries[country].id};
         if(country<scene->worldBase->ranges.size())resource.geometry={scene->worldBase->ranges[country].geometryId,1};
@@ -316,57 +355,29 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         install("world/"+std::to_string(country)+"/"+scene->worldCountries[country].id+
                 (channel.empty()?"":"/"+channel),MapPrimitive::Stroke,style.blendMode,
                 style,resource,world,!channel.empty(),
-                (count/2)*(4*sizeof(StrokeVertex)+6*sizeof(std::uint32_t)),
+                (count/2)*(strokeVertices*sizeof(StrokeVertex)+strokeIndices*sizeof(std::uint32_t)),
                 !channel.empty(),[&](Entry& node) {
-            const auto segments=count/2;
-            node.allocate(int(segments*4),int(segments*6));
-            auto* vertex=static_cast<StrokeVertex*>(node.geometry()->vertexData());
-            auto* indices=node.geometry()->indexDataAsUInt();
-            for(std::size_t i=0;i<segments;++i) {
-                const auto a=std::size_t(mesh.lineIndices[start+i*2]);
-                const auto b=std::size_t(mesh.lineIndices[start+i*2+1]);
-                const float x0=mesh.positionsMicrodegrees[a*2]/1000000.f;
-                const float y0=mesh.positionsMicrodegrees[a*2+1]/1000000.f;
-                const float x1=mesh.positionsMicrodegrees[b*2]/1000000.f;
-                const float y1=mesh.positionsMicrodegrees[b*2+1]/1000000.f;
-                for(int j=0;j<4;++j)vertex[i*4+j]={x0,y0,x1,y1,
-                    (j%2)?1.f:-1.f,(j/2)?1.f:0.f,0.f};
-                const std::uint32_t base=std::uint32_t(i*4);
-                const std::uint32_t quad[]{base,base+1,base+2,base+2,base+1,base+3};
-                std::memcpy(indices+i*6,quad,sizeof(quad));
-            }
+            const auto values=worldSegments(mesh,start,count);
+            node.allocate(int(count/2*strokeVertices),int(count/2*strokeIndices));
+            writeStroke(static_cast<StrokeVertex*>(node.geometry()->vertexData()),node.geometry()->indexDataAsUInt(),values);
         });
     };
     auto stroke=[&](const StrokeDrawPacket& draw,int world,bool interaction,
                     RenderStyle style,const std::string& channel="") {
         const auto& packet=draw.geometryPacket;
-        if(!packet.startsEnds||packet.segmentCount>INT_MAX/4||!packet.segmentCount)return;
+        if(!packet.startsEnds||packet.segmentCount>INT_MAX/strokeIndices||!packet.segmentCount)return;
         auto resource=mapDrawResourceIdentity(draw);
         resource.buffers={packet.startsEnds,packet.endpointWidths,{}};
         resource.counts={packet.segmentCount,packet.startsEnds->size(),packet.endpointWidths?packet.endpointWidths->size():0};
         install(draw.key+(interaction?"/"+channel:""),MapPrimitive::Stroke,style.blendMode,style,
                 resource,world,interaction,
-                packet.segmentCount*(4*sizeof(StrokeVertex)+6*sizeof(std::uint32_t)),
+                packet.segmentCount*(strokeVertices*sizeof(StrokeVertex)+strokeIndices*sizeof(std::uint32_t)),
                 interaction||contains(scene->interaction.selected,draw.object)||
                     (scene->interaction.editTarget&&*scene->interaction.editTarget==draw.object),
                 [&](Entry& node) {
-            node.allocate(int(packet.segmentCount*4),int(packet.segmentCount*6));
-            auto* vertex=static_cast<StrokeVertex*>(node.geometry()->vertexData());
-            auto* index=node.geometry()->indexDataAsUInt();
-            const bool variable=packet.endpointWidths&&
-                packet.endpointWidths->size()==packet.segmentCount*2;
-            for(std::size_t i=0;i<packet.segmentCount;++i) {
-                const auto* s=packet.startsEnds->data()+i*4;
-                for(int j=0;j<4;++j) {
-                    const auto endpoint=(j/2)?1u:0u;
-                    const float width=variable?packet.endpointWidths->at(i*2+endpoint):0.f;
-                    vertex[i*4+j]={s[0],s[1],s[2],s[3],
-                        (j%2)?1.f:-1.f,(j/2)?1.f:0.f,width};
-                }
-                const std::uint32_t base=std::uint32_t(i*4);
-                const std::uint32_t quad[]{base,base+1,base+2,base+2,base+1,base+3};
-                std::memcpy(index+i*6,quad,sizeof(quad));
-            }
+            node.allocate(int(packet.segmentCount*strokeVertices),int(packet.segmentCount*strokeIndices));
+            writeStroke(static_cast<StrokeVertex*>(node.geometry()->vertexData()),node.geometry()->indexDataAsUInt(),
+                        *packet.startsEnds,packet.endpointWidths.get());
         });
     };
     auto point=[&](const PointDrawPacket& draw,int world,bool interaction=false,
@@ -439,7 +450,8 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
     std::size_t batchBytes=0;
     const auto sameStyle=[](const RenderStyle& a,const RenderStyle& b) {
         return a.color==b.color&&a.alpha==b.alpha&&a.fillAlpha==b.fillAlpha&&
-            a.width==b.width&&a.dashOn==b.dashOn&&a.dashOff==b.dashOff&&a.blendMode==b.blendMode;
+            a.width==b.width&&a.dashOn==b.dashOn&&a.dashOff==b.dashOff&&a.blendMode==b.blendMode&&
+            a.cap==b.cap&&a.join==b.join&&a.antiAlias==b.antiAlias;
     };
     const auto flushBase=[&] {
         if(batch.empty())return;
@@ -469,17 +481,9 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                     for(std::size_t i=0;i<part.indices;++i)
                         outputIndices[indexOffset+i]=std::uint32_t(vertexOffset)+mesh.triangleIndices[part.indexFirst+i]-std::uint32_t(part.first);
                 } else {
-                    auto* output=static_cast<StrokeVertex*>(node.geometry()->vertexData());
-                    for(std::size_t i=0;i<part.vertices/4;++i) {
-                        const auto a=std::size_t(mesh.lineIndices[part.indexFirst+i*2]);
-                        const auto b=std::size_t(mesh.lineIndices[part.indexFirst+i*2+1]);
-                        const float ax=mesh.positionsMicrodegrees[a*2]/1000000.f,ay=mesh.positionsMicrodegrees[a*2+1]/1000000.f;
-                        const float bx=mesh.positionsMicrodegrees[b*2]/1000000.f,by=mesh.positionsMicrodegrees[b*2+1]/1000000.f;
-                        for(int j=0;j<4;++j)output[vertexOffset+i*4+j]={ax,ay,bx,by,(j%2)?1.f:-1.f,(j/2)?1.f:0.f,0.f};
-                        const std::uint32_t base=std::uint32_t(vertexOffset+i*4);
-                        const std::uint32_t quad[]{base,base+1,base+2,base+2,base+1,base+3};
-                        std::memcpy(outputIndices+indexOffset+i*6,quad,sizeof(quad));
-                    }
+                    const auto values=worldSegments(mesh,part.indexFirst,part.vertices/strokeVertices*2);
+                    writeStroke(static_cast<StrokeVertex*>(node.geometry()->vertexData())+vertexOffset,
+                                outputIndices+indexOffset,values,nullptr,vertexOffset);
                 }
                 vertexOffset+=part.vertices;indexOffset+=part.indices;
             }
@@ -502,7 +506,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             } else {
                 part.indexFirst=mesh.countryBoundaryRanges.at(slot*2);
                 const auto segments=mesh.countryBoundaryRanges.at(slot*2+1)/2;
-                part.vertices=segments*4;part.indices=segments*6;
+                part.vertices=segments*strokeVertices;part.indices=segments*strokeIndices;
             }
             if(!part.vertices||!part.indices)continue;
             if(part.vertices>INT_MAX||part.indices>INT_MAX)continue;

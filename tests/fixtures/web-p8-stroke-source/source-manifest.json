@@ -1,0 +1,41 @@
+{
+  "schema": "pandoeditor-fixed-web-stroke-source",
+  "webSHA": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+  "files": [
+    {
+      "path": "assets/js/modules/gpu-stroke-geometry.js",
+      "file": "gpu-stroke-geometry.js",
+      "bytes": 6598,
+      "sha256": "c7b885a4150c20f957b2477e48d03763e9778be728afc0481016e9b44e5e05fe",
+      "gitBlob": "5cf46f288cc6d3288387309de29aeb3fb4972cbf"
+    },
+    {
+      "path": "assets/js/modules/gpu-stroke-renderer.js",
+      "file": "gpu-stroke-renderer.js",
+      "bytes": 41687,
+      "sha256": "b2cbf0d1a324b11b1cde3d7d38875e10c43d561d4f42fde6f79d1b5bd4be0642",
+      "gitBlob": "2bb30e34daedf09d5f07a857856d1236200f3a3b"
+    },
+    {
+      "path": "assets/js/modules/map-interaction-style.js",
+      "file": "map-interaction-style.js",
+      "bytes": 10561,
+      "sha256": "92bd449b3329830203e6237987ed2b06e260c42780aabce1d3332f1d27af564c",
+      "gitBlob": "8cad4db5a07c4286b5a5e1fccdbaa6c6988caa4e"
+    },
+    {
+      "path": "assets/js/modules/layer-presentation.js",
+      "file": "layer-presentation.js",
+      "bytes": 7612,
+      "sha256": "1422ac615f8bab3654848fe6f3136031b2c0672c1c71309481cccf9e1cccd989",
+      "gitBlob": "d3693326c1085c3a2757d33ea40787be933c8519"
+    },
+    {
+      "path": "assets/js/modules/map-visual-frame.js",
+      "file": "map-visual-frame.js",
+      "bytes": 8717,
+      "sha256": "4333648377219ad4395a9573b32e1f1db86f494029656929def0785264a81489",
+      "gitBlob": "40a7f1ebe2a627e68b9554588ab9f4135f0230b9"
+    }
+  ]
+}

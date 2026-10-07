@@ -29,4 +29,5 @@ public:
     QVector4D globe1;  // translateX, translateY, viewport width, viewport height
     QVector4D color;
     QVector4D effects; // stroke width, dash on, dash off, point radius
+    QVector4D strokeOptions; // join mode, round cap, AA CSS radius, miter limit
 };

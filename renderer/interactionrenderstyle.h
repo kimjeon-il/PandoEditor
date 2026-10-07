@@ -9,5 +9,6 @@ inline RenderStyle fixedInteractionStyle(mapstyle::InteractionRole role,
         {view.viewportWidth,view.viewportHeight,view.scale,view.mode==ProjectionMode::Flat});
     RenderStyle result;result.color=policy.color;result.width=float(policy.width);
     result.alpha=float(policy.alpha);result.fillAlpha=float(policy.fillAlpha);
-    result.dashOn=float(policy.dashOn);result.dashOff=float(policy.dashOff);return result;
+    result.dashOn=float(policy.dashOn);result.dashOff=float(policy.dashOff);
+    result.cap=policy.cap;result.join=policy.join;result.antiAlias=policy.antiAlias;return result;
 }

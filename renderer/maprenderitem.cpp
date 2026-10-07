@@ -1,5 +1,6 @@
 #include "maprenderitem.h"
 #include "interactionrenderstyle.h"
+#include "stroketopology.h"
 #include <pandoeditor/map/projectionengine.h>
 #include <QPainter>
 #include <QPainterPath>
@@ -204,47 +205,89 @@ void MapRenderItem::paint(QPainter* painter) {
 
     const auto drawStroke=[&](const StrokeDrawPacket& draw,double offset,
                               const RenderStyle& style) {
-        if(style.width<=0||style.alpha<=0)return;
         const auto& packet=draw.geometryPacket;
         if(!packet.startsEnds||!packet.segmentCount)return;
         const auto& segments=*packet.startsEnds;
         const bool variable=packet.endpointWidths&&
             packet.endpointWidths->size()==packet.segmentCount*2;
+        if((style.width<=0&&!variable)||style.alpha<=0)return;
         painter->save();
+        painter->setRenderHint(QPainter::Antialiasing,smoothLines_&&style.antiAlias);
         applyComposition(painter,style);
-        if(!variable) {
-            QPen pen(colorFor(style),style.width,
-                     Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin);
-            if(style.dashOn>0&&style.dashOff>0)
-                pen.setDashPattern({qreal(style.dashOn/style.width),qreal(style.dashOff/style.width)});
-            painter->setPen(pen);painter->setBrush(Qt::NoBrush);
-        } else {
-            painter->setPen(Qt::NoPen);painter->setBrush(colorFor(style));
-        }
-        for(std::size_t i=0;i<packet.segmentCount;++i) {
-            const auto* s=segments.data()+i*4;
-            const auto a=projectPoint({s[0],s[1]},view_,offset);
-            const auto b=projectPoint({s[2],s[3]},view_,offset);
-            if(!a.finite||!b.finite||!a.visibleHemisphere||!b.visibleHemisphere)continue;
-            if(!variable) {
-                painter->drawLine(QPointF(a.x,a.y),QPointF(b.x,b.y));
-                recordStroke(draw.object,draw.geometry,style.alpha);
-                continue;
+        const bool dashed=style.dashOn>0&&style.dashOff>0;
+        QPen pen(colorFor(style),style.width,Qt::SolidLine,
+                 dashed||style.cap==mapstyle::Cap::Butt?Qt::FlatCap:Qt::RoundCap,
+                 style.join==mapstyle::Join::Miter?Qt::MiterJoin:Qt::RoundJoin);
+        pen.setMiterLimit(4);
+        if(dashed)pen.setDashPattern({qreal(style.dashOn/style.width),qreal(style.dashOff/style.width)});
+        painter->setPen(variable?QPen(Qt::NoPen):pen);painter->setBrush(variable?QBrush(colorFor(style)):QBrush(Qt::NoBrush));
+        QPainterPath path,variableShape;stroke::Point chainStart{};bool connected=false;
+        const double phaseScale=view_.scale*3.14159265358979323846/180;
+        for(const auto& segment:stroke::chains(segments)) {
+            auto ga=pandoeditor::Point{segment.start[0],segment.start[1]},gb=pandoeditor::Point{segment.end[0],segment.end[1]};
+            auto a=projectPoint(ga,view_,offset),b=projectPoint(gb,view_,offset);
+            if(!a.finite||!b.finite||(!a.visibleHemisphere&&!b.visibleHemisphere)){connected=false;continue;}
+            const bool originalStartVisible=a.visibleHemisphere,originalEndVisible=b.visibleHemisphere;
+            const bool clipped=view_.mode==ProjectionMode::Globe&&originalStartVisible!=originalEndVisible;
+            if(view_.mode==ProjectionMode::Globe&&a.visibleHemisphere!=b.visibleHemisphere) {
+                auto visible=a.visibleHemisphere?ga:gb,hidden=a.visibleHemisphere?gb:ga;
+                for(int n=0;n<16;++n){pandoeditor::Point mid{(visible.x+hidden.x)/2,(visible.y+hidden.y)/2};if(projectPoint(mid,view_,offset).visibleHemisphere)visible=mid;else hidden=mid;}
+                if(!a.visibleHemisphere)a=projectPoint(visible,view_,offset);else b=projectPoint(visible,view_,offset);
+                connected=false;
             }
-            const double wa=std::max(.1,double(packet.endpointWidths->at(i*2))+style.width);
-            const double wb=std::max(.1,double(packet.endpointWidths->at(i*2+1))+style.width);
-            const double dx=b.x-a.x,dy=b.y-a.y,length=std::hypot(dx,dy);
-            if(length<1e-9)continue;
-            const QPointF normal(-dy/length,dx/length);
             const QPointF pa(a.x,a.y),pb(b.x,b.y);
-            const double ha=wa/2,hb=wb/2;
-            QPainterPath shape;
-            shape.addPolygon(QPolygonF{pa+normal*ha,pb+normal*hb,
-                                       pb-normal*hb,pa-normal*ha});
-            shape.closeSubpath();
-            painter->drawPath(shape);
+            if(!variable) {
+                if(clipped&&!dashed) {
+                    if(!path.isEmpty()){painter->drawPath(path);path=QPainterPath();}
+                    const auto delta=pb-pa;const double length=std::hypot(delta.x(),delta.y());
+                    if(length>1e-9) {
+                        const double half=style.width/2;const QPointF normal(-delta.y()/length,delta.x()/length);
+                        QPainterPath shape;shape.addPolygon(QPolygonF{pa+normal*half,pb+normal*half,pb-normal*half,pa-normal*half});shape.closeSubpath();
+                        if(style.cap==mapstyle::Cap::Round) {
+                            QPainterPath caps;
+                            if(originalStartVisible&&!(segment.flags&1))caps.addEllipse(pa,half,half);
+                            if(originalEndVisible&&!(segment.flags&2))caps.addEllipse(pb,half,half);
+                            shape=shape.united(caps);
+                        }
+                        painter->setPen(Qt::NoPen);painter->setBrush(colorFor(style));painter->drawPath(shape);
+                        painter->setPen(pen);painter->setBrush(Qt::NoBrush);
+                    }
+                    connected=false;continue;
+                }
+                if(dashed) {
+                    pen.setDashOffset(segment.phase*phaseScale/style.width);painter->setPen(pen);painter->drawLine(pa,pb);
+                }else {
+                    if(!connected||!(segment.flags&1)){path.moveTo(pa);chainStart=segment.start;}
+                    path.lineTo(pb);connected=(segment.flags&2)!=0;
+                    if((segment.flags&16)&&stroke::equal(segment.end,chainStart))path.closeSubpath();
+                }
+            }else {
+                const auto i=segment.input;
+                const double ha=std::max(.1,double(packet.endpointWidths->at(i*2))+style.width)/2;
+                const double hb=std::max(.1,double(packet.endpointWidths->at(i*2+1))+style.width)/2;
+                const double dx=b.x-a.x,dy=b.y-a.y,length=std::hypot(dx,dy);if(length<1e-9)continue;
+                const QPointF normal(-dy/length,dx/length),delta=pb-pa;
+                const auto body=[&](double from,double to) {
+                    const auto left=pa+delta*(from/length),right=pa+delta*(to/length);
+                    const auto wl=ha+(hb-ha)*from/length,wr=ha+(hb-ha)*to/length;
+                    // Match addEllipse's winding so shared filled coverage is
+                    // a union rather than cancelling at a variable-width cap.
+                    variableShape.addPolygon(QPolygonF{left-normal*wl,right-normal*wr,right+normal*wr,left+normal*wl});variableShape.closeSubpath();
+                };
+                if(dashed) {
+                    const double period=std::max(1.,double(style.dashOn+style.dashOff));
+                    for(double start=-std::fmod(segment.phase*phaseScale,period);start<length;start+=period)
+                        if(std::min(length,start+style.dashOn)>std::max(0.,start))body(std::max(0.,start),std::min(length,start+style.dashOn));
+                }else {
+                    body(0,length);
+                    if(originalStartVisible&&(((segment.flags&1)&&style.join==mapstyle::Join::Round)||(!(segment.flags&1)&&style.cap==mapstyle::Cap::Round)))variableShape.addEllipse(pa,ha,ha);
+                    if(originalEndVisible&&!(segment.flags&2)&&style.cap==mapstyle::Cap::Round)variableShape.addEllipse(pb,hb,hb);
+                }
+            }
             recordStroke(draw.object,draw.geometry,style.alpha);
         }
+        if(variable){variableShape.setFillRule(Qt::WindingFill);painter->drawPath(variableShape);}
+        else if(!dashed)painter->drawPath(path);
         painter->restore();
     };
 
@@ -302,21 +345,17 @@ void MapRenderItem::paint(QPainter* painter) {
             }
             painter->drawPath(path);
         } else {
-            painter->setBrush(Qt::NoBrush);
-            painter->setPen(QPen(colorFor(style),std::max(.1f,style.width),
-                                 Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin));
+            auto positions=std::make_shared<std::vector<float>>();positions->reserve(count*2);
             for(std::size_t i=0;i+1<count;i+=2) {
-                const auto ai=indices[start+i],bi=indices[start+i+1];
-                const auto a=projectPoint({mesh.positionsMicrodegrees[ai*2]/1e6,
-                    mesh.positionsMicrodegrees[ai*2+1]/1e6},view_,offset);
-                const auto b=projectPoint({mesh.positionsMicrodegrees[bi*2]/1e6,
-                    mesh.positionsMicrodegrees[bi*2+1]/1e6},view_,offset);
-                if(a.finite&&b.finite&&a.visibleHemisphere&&b.visibleHemisphere) {
-                    painter->drawLine(QPointF(a.x,a.y),QPointF(b.x,b.y));
-                    if(country<scene_->worldBase->ranges.size())recordStroke({"territorial",base.id},
-                        {scene_->worldBase->ranges[country].geometryId,1},style.alpha);
+                for(const auto vertex:{indices[start+i],indices[start+i+1]}) {
+                    positions->push_back(float(mesh.positionsMicrodegrees[vertex*2]/1e6));
+                    positions->push_back(float(mesh.positionsMicrodegrees[vertex*2+1]/1e6));
                 }
             }
+            StrokeDrawPacket boundary;boundary.object={"territorial",base.id};
+            if(country<scene_->worldBase->ranges.size())boundary.geometry={scene_->worldBase->ranges[country].geometryId,1};
+            boundary.geometryPacket.startsEnds=positions;boundary.geometryPacket.segmentCount=count/2;
+            drawStroke(boundary,offset,style);
         }
         painter->restore();
     };

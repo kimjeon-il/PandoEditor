@@ -1,6 +1,7 @@
 #pragma once
 #include <pandoeditor/document.h>
 #include <pandoeditor/maprenderorder.h>
+#include <pandoeditor/map/interactionstylepolicy.h>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -17,6 +18,9 @@ struct RenderStyle {
     float alpha=1, width=1, fillAlpha=1;
     BlendMode blendMode=BlendMode::Normal;
     float dashOn=0,dashOff=0;
+    mapstyle::Cap cap=mapstyle::Cap::Round;
+    mapstyle::Join join=mapstyle::Join::Round;
+    bool antiAlias=true;
 };
 
 // Positions are derived unwrapped longitude/latitude pairs, never source geometry.

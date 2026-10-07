@@ -840,10 +840,16 @@ private slots:
         s->interaction.selected={{"territorial","red"}};
         s->interaction.primary=pandoeditor::ObjectRef{"territorial","red"};
 
+        auto base=std::make_shared<RenderScene>(*s);base->interaction={};
+        item.setSceneSnapshot(base,viewFor(40,30));
+        QCOMPARE(paint(item,40,30).pixelColor(16,10),QColor(Qt::black));
         item.setSceneSnapshot(s,viewFor(40,30));
         const auto image=paint(item,40,30);
         const auto overlap=image.pixelColor(16,10);
-        QVERIFY(overlap.red()<20&&overlap.green()<20&&overlap.blue()<20);
+        // Fixed-Web primary selection is #cda95d at .30*.35 alpha over
+        // the black multiply result. QPainter quantizes opacity to 8 bits.
+        // Independently evaluated production style: stroke-web-primary-33.json.
+        QVERIFY(std::abs(overlap.red()-22)<=1&&std::abs(overlap.green()-18)<=1&&std::abs(overlap.blue()-10)<=1);
         QVERIFY(image.pixelColor(2,10).blue()>40);
     }
 
