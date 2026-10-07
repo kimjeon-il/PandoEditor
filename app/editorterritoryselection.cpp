@@ -256,7 +256,11 @@ bool EditorController::applyTerritorySelection(){
         if(disposition!=JobDisposition::Accepted||!edit.base.matches(project_)||(childSplit&&(selection_.primary()?QString::fromStdString(selection_.primary()->id):QString())!=entrySelection)){emit geometryEditChanged();return;}
         if(!result.ok()||!result.preview){edit.error=QString::fromStdString(result.detail);commandError(result.error,edit.error);emit geometryEditChanged();return;}
         MapProjection next;try{next.rebuild(result.preview->change().after());}catch(const std::exception& error){edit.error=QString::fromUtf8(error.what());emit geometryEditChanged();return;}
+        QElapsedTimer commitMeasurement;commitMeasurement.start();const auto measuredFlow=edit.tool;
         const auto applied=CommandProcessor::confirm(project_,*result.preview);if(!applied.ok()){edit.error=QString::fromStdString(applied.detail);commandError(applied.error,edit.error);emit geometryEditChanged();return;}
+        holdConfirmedGeometry(edit.base.document(),applied.impact,edit.target);
         noteAppliedImpact(applied.impact);if(edit.splitIntent)selection_.replace(territorialRef(edit.splitIntent->createdId));projection_=std::move(next);geometryEdit_.reset();hover_.reset();++hoverRevision_;closeObjectChooser();publish(false);emit geometryChanged();emit structureChanged();emit geometryEditChanged();
+        editingPerformance_.record("commit",measuredFlow,double(commitMeasurement.nsecsElapsed())/1e6);
+        emit renderQualityChanged();
     });emit geometryEditChanged();return true;
 }

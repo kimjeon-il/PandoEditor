@@ -47,6 +47,9 @@ struct ContentEdit {
     ContentValue value;
     std::optional<std::pair<GeometryRef,Geometry>> geometry;
     bool create=false;
+    // Creation-time place presentation belongs to the same content command,
+    // so Undo and Redo restore the copied label's pinned position together.
+    std::optional<LabelSettings> initialLabelSettings;
 };
 struct SetPhysicalData { PhysicalDataSettings settings; };
 using CommandAction = std::variant<std::monostate, SetCountryColor, AddLayer,

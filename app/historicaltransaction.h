@@ -9,4 +9,7 @@ HistoricalInstantiationPlan prepareHistoricalTransaction(
     const ProjectSnapshot&,const HistoricalLibrary&,
     const std::vector<HistoricalAddRequest>&,
     const GeometryCalculator&,const GeometryCancellation& cancelled={});
+HistoricalInstantiationPlan prepareHistoricalTransaction(
+    const ProjectSnapshot&,std::vector<HistoricalAddition>,
+    const GeometryCalculator&,const GeometryCancellation& cancelled={});
 }

@@ -1,4 +1,5 @@
 #include "windowsframe.h"
+#include "../renderer/terrainlayeritem.h"
 #include "maprenderitem.h"
 #include "gpumapitem.h"
 #include "referenceimageitem.h"
@@ -30,6 +31,7 @@ void registerWindowsFrameType()
     qmlRegisterType<ReferenceImageItem>("Pandoeditor.Windowing", 1, 0, "ReferenceImageItem");
     qmlRegisterType<GeographicImageItem>("Pandoeditor.Windowing", 1, 0, "GeographicImageItem");
     qmlRegisterType<TerrainLandMaskItem>("Pandoeditor.Windowing", 1, 0, "TerrainLandMaskItem");
+    qmlRegisterType<TerrainLayerItem>("Pandoeditor.Windowing", 1, 0, "TerrainLayerItem");
     qmlRegisterType<ReferenceImageLibrary>("Pandoeditor.Windowing", 1, 0, "ReferenceImageLibrary");
 }
 

@@ -9,6 +9,12 @@
 #include <cmath>
 #include <stdexcept>
 #include <optional>
+#include <memory>
+#include <QThread>
+#include <QElapsedTimer>
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(geometryStageLog,"pando.geometry.stages",QtWarningMsg)
 
 static void initializeGeometryResource() {
     static const bool initialized=[] { Q_INIT_RESOURCE(m4_geometry);return true; }();
@@ -161,16 +167,38 @@ bool retryableRiverClippingError(const QJSValue& error) {
     const auto detail=error.toString();
     return detail.contains("SweepLine tree",Qt::CaseInsensitive)||detail.contains("Unable to find segment",Qt::CaseInsensitive);
 }
+void validateAreaOutput(const Geometry& geometry) {
+    for(const auto& polygon:geometry.polygons) {
+        if(polygon.empty())throw std::runtime_error("INVALID_KERNEL_RESULT: empty polygon");
+        for(const auto& ring:polygon) {
+            if(ring.size()<4||ring.front().x!=ring.back().x||ring.front().y!=ring.back().y)
+                throw std::runtime_error("INVALID_KERNEL_RESULT: open ring");
+            for(const auto point:ring)if(!std::isfinite(point.x)||!std::isfinite(point.y)
+                ||std::abs(point.x)>180||std::abs(point.y)>90)
+                throw std::runtime_error("INVALID_KERNEL_RESULT: coordinate");
+        }
+    }
+}
 GeometryOperationResult calculateWithValidation(const GeometryOperationRequest& request,
-    const GeometryCancellation& cancelled,void (*validate)(const Geometry&),bool riverRetry=false) {
+    const GeometryCancellation& cancelled,void (*validate)(const Geometry&),bool riverRetry=false,
+    std::unique_ptr<QJSEngine>* transactionEngine=nullptr,double* scalarArea=nullptr) {
     const auto isCancelled=[&]{return cancelled && cancelled();};
     if(isCancelled())return {GeometryOperationStatus::Cancelled,{},{}};
     try {
         const auto operands=request.operands.empty()?std::vector<Geometry>{request.left,request.right}:request.operands;
+        QElapsedTimer stageClock;stageClock.start();
         if(operands.size()<2)throw std::invalid_argument("INVALID_GEOMETRY_OPERATION: at least two operands required");
         for(const auto& operand:operands)validate(operand);
-        QJSEngine engine;
-        loadPinnedPolygonClipping(engine);
+        qCDebug(geometryStageLog)<<"validationMs"<<stageClock.nsecsElapsed()/1e6;stageClock.restart();
+        std::unique_ptr<QJSEngine> singleEngine;
+        auto& storage=transactionEngine?*transactionEngine:singleEngine;
+        if(!storage) {
+            auto candidate=std::make_unique<QJSEngine>();
+            loadPinnedPolygonClipping(*candidate);
+            storage=std::move(candidate);
+        }
+        auto& engine=*storage;
+        qCDebug(geometryStageLog)<<"engineMs"<<stageClock.nsecsElapsed()/1e6;stageClock.restart();
         const char* operation=nullptr;
         switch(request.operation) {
         case GeometryOperation::Union:operation="union";break;
@@ -183,7 +211,9 @@ GeometryOperationResult calculateWithValidation(const GeometryOperationRequest& 
         if(!function.isCallable())throw std::runtime_error("GEOMETRY_KERNEL_INVALID_EXPORT");
         QJSValueList arguments;arguments.reserve(qsizetype(operands.size()));
         for(const auto& operand:operands)arguments.push_back(coordinates(engine,operand));
+        qCDebug(geometryStageLog)<<"encodeMs"<<stageClock.nsecsElapsed()/1e6;stageClock.restart();
         auto result=function.call(arguments);
+        qCDebug(geometryStageLog)<<"kernelMs"<<stageClock.nsecsElapsed()/1e6;stageClock.restart();
         // The synchronous kernel is not interrupted mid-call. Cancellation wins
         // over success AND errors and prevents a result entering a candidate.
         if(isCancelled())return {GeometryOperationStatus::Cancelled,{},{}};
@@ -206,8 +236,23 @@ GeometryOperationResult calculateWithValidation(const GeometryOperationRequest& 
         }
         if(result.isError())throw std::runtime_error(result.toString().toStdString());
         auto geometry=decode(result);
+        qCDebug(geometryStageLog)<<"decodeMs"<<stageClock.nsecsElapsed()/1e6;
         if(geometry.polygons.empty())return {GeometryOperationStatus::Empty,{},{}};
-        validate(geometry);
+        if(scalarArea) {
+            validateAreaOutput(geometry);
+            const auto measured=planarArea(geometry);
+            if(!std::isfinite(measured))throw std::runtime_error("INVALID_KERNEL_RESULT: area");
+            if(isCancelled())return {GeometryOperationStatus::Cancelled,{},{}};
+            *scalarArea=measured;
+            return {GeometryOperationStatus::Completed,{},{}};
+        }
+        try {validate(geometry);}catch(...) {
+            if(geometryStageLog().isDebugEnabled()) {
+                auto stringify=engine.globalObject().property("JSON").property("stringify");
+                qCDebug(geometryStageLog)<<operation<<"rejectedKernelJSON"<<stringify.call({result}).toString();
+            }
+            throw;
+        }
         if(isCancelled())return {GeometryOperationStatus::Cancelled,{},{}};
         return {GeometryOperationStatus::Completed,std::move(geometry),{}};
     } catch(const std::exception& error) {
@@ -219,6 +264,22 @@ GeometryOperationResult calculateWithValidation(const GeometryOperationRequest& 
 GeometryOperationResult calculateGeometry(const GeometryOperationRequest& request,
                                          const GeometryCancellation& cancelled) {
     return calculateWithValidation(request,cancelled,validatePolygon);
+}
+GeometryOperationAreaResult calculateGeometryArea(const GeometryOperationRequest& request,
+                                                 const GeometryCancellation& cancelled) {
+    double area=0;
+    const auto result=calculateWithValidation(request,cancelled,validatePolygon,false,nullptr,&area);
+    return {result.status,area,result.detail};
+}
+
+GeometryCalculator makeTransactionGeometryCalculator() {
+    auto storage=std::make_shared<std::unique_ptr<QJSEngine>>();
+    auto* owner=QThread::currentThread();
+    return [storage,owner](const GeometryOperationRequest& request,const GeometryCancellation& cancelled) {
+        if(QThread::currentThread()!=owner)
+            return GeometryOperationResult{GeometryOperationStatus::Failed,{},"GEOMETRY_TRANSACTION_THREAD_MISMATCH"};
+        return calculateWithValidation(request,cancelled,validatePolygon,false,storage.get());
+    };
 }
 
 RiverGeometryIntermediateResult calculateRiverGeometryIntermediate(const GeometryOperationRequest& request,

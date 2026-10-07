@@ -5,6 +5,7 @@
 #include <QSGTexture>
 #include <QVector4D>
 #include <QSize>
+#include <functional>
 
 // Render-thread only; the owner retains textures through camera/style updates.
 // landPass is an authoritative world geometry pass, never an elevation test.
@@ -20,6 +21,10 @@ public:
     void setOptions(bool dem,bool physical,bool dark,float shadeBlend,bool landPass,
                     bool geographicInput=false);
     void setLandMask(QSGTexture*,QSizeF logicalSize,QVector4D uvTransform,bool ready);
+    void setUploadProbe(bool probe){maskState.setZ(probe?1.f:0.f);}
+    void setDrawSuppressed(bool hidden){maskState.setW(hidden?1.f:0.f);}
+    std::function<void(QSGTexture*,double,bool)> commitObserver;
+    std::function<void()> drawObserver;
     QSGTexture* terrainTexture=nullptr;
     QSGTexture* tintTexture=nullptr;
     QSGTexture* landMaskTexture=nullptr; // Borrowed, never deleted by this material.

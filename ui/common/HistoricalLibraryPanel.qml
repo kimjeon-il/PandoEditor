@@ -89,6 +89,12 @@ Dialog {
             id:results;objectName:"historicalResults";visible:!root.optionsOpen&&!root.reviewing
             Layout.fillWidth:true;Layout.fillHeight:true;clip:true;spacing:8;model:root.rows
             ScrollBar.vertical:ScrollBar{}
+            section.property: root.flagMode ? "" : "lineageName"
+            section.delegate: Label {
+                required property string section
+                width:results.width;visible:section.length>0;height:visible?30:0
+                text:section;textFormat:Text.PlainText;font.weight:Font.DemiBold;color:root.colors.muted
+            }
             keyNavigationEnabled:true
             Keys.onPressed:event=>{if(event.key===Qt.Key_Home){currentIndex=0;event.accepted=true}else if(event.key===Qt.Key_End){currentIndex=count-1;event.accepted=true}}
             Keys.onReturnPressed:root.selectAt(currentIndex)

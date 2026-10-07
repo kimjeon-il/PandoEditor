@@ -112,7 +112,7 @@ std::optional<GeometryRef> geometryFor(const ProjectDocument& doc,const ObjectRe
 }
 bool sameInteraction(const InteractionRenderPacket& a,const InteractionRenderPacket& b) {
     return a.candidates==b.candidates&&a.selected==b.selected&&a.primary==b.primary&&
-        a.hover==b.hover&&a.editTarget==b.editTarget;
+        a.hover==b.hover&&a.editTarget==b.editTarget&&a.styleOptions==b.styleOptions;
 }
 std::uint64_t interactionSignature(const InteractionRenderPacket& interaction) {
     std::uint64_t selection=basis;
@@ -121,6 +121,10 @@ std::uint64_t interactionSignature(const InteractionRenderPacket& interaction) {
     for(const auto* ref:{&interaction.primary,&interaction.hover,&interaction.editTarget})if(*ref){
         mix(selection,(*ref)->domain);mix(selection,(*ref)->id);
     }
+    const auto& style=interaction.styleOptions;
+    mix(selection,style.dark);mix(selection,style.outlineVisible);mix(selection,style.directManipulation);
+    mix(selection,style.sharedBoundary);mix(selection,style.antiAlias);mixDouble(selection,style.fillStrength);
+    mix(selection,style.selectionColor.has_value());if(style.selectionColor)mix(selection,*style.selectionColor);
     return selection;
 }
 }
@@ -309,7 +313,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
         for(const auto& range:worldBase_->ranges) {
             WorldCountryDraw base;base.id=range.ownerId;
             base.fill.color=0xa8c7db;base.boundary.color=0x61778a;
-            base.boundary.width=1.2f;
+            base.boundary.width=float(mapstyle::baseStroke(mapstyle::BaseRole::Country).width);
             if(!worldBase_->startupPreview()) {
                 const auto unit=std::find_if(doc.units.begin(),doc.units.end(),
                     [&](const auto& value){return value.id==range.ownerId;});
@@ -461,10 +465,11 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
                 if(object.domain=="territorial")for(const auto& unit:doc.units)
                     if(unit.id==object.id) {
                         stroke.style.color=0x61778a;
-                        stroke.style.width=isRootGeneral(doc,unit)?1.2f:
-                            unit.kind==UnitKind::General?.9f:.7f;
-                        if(unit.kind==UnitKind::General&&!isRootGeneral(doc,unit)){stroke.style.dashOn=4;stroke.style.dashOff=2;}
-                        if(unit.kind==UnitKind::Regional){stroke.style.dashOn=1.5f;stroke.style.dashOff=2;}
+                        const auto role=isRootGeneral(doc,unit)?mapstyle::BaseRole::Country:
+                            unit.kind==UnitKind::General?mapstyle::BaseRole::SubunitInternal:mapstyle::BaseRole::Region;
+                        const auto policy=mapstyle::baseStroke(role);
+                        stroke.style.width=float(policy.width);
+                        stroke.style.dashOn=float(policy.dashOn);stroke.style.dashOff=float(policy.dashOff);
                         break;
                     }
                 stroke.drawOrder=mapRenderOrder(doc,object,RenderPrimitiveRole::Boundary);

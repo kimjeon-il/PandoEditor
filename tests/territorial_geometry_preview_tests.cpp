@@ -184,6 +184,27 @@ int compareBrowserAnnex(const QString& reportPath,const QString& payloadPath,con
 class TerritorialGeometryPreviewTests:public QObject {
     Q_OBJECT
 private slots:
+    void sixteenAdjacentOwnersPreserveExactDrafts() {
+        const Ring perimeter{{-4,-4},{-2,-4},{0,-4},{2,-4},{4,-4},{4,-2},{4,0},{4,2},{4,4},{2,4},{0,4},{-2,4},{-4,4},{-4,2},{-4,0},{-4,-2}};
+        ProjectDocument document({},{});
+        SharedBoundaryIntent intent;
+        for(std::size_t i=0;i<perimeter.size();++i) {
+            Geometry source;source.polygons={{{{0,0},perimeter[i],perimeter[(i+1)%16],{0,0}}}};
+            const auto id="owner-"+std::to_string(i);addUnit(document,id,source);
+            auto draft=source;draft.polygons[0][0].front()={1,0};draft.polygons[0][0].back()={1,0};
+            intent.drafts.push_back({territorialRef(id),draft});
+        }
+        Project project;project.replace(document);const auto before=projectcodec::encode(project);
+        JobScheduler jobs;auto ticket=jobs.enqueue(project.snapshot(),"boundary-sixteen");jobs.takeNext();
+        const auto result=calculateBoundaryGeometryPreview(project.snapshot(),intent,territorialPreviewCalculators(),ticket.token());
+        QVERIFY2(result.ok(),result.detail.c_str());QVERIFY(!result.blocking());
+        QCOMPARE(result.patch().replacements.size(),std::size_t(16));
+        for(std::size_t i=0;i<intent.drafts.size();++i) {
+            QCOMPARE(result.patch().replacements[i].owner,intent.drafts[i].owner);
+            QVERIFY(exactPreviewGeometry(result.patch().replacements[i].geometry,intent.drafts[i].geometry));
+        }
+        QCOMPARE(projectcodec::encode(project),before);
+    }
     void runtimeFactoryExactlyForwardsActualPreviewKernels() {
         const auto& runtime=territorialPreviewCalculators();
         QVERIFY(&runtime==&territorialPreviewCalculators());

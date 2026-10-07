@@ -99,10 +99,16 @@ void indexContent(const ProjectDocument& d,DocumentIndex& idx) {
     }
 }
 
+std::set<std::string> copiedPlaceSourceIds(const ProjectDocument& document) {
+    std::set<std::string> ids;
+    for(const auto& label:document.labels)
+        if(label.sourcePlaceId&&!label.sourcePlaceId->empty())ids.insert(*label.sourcePlaceId);
+    return ids;
+}
 bool sameContent(const ProjectDocument& a,const ProjectDocument& b) {
     return equalContentRows(a.countryDetails,b.countryDetails,[](const auto& v){return std::tie(v.first,v.second.capital);}) &&
         equalContentRows(a.symbols,b.symbols,[](const auto& v){return std::tie(v.first,v.second.policy,v.second.embeddedDataUrl,v.second.defaultCountryId,v.second.defaultFlagDataUrl);}) &&
-        equalContentRows(a.labels,b.labels,[](const auto& v){return std::make_tuple(v.id,v.name,v.kind,v.notes,v.geometry,v.territory,sourceKey(v.source));}) &&
+        equalContentRows(a.labels,b.labels,[](const auto& v){return std::make_tuple(v.id,v.name,v.kind,v.notes,v.geometry,v.territory,sourceKey(v.source),v.sourcePlaceId);}) &&
         equalContentRows(a.hydro,b.hydro,[](const auto& v){return std::make_tuple(v.id,v.name,v.kind,v.notes,v.geometry,v.color,v.locked,sourceKey(v.source),v.sourceFeatureId);}) &&
         equalContentRows(a.distributionLayers,b.distributionLayers,[](const auto& v){return std::make_tuple(v.id,v.name,v.unit,v.color,v.locked,v.parentId,v.groups,validityKey(v.validity),v.metadata,v.valueScale.manual,v.valueScale.manual?v.valueScale.min:0,v.valueScale.manual?v.valueScale.max:1);}) &&
         equalContentRows(a.distributionEntries,b.distributionEntries,[](const auto& v){return std::make_tuple(v.id,v.layerId,v.territory,v.geometry,v.value,v.certainty,v.metadata,validityKey(v.validity));}) &&

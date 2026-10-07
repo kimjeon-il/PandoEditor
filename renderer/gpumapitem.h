@@ -7,6 +7,16 @@
 #include <QPointer>
 #include <atomic>
 #include <QString>
+#include <mutex>
+
+// Immutable CPU/QSG submission observation, not a driver fence or DWM receipt.
+struct MapRenderObservation {
+    std::shared_ptr<const MapFrame> frame;
+    MapGpuStats stats;
+    qulonglong windowGeneration=0,resourceGeneration=0,bridgeGeneration=0;
+    bool rendererReady=false;
+    QVariantList strokeInventory;
+};
 
 class GpuMapItem : public QQuickItem {
     Q_OBJECT
@@ -65,11 +75,20 @@ public:
     qulonglong resourceGeneration() const{return resourceGeneration_.load();}
     QVariantMap resourceCacheStats() const;
     const MapGpuStats& gpuStats() const {return publishedStats_;}
+    std::shared_ptr<const MapRenderObservation> renderObservation() const {
+        std::lock_guard lock(renderObservationMutex_);
+        if(!renderObservation_||renderObservation_->windowGeneration!=windowGeneration_.load()||
+           renderObservation_->resourceGeneration!=resourceGeneration_.load()||
+           renderObservation_->bridgeGeneration!=bridgeGeneration_.load())return {};
+        return renderObservation_;
+    }
     qulonglong uploadContinuationCount() const {return uploadContinuations_;}
     qulonglong uploadBudgetBytes() const{return uploadBudgetBytes_;}
     void setUploadBudgetBytes(qulonglong bytes) {if(uploadBudgetBytes_!=bytes){uploadBudgetBytes_=bytes;emit viewportChanged();update();}}
 signals:
     void frameSampled(double milliseconds);
+    // Qt submitted/displayed-frame receipt; neither a GPU fence nor DWM proof.
+    void framePresented(std::shared_ptr<const MapFrame> frame,QVariantList strokeInventory);
     void sceneBridgeChanged();
     void rendererReadyChanged();
     void viewportChanged();
@@ -80,6 +99,7 @@ private:
     void evaluateBackend();
     void attachWindow(QQuickWindow* window);
     void setStatus(bool ready,const QString& reason);
+    void publishPresentation();
     QPointer<MapSceneBridge> bridge_;
     QPointer<QQuickWindow> connectedWindow_;
     MapFlatViewport flat_;
@@ -93,4 +113,10 @@ private:
     qulonglong uploadContinuations_=0;
     std::atomic<qulonglong> bridgeGeneration_{0},windowGeneration_{0},resourceGeneration_{0};
     qulonglong renderGeneration_=0; // Render thread only; statistics belong to one resource generation.
+    mutable std::mutex renderObservationMutex_;
+    std::shared_ptr<const MapRenderObservation> renderObservation_;
+    mutable std::mutex presentationMutex_;
+    std::shared_ptr<const MapRenderObservation> presentationObservation_;
+    qulonglong presentationSequence_=0,publishedPresentationSequence_=0;
+    bool presentationEnded_=false,presentationSwapped_=false;
 };

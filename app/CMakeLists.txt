@@ -12,6 +12,15 @@ else()
     find_package(Qt6 6.5 REQUIRED COMPONENTS ShaderTools)
 endif()
 find_package(ZLIB REQUIRED)
+if(BUILD_TESTING)
+    add_executable(place_label_collision_tests ../tests/place_label_collision_tests.cpp)
+    target_link_libraries(place_label_collision_tests PRIVATE Pandoeditor::MapEngine)
+    add_test(NAME place_label_collision_tests COMMAND place_label_collision_tests)
+    add_executable(place_parity_probe ../tests/place_parity_probe.cpp
+        placeruntimestore.cpp placeruntimestore.h placeruntimeprovider.cpp placeruntimeprovider.h)
+    target_include_directories(place_parity_probe PRIVATE .)
+    target_link_libraries(place_parity_probe PRIVATE Pandoeditor::MapEngine Pandoeditor::Core Qt6::Gui Qt6::Concurrent)
+endif()
 qt_add_executable(pandoeditor main.cpp)
 
 add_library(pandoeditor_editor STATIC
@@ -22,6 +31,8 @@ add_library(pandoeditor_editor STATIC
     hydrodataprovider.cpp hydrodataprovider.h
     historicallibraryloader.cpp historicallibraryloader.h
     historicaltransaction.cpp historicaltransaction.h
+    territoriallibrarycatalog.cpp territoriallibrarycatalog.h
+    territorialcatalogadapter.cpp territorialcatalogadapter.h
     gisgeojson.cpp gisgeojson.h
     giszip.cpp giszip.h
     gisgeopackage.cpp gisgeopackage.h
@@ -37,6 +48,9 @@ add_library(pandoeditor_editor STATIC
     worlddataset.cpp worlddataset.h
     worlddatasetloader.cpp worlddatasetloader.h
     terrainimageprovider.cpp terrainimageprovider.h
+    placeruntimestore.cpp placeruntimestore.h
+    placeruntimeprovider.cpp placeruntimeprovider.h
+    editorplace.cpp
     resourcecachecoordinator.cpp resourcecachecoordinator.h
     worldresourcecache.cpp worldresourcecache.h
     worldbootstrap.cpp
@@ -74,6 +88,8 @@ add_library(pandoeditor_editor STATIC
     ../renderer/terrainprovider.cpp ../renderer/terrainprovider.h
     ../renderer/terrainrendercontract.cpp ../renderer/terrainrendercontract.h
     ../renderer/terrainlandmaskitem.cpp ../renderer/terrainlandmaskitem.h
+    ../renderer/terrainrenderowner.cpp ../renderer/terrainrenderowner.h
+    ../renderer/terrainlayeritem.cpp ../renderer/terrainlayeritem.h
     ../renderer/scenegraph/terrainmaterial.cpp ../renderer/scenegraph/terrainmaterial.h
     ../renderer/uploadscheduler.cpp ../renderer/uploadscheduler.h
     ../renderer/maprenderitem.cpp ../renderer/maprenderitem.h
@@ -86,6 +102,7 @@ add_library(pandoeditor_editor STATIC
 )
 target_include_directories(pandoeditor_editor PUBLIC . ../renderer)
 target_link_libraries(pandoeditor_editor PUBLIC Pandoeditor::Core Pandoeditor::MapEngine Qt6::Quick Qt6::Concurrent Qt6::Svg Qt6::Sql Qt6::Network ZLIB::ZLIB)
+target_link_libraries(pandoeditor_editor PRIVATE Qt6::GuiPrivate)
 qt_add_shaders(pandoeditor_editor m73_map_shaders
     PREFIX "/m73" BASE "${PROJECT_SOURCE_DIR}/renderer"
     FILES
@@ -102,6 +119,8 @@ qt_add_resources(pandoeditor_editor terrain_dem_metadata
     FILES "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.13.3/manifest.json"
           "${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-terrain-dem-c3c18d1.json"
           "${PROJECT_SOURCE_DIR}/assets/world/terrain-dem-provenance-c3c18d1.json")
+qt_add_resources(pandoeditor_editor place_runtime PREFIX "/place" BASE "${PROJECT_SOURCE_DIR}/assets/place"
+    FILES "${PROJECT_SOURCE_DIR}/assets/place/manifest.json")
 qt_add_resources(pandoeditor_editor m4_geometry
     PREFIX "/geometry" BASE "${PROJECT_SOURCE_DIR}/assets/geometry"
     FILES "${PROJECT_SOURCE_DIR}/assets/geometry/polygon-clipping-0.15.7.js"
@@ -153,6 +172,10 @@ qt_add_resources(pandoeditor world_metadata
 qt_add_resources(pandoeditor historical_pilot
     PREFIX "/historical" BASE "${PROJECT_SOURCE_DIR}/assets/historical"
     FILES "${PROJECT_SOURCE_DIR}/assets/historical/historical-library-pilot.json")
+file(GLOB TERRITORIAL_CATALOG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/assets/territorial-library-v2/*.gz")
+qt_add_resources(pandoeditor_editor territorial_catalog PREFIX "/territorial-library-v2"
+    BASE "${PROJECT_SOURCE_DIR}/assets/territorial-library-v2"
+    FILES "${PROJECT_SOURCE_DIR}/assets/territorial-library-v2/index.json" ${TERRITORIAL_CATALOG_FILES})
 
 qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
@@ -173,6 +196,74 @@ file(GLOB_RECURSE DEFAULT_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/as
 qt_add_resources(pandoeditor default_flags PREFIX "/defaults/flags" BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags" FILES ${DEFAULT_FLAG_FILES})
 
 if(BUILD_TESTING)
+    add_executable(interaction_style_policy_tests ../tests/interaction_style_policy_tests.cpp)
+    target_include_directories(interaction_style_policy_tests PRIVATE "${PROJECT_SOURCE_DIR}/engine/include")
+    add_test(NAME interaction_style_policy_tests COMMAND interaction_style_policy_tests)
+    add_executable(map_builder_stroke_policy_tests ../tests/map_builder_stroke_policy_tests.cpp)
+    target_include_directories(map_builder_stroke_policy_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests")
+    target_link_libraries(map_builder_stroke_policy_tests PRIVATE pandoeditor_editor)
+    add_test(NAME map_builder_stroke_policy_tests COMMAND map_builder_stroke_policy_tests)
+    add_executable(map_stroke_handoff_tests ../tests/map_stroke_handoff_tests.cpp)
+    target_link_libraries(map_stroke_handoff_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME map_stroke_handoff_tests COMMAND map_stroke_handoff_tests -o -,txt)
+    set_tests_properties(map_stroke_handoff_tests PROPERTIES TIMEOUT 60 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(geometry_presentation_handoff_tests ../tests/geometry_presentation_handoff_tests.cpp)
+    target_link_libraries(geometry_presentation_handoff_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(geometry_presentation_handoff_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME geometry_presentation_handoff_tests COMMAND geometry_presentation_handoff_tests -o -,txt)
+    set_tests_properties(geometry_presentation_handoff_tests PROPERTIES TIMEOUT 60 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(historical_snapshot_timing_probe ../tests/historical_snapshot_timing_probe.cpp)
+    target_link_libraries(historical_snapshot_timing_probe PRIVATE pandoeditor_editor)
+    add_executable(native_editing_performance_probe ../tests/native_editing_performance_probe.cpp)
+    if(WIN32)
+    add_executable(geometry_presentation_device_tests ../tests/geometry_presentation_device_tests.cpp)
+    target_link_libraries(geometry_presentation_device_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(geometry_presentation_device_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME geometry_presentation_device_tests COMMAND geometry_presentation_device_tests -o -,txt)
+    set_tests_properties(geometry_presentation_device_tests PROPERTIES TIMEOUT 60 LABELS "hardware;presentation"
+        ENVIRONMENT "QT_QPA_PLATFORM=windows;QSG_RHI_BACKEND=d3d11")
+    endif()
+    target_include_directories(native_editing_performance_probe PRIVATE "${PROJECT_SOURCE_DIR}/tests")
+    target_link_libraries(native_editing_performance_probe PRIVATE pandoeditor_editor)
+    qt_add_resources(native_editing_performance_probe sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_executable(native_performance_structure_tests ../tests/native_performance_structure_tests.cpp)
+    target_link_libraries(native_performance_structure_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(native_performance_structure_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME native_performance_structure_tests COMMAND native_performance_structure_tests -o -,txt)
+    set_tests_properties(native_performance_structure_tests PROPERTIES TIMEOUT 60 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(place_runtime_store_tests ../tests/place_runtime_store_tests.cpp)
+    add_executable(territorial_info_controller_tests ../tests/territorial_info_controller_tests.cpp)
+    target_link_libraries(territorial_info_controller_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(territorial_info_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME territorial_info_controller_tests COMMAND territorial_info_controller_tests)
+    set_tests_properties(territorial_info_controller_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(place_controller_tests ../tests/place_controller_tests.cpp)
+    target_link_libraries(place_controller_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(place_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME place_controller_tests COMMAND place_controller_tests)
+    set_tests_properties(place_controller_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    add_executable(territorial_catalog_controller_tests ../tests/territorial_catalog_controller_tests.cpp)
+    target_link_libraries(territorial_catalog_controller_tests PRIVATE pandoeditor_editor Qt6::Test)
+    qt_add_resources(territorial_catalog_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME territorial_catalog_controller_tests COMMAND territorial_catalog_controller_tests)
+    set_tests_properties(territorial_catalog_controller_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    target_link_libraries(place_runtime_store_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(place_runtime_store_tests PRIVATE PLACE_RUNTIME_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-place-runtime-source")
+    add_test(NAME place_runtime_store_tests COMMAND place_runtime_store_tests)
+    add_executable(place_runtime_provider_tests ../tests/place_runtime_provider_tests.cpp)
+    target_link_libraries(place_runtime_provider_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(place_runtime_provider_tests PRIVATE PLACE_RUNTIME_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-place-runtime-source")
+    add_test(NAME place_runtime_provider_tests COMMAND place_runtime_provider_tests)
+    add_executable(terrain_render_owner_tests ../tests/terrain_render_owner_tests.cpp)
+    target_link_libraries(terrain_render_owner_tests PRIVATE pandoeditor_editor Qt6::Test)
+    add_test(NAME terrain_render_owner_tests COMMAND terrain_render_owner_tests)
     add_executable(gis_geojson_tests ../tests/gis_geojson_tests.cpp)
     target_link_libraries(gis_geojson_tests PRIVATE pandoeditor_editor)
     add_test(NAME gis_geojson_tests COMMAND gis_geojson_tests)
@@ -224,6 +315,9 @@ if(BUILD_TESTING)
     target_link_libraries(gis_export_tests PRIVATE pandoeditor_editor Qt6::Sql)
     add_test(NAME gis_export_tests COMMAND gis_export_tests)
     add_executable(project_geopackage_tests ../tests/project_geopackage_tests.cpp)
+    add_executable(place_provenance_engine_tests ../tests/place_provenance_engine_tests.cpp)
+    target_link_libraries(place_provenance_engine_tests PRIVATE pandoeditor_editor Qt6::Sql)
+    add_test(NAME place_provenance_engine_tests COMMAND place_provenance_engine_tests)
     target_link_libraries(project_geopackage_tests PRIVATE pandoeditor_editor Qt6::Sql)
     target_compile_definitions(project_geopackage_tests PRIVATE
         WEB_GPKG_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-m6")
@@ -329,6 +423,26 @@ if(BUILD_TESTING)
     add_test(NAME terrain_lod_demand_tests COMMAND terrain_lod_demand_tests
         "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.13.3/manifest.json"
         "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.12.6/manifest.json")
+    add_executable(terrain_display_state_tests ../tests/terrain_display_state_tests.cpp)
+    add_executable(terrain_grid_mesh_tests ../tests/terrain_grid_mesh_tests.cpp)
+    add_test(NAME terrain_grid_mesh_tests COMMAND terrain_grid_mesh_tests)
+    target_include_directories(terrain_display_state_tests PRIVATE .)
+    target_link_libraries(terrain_display_state_tests PRIVATE Qt6::Core)
+    add_test(NAME terrain_display_state_tests COMMAND terrain_display_state_tests)
+    add_executable(terrain_render_protection_tests ../tests/terrain_render_protection_tests.cpp
+        ../renderer/terrainprovider.cpp)
+    target_include_directories(terrain_render_protection_tests PRIVATE ../renderer)
+    target_link_libraries(terrain_render_protection_tests PRIVATE Pandoeditor::MapEngine Qt6::Gui)
+    add_test(NAME terrain_render_protection_tests COMMAND terrain_render_protection_tests
+        "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.12.6/manifest.json")
+    # Standalone latest-Web catalog preparation; editor/UI adoption is P8.
+    find_package(ZLIB REQUIRED)
+    add_executable(territorial_library_catalog_tests ../tests/territorial_library_catalog_tests.cpp
+        territoriallibrarycatalog.cpp)
+    target_include_directories(territorial_library_catalog_tests PRIVATE .)
+    target_link_libraries(territorial_library_catalog_tests PRIVATE Pandoeditor::Core Qt6::Core ZLIB::ZLIB)
+    add_test(NAME territorial_library_catalog_tests COMMAND territorial_library_catalog_tests
+        "${PROJECT_SOURCE_DIR}/assets/territorial-library-v2")
     add_executable(terrain_render_contract_tests ../tests/terrain_render_contract_tests.cpp
         ../renderer/terrainrendercontract.cpp)
     target_link_libraries(terrain_render_contract_tests PRIVATE Qt6::Test Qt6::Gui)
@@ -555,9 +669,13 @@ if(BUILD_TESTING)
     add_test(NAME editor_tests COMMAND editor_tests)
     set_tests_properties(selection_editor_tests editor_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(ui_tests ../tests/ui_tests.cpp)
+    add_executable(terrain_controller_display_tests ../tests/terrain_controller_display_tests.cpp)
+    target_link_libraries(terrain_controller_display_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
+    target_compile_definitions(terrain_controller_display_tests PRIVATE PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world")
     target_link_libraries(ui_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
     target_compile_definitions(ui_tests PRIVATE PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world")
-    qt_add_resources(ui_tests ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui"
+    foreach(native_ui_target ui_tests terrain_controller_display_tests)
+    qt_add_resources(${native_ui_target} ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui"
         FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/WebImportDialog.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/HistoricalLibraryPanel.qml"
@@ -572,16 +690,22 @@ if(BUILD_TESTING)
         "${PROJECT_SOURCE_DIR}/ui/common/ObjectSearch.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/ObjectChooser.qml"
               "${PROJECT_SOURCE_DIR}/ui/desktop/DesktopWorkspace.qml")
-    qt_add_resources(ui_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+    qt_add_resources(${native_ui_target} sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    endforeach()
     # Exercise the production default flag resolver and image loading without
     # leaving other sample-country flags unresolved in the UI test engine.
-    foreach(test_name presentation_editor_tests ui_tests)
+    foreach(test_name presentation_editor_tests ui_tests terrain_controller_display_tests territorial_catalog_controller_tests)
         qt_add_resources(${test_name} test_default_flag PREFIX "/defaults/flags"
             BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags"
             FILES ${DEFAULT_FLAG_FILES})
     endforeach()
     add_test(NAME ui_tests COMMAND ui_tests -o -,txt)
+    if(WIN32)
+        add_test(NAME terrain_controller_display_tests COMMAND terrain_controller_display_tests -o -,txt)
+        set_tests_properties(terrain_controller_display_tests PROPERTIES TIMEOUT 180
+            ENVIRONMENT "QT_QPA_PLATFORM=windows;QSG_RHI_BACKEND=d3d11")
+    endif()
     # Aggregate software-rendered UI suite budget; individual waits and performance gates are unchanged.
     # The expanded suite exceeded 120 s on CI after 31 passing cases.
     set_tests_properties(ui_tests PROPERTIES TIMEOUT 180 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")

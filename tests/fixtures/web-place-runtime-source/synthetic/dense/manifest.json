@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "revision": "synthetic-dense-v1",
+  "stages": [
+    {
+      "id": 0,
+      "minZoom": 0,
+      "columns": 4,
+      "rows": 1
+    }
+  ],
+  "tiles": {
+    "0/0-0": {
+      "shard": "0",
+      "offset": 0,
+      "length": 41521,
+      "sha256": "e65e5179487e0a9dc1bb67305026e96c077dbadfca40c918f949bc797739ecaa"
+    },
+    "0/1-0": {
+      "shard": "1",
+      "offset": 0,
+      "length": 41521,
+      "sha256": "29a36ccde7832a65b502bf125b331fbf705bd2876d44a827c90e0f86492b74aa"
+    },
+    "0/2-0": {
+      "shard": "2",
+      "offset": 0,
+      "length": 41521,
+      "sha256": "a737ddf9c39af14368fbb0bd142d272b4e4da03f0c7e9ef88a474867157038d3"
+    },
+    "0/3-0": {
+      "shard": "3",
+      "offset": 0,
+      "length": 41521,
+      "sha256": "2f26e1de0045ba9b55549a1477e369ff659404a726be145b97d98ca84b1f54ff"
+    }
+  },
+  "shards": {
+    "0": {
+      "url": "0.bin",
+      "bytes": 41521,
+      "sha256": "e65e5179487e0a9dc1bb67305026e96c077dbadfca40c918f949bc797739ecaa"
+    },
+    "1": {
+      "url": "1.bin",
+      "bytes": 41521,
+      "sha256": "29a36ccde7832a65b502bf125b331fbf705bd2876d44a827c90e0f86492b74aa"
+    },
+    "2": {
+      "url": "2.bin",
+      "bytes": 41521,
+      "sha256": "a737ddf9c39af14368fbb0bd142d272b4e4da03f0c7e9ef88a474867157038d3"
+    },
+    "3": {
+      "url": "3.bin",
+      "bytes": 41521,
+      "sha256": "2f26e1de0045ba9b55549a1477e369ff659404a726be145b97d98ca84b1f54ff"
+    }
+  },
+  "search": {}
+}

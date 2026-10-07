@@ -38,8 +38,10 @@ double greatCircleDistance(double longitude,double latitude,double otherLongitud
 }
 
 TerrainTileProvider::TerrainTileProvider(const QByteArray& pinned,const QString& root,
-                                         std::function<QString(const QString&)> resolver)
-    :root_(root),assetResolver_(std::move(resolver)) {
+                                         std::function<QString(const QString&)> resolver,
+                                         std::function<void()> beforeDecode,
+                                         std::function<QString(const QString&)> planningResolver)
+    :root_(root),assetResolver_(std::move(resolver)),planningResolver_(std::move(planningResolver)),beforeDecode_(std::move(beforeDecode)) {
     const auto object=QJsonDocument::fromJson(pinned).object();
     version_=object.value("version").toString();
     dem_=version_==QStringLiteral("0.13.3")&&object.value("representation")==QStringLiteral("dem-relief-v1");
@@ -85,6 +87,7 @@ TerrainTileProvider::TerrainTileProvider(const QByteArray& pinned,const QString&
 QString TerrainTileProvider::tilePath(int level,int column,int row) const {
     TerrainTileSpec spec;spec.level=level;spec.column=column;spec.row=row;
     const auto relative=relativeTilePath(spec);
+    if(planningResolver_)return planningResolver_(relative);
     // An installed verifier's refusal is authoritative, including corrupt
     // files already present under root_. Do not read them through a fallback.
     if(assetResolver_)return assetResolver_(relative);
@@ -93,14 +96,25 @@ QString TerrainTileProvider::tilePath(int level,int column,int row) const {
 QString TerrainTileProvider::decodeError() const {
     std::lock_guard lock(mutex_);return decodeFailureReason_;
 }
+bool TerrainTileProvider::isDecodeFailure(const QString& relative) const {
+    std::lock_guard lock(mutex_);return decodeFailures_.count(relative)!=0;
+}
+bool TerrainTileProvider::retryVerifiedAsset(const QString& relative) const {
+    std::lock_guard lock(mutex_);
+    if(!decodeFailures_.count(relative))return false;
+    clearDecodeFailure(relative);return true;
+}
 // Called while mutex_ protects decoder/cache state. A different successful
 // asset must not erase the reason a current optional source fell back.
-void TerrainTileProvider::recordDecodeFailure(const QString& path,const QString& reason) const {
+void TerrainTileProvider::recordDecodeFailure(const QString& relative,const QString& path,const QString& reason) const {
     if(failedDecodes_!=std::numeric_limits<std::uint64_t>::max())++failedDecodes_;
-    decodeFailurePath_=path;decodeFailureReason_=QString("Terrain decode failed: %1 (%2)").arg(path,reason);
+    latestDecodeFailure_=relative;decodeFailureReason_=QString("Terrain decode failed: %1 (%2)").arg(path,reason);
+    decodeFailures_[relative]=decodeFailureReason_;
 }
-void TerrainTileProvider::clearDecodeFailure(const QString& path) const {
-    if(decodeFailurePath_==path){decodeFailurePath_.clear();decodeFailureReason_.clear();}
+void TerrainTileProvider::clearDecodeFailure(const QString& relative) const {
+    if(!decodeFailures_.erase(relative)||latestDecodeFailure_!=relative)return;
+    if(decodeFailures_.empty()){latestDecodeFailure_.clear();decodeFailureReason_.clear();}
+    else {latestDecodeFailure_=decodeFailures_.rbegin()->first;decodeFailureReason_=decodeFailures_.rbegin()->second;}
 }
 
 QString TerrainTileProvider::relativeTilePath(const TerrainTileSpec& spec) const {
@@ -113,17 +127,32 @@ QSize TerrainTileProvider::levelSize(int level) const {
 QImage TerrainTileProvider::loadTint() const {
     if(!available_||!dem_)return {};
     const QString relative="terrain/v0.13.3/tint.webp";
-    const auto path=assetResolver_?assetResolver_(relative):QDir(root_).filePath(relative);
+    const auto path=planningResolver_?planningResolver_(relative):assetResolver_?assetResolver_(relative):QDir(root_).filePath(relative);
     if(path.isEmpty())return {};
-    std::lock_guard lock(mutex_);const CacheKey key{path,false};policy_.touch(key);
-    if(const auto found=images_.find(key);found!=images_.end())return found->second.image;
-    QImageReader reader(path,"webp");
-    if(reader.size()!=QSize(4096,2048)){
-        recordDecodeFailure(path,QString("expected 4096x2048 tint; %1").arg(reader.errorString()));return {};}
-    auto image=reader.read();if(image.isNull()){recordDecodeFailure(path,reader.errorString());return {};}
-    clearDecodeFailure(path);
+    const CacheKey key{path,false};
+    {
+        std::lock_guard lock(mutex_);policy_.touch(key);
+        if(const auto found=images_.find(key);found!=images_.end())return found->second.image;
+    }
+    const auto fail=[&](const QString& reason) {
+        std::lock_guard lock(mutex_);recordDecodeFailure(relative,path,reason);return QImage{};
+    };
+    // Source identity is immutable. File decoding and conversion must not hold
+    // the cache mutex needed by GUI status and render-protection updates.
+    const auto readPath=planningResolver_&&assetResolver_?assetResolver_(relative):path;
+    if(readPath.isEmpty())return fail("verified source unavailable");
+    QImageReader reader(readPath,"webp");
+    if(reader.size()!=QSize(4096,2048))
+        return fail(QString("expected 4096x2048 tint; %1").arg(reader.errorString()));
+    if(beforeDecode_)beforeDecode_();
+    auto image=reader.read();if(image.isNull())return fail(reader.errorString());
     image=image.convertToFormat(QImage::Format_RGBA8888);
     const auto bytes=std::size_t(image.sizeInBytes());
+    std::lock_guard lock(mutex_);
+    clearDecodeFailure(relative);
+    // Another decoder may have completed this same immutable source while the
+    // mutex was released. Reuse its backing without a second cache admission.
+    if(const auto found=images_.find(key);found!=images_.end())return found->second.image;
     auto inserted=images_.emplace(key,CachedImage{image,bytes});
     try {if(!policy_.admit(key,bytes)){images_.erase(inserted.first);return {};}}
     catch(...){images_.erase(inserted.first);throw;}
@@ -238,23 +267,32 @@ QImage TerrainTileProvider::loadTile(const TerrainTileSpec& spec,bool grayMode) 
     const auto expected=tilePath(spec.level,spec.column,spec.row);
     if(expected.isEmpty())return {};
     if(spec.path!=expected)return {};
-    std::lock_guard lock(mutex_);
     const CacheKey key{expected,dem_?false:grayMode};
-    policy_.touch(key);
-    if(auto found=images_.find(key);found!=images_.end()){const auto image=found->second.image;finishPending(key);return image;}
-    QImageReader reader(expected,"webp");
+    {
+        std::lock_guard lock(mutex_);policy_.touch(key);
+        if(auto found=images_.find(key);found!=images_.end()){const auto image=found->second.image;finishPending(key);return image;}
+    }
+    const auto fail=[&](const QString& reason) {
+        std::lock_guard lock(mutex_);recordDecodeFailure(relativeTilePath(spec),expected,reason);return QImage{};
+    };
+    // A cached backing already owns verified immutable pixels. Only a cold
+    // read consults the verifier; it can select an approved external location
+    // distinct from the stable logical cache path used by demand/protection.
+    const auto readPath=planningResolver_&&assetResolver_?assetResolver_(relativeTilePath(spec)):expected;
+    if(readPath.isEmpty())return fail("verified source unavailable");
+    QImageReader reader(readPath,"webp");
+    if(beforeDecode_)beforeDecode_();
     auto image=reader.read();
-    if(image.isNull()){recordDecodeFailure(expected,reader.errorString());return {};}
+    if(image.isNull())return fail(reader.errorString());
     if(dem_) {
         const auto& grid=levels_[spec.level];
         const QSize size(std::min(grid.tileSize,grid.width-spec.column*grid.tileSize)+2,
                          std::min(grid.tileSize,grid.height-spec.row*grid.tileSize)+2);
-        if(image.size()!=size){recordDecodeFailure(expected,"DEM dimensions/gutter mismatch");return {};}
+        if(image.size()!=size)return fail("DEM dimensions/gutter mismatch");
         image=image.convertToFormat(QImage::Format_RGBA8888);
         for(int y=0;y<image.height();++y){const auto* row=image.constScanLine(y);
-            for(int x=0;x<image.width();++x)if(row[x*4+3]!=255){recordDecodeFailure(expected,"DEM A channel must be 255");return {};}}
+            for(int x=0;x<image.width();++x)if(row[x*4+3]!=255)return fail("DEM A channel must be 255");}
     }
-    clearDecodeFailure(expected);
     if(grayMode&&!dem_) {
         image=image.convertToFormat(QImage::Format_ARGB32);
         for(int y=0;y<image.height();++y)for(int x=0;x<image.width();++x) {
@@ -264,6 +302,9 @@ QImage TerrainTileProvider::loadTile(const TerrainTileSpec& spec,bool grayMode) 
         }
     }
     const auto bytes=std::size_t(image.sizeInBytes());
+    std::lock_guard lock(mutex_);
+    clearDecodeFailure(relativeTilePath(spec));
+    if(auto found=images_.find(key);found!=images_.end()){const auto cached=found->second.image;finishPending(key);return cached;}
     auto inserted=images_.emplace(key,CachedImage{image,bytes});
     try {if(!policy_.admit(key,bytes)){images_.erase(inserted.first);return image;}}
     catch(...){images_.erase(inserted.first);throw;}
@@ -282,6 +323,7 @@ void TerrainTileProvider::setCacheBudget(std::size_t bytes) {
 }
 void TerrainTileProvider::protectVisible(const std::vector<TerrainTileSpec>& tiles,bool gray) {
     std::lock_guard lock(mutex_);
+    renderOwnedProtection_=false;
     if(dem_)gray=false;
     displayGray_=gray;
     if(tiles.empty()){visible_.clear();fallback_.clear();pending_.clear();}
@@ -293,6 +335,28 @@ void TerrainTileProvider::protectVisible(const std::vector<TerrainTileSpec>& til
         if(pending_.empty())fallback_.clear();
     }
     applyProtection();trim();
+}
+void TerrainTileProvider::protectRenderResources(const std::vector<TerrainTileSpec>& requested,
+                                                const std::vector<TerrainTileSpec>& retained) {
+    std::lock_guard lock(mutex_);
+    renderOwnedProtection_=true;displayGray_=false;
+    visible_.clear();fallback_.clear();pending_.clear();
+    // Both representations decode raw source bytes; raster display variants
+    // have their own bridge backing leases, not duplicate raw decoder entries.
+    for(const auto& spec:requested) {
+        const CacheKey key{spec.path,false};visible_.insert(key);
+        if(!images_.count(key))pending_.insert(key);
+    }
+    for(const auto& spec:retained)fallback_.insert({spec.path,false});
+    applyProtection();trim();
+}
+std::size_t TerrainTileProvider::expectedDecodedTileBytes(const TerrainTileSpec& spec) const {
+    if(spec.level<0||spec.level>=int(levels_.size()))return 0;
+    const auto& level=levels_[spec.level];
+    if(spec.column<0||spec.column>=level.columns||spec.row<0||spec.row>=level.rows)return 0;
+    const auto width=std::min(level.tileSize,level.width-spec.column*level.tileSize)+2;
+    const auto height=std::min(level.tileSize,level.height-spec.row*level.tileSize)+2;
+    return std::size_t(width)*std::size_t(height)*4;
 }
 std::size_t TerrainTileProvider::cachedBytes() const {
     std::lock_guard lock(mutex_);return resident_;
@@ -316,6 +380,7 @@ void TerrainTileProvider::applyProtection() const {
     }
 }
 void TerrainTileProvider::finishPending(const CacheKey& key) const {
+    if(renderOwnedProtection_){pending_.erase(key);return;}
     pending_.erase(key);bool changed=false;
     if(key.second==displayGray_&&fallback_.count(key))changed=fallback_.erase({key.first,!key.second})!=0;
     if(pending_.empty()&&!fallback_.empty()){fallback_.clear();changed=true;}

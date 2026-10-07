@@ -52,3 +52,7 @@ assets/world/physical-inventory-terrain-dem-c3c18d1.json -text
 assets/world/terrain-dem-provenance-c3c18d1.json -text
 tests/fixtures/web-p2-p3-terrain-source/** -text
 tests/fixtures/web-p2-p3-current-source/** -text
+tests/fixtures/web-place-runtime-source/** -text
+tests/fixtures/web-territorial-library-v2/** -text whitespace=-blank-at-eof
+assets/place/** -text
+assets/territorial-library-v2/** -text

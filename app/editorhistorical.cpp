@@ -1,6 +1,8 @@
 #include "editorcontroller.h"
 #include "historicallibraryloader.h"
 #include "historicaltransaction.h"
+#include "territorialcatalogadapter.h"
+#include "defaultflagresolver.h"
 #include "geometrycalculator.h"
 #include <pandoeditor/project.h>
 #include <pandoeditor/temporal.h>
@@ -8,9 +10,13 @@
 #include <QFutureWatcher>
 #include <QJsonDocument>
 #include <QFileInfo>
+#include <QFile>
+#include <QDate>
+#include <QCryptographicHash>
 #include <algorithm>
 #include <limits>
 
+static void initializeCatalogResources(){Q_INIT_RESOURCE(territorial_catalog);}
 namespace {
 QString qs(const std::string& value){return QString::fromStdString(value);}
 QString label(const pandoeditor::HistoricalEntity& entity) {
@@ -21,10 +27,89 @@ QString kindName(const std::string& catalogKind) {
     return catalogKind=="country"?QStringLiteral("국가"):catalogKind=="subunit"?QStringLiteral("하위단위"):QStringLiteral("지방");
 }
 QString opt(const std::optional<std::string>& value){return value?qs(*value):QString();}
+QString catalogDate(const QString& value){return value.isEmpty()?QDate::currentDate().toString(Qt::ISODate):value;}
+QString catalogName(const QJsonObject& entity) {
+    const auto names=entity.value("names").toObject();
+    for(const auto& key:{"ko","en"})if(!names.value(key).toString().isEmpty())return names.value(key).toString();
+    return names.isEmpty()?QString():names.begin().value().toString();
+}
+QVariantMap catalogPreview(const pandoeditor::TerritorialLibraryCatalog& catalog,const QString& id,const QString& date) {
+    const auto selected=catalog.preview(id,date);const auto entity=selected.value("entity").toObject(),version=selected.value("version").toObject();
+    auto result=entity.toVariantMap();result["id"]=id;result["name"]=catalogName(entity);
+    result["geometryVersionId"]=version.value("versionId").toVariant();result["selectedVersionId"]=version.value("versionId").toVariant();
+    result["certainty"]=version.value("certainty").toVariant();result["datePrecision"]=version.value("datePrecision").toVariant();
+    result["sourceId"]=version.value("sourceId").toVariant();
+    result["parentLibraryId"]=entity.value("parentEntityId").toVariant();
+    result["mode"]=entity.value("instantiation").toObject().value("mode").toVariant();
+    bool hasChildren=false;for(const auto& candidate:catalog.entries())if(candidate.toObject().value("parentEntityId")==id){hasChildren=true;break;}
+    result["hasChildren"]=hasChildren;QVariantList versions;
+    for(const auto& raw:entity.value("geometryVersions").toArray()) {
+        auto row=raw.toObject().toVariantMap();row["id"]=row.value("versionId");
+        row["label"]=QStringLiteral("경계 %1 · %2 ~ %3").arg(versions.size()+1).arg(row.value("validFrom").toString()).arg(row.value("validTo").toString());versions.push_back(row);
+    }
+    result["versions"]=versions;
+    const auto geometry=pandoeditor::territorialCatalogGeometry(version.value("geometry").toObject());
+    double minX=std::numeric_limits<double>::infinity(),minY=minX,maxX=-minX,maxY=-minX;
+    for(const auto& polygon:geometry.polygons)for(const auto& ring:polygon)for(const auto& point:ring) {
+        minX=std::min(minX,point.x);maxX=std::max(maxX,point.x);minY=std::min(minY,point.y);maxY=std::max(maxY,point.y);
+    }
+    const double width=std::max(maxX-minX,1e-9),height=std::max(maxY-minY,1e-9);QVariantList polygons;
+    for(const auto& polygon:geometry.polygons) {
+        QVariantList rings;for(const auto& ring:polygon) {
+            QVariantList points;for(const auto& point:ring)points.push_back(QVariantMap{{"x",(point.x-minX)/width},{"y",1-(point.y-minY)/height}});
+            rings.push_back(points);
+        }polygons.push_back(rings);
+    }
+    result["polygons"]=polygons;return result;
+}
+}
+
+void EditorController::initializeTerritorialCatalog() {
+    initializeCatalogResources();
+    QFile file(QStringLiteral(":/territorial-library-v2/index.json"));
+    if(!file.open(QIODevice::ReadOnly)){historicalError_=QStringLiteral("PL-LIB-READ: bundled index missing");historicalStage_=QStringLiteral("error");return;}
+    installTerritorialCatalog(file.readAll(),QByteArrayLiteral("63c072095fd6c95034365f6d7f9d4e4ff99f71684890bffc8e678fe741b4334c"),
+        QStringLiteral(":/territorial-library-v2"),QStringLiteral("Territorial Library v2"),true);
+}
+bool EditorController::installTerritorialCatalog(const QByteArray& bytes,const QByteArray& pin,const QString& root,const QString& name,bool bundled) {
+    try {
+        // Validate before replacing any published source or cancelling its work.
+        auto candidate=std::make_shared<pandoeditor::TerritorialLibraryCatalog>(bytes,pin,root);
+        cancelHistoricalAdd();++historicalCatalogGeneration_;historicalCatalog_=std::move(candidate);
+        historicalCatalogSha256_=pin;historicalCatalogRoot_=root;historicalSource_.reset();historicalLibrary_.reset();
+        historicalCatalogName_=name;historicalCatalogBundled_=bundled;historicalPreviewCache_.clear();
+        historicalSelectedId_.clear();historicalVersionId_.clear();historicalReferenceDate_=catalogDate({});
+        historicalFilter_.referenceDate=historicalReferenceDate_.toStdString();historicalStage_=QStringLiteral("ready");historicalError_.clear();
+        emit historicalChanged();return true;
+    }catch(const std::exception& error){historicalError_=QString::fromUtf8(error.what());emit historicalChanged();return false;}
+}
+QVariantMap EditorController::historicalCatalogStatus() const {
+    int versions=0;if(historicalCatalog_)for(const auto& entity:historicalCatalog_->entries())versions+=entity.toObject().value("geometryVersions").toArray().size();
+    return {{"indexSha256",historicalCatalogSha256_},{"entities",historicalCatalog_?historicalCatalog_->entries().size():0},
+        {"lineages",historicalCatalog_?historicalCatalog_->lineages().size():0},{"geometryVersions",versions},
+        {"loadedEntities",historicalCatalog_?static_cast<qulonglong>(historicalCatalog_->loadedEntityCount()):0},
+        {"generation",historicalCatalogGeneration_},{"pendingJobs",historicalPendingJobs_},{"previewLoading",historicalPreviewLoading_}};
+}
+QVariantList EditorController::historicalLineages() const {
+    if(!historicalCatalog_)return {};
+    try {return historicalCatalog_->search(qs(historicalFilter_.query),catalogDate(qs(historicalFilter_.referenceDate))).toVariantList();}
+    catch(const std::exception&){return {};}
 }
 
 QVariantList EditorController::historicalResults() const {
     QVariantList rows;
+    if(historicalCatalog_) {
+        for(const auto& group:historicalLineages()) {
+            const auto lineage=group.toMap();for(const auto& raw:lineage.value("entities").toList()) {
+                auto row=raw.toMap();row["id"]=row.value("entityId");row["name"]=catalogName(QJsonObject::fromVariantMap(row));
+                row["lineageNames"]=lineage.value("names");
+                row["lineageName"]=catalogName(QJsonObject{{"names",QJsonObject::fromVariantMap(lineage.value("names").toMap())}});
+                row["kind"]=row.value("entityKind");row["type"]=row.value("entityKind")=="regional"?QStringLiteral("지방"):QStringLiteral("국가/하위단위");
+                row["parentId"]=row.value("parentEntityId");
+                row["flagSource"]=resolveDefaultFlagSource(row.value("metadata").toMap().value("defaultFlagDataUrl").toString());rows.push_back(row);
+            }
+        }return rows;
+    }
     if(!historicalLibrary_)return rows;
     for(const auto* entity:historicalLibrary_->search(historicalFilter_)) {
         rows.push_back(QVariantMap{{"id",qs(entity->libraryId)},{"name",label(*entity)},
@@ -44,6 +129,9 @@ QVariantList EditorController::historicalRegionOptions() const {
 }
 QVariantList EditorController::historicalSnapshots() const {
     QVariantList rows;
+    if(historicalCatalog_) {
+        for(const auto& raw:historicalCatalog_->snapshots()) {auto row=raw.toObject().toVariantMap();row["count"]=row.value("entityRefs").toList().size();rows.push_back(row);}return rows;
+    }
     if(historicalLibrary_)for(const auto* snapshot:historicalLibrary_->listSnapshots())
         rows.push_back(QVariantMap{{"id",qs(snapshot->id)},{"name",qs(snapshot->name)},
             {"referenceDate",opt(snapshot->referenceDate)},{"count",static_cast<int>(snapshot->entityRefs.size())}});
@@ -67,6 +155,7 @@ QVariantList EditorController::historicalParents(const QString& countryId) const
     return result;
 }
 QVariantMap EditorController::historicalPreview() const {
+    if(historicalCatalog_)return historicalPreviewCache_;
     if(!historicalLibrary_||historicalSelectedId_.isEmpty())return {};
     const auto* entity=historicalLibrary_->get(historicalSelectedId_.toStdString());
     if(!entity)return {};
@@ -122,19 +211,20 @@ QVariantMap EditorController::historicalPreview() const {
     return result;
 }
 bool EditorController::installHistoricalSource(const QByteArray& bytes,const QString& name,bool bundled) {
-    cancelHistoricalAdd();
     try {
-        historicalSource_=std::make_shared<pandoeditor::HistoricalSource>(
+        auto candidate=std::make_shared<pandoeditor::HistoricalSource>(
             pandoeditor::parseHistoricalLibrarySource(bytes));
+        cancelHistoricalAdd();historicalCatalog_.reset();++historicalCatalogGeneration_;historicalCatalogSha256_.clear();historicalPreviewCache_.clear();
+        historicalSource_=std::move(candidate);
         historicalCatalogName_=name;historicalCatalogBundled_=bundled;
         return refreshHistoricalCatalog();
     }catch(const std::exception& error) {
-        historicalSource_.reset();historicalLibrary_.reset();historicalCatalogName_.clear();
         historicalError_=QString::fromUtf8(error.what());historicalStage_=QStringLiteral("error");
         emit historicalChanged();return false;
     }
 }
 bool EditorController::refreshHistoricalCatalog() {
+    if(historicalCatalog_) {cancelHistoricalAdd();historicalPreviewCache_.clear();historicalSelectedId_.clear();historicalVersionId_.clear();return true;}
     if(!historicalSource_)return false;
     try {
         auto materialized=pandoeditor::materializeHistoricalSource(*historicalSource_,
@@ -144,7 +234,7 @@ bool EditorController::refreshHistoricalCatalog() {
                 const auto& unit=project_.document().units.at(it->second);
                 if(unit.kind!=pandoeditor::UnitKind::General)return std::nullopt;
                 return *project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit.id).geometryRef);
-            },pandoeditor::calculateGeometry);
+            },pandoeditor::makeTransactionGeometryCalculator());
         historicalLibrary_=std::make_shared<pandoeditor::HistoricalLibrary>(std::move(materialized.library));
         historicalSelectedId_.clear();historicalVersionId_.clear();
         historicalError_.clear();historicalStage_=QStringLiteral("ready");
@@ -159,7 +249,14 @@ bool EditorController::refreshHistoricalCatalog() {
 bool EditorController::loadHistoricalLibrary(const QUrl& url) {
     try {
         const auto name=url.isLocalFile()?QFileInfo(url.toLocalFile()).fileName():url.fileName();
-        return installHistoricalSource(storage_.read(url),QStringLiteral("로컬: ")+name,false);
+        const auto bytes=storage_.read(url);QJsonParseError parseError;const auto document=QJsonDocument::fromJson(bytes,&parseError);
+        if(parseError.error!=QJsonParseError::NoError||!document.isObject())throw std::invalid_argument("PL-LIB-JSON: invalid catalog object");
+        const auto object=document.object();
+        if(object.contains("lineages")) {
+            if(!url.isLocalFile())throw std::invalid_argument("PL-LIB-READ: local catalog index required");
+            return installTerritorialCatalog(bytes,QCryptographicHash::hash(bytes,QCryptographicHash::Sha256).toHex(),QFileInfo(url.toLocalFile()).absolutePath(),QStringLiteral("로컬: ")+name,false);
+        }
+        return installHistoricalSource(bytes,QStringLiteral("로컬: ")+name,false);
     }catch(const std::exception& error) {
         historicalError_=QString::fromUtf8(error.what());historicalStage_=QStringLiteral("error");
         emit historicalChanged();return false;
@@ -167,6 +264,15 @@ bool EditorController::loadHistoricalLibrary(const QUrl& url) {
 }
 void EditorController::searchHistorical(const QString& query,const QString& type,
     const QString& status,const QString& referenceDate,const QString& region) {
+    if(historicalCatalog_) {
+        try {const auto date=catalogDate(referenceDate);pandoeditor::parseTemporal(date.toStdString());
+            if(date!=historicalReferenceDate_) {
+                cancelHistoricalAdd();historicalPreviewCache_.clear();historicalVersionId_.clear();historicalReferenceDate_=date;
+            }
+            historicalFilter_={query.toStdString(),{},pandoeditor::HistoricalStatus::All,date.toStdString(),{}};historicalError_.clear();
+        }catch(const std::exception& error){historicalError_=QString::fromUtf8(error.what());}
+        emit historicalChanged();return;
+    }
     historicalFilter_={query.toStdString(),type.toStdString(),
         status==QStringLiteral("current")?pandoeditor::HistoricalStatus::Current:
         status==QStringLiteral("past")?pandoeditor::HistoricalStatus::Past:pandoeditor::HistoricalStatus::All,
@@ -177,6 +283,39 @@ void EditorController::searchHistorical(const QString& query,const QString& type
 }
 void EditorController::selectHistorical(const QString& id,const QString& versionId,const QString& referenceDate) {
     cancelHistoricalAdd();
+    if(historicalCatalog_) {
+        historicalSelectedId_=id;historicalReferenceDate_=catalogDate(referenceDate);historicalPreviewCache_.clear();
+        try {
+            const auto entity=historicalCatalog_->entry(id);const auto selected=historicalCatalog_->selectedVersionId(id,historicalReferenceDate_);
+            historicalVersionId_=selected;historicalPreviewCache_={{"id",id},{"name",catalogName(entity)},{"selectedVersionId",selected},{"loading",false}};
+            if(selected.isEmpty())throw std::invalid_argument("PL-LIB-GEOMETRY-GAP: no boundary at selected date");
+            if(!versionId.isEmpty()&&versionId!=selected)throw std::invalid_argument("PL-LIB-GEOMETRY-GAP: requested version is not selected at date");
+            const auto catalog=historicalCatalog_;const auto generation=historicalCatalogGeneration_,token=historicalSession_;
+            const auto base=project_.snapshot();const auto date=historicalReferenceDate_;
+            auto cancelled=std::make_shared<std::atomic_bool>(false);historicalCatalogCancel_=cancelled;
+            historicalPreviewLoading_=true;historicalPreviewCache_["loading"]=true;++historicalPendingJobs_;
+            auto* watcher=new QFutureWatcher<QVariantMap>(this);
+            connect(watcher,&QFutureWatcher<QVariantMap>::finished,this,[this,watcher,catalog,generation,token,base,cancelled]() {
+                watcher->deleteLater();--historicalPendingJobs_;
+                if(cancelled->load()||token!=historicalSession_||generation!=historicalCatalogGeneration_||catalog!=historicalCatalog_||!base.matches(project_)) {
+                    if(token==historicalSession_&&generation==historicalCatalogGeneration_&&catalog==historicalCatalog_) {
+                        historicalPreviewLoading_=false;historicalPreviewCache_["loading"]=false;
+                        historicalPreviewCache_["error"]=QStringLiteral("PL-LIB-STALE: project changed");
+                    }emit historicalChanged();return;
+                }
+                historicalPreviewLoading_=false;
+                try {historicalPreviewCache_=watcher->result();historicalPreviewCache_["loading"]=false;historicalError_.clear();}
+                catch(const std::exception& error){historicalPreviewCache_["error"]=QString::fromUtf8(error.what());historicalPreviewCache_["loading"]=false;historicalError_=QString::fromUtf8(error.what());}
+                catch(...){historicalPreviewCache_["error"]=QStringLiteral("PL-LIB-PREVIEW: worker failed");historicalPreviewCache_["loading"]=false;}
+                emit historicalChanged();
+            });
+            watcher->setFuture(QtConcurrent::run([catalog,id,date,cancelled]() {
+                if(cancelled->load())throw std::runtime_error("CANCELLED");auto result=catalogPreview(*catalog,id,date);
+                if(cancelled->load())throw std::runtime_error("CANCELLED");return result;
+            }));
+        }catch(const std::exception& error){historicalPreviewCache_["error"]=QString::fromUtf8(error.what());historicalError_=QString::fromUtf8(error.what());}
+        emit historicalChanged();return;
+    }
     if(id!=historicalSelectedId_)historicalVersionId_.clear();
     historicalSelectedId_=id;
     if(!versionId.isEmpty())historicalVersionId_=versionId;
@@ -185,6 +324,69 @@ void EditorController::selectHistorical(const QString& id,const QString& version
 }
 bool EditorController::prepareHistoricalAdd(const QVariantMap& options) {
     cancelHistoricalAdd();
+    if(historicalCatalog_) {
+        try {
+            auto date=catalogDate(options.value("referenceDate",historicalReferenceDate_).toString());
+            const auto selected=options.value("libraryId",historicalSelectedId_).toString();
+            QStringList roots;const auto snapshotId=options.value("snapshotId").toString();
+            if(snapshotId.isEmpty())roots.push_back(selected);
+            else {
+                for(const auto& raw:historicalCatalog_->snapshots()) {
+                    const auto snapshot=raw.toObject();if(snapshot.value("id")==snapshotId) {
+                        if(!options.contains("referenceDate")||options.value("referenceDate").toString().isEmpty())date=snapshot.value("referenceDate").toString();
+                        for(const auto& id:snapshot.value("entityRefs").toArray())roots.push_back(id.toString());
+                    }
+                }
+                if(roots.isEmpty())throw std::invalid_argument("PL-LIB-SNAPSHOT: missing snapshot");
+            }
+            const auto depth=options.value("childDepth",QStringLiteral("none")).toString();
+            const auto ids=historicalCatalog_->entityRefsWithChildren(roots,date,depth);const auto ownership=options.value("ownership").toMap();
+            for(const auto& id:ids) {
+                const auto entity=historicalCatalog_->entry(id);const auto parent=entity.value("parentEntityId").toString();
+                if(historicalCatalog_->selectedVersionId(id,date).isEmpty())throw std::invalid_argument("PL-LIB-GEOMETRY-GAP: no boundary at selected date");
+                if(entity.value("entityKind")=="general"&&!parent.isEmpty()&&!ids.contains(parent)&&ownership.value(id).toMap().isEmpty())
+                    historicalOwnershipNeeded_.push_back(QVariantMap{{"id",id},{"entityId",id},{"name",catalogName(entity)},{"parentId",parent}});
+            }
+            if(!historicalOwnershipNeeded_.isEmpty()){historicalStage_=QStringLiteral("ownership");historicalError_=QStringLiteral("소속 국가와 상위 단위를 선택하세요.");emit historicalChanged();return false;}
+            const auto catalog=historicalCatalog_;const auto base=project_.snapshot();const auto generation=historicalCatalogGeneration_,token=historicalSession_;
+            const auto cachedVersion=selected==historicalSelectedId_&&date==historicalReferenceDate_?historicalVersionId_:QString();
+            const auto version=options.value("geometryVersionId",cachedVersion).toString();
+            if(date!=historicalReferenceDate_){historicalPreviewCache_.clear();historicalVersionId_.clear();}
+            historicalReferenceDate_=date;
+            auto cancelled=std::make_shared<std::atomic_bool>(false);historicalCatalogCancel_=cancelled;
+            ++historicalPendingJobs_;historicalError_.clear();historicalStage_=QStringLiteral("preparing");emit historicalChanged();
+            auto* watcher=new QFutureWatcher<pandoeditor::HistoricalInstantiationPlan>(this);
+            connect(watcher,&QFutureWatcher<pandoeditor::HistoricalInstantiationPlan>::finished,this,[this,watcher,catalog,base,generation,token,cancelled]() {
+                watcher->deleteLater();--historicalPendingJobs_;
+                if(cancelled->load()||token!=historicalSession_||generation!=historicalCatalogGeneration_||catalog!=historicalCatalog_||!base.matches(project_)) {
+                    if(token==historicalSession_&&generation==historicalCatalogGeneration_&&catalog==historicalCatalog_) {
+                        historicalStage_=QStringLiteral("ready");historicalError_=QStringLiteral("PL-LIB-STALE: project changed");
+                    }emit historicalChanged();return;
+                }
+                try {
+                    auto plan=watcher->result();pandoeditor::CommandArguments args;args.action=plan;
+                    auto result=pandoeditor::CommandProcessor::prepare(project_,pandoeditor::CommandProcessor::makeRequest(project_,"historical.instantiate",std::move(args)));
+                    if(!result.ok()||!result.preview)throw std::runtime_error(result.detail.empty()?"PL-LIB-ADD: prepare failed":result.detail);
+                    historicalCommandPreview_=std::move(result.preview);QVariantList added,adjusted,updated;
+                    for(const auto& item:plan.additions)added.push_back(qs(item.selection.name));
+                    const auto display=[&](const pandoeditor::ObjectRef& ref){const auto view=project_.propertyView(ref);return view?qs(view->displayName):qs(ref.id);};
+                    for(const auto& patch:plan.territoryReplacements)adjusted.push_back(display(patch.owner));
+                    for(const auto& [donor,target]:plan.territoryTransfers)adjusted.push_back(display(donor)+QStringLiteral(" → ")+display(target));
+                    for(const auto& [id,name]:plan.countryNameUpdates)updated.push_back(display(pandoeditor::territorialRef(id))+QStringLiteral(" → ")+qs(name));
+                    historicalImpact_={{"added",added},{"adjusted",adjusted},{"updated",updated},{"summary",QStringLiteral("%1개 추가 · 영토 %2개 조정 · 국가 이름 %3개 변경").arg(added.size()).arg(adjusted.size()).arg(updated.size())}};
+                    historicalStage_=QStringLiteral("impact");historicalError_.clear();
+                }catch(const std::exception& error){historicalStage_=QStringLiteral("ready");historicalError_=QString::fromUtf8(error.what());}
+                catch(...){historicalStage_=QStringLiteral("ready");historicalError_=QStringLiteral("PL-LIB-ADD: worker failed");}
+                emit historicalChanged();
+            });
+            watcher->setFuture(QtConcurrent::run([catalog,base,roots,date,depth,ownership,selected,version,cancelled]() {
+                const pandoeditor::GeometryCancellation check=[cancelled](){return cancelled->load();};
+                if(check())throw std::runtime_error("CANCELLED");
+                auto additions=pandoeditor::territorialCatalogSelections(*catalog,base,roots,date,depth,ownership,selected,version);
+                return pandoeditor::prepareHistoricalTransaction(base,std::move(additions),pandoeditor::makeTransactionGeometryCalculator(),check);
+            }));return true;
+        }catch(const std::exception& error){historicalStage_=QStringLiteral("ready");historicalError_=QString::fromUtf8(error.what());emit historicalChanged();return false;}
+    }
     if(!historicalLibrary_) {historicalError_=QStringLiteral("역사 라이브러리 파일을 먼저 선택하세요.");emit historicalChanged();return false;}
     try {
         const auto snapshotId=options.value("snapshotId").toString().toStdString();
@@ -265,7 +467,7 @@ bool EditorController::prepareHistoricalAdd(const QVariantMap& options) {
                 emit historicalChanged();
             });
         watcher->setFuture(QtConcurrent::run([base,catalog,requests=std::move(requests)]() {
-            return pandoeditor::prepareHistoricalTransaction(base,*catalog,requests,pandoeditor::calculateGeometry);
+            return pandoeditor::prepareHistoricalTransaction(base,*catalog,requests,pandoeditor::makeTransactionGeometryCalculator());
         }));
         return true;
     }catch(const std::exception& error){historicalStage_=QStringLiteral("ready");historicalError_=QString::fromUtf8(error.what());emit historicalChanged();return false;}
@@ -280,10 +482,13 @@ bool EditorController::confirmHistoricalAdd(qulonglong token) {
     historicalError_.clear();publish(false);emit historicalChanged();return true;
 }
 void EditorController::cancelHistoricalAdd() {
+    if(historicalCatalogCancel_)historicalCatalogCancel_->store(true);
+    historicalCatalogCancel_.reset();historicalPreviewLoading_=false;
+    if(historicalPreviewCache_.contains("loading"))historicalPreviewCache_["loading"]=false;
     ++historicalSession_;
     if(historicalCommandPreview_)pandoeditor::CommandProcessor::cancel(*historicalCommandPreview_);
     historicalCommandPreview_.reset();historicalImpact_.clear();
     historicalOwnershipNeeded_.clear();
-    historicalStage_=historicalLibrary_?QStringLiteral("ready"):QStringLiteral("unloaded");
+    historicalStage_=(historicalLibrary_||historicalCatalog_)?QStringLiteral("ready"):QStringLiteral("unloaded");
     emit historicalChanged();
 }

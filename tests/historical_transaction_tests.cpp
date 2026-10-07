@@ -28,6 +28,27 @@ Project project() {
 class HistoricalTransactionTests:public QObject {
     Q_OBJECT
 private slots:
+    void disconnectedReplacementComponentsDoNotEnterUnrelatedBooleanWork() {
+        auto p=project();auto shape=box(0,0,4,10);shape.type="MultiPolygon";
+        shape.polygons.push_back(box(80,40,4,10).polygons.front());
+        auto source=catalog(shape);std::size_t largestOperand=0;int calls=0;
+        const GeometryCalculator measured=[&](const GeometryOperationRequest& request,const GeometryCancellation& cancelled) {
+            ++calls;largestOperand=std::max(largestOperand,request.right.polygons.size());
+            return calculateGeometry(request,cancelled);
+        };
+        const auto plan=prepareHistoricalTransaction(p.snapshot(),source,{{"historical-country:test","1945"}},measured);
+        QCOMPARE(calls,2);QCOMPARE(largestOperand,std::size_t(1));
+        QCOMPARE(plan.territoryReplacements.size(),std::size_t(1));
+        QCOMPARE(planarArea(plan.territoryReplacements.front().geometry),60.);
+        QCOMPARE(plan.additions.front().selection.geometry.polygons.size(),std::size_t(2));
+        // Bounds restrict calculation input; the original source archive remains complete.
+        CommandArguments args;args.action=plan;
+        auto prepared=CommandProcessor::prepare(p,CommandProcessor::makeRequest(p,"historical.instantiate",args));
+        QVERIFY2(prepared.ok(),prepared.detail.c_str());QVERIFY(CommandProcessor::confirm(p,*prepared.preview).changed());
+        const auto& binding=staticGeometryBinding(p.document(),"historical-country:test");
+        QCOMPARE(p.document().geometries.get(binding.geometryRef)->polygons.size(),std::size_t(2));
+        QVERIFY(p.undo());QCOMPARE(planarArea(*p.document().geometries.get(staticGeometryBinding(p.document(),"A").geometryRef)),100.);
+    }
     void replacementAndNameAreOneUndo() {
         auto p=project();auto source=catalog(box(0,0,4,10));
         auto plan=prepareHistoricalTransaction(p.snapshot(),source,{{"historical-country:test","1945"}},calculateGeometry);

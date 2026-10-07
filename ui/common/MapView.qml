@@ -25,6 +25,8 @@ Rectangle {
     readonly property real originX: Number.isFinite(cameraState.originX) ? cameraState.originX : 0
     readonly property real originY: Number.isFinite(cameraState.originY) ? cameraState.originY : 0
     readonly property var mapWindow: view.Window.window
+    readonly property bool terrainWindowVisible: visible && mapWindow && mapWindow.visible && mapWindow.visibility !== Window.Minimized
+    onTerrainWindowVisibleChanged: editor.setTerrainWindowVisible(terrainWindowVisible)
     readonly property real layoutWindowWidth: mapWindow ? mapWindow.width : 800
     readonly property real windowDevicePixelRatio: view.Screen.devicePixelRatio
     onLayoutWindowWidthChanged: syncViewport()
@@ -84,7 +86,7 @@ Rectangle {
     }
     onWidthChanged: { invalidatePick(); syncViewport() }
     onHeightChanged: { invalidatePick(); syncViewport() }
-    Component.onCompleted: syncViewport()
+    Component.onCompleted: { editor.setTerrainWindowVisible(terrainWindowVisible); syncViewport() }
     function fit() { editor.fitMapCamera() }
     function zoomAt(factor, px, py) { editor.zoomMapCameraAt(factor,px,py) }
     Connections {
@@ -138,21 +140,13 @@ Rectangle {
             hideSource: true
             live: true; smooth: false; mipmap: false; recursive: false
         }
-    Repeater {
-        model: editor.terrainTiles
-        delegate: GeographicImageItem {
-            required property var modelData
-            anchors.fill: parent
-            sceneBridge: editor.mapSceneBridge
-            terrainBridge: editor.terrainResourceBridge
-            landMaskSource: physicalLandMask
-            terrainTile: ({level: modelData.level, column: modelData.column, row: modelData.row})
-            smooth: true
-            west: modelData.west; east: modelData.east
-            south: modelData.south; north: modelData.north
-            colorMode: editor.terrainMode === "gray" ? "gray" : "color"
-            z: -0.5
-        }
+    TerrainLayerItem {
+        objectName: "retainedTerrainLayer"
+        anchors.fill: parent
+        sceneBridge: editor.mapSceneBridge
+        terrainBridge: editor.terrainResourceBridge
+        landMaskSource: physicalLandMask
+        z: -0.5
     }
 
     ReferenceImageLibrary { id: referenceImages }
@@ -281,6 +275,7 @@ Rectangle {
 
     GpuMapItem {
         id: gpuMapRenderer
+        Component.onCompleted: editor.recordMapPresentationSource(gpuMapRenderer)
         objectName: "gpuMapRenderer"
         anchors.fill: parent
         sceneBridge: editor.mapSceneBridge
@@ -295,6 +290,7 @@ Rectangle {
     }
     MapRenderItem {
         id: canonicalMapRenderer
+        Component.onCompleted: editor.recordMapPresentationSource(canonicalMapRenderer)
         objectName: "canonicalMapRenderer"
         anchors.fill: parent
         visible: !gpuMapRenderer.rendererReady && !gpuMapRenderer.forcedGpu
@@ -656,6 +652,24 @@ Rectangle {
         }
     }
     Repeater {
+        model: editor.geometryPresentationPaths
+        delegate: Shape {
+            id: heldPresentationShape
+            required property var modelData
+            anchors.fill: parent
+            z: editor.layers.length + 4
+            objectName: "geometryPresentationOverlay"
+            readonly property var style: { view.cameraState; editor.appearancePreferences; return editor.mapInteractionStyle("edit-target",true,false) }
+            ShapePath {
+                strokeColor: heldPresentationShape.style.color
+                strokeWidth: heldPresentationShape.style.width
+                fillColor: "transparent"
+                joinStyle: ShapePath.RoundJoin
+                PathSvg { path: modelData.path }
+            }
+        }
+    }
+    Repeater {
         model: editor.geometryDraftPaths
         delegate: Item {
             required property var modelData
@@ -664,15 +678,20 @@ Rectangle {
             readonly property string selectionKind: modelData.selectionKind || ""
             readonly property string selectionId: modelData.id || modelData.key || ""
             readonly property bool selectionPicked: modelData.selected === true
+            readonly property var interactionStyle: { view.cameraState; editor.appearancePreferences; return editor.mapInteractionStyle(selectionKind === "candidate" || selectionKind === "component" ? (selectionPicked ? "secondary" : "candidate") : "edit-target",true,editor.geometryEditState.tool === "boundary") }
+            readonly property color interactionColor: interactionStyle.color
             objectName: selectionId ? "geometrySelectionOverlay_"+selectionKind+"_"+selectionId : "geometryDraftOverlay"
             Shape {
                 x: view.originX; y: view.originY
                 width: editor.mapWidth; height: editor.mapHeight
                 transform: Scale { xScale: view.mapScale; yScale: view.mapScale }
                 ShapePath {
-                    strokeColor: modelData.removed ? "#dc2626" : modelData.selectionKind === "part" ? "#7c3aed" : modelData.selectionKind === "candidate" || modelData.selectionKind === "component" ? (modelData.selected ? "#059669" : "#2563eb") : modelData.created ? "#059669" : "#d97706"
-                    strokeWidth: editor.editPixelLengthToMap(modelData.selected ? 3 : 2, view.cameraState)
-                    fillColor: modelData.hole || modelData.line ? "#00000000" : modelData.selectionKind === "part" ? "#407c3aed" : modelData.selectionKind === "candidate" || modelData.selectionKind === "component" ? (modelData.selected ? "#7010b981" : "#202563eb") : modelData.created ? "#6010b981" : "#60f59e0b"
+                    strokeColor: modelData.removed ? "#dc2626" : Qt.rgba(interactionColor.r,interactionColor.g,interactionColor.b,interactionStyle.alpha)
+                    strokeWidth: editor.editPixelLengthToMap(interactionStyle.width, view.cameraState)
+                    strokeStyle: interactionStyle.dashOn > 0 ? ShapePath.DashLine : ShapePath.SolidLine
+                    dashPattern: interactionStyle.dashOn > 0 && interactionStyle.width > 0 ? [interactionStyle.dashOn/interactionStyle.width,interactionStyle.dashOff/interactionStyle.width] : [4,2]
+                    capStyle: ShapePath.RoundCap
+                    fillColor: modelData.hole || modelData.line ? "transparent" : Qt.rgba(interactionColor.r,interactionColor.g,interactionColor.b,interactionStyle.fillAlpha)
                     fillRule: ShapePath.OddEvenFill; joinStyle: ShapePath.RoundJoin
                     PathSvg { path: modelData.path }
                 }

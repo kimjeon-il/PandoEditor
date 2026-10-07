@@ -1,0 +1,508 @@
+{
+  "schema": "pando-m98-editing-diagnostic-input-v1",
+  "fixedWebSha": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+  "fixtureClass": "explicitly reduced/synthetic diagnostic; independent from full-data acceptance",
+  "splitInputSource": {
+    "path": "../tests/fixtures/web-m973-split/lifecycle-observations-v2.json.gz",
+    "inputField": "cases[].input",
+    "behavioralCommit": "6c3f930b8573fa09991885b661879ea36725472e",
+    "caseIds": [
+      "root-six-crossing",
+      "root-hole",
+      "root-multi",
+      "root-date-line"
+    ],
+    "scope": "Retained original input coordinates only. Original observations and expected values remain immutable; this probe does not assert their legacy dateline rejection as current behavior."
+  },
+  "productionPlaceManifest": "../assets/place/manifest.json",
+  "hydroManifest": "../tests/fixtures/web-hydro/v0.13.1/manifest.json",
+  "caseCount": 14,
+  "snapSamplesPerCase": 300,
+  "boundaryOwnerCounts": [
+    2,
+    4,
+    8,
+    16
+  ],
+  "pins": [
+    {
+      "path": "../tests/fixtures/web-m973-split/lifecycle-observations-v2.json.gz",
+      "bytes": 183734,
+      "sha256": "f03f757d5162f60c0234932e11f046574781127e610af7660d323451c96ad5e0"
+    },
+    {
+      "path": "../tests/fixtures/web-m973-split/observation-manifest.json",
+      "bytes": 4065,
+      "sha256": "3d9663af9b19506527667e09818c2e8d8880c26d10d0e0954ac24a6875906538"
+    },
+    {
+      "path": "../tests/fixtures/web-m974/input-manifest.json",
+      "bytes": 2953,
+      "sha256": "d9b4780136c8c53be98cd773d9deab9fd92afbd140eb3139b0ce8a85b17bcfc4"
+    },
+    {
+      "path": "../tests/fixtures/web-m974/source-manifest.json",
+      "bytes": 34082,
+      "sha256": "54c0f0a743dedcbb7964235f8d1d8297aecb457901895a5a03940de12a70384e"
+    },
+    {
+      "path": "../assets/place/manifest.json",
+      "bytes": 108,
+      "sha256": "148660b93529a60640f6a340117f976a7e2822ab8f34fa1814023920fc82f4b7"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/expected.json",
+      "bytes": 23641,
+      "sha256": "c6f702dff062383feae84d4c8525623feee70403bac5a2a6ffc78492b4a25924"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/README.md",
+      "bytes": 3673,
+      "sha256": "8ddb6102e641f516caf473d828eef0378bdcf925ec9d661228866ca3a867cd79"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/app-object-picking.js",
+      "bytes": 23913,
+      "sha256": "a2377457f08a721609744def512a7861fe1ddcd4c1b1b03c3c7539e75bff5c33"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/country-label-flags.js",
+      "bytes": 1170,
+      "sha256": "fde7f9c4692327aa310dbf3a2c92b7a2e9a7240d9d1742eb0c420ac18d6f967c"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/earcut.min.js",
+      "bytes": 7131,
+      "sha256": "1444195270d4358ef8dd1a448074f555d7ac3c83c850f5648b611ea1d2090ff3"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/geographic-boundary-core.js",
+      "bytes": 3928,
+      "sha256": "b9017382fcc828924608c8a32ddbf2831800475a725b432cad9e6445d33bc8ea"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/gpu-base-scene-pass.js",
+      "bytes": 4747,
+      "sha256": "7848699a270c382ee55543e086bea19632b2dfd370778f6ec84994b2a7dcaad7"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/gpu-blend-utils.js",
+      "bytes": 739,
+      "sha256": "3a99ec76ee17a3795dd6838f7c893e1ee0ae778e8828ec3c026bf90d3df328e6"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/hydro-shard-store.js",
+      "bytes": 6996,
+      "sha256": "470f37a8778a89dadc597bc1d3548d837c862e08682d875a147dac95a8a4f681"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/hydro-tile-window.js",
+      "bytes": 6262,
+      "sha256": "3ab826e572a4e001b09139a3113e1ec7fa81fdf49d386bf48cb1f0a0aa4ae928"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/hydro-tile-worker.js",
+      "bytes": 32253,
+      "sha256": "14399a8454fb980fb2adc78b7c52bcd32ea5e1b1f313dcfba301886a6b9ddfec"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/label-layout.js",
+      "bytes": 7399,
+      "sha256": "29bf137329de6014b24290615dfd6c174bd17b1bbfe4e129a2e53e9759ae9ea6"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/layer-presentation.js",
+      "bytes": 4728,
+      "sha256": "e0b73b087696a21dab43289958357a527c4f6eea4ef5151b3d312a291c6bd20c"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/map-layout-metrics.js",
+      "bytes": 3513,
+      "sha256": "78864a1c4d143bba6bdd421c368c0e0144fdb4066aac11d33bf77f2e5cedc8d2"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/source/package.json",
+      "bytes": 19,
+      "sha256": "ccdf8de44295f59be00f6b8cf1359959938a16a4ccf8c55940d8af1894748c5f"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/v0.13.0/index.bin.gz",
+      "bytes": 133,
+      "sha256": "797a25dad26bc04b8493504291d21beee852775c24fee32c520e3afabb8a75a2"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/v0.13.0/metadata-detail.json.gz",
+      "bytes": 116,
+      "sha256": "bc9bfeb343396c5d58849a0b8ff20b2961dfc5b4818e6d13fd1388d43ae26eea"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/v0.13.0/shards/s0.bin",
+      "bytes": 507,
+      "sha256": "4848da882a4b65d94ecf5f562d62a90885d167d0b84d3c3a024fe94427441b1e"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/v0.13.1/manifest.json",
+      "bytes": 1585,
+      "sha256": "36e3db21e00f0b765af4f15fc11451e7a989f98ee4cc7a8a4fbb809f34efb16b"
+    },
+    {
+      "path": "../tests/fixtures/web-hydro/v0.13.1/metadata-core.json.gz",
+      "bytes": 350,
+      "sha256": "802d827ac087c073f230aeee332215d9e1df3e65c74e0f8cfe5828b56d0fc744"
+    }
+  ],
+  "splitInputs": [
+    {
+      "id": "root-six-crossing",
+      "scope": "root",
+      "source": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              10
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              10,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      },
+      "coords": [
+        [
+          -1,
+          2
+        ],
+        [
+          11,
+          2
+        ],
+        [
+          -1,
+          8
+        ],
+        [
+          11,
+          8
+        ]
+      ],
+      "view": {
+        "kind": "flat",
+        "scale": 500,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          5,
+          5
+        ],
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false,
+        "size": {
+          "width": 1024,
+          "height": 768
+        }
+      },
+      "select": "default",
+      "dependents": false,
+      "dependentReference": false,
+      "dependentLabel": false,
+      "dependentLabelSettings": false,
+      "dependentPresentation": false,
+      "dependentGeneric": false
+    },
+    {
+      "id": "root-hole",
+      "scope": "root",
+      "source": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              10
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              10,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              3
+            ],
+            [
+              7,
+              3
+            ],
+            [
+              7,
+              7
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              3,
+              3
+            ]
+          ]
+        ]
+      },
+      "coords": [
+        [
+          -1,
+          5
+        ],
+        [
+          11,
+          5
+        ]
+      ],
+      "view": {
+        "kind": "flat",
+        "scale": 500,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          5,
+          5
+        ],
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false,
+        "size": {
+          "width": 1024,
+          "height": 768
+        }
+      },
+      "select": "default",
+      "dependents": false,
+      "dependentReference": false,
+      "dependentLabel": false,
+      "dependentLabelSettings": false,
+      "dependentPresentation": false,
+      "dependentGeneric": false
+    },
+    {
+      "id": "root-multi",
+      "scope": "root",
+      "source": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                4,
+                4
+              ],
+              [
+                4,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                6,
+                0
+              ],
+              [
+                6,
+                4
+              ],
+              [
+                10,
+                4
+              ],
+              [
+                10,
+                0
+              ],
+              [
+                6,
+                0
+              ]
+            ]
+          ]
+        ]
+      },
+      "coords": [
+        [
+          -1,
+          2
+        ],
+        [
+          11,
+          2
+        ]
+      ],
+      "view": {
+        "kind": "flat",
+        "scale": 500,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          5,
+          5
+        ],
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false,
+        "size": {
+          "width": 1024,
+          "height": 768
+        }
+      },
+      "select": "default",
+      "dependents": false,
+      "dependentReference": false,
+      "dependentLabel": false,
+      "dependentLabelSettings": false,
+      "dependentPresentation": false,
+      "dependentGeneric": false
+    },
+    {
+      "id": "root-date-line",
+      "scope": "root",
+      "source": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              179,
+              -2
+            ],
+            [
+              179,
+              2
+            ],
+            [
+              -179,
+              2
+            ],
+            [
+              -179,
+              -2
+            ],
+            [
+              179,
+              -2
+            ]
+          ]
+        ]
+      },
+      "coords": [
+        [
+          178,
+          0
+        ],
+        [
+          -178,
+          0
+        ]
+      ],
+      "view": {
+        "kind": "flat",
+        "scale": 500,
+        "translate": [
+          512,
+          384
+        ],
+        "rotate": [
+          0,
+          0,
+          0
+        ],
+        "center": [
+          180,
+          0
+        ],
+        "snapDistance": {
+          "mouse": 10,
+          "touch": 18
+        },
+        "coarsePointer": false,
+        "size": {
+          "width": 1024,
+          "height": 768
+        }
+      },
+      "select": "default",
+      "dependents": false,
+      "dependentReference": false,
+      "dependentLabel": false,
+      "dependentLabelSettings": false,
+      "dependentPresentation": false,
+      "dependentGeneric": false
+    }
+  ]
+}

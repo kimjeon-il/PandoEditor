@@ -93,7 +93,7 @@ ColumnLayout {
                     required property string modelData
                     Layout.fillWidth: true
                     visible: root.editState[modelData] !== undefined && (["valueMin","valueMax"].indexOf(modelData)<0 || root.editState.valueScaleMode === "manual")
-                    placeholderText: ({name:"이름",notes:"메모",capital:"수도 문자열",color:"색상 #RRGGBB",unit:"단위",value:"값",valueMin:"색 농도 최솟값",valueMax:"색 농도 최댓값",certainty:"확실성",validFrom:"시작 연도/날짜",validTo:"종료 연도/날짜"})[modelData]
+                    placeholderText: ({name:"이름",notes:"비고",capital:"수도 문자열",color:"색상 #RRGGBB",unit:"단위",value:"값",valueMin:"색 농도 최솟값",valueMax:"색 농도 최댓값",certainty:"확실성",validFrom:"시작 연도/날짜",validTo:"종료 연도/날짜"})[modelData]
                     text: root.editState[modelData] === undefined ? "" : String(root.editState[modelData])
                     onTextEdited: { if (owner === root.editState.domain + ":" + root.editState.id) edited = editor.updateContentField(modelData, text) }
                     onEditingFinished: { if (edited && !root.holdCommits && !root.editState.create && owner === root.editState.domain + ":" + root.editState.id) editor.commitContentField(modelData); edited = false }

@@ -16,6 +16,7 @@ qint64 monotonicNanoseconds() {
 }
 
 GpuMapItem::GpuMapItem(QQuickItem* parent):QQuickItem(parent) {
+    qRegisterMetaType<std::shared_ptr<const MapFrame>>();
     Q_INIT_RESOURCE(m73_map_shaders);
     setFlag(ItemHasContents,true);
     connect(this,&QQuickItem::windowChanged,this,&GpuMapItem::attachWindow);
@@ -83,6 +84,29 @@ void GpuMapItem::attachWindow(QQuickWindow* next) {
     frameStartNs_.store(0);
     setStatus(false,QStringLiteral("Waiting for Qt Quick scene graph"));
     if(!next)return;
+    connect(next,&QQuickWindow::beforeFrameBegin,this,[this,windowGeneration] {
+        if(windowGeneration_.load()!=windowGeneration)return;
+        std::lock_guard lock(presentationMutex_);
+        ++presentationSequence_;presentationObservation_.reset();
+        presentationEnded_=presentationSwapped_=false;
+    },Qt::DirectConnection);
+    connect(next,&QQuickWindow::afterSynchronizing,this,[this,windowGeneration] {
+        if(windowGeneration_.load()!=windowGeneration)return;
+        const auto observed=renderObservation();
+        std::lock_guard lock(presentationMutex_);
+        if(observed&&observed->rendererReady&&!observed->stats.uploadsPending)
+            presentationObservation_=observed;
+    },Qt::DirectConnection);
+    connect(next,&QQuickWindow::afterFrameEnd,this,[this,windowGeneration] {
+        if(windowGeneration_.load()!=windowGeneration)return;
+        {std::lock_guard lock(presentationMutex_);presentationEnded_=true;}
+        publishPresentation();
+    },Qt::DirectConnection);
+    connect(next,&QQuickWindow::frameSwapped,this,[this,windowGeneration] {
+        if(windowGeneration_.load()!=windowGeneration)return;
+        {std::lock_guard lock(presentationMutex_);presentationSwapped_=true;}
+        publishPresentation();
+    },Qt::DirectConnection);
     connect(next,&QQuickWindow::sceneGraphInitialized,this,[this,windowGeneration] {
         if(windowGeneration_.load()!=windowGeneration)return;
         const auto generation=resourceGeneration_.fetch_add(1)+1;
@@ -155,6 +179,7 @@ void GpuMapItem::evaluateBackend() {
     setStatus(true,QString());
 }
 QSGNode* GpuMapItem::updatePaintNode(QSGNode* previous,UpdatePaintNodeData*) {
+    {std::lock_guard lock(renderObservationMutex_);renderObservation_.reset();}
     const auto generation=resourceGeneration_.load();
     if(renderGeneration_!=generation) {
         delete previous;previous=nullptr;renderStats_={};renderGeneration_=generation;
@@ -196,6 +221,11 @@ QSGNode* GpuMapItem::updatePaintNode(QSGNode* previous,UpdatePaintNodeData*) {
         return nullptr;
     }
     node->sync(frame->scene,view,flat_,renderStats_,uploadBudgetBytes_,frame->worldPlan.get());
+    {
+        std::lock_guard lock(renderObservationMutex_);
+        renderObservation_=std::make_shared<const MapRenderObservation>(MapRenderObservation{
+            frame,renderStats_,windowGeneration_.load(),generation,bridgeGeneration_.load(),true,node->strokeInventory()});
+    }
     if(renderStats_.uploadsPending&&!uploadContinuationQueued_.exchange(true))
         QMetaObject::invokeMethod(this,[this,generation] {
             if(resourceGeneration_.load()!=generation)return;
@@ -209,6 +239,25 @@ QSGNode* GpuMapItem::updatePaintNode(QSGNode* previous,UpdatePaintNodeData*) {
         publishedStats_=current;emit statsChanged();
     },Qt::QueuedConnection);
     return node;
+}
+
+void GpuMapItem::publishPresentation() {
+    std::shared_ptr<const MapRenderObservation> observed;
+    {
+        std::lock_guard lock(presentationMutex_);
+        if(!presentationEnded_||!presentationSwapped_||!presentationObservation_||
+            presentationSequence_==publishedPresentationSequence_)return;
+        observed=presentationObservation_;publishedPresentationSequence_=presentationSequence_;
+    }
+    // Preserve the packet captured for this actual frame, even if a new view
+    // synchronizes before GUI delivery. The consumer additionally authenticates
+    // its current project/session/view and the exact drawn stroke inventory.
+    QMetaObject::invokeMethod(this,[this,observed] {
+        if(!isVisible()||!rendererReady()||observed->windowGeneration!=windowGeneration_.load()||
+            observed->resourceGeneration!=resourceGeneration_.load()||
+            observed->bridgeGeneration!=bridgeGeneration_.load())return;
+        emit framePresented(observed->frame,observed->strokeInventory);
+    },Qt::QueuedConnection);
 }
 
 QVariantMap GpuMapItem::resourceCacheStats() const {

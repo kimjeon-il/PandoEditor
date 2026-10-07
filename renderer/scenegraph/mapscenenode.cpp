@@ -1,6 +1,7 @@
 #include "mapscenenode.h"
 #include "mapmaterial.h"
 #include "resourceidentity.h"
+#include "../interactionrenderstyle.h"
 #include <QSGGeometryNode>
 #include <QSGGeometry>
 #include <QElapsedTimer>
@@ -165,10 +166,16 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
                      bool protectedGeometry,auto upload) {
         const std::string identity=key(id,kind,world,interaction);
         Entry* node=nullptr;
+        Entry* predecessor=nullptr;
         if(auto it=old.find(identity);it!=old.end()) {
             node=it->second;old.erase(it);
             if(node->kind!=kind||node->resource!=resource) {
-                retire(node);node=nullptr;
+                // A budget-deferred boundary keeps its actual old backing.
+                // The inventory retains its old geometry identity until the
+                // matching successor enters the scene graph.
+                if(node->kind==MapPrimitive::Stroke&&kind==MapPrimitive::Stroke)predecessor=node;
+                else retire(node);
+                node=nullptr;
             }
         }
         if(!node) {
@@ -183,21 +190,26 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         }
         if(!node) {
             if(!scheduler_.reserve(estimatedBytes,protectedGeometry)) {
-                pending_=true;return;
+                pending_=true;
+                if(!predecessor)return;
+                node=predecessor;predecessor=nullptr;
+            }else {
+                if(predecessor){retire(predecessor);predecessor=nullptr;}
+                node=new Entry(identity,kind,blend);
+                QElapsedTimer uploadClock;uploadClock.start();
+                upload(*node);
+                const auto ms=uploadClock.nsecsElapsed()/1.e6;
+                stats.uploadMilliseconds+=ms;
+                if(kind==MapPrimitive::Stroke)stats.strokeUploadMilliseconds+=ms;
+                stats.uploadedBytes+=node->bytes;
+                node->resource=resource;
+                ++stats.geometryUploadCount;
+                ++stats.resourceCreationCount;
+                if(interaction)++stats.interactionGeometryUploadCount;
+                else ++stats.baseGeometryUploadCount;
             }
-            node=new Entry(identity,kind,blend);
-            QElapsedTimer uploadClock;uploadClock.start();
-            upload(*node);
-            const auto ms=uploadClock.nsecsElapsed()/1.e6;
-            stats.uploadMilliseconds+=ms;
-            if(kind==MapPrimitive::Stroke)stats.strokeUploadMilliseconds+=ms;
-            stats.uploadedBytes+=node->bytes;
-            node->resource=resource;
-            ++stats.geometryUploadCount;
-            ++stats.resourceCreationCount;
-            if(interaction)++stats.interactionGeometryUploadCount;
-            else ++stats.baseGeometryUploadCount;
         }
+        if(predecessor)retire(predecessor);
         if(node->blend!=blend) {
             auto* replacement=new MapMaterial(kind,blend);
             auto* oldMaterial=node->material();
@@ -228,7 +240,9 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         if(kind==MapPrimitive::Stroke)stats.strokeBytes+=node->bytes;
         ordered.push_back(node);
     };
-    auto fill=[&](const PolygonDrawPacket& draw,int world) {
+    auto fill=[&](const PolygonDrawPacket& draw,int world,bool interaction=false,
+                  const RenderStyle* overrideStyle=nullptr,const std::string& channel="") {
+        const auto& style=overrideStyle?*overrideStyle:draw.style;
         const auto& packet=draw.geometryPacket;
         if(!packet.positions||!packet.indices)return;
         const auto& index=*(view.mode==ProjectionMode::Globe?packet.globeIndices:packet.indices);
@@ -236,8 +250,8 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         auto resource=mapDrawResourceIdentity(draw);
         resource.buffers={packet.positions,view.mode==ProjectionMode::Globe?packet.globeIndices:packet.indices,{}};
         resource.counts={packet.vertexCount,index.size(),packet.positions->size()};
-        install(draw.key,MapPrimitive::Fill,draw.style.blendMode,draw.style,
-                resource,world,false,
+        install(draw.key+(interaction?"/"+channel:""),MapPrimitive::Fill,style.blendMode,style,
+                resource,world,interaction,
                 packet.vertexCount*sizeof(FillVertex)+index.size()*sizeof(std::uint32_t),
                 contains(scene->interaction.selected,draw.object)||
                     (scene->interaction.editTarget&&*scene->interaction.editTarget==draw.object),
@@ -249,10 +263,11 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
             std::memcpy(node.geometry()->indexData(),index.data(),index.size()*sizeof(std::uint32_t));
         });
     };
-    auto worldFill=[&](std::size_t country,int world) {
+    auto worldFill=[&](std::size_t country,int world,const RenderStyle* overrideStyle=nullptr,
+                       const std::string& channel="") {
         if(!scene->worldBase||!scene->worldBase->mesh||
            country>=scene->worldCountries.size()||!scene->worldCountries[country].visible||
-           (country<fills.visible.size()&&!fills.visible[country]))return;
+           (!overrideStyle&&country<fills.visible.size()&&!fills.visible[country]))return;
         const auto& mesh=*scene->worldBase->mesh;
         const auto start=mesh.countryTriangleRanges.at(country*2);
         const auto count=mesh.countryTriangleRanges.at(country*2+1);
@@ -264,6 +279,7 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         const auto vertices=std::size_t(last-first);
         if(vertices>INT_MAX||count>INT_MAX)return;
         const auto& countryDraw=scene->worldCountries[country];
+        const auto& style=overrideStyle?*overrideStyle:countryDraw.fill;
         MapResourceIdentity resource;resource.buffers[0]=scene->worldBase->mesh;
         resource.object={"territorial",countryDraw.id};
         if(country<scene->worldBase->ranges.size())resource.geometry={scene->worldBase->ranges[country].geometryId,1};
@@ -271,8 +287,8 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
         resource.counts={vertices,count,mesh.triangleIndices.size()};
         // Several immutable mesh slots can belong to one logical country.
         // The owner alone is not a geometry identity (e.g. overseas islands).
-        install("world/"+std::to_string(country)+"/"+countryDraw.id,MapPrimitive::Fill,countryDraw.fill.blendMode,
-                countryDraw.fill,resource,world,false,
+        install("world/"+std::to_string(country)+"/"+countryDraw.id+(overrideStyle?"/"+channel:""),MapPrimitive::Fill,style.blendMode,
+                style,resource,world,bool(overrideStyle),
                 vertices*sizeof(FillVertex)+count*sizeof(std::uint32_t),false,[&](Entry& node) {
             node.allocate(int(vertices),int(count));
             auto* output=static_cast<FillVertex*>(node.geometry()->vertexData());
@@ -516,56 +532,64 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
     flushBase();
     // Interaction is a separate final pass; the source packets remain immutable.
     const auto outline=[&](const pandoeditor::ObjectRef& ref,int world,
-                           const std::string& channel,std::uint32_t color,
-                           float width,bool vertices=false) {
+                           const std::string& channel,mapstyle::InteractionRole role,bool vertices=false) {
+        const auto highlight=fixedInteractionStyle(role,scene->interaction.styleOptions,view);
+        if(highlight.fillAlpha>0) {
+            auto tint=highlight;tint.alpha=highlight.fillAlpha;tint.fillAlpha=1;
+            for(const auto& draw:scene->polygons)if(draw.object==ref)fill(draw,world,true,&tint,channel);
+        }
         for(const auto& draw:scene->strokes)if(draw.object==ref) {
-            auto style=draw.style;style.color=color;style.alpha=1;
-            style.width=width;style.dashOn=style.dashOff=0;
+            auto style=highlight;style.blendMode=draw.style.blendMode;
+            if(style.width<=0||style.alpha<=0)continue;
             stroke(draw,world,true,style,channel);
             if(vertices&&draw.object.domain!="hydroBuiltin")selectionVertices(draw,world,channel);
         }
         for(const auto& draw:scene->points)if(draw.object==ref) {
-            RenderStyle style;style.color=color;style.alpha=1;
-            point(draw,world,true,style,channel);
+            point(draw,world,true,highlight,channel);
         }
     };
     for(double offset:worldOffsets) {
         const int world=int(offset);
         if(scene->worldBase&&scene->worldBase->mesh&&!scene->worldBase->startupPreview()) {
             const auto baseHighlight=[&](const pandoeditor::ObjectRef& ref,
-                                         const std::string& channel,std::uint32_t color,float width) {
+                                         const std::string& channel,mapstyle::InteractionRole role) {
                 if(ref.domain!="territorial")return;
-                RenderStyle style;style.color=color;style.width=width;
+                const auto style=fixedInteractionStyle(role,scene->interaction.styleOptions,view);
+                if(style.fillAlpha>0) {
+                    auto tint=style;tint.alpha=style.fillAlpha;tint.fillAlpha=1;
+                    for(const auto index:worldRangeIndicesForOwner(*scene->worldBase,ref.id))worldFill(index,world,&tint,channel);
+                }
+                if(style.width<=0||style.alpha<=0)return;
                 for(const auto index:worldRangeIndicesForOwner(*scene->worldBase,ref.id))
                     worldStroke(index,world,style,channel);
             };
             for(const auto& candidate:scene->interaction.candidates)
                 if(!contains(scene->interaction.selected,candidate))
-                    baseHighlight(candidate,"candidate",0x8abddd,1.5f);
+                    baseHighlight(candidate,"candidate",mapstyle::InteractionRole::Candidate);
             if(scene->interaction.hover&&
                !contains(scene->interaction.selected,*scene->interaction.hover))
-                baseHighlight(*scene->interaction.hover,"hover",0x4083bc,2.f);
+                baseHighlight(*scene->interaction.hover,"hover",mapstyle::InteractionRole::Hover);
             for(const auto& selected:scene->interaction.selected)
                 if(!scene->interaction.primary||selected!=*scene->interaction.primary)
-                    baseHighlight(selected,"secondary",0x163e64,2.f);
+                    baseHighlight(selected,"secondary",mapstyle::InteractionRole::Secondary);
             if(scene->interaction.primary)
-                baseHighlight(*scene->interaction.primary,"primary",0x163e64,3.f);
+                baseHighlight(*scene->interaction.primary,"primary",mapstyle::InteractionRole::Primary);
             if(scene->interaction.editTarget)
-                baseHighlight(*scene->interaction.editTarget,"edit-target",0xe89b1a,3.5f);
+                baseHighlight(*scene->interaction.editTarget,"edit-target",mapstyle::InteractionRole::EditTarget);
         }
         for(const auto& candidate:scene->interaction.candidates)
             if(!contains(scene->interaction.selected,candidate))
-                outline(candidate,world,"candidate",0x8abddd,1.5f);
+                outline(candidate,world,"candidate",mapstyle::InteractionRole::Candidate);
         if(scene->interaction.hover &&
            !contains(scene->interaction.selected,*scene->interaction.hover))
-            outline(*scene->interaction.hover,world,"hover",0x4083bc,2.f);
+            outline(*scene->interaction.hover,world,"hover",mapstyle::InteractionRole::Hover);
         for(const auto& selected:scene->interaction.selected)
             if(!scene->interaction.primary||selected!=*scene->interaction.primary)
-                outline(selected,world,"secondary",0x163e64,2.f,true);
+                outline(selected,world,"secondary",mapstyle::InteractionRole::Secondary,true);
         if(scene->interaction.primary)
-            outline(*scene->interaction.primary,world,"primary",0x163e64,3.f,true);
+            outline(*scene->interaction.primary,world,"primary",mapstyle::InteractionRole::Primary,true);
         if(scene->interaction.editTarget)
-            outline(*scene->interaction.editTarget,world,"edit-target",0xe89b1a,3.5f,true);
+            outline(*scene->interaction.editTarget,world,"edit-target",mapstyle::InteractionRole::EditTarget,true);
     }
     // Removing/re-adding unchanged nodes invalidates Qt's RHI batches, even
     // when our QSGGeometry allocations were retained. Reconcile only actual
@@ -581,4 +605,18 @@ void MapSceneNode::sync(const std::shared_ptr<const RenderScene>& scene,
     stats.uploadBytesThisFrame=scheduler_.frameBytes();
     stats.uploadsPending=pending_;
     stats.liveResourceCount=stats.drawNodes;stats.liveResourceBytes=stats.geometryBytes;
+}
+
+QVariantList MapSceneNode::strokeInventory() const {
+    QVariantList result;
+    for(auto* child=firstChild();child;child=child->nextSibling()) {
+        const auto* entry=static_cast<const Entry*>(child);
+        if(entry->kind!=MapPrimitive::Stroke||entry->resource.object.id.empty()||
+            entry->resource.geometry.id.empty()||entry->mapMaterial()->color.w()<=0)continue;
+        result.push_back(QVariantMap{{"domain",QString::fromStdString(entry->resource.object.domain)},
+            {"id",QString::fromStdString(entry->resource.object.id)},
+            {"geometryId",QString::fromStdString(entry->resource.geometry.id)},
+            {"geometryVersion",qulonglong(entry->resource.geometry.version)}});
+    }
+    return result;
 }

@@ -8,6 +8,7 @@
 #include <QUrl>
 #include <QVector>
 #include <QHash>
+#include <functional>
 
 struct PhysicalAssetSpec {
     QString dataset,version,path;
@@ -33,6 +34,14 @@ public:
     void setExternalDatasetRoot(const QString& dataset,QString root);
     QString cachePath(const PhysicalAssetSpec&) const;
     QString resolveExisting(const PhysicalAssetSpec&) const;
+    // Value-only verifier for asynchronous source owners; never captures this QObject.
+    std::function<QString(const PhysicalAssetSpec&)> verifiedResolver() const;
+    // Stable logical cache identity: no file access or verification. Workers
+    // must still use verifiedResolver before admitting new source bytes.
+    std::function<QString(const PhysicalAssetSpec&)> plannedPathResolver() const;
+    // Existing expected-size file only; deliberately not an integrity receipt.
+    QString candidatePath(const PhysicalAssetSpec&) const;
+    std::function<QString(const PhysicalAssetSpec&)> candidatePathResolver() const;
     bool installVerified(const PhysicalAssetSpec&,const QByteArray& bytes);
     void request(const PhysicalAssetSpec&);
     bool cleanupVersions(const QString& dataset,const QString& keepVersion);
@@ -44,7 +53,10 @@ private:
     struct Job {PhysicalAssetSpec asset;int failures=0;};
     static QString defaultRoot();
     static bool validAsset(const PhysicalAssetSpec&);
-    bool verified(const QString& path,const PhysicalAssetSpec&) const;
+    static bool verified(const QString& path,const PhysicalAssetSpec&);
+    static QString assetPath(const QString& root,const PhysicalAssetSpec&);
+    static QString candidateAssetPath(const QString& cacheRoot,const QString& externalRoot,
+                                      const QHash<QString,QString>& datasetRoots,const PhysicalAssetSpec&);
     QString externalPath(const PhysicalAssetSpec&) const;
     void quarantine(const QString& path) const;
     void pump();

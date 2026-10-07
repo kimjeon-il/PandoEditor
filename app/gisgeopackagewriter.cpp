@@ -217,8 +217,13 @@ QByteArray exportGisGeoPackage(const ProjectDocument& document,
         Database connection(fileName);
         createTables(connection.db);
         require(connection.db.transaction(),"GPKG_WRITE_FAILED");
-        for(const auto& table:tables())if(categories.count(table.category))
+        for(auto table:tables())if(categories.count(table.category)) {
+            // Keep existing native packages' derived schema readable. A copied
+            // place adds the fixed Web GeoJSON alias only when it has data.
+            if(table.category=="labels"&&!copiedPlaceSourceIds(document).empty())
+                table.columns.push_back({"source_place_id"});
             writeTable(connection.db,table,rows[table.name]);
+        }
         require(connection.db.commit(),"GPKG_WRITE_FAILED");
     }
     QFile file(fileName);

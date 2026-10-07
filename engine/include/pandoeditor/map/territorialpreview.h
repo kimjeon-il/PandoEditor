@@ -22,6 +22,7 @@ struct TerritorialPreviewCalculators {
     TerritoryGeometryTransform normalizeRaw;
     std::function<PreviewRiverNormalizationResult(const Geometry&,const GeometryCancellation&)> normalizeRiver;
     std::function<PreviewAreaResult(const Geometry&,const GeometryCancellation&)> areaKm2;
+    std::function<GeometryOperationAreaResult(const GeometryOperationRequest&,const GeometryCancellation&)> planarClipArea;
 };
 }
 

@@ -44,7 +44,23 @@ private slots:
     void pinnedInventoryAndViewportSelectionAreLazy();
     void datasetRootsAreIndependentAndStillHashVerified();
     void pinnedTerrainMetadataSeedsAndRejectsAlteredBytes();
+    void valueVerifierSurvivesOwnerAndStillRejectsAlteredBytes();
 };
+void PhysicalDataStoreTests::valueVerifierSurvivesOwnerAndStillRejectsAlteredBytes() {
+    QTemporaryDir root;QVERIFY(root.isValid());const QByteArray bytes="verified source bytes";
+    PhysicalAssetSpec asset{"terrain-dem","pinned","tile.webp",bytes.size(),hash(bytes),QUrl("https://example.invalid/tile.webp")};
+    std::function<QString(const PhysicalAssetSpec&)> verifier;QString installed;
+    {
+        PhysicalDataStore owner(root.path());QVERIFY(owner.installVerified(asset,bytes));
+        installed=owner.cachePath(asset);verifier=owner.verifiedResolver();
+        QCOMPARE(verifier(asset),installed);
+    }
+    // Workers retain only values; closing the QObject owner does not invalidate verification.
+    QCOMPARE(verifier(asset),installed);
+    QFile changed(installed);QVERIFY(changed.open(QIODevice::WriteOnly));
+    QCOMPARE(changed.write(QByteArray(bytes.size(),'x')),qint64(bytes.size()));changed.close();
+    QVERIFY(verifier(asset).isEmpty());
+}
 
 void PhysicalDataStoreTests::pinnedTerrainMetadataSeedsAndRejectsAlteredBytes() {
     QFile inventoryFile(QStringLiteral(PHYSICAL_INVENTORY));QVERIFY(inventoryFile.open(QIODevice::ReadOnly));

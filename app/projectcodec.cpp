@@ -359,6 +359,7 @@ V contentValue(const ProjectDocument& d) {
         {"notes",V::str(v.notes)},{"geometryRef",geometryRefValue(v.geometry)},{"source",sourceValue(v.source)}});};
     for(const auto& v:d.labels) {
         auto row=common(v); row.object["kind"]=V::str(v.kind);
+        if(v.sourcePlaceId)row.object["sourcePlaceId"]=V::str(*v.sourcePlaceId);
         row.object["territory"]=v.territory?refValue(*v.territory):V{}; labels.array.push_back(std::move(row));
     }
     for(const auto& v:d.hydro) {
@@ -402,7 +403,8 @@ void readContent(const V& content,ProjectDocument& d) {
     for(const auto& row:array(field(content,"labels"))) {
         auto path="/content/labels/"+std::to_string(d.labels.size()); PlaceLabel v; common(row,v,path);
         v.kind=str(field(row,"kind")); if(field(row,"territory").kind!=V::Null) v.territory=ref(field(row,"territory"),d,path+"/territory");
-        unknown(d,6,row,path,{"id","name","notes","geometryRef","source","kind","territory"}); d.labels.push_back(std::move(v));
+        if(row.object.count("sourcePlaceId")&&field(row,"sourcePlaceId").kind!=V::Null)v.sourcePlaceId=str(field(row,"sourcePlaceId"));
+        unknown(d,6,row,path,{"id","name","notes","geometryRef","source","kind","territory","sourcePlaceId"}); d.labels.push_back(std::move(v));
     }
     for(const auto& row:array(field(content,"hydro"))) {
         auto path="/content/hydro/"+std::to_string(d.hydro.size()); HydroFeature v; common(row,v,path);
@@ -707,7 +709,7 @@ ProjectDocument decodeWeb(const QByteArray& bytes) {
     restoreArchive(root,d);
     for(const auto& [ref,shape]:d.geometries.versions())d.geometryProvenance.originalArchive.insert(ref);
     for(const auto& row:array(field(root,"labels"))) {
-        unknown(d,10,row,"/labels",{"id","name","kind","notes","coordinates","territorialUnitId","source"});PlaceLabel label;label.id=str(field(row,"id"));label.name=str(field(row,"name"));label.kind=str(field(row,"kind"));label.notes=optionalText(row,"notes");label.geometry=inlineGeometry(d,"label",label.id,object({{"type",V::str("Point")},{"coordinates",field(row,"coordinates")}}));const auto parent=optionalText(row,"territorialUnitId");if(!parent.empty())label.territory=territorialRef(parent);if(row.object.count("source"))label.source=webSource(field(row,"source"),d);d.labels.push_back(std::move(label));
+        unknown(d,10,row,"/labels",{"id","name","kind","notes","coordinates","territorialUnitId","source","sourcePlaceId"});PlaceLabel label;label.id=str(field(row,"id"));label.name=str(field(row,"name"));label.kind=str(field(row,"kind"));label.notes=optionalText(row,"notes");label.geometry=inlineGeometry(d,"label",label.id,object({{"type",V::str("Point")},{"coordinates",field(row,"coordinates")}}));const auto parent=optionalText(row,"territorialUnitId");if(!parent.empty())label.territory=territorialRef(parent);if(row.object.count("source"))label.source=webSource(field(row,"source"),d);if(row.object.count("sourcePlaceId")&&field(row,"sourcePlaceId").kind!=V::Null)label.sourcePlaceId=str(field(row,"sourcePlaceId"));d.labels.push_back(std::move(label));
     }
     for(const auto* domain:{"hydroEdits","genericFeatures"})for(const auto& row:array(field(root,domain))) {
         unknown(d,10,row,std::string("/")+domain,{"type","id","properties","geometry"});require(str(field(row,"type"))=="Feature","INVALID_FEATURE");const auto id=str(field(row,"id"));const auto& p=field(row,"properties");const auto geo=inlineGeometry(d,domain,id,field(row,"geometry"));
@@ -748,7 +750,7 @@ QByteArray encodeWeb(const ProjectSnapshot& snapshot) {
         if(allocation!=d.geometryProvenance.inlineAllocations.end()&&!allocation->second.promoted)continue;
         archive.array.push_back(object({{"id",V::str(ref.id)},{"version",V::num(ref.version)},{"geojson",geometryValue(*shape)}}));
     }
-    for(const auto& label:d.labels){const auto shape=d.geometries.get(label.geometry);require(shape&&shape->type=="Point","INVALID_LABEL_GEOMETRY");labels.array.push_back(object({{"id",V::str(label.id)},{"name",V::str(label.name)},{"kind",V::str(label.kind)},{"notes",V::str(label.notes)},{"coordinates",pointValue(shape->points.at(0))},{"territorialUnitId",V::str(label.territory?label.territory->id:"")},{"source",webSourceValue(label.source)}}));}
+    for(const auto& label:d.labels){const auto shape=d.geometries.get(label.geometry);require(shape&&shape->type=="Point","INVALID_LABEL_GEOMETRY");auto row=object({{"id",V::str(label.id)},{"name",V::str(label.name)},{"kind",V::str(label.kind)},{"notes",V::str(label.notes)},{"coordinates",pointValue(shape->points.at(0))},{"territorialUnitId",V::str(label.territory?label.territory->id:"")},{"source",webSourceValue(label.source)}});if(label.sourcePlaceId)row.object["sourcePlaceId"]=V::str(*label.sourcePlaceId);labels.array.push_back(std::move(row));}
     auto feature=[&](const auto& value,V props){return object({{"type",V::str("Feature")},{"id",V::str(value.id)},{"geometry",geometryValue(*d.geometries.get(value.geometry))},{"properties",props}});};
     for(const auto& value:d.genericFeatures){require(value.fallbackOnly,"UNSUPPORTED_WEB_EXPORT: generic direct creation");generic.array.push_back(feature(value,object({{"schemaVersion",V::num(2)},{"name",V::str(value.name)},{"notes",V::str(value.notes)},{"color",colorValue(value.color)},{"locked",V::boolean(value.locked)},{"source",webSourceValue(value.source)}})));}
     for(const auto& value:d.hydro){auto props=object({{"name",V::str(value.name)},{"notes",V::str(value.notes)},{"category",V::str(value.kind)},{"locked",V::boolean(value.locked)},{"editorColor",colorValue(value.color)},{"source",webSourceValue(value.source)},{"pandolab_schema_version",V::num(1)},{"pandolab_domain",V::str("hydro")},{"pandolab_id",V::str(value.id)}});if(value.sourceFeatureId)props.object["sourceFeatureId"]=V::str(*value.sourceFeatureId);hydro.array.push_back(feature(value,props));}

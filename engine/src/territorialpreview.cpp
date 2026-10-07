@@ -45,6 +45,14 @@ Geometry annexUnion(const std::vector<Geometry>& geometries,const TerritorialPre
     if(!calculated.succeeded())throw std::runtime_error(calculated.detail);
     return calculated.geometry;
 }
+double boundaryClipArea(GeometryOperation operation,const Geometry& left,const Geometry& right,const TerritorialPreviewCalculators& calculators,const JobToken& token) {
+    annexCheckCancelled(token);
+    if(!calculators.planarClipArea)throw std::runtime_error("BOUNDARY_AREA_CALCULATOR_UNAVAILABLE");
+    const auto result=calculators.planarClipArea({operation,left,right},[&]{return token.cancelled();});
+    annexCheckCancelled(token);
+    if(!result.succeeded())throw std::runtime_error(result.detail);
+    return result.area;
+}
 struct AnnexBounds { double minX=180,minY=90,maxX=-180,maxY=-90; };
 AnnexBounds annexBounds(const Geometry& geometry) {
     AnnexBounds bounds;
@@ -492,11 +500,11 @@ BoundaryGeometryPreviewResult calculateBoundaryGeometryPreview(const ProjectSnap
                 if(gained.polygons.empty())continue;
                 for(const auto& other:document.units)if(isRootGeneral(document,other)&&other.id!=draft.owner.id) {
                     const auto ref=territorialRef(other.id);const auto changed=proposed.find(ref);const auto& otherGeometry=changed==proposed.end()?original.at(ref):changed->second;
-                    if(significantArea(planarArea(annexCalculate(GeometryOperation::Intersection,gained,otherGeometry,calculators,token)),planarArea(gained)))throw std::runtime_error("BOUNDARY_OWNER_OVERLAP");
+                    if(significantArea(boundaryClipArea(GeometryOperation::Intersection,gained,otherGeometry,calculators,token),planarArea(gained)))throw std::runtime_error("BOUNDARY_OWNER_OVERLAP");
                 }
             } else for(const auto& other:intent.drafts)if(other.owner<draft.owner) {
-                const auto overlap=annexCalculate(GeometryOperation::Intersection,proposed.at(draft.owner),proposed.at(other.owner),calculators,token);
-                if(significantArea(planarArea(overlap),std::min(planarArea(proposed.at(draft.owner)),planarArea(proposed.at(other.owner)))))throw std::runtime_error("BOUNDARY_OWNER_OVERLAP");
+                const auto overlap=boundaryClipArea(GeometryOperation::Intersection,proposed.at(draft.owner),proposed.at(other.owner),calculators,token);
+                if(significantArea(overlap,std::min(planarArea(proposed.at(draft.owner)),planarArea(proposed.at(other.owner)))))throw std::runtime_error("BOUNDARY_OWNER_OVERLAP");
             }
         }
         std::map<ObjectRef,std::optional<Geometry>> next;
@@ -561,7 +569,7 @@ BoundaryGeometryPreviewResult calculateBoundaryGeometryPreview(const ProjectSnap
                 const auto other=territorialRef(sibling.id);
                 if(other==owner||sibling.kind!=UnitKind::General||!survives(other)||parentOf(sibling.id)!=parent||staticParentRelation(document,sibling.id).coverageMode!="partition")continue;
                 const auto& left=finalShape(owner);const auto& right=finalShape(other);
-                if(annexBoundsOverlap(annexBounds(left),annexBounds(right))&&significantArea(planarArea(annexCalculate(GeometryOperation::Intersection,left,right,calculators,token)),planarArea(left)))throw std::runtime_error("BOUNDARY_PARTITION_OVERLAP");
+                if(annexBoundsOverlap(annexBounds(left),annexBounds(right))&&significantArea(boundaryClipArea(GeometryOperation::Intersection,left,right,calculators,token),planarArea(left)))throw std::runtime_error("BOUNDARY_PARTITION_OVERLAP");
             }
         }
         const auto rootOf=[&](std::string id,bool changed){std::set<std::string> seen;while(seen.insert(id).second){const auto found=parents.find(id);const auto parent=changed&&found!=parents.end()?found->second:staticParentRelation(document,id).parentId;if(parent.empty())return id;id=parent;}throw std::runtime_error("PARENT_CYCLE");};

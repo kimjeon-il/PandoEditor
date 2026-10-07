@@ -7,6 +7,8 @@
 #include <QQuickPaintedItem>
 #include <memory>
 #include <atomic>
+#include <mutex>
+#include <QVariantList>
 
 // CPU fallback backend. It consumes exactly the same immutable RenderScene and
 // MapViewState as the Qt Scene Graph GPU backend; no legacy path/visual/hydro
@@ -19,6 +21,7 @@ class MapRenderItem : public QQuickPaintedItem {
     Q_PROPERTY(bool smoothLines READ smoothLines WRITE setSmoothLines NOTIFY smoothLinesChanged)
 public:
     explicit MapRenderItem(QQuickItem* parent=nullptr);
+    ~MapRenderItem() override;
     void paint(QPainter*) override;
 
     QObject* sceneBridge() const{return sceneBridge_;}
@@ -32,10 +35,15 @@ public:
 
     void setSceneSnapshot(std::shared_ptr<const RenderScene>,const MapViewState&);
 signals:
+    void framePresented(std::shared_ptr<const MapFrame> frame,QVariantList strokeInventory);
     void sceneBridgeChanged();
     void smoothLinesChanged();
+protected:
+    QSGNode* updatePaintNode(QSGNode*,UpdatePaintNodeData*) override;
 private:
     void syncSceneBridge();
+    void attachPresentationWindow(QQuickWindow*);
+    void publishPresentation();
 
     std::shared_ptr<const RenderScene> scene_;
     std::shared_ptr<const MapFrame> frame_;
@@ -44,4 +52,12 @@ private:
     bool smoothLines_=true;
     std::atomic<std::uint64_t> paintCount_{0};
     std::atomic<qint64> paintNanoseconds_{0};
+    QPointer<QQuickWindow> presentationWindow_;
+    std::atomic<qulonglong> presentationWindowGeneration_{0},presentationContextGeneration_{0},presentationBridgeGeneration_{0};
+    std::mutex presentationMutex_;
+    std::shared_ptr<const MapFrame> paintedFrame_,presentationFrame_;
+    QVariantList paintedStrokeInventory_,presentationStrokeInventory_;
+    qulonglong presentationSequence_=0,publishedPresentationSequence_=0;
+    qulonglong capturedContextGeneration_=0,capturedBridgeGeneration_=0;
+    bool presentationEnded_=false,presentationSwapped_=false,paintingForSceneGraph_=false;
 };

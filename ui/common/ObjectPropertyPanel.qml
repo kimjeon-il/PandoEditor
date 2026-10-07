@@ -18,7 +18,7 @@ Rectangle {
     property alias selectionHeader:headerSlot
     color:colors.panel;border.color:colors.border
     function showFlagMenu(trigger){tabs.currentIndex=0;contentFields.showFlagMenu(trigger)}
-    function changeTab(){nameMetadata.finish(true);notesMetadata.finish(true);navigationStarted()}
+    function changeTab(){nameMetadata.finish(true);periodMetadata.finish(true);notesMetadata.finish(true);navigationStarted()}
     function navigationStarted(){navigating=true;Qt.callLater(function(){panel.navigating=false})}
     function dismissPopup(){return contentFields.dismissPopup()||(advanced.item&&advanced.item.dismissPopup())||multi.dismissPopup()}
     function showContentCreation(){tabs.currentIndex=0;contentFields.showCreationTools=true;contentFields.autoSelection=false;editor.cancelContentEdit()}
@@ -71,10 +71,11 @@ Rectangle {
                     Layout.preferredHeight:contentHeight + 16
                     holdCommits:panel.holdFieldCommits||panel.navigating
                 }
-                RegionValidityFields {visible:tabs.currentIndex===0&&editor.objectProperties.dateFields===true;holdCommits:panel.holdFieldCommits||panel.navigating}
                 ColumnLayout {
                     visible:tabs.currentIndex===0;Layout.fillWidth:true
                     ObjectMetadataField {id:nameMetadata;field:"name";visible:editor.selectionItems.length===1 && !contentFields.selectionContent;holdCommits:panel.holdFieldCommits||panel.navigating}
+                    TerritorialInfoRelations {id:infoRelations;visible:editor.selectionItems.length===1&&editor.primaryObject.domain==="territorial"&&(infoRelations.parentRows.length>0||infoRelations.childRows.length>0)}
+                    TerritorialPeriodField {id:periodMetadata;visible:editor.selectionItems.length===1&&editor.primaryObject.domain==="territorial";holdCommits:panel.holdFieldCommits||panel.navigating}
                     ObjectMetadataField {id:notesMetadata;field:"notes";visible:editor.selectionItems.length===1 && !contentFields.selectionContent;holdCommits:panel.holdFieldCommits||panel.navigating}
                 }
                 UiButton {

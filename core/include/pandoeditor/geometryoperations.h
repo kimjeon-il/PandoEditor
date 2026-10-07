@@ -28,4 +28,13 @@ struct GeometryOperationResult {
 using GeometryCancellation=std::function<bool()>;
 using GeometryCalculator=std::function<GeometryOperationResult(
     const GeometryOperationRequest&, const GeometryCancellation&)>;
+// A scalar predicate result cannot be used as a replacement or archive entry.
+struct GeometryOperationAreaResult {
+    GeometryOperationStatus status=GeometryOperationStatus::Failed;
+    double area=0;
+    std::string detail;
+    bool succeeded() const noexcept {
+        return status==GeometryOperationStatus::Completed||status==GeometryOperationStatus::Empty;
+    }
+};
 }

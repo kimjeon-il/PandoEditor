@@ -74,6 +74,12 @@ if(BUILD_TESTING)
     target_link_libraries(property_ui_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
     file(GLOB_RECURSE M32_UI_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/ui/*.qml" "${PROJECT_SOURCE_DIR}/ui/*.js" "${PROJECT_SOURCE_DIR}/ui/*.json")
     qt_add_resources(property_ui_tests property_test_ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui" FILES ${M32_UI_FILES})
+    add_executable(territorial_info_ui_tests "${PROJECT_SOURCE_DIR}/tests/territorial_info_ui_tests.cpp")
+    target_link_libraries(territorial_info_ui_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
+    qt_add_resources(territorial_info_ui_tests territorial_info_ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui" FILES ${M32_UI_FILES})
+    qt_add_resources(territorial_info_ui_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME territorial_info_ui_tests COMMAND territorial_info_ui_tests -o -,txt)
+    set_tests_properties(territorial_info_ui_tests PROPERTIES TIMEOUT 90 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     qt_add_resources(property_ui_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     if(WIN32)
         file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/test-results/qt")
@@ -107,9 +113,11 @@ set(M32_PROPERTY_RESOURCES
     "${PROJECT_SOURCE_DIR}/ui/common/TerritorialSelectionToolbar.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/ObjectNotesPopover.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/RegionValidityFields.qml"
+    "${PROJECT_SOURCE_DIR}/ui/common/TerritorialPeriodField.qml"
+    "${PROJECT_SOURCE_DIR}/ui/common/TerritorialInfoRelations.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/MultiObjectProperties.qml"
     "${PROJECT_SOURCE_DIR}/ui/common/ObjectPropertyPanel.qml")
-foreach(target_name pandoeditor ui_tests river_selection_ui_tests web_import_ui_tests selection_ui_tests)
+foreach(target_name pandoeditor ui_tests terrain_controller_display_tests river_selection_ui_tests web_import_ui_tests selection_ui_tests)
     if(TARGET ${target_name})
         qt_add_resources(${target_name} m32_ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui" FILES ${M32_PROPERTY_RESOURCES})
     endif()
@@ -134,7 +142,7 @@ if(BUILD_TESTING)
     set_tests_properties(screen_color_tests PROPERTIES TIMEOUT 30 ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
 
-foreach(target_name pandoeditor ui_tests river_selection_ui_tests web_import_ui_tests selection_ui_tests property_ui_tests)
+foreach(target_name pandoeditor ui_tests terrain_controller_display_tests river_selection_ui_tests web_import_ui_tests selection_ui_tests property_ui_tests territorial_info_ui_tests)
     if(TARGET ${target_name})
         qt_add_resources(${target_name} ui_fonts PREFIX "/fonts" BASE "${PROJECT_SOURCE_DIR}/ui/fonts"
             FILES "${PROJECT_SOURCE_DIR}/ui/fonts/Pretendard-Regular.otf"
@@ -142,8 +150,10 @@ foreach(target_name pandoeditor ui_tests river_selection_ui_tests web_import_ui_
                   "${PROJECT_SOURCE_DIR}/ui/fonts/LICENSE.Pretendard.txt")
     endif()
 endforeach()
-if(TARGET property_ui_tests)
+foreach(target_name property_ui_tests territorial_info_ui_tests)
+if(TARGET ${target_name})
     file(GLOB_RECURSE M4_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/assets/defaults/flags/*")
-    qt_add_resources(property_ui_tests property_flags PREFIX "/defaults/flags"
+    qt_add_resources(${target_name} property_flags PREFIX "/defaults/flags"
         BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags" FILES ${M4_FLAG_FILES})
 endif()
+endforeach()

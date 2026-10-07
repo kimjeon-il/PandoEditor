@@ -177,17 +177,26 @@ void EditorController::startWorldBootstrap() {
             try {
                 WorldDataset source(worldDataRoot_);
                 const auto terrainRoot=!physicalRoot_.isEmpty()?physicalRoot_:source.optionalDataRoot();
+                const auto verifier=physicalStore_?physicalStore_->verifiedResolver():std::function<QString(const PhysicalAssetSpec&)>{};
+                const auto planner=physicalStore_?physicalStore_->plannedPathResolver():std::function<QString(const PhysicalAssetSpec&)>{};
+                const auto resolver=[inventory=physicalAssets_,verifier](const QString& relative) {
+                    const auto found=inventory.constFind(relative);
+                    return verifier&&found!=inventory.cend()?verifier(*found):QString{};
+                };
+                const auto planningResolver=[inventory=physicalAssets_,planner,terrainRoot](const QString& relative) {
+                    if(!planner)return QDir(terrainRoot).filePath(relative);
+                    const auto found=inventory.constFind(relative);
+                    return found!=inventory.cend()?planner(*found):QString{};
+                };
                 terrainProvider_=std::make_shared<TerrainTileProvider>(
-                    source.read("terrain"),terrainRoot,[this](const QString& relative) {
-                        return verifiedPhysicalAssetPath(relative);
-                    });
+                    source.read("terrain"),terrainRoot,resolver,std::function<void()>{},planningResolver);
                 terrainProvider_->setCacheBudget(quality_.profile().terrainCacheBudgetBytes);
                 terrainRasterProvider_=terrainProvider_;
                 QFile demManifest(QStringLiteral(":/world/terrain/v0.13.3/manifest.json"));
                 if(physicalStore_&&demManifest.open(QIODevice::ReadOnly)) {
                     terrainDemProvider_=std::make_shared<TerrainTileProvider>(demManifest.readAll(),
                         QDir(physicalStore_->root()).filePath("terrain-dem/c3c18d1"),
-                        [this](const QString& relative){return verifiedPhysicalAssetPath(relative);});
+                        resolver,std::function<void()>{},planningResolver);
                     terrainDemProvider_->setCacheBudget(quality_.profile().terrainCacheBudgetBytes);
                     if(!terrainDemProvider_->available())physicalError_=terrainDemProvider_->error();
                 }
@@ -272,9 +281,7 @@ void EditorController::cancelWorldBootstrap() {
     worldBase_.reset();worldResources_.reset();worldRanges_.clear();
     worldReloading_[0]=worldReloading_[1]=false;worldReloadFailed_[0]=worldReloadFailed_[1]=false;
     worldFocusDetail_=false;worldDetailCanonical_=false;
-    for(const auto& source:distinctTerrainProviders())source->protectVisible({});
-    terrainTiles_.clear();terrainDisplay_.reset();terrainDisplaySource_.reset();
-    terrainAssetPending_=0;terrainMissingTiles_=0;
+    resetTerrainRender();
     terrainProvider_.reset();terrainRasterProvider_.reset();terrainDemProvider_.reset();
     worldHydroNotice_.clear();
     emit terrainChanged();

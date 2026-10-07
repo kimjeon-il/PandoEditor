@@ -50,6 +50,14 @@ QVariantMap EditorController::hydroDataStatus() const {
     const auto inspected=inspectHydroData(displayText(settings.source));return QVariantMap{{"ready",inspected.ready},{"root",inspected.root},{"version",inspected.version},{"dataset",inspected.dataset},{"error",inspected.error}};
 }
 QVariantMap EditorController::terrainDataStatus() const {
+    const auto state=terrainDisplay_.snapshot();
+    std::set<qint64> preparedImageIds;quint64 preparedBytes=0,preparedCpuOnlyBytes=0;
+    for(const auto& item:terrainPrepared_) {
+        const auto& image=item.second.frame.image;
+        if(preparedImageIds.insert(image.cacheKey()).second)preparedBytes+=image.sizeInBytes();
+        if(std::find(state.uploadSubmittedResources.begin(),state.uploadSubmittedResources.end(),item.first)==state.uploadSubmittedResources.end())
+            preparedCpuOnlyBytes+=image.sizeInBytes();
+    }
     const auto& terrainView=sceneBridge_.viewState();
     const bool mobileLayout=terrainLayoutWidth_<=799;
     const double sourceDpr=std::min(mobileLayout?2.:3.,std::max(1.,terrainView.devicePixelRatio));
@@ -72,55 +80,277 @@ QVariantMap EditorController::terrainDataStatus() const {
             {"demMetadataReady",terrainDemProvider_&&terrainDemProvider_->available()},
             {"demMetadataError",demMetadataError},{"demDecodeError",demDecodeError},
             {"fallbackReason",fallbackReason},
-            {"demCpuTilesReady",terrainProvider_&&terrainProvider_->isDem()&&!terrainTiles_.empty()},
+            {"demCpuTilesReady",terrainProvider_&&terrainProvider_->isDem()&&!state.cpuReadyResources.empty()},
+            {"requestedCount",qulonglong(state.requestedKeys.size())},{"cpuReadyCount",qulonglong(state.cpuReadyResources.size())},
+            {"uploadSubmittedCount",qulonglong(state.uploadSubmittedResources.size())},
+            {"candidateId",qulonglong(state.candidate?state.candidate->id:0)},
+            {"submittedFrame",qulonglong(state.submitted?state.submitted->frameSequence:0)},
+            {"displayReceiptAccepted",state.receiptAccepted},{"displayedDraws",qulonglong(state.displayed.size())},
+            {"rejectedEvents",qulonglong(state.rejectedEvents)},
+            {"cpuDecodeReservedBytes",terrainDecodeReservations_},{"cpuDecodeDeferred",terrainPreparationDeferred_},
+            {"pendingJobs",qulonglong(terrainDecodeWatcher_?1:0)},
+            {"cpuPreparationPending",terrainPreparePending_},{"cpuPreparationScheduled",terrainPreparationTimer_.isActive()},
+            {"uploadWorkPending",terrainRenderStats_.uploadWorkPending},
+            {"pendingJobsScope",QStringLiteral("actual terrain CPU decode/hash worker; asset downloads reported separately")},
+            {"preparedUniqueImageBytes",preparedBytes},{"preparedCpuOnlyImageBytes",preparedCpuOnlyBytes},
+            {"cpuReservationScope",QStringLiteral("nominal raw, conversion and hash backing estimates; decoder scratch unobserved")},
+            {"cpuRenderImageBytes",terrainRenderStats_.cpuImageBytes},{"qsgTextureNominalBytes",terrainRenderStats_.textureNominalBytes},
+            {"stagingNominalBytes",terrainRenderStats_.stagingNominalBytes},{"meshBytes",terrainRenderStats_.meshBytes},
+            {"uploadOperations",terrainRenderStats_.uploadOperations},{"uploadBytes",terrainRenderStats_.uploadBytes},
+            {"pendingDisplayAdoptions",terrainRenderStats_.pendingSubmittedFrames},
+            {"frameUploadMillis",terrainRenderStats_.frameUploadMillis},{"oversizedOperations",terrainRenderStats_.oversizedOperations},
+            {"allocationFailures",terrainRenderStats_.allocationFailures},{"textureSizeChanges",terrainRenderStats_.textureSizeChanges},
+            {"memoryPressure",terrainRenderStats_.memoryPressure},{"mandatoryOverflowBytes",terrainRenderStats_.mandatoryOverflowBytes},
+            {"temporaryProtectedBytes",terrainRenderStats_.temporaryProtectedBytes},
+            {"gpuResidentBytes",QVariant{}},{"presentationObservation",QStringLiteral("QSG frame submission and associated frameSwapped; no GPU fence or DWM observation")},
             {"missingTiles",terrainMissingTiles_},
             {"activeDownloads",physicalActive_},{"queuedDownloads",physicalQueued_},
             {"error",fallback&&!demError.isEmpty()?demError:!activeError.isEmpty()?activeError:physicalError_}};
 }
 void EditorController::executeTerrainResources(const ViewportResourceRequest& request) {
-    if(terrainMode_=="none") {
-        for(const auto& source:distinctTerrainProviders())source->protectVisible({});
-        const bool changed=!terrainTiles_.isEmpty()||terrainAssetPending_!=0||terrainMissingTiles_!=0;
-        terrainDisplay_.reset();terrainDisplaySource_.reset();
-        terrainAssetPending_=0;terrainMissingTiles_=0;terrainTiles_.clear();
-        if(changed)emit terrainChanged();
-        return;
+    // Hydro/labels keep their own settle policy. Terrain starts only after the
+    // last navigation input has been quiet for the fixed Web's 500 ms.
+    Q_UNUSED(request);
+    updateTerrainDemand(false);
+    if(terrainWindowVisible_&&activeMapInteractions_==0)terrainPreparationTimer_.start();
+}
+void EditorController::setTerrainWindowVisible(bool visible) {
+    if(terrainWindowVisible_==visible)return;
+    terrainWindowVisible_=visible;
+    if(!visible) {
+        terrainPreparationTimer_.stop();terrainPreparePending_=false;
+        if(!terrainDemand_.base.empty())terrainDisplay_.cancel(terrainDemand_.scope);
+        publishTerrainRenderInput();
+        const auto snap=terrainDisplay_.snapshot();std::vector<TerrainTileSpec> retained;
+        for(const auto& id:snap.protectedResources)if(const auto found=terrainPreparedSpecs_.find(id);found!=terrainPreparedSpecs_.end())retained.push_back(found->second);
+        if(terrainProvider_)terrainProvider_->protectRenderResources({},retained);
+    } else {
+        updateTerrainDemand(false);
+        if(activeMapInteractions_==0)terrainPreparationTimer_.start();
     }
-    if(!terrainProvider_||!terrainProvider_->available()||!validMapViewState(request.view))return;
+}
+void EditorController::resetTerrainRender() {
+    terrainPreparationTimer_.stop();terrainPreparePending_=false;
+    terrainDisplay_.reset();terrainDisplaySource_.reset();terrainDemand_={};
+    terrainPrepared_.clear();terrainPreparedSpecs_.clear();terrainDemandSpecs_.clear();terrainFailedPreparation_.clear();
+    terrainUploadedTint_.clear();terrainTint_={};terrainTintContentKey_.clear();
+    terrainFallbackDraws_.clear();terrainAssetPending_=terrainMissingTiles_=0;terrainTiles_.clear();
+    for(const auto& source:distinctTerrainProviders())source->protectRenderResources({},{});
+    TerrainRenderInput disabled;disabled.enabled=false;disabled.releaseResources=true;disabled.view=sceneBridge_.viewState();
+    if(terrainResourceBridge_)terrainResourceBridge_->setRenderInput(std::move(disabled));
+}
+void EditorController::updateTerrainDemand(bool prepareCpu) {
+    const auto view=sceneBridge_.viewState();
+    if(terrainMode_=="none") {resetTerrainRender();return;}
+    if(!terrainProvider_||!terrainProvider_->available()||!validMapViewState(view))return;
+    // Asset readiness chooses the CPU source. The render owner separately
+    // retains the last displayed raster until the new DEM base+tint is drawn.
     if(terrainDemProvider_&&terrainDemProvider_->available()) {
         bool baseReady=true;
         for(const QString& path:{QStringLiteral("terrain/v0.13.0/0/0-0.webp"),
             QStringLiteral("terrain/v0.13.0/0/1-0.webp"),QStringLiteral("terrain/v0.13.3/tint.webp")}) {
             if(!physicalAssetReady(path)){baseReady=false;requestPhysicalAsset(path);}
         }
-        if(baseReady)baseReady=!terrainDemProvider_->loadTint().isNull()&&
-            !terrainDemProvider_->loadTile(0,0,0).isNull()&&
-            !terrainDemProvider_->loadTile(0,1,0).isNull();
-        const auto next=baseReady?terrainDemProvider_:terrainRasterProvider_;
+        const auto next=baseReady&&terrainDemProvider_->decodeError().isEmpty()?terrainDemProvider_:terrainRasterProvider_;
         if(next&&next!=terrainProvider_) {
             terrainProvider_=next;emit terrainChanged();
         }
     }
-    if(terrainDisplaySource_.lock()!=terrainProvider_){terrainDisplay_.reset();terrainDisplaySource_=terrainProvider_;}
-    QVariantList visible;
-    int missing=0;terrainAssetPending_=0;
-    const auto tileSpecs=terrainProvider_->tilesForView(request.view,terrainLayoutWidth_<=799);
-    terrainProvider_->protectVisible(tileSpecs,terrainMode_=="gray");
-    for(const auto& tile:tileSpecs) {
-        const auto relative=terrainProvider_->relativeTilePath(tile);
-        if(!physicalAssetReady(relative)){
-            ++missing;++terrainAssetPending_;requestPhysicalAsset(relative);continue;
+    terrainResourceBridge_->setSource(terrainProvider_);
+    const auto owner=terrainResourceBridge_->ownerSnapshot();
+    const auto scene=sceneBridge_.sceneSnapshot();
+    if(terrainProjectInstance_!=project_.instanceId()) {
+        terrainProjectInstance_=project_.instanceId();++terrainProjectGeneration_;
+    }
+    const auto previous=terrainDisplay_.snapshot();
+    TerrainDisplayScope scope{terrainResourceBridge_->sourceEpoch(),owner.windowEpoch,owner.contextEpoch,
+        terrainProjectGeneration_,view.revision,scene?scene->revision:0,
+        previous.scope.candidateSequence,previous.scope.requestSequence};
+    const bool gray=terrainMode_=="gray";
+    const auto plan=terrainProvider_->planForView(view,terrainLayoutWidth_<=799);
+    const auto resource=[&](const TerrainTileSpec& tile) {
+        return TerrainDisplayResource{QStringLiteral("%1/%2/%3").arg(tile.level).arg(tile.column).arg(tile.row)+
+            (terrainProvider_->isDem()?QStringLiteral("/raw"):gray?QStringLiteral("/raster-gray"):QStringLiteral("/raster-color")),
+            {},tile.level,{tile.west,tile.north,tile.east,tile.south}};
+    };
+    TerrainDisplayDemand demand;demand.scope=scope;
+    for(const auto& tile:plan.baseTiles)demand.base.push_back(resource(tile));
+    for(const auto& tile:plan.targetTiles)demand.target.push_back(resource(tile));
+    for(const auto& tile:plan.prefetchTiles)demand.prefetch.push_back(resource(tile));
+    std::set<double> offsets;
+    for(const auto& tile:terrainProvider_->tilesForView(view,terrainLayoutWidth_<=799)) {
+        offsets.insert(tile.worldOffsetDegrees);
+        demand.domains.push_back({tile.west+tile.worldOffsetDegrees,tile.north,
+                                  tile.east+tile.worldOffsetDegrees,tile.south});
+    }
+    if(demand.domains.empty())demand.domains.push_back({-180,90,180,-90});
+    if(offsets.empty())offsets.insert(0);
+    demand.worldOffsets.assign(offsets.begin(),offsets.end());
+    const bool variantChanged=terrainDemand_.target!=demand.target||terrainDemand_.base!=demand.base||
+        terrainDemand_.prefetch!=demand.prefetch||terrainDemand_.domains!=demand.domains||
+        terrainDemand_.worldOffsets!=demand.worldOffsets;
+    if(scope!=previous.scope||variantChanged||previous.cancelled||terrainDemand_.base.empty()) {
+        const bool sameOwner=scope.sourceEpoch==previous.scope.sourceEpoch&&scope.windowEpoch==previous.scope.windowEpoch&&
+            scope.contextEpoch==previous.scope.contextEpoch&&scope.projectGeneration==previous.scope.projectGeneration;
+        if(!sameOwner) {
+            terrainPrepared_.clear();terrainPreparedSpecs_.clear();terrainUploadedTint_.clear();
+            terrainTint_={};terrainTintContentKey_.clear();
         }
-        if(terrainProvider_->loadTile(tile,terrainMode_=="gray").isNull()){++missing;continue;}
-        const auto source=QUrl::fromLocalFile(physicalAssetPath(relative));
-        visible.push_back(QVariantMap{{"source",source},{"level",tile.level},{"column",tile.column},{"row",tile.row},
-            {"west",tile.west+tile.worldOffsetDegrees},{"east",tile.east+tile.worldOffsetDegrees},
-            {"south",tile.south},{"north",tile.north}});
+        demand.scope.requestSequence=++terrainRequestSequence_;
+        demand.scope.candidateSequence=terrainRequestSequence_;
+        terrainDemand_=std::move(demand);terrainDisplay_.beginDemand(terrainDemand_);
+        terrainFailedPreparation_.clear();
+        terrainDemandSpecs_.clear();
+        for(const auto& request:plan.requests)terrainDemandSpecs_[resource(request.spec).key]=request.spec;
+        const auto held=terrainDisplay_.snapshot().protectedResources;
+        for(auto it=terrainPrepared_.begin();it!=terrainPrepared_.end();) {
+            if(!terrainDemandSpecs_.count(it->first.key)&&std::find(held.begin(),held.end(),it->first)==held.end()) {
+                terrainPreparedSpecs_.erase(it->first);it=terrainPrepared_.erase(it);
+            } else ++it;
+        }
+        for(const auto& item:terrainPrepared_)if(terrainDemandSpecs_.count(item.first.key))
+            terrainDisplay_.cpuReady(terrainDemand_.scope,item.second.resource);
+        if(!terrainProvider_->isDem()||(!terrainTintContentKey_.isEmpty()&&terrainUploadedTint_==terrainTintContentKey_))
+            terrainDisplay_.buildCandidate();
     }
-    visible=terrainDisplay_.publish(std::move(visible),missing==0);
-    if(visible!=terrainTiles_||missing!=terrainMissingTiles_) {
-        terrainTiles_=std::move(visible);terrainMissingTiles_=missing;emit terrainChanged();
+    terrainMissingTiles_=0;
+    const auto snap=terrainDisplay_.snapshot();
+    for(const auto& item:terrainDemand_.target)
+        if(std::find(snap.uploadSubmittedKeys.begin(),snap.uploadSubmittedKeys.end(),item.key)==snap.uploadSubmittedKeys.end())++terrainMissingTiles_;
+    publishTerrainRenderInput();
+    if(!prepareCpu||!terrainWindowVisible_||activeMapInteractions_>0||!owner.alive)return;
+    terrainPreparePending_=true;
+    if(terrainDecodeWatcher_)return; // At most one decode/hash job; latest demand wins.
+    const auto budget=quality_.profile().terrainCacheBudgetBytes;
+    const bool pressure=terrainRenderStats_.memoryPressure||terrainProvider_->cachedBytes()>budget;
+    std::set<QString> prepared;
+    for(const auto& item:terrainPrepared_)if(item.second.frame.sourceEpoch==scope.sourceEpoch)prepared.insert(item.first.key);
+    for(const auto& request:plan.requests) {
+        const auto spec=resource(request.spec);
+        if(prepared.count(spec.key)||terrainFailedPreparation_.count(spec.key))continue;
+        const bool base=std::any_of(terrainDemand_.base.begin(),terrainDemand_.base.end(),[&](const auto& b){return b.key==spec.key;});
+        const bool prefetch=std::any_of(terrainDemand_.prefetch.begin(),terrainDemand_.prefetch.end(),[&](const auto& b){return b.key==spec.key;});
+        const auto bytes=terrainProvider_->expectedDecodedTileBytes(request.spec);
+        if(!base&&(pressure||bytes>budget||terrainProvider_->cachedBytes()>budget-bytes)) {
+            ++terrainPreparationDeferred_;continue;
+        }
+        const auto relative=terrainProvider_->relativeTilePath(request.spec);
+        if(!physicalAssetReady(relative)) {++terrainAssetPending_;requestPhysicalAsset(relative);continue;}
+        std::vector<TerrainTileSpec> retained;
+        for(const auto& id:snap.protectedResources)if(const auto found=terrainPreparedSpecs_.find(id);found!=terrainPreparedSpecs_.end())retained.push_back(found->second);
+        terrainProvider_->protectRenderResources({request.spec},retained);
+        // The pinned DEM decoder requires a 4096x2048 RGBA tint. Reserve its
+        // first decode/hash backing as well as the admitted tile, before work.
+        terrainDecodeReservations_=bytes*(terrainProvider_->isDem()?2:3)+
+            (terrainProvider_->isDem()&&terrainTintContentKey_.isEmpty()?2*4096ull*2048*4:0);
+        const auto capturedScope=terrainDemand_.scope;const auto source=terrainProvider_;
+        const auto knownTint=terrainTintContentKey_;const auto knownTintCacheKey=terrainTint_.cacheKey();const auto tile=request.spec;
+        auto* watcher=new QFutureWatcher<TerrainRenderResource>(this);terrainDecodeWatcher_=watcher;
+        connect(watcher,&QFutureWatcher<TerrainRenderResource>::finished,this,[this,watcher,capturedScope,source,tile,prefetch,key=spec.key] {
+            auto result=watcher->result();watcher->deleteLater();terrainDecodeWatcher_=nullptr;terrainDecodeReservations_=0;
+            const bool failed=result.frame.image.isNull()||(source->isDem()&&result.frame.tint.isNull());
+            if(capturedScope==terrainDemand_.scope&&terrainWindowVisible_&&activeMapInteractions_==0&&terrainMode_!="none"&&!failed) {
+                result.prefetch=prefetch;const TerrainDisplayResourceId id{result.resource.key,result.resource.contentKey};
+                if(terrainDisplay_.cpuReady(capturedScope,result.resource)) {
+                    terrainPrepared_[id]=result;terrainPreparedSpecs_[id]=tile;
+                    if(!result.frame.tint.isNull()){terrainTint_=result.frame.tint;terrainTintContentKey_=result.tintContentKey;}
+                    publishTerrainRenderInput();emit terrainChanged();
+                }
+            }
+            if(capturedScope==terrainDemand_.scope&&failed) {
+                terrainFailedPreparation_.insert(key);
+                if(result.frame.image.isNull())requestPhysicalAsset(source->relativeTilePath(tile));
+                if(source->isDem()&&result.frame.tint.isNull())requestPhysicalAsset("terrain/v0.13.3/tint.webp");
+                emit terrainChanged();
+            }
+            if(terrainPreparePending_&&terrainWindowVisible_&&activeMapInteractions_==0)
+                QTimer::singleShot(0,this,[this]{updateTerrainDemand(true);});
+        });
+        watcher->setFuture(QtConcurrent::run([source,capturedScope,tile,gray,knownTint,knownTintCacheKey] {
+            return TerrainImageBridge::prepareRenderResource(source,capturedScope.sourceEpoch,tile,gray,knownTint,knownTintCacheKey);
+        }));
+        return;
     }
+    terrainPreparePending_=false;
+}
+void EditorController::publishTerrainRenderInput() {
+    if(terrainDemand_.base.empty())return;
+    const auto snap=terrainDisplay_.snapshot();TerrainRenderInput input;
+    input.scope=terrainDemand_.scope;input.view=sceneBridge_.viewState();
+    input.meshPhysicalScale=input.view.scale*std::min(terrainLayoutWidth_<=799?2.:3.,std::max(1.,input.view.devicePixelRatio));
+    const auto scene=sceneBridge_.sceneSnapshot();input.sceneRevision=scene?scene->revision:0;
+    input.enabled=terrainMode_!="none"&&terrainWindowVisible_;input.gray=terrainMode_=="gray";input.inputActive=activeMapInteractions_>0;
+    input.requiresTint=terrainProvider_->isDem();
+    input.budgetBytes=quality_.profile().terrainCacheBudgetBytes;
+    input.tint=terrainTint_;input.tintContentKey=terrainTintContentKey_;
+    input.protectedResources=snap.protectedResources;
+    std::set<QString> requested(snap.requestedKeys.begin(),snap.requestedKeys.end());
+    for(const auto& item:terrainPrepared_)if(requested.count(item.first.key)) {
+        auto current=item.second;
+        current.prefetch=std::any_of(terrainDemand_.prefetch.begin(),terrainDemand_.prefetch.end(),[&](const auto& r){return r.key==item.first.key;})&&
+            !std::any_of(terrainDemand_.target.begin(),terrainDemand_.target.end(),[&](const auto& r){return r.key==item.first.key;});
+        input.resources.push_back(std::move(current));
+    }
+    for(const auto& base:terrainDemand_.base) {
+        const auto found=std::find_if(input.resources.begin(),input.resources.end(),[&](const auto& r){return r.resource.key==base.key;});
+        input.baseResources.push_back({base.key,found==input.resources.end()?QString{}:found->resource.contentKey});
+    }
+    // DEM CPU tint is necessary but never substitutes for an actual commit.
+    if(!terrainProvider_->isDem()||(!terrainTintContentKey_.isEmpty()&&terrainUploadedTint_==terrainTintContentKey_)) {
+        input.candidate=snap.candidate;
+    }
+    terrainResourceBridge_->setRenderInput(std::move(input));
+}
+void EditorController::observeTerrainRender(const TerrainRenderObservation& event) {
+    if(event.kind==TerrainRenderObservation::Pressure&&event.stats.cpuImageBytes==terrainRenderStats_.cpuImageBytes&&
+       event.stats.textureNominalBytes==terrainRenderStats_.textureNominalBytes&&event.stats.meshBytes==terrainRenderStats_.meshBytes&&
+       event.stats.stagingNominalBytes==terrainRenderStats_.stagingNominalBytes&&event.stats.uploadOperations==terrainRenderStats_.uploadOperations&&
+       event.stats.memoryPressure==terrainRenderStats_.memoryPressure&&event.stats.temporaryProtectedBytes==terrainRenderStats_.temporaryProtectedBytes&&
+       event.stats.pendingSubmittedFrames==terrainRenderStats_.pendingSubmittedFrames&&
+       event.stats.uploadWorkPending==terrainRenderStats_.uploadWorkPending)
+        return;
+    terrainRenderStats_=event.stats;terrainFallbackDraws_=event.fallbackDraws;
+    if(event.kind==TerrainRenderObservation::UploadSubmitted) {
+        bool changed=false;const auto before=terrainDisplay_.snapshot();
+        for(const auto& resource:event.resources) {
+            const TerrainDisplayResourceId id{resource.key,resource.contentKey};
+            if(std::find(before.uploadSubmittedResources.begin(),before.uploadSubmittedResources.end(),id)==before.uploadSubmittedResources.end())
+                changed=terrainDisplay_.uploadSubmitted(event.scope,resource)||changed;
+        }
+        if(event.scope==terrainDemand_.scope&&!event.tintContentKey.isEmpty()&&event.tintContentKey==terrainTintContentKey_&&terrainUploadedTint_!=event.tintContentKey) {
+            terrainUploadedTint_=event.tintContentKey;changed=true;
+        }
+        if(changed&&(!terrainProvider_->isDem()||terrainUploadedTint_==terrainTintContentKey_)) {
+            terrainDisplay_.buildCandidate();publishTerrainRenderInput();
+        }
+    } else if(event.kind==TerrainRenderObservation::CandidateSubmitted&&event.receipt) {
+        const auto candidate=terrainDisplay_.snapshot().candidate;
+        if(candidate&&event.receipt->candidateId==candidate->id)
+            terrainDisplay_.submitCandidate(*candidate,event.receipt->frameSequence,event.receipt->draws);
+    } else if(event.kind==TerrainRenderObservation::DisplayReceipt&&event.receipt) {
+        if(terrainDisplay_.acceptDisplayReceipt(*event.receipt)) {
+            const auto snap=terrainDisplay_.snapshot();
+            terrainResourceBridge_->acknowledgeDisplay(*event.receipt,snap.protectedResources);
+            terrainTiles_.clear();
+            for(const auto& draw:snap.displayed)terrainTiles_.push_back(QVariantMap{{"key",draw.resource.key},
+                {"level",draw.resource.level},{"west",draw.bounds.west},{"east",draw.bounds.east},
+                {"north",draw.bounds.north},{"south",draw.bounds.south}});
+            publishTerrainRenderInput();
+        }
+    } else if(event.kind==TerrainRenderObservation::ResourceRetired) {
+        for(const auto& id:event.retired) {
+            if(id.key=="@terrain/tint") {if(id.contentKey==terrainUploadedTint_)terrainUploadedTint_.clear();continue;}
+            if(terrainDisplay_.retireResource(event.scope,id.key,id.contentKey)) {
+                terrainPrepared_.erase(id);terrainPreparedSpecs_.erase(id);
+            }
+        }
+        if(terrainWindowVisible_&&activeMapInteractions_==0&&terrainPreparationDeferred_)
+            QTimer::singleShot(0,this,[this]{updateTerrainDemand(true);});
+    }
+    const auto snap=terrainDisplay_.snapshot();std::vector<TerrainTileSpec> retained;
+    for(const auto& id:snap.protectedResources)if(const auto found=terrainPreparedSpecs_.find(id);found!=terrainPreparedSpecs_.end())retained.push_back(found->second);
+    if(terrainProvider_)terrainProvider_->protectRenderResources({},retained);
+    emit terrainChanged();emit renderQualityChanged();
 }
 QVariantMap EditorController::hydroProjection() const{return projection_.hydroParameters();}
 QVariantMap EditorController::hydroStyle() const {
@@ -330,15 +560,17 @@ void EditorController::reprojectLabelPlacements() {
 
 void EditorController::executeLabelResources(const ViewportResourceRequest& request) {
     if(labelSourcesDirty_)rebuildLabelSources();
+    labelEngine_.setBuiltinSuppressedIds(copiedPlaceSourceIds(project_.document()));
+    refreshBuiltinPlaceLabels();
     MapLabelLayoutOptions options;
     options.zoom=camera_.display().zoom;
     options.viewportWidth=request.view.viewportWidth;
     options.viewportHeight=request.view.viewportHeight;
     options.bottomInset=mobileMode_?96.:32.;
-    options.collisionPadding=std::max(1.,std::ceil(
-        (mobileMode_?5.:3.)*quality_.profile().labelDensity));
-    options.maxCandidates=mobileMode_?4096:8192;
-    options.maxPlaced=mobileMode_?1024:2048;
+    options.collisionPadding=mobileMode_?5.:3.;
+    options.maxCandidates=2048;
+    options.maxPlaced=2048;
+    options.labelDensity=quality_.profile().labelDensity;
     const auto selectedItems=selection_.items();
     std::set<ObjectRef> selected(selectedItems.begin(),selectedItems.end());
     if(geometryEdit_)selected.insert(geometryEdit_->target);

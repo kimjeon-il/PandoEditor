@@ -36,11 +36,20 @@ struct TerrainDemandPlan {
 class TerrainTileProvider final {
 public:
     // A separate immutable manifest selects raster or DEM; sources never alias.
+    // Fifth argument is a pure logical-path lookup for planning. The third
+    // resolver remains authoritative at cold reads. Without the fifth argument,
+    // legacy resolver-based path behavior is preserved.
     TerrainTileProvider(const QByteArray& pinnedManifest,const QString& dataRoot,
-                        std::function<QString(const QString&)> assetResolver={});
+                        std::function<QString(const QString&)> assetResolver={},
+                        std::function<void()> beforeDecode={},
+                        std::function<QString(const QString&)> planningResolver={});
     bool available() const {return available_;}
     QString error() const {return error_;}
     QString decodeError() const;
+    // Match canonical relative asset names only. A newly verified install may
+    // clear its own failed attempt; neither call resolves, hashes or reads bytes.
+    bool isDecodeFailure(const QString& relative) const;
+    bool retryVerifiedAsset(const QString& relative) const;
     bool isDem() const {return dem_;}
     int gutter() const {return 1;}
     QString manifestVersion() const {return version_;}
@@ -54,6 +63,11 @@ public:
     QImage loadTile(int level,int column,int row,bool gray=false) const;
     void setCacheBudget(std::size_t bytes);
     void protectVisible(const std::vector<TerrainTileSpec>& tiles,bool gray=false);
+    // Production render handoff owns these pins explicitly. CPU decoding must
+    // never decide that submitted/displayed fallback can be released.
+    void protectRenderResources(const std::vector<TerrainTileSpec>& requested,
+                                const std::vector<TerrainTileSpec>& retained);
+    std::size_t expectedDecodedTileBytes(const TerrainTileSpec&) const;
     pandoeditor::ResourceCacheSnapshot resourceCacheSnapshot() const;
     void switchVisibleVariant(bool gray);
     std::size_t cachedBytes() const;
@@ -71,16 +85,22 @@ private:
     TerrainTileSpec tileSpec(int level,int column,int row) const;
     std::vector<TerrainTileSpec> visibleTargetSpecs(const MapViewState& view,int level) const;
     QString tilePath(int level,int column,int row) const;
-    void recordDecodeFailure(const QString& path,const QString& reason) const;
-    void clearDecodeFailure(const QString& path) const;
+    void recordDecodeFailure(const QString& relative,const QString& path,const QString& reason) const;
+    void clearDecodeFailure(const QString& relative) const;
     std::function<QString(const QString&)> assetResolver_;
+    std::function<QString(const QString&)> planningResolver_;
+    // Optional observation of actual decoder entry; never replaces decoding.
+    std::function<void()> beforeDecode_;
+    // Guards cache policy, protection, and failure publication, not decoding.
     mutable std::mutex mutex_;
     mutable std::map<CacheKey,CachedImage> images_;
     mutable std::set<CacheKey> visible_,fallback_,pending_;
     mutable bool displayGray_=false;
+    mutable bool renderOwnedProtection_=false;
     mutable pandoeditor::ResourceCachePolicy<CacheKey> policy_{128ull*1024*1024};
     mutable std::size_t resident_=0;
     mutable std::uint64_t failedDecodes_=0;
-    mutable QString decodeFailurePath_,decodeFailureReason_;
+    mutable std::map<QString,QString> decodeFailures_;
+    mutable QString latestDecodeFailure_,decodeFailureReason_;
     std::size_t budget_=128ull*1024*1024;
 };

@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "webCommit": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+  "scope": "synthetic mechanism fixtures; production manifest remains empty-v1; no 64-review runtime acceptance",
+  "sources": [
+    {
+      "path": "assets/js/modules/place-contract.js",
+      "sha256": "0ff49cc2ac68a22a3ebc086f8a0e0b733598598fadb02fc7a538d83ae3f3d121",
+      "bytes": 2365
+    },
+    {
+      "path": "assets/js/modules/place-codec.js",
+      "sha256": "507acb4d00421cfb01467e59ba35c7c2ca3d0baecadc7742ba587a0485d203b2",
+      "bytes": 4082
+    },
+    {
+      "path": "assets/js/modules/place-worker-store.js",
+      "sha256": "9db939eb7805fa7527d798d2858447b3436e12313fda480db24e037e2123b5a9",
+      "bytes": 10775
+    },
+    {
+      "path": "assets/js/modules/place-runtime.js",
+      "sha256": "b14688bb63ad71d2d657e13c97cbf0e5b50fbb60fb4d45f827b6dce20dd1b23f",
+      "bytes": 4505
+    },
+    {
+      "path": "assets/js/modules/label-layout.js",
+      "sha256": "24568735641aec976a66207ed7a8df7dc8ca448bc7002c6ca89df5509dc95c29",
+      "bytes": 7555
+    },
+    {
+      "path": "assets/js/modules/hydro-tile-window.js",
+      "sha256": "778628b590e011db15cbb525deb1c5a7e007ecf3ba376490384f567a6a524397",
+      "bytes": 6102
+    },
+    {
+      "path": "assets/data/places/manifest.json",
+      "sha256": "148660b93529a60640f6a340117f976a7e2822ab8f34fa1814023920fc82f4b7",
+      "bytes": 108
+    },
+    {
+      "path": "tests/helpers/place-view.mjs",
+      "sha256": "4e70308471659de0f926108afddb6600cb82b71647be72037a79659398400199",
+      "bytes": 1310
+    },
+    {
+      "path": "assets/js/vendor/d3.min.js",
+      "sha256": "4cdf92091ed0cfdd8b862af1c6d4744bd0458e746b92c1bbd5403a1143ecd538",
+      "bytes": 151144
+    },
+    {
+      "path": "assets/js/modules/map-visual-frame.js",
+      "sha256": "4333648377219ad4395a9573b32e1f1db86f494029656929def0785264a81489",
+      "bytes": 8717
+    },
+    {
+      "path": "assets/js/modules/worker-rpc.js",
+      "sha256": "5e5cb0b12ccb3c4ae88a44a50687b261ad95cdda3c716540f038207a1f834d8b",
+      "bytes": 13740
+    },
+    {
+      "path": "assets/js/modules/worker-job-scheduler.js",
+      "sha256": "06d2ca1668a10a9de79c58bfbfce9fb4d68aa22611f8b83cd2471a93a1ce97c9",
+      "bytes": 8240
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "synthetic/basic/0.bin",
+      "sha256": "886bf1c9539a52af14fdf35dc72a76089deb572d869ba5663a059bd96dbfa4b4",
+      "bytes": 367
+    },
+    {
+      "path": "synthetic/basic/manifest.json",
+      "sha256": "ddcc174263fec4eedcb670046cd42fa3b782a54d34e01d7e791e9fe5a190e3a2",
+      "bytes": 768
+    },
+    {
+      "path": "synthetic/dense/0.bin",
+      "sha256": "e65e5179487e0a9dc1bb67305026e96c077dbadfca40c918f949bc797739ecaa",
+      "bytes": 41521
+    },
+    {
+      "path": "synthetic/dense/1.bin",
+      "sha256": "29a36ccde7832a65b502bf125b331fbf705bd2876d44a827c90e0f86492b74aa",
+      "bytes": 41521
+    },
+    {
+      "path": "synthetic/dense/2.bin",
+      "sha256": "a737ddf9c39af14368fbb0bd142d272b4e4da03f0c7e9ef88a474867157038d3",
+      "bytes": 41521
+    },
+    {
+      "path": "synthetic/dense/3.bin",
+      "sha256": "2f26e1de0045ba9b55549a1477e369ff659404a726be145b97d98ca84b1f54ff",
+      "bytes": 41521
+    },
+    {
+      "path": "synthetic/dense/manifest.json",
+      "sha256": "ce684e5d72396a66e468974eb85ee8fd03b6b9929ee46a69d075940c679f5d96",
+      "bytes": 1456
+    },
+    {
+      "path": "synthetic/overscan/0.bin",
+      "sha256": "db4d0a516120dad5858da4daba92066c273ce19f16d0de3de3621a5a8e64ee3d",
+      "bytes": 41521
+    },
+    {
+      "path": "synthetic/overscan/1.bin",
+      "sha256": "fa2f13d04a740d717bb00962058aacdd162db55cd9403711a365c67679689402",
+      "bytes": 41521
+    },
+    {
+      "path": "synthetic/overscan/2.bin",
+      "sha256": "23c6bc0e1923f2bd4aaf2e1dadc43698df6534b55db21f6714d8255b772efccd",
+      "bytes": 41521
+    },
+    {
+      "path": "synthetic/overscan/3.bin",
+      "sha256": "db66536a1222d8738e589a843483b0be9313bec4ff21cda88d9ed5de48c4a2c1",
+      "bytes": 126
+    },
+    {
+      "path": "synthetic/overscan/manifest.json",
+      "sha256": "79ef1c476cd3e1eeb5e8ec4d2f22684912f0515dd34dd1b6fd237b8fd0cab139",
+      "bytes": 1455
+    }
+  ]
+}

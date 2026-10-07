@@ -1,0 +1,2100 @@
+{
+  "schema": "pandoeditor-territorial-library-v2-web-provenance",
+  "webCommit": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+  "sourceBytes": "exact Git blobs; no newline conversion",
+  "files": [
+    {
+      "path": "assets/data/territorial-entities/generated/v2/index.json",
+      "destination": "assets/territorial-library-v2/index.json",
+      "gitBlob": "8139d15985b49f0af9e35ffe86c14934aeec1728",
+      "sha256": "63c072095fd6c95034365f6d7f9d4e4ff99f71684890bffc8e678fe741b4334c",
+      "bytes": 555560
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ABW.json.gz",
+      "destination": "assets/territorial-library-v2/state-ABW.json.gz",
+      "gitBlob": "65080e066587f9b18a1a88f6892cc166bc12876a",
+      "sha256": "a427e103fb240c1ec95b44216defbd79ab97e1a0c9ba260b4600dd4385acc831",
+      "bytes": 867
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-AFG.json.gz",
+      "destination": "assets/territorial-library-v2/state-AFG.json.gz",
+      "gitBlob": "6b1d1175c2a6bcb4950e4ed5dfeb8f19f3898748",
+      "sha256": "daf94898d403323e51259b3e4a7a3b75c43ee5ab8c70fc0a88c2860a004925f7",
+      "bytes": 14786
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-AGO.json.gz",
+      "destination": "assets/territorial-library-v2/state-AGO.json.gz",
+      "gitBlob": "d3c139ad2f147a22f40bbfa8473cf8239527eceb",
+      "sha256": "dfe45de5029abf819710e4f25f9e0885529e57f312b7e15d074accf3648721e9",
+      "bytes": 15584
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-AIA.json.gz",
+      "destination": "assets/territorial-library-v2/state-AIA.json.gz",
+      "gitBlob": "f11624938a1216279a1461673e03df351fdad2cc",
+      "sha256": "9f82172105418acb244d4c71298af616975976839b7ba76a32176b6a1b270bab",
+      "bytes": 1223
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ALB.json.gz",
+      "destination": "assets/territorial-library-v2/state-ALB.json.gz",
+      "gitBlob": "59aa74d75cbc1c9777fa37a24e3e86249a51e1c3",
+      "sha256": "1621472e082622fde80923b23fc81e49c5e58f1e797fe0f183ee9cf55cb9af58",
+      "bytes": 5595
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ALD.json.gz",
+      "destination": "assets/territorial-library-v2/state-ALD.json.gz",
+      "gitBlob": "9fbcb3904076090539efba010caa970be05351cc",
+      "sha256": "2e834aab8ab2cdab1966803d34bf2a6da44dfa04ec94d38eb13e9649e4e64676",
+      "bytes": 4765
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-AND.json.gz",
+      "destination": "assets/territorial-library-v2/state-AND.json.gz",
+      "gitBlob": "c3ed599007cfc99acb74280e62c59cf4323a7e50",
+      "sha256": "5c279d5f995771daf248218cfb187ab9f067f360c1461732e44eccbda1a8639c",
+      "bytes": 1096
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ARE.json.gz",
+      "destination": "assets/territorial-library-v2/state-ARE.json.gz",
+      "gitBlob": "8bc01d879bd48b19d8916e9d73bfca2a2a650258",
+      "sha256": "14bbc7ecb1f75a94ba80dac99d7e7079f8d925b5e913b13987798d5541263ad6",
+      "bytes": 7855
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ARG.json.gz",
+      "destination": "assets/territorial-library-v2/state-ARG.json.gz",
+      "gitBlob": "3126cfd8693c277e19b27a10ea51caca642ff461",
+      "sha256": "c9a8eb6d1e131622b4aba8c604c5bbbf950c72cd3143007d7753653b2a34f298",
+      "bytes": 42988
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ARM.json.gz",
+      "destination": "assets/territorial-library-v2/state-ARM.json.gz",
+      "gitBlob": "f2677ef59f1a8ab68a10e5231acf7f602dba0d6e",
+      "sha256": "105af14159c1f6cd862ea95cdce3b679298d86d47ea0d70e263bbbbf22cc718f",
+      "bytes": 4716
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-armenian-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-armenian-ssr.json.gz",
+      "gitBlob": "e504d261073290fc88b48c19a88c32ef0bfcd577",
+      "sha256": "bff7f7cea54e74785b720769d639bd7a352866c9e67daec297997e2985ddfdf9",
+      "bytes": 8360
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ASM.json.gz",
+      "destination": "assets/territorial-library-v2/state-ASM.json.gz",
+      "gitBlob": "47436c1e85cd5fd4fec89e4471bb59785c0dc28a",
+      "sha256": "c470779f040f618b1d5546c0ec875454ea96f23376e7f0a644af5bf54c8fcad4",
+      "bytes": 1237
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ATA.json.gz",
+      "destination": "assets/territorial-library-v2/state-ATA.json.gz",
+      "gitBlob": "d56c412adfeac675f75a1b7d6d167c4a98a38aab",
+      "sha256": "fa3ae392c7e73ed9566aaae7477f1dfabbe30b111b4f113fbdb6f00348eb0518",
+      "bytes": 215043
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ATC.json.gz",
+      "destination": "assets/territorial-library-v2/state-ATC.json.gz",
+      "gitBlob": "ca5012bf50556883d19592e04c8dc6ec3ee2eb16",
+      "sha256": "e590f35c516cce7f88977efe592a04154cfafdd40c93ad4b45a4ae82b747b979",
+      "bytes": 611
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ATF.json.gz",
+      "destination": "assets/territorial-library-v2/state-ATF.json.gz",
+      "gitBlob": "fff69bff820db6cd79e7761f582d9bb79ebbc0af",
+      "sha256": "70bbe3f2627564284bf1c3dd0918cf0d2d7644250dea1be4ec83138ae6bbaa4d",
+      "bytes": 5559
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ATG.json.gz",
+      "destination": "assets/territorial-library-v2/state-ATG.json.gz",
+      "gitBlob": "49c197953a02eb7dd3ae41f11c310fab7715a60c",
+      "sha256": "d0b0f5abd1a1af7ace2972324b57351421fa492186cebe705164cc7c2ce92077",
+      "bytes": 1696
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-AUS.json.gz",
+      "destination": "assets/territorial-library-v2/state-AUS.json.gz",
+      "gitBlob": "265a9d8a0b5f6a699b3c5406bc1cf5bb08d25681",
+      "sha256": "e2e63a847ece4ea19176e1dadf410039fa8e874d23a96b037b89c21472b3d49b",
+      "bytes": 118793
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-AUT.json.gz",
+      "destination": "assets/territorial-library-v2/state-AUT.json.gz",
+      "gitBlob": "f85b3810ae4d710c59ae1d804b58c0c0fcbc80de",
+      "sha256": "53325529c92b6f472b1bbe190084354412c80f4df8bd0af7dec994c691ef2c5e",
+      "bytes": 10465
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-AZE.json.gz",
+      "destination": "assets/territorial-library-v2/state-AZE.json.gz",
+      "gitBlob": "29535cee87ab4dbd0fa3c2c1db6c7671ef3bd68c",
+      "sha256": "2a11ab22e11f31eec6905fcdf3b21979626b049aa64c28c53802dbed386a4ab4",
+      "bytes": 9490
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-azerbaijan-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-azerbaijan-ssr.json.gz",
+      "gitBlob": "2d6831e95051a5bb9129fff6d0e287a6fb6ae523",
+      "sha256": "380ea2636ad23cda29e812e4d6644321ede17545b0bd326a3e2c7e5ba4d44e99",
+      "bytes": 13439
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BDI.json.gz",
+      "destination": "assets/territorial-library-v2/state-BDI.json.gz",
+      "gitBlob": "d0c885199165b2e107f506f1f28df343e708703a",
+      "sha256": "58ec1cf44d2df50c2a9c28ed1cd28e74a1309d6091c10de3f7097d1b57d97468",
+      "bytes": 3434
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BEL.json.gz",
+      "destination": "assets/territorial-library-v2/state-BEL.json.gz",
+      "gitBlob": "ef49b4dc29c01c32da6a4c9b0647160391c53fb6",
+      "sha256": "a48e6c8810f6b1d7dd6ca503f45a45d24c9a08a1b0ef7ed5637ceab9681af2d0",
+      "bytes": 6470
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BEN.json.gz",
+      "destination": "assets/territorial-library-v2/state-BEN.json.gz",
+      "gitBlob": "a00ab01b74469664a91c3ffdcc6f052f17964246",
+      "sha256": "6dcd5da86e5cce4aec1f8500cb03a7f75698ddd7a26e3fc1a71cdff344daf40f",
+      "bytes": 6225
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BFA.json.gz",
+      "destination": "assets/territorial-library-v2/state-BFA.json.gz",
+      "gitBlob": "6782c31d2fdf79e2607423dd1f25e816c23e20d9",
+      "sha256": "c6ea01177fabaa43e6ca7ef96403cbd51f95a457a43313893eb0ed79845261d3",
+      "bytes": 10686
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BGD.json.gz",
+      "destination": "assets/territorial-library-v2/state-BGD.json.gz",
+      "gitBlob": "3ac8f117e6eeec9b4b83a8eccc9b7d67310fdafc",
+      "sha256": "112b046d59adb4175788d91f928966cc727ede9a8c0acfeda7b5658a34b316bb",
+      "bytes": 20452
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BGR.json.gz",
+      "destination": "assets/territorial-library-v2/state-BGR.json.gz",
+      "gitBlob": "74010871fc19fc5349cb87d67d76838e20540540",
+      "sha256": "7a39937043b61db448462c9e70dc5d531e6a6431e3ba945286da8bcf0163fb43",
+      "bytes": 8536
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BHR.json.gz",
+      "destination": "assets/territorial-library-v2/state-BHR.json.gz",
+      "gitBlob": "82fc257667757a1161e96d3151d77ff828b2ce6c",
+      "sha256": "41aa632fcc0a5fa1d87154cf3d2d1bd6e92c2bbe55b29540cef74d0f5b95b3af",
+      "bytes": 1905
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BHS.json.gz",
+      "destination": "assets/territorial-library-v2/state-BHS.json.gz",
+      "gitBlob": "045e10167b01549892d0808a1c09f511b0240bd6",
+      "sha256": "bb98fc639507ea1b0bd7c1eb9beddcc1b08928f27933c31669bb65005611a593",
+      "bytes": 14972
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BIH.json.gz",
+      "destination": "assets/territorial-library-v2/state-BIH.json.gz",
+      "gitBlob": "8d6374008b5125d410fc2b2cbc31bb67358cd351",
+      "sha256": "fa4a855dccdedfa33ea1dce7ca87276008f32f2c6990d6e4ce0f24abe1716ab0",
+      "bytes": 6354
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BJN.json.gz",
+      "destination": "assets/territorial-library-v2/state-BJN.json.gz",
+      "gitBlob": "3dd885f3c4d326be61b1eec704f035a1c3e02969",
+      "sha256": "6c1024327d82bc2f74210afcfd44f4113a74b91f544a48d2eb4b4f010fa615c5",
+      "bytes": 583
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BLM.json.gz",
+      "destination": "assets/territorial-library-v2/state-BLM.json.gz",
+      "gitBlob": "6759c9f6fef02b35e803bfe1968759516b51901a",
+      "sha256": "341515cc74223a0d0220eaa5a462fd5d52d53f7d051b8694b58b223ee2ed8975",
+      "bytes": 734
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BLR.json.gz",
+      "destination": "assets/territorial-library-v2/state-BLR.json.gz",
+      "gitBlob": "8a848ffd21a0c930ddae4e24d509d3450e1c363e",
+      "sha256": "ff266ce9ab7bcdf3c90a331ff4b660c128535b425ab346273ef5d7d6db8f595a",
+      "bytes": 11337
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-byelorussian-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-byelorussian-ssr.json.gz",
+      "gitBlob": "795ee7941bc8bbecaf95bca8e95f1268fd5315b4",
+      "sha256": "efe6773ab12e5ea042413b73f6a8c4fd46fb6df0be4a3cfb7eca6c6dbfd0e543",
+      "bytes": 16640
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BLZ.json.gz",
+      "destination": "assets/territorial-library-v2/state-BLZ.json.gz",
+      "gitBlob": "00249dafdbeb2de0d94b3e735367e9afb1d5dcfb",
+      "sha256": "4f246c09378e5d811fc4b160ba2395dc0ac662a29a4250008ff1c625b24c071d",
+      "bytes": 5067
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BMU.json.gz",
+      "destination": "assets/territorial-library-v2/state-BMU.json.gz",
+      "gitBlob": "fa0cdab59ef4a6b881ec178be856a73c3041c446",
+      "sha256": "4581a155809bec79efaa66cffd56ebcbbeddae7049f67e72525450fd4bd0a825",
+      "bytes": 1394
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BOL.json.gz",
+      "destination": "assets/territorial-library-v2/state-BOL.json.gz",
+      "gitBlob": "f62a7e45dab73d1ac09706c6be66b19531d3b414",
+      "sha256": "15f2bffc5e541b2963d7b4acd55c25cc017378fe9ac4b633e8ef6b65392d1097",
+      "bytes": 14628
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BRA.json.gz",
+      "destination": "assets/territorial-library-v2/state-BRA.json.gz",
+      "gitBlob": "032a236aab3448d558e84034878e1bfcd6f0c344",
+      "sha256": "6c84e215ac867534f809682c751632f25f04bbd8c87a32620fbc1501b9e7d5eb",
+      "bytes": 97922
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BRB.json.gz",
+      "destination": "assets/territorial-library-v2/state-BRB.json.gz",
+      "gitBlob": "64fd3809b6d28bc9c1c52443bb7044fe0b0cc625",
+      "sha256": "ac3e79d2531c9d9efb62d0bc5ba30f8ead5753fb3cf1a29dde272ad7780b0dbc",
+      "bytes": 975
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BRI.json.gz",
+      "destination": "assets/territorial-library-v2/state-BRI.json.gz",
+      "gitBlob": "71a41daefe187907b9e7a3e39ab6985dbc3fa42e",
+      "sha256": "c5264d76af952284012beb90cb6b41371a4514a7cd27b39be31ebb8f3144345d",
+      "bytes": 583
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BRN.json.gz",
+      "destination": "assets/territorial-library-v2/state-BRN.json.gz",
+      "gitBlob": "a28a3b34a99e032ee8abceedd0f6bd9d35f2bdce",
+      "sha256": "199a8956368d74c2a36c95436022082ab6b1989c9059f8a698be3bbf2f9823dd",
+      "bytes": 2099
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BRT.json.gz",
+      "destination": "assets/territorial-library-v2/state-BRT.json.gz",
+      "gitBlob": "d967fe183d6b5c96a273b67bf787ba251580e6ed",
+      "sha256": "4d0b71434054f624e69b81cb3847340c5645f7f5116685a6a91f2c38de969c97",
+      "bytes": 661
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BTN.json.gz",
+      "destination": "assets/territorial-library-v2/state-BTN.json.gz",
+      "gitBlob": "98b0b9c01c3add5418d18f6c9a25c29ac70df4a0",
+      "sha256": "a9f9d59bffa473528739a5d33637b91a77ed32c9b2959059f100104dba8fe515",
+      "bytes": 3589
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-BWA.json.gz",
+      "destination": "assets/territorial-library-v2/state-BWA.json.gz",
+      "gitBlob": "4c90d26cc3e0e0c8ac1ff9343a1a81e80c065756",
+      "sha256": "0a4e68b4303a70e0bf73768449d998b8d2a742c6f074f4e47c7ab58a9d0dbd87",
+      "bytes": 9558
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CAF.json.gz",
+      "destination": "assets/territorial-library-v2/state-CAF.json.gz",
+      "gitBlob": "dd686d25503b0af03e21fc8933a786f50a8a305f",
+      "sha256": "280d27ea467ba7a5d6209bf242f163239cd6a25fcd7bed01eacdacdf765db3ae",
+      "bytes": 16886
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CAN.json.gz",
+      "destination": "assets/territorial-library-v2/state-CAN.json.gz",
+      "gitBlob": "5a855442b14928cec93639a8fae83a083b497a29",
+      "sha256": "0c1e264e69ab39bb71b463ed15cc1a4e765a1f75a552ea979ae47ad0a114413c",
+      "bytes": 590812
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CHE.json.gz",
+      "destination": "assets/territorial-library-v2/state-CHE.json.gz",
+      "gitBlob": "7762a78c4dbcfa1258ff485be8c189aba4a6e00f",
+      "sha256": "eabba068e90a9628b81a84b8f5088dea2ed06ffd7091b0a872f352b8daa49daf",
+      "bytes": 7388
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CHL.json.gz",
+      "destination": "assets/territorial-library-v2/state-CHL.json.gz",
+      "gitBlob": "a02aca037fd342b6e3d8ec9162986f96d8c421d4",
+      "sha256": "7d7f1d913f2f07e9020fcd2df7e40484ef62857cb77b18759b37fc1c88385c66",
+      "bytes": 145971
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CHN.json.gz",
+      "destination": "assets/territorial-library-v2/state-CHN.json.gz",
+      "gitBlob": "53271c9c0db61fdc27a1919fedaeb9e17256769e",
+      "sha256": "0a827269888c1adb34c1a12f1c072a4c95d5360c683e98a5f10d28f7c399dcb7",
+      "bytes": 123986
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CIV.json.gz",
+      "destination": "assets/territorial-library-v2/state-CIV.json.gz",
+      "gitBlob": "1be01494d1952b3a416cc0d01811360c39592427",
+      "sha256": "8f367ce26ae50e9ce93aa5e597d6987ee3191627cd3574f9b5b9b9886e89554a",
+      "bytes": 14721
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CLP.json.gz",
+      "destination": "assets/territorial-library-v2/state-CLP.json.gz",
+      "gitBlob": "7ce144afc677c0d8a265b2c84d329be4add2d241",
+      "sha256": "d28783300db27d9a90488ac4a3bb0c0b93e6384db041250ed4d8d078a60f36e2",
+      "bytes": 610
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CMR.json.gz",
+      "destination": "assets/territorial-library-v2/state-CMR.json.gz",
+      "gitBlob": "21793474ed47e0757cd6e2c8a28a2a4becbb56cd",
+      "sha256": "5d639627933475a768342fcbe24aacaf88f51cb915bc594f7dcecd7fb30e9f15",
+      "bytes": 13773
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CNM.json.gz",
+      "destination": "assets/territorial-library-v2/state-CNM.json.gz",
+      "gitBlob": "db5b646503a6860e6338d9aa6b68648d12a6243c",
+      "sha256": "37acb3c19beb56f8a1a0146c25c54932984404b545c0cad45990baec45e74943",
+      "bytes": 2411
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-COD.json.gz",
+      "destination": "assets/territorial-library-v2/state-COD.json.gz",
+      "gitBlob": "c68da05357cafd4f6fc564a8a59a201f8e774735",
+      "sha256": "f2cbab694225a88c207597c7bedd5ebbb8ce2732fffdf5648a8dbd05fb4e52ed",
+      "bytes": 26889
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-COG.json.gz",
+      "destination": "assets/territorial-library-v2/state-COG.json.gz",
+      "gitBlob": "7a71b1f635089aef5a12b476d2ec1b659805e89f",
+      "sha256": "22e22c606e320139f05e05e1fc4cc2a094d0c766b2c7ba645136fc8eeecb1c1d",
+      "bytes": 12953
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-COK.json.gz",
+      "destination": "assets/territorial-library-v2/state-COK.json.gz",
+      "gitBlob": "70421547a23d8881094069f962dc8301b9a85dd9",
+      "sha256": "ca06a89656b72fea2756ac2770659b9648cb4a4e788a53d81962d53529c685cd",
+      "bytes": 1842
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-COL.json.gz",
+      "destination": "assets/territorial-library-v2/state-COL.json.gz",
+      "gitBlob": "8f4fd7403eb2cd3ff658361bf96e9f5d19e1bfcd",
+      "sha256": "b61a592fe9cc116771f9b59ec539a97a855503886869b89e1660e8d6ad2f0e90",
+      "bytes": 29853
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-COM.json.gz",
+      "destination": "assets/territorial-library-v2/state-COM.json.gz",
+      "gitBlob": "c39c9c8288537cfbf5e063eee2cf3598b046d900",
+      "sha256": "44524d907adff67e15a4064ebc75c35c5ece49597e185b91afa75e5c57b4dc53",
+      "bytes": 1802
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CPV.json.gz",
+      "destination": "assets/territorial-library-v2/state-CPV.json.gz",
+      "gitBlob": "6541929f82ca4b5c28e7ae20806fb6212d01b1e3",
+      "sha256": "9a7eb5bc340108241229f07dc27a6e767b2881697b1f2958e3e06edb507354eb",
+      "bytes": 4511
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CRI.json.gz",
+      "destination": "assets/territorial-library-v2/state-CRI.json.gz",
+      "gitBlob": "70a7378c27230e1c089dff7de0c037c1c44ce1b9",
+      "sha256": "343d10542ab995220f4f9985f3798b5ea436bb014c713566460dab0066708c33",
+      "bytes": 7964
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CSI.json.gz",
+      "destination": "assets/territorial-library-v2/state-CSI.json.gz",
+      "gitBlob": "9ed80c70780c27d9563ff51c037ecd1e494f24a1",
+      "sha256": "18d5afaea7fb984f685471dd39dbdb50e91562198a1b648ca111f38d0141c86d",
+      "bytes": 582
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CUB.json.gz",
+      "destination": "assets/territorial-library-v2/state-CUB.json.gz",
+      "gitBlob": "d0f551f25df2e933fc40aad8971ae5cb49e77a7e",
+      "sha256": "3aaf1d6a317746fbb9ff07b968ab021c55880d5dc4c737c4ba21d57ff5246e1a",
+      "bytes": 24102
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CUW.json.gz",
+      "destination": "assets/territorial-library-v2/state-CUW.json.gz",
+      "gitBlob": "a845422422c35a76a1ea5cb02e7323508944cbb5",
+      "sha256": "d865daa602d1143705cd8d29bf94d10210fb943d4f0c9208b839a71ad85a8bce",
+      "bytes": 1057
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CYM.json.gz",
+      "destination": "assets/territorial-library-v2/state-CYM.json.gz",
+      "gitBlob": "2839262ea9074095ea9dd1352c45c62fd1b0013e",
+      "sha256": "6522113d02128c39816b0d2b418c47e04eab56ab841260310d6ff586c21bbf1d",
+      "bytes": 1411
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CYN.json.gz",
+      "destination": "assets/territorial-library-v2/state-CYN.json.gz",
+      "gitBlob": "2b99b367d344d2b4458559e0c6880c52e6bb0d8d",
+      "sha256": "4f91fa809f258406493d77a75c85cde0de854ef69542720f26a7dd7da2d4b214",
+      "bytes": 2366
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CYP.json.gz",
+      "destination": "assets/territorial-library-v2/state-CYP.json.gz",
+      "gitBlob": "46ae98e38698a01ad8b21d3c1c2ae2a67d433238",
+      "sha256": "9ab7022fe5d16564eab79f78aca21a7441a4e59889b78b549340b326680d1d4f",
+      "bytes": 3226
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-CZE.json.gz",
+      "destination": "assets/territorial-library-v2/state-CZE.json.gz",
+      "gitBlob": "c181c6dbf382992ab8b202f041b9403ff88d626f",
+      "sha256": "292363203a0a696eecb19d41cd953f98aac30c7ad8348d8a3cc6d2ab1e1c5182",
+      "bytes": 8918
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-czechoslovakia.json.gz",
+      "destination": "assets/territorial-library-v2/state-czechoslovakia.json.gz",
+      "gitBlob": "4745b29d765e812141ca560f741873591ff2bc82",
+      "sha256": "fbf193a14ccd3fdab8977e236788d1caa60f336fbbf9028232e70ae25e04940b",
+      "bytes": 13754
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-DJI.json.gz",
+      "destination": "assets/territorial-library-v2/state-DJI.json.gz",
+      "gitBlob": "cb1ed968e4b0089e5e24004d97e436036b345041",
+      "sha256": "5dc412f9fdb08be598aa6535bc95ae826bb2e22331c7b34fb0a032efd9a4c7b2",
+      "bytes": 2558
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-DMA.json.gz",
+      "destination": "assets/territorial-library-v2/state-DMA.json.gz",
+      "gitBlob": "22b6e2274bef01cdfb686ad0986b7d88b8de56f5",
+      "sha256": "7e5902ca86f64df07a60f202155b821e0ad765813be9ecab1873b2081ff64d13",
+      "bytes": 1323
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-DNK.json.gz",
+      "destination": "assets/territorial-library-v2/state-DNK.json.gz",
+      "gitBlob": "fe0915a04737219d56fb4198ed3b2b9803f40ecc",
+      "sha256": "dfe19d3b565390c285651d19c1ab048090894de3cf6d4962679ae2b141d70f1c",
+      "bytes": 19226
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-DOM.json.gz",
+      "destination": "assets/territorial-library-v2/state-DOM.json.gz",
+      "gitBlob": "d9d92660c189ba6f1393b082b1c9ded316b32935",
+      "sha256": "ffa082eb8065ffde43bd8cc55747429371fcabb5e33e8c2bdec0bf0ceaebb303",
+      "bytes": 5984
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-DZA.json.gz",
+      "destination": "assets/territorial-library-v2/state-DZA.json.gz",
+      "gitBlob": "d26c7682dfb2582d463a60fd43c2c31059e74659",
+      "sha256": "2a6f50a2e24dc2bba10273f257a588410ceb80a7d2d0e9e0a4ad31be39558720",
+      "bytes": 12470
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ECU.json.gz",
+      "destination": "assets/territorial-library-v2/state-ECU.json.gz",
+      "gitBlob": "b4e403a29c2fcfc8023048dd92330bad0d26e9c0",
+      "sha256": "bae1c07ba63bb87eb9f5f7af7ede23e09a7be5b4f85d00f9858466f636251a61",
+      "bytes": 14468
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-EGY.json.gz",
+      "destination": "assets/territorial-library-v2/state-EGY.json.gz",
+      "gitBlob": "be3213ba49aa7ccf92765051574d88a0c7d31d39",
+      "sha256": "bf941f3d03ea1bf5d7a19560831acb30862b44a1fd853c9644356e98d936526b",
+      "bytes": 16769
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ERI.json.gz",
+      "destination": "assets/territorial-library-v2/state-ERI.json.gz",
+      "gitBlob": "e9b5df974862a28304c02018994d8645c58cab06",
+      "sha256": "173dd7320a289edea82c06f421f27edc3516b397e585ff976a0e84cb65361965",
+      "bytes": 9821
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ESB.json.gz",
+      "destination": "assets/territorial-library-v2/state-ESB.json.gz",
+      "gitBlob": "28398ca6b17efe5f60171ac87f2f3422ddf4a875",
+      "sha256": "130d6fa5bc8c11b8c58e30cf4eb6ba2ab16a5d6be8b28cb5aa08a74fd383997a",
+      "bytes": 1449
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ESP.json.gz",
+      "destination": "assets/territorial-library-v2/state-ESP.json.gz",
+      "gitBlob": "7b7c20ccf305e7c829c210e8a1250bf4e89f8bbf",
+      "sha256": "25fc794f73786606c342578eed1eb446808a5d2f968223138525d143e30940ce",
+      "bytes": 27218
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-EST.json.gz",
+      "destination": "assets/territorial-library-v2/state-EST.json.gz",
+      "gitBlob": "cbf3b2c21ba896ea6bfd67ab50d66d18121ec2e6",
+      "sha256": "0a2af6db1c8b63c2b5e0a3b9b8289d08daac14725e9cf1bc0318baf37e1dd9f9",
+      "bytes": 9978
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-estonian-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-estonian-ssr.json.gz",
+      "gitBlob": "d5e9b95141f52a50b2ea681e254f55b698514841",
+      "sha256": "81fc4a65f6a76edbcf1371712eee09186b86d125deaa15320837119bafbe36a5",
+      "bytes": 13150
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ETH.json.gz",
+      "destination": "assets/territorial-library-v2/state-ETH.json.gz",
+      "gitBlob": "0ca229cda99a1d4ab8400637c7c3bafe9b676633",
+      "sha256": "b38e6b67462eb812a751cffec02e7a13091d12352dfa1b0da269e3ca4053a5db",
+      "bytes": 10786
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-FIN.json.gz",
+      "destination": "assets/territorial-library-v2/state-FIN.json.gz",
+      "gitBlob": "6619dd2a233e9ff3135aa3cbe6d79f8b45ee68a6",
+      "sha256": "ccf826809a561324e47eec0403793d7298f427d2881004465eec592072afd7d2",
+      "bytes": 28739
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-FJI.json.gz",
+      "destination": "assets/territorial-library-v2/state-FJI.json.gz",
+      "gitBlob": "701535d87e16bd168ad05909a7306af32d287276",
+      "sha256": "23a255c0bf198cdcffc4fba8828996ba980da3d26c20d6f3513d41478a159b69",
+      "bytes": 13337
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-FLK.json.gz",
+      "destination": "assets/territorial-library-v2/state-FLK.json.gz",
+      "gitBlob": "e30e64b86a177c2323a74507d47ea001b8c71334",
+      "sha256": "46fb259c5f998e4a24d0740ad83895415a9f32bd8eda5539568de1e919fb1444",
+      "bytes": 12151
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-FRA.json.gz",
+      "destination": "assets/territorial-library-v2/state-FRA.json.gz",
+      "gitBlob": "b49193214b92d41ef18aa09b20f6abbbcd358442",
+      "sha256": "8e2d9cd3c837dcd63b592f83d115858cd955a887ba24567749e338ed9932b6ae",
+      "bytes": 41038
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-FRO.json.gz",
+      "destination": "assets/territorial-library-v2/state-FRO.json.gz",
+      "gitBlob": "6159c3e3fa658a41a121859e241f855c009e32d6",
+      "sha256": "5d8c0f4356f8542ec79186e71054786a88bc8fefa3290df79e56b2ac3981e115",
+      "bytes": 4807
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-FSM.json.gz",
+      "destination": "assets/territorial-library-v2/state-FSM.json.gz",
+      "gitBlob": "4edbe9982b53481411ee4dc041f05bd72c3b1d3d",
+      "sha256": "25ef4e6017971d23f24ef644a8b27730034a6e9e9586d5e872627e4a508d9d7e",
+      "bytes": 2985
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GAB.json.gz",
+      "destination": "assets/territorial-library-v2/state-GAB.json.gz",
+      "gitBlob": "1d4755be65ccc360464001e2ea7ea1cb7f6f6486",
+      "sha256": "8a2ceac74d1b28177ec7445bdeaa2109b15dcc79edbd2f068aced0f39c8affa5",
+      "bytes": 13556
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GBR.json.gz",
+      "destination": "assets/territorial-library-v2/state-GBR.json.gz",
+      "gitBlob": "48129abd2c8d6900d7cb722802bfde0817f9f22e",
+      "sha256": "9b2dbfccd3de54ba642473a9eace00f363dd340b52216e299ff523108eef18af",
+      "bytes": 60234
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GEO.json.gz",
+      "destination": "assets/territorial-library-v2/state-GEO.json.gz",
+      "gitBlob": "18236846994122df60775eec5683196daa137de6",
+      "sha256": "40de1b966c88be9c6b9729c299e30eaffcc3b1c1bb960e8abebc5746dce5cd47",
+      "bytes": 5625
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-georgian-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-georgian-ssr.json.gz",
+      "gitBlob": "1b9cea3370ef9d25483f359b9b882a54a6bf8a40",
+      "sha256": "ea441b2114f3b75ca01a1354af8c14b734e7b4d3bf1feee29d131c47683950eb",
+      "bytes": 9611
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-DEU.json.gz",
+      "destination": "assets/territorial-library-v2/state-DEU.json.gz",
+      "gitBlob": "b83ce963dd4e99c7cd5712b24bf64aec5ad6e9e7",
+      "sha256": "162641c60ea19d33ead9f0255cb071e570a7e7a0940f94c9585bba89ba6eae1f",
+      "bytes": 27013
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-deutsche-demokratische-republik.json.gz",
+      "destination": "assets/territorial-library-v2/state-deutsche-demokratische-republik.json.gz",
+      "gitBlob": "6a9f997090df3b721aef26c912fa561ce4735ca4",
+      "sha256": "ccec62fab49fc6114799fab189c24887698effb652b09565c554b581df2ceea0",
+      "bytes": 45956
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-east-prussia.json.gz",
+      "destination": "assets/territorial-library-v2/state-east-prussia.json.gz",
+      "gitBlob": "cd546aabdeb5b064569fae0fd64734b0c0da702b",
+      "sha256": "ee2f2959faa7fe9125d148e389c971158671e0467cc426a2272860245ea468c2",
+      "bytes": 54481
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-west-prussia.json.gz",
+      "destination": "assets/territorial-library-v2/state-west-prussia.json.gz",
+      "gitBlob": "1de8eaf66d04bb1ac7bbfb95ec1dbfe7e4625ab1",
+      "sha256": "45369b30be6c978e6e685fa96b037640a99973b294553d300e22bda7789ecc42",
+      "bytes": 13208
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GGY.json.gz",
+      "destination": "assets/territorial-library-v2/state-GGY.json.gz",
+      "gitBlob": "2f7ade8bbfc507d07133d3625ab653389777bec3",
+      "sha256": "111cb6a4302248e2eb27946cb3691d55679a7a00a52ccef8095e7faeb2838418",
+      "bytes": 1177
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GHA.json.gz",
+      "destination": "assets/territorial-library-v2/state-GHA.json.gz",
+      "gitBlob": "1c9daf2f13fc76307065c35f72974a79d2ab8ddd",
+      "sha256": "488987f0472b71d0408862bf070ff1343e0699e6c537bf7e929ae6f3416a5bc8",
+      "bytes": 8244
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GIB.json.gz",
+      "destination": "assets/territorial-library-v2/state-GIB.json.gz",
+      "gitBlob": "486379d6970c8b5c99d66dcce9a03d2a678f778b",
+      "sha256": "1c4b62363827a74edf706c37fbb2386f56e1faf2d88c7d301043e82f42b9f706",
+      "bytes": 672
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GIN.json.gz",
+      "destination": "assets/territorial-library-v2/state-GIN.json.gz",
+      "gitBlob": "fdb8f6dae6bf107c9af475d216f53d7f8dd3580e",
+      "sha256": "9ed000a247c7b9d2caf61b0ae4cd66e5861d8b6e55e05e44ddc048f4e0e528d8",
+      "bytes": 15202
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GMB.json.gz",
+      "destination": "assets/territorial-library-v2/state-GMB.json.gz",
+      "gitBlob": "c443ea22a2ac960382312cfe63110c4140dbfa4d",
+      "sha256": "4e4658f824e9e53b0268d9031244947692c36c719595897adcb99413898911fd",
+      "bytes": 4278
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GNB.json.gz",
+      "destination": "assets/territorial-library-v2/state-GNB.json.gz",
+      "gitBlob": "550fc129f30a5c649fc33b8c62cccb6fecffb46a",
+      "sha256": "ff4537545fdefa038a6fcc6f09529a190df68429717da32d6aafc86659ffa042",
+      "bytes": 11364
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GNQ.json.gz",
+      "destination": "assets/territorial-library-v2/state-GNQ.json.gz",
+      "gitBlob": "b159a256cae088773e66e09a92af7532f37c13c3",
+      "sha256": "b7b92f66791707e473f9d7aa24811bcd51c9aa79e6a7d52792601a64d67fade6",
+      "bytes": 2973
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GRC.json.gz",
+      "destination": "assets/territorial-library-v2/state-GRC.json.gz",
+      "gitBlob": "2edf1d3023f00681247fd2ceaf3d19f4c7bfb815",
+      "sha256": "90fa48a625a83267a9598e62477a4395675b85ebb17f6cd95a93d061464027ad",
+      "bytes": 51275
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GRD.json.gz",
+      "destination": "assets/territorial-library-v2/state-GRD.json.gz",
+      "gitBlob": "b448fa6135f16848abbcfc5099a373dd3e931d5a",
+      "sha256": "837dbd2c62ec8ea5aa340ae353060922312fca9c368879cb115ee44ebd545d3c",
+      "bytes": 1228
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GRL.json.gz",
+      "destination": "assets/territorial-library-v2/state-GRL.json.gz",
+      "gitBlob": "824cbda690c33f067db54bd0d202048ee9ab370f",
+      "sha256": "b68970bf0e5788589d3fe931179dfc9ea030ad80115a7d53b9c3266f60efbe6f",
+      "bytes": 174897
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GTM.json.gz",
+      "destination": "assets/territorial-library-v2/state-GTM.json.gz",
+      "gitBlob": "8587e2f6fa460e1ce98d12030ba1c52ad96a137c",
+      "sha256": "60f2c2efb6183ccf6f578a6e1adbea42e63315d4fe2a57e753f8da0e07949bcb",
+      "bytes": 4839
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GUM.json.gz",
+      "destination": "assets/territorial-library-v2/state-GUM.json.gz",
+      "gitBlob": "0f4cdd9f31f9533e1086c0f2494833caecdcc0c6",
+      "sha256": "18a254193968d9e6bd8937361f47c5ea7e2c9328c7f18cf822f75d82fcb5644b",
+      "bytes": 1076
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-GUY.json.gz",
+      "destination": "assets/territorial-library-v2/state-GUY.json.gz",
+      "gitBlob": "ba5c5550a457cfee4cdcb08aa0030ce39094fcd1",
+      "sha256": "2204e62110571da0dad537e1e07bda6828fd47a474f73f2366fd27cdf78873f6",
+      "bytes": 10942
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-HKG.json.gz",
+      "destination": "assets/territorial-library-v2/state-HKG.json.gz",
+      "gitBlob": "8b94a8ed93cbeb998f1fa4c754248e8131a31dea",
+      "sha256": "ac35d601455a5711c94ee0cb02bea224efd6dfaa588ac0f24d2b8120e2227316",
+      "bytes": 3740
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-HMD.json.gz",
+      "destination": "assets/territorial-library-v2/state-HMD.json.gz",
+      "gitBlob": "d9b57f6e30ec37cf75a51b10dbef85d0080381f5",
+      "sha256": "44aba0b72afad7c9ed35c0a2056fde4f7abf8847684e67999abc409812b5b936",
+      "bytes": 1170
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-HND.json.gz",
+      "destination": "assets/territorial-library-v2/state-HND.json.gz",
+      "gitBlob": "27e0bf69c4c0fcf68f3b9a3844f56ebc41e9850d",
+      "sha256": "dc220b7eff2e3c9b2202d68a06eeb85460219833b745e6de0007138777bd0ae5",
+      "bytes": 11167
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-HRV.json.gz",
+      "destination": "assets/territorial-library-v2/state-HRV.json.gz",
+      "gitBlob": "ec0f719e835129e2e282fd34cdd83d6e769e0c7f",
+      "sha256": "fbd54b99e8e276997c62ac2a7186c77d51e84af385a5cb1f813701f3db835a4d",
+      "bytes": 20691
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-HTI.json.gz",
+      "destination": "assets/territorial-library-v2/state-HTI.json.gz",
+      "gitBlob": "d4179c7116987ec6d422931b83473a272dc5dd54",
+      "sha256": "ff39005ef7e9799ccf3af6a8db5832314424283925c777ae7e2c09a2c32af7ba",
+      "bytes": 6456
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-HUN.json.gz",
+      "destination": "assets/territorial-library-v2/state-HUN.json.gz",
+      "gitBlob": "c8563a850d8d8b745adcb28e89877c614c1a5023",
+      "sha256": "bdb95010574943363adf6569d8ce97da1b907d5fba1ea879544fff69a4f1550f",
+      "bytes": 8345
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-IMN.json.gz",
+      "destination": "assets/territorial-library-v2/state-IMN.json.gz",
+      "gitBlob": "f6675fa95ec1f88d57ecd4fba87d44953e1daa3e",
+      "sha256": "2e1ab1082746211fed8ef52c0535dc82659c102ff879fd3b5c59d71e6b2030cc",
+      "bytes": 1301
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-IND.json.gz",
+      "destination": "assets/territorial-library-v2/state-IND.json.gz",
+      "gitBlob": "6fd06d4ddea6ca2571ca7aded8f7a673bb9f77c2",
+      "sha256": "cb6c53fa0b8a0eb8dc0b149e99617736183213bfa29a30f8b6ca2c9279abda7e",
+      "bytes": 68922
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-IDN.json.gz",
+      "destination": "assets/territorial-library-v2/state-IDN.json.gz",
+      "gitBlob": "188c3268d698d1e5958c8b973b9f940333c55564",
+      "sha256": "dede05ccaa4d6773d4ddec0762629af83875ffb4b2ade48be248c5ad241f9dc5",
+      "bytes": 171480
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-indonesia.json.gz",
+      "destination": "assets/territorial-library-v2/state-indonesia.json.gz",
+      "gitBlob": "c5e1bf3db2c98ff5c8be1a308ad54da3b4a4793b",
+      "sha256": "22d2649d7d9fbc31cda1b18f695fc653249a67e86a3ef650d41abf8abd3a31e1",
+      "bytes": 172618
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-IOA.json.gz",
+      "destination": "assets/territorial-library-v2/state-IOA.json.gz",
+      "gitBlob": "4cc247e95277133de5532d955b7a74f10e912365",
+      "sha256": "24ae56d0a62fd6587dfec617176819c08982e55a4367edb37321037968b13be1",
+      "bytes": 1088
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-IOT.json.gz",
+      "destination": "assets/territorial-library-v2/state-IOT.json.gz",
+      "gitBlob": "dbd5c205b3924e7ab3334cebc67031f076cfafc9",
+      "sha256": "a508b595a8893a396228ae4fad983955d7ae113c22f0787258def1bc9901cd22",
+      "bytes": 1568
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-IRL.json.gz",
+      "destination": "assets/territorial-library-v2/state-IRL.json.gz",
+      "gitBlob": "29128eab1a5d0c0e2b581c4c158ea90a43c15679",
+      "sha256": "5bc25f4d39394faf88c5ddd27d4f77e7ca392107af2cc11646236583c8591976",
+      "bytes": 20593
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-IRN.json.gz",
+      "destination": "assets/territorial-library-v2/state-IRN.json.gz",
+      "gitBlob": "5fe7816efb6b45f3addb8dd9a1d60b8785bfea95",
+      "sha256": "0e10bceb2f2f84259eaa2787d3ba24d1bff0e3a39ff31a27307974fd6f6b1d5e",
+      "bytes": 25677
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-IRQ.json.gz",
+      "destination": "assets/territorial-library-v2/state-IRQ.json.gz",
+      "gitBlob": "042254db066b232647ba584b15c24ffa303d5bb6",
+      "sha256": "b73e1ac82669ec03881df31487d8f8f0a1121937ca132e73bee712607b07dcb1",
+      "bytes": 8409
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ISL.json.gz",
+      "destination": "assets/territorial-library-v2/state-ISL.json.gz",
+      "gitBlob": "ebd8e94cad3f34cdf277f4738c55a1aae7f769ad",
+      "sha256": "bc7afbceec5a896f2d8547aff159c4253e5911615165bdc69bff8605a467c46c",
+      "bytes": 26839
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ISR.json.gz",
+      "destination": "assets/territorial-library-v2/state-ISR.json.gz",
+      "gitBlob": "9b8f529d1bfbb294b26f04c58c7cba2b0227b47d",
+      "sha256": "0d13c6ee8ff13da706ebce70b7d279583dd712f002e2adfb27098a43ebb025e2",
+      "bytes": 4839
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ITA.json.gz",
+      "destination": "assets/territorial-library-v2/state-ITA.json.gz",
+      "gitBlob": "831cdca7da04a2b5cd3b13499cd1564c9de640ea",
+      "sha256": "2c0567e3e8e63ddd541d87d562992e8b71b85a9d2d98f7d2aa0d8cc05fc3e202",
+      "bytes": 30392
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-JAM.json.gz",
+      "destination": "assets/territorial-library-v2/state-JAM.json.gz",
+      "gitBlob": "c0072d8b7aecb7a9995a3e2af219809f9fb73694",
+      "sha256": "6b9c15f3115d7bce5220d40119dfb97800d134d8912dfed487a0435dc14e99a1",
+      "bytes": 2923
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-JEY.json.gz",
+      "destination": "assets/territorial-library-v2/state-JEY.json.gz",
+      "gitBlob": "d1d440c6eb94b50b752b2ed81d4d1a825ade0b3c",
+      "sha256": "9e3b25460ce1ad520a7e43a5f40d2c04b0957f4e31009cb505258af95490ddd5",
+      "bytes": 1046
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-JOR.json.gz",
+      "destination": "assets/territorial-library-v2/state-JOR.json.gz",
+      "gitBlob": "ab9333e6defa9d0d2497cd5cb90f1b91a6c3a0b6",
+      "sha256": "40c45ecb41ca8badbf951285c256b8dcd6a62bb1a76ab3efd71c6be99afafcee",
+      "bytes": 3856
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-JPN.json.gz",
+      "destination": "assets/territorial-library-v2/state-JPN.json.gz",
+      "gitBlob": "c21f337e5049655a0fe86ae35210dfb6ca0d6ac8",
+      "sha256": "9fda5496bc8c26faa1ba24b10a6d860a288cdd876ff8e67c2cbcc79d070948bc",
+      "bytes": 62124
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KAB.json.gz",
+      "destination": "assets/territorial-library-v2/state-KAB.json.gz",
+      "gitBlob": "31300c9bc9d71622fbd3de47a725abc91cea7550",
+      "sha256": "6780d6367421f16c0af887b5abd9582fc72551b76e36bfc6270d8c4cdfb1731a",
+      "bytes": 1064
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KAS.json.gz",
+      "destination": "assets/territorial-library-v2/state-KAS.json.gz",
+      "gitBlob": "af453a029b3af56d56021e694e55b3960907623b",
+      "sha256": "9da03394c9d08b5463d63633789c9e75024920dd2a22db8c4cf55fd28c06301a",
+      "bytes": 930
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KAZ.json.gz",
+      "destination": "assets/territorial-library-v2/state-KAZ.json.gz",
+      "gitBlob": "7236cd1d250d5ea3c14e17672060ac481df1bed2",
+      "sha256": "8fb72a165b04ee6ea61dac9e4423536358e9b57cf7cf139ffe43dbf68d726fc6",
+      "bytes": 39002
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-kazakh-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-kazakh-ssr.json.gz",
+      "gitBlob": "7e0126e9b2c46a73fc86cc15230d94a0cf4acfa6",
+      "sha256": "756d472ca64fc0dedf11f496579fcb456a13cfed72bc2ee794d42d668789cd50",
+      "bytes": 41977
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KEN.json.gz",
+      "destination": "assets/territorial-library-v2/state-KEN.json.gz",
+      "gitBlob": "42e6f73e9ccf526cb1b99aea38cc6ca8dbb0d991",
+      "sha256": "e256e72c1e37c9c303e0c6baa05239c7555dd8b347c428f8e8a39da6cf1eaa23",
+      "bytes": 8800
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KGZ.json.gz",
+      "destination": "assets/territorial-library-v2/state-KGZ.json.gz",
+      "gitBlob": "8ae056047b60857f2401a02d5b673e26f0114c5f",
+      "sha256": "600a20e11bdfd26f5cad2c0e94ed4eb96d9d894015e7fbcf5c9e4c42f991af9f",
+      "bytes": 11800
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-kirghiz-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-kirghiz-ssr.json.gz",
+      "gitBlob": "16d284d23360d5becd0e268ece71d224d642c6d6",
+      "sha256": "5b8c4d56c1f6d5dd4fe303db5cda0f70b2b0eef7b873c9e505f94ff853df416f",
+      "bytes": 15876
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KHM.json.gz",
+      "destination": "assets/territorial-library-v2/state-KHM.json.gz",
+      "gitBlob": "dd918c34be8035819af9ba51048c38f53d8bd8ad",
+      "sha256": "8bf3e6f58bc91ef65e49344075b1add67461615f609bdfedbc54a35326886fb0",
+      "bytes": 11349
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KIR.json.gz",
+      "destination": "assets/territorial-library-v2/state-KIR.json.gz",
+      "gitBlob": "841cc068d0e8a002bd34cc55baa8c635ba12f429",
+      "sha256": "83ef42195c32ec8af927b926111e64b6483356497f01c991f7ce28e6d4fff4a8",
+      "bytes": 6944
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KNA.json.gz",
+      "destination": "assets/territorial-library-v2/state-KNA.json.gz",
+      "gitBlob": "dfbf9fa67df150651a10fc73af35358046841993",
+      "sha256": "f3587fdfb05328023c647410836d3431cf6be19ddf2992b0ddb28acb1ed88e41",
+      "bytes": 1063
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KOR.json.gz",
+      "destination": "assets/territorial-library-v2/state-KOR.json.gz",
+      "gitBlob": "d26ee40f9891552e8c9787f8b8dd61e2d19515e0",
+      "sha256": "43546573a5c204476d66b6fb7682d5ee635962335bd51ce6666867baab8feae8",
+      "bytes": 26664
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PRK.json.gz",
+      "destination": "assets/territorial-library-v2/state-PRK.json.gz",
+      "gitBlob": "bc9273511b6d731cc6df636833eeb6214f12f45d",
+      "sha256": "2781aa88802ad83447c8f88191e18e17abeeaa12245d3f1d21a828dfe2ad29b4",
+      "bytes": 16507
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KOS.json.gz",
+      "destination": "assets/territorial-library-v2/state-KOS.json.gz",
+      "gitBlob": "337d663e1fa2eba29c565e8eb9ef9c692eeb5840",
+      "sha256": "7eab789a1e08b02a8e4ccdb8a6afb4d4db20d823ab82b0fc4350ced57fa8cb55",
+      "bytes": 3088
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-KWT.json.gz",
+      "destination": "assets/territorial-library-v2/state-KWT.json.gz",
+      "gitBlob": "b9d43399e137e3d5addb8a09716b5559329864fa",
+      "sha256": "c47e938cf8e7ce7821782ad7310cc7db19f991f769bdc9cbc556291738a46e7e",
+      "bytes": 2914
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LAO.json.gz",
+      "destination": "assets/territorial-library-v2/state-LAO.json.gz",
+      "gitBlob": "baeeecc1739dc53034571865e449dffcc359500e",
+      "sha256": "f1261fcd90ce89759a59e52d0be04d378831ae9cf2964ce887014998061aeca9",
+      "bytes": 16600
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LBN.json.gz",
+      "destination": "assets/territorial-library-v2/state-LBN.json.gz",
+      "gitBlob": "a3ba5b818fe768b20d86bf55eb4db1e0c92bcbeb",
+      "sha256": "55ce27963525b8a73af54f4856ec8f2af1abce4afd7a419937817d1552525131",
+      "bytes": 3378
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LBR.json.gz",
+      "destination": "assets/territorial-library-v2/state-LBR.json.gz",
+      "gitBlob": "794c6e0ca71097980dd99d438fd66d182efdfdae",
+      "sha256": "e8241879df948f7ebbaa9a196382603dae46b4bf5d0e2a9933af766fb1dd96d6",
+      "bytes": 7043
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LBY.json.gz",
+      "destination": "assets/territorial-library-v2/state-LBY.json.gz",
+      "gitBlob": "d74a6f2c5f69c1937fd4161c3a68ecd3bc9e4751",
+      "sha256": "bb79023015fdfbff1a9c16e41cc36d67e20f3c2d5e4630e704c36c7433fefa98",
+      "bytes": 7003
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LCA.json.gz",
+      "destination": "assets/territorial-library-v2/state-LCA.json.gz",
+      "gitBlob": "0bcf30f22e2357127844f2c73da74d9a789e2201",
+      "sha256": "3e8f34746c82d2e4f608fc4de7756cac3430a501a18a76672272239e95f03bb0",
+      "bytes": 1110
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LIE.json.gz",
+      "destination": "assets/territorial-library-v2/state-LIE.json.gz",
+      "gitBlob": "5c3d62038d8be7024df6d3579dfe6f2f6bb2e25e",
+      "sha256": "232ec1f49f15463cb163290189a0f505990f880f1ecaebd2c11be50a1a3fdba3",
+      "bytes": 907
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LKA.json.gz",
+      "destination": "assets/territorial-library-v2/state-LKA.json.gz",
+      "gitBlob": "86f322f8a457cb5573b7571f1a4c1173ba48b11d",
+      "sha256": "ac71b5e4193574b1eda5d4179e0e2525ef635d4bc0ec155b92bd6d52be3a95e5",
+      "bytes": 8148
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LSO.json.gz",
+      "destination": "assets/territorial-library-v2/state-LSO.json.gz",
+      "gitBlob": "da01f760ada37cd60daed3f2996bbcab60615ce7",
+      "sha256": "01178d6d9216b47616b068fa4435537ec0a31eae99d409295087edf3b3fe5981",
+      "bytes": 3611
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LTU.json.gz",
+      "destination": "assets/territorial-library-v2/state-LTU.json.gz",
+      "gitBlob": "09a81a1c3feeec36fa90223263521e8d016ff05f",
+      "sha256": "584f0d83dcb7f964b728c3fbbb7ca359663b0c4c1990a35d14edb59ad02eb8ff",
+      "bytes": 5879
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-lithuanian-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-lithuanian-ssr.json.gz",
+      "gitBlob": "0e4e2f50de6aaabd4cd4c0e0fd6555ccdf6f7422",
+      "sha256": "5ec911805ba43a8f772d97fea59ff423a5ba113b212f1e0f6e3c2fec3e5c329c",
+      "bytes": 9761
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LUX.json.gz",
+      "destination": "assets/territorial-library-v2/state-LUX.json.gz",
+      "gitBlob": "0eaebfcc7f18bd062a83ef98c4d3e6fd78499577",
+      "sha256": "464247de032d2b0cbe3142f75d5b01a0986ab76013104ce2281c9757231321a4",
+      "bytes": 2362
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-LVA.json.gz",
+      "destination": "assets/territorial-library-v2/state-LVA.json.gz",
+      "gitBlob": "759629a2b319bf6385aed7daa3c0f22055cb30e1",
+      "sha256": "669233b04a9fa3ff909f913cd23af6de309b614dfbf768da087c5d8df849ecd6",
+      "bytes": 5696
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-latvian-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-latvian-ssr.json.gz",
+      "gitBlob": "36d6338b901e49c056e54f8a958ef7adb12895c3",
+      "sha256": "6977fb7ce384a1dc0b46d621b25a50008762c07bfc4b49b9becc74b59365a763",
+      "bytes": 8699
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MAC.json.gz",
+      "destination": "assets/territorial-library-v2/state-MAC.json.gz",
+      "gitBlob": "83f63706402a361a01f17a2f2edc4dabbc1baf32",
+      "sha256": "4a8216a54351ddd7a2489644b83a2f691fd703bfd104da5c66f86819bab9394a",
+      "bytes": 1348
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MAF.json.gz",
+      "destination": "assets/territorial-library-v2/state-MAF.json.gz",
+      "gitBlob": "7522712a21a3d7f335a9970f19ac14753b29d1f9",
+      "sha256": "9f2be5165e8a75c5f637a0aa8b675ec7873fea3448d1b5f1c8df1f912462883a",
+      "bytes": 833
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MAR.json.gz",
+      "destination": "assets/territorial-library-v2/state-MAR.json.gz",
+      "gitBlob": "7f46858085eea2efe2eb77e6a47ed2877d7b6f91",
+      "sha256": "4f6cb18731ba6d6613e5906906accc8c4ffc388b7830776aef092c750b3dcc92",
+      "bytes": 10270
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MCO.json.gz",
+      "destination": "assets/territorial-library-v2/state-MCO.json.gz",
+      "gitBlob": "27fde3d851be08f66508ba04711ef58c5f6361c5",
+      "sha256": "0d4b1f43ccce40058418d3b53ca0ab64488ae70f0f215dfe7aa23d33e9ce146e",
+      "bytes": 727
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MDA.json.gz",
+      "destination": "assets/territorial-library-v2/state-MDA.json.gz",
+      "gitBlob": "26e3c07f85ef3234b1937d9b9d1a5491bea79b5c",
+      "sha256": "8ee6a44c21da15ca610091aacff5da6cdafe88986086533e49ca9ab352ee1965",
+      "bytes": 7123
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-moldavian-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-moldavian-ssr.json.gz",
+      "gitBlob": "4c6a7ecd31fab6df9e176e22ff4802ad08c9d8a9",
+      "sha256": "066171bdb591f62840428d7e9a3676e2ec771d629fe26ba224224d88c1059305",
+      "bytes": 10995
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MDG.json.gz",
+      "destination": "assets/territorial-library-v2/state-MDG.json.gz",
+      "gitBlob": "7cc3136dbfc89fdfea29894fb261585ce7a641e8",
+      "sha256": "454f353805b0e2372e5e4f7c9c3528c897bfd210cdad7527570f0ac351cb2adb",
+      "bytes": 15472
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MDV.json.gz",
+      "destination": "assets/territorial-library-v2/state-MDV.json.gz",
+      "gitBlob": "334280f330d3d347366b65cab82834ffa2017401",
+      "sha256": "f7789ddb4335af7958cd05ebeadf4824e3936ca2eb3aad77ae93ff2e14e31847",
+      "bytes": 12147
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MEX.json.gz",
+      "destination": "assets/territorial-library-v2/state-MEX.json.gz",
+      "gitBlob": "fda919543fc83121b0a219c4b41e03d6e6dbd1b7",
+      "sha256": "ea010277d65f6d417d94e8126850e1ca833a59393ac25cb937663f471cb03524",
+      "bytes": 66559
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MHL.json.gz",
+      "destination": "assets/territorial-library-v2/state-MHL.json.gz",
+      "gitBlob": "12ce552c772acb2d2b41ef60d48bfe0e5879e9f7",
+      "sha256": "57fd9228770b64a11b334780b3b652c173c7e8d9748475ee689fe3f2f59a46bc",
+      "bytes": 2603
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MKD.json.gz",
+      "destination": "assets/territorial-library-v2/state-MKD.json.gz",
+      "gitBlob": "3ba0e4da88adf54bd7428b38a051f4916720bc5e",
+      "sha256": "618382d4e84d11fedd5369f44f6dcd67dd4d016da364d2bed895190dbcf978b4",
+      "bytes": 3926
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MLI.json.gz",
+      "destination": "assets/territorial-library-v2/state-MLI.json.gz",
+      "gitBlob": "e2ffc0ab36745a449bba5a561267058483300f57",
+      "sha256": "6a2f1956637b0bf76f299f26590b81a61dfcbbd8ad9cd85390ea3ace383dc57e",
+      "bytes": 16668
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MLT.json.gz",
+      "destination": "assets/territorial-library-v2/state-MLT.json.gz",
+      "gitBlob": "ec806ed822431dc77a8f1f5fae4be2aff3c8ce83",
+      "sha256": "f7aaef3e312411f7c1575c1f7f0980d484d24d539c8988a9e89cd820c0bdbc53",
+      "bytes": 1137
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MMR.json.gz",
+      "destination": "assets/territorial-library-v2/state-MMR.json.gz",
+      "gitBlob": "3480f1e7ccc27e11f5f6dabf6f02238e5c23ffa8",
+      "sha256": "a3fc2376677962ebe616389c37ff55f5634e64109b68f5f3517b05a03d2505e4",
+      "bytes": 40921
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MNE.json.gz",
+      "destination": "assets/territorial-library-v2/state-MNE.json.gz",
+      "gitBlob": "a63efdaec7161d1773baafc9cd4b8ca394a82055",
+      "sha256": "6abf3435e26882ff9539617b7acd141c0356f0b11230e30e091d824dfe666bca",
+      "bytes": 3888
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MNG.json.gz",
+      "destination": "assets/territorial-library-v2/state-MNG.json.gz",
+      "gitBlob": "bc5380a681bb70d86f93621372e84d14036f0df3",
+      "sha256": "8e9af1c5ae1b7301f245a817947ce96076d2577c58653a4c3f52c9d26e936874",
+      "bytes": 14837
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MNP.json.gz",
+      "destination": "assets/territorial-library-v2/state-MNP.json.gz",
+      "gitBlob": "8c0368e8b88afdb8ea01fa4ca51effd6ca1c0d40",
+      "sha256": "081415d3c3df47507e651dfd0ac33ca4211556f26e9388e549ba13d8f3d734c9",
+      "bytes": 2359
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MOZ.json.gz",
+      "destination": "assets/territorial-library-v2/state-MOZ.json.gz",
+      "gitBlob": "cac2993e9c3681059059507ef347e09f9ce6e6ce",
+      "sha256": "fde5421a6205c1092a337a564b62060e1683a09ee5a6e847ca636ce85163e30a",
+      "bytes": 21524
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MRT.json.gz",
+      "destination": "assets/territorial-library-v2/state-MRT.json.gz",
+      "gitBlob": "c4ff07ffa2aed70dbe487975f44842b35a582135",
+      "sha256": "928b59acb9d8d2bbad88b6c4da36c2226216cd38286f27b1a232e2e4c3da2dcd",
+      "bytes": 10885
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MSR.json.gz",
+      "destination": "assets/territorial-library-v2/state-MSR.json.gz",
+      "gitBlob": "428d3ca6372d5b6602b22e0679b8cdb85f7fb688",
+      "sha256": "40c8ca38c9f37b03270ea1313564902996bdb12b3a021054235e001849302b34",
+      "bytes": 842
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MUS.json.gz",
+      "destination": "assets/territorial-library-v2/state-MUS.json.gz",
+      "gitBlob": "093415e6262c6e1ee5e540d6ead7474edf15e7fc",
+      "sha256": "521c577d7a1c3849b1c7f4260ba79c00ad3305ac47a6cc1c1d866fae047db799",
+      "bytes": 1713
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MWI.json.gz",
+      "destination": "assets/territorial-library-v2/state-MWI.json.gz",
+      "gitBlob": "5043415abe44448af21b255a5eb8d79619bfe554",
+      "sha256": "b926bb8dd332a972181f3f7a5da318c9668649e7d8a8e8619055b93c31e80e93",
+      "bytes": 8165
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-MYS.json.gz",
+      "destination": "assets/territorial-library-v2/state-MYS.json.gz",
+      "gitBlob": "3660ae46ac746282e48bf75da06831afa12073f9",
+      "sha256": "2e45ecd13ace1d78f9d6f0ac15f648986413036a9cc5b77269a403b3bf0e44aa",
+      "bytes": 23794
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-nagorno-karabakh.json.gz",
+      "destination": "assets/territorial-library-v2/state-nagorno-karabakh.json.gz",
+      "gitBlob": "3177cd853552e8976fbe352b61776aa3655d19a8",
+      "sha256": "75e081045e9dbd621b93a72a8f8479e19efa015bd690e02141f6d01cd30024ae",
+      "bytes": 8678
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NAM.json.gz",
+      "destination": "assets/territorial-library-v2/state-NAM.json.gz",
+      "gitBlob": "037ec72ce346ef4dce43fd997ba7d4dae99882c5",
+      "sha256": "37ce905d333289f38a55b2e2580c5edb708ef2a4177d118bf4540576e5e011f2",
+      "bytes": 11344
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NCL.json.gz",
+      "destination": "assets/territorial-library-v2/state-NCL.json.gz",
+      "gitBlob": "a66ad1a9c1c0f0e438cb0df5fc3874144b9be3fb",
+      "sha256": "0e9d4365ae9396287585ee7bd888aa1b8269624587ee9d11056d3984e7306ef8",
+      "bytes": 9331
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NER.json.gz",
+      "destination": "assets/territorial-library-v2/state-NER.json.gz",
+      "gitBlob": "d88b841ccafef83f3b123fc50d8c903f1136e1f6",
+      "sha256": "b286eac2f6759e71802afebc0823bdb68a967519548fe435062823da512fbf5c",
+      "bytes": 10538
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NFK.json.gz",
+      "destination": "assets/territorial-library-v2/state-NFK.json.gz",
+      "gitBlob": "2e550e1e25a46465f6dbf206f21392e7e8891708",
+      "sha256": "abc6f1b5e31118b5616fbc4509352c5fe06f86ad89d856ae1e5e93e6891c772b",
+      "bytes": 858
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NGA.json.gz",
+      "destination": "assets/territorial-library-v2/state-NGA.json.gz",
+      "gitBlob": "732d0452acf7145fa67175760a64f78621cb5af1",
+      "sha256": "14ea2ecf7af92acaa16cb5968596e10a2e290d932eee0df2c2320e98fb0258ac",
+      "bytes": 16505
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NIC.json.gz",
+      "destination": "assets/territorial-library-v2/state-NIC.json.gz",
+      "gitBlob": "acc90fe58a57859476ea73c6710007aa87ceba56",
+      "sha256": "75cc72ef560974583fd711ffd152099e339ad2ebeb791108d47d52e3be76bd3a",
+      "bytes": 9022
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NIU.json.gz",
+      "destination": "assets/territorial-library-v2/state-NIU.json.gz",
+      "gitBlob": "9ab996ed315a2e996d857dfd19f023387732e0b5",
+      "sha256": "f109d8143a053aa8588fcdce613c9b560a851d0568cb5d7cee8d59fb12b2a5b7",
+      "bytes": 953
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NLD.json.gz",
+      "destination": "assets/territorial-library-v2/state-NLD.json.gz",
+      "gitBlob": "3d662b82c4196dbb715b8d9925d24a3292845523",
+      "sha256": "25c90d94e93501a37edc66bc9fae1e9d6204459b5ac1afb7c71624c8adce156e",
+      "bytes": 8404
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NOR.json.gz",
+      "destination": "assets/territorial-library-v2/state-NOR.json.gz",
+      "gitBlob": "639cfe48278a9916f93cd4f73d8a7f1fbc149fa1",
+      "sha256": "18648db682b87c92f871af9192a578d73326ddd96e3bcf24a4410980d4bdc810",
+      "bytes": 135268
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-north-schleswig.json.gz",
+      "destination": "assets/territorial-library-v2/state-north-schleswig.json.gz",
+      "gitBlob": "cf3f9c1eeab61899847e476f0e901e26a7ece0d8",
+      "sha256": "24cd653e5adac4123fc5867f30bac926d7733abd4c86a9bca86958268733211b",
+      "bytes": 5054
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NPL.json.gz",
+      "destination": "assets/territorial-library-v2/state-NPL.json.gz",
+      "gitBlob": "2525925c8fa82f97d35a188d70d2fd3950545e2d",
+      "sha256": "142629752ec5122b19db3953edc1ea805aacc4b461d77cdce3f26b2875316587",
+      "bytes": 10014
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NRU.json.gz",
+      "destination": "assets/territorial-library-v2/state-NRU.json.gz",
+      "gitBlob": "23108b4cc891bd08241cd886b31802c1bc89862d",
+      "sha256": "47ddbeea51a90d485a1b6e95f88f1ae31cc23653d8b3d9ddade7ef6e7f149b15",
+      "bytes": 693
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-NZL.json.gz",
+      "destination": "assets/territorial-library-v2/state-NZL.json.gz",
+      "gitBlob": "1d75d4f7ef62c6a3d5cb3b77ccac61fd941ca89a",
+      "sha256": "5cd427252216a9d1df4fef5b1442b6ff458699ce311bb0ddcd1bc27201882424",
+      "bytes": 39910
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-OMN.json.gz",
+      "destination": "assets/territorial-library-v2/state-OMN.json.gz",
+      "gitBlob": "6f3589316092d1e3ec295488a67af77a105de601",
+      "sha256": "0a420a0bdb0e58f8fce0e4a7869037baedcedbc0c7beeffef4f8856c38b08f84",
+      "bytes": 10068
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PAK.json.gz",
+      "destination": "assets/territorial-library-v2/state-PAK.json.gz",
+      "gitBlob": "c77dad89ff959c791c4616bdb2e13007e58e250f",
+      "sha256": "f12e3a8b1a89a12a272ea65bfb045da4001efbd0d73fea0aded3cf9faff5ba5d",
+      "bytes": 20263
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PAN.json.gz",
+      "destination": "assets/territorial-library-v2/state-PAN.json.gz",
+      "gitBlob": "0535442ee257979eb52b7690d365bba6a12bc0ea",
+      "sha256": "3dd958888583ad28c402ec0442641c88af3f60040c93ab4cae12cbaafb702b1e",
+      "bytes": 17785
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PCN.json.gz",
+      "destination": "assets/territorial-library-v2/state-PCN.json.gz",
+      "gitBlob": "3ecf14078078b6d0fdd58972cc857504e3aa5a6d",
+      "sha256": "a48f7175f5875abcd30f097b898157fde38532c63a05a95d3760b2006c09f863",
+      "bytes": 1000
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PER.json.gz",
+      "destination": "assets/territorial-library-v2/state-PER.json.gz",
+      "gitBlob": "da9eef1dcd86b2f393a60cb2ebc9538526d103db",
+      "sha256": "37220b8543157414fe2d785b932260713420491b90352cd112a1595c4a6d6e83",
+      "bytes": 23152
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PGA.json.gz",
+      "destination": "assets/territorial-library-v2/state-PGA.json.gz",
+      "gitBlob": "939ed44806c658ac717248772a25e8629fe37f1e",
+      "sha256": "05ee49df3dbeb5cc4678706f488c7d2faf7d3af5501b111c1596bd20026af999",
+      "bytes": 1456
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PHL.json.gz",
+      "destination": "assets/territorial-library-v2/state-PHL.json.gz",
+      "gitBlob": "d34ea9a7c76109106470c114af1abfe5a160a7c1",
+      "sha256": "58918f75a852c099e92eb0748ec7a29bee043e6264a154ca821920b857494cd9",
+      "bytes": 64616
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PLW.json.gz",
+      "destination": "assets/territorial-library-v2/state-PLW.json.gz",
+      "gitBlob": "c82885eeef269c14c260d7a0eee8060987e0d40d",
+      "sha256": "c89739fe945070ab1f087e5e6adb823ce2e16b51fa3d4f3d58bb206e39b4445d",
+      "bytes": 2146
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PNG.json.gz",
+      "destination": "assets/territorial-library-v2/state-PNG.json.gz",
+      "gitBlob": "7f7e15ee096dab4e62b0b595c46c49b6493d086b",
+      "sha256": "560d14b9fb450c2e511e825c0bcb0bd89bfd33522503c4335d16d60a6d4fb22a",
+      "bytes": 42573
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-POL.json.gz",
+      "destination": "assets/territorial-library-v2/state-POL.json.gz",
+      "gitBlob": "9690fd59b503ff66b53e3781d911917c39730abd",
+      "sha256": "b99e6d126442cf9b05f6a5b8a25c026efaaf73a9d8ebabc723e98b9777c21af0",
+      "bytes": 12507
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PRI.json.gz",
+      "destination": "assets/territorial-library-v2/state-PRI.json.gz",
+      "gitBlob": "37c8765fcbaa1a6caa56c592785f9dd1a60313c9",
+      "sha256": "f089e5c5921ffa290d19280b8bc0f1154f45c9f66cbbf5fd0ef467462c750bc1",
+      "bytes": 3332
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PRT.json.gz",
+      "destination": "assets/territorial-library-v2/state-PRT.json.gz",
+      "gitBlob": "20c3461062597117d4516a541c4ef3f1e6f10663",
+      "sha256": "1c8c4dde3c1cbe8ff1592f95ec5a5aaccfbe779cea9bf181d3d4d59232a47c84",
+      "bytes": 11995
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PRY.json.gz",
+      "destination": "assets/territorial-library-v2/state-PRY.json.gz",
+      "gitBlob": "d26f78d4f3b73066e7b78157627ce9d0c8117cc3",
+      "sha256": "2bf3277dcedc6f1c3d4068c5f3af65b5783f5d38619ae2ec9341161653146f8d",
+      "bytes": 11182
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PSX.json.gz",
+      "destination": "assets/territorial-library-v2/state-PSX.json.gz",
+      "gitBlob": "b60f8f58b6564d2ffc112b4f8453fc51eb51ac52",
+      "sha256": "599fa6293f7cc3b6dec595119093c8ae1ae3ea6ecb451d1c98e7c21473c71d12",
+      "bytes": 2731
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-PYF.json.gz",
+      "destination": "assets/territorial-library-v2/state-PYF.json.gz",
+      "gitBlob": "6dac4bebb1e6bf3df1e2f2ee56652a192b8f0c1b",
+      "sha256": "bde2090df7c38ee9342a21271a3da99b2f10e4cca960e66bb8e3e8d9a41e74e1",
+      "bytes": 10181
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-QAT.json.gz",
+      "destination": "assets/territorial-library-v2/state-QAT.json.gz",
+      "gitBlob": "b4b2b5510c24d26dd34b616f12c76400f021a8e2",
+      "sha256": "d6f84d3fc464aa39c90cbc8f68a45c37c36766f8d2b65ded958efe7cdca72cf3",
+      "bytes": 2759
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ROU.json.gz",
+      "destination": "assets/territorial-library-v2/state-ROU.json.gz",
+      "gitBlob": "8f4a24ca41af8924cdd3864d12d8c39ee979c5e5",
+      "sha256": "ca9428c7dc086f82e18bff0b10de7d0e0df479690cd186bbcffdda36764144cd",
+      "bytes": 11464
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-RUS.json.gz",
+      "destination": "assets/territorial-library-v2/state-RUS.json.gz",
+      "gitBlob": "1e793739ec562a7652b3a8e9df583d13802b8d5a",
+      "sha256": "a8b6585d7deb97fd6993bb0ccfbf7d11fa7ca125786e0f011aba83bad881b5d1",
+      "bytes": 330144
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-russian-sfsr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-russian-sfsr.json.gz",
+      "gitBlob": "e499c633a334050c6fe508ddd36b2ffb8f789a5d",
+      "sha256": "28fb7ed41dfc2d806dd2d24a97c4090c7eb0494f413a53277ee7214be0d930bf",
+      "bytes": 332939
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-RWA.json.gz",
+      "destination": "assets/territorial-library-v2/state-RWA.json.gz",
+      "gitBlob": "841ae43a56f09880c1d56f235382d472933bcd0e",
+      "sha256": "35e622634dbbd57a618d4f7c2fd116610bb2eb95ab464f9129a2c747a0bdc387",
+      "bytes": 3552
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SAH.json.gz",
+      "destination": "assets/territorial-library-v2/state-SAH.json.gz",
+      "gitBlob": "ee06e2b4f5c59fc008d5143d399867260493c7fa",
+      "sha256": "85301a87860d7e920c6b958ed2f714c3ba1bdce367b687e48a72d3f87a9063bc",
+      "bytes": 3082
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SAU.json.gz",
+      "destination": "assets/territorial-library-v2/state-SAU.json.gz",
+      "gitBlob": "b5b6a5d7c4e013cfc9640c9537bd8f7649878b5c",
+      "sha256": "95028d8bcc7dbe322ec3422ba51369b5fa058bfdfd186ce75ef9ff9e2a830e23",
+      "bytes": 21994
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SCR.json.gz",
+      "destination": "assets/territorial-library-v2/state-SCR.json.gz",
+      "gitBlob": "c9e606438c9192b7dbaa42f5682474375ed945be",
+      "sha256": "38f422d1466179bc7e34509678f7776f5c656e9211c3b871065507f0f6fff0cd",
+      "bytes": 581
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SDS.json.gz",
+      "destination": "assets/territorial-library-v2/state-SDS.json.gz",
+      "gitBlob": "4dbd28bd7517d75970f0beadc94aafb2b887d25c",
+      "sha256": "6e6d4c64a3532e40e1f0724b6fe7f0d34b506a69e5780cc6d8d40c7d1875fd80",
+      "bytes": 11372
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SEN.json.gz",
+      "destination": "assets/territorial-library-v2/state-SEN.json.gz",
+      "gitBlob": "1b14963258932fa5c9f577af943a4bc75c743fd4",
+      "sha256": "69b209fb806addcc4067d10ed838ad20f662c046da8a95fe3ce7c0ea431adc59",
+      "bytes": 12957
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SER.json.gz",
+      "destination": "assets/territorial-library-v2/state-SER.json.gz",
+      "gitBlob": "456a28e0012a770b71c9fd40e4ca8e8e022606eb",
+      "sha256": "6aa02b858751f440774ae2a5f2b7100c7eadf5a007fe572b56abc8c156cef601",
+      "bytes": 586
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SGP.json.gz",
+      "destination": "assets/territorial-library-v2/state-SGP.json.gz",
+      "gitBlob": "fe1d5e4a38faa70859d3533627a5be5144bdacf0",
+      "sha256": "80a288320084bbdddc0c64dfdb469470dcf5ff9bd3799c8b143e66038f787511",
+      "bytes": 1010
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SGS.json.gz",
+      "destination": "assets/territorial-library-v2/state-SGS.json.gz",
+      "gitBlob": "f2d749d82d252eb6643e74f5a86e6e06a1381221",
+      "sha256": "102f2f10ba4266c30d77d743a0d9678e8802d58e9e1823cf6fea064b1fd6ba20",
+      "bytes": 5919
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SHN.json.gz",
+      "destination": "assets/territorial-library-v2/state-SHN.json.gz",
+      "gitBlob": "ce3f5fbb20bbde1e354c9bcb938037b0de3e7cb2",
+      "sha256": "a6cafc8bd8f10e960aafd85652823c139fb47c3166d42b493d05eae5e321524b",
+      "bytes": 1444
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SLB.json.gz",
+      "destination": "assets/territorial-library-v2/state-SLB.json.gz",
+      "gitBlob": "5abed94301030ad17c1c0052d502bc962568262d",
+      "sha256": "650fafefb2c29f7035542cd259b1057ff745811c160f2f83d4886da5815473f6",
+      "bytes": 19513
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SLE.json.gz",
+      "destination": "assets/territorial-library-v2/state-SLE.json.gz",
+      "gitBlob": "e484583469f5a38e1c5afdce34d1f80c7cc920b2",
+      "sha256": "52813faf83260fb4001bbee6925756c614d7310ebd46bb6b9565d97543599906",
+      "bytes": 6877
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SLV.json.gz",
+      "destination": "assets/territorial-library-v2/state-SLV.json.gz",
+      "gitBlob": "75dec47805fdbf594a16a6e591bdd2f542514c46",
+      "sha256": "81182b7ccd8477ac2f9c7e04687d093335a6e3f1a05dc437f06f6ae9f6fc5d2f",
+      "bytes": 4070
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SMR.json.gz",
+      "destination": "assets/territorial-library-v2/state-SMR.json.gz",
+      "gitBlob": "049183971ed4955b4b6dc03681a853a516ac7dc3",
+      "sha256": "29ef84eb8ef989f3dec464e0fa3c980f41a5965f435bf5adf3695071a0fe376d",
+      "bytes": 776
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SOL.json.gz",
+      "destination": "assets/territorial-library-v2/state-SOL.json.gz",
+      "gitBlob": "1e9280f26b0d3385b7f6e222969a7001f72729b8",
+      "sha256": "7dfdba003b1350c542ab4e42a2fc116258669c8c7ba1fdce948cb64330b52749",
+      "bytes": 3587
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SOM.json.gz",
+      "destination": "assets/territorial-library-v2/state-SOM.json.gz",
+      "gitBlob": "0ec155aa2d18d6f5fa73af24d5281a9cf16d5211",
+      "sha256": "e5a08a4007f015d8a56d2c4924cd93a8a98378254e76ada4ee71f4a7c05bc143",
+      "bytes": 6956
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union.json.gz",
+      "gitBlob": "d128b7633e313937dd152ade0255bd38dd4d935f",
+      "sha256": "5617655b97eb73205d1e6042b9cbed5ced79f6fb0f87603c65b684ed34025fc0",
+      "bytes": 361564
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SPI.json.gz",
+      "destination": "assets/territorial-library-v2/state-SPI.json.gz",
+      "gitBlob": "b808865c2574d6b8d87b4e8f55ba48e5a2ce246e",
+      "sha256": "80931cf8ffe1459ca623471e1c38c7e9e9389f19c7ab02f5b143d602164aa784",
+      "bytes": 976
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SPM.json.gz",
+      "destination": "assets/territorial-library-v2/state-SPM.json.gz",
+      "gitBlob": "64aa84f4a262dde519e763c0270cb8fdd585dfa3",
+      "sha256": "46d89aca1b51fb6e130dd0424e1e962bae1f911fe4b1d2f64ad8707e4418931b",
+      "bytes": 1412
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SRB.json.gz",
+      "destination": "assets/territorial-library-v2/state-SRB.json.gz",
+      "gitBlob": "24e636776a5783ad2ad5fe2463faf6c3d4e569ce",
+      "sha256": "147ca02bf82024e2af9ac9ad8265fb1fb47dbd979dbd643d964f505dc9ef28ca",
+      "bytes": 9092
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-STP.json.gz",
+      "destination": "assets/territorial-library-v2/state-STP.json.gz",
+      "gitBlob": "abcf7b0dbb93a85579741ddbab4a1ebae172063f",
+      "sha256": "7a1c2c6aca16fb1a9bf9ce276edb2cba405f7f67a491fbf0ea838139eda17093",
+      "bytes": 1554
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SDN.json.gz",
+      "destination": "assets/territorial-library-v2/state-SDN.json.gz",
+      "gitBlob": "4a678d49e19a0ab429343f80f0dde53317da6bd9",
+      "sha256": "eab2579954a5e31e01fbde7d0ebd421147309d531dd2701d402595986e4cae1c",
+      "bytes": 11427
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-sudan.json.gz",
+      "destination": "assets/territorial-library-v2/state-sudan.json.gz",
+      "gitBlob": "fa80481f8ba13e9dc3d318f79d6a4b36673d2de8",
+      "sha256": "a235d97be3a9026e1d714e032fe1fae36ad4fe2fecd0bb95bb1a81e1f140a04a",
+      "bytes": 17605
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SUR.json.gz",
+      "destination": "assets/territorial-library-v2/state-SUR.json.gz",
+      "gitBlob": "6a2f2bf82dd6c8b42a00178800b96b7aa1511738",
+      "sha256": "ab8b98f43580c4e67d213a541ccf7cb16374899fe41536522f9573527d128949",
+      "bytes": 7353
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SVK.json.gz",
+      "destination": "assets/territorial-library-v2/state-SVK.json.gz",
+      "gitBlob": "68b18f5d131203dc641526408eef1833d1495c31",
+      "sha256": "81d49db3f5816b8886627235954a51308a743ef098be3318e3d3a75298852851",
+      "bytes": 5958
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SVN.json.gz",
+      "destination": "assets/territorial-library-v2/state-SVN.json.gz",
+      "gitBlob": "cf7954d9834d9f29759dcb1778956d76865fd2dd",
+      "sha256": "093d9bf5feb200266c3cd7863963c106201dee82feba3dbf50046cc0de3e928b",
+      "bytes": 5350
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SWE.json.gz",
+      "destination": "assets/territorial-library-v2/state-SWE.json.gz",
+      "gitBlob": "8bd94a981927dc7d8981d4a1e0297966f515544c",
+      "sha256": "439447c2fd00c728130bfd1a79c7fb22336c5fac7ba9d9f5bf49290a2a21963e",
+      "bytes": 40608
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SWZ.json.gz",
+      "destination": "assets/territorial-library-v2/state-SWZ.json.gz",
+      "gitBlob": "4272144db9ebfe8b7e3726f94e83477975b05d99",
+      "sha256": "9dc89df43d12a67da9513d1e9ac34ad38fe2c96fba2e037df501cd396ff9d5e0",
+      "bytes": 1469
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SXM.json.gz",
+      "destination": "assets/territorial-library-v2/state-SXM.json.gz",
+      "gitBlob": "f87ad4565bc90b21c4e60de4a16d4980468fdb2b",
+      "sha256": "65a1ff9542c0e9136e768566db78a4cbc180cb710354957b6c632ecd0493d03f",
+      "bytes": 708
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SYC.json.gz",
+      "destination": "assets/territorial-library-v2/state-SYC.json.gz",
+      "gitBlob": "2beffa755a2d5cd2479dcae68c2690e13a7407ea",
+      "sha256": "1366159377ee51eaead57ebd6a9d7d9a98acb90647b7669ac7ddf8b47714a36c",
+      "bytes": 3447
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-SYR.json.gz",
+      "destination": "assets/territorial-library-v2/state-SYR.json.gz",
+      "gitBlob": "2d1a1c7ac4becd83e01cd981db4405a41799fc7e",
+      "sha256": "0a2287e0618608a0827090666fbc3066f7ee28ebcc794b00573d66061f384980",
+      "bytes": 6064
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TCA.json.gz",
+      "destination": "assets/territorial-library-v2/state-TCA.json.gz",
+      "gitBlob": "af7944ba0ba36a24c724f6c36e56f827405c4fb9",
+      "sha256": "d3f1483be6876bc71c7fd527c030e212541e52ed6d50908773adbf19ba78ee6b",
+      "bytes": 2529
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TCD.json.gz",
+      "destination": "assets/territorial-library-v2/state-TCD.json.gz",
+      "gitBlob": "66b8460a74eb6280c0edd01865c757df777ab432",
+      "sha256": "6cbd4edcd43e6eedba5358aff2f2c7737d33a8326d4624410fec790683561263",
+      "bytes": 11978
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TGO.json.gz",
+      "destination": "assets/territorial-library-v2/state-TGO.json.gz",
+      "gitBlob": "b66042af5f781d88f0ccd89fdcee74c33958eec3",
+      "sha256": "4e1a0ec9ad5fcf03e9a0c8d6f4bc511b686d0d5ff2a6130d12d273dc118dd9e7",
+      "bytes": 5078
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-THA.json.gz",
+      "destination": "assets/territorial-library-v2/state-THA.json.gz",
+      "gitBlob": "88472f5e1a54baec45604747efbdc1c6f862721c",
+      "sha256": "a4c34eff427a7263d7810593631897d99e5e20b3ee9cb728c6f57ca1cb7fe92a",
+      "bytes": 30262
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-tajik-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-tajik-ssr.json.gz",
+      "gitBlob": "6bca395929bc3f842c0339a24916087e890c5ba7",
+      "sha256": "64de1e93105009bc059cf5d6546faf581cc0b2481863422187f08019f2ae813c",
+      "bytes": 16312
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TJK.json.gz",
+      "destination": "assets/territorial-library-v2/state-TJK.json.gz",
+      "gitBlob": "946a79e1cf855aea3558e27aa8b2f9f662b5a830",
+      "sha256": "9193cab31dd7c530aa70fe4e41f8b68dcaef9b3d84174ff8534f5c96825d769c",
+      "bytes": 12100
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-turkmen-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-turkmen-ssr.json.gz",
+      "gitBlob": "5499ab013b4f2244effd94c995515ed759326e21",
+      "sha256": "222dd068b3f07bc70374a35cbdea30e42806a506dc13ae708ee3372d34dce48d",
+      "bytes": 20020
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TKM.json.gz",
+      "destination": "assets/territorial-library-v2/state-TKM.json.gz",
+      "gitBlob": "d42003a9125c437ce0340cf219e1c6d1891e0a01",
+      "sha256": "4ae5713f1fa0d0320c2692b904c1bb3538c18145afe77bdaf66b6502b5f49250",
+      "bytes": 15831
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TLS.json.gz",
+      "destination": "assets/territorial-library-v2/state-TLS.json.gz",
+      "gitBlob": "ad0c53e7b852053a7a194b68af402c99ad1e7ebd",
+      "sha256": "a40cf57e1a0fb0059eb6e1db935400939b8e63362b777c2ed29328aa599ec377",
+      "bytes": 3224
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TON.json.gz",
+      "destination": "assets/territorial-library-v2/state-TON.json.gz",
+      "gitBlob": "196fdbf8052b9024833506028966f01540b1b640",
+      "sha256": "6e62494152012e6cecd44abccf9a68fea4c1b3c4fbceb7803e293033fbc59b6d",
+      "bytes": 2537
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TTO.json.gz",
+      "destination": "assets/territorial-library-v2/state-TTO.json.gz",
+      "gitBlob": "dd079b397b5a9d464034a97c84716926ec0a0e64",
+      "sha256": "ef529e004f3fd7bb511c80bf4f023beeb269b0729fd0ffd74b4a5d3a38d6aa63",
+      "bytes": 2434
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TUN.json.gz",
+      "destination": "assets/territorial-library-v2/state-TUN.json.gz",
+      "gitBlob": "9358396a51b8341814d62b7f98874682c657f033",
+      "sha256": "d72c22f9dbb335606041c373d42f7ab6c3d847afa80875625e9a0ff28d8a604c",
+      "bytes": 7190
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TUR.json.gz",
+      "destination": "assets/territorial-library-v2/state-TUR.json.gz",
+      "gitBlob": "bfcda665f9faaaf60304171be59538465ac54196",
+      "sha256": "11050917b1d00c50143f20d0ef5ca2b9e60f2fb9b2f18549dea471443821e918",
+      "bytes": 31861
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TUV.json.gz",
+      "destination": "assets/territorial-library-v2/state-TUV.json.gz",
+      "gitBlob": "c6fc31555f807af47510e2b47ef08d000088debf",
+      "sha256": "f932aba11263b3a35f835b2e9f3abe1daccb1973d6cc865d34b39269811eda4b",
+      "bytes": 1301
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TWN.json.gz",
+      "destination": "assets/territorial-library-v2/state-TWN.json.gz",
+      "gitBlob": "330ea39f68662efcb4a8cc6ad99b809b1b85633d",
+      "sha256": "0622c9bda5f6ceff1b782e320d8c4727b2e12e2c881056908b224a541a70e025",
+      "bytes": 5771
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-TZA.json.gz",
+      "destination": "assets/territorial-library-v2/state-TZA.json.gz",
+      "gitBlob": "f2f684f9b8d2085e90c0831678f2594211c7f6f1",
+      "sha256": "ecbaf2160db65fbf13291c4f0524c284d61ba3f04744c8a63c4788e1a2b3d77f",
+      "bytes": 16484
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-UGA.json.gz",
+      "destination": "assets/territorial-library-v2/state-UGA.json.gz",
+      "gitBlob": "d8038355a30cce287f5aaf0b82b9f4f94123397e",
+      "sha256": "a47951af5173f29862cad0f0175fc61e62942b8b1445bf00747434a05f0a9f24",
+      "bytes": 6254
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-ukrainian-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-ukrainian-ssr.json.gz",
+      "gitBlob": "4ba7f54836ebf78d6c823a05b05225f066160783",
+      "sha256": "cfd95d8e93a598d6a36052d78ac0949877972d98bfeafaac83e181c2ee9c2f78",
+      "bytes": 35926
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-UKR.json.gz",
+      "destination": "assets/territorial-library-v2/state-UKR.json.gz",
+      "gitBlob": "d37c91a101b5fdad566942a622bc8572fc26bb58",
+      "sha256": "a48f142b994d0d1a919345378f43bf3238d325211cad6aed233b4b5dda28388c",
+      "bytes": 24529
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ukraine.json.gz",
+      "destination": "assets/territorial-library-v2/state-ukraine.json.gz",
+      "gitBlob": "762f95114b095b182f1c7d92547181457602907a",
+      "sha256": "6222c36cb64791ba025bed661663e97bc31e0c576ae771885e96991fc682e3cd",
+      "bytes": 32641
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-UMI.json.gz",
+      "destination": "assets/territorial-library-v2/state-UMI.json.gz",
+      "gitBlob": "645edad9e126891197534cd43238f9ab404a3c3f",
+      "sha256": "7e9c4cd0785ed8f9f40de1d7768e5bde6b19f317f2f1a116b56f9668300d0d39",
+      "bytes": 1699
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-URY.json.gz",
+      "destination": "assets/territorial-library-v2/state-URY.json.gz",
+      "gitBlob": "77a353f014352dd67dee38090b868ed4a2cd4835",
+      "sha256": "9a846231ab93b2397b4c54c58e976b1e07f8dd8a165857e41c3469fe4a5f8006",
+      "bytes": 6168
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-USA.json.gz",
+      "destination": "assets/territorial-library-v2/state-USA.json.gz",
+      "gitBlob": "a2feb496196356b4c3cbe11a212cb12cf84d0780",
+      "sha256": "a0237bb7e49c5cb488d49d1d7fac984790264ffe96f915808ea9348c3552aa95",
+      "bytes": 309865
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-USG.json.gz",
+      "destination": "assets/territorial-library-v2/state-USG.json.gz",
+      "gitBlob": "7c6abf523b6dd3ffa22b7e4137673efa16abc1b9",
+      "sha256": "471eafd9a99c274d1469fb28c9922e48c751ccff82d4e47cc62dfe49f70897c4",
+      "bytes": 998
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-soviet-union-uzbek-ssr.json.gz",
+      "destination": "assets/territorial-library-v2/state-soviet-union-uzbek-ssr.json.gz",
+      "gitBlob": "34ccbacfb2eec90c29a9154c34d062d037841493",
+      "sha256": "2cf46b783b44a02484c9e50bae5593a4ddd46ed062fd1fe7fea264aa11f4fb7e",
+      "bytes": 20313
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-UZB.json.gz",
+      "destination": "assets/territorial-library-v2/state-UZB.json.gz",
+      "gitBlob": "dd92e1f23d0306c7eb148e2fcaf61b3d32b16416",
+      "sha256": "b113d7ba7dc8a6c08f02073f5e30c284e8f38be223fb8bb40a5b7a5ecb721a4d",
+      "bytes": 15954
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-VAT.json.gz",
+      "destination": "assets/territorial-library-v2/state-VAT.json.gz",
+      "gitBlob": "aea14cf3eb671aa7f411f7960b74cf2a068bbbec",
+      "sha256": "ae64d5f4f50112ac01dcc82495c29361e7b3ef799f42a6f6cbbc351faecffe19",
+      "bytes": 672
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-VCT.json.gz",
+      "destination": "assets/territorial-library-v2/state-VCT.json.gz",
+      "gitBlob": "277cf4eea0a1253d12df740aa4a5781a351a898b",
+      "sha256": "bb36cd759e00f5758f94e99dd79966884e947b3cf02160737bf581102ab9dc92",
+      "bytes": 1438
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-VEN.json.gz",
+      "destination": "assets/territorial-library-v2/state-VEN.json.gz",
+      "gitBlob": "9a1dc64abf2de23d5092c21595b19149cce65be0",
+      "sha256": "37531721274f91671592610a38afd23245cc6a815e92e87b48fbe44272dd649b",
+      "bytes": 29356
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-VGB.json.gz",
+      "destination": "assets/territorial-library-v2/state-VGB.json.gz",
+      "gitBlob": "beaba650c4a543029ac35d3c2e9c36ddae880e3f",
+      "sha256": "dc75c8bd9be17c0120c3f5d36c74b9a6da26da28226f4debc116d93f7d0e2889",
+      "bytes": 1524
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-VIR.json.gz",
+      "destination": "assets/territorial-library-v2/state-VIR.json.gz",
+      "gitBlob": "c545f995e3d5a2651780fcb84937224edd6843e4",
+      "sha256": "076eaaa075adaa43d2d9b81ad5558d70626983be3781af77391cf00a7df5be1a",
+      "bytes": 1329
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-VNM.json.gz",
+      "destination": "assets/territorial-library-v2/state-VNM.json.gz",
+      "gitBlob": "b52d85e1ab51ad00cafc27ad4f14893da5e33018",
+      "sha256": "5f4c5723a560795b1d6adcdeff496aa6c3118e1754a3a98ae1275ac0a40c00ac",
+      "bytes": 36623
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-VUT.json.gz",
+      "destination": "assets/territorial-library-v2/state-VUT.json.gz",
+      "gitBlob": "eb2ef160e6bb9a49c3d83a53ff95011bd5be5cbb",
+      "sha256": "5057d9750857b8cc6bbe9b20f26b4b5fd8ca9c087e9585ba1b6554afff29f5e3",
+      "bytes": 9432
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-WLF.json.gz",
+      "destination": "assets/territorial-library-v2/state-WLF.json.gz",
+      "gitBlob": "1277b41281c71365fdbaa0a1b71ea46ef635b168",
+      "sha256": "ffb50fc067d57d5e5af8ca168c3ef77a074795e8516e5cd6dc37e2ef52b60148",
+      "bytes": 1006
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-WSB.json.gz",
+      "destination": "assets/territorial-library-v2/state-WSB.json.gz",
+      "gitBlob": "a4e774ddd677a40c2ff4e8af3013dcf82ca80ea6",
+      "sha256": "796471c12f86c063eb0378004d077d1f7489285f452cd642f400ced671bc84b8",
+      "bytes": 973
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-WSM.json.gz",
+      "destination": "assets/territorial-library-v2/state-WSM.json.gz",
+      "gitBlob": "294802a89b5d02d14185e9caaa361f990e401fd0",
+      "sha256": "77c0cc677fa21b1585f390840c2cb7274ddeeaaa80693169a53c2d882c2bdf9a",
+      "bytes": 1847
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-YEM.json.gz",
+      "destination": "assets/territorial-library-v2/state-YEM.json.gz",
+      "gitBlob": "725f8a5cc8a51945b8baa5966ff6ab4a6f7a323d",
+      "sha256": "49cb24e203dba1f0a0b952a9fc7dde94a75b3b6c97b7b73af122cecd96f79ba9",
+      "bytes": 10151
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-yugoslavia.json.gz",
+      "destination": "assets/territorial-library-v2/state-yugoslavia.json.gz",
+      "gitBlob": "80b936bd639845ad3abcafcfc02d9046d1213ede",
+      "sha256": "407ab95e52e1e732dd5a32089a348cfb967b38a54b856d91df2baa33b9dc89d6",
+      "bytes": 61465
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ZAF.json.gz",
+      "destination": "assets/territorial-library-v2/state-ZAF.json.gz",
+      "gitBlob": "67eb169fde50b2ca05e4fe8fc67fe167df13ba07",
+      "sha256": "dc0d247a2e2b4c699b0b15b67b9d1bda76be76b938e1047803d80a36f28e0928",
+      "bytes": 20681
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ZMB.json.gz",
+      "destination": "assets/territorial-library-v2/state-ZMB.json.gz",
+      "gitBlob": "0d9f0026e2c98a13bfb9affdfeffa9712da7d43a",
+      "sha256": "4c34f6d859707e033f956bee75dc9b1ef64d56ee911ea82400f7fc784e1642ef",
+      "bytes": 14488
+    },
+    {
+      "path": "assets/data/territorial-entities/generated/v2/state-ZWE.json.gz",
+      "destination": "assets/territorial-library-v2/state-ZWE.json.gz",
+      "gitBlob": "25c1b6969f82ccaa23cf13eb5e18738fc5a9e4fa",
+      "sha256": "7c1183856d8a74e94b6408f3ffee7807d0197c7c43b3297dac32691439d9cc5c",
+      "bytes": 7855
+    },
+    {
+      "path": "package.json",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/package.json",
+      "gitBlob": "c0d51186be3de72fb777caac74baef288d144390",
+      "sha256": "7943b027419aed9d334cd775e508a43da53429fc05030477b946018cb9b28414",
+      "bytes": 7873
+    },
+    {
+      "path": "assets/js/modules/territorial-library.js",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/assets/js/modules/territorial-library.js",
+      "gitBlob": "137e4f7a617330f4dc37ebbb1b5ad071d5da2afe",
+      "sha256": "4c6b600d711c71c589676b88bc5e27665b3c8ea6a558896d66c1ed8ac1765cd6",
+      "bytes": 10643
+    },
+    {
+      "path": "assets/js/modules/territorial-library-service.js",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/assets/js/modules/territorial-library-service.js",
+      "gitBlob": "6f319f165b989ea512048828259907e30fa2ed7f",
+      "sha256": "d44a040c7b3b5f2316933cb10789cff4571d1b65543271ab0ae9bce6443055a6",
+      "bytes": 3210
+    },
+    {
+      "path": "assets/js/modules/territorial-entity-loader.js",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/assets/js/modules/territorial-entity-loader.js",
+      "gitBlob": "42b2fbb2a5faf99a92caa9f4ca565d718c496e27",
+      "sha256": "1f35bc12f61b23915dc66a962347a61c994a97819ab07f0a5ad200be5bfb262b",
+      "bytes": 2865
+    },
+    {
+      "path": "assets/js/modules/stored-asset-loader.js",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/assets/js/modules/stored-asset-loader.js",
+      "gitBlob": "4e0f206db2a92764366fdc9903381fb54c5890e0",
+      "sha256": "943fc8764b75207d00d1e2d005a79f528d8e68d9f24032948ec7cc5946eb3de1",
+      "bytes": 8276
+    },
+    {
+      "path": "assets/js/modules/geometry-version-store.js",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/assets/js/modules/geometry-version-store.js",
+      "gitBlob": "72de730052a0a76e9096c412349af04428b50ba1",
+      "sha256": "517fdac775cac9c19125eb0cce27e0d50b18e4dcca2e97d52a6fcb1e67295d40",
+      "bytes": 4468
+    },
+    {
+      "path": "assets/js/modules/temporal.js",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/assets/js/modules/temporal.js",
+      "gitBlob": "34ef7a8bc1cba4cf9c550dc93be8882f5c9b6aa7",
+      "sha256": "cac4c811c98077407438d470e367143ffe015219de5c932785264859c17e0dcf",
+      "bytes": 4550
+    },
+    {
+      "path": "assets/js/modules/territorial-library-controller.js",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/assets/js/modules/territorial-library-controller.js",
+      "gitBlob": "78463dd05ec7fbdc2066cc5614d0f8f3f3aee068",
+      "sha256": "d063bccf1284a4fc54aeff67ceb1b5789159e29f01e385da2607c07f21fabd2c",
+      "bytes": 21588
+    },
+    {
+      "path": "tests/unit/territorial-library.test.mjs",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/tests/unit/territorial-library.test.mjs",
+      "gitBlob": "8bd48b5d36815116940b8f81dd6306f5a69fb60d",
+      "sha256": "a0ed74a567aca794aaec7e31a1de16d32379daa15ffe2086cb2cdf9a922b1e7f",
+      "bytes": 4383
+    },
+    {
+      "path": "tests/unit/territorial-library-service.test.mjs",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/tests/unit/territorial-library-service.test.mjs",
+      "gitBlob": "83beb6f8afd9429af3e680abb9f08b18207fde88",
+      "sha256": "3f39beda1c372e814d2b1b60b0cc09d45efd5a495983732c2fac76f3b04f2ee3",
+      "bytes": 3424
+    },
+    {
+      "path": "tests/unit/territorial-entity-loader.test.mjs",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/tests/unit/territorial-entity-loader.test.mjs",
+      "gitBlob": "c9a4195c2e3271f857e10022ab7b15cc9591d049",
+      "sha256": "7f0f81a41c0e23203ce0d34a7beb0f8a2bc3d3ca01bb5246ca2c2fb657611f35",
+      "bytes": 2552
+    },
+    {
+      "path": "tests/unit/territorial-library-data.test.mjs",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/tests/unit/territorial-library-data.test.mjs",
+      "gitBlob": "5435e32858484711f0eec9bb3f1fe75833832ccb",
+      "sha256": "e47391993437de690f0c9fd8faa1ee61ff24a5c733fe230f2686de4dd7d6a7a8",
+      "bytes": 2993
+    },
+    {
+      "path": "assets/js/build-meta.js",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/assets/js/build-meta.js",
+      "gitBlob": "f97bd530707e0c72bc1660a255049a91bebd66a1",
+      "sha256": "68be98b45713f04615238656704f629de8486380601807808913e2f2d3394eb8",
+      "bytes": 499
+    },
+    {
+      "path": "assets/js/modules/app-library-assembly.js",
+      "destination": "tests/fixtures/web-territorial-library-v2/source/assets/js/modules/app-library-assembly.js",
+      "gitBlob": "af40ae6f0888a54abac0ebc2435771ab4ebf7b35",
+      "sha256": "18771f850636a168abdac510c1dc93ca2bf04cb170c60c999135ae2f0a5f44f2",
+      "bytes": 15458
+    }
+  ]
+}

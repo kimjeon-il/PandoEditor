@@ -19,6 +19,9 @@ void require(bool condition,CommandError error,const char* detail)
     if(!condition) throw Rejection{error,detail};
 }
 bool opacity(double value) { return std::isfinite(value) && value>=0 && value<=1; }
+const std::string& historicalInstanceId(const HistoricalAddition& addition) {
+    return addition.instanceId.empty()?addition.selection.libraryId:addition.instanceId;
+}
 
 std::vector<ObjectRef> targetsFor(const CommandArguments& args)
 {
@@ -39,7 +42,7 @@ std::vector<ObjectRef> targetsFor(const CommandArguments& args)
         else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>) refs.insert(action.plan.affectedObjects.begin(),action.plan.affectedObjects.end());
         else if constexpr(std::is_same_v<T,HistoricalInstantiationPlan>) {
             for(const auto& addition:action.additions) {
-                refs.insert(territorialRef(addition.selection.libraryId));
+                refs.insert(territorialRef(historicalInstanceId(addition)));
                 if(addition.parent)refs.insert(*addition.parent);
                 if(addition.sovereign)refs.insert(*addition.sovereign);
             }
@@ -114,10 +117,11 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                 require(!action.additions.empty(),CommandError::InvalidTargets,"empty historical plan");
                 std::set<std::string> unique;
                 bool replacementMode=false;
+                const bool catalogBatch=std::all_of(action.additions.begin(),action.additions.end(),[](const auto& addition){return !addition.instanceId.empty();});
                 std::map<std::string,std::string> expectedNames;
                 for(const auto& addition:action.additions) {
                     const auto& selection=addition.selection;
-                    require(!selection.libraryId.empty()&&unique.insert(selection.libraryId).second,
+                    require(!selection.libraryId.empty()&&unique.insert(historicalInstanceId(addition)).second,
                             CommandError::InvalidTargets,"duplicate historical selection");
                     require(selection.instantiation.mode=="independent"||selection.instantiation.mode=="territory-replacement",CommandError::InvalidArguments,"invalid historical mode");
                     replacementMode|=selection.instantiation.mode=="territory-replacement";
@@ -133,19 +137,24 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                             CommandError::InvalidArguments,"invalid independent country choice");
                 }
                 require(action.countryNameUpdates==expectedNames,CommandError::InvalidArguments,"country updates differ from library");
-                require(replacementMode||(action.territoryReplacements.empty()&&action.territoryTransfers.empty()),CommandError::InvalidArguments,"unexpected historical geometry patch");
+                require(replacementMode||catalogBatch||(action.territoryReplacements.empty()&&action.territoryTransfers.empty()),CommandError::InvalidArguments,"unexpected historical geometry patch");
                 for(const auto& patch:action.territoryReplacements)
                     require(patch.owner.domain=="territorial" && project.index().objects.count(patch.owner) &&
                             (patch.geometry.type=="Polygon"||patch.geometry.type=="MultiPolygon"),
                             CommandError::InvalidArguments,"invalid historical geometry patch");
                 for(const auto& [donor,target]:action.territoryTransfers) {
                     const auto found=project.index().objects.find(donor);
+                    const auto targetFound=project.index().objects.find(target);
+                    const bool expandedRoot=catalogBatch&&target.domain=="territorial"&&targetFound!=project.index().objects.end()&&
+                        isRootGeneral(project.document(),project.document().units.at(targetFound->second))&&
+                        std::any_of(action.territoryReplacements.begin(),action.territoryReplacements.end(),[&](const auto& patch){return patch.owner==target;});
                     require(found!=project.index().objects.end()&&donor.domain=="territorial"&&
                             project.document().units.at(found->second).kind==UnitKind::General&&
-                            std::any_of(action.additions.begin(),action.additions.end(),[&](const auto& item){
-                                return territorialRef(item.selection.libraryId)==target&&
-                                    item.selection.instantiation.mode=="territory-replacement";
-                            }),CommandError::InvalidArguments,"invalid historical country transfer");
+                            (expandedRoot||std::any_of(action.additions.begin(),action.additions.end(),[&](const auto& item){
+                                return territorialRef(historicalInstanceId(item))==target&&
+                                    (item.selection.instantiation.mode=="territory-replacement"||
+                                     (catalogBatch&&item.selection.type==UnitKind::General&&!item.parent));
+                            })),CommandError::InvalidArguments,"invalid historical country transfer");
                 }
                 for(const auto& [id,name]:action.countryNameUpdates)
                     require(!name.empty()&&project.index().objects.count(territorialRef(id))&&
@@ -228,7 +237,7 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
         }
         if(const auto historical=std::get_if<HistoricalInstantiationPlan>(&request.args.action)) {
             const auto created=std::any_of(historical->additions.begin(),historical->additions.end(),
-                [&](const auto& item){return territorialRef(item.selection.libraryId)==ref;});
+                [&](const auto& item){return territorialRef(historicalInstanceId(item))==ref;});
             require(ref.domain=="territorial" && (created? !project.index().objects.count(ref)
                 :project.index().objects.count(ref)!=0),CommandError::InvalidTargets,"historical target invalid");
             continue;
@@ -576,6 +585,7 @@ void applyContent(ProjectDocument& d,const DocumentIndex& before,const ContentEd
     require(edit.create?!exists:exists,CommandError::InvalidTargets,"content creation/update existence mismatch");
     require(!edit.create || (!std::holds_alternative<std::monostate>(edit.value) && edit.target.domain!="territorial"),
         CommandError::InvalidArguments,"invalid content creation");
+    require(!edit.initialLabelSettings||(edit.create&&edit.target.domain=="label"&&std::holds_alternative<PlaceLabel>(edit.value)),CommandError::InvalidArguments,"initial label settings require place creation");
     if(edit.geometry) {
         require(!d.geometries.get(edit.geometry->first),CommandError::InvalidArguments,"geometry version already exists");
         d.geometries.insert(edit.geometry->first,edit.geometry->second);
@@ -640,6 +650,7 @@ void applyContent(ProjectDocument& d,const DocumentIndex& before,const ContentEd
         }
     },edit.value);
     require(!edit.geometry || (edit.value.index()>=1 && edit.value.index()<=5),CommandError::InvalidArguments,"unexpected geometry payload");
+    if(edit.initialLabelSettings)d.presentation.webPresentation.labelSettings[edit.target]=*edit.initialLabelSettings;
 }
 void applyArguments(ProjectDocument& candidate,const DocumentIndex& index,const CommandArguments& args)
 {
@@ -754,6 +765,7 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
                 }
                 if constexpr(std::is_same_v<T,PlaceLabel>||std::is_same_v<T,HydroFeature>)allow(old.kind!=next.kind,"kind");
                 if constexpr(std::is_same_v<T,PlaceLabel>)allow(!(old.territory==next.territory),"relation");
+                if constexpr(std::is_same_v<T,PlaceLabel>)allow(old.sourcePlaceId!=next.sourcePlaceId,"source");
                 if constexpr(std::is_same_v<T,GenericFeature>)allow(old.fallbackOnly!=next.fallbackOnly,"source");
                 if constexpr(std::is_same_v<T,HydroFeature>)allow(old.sourceFeatureId!=next.sourceFeatureId,"source");
                 if constexpr(std::is_same_v<T,HydroFeature>||std::is_same_v<T,GenericFeature>||std::is_same_v<T,DistributionLayer>){allow(old.color!=next.color,"color");allow(old.locked!=next.locked,"locked");}
@@ -805,7 +817,7 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
     }
     if(const auto historical=std::get_if<HistoricalInstantiationPlan>(&request.args.action)) {
         for(const auto& addition:historical->additions) {
-            require(effectAllowed(before,territorialRef(addition.selection.libraryId),"add"),
+            require(effectAllowed(before,territorialRef(historicalInstanceId(addition)),"add"),
                     CommandError::UnsupportedDependency,"historical creation dependency");
             for(const auto& ref:{addition.parent,addition.sovereign})if(ref&&project.index().objects.count(*ref)) {
                 const auto& owner=before.units.at(project.index().objects.at(*ref));
@@ -1019,7 +1031,7 @@ ChangeImpact calculateChangeImpact(const ProjectDocument& before,const ProjectDo
             return x.first==y.first&&std::tie(x.second.policy,x.second.embeddedDataUrl,x.second.defaultCountryId,x.second.defaultFlagDataUrl)==
                 std::tie(y.second.policy,y.second.embeddedDataUrl,y.second.defaultCountryId,y.second.defaultFlagDataUrl);
         })||!same(before.labels,after.labels,[&](const auto& x,const auto& y) {
-            return std::tie(x.id,x.name,x.kind,x.notes,x.territory)==std::tie(y.id,y.name,y.kind,y.notes,y.territory)&&sourceKey(x.source)==sourceKey(y.source);
+            return std::tie(x.id,x.name,x.kind,x.notes,x.territory,x.sourcePlaceId)==std::tie(y.id,y.name,y.kind,y.notes,y.territory,y.sourcePlaceId)&&sourceKey(x.source)==sourceKey(y.source);
         })||!same(before.hydro,after.hydro,[&](const auto& x,const auto& y) {
             return std::tie(x.id,x.name,x.kind,x.notes,x.color,x.locked,x.sourceFeatureId)==
                 std::tie(y.id,y.name,y.kind,y.notes,y.color,y.locked,y.sourceFeatureId)&&sourceKey(x.source)==sourceKey(y.source);

@@ -75,19 +75,47 @@ bool PhysicalDataStore::validAsset(const PhysicalAssetSpec& asset) {
         asset.url.isValid()&&(asset.url.scheme()=="https"||asset.url.scheme()=="http");
 }
 QString PhysicalDataStore::cachePath(const PhysicalAssetSpec& asset) const {
+    return assetPath(root_,asset);
+}
+QString PhysicalDataStore::assetPath(const QString& root,const PhysicalAssetSpec& asset) {
     if(!validAsset(asset))return {};
-    const auto path=QDir(root_).filePath(asset.dataset+'/'+asset.version+'/'+asset.path);
-    return contained(root_,path)?QDir::cleanPath(path):QString();
+    if(root.isEmpty())return {};
+    const auto path=QDir(root).filePath(asset.dataset+'/'+asset.version+'/'+asset.path);
+    return contained(root,path)?QDir::cleanPath(path):QString();
 }
 QString PhysicalDataStore::externalPath(const PhysicalAssetSpec& asset) const {
     const auto root=externalDatasetRoots_.value(asset.dataset,externalRoot_);
-    if(root.isEmpty()||!validAsset(asset))return {};
-    const auto path=QDir(root).filePath(asset.dataset+'/'+asset.version+'/'+asset.path);
-    return contained(root,path)?QDir::cleanPath(path):QString();
+    return assetPath(root,asset);
 }
 QString PhysicalDataStore::resolveExisting(const PhysicalAssetSpec& asset) const {
     const auto external=externalPath(asset);if(!external.isEmpty()&&verified(external,asset))return external;
     const auto cached=cachePath(asset);return verified(cached,asset)?cached:QString();
+}
+std::function<QString(const PhysicalAssetSpec&)> PhysicalDataStore::verifiedResolver() const {
+    return [cacheRoot=root_,externalRoot=externalRoot_,datasetRoots=externalDatasetRoots_](const PhysicalAssetSpec& asset) {
+        const auto external=assetPath(datasetRoots.value(asset.dataset,externalRoot),asset);
+        if(!external.isEmpty()&&verified(external,asset))return external;
+        const auto cached=assetPath(cacheRoot,asset);return verified(cached,asset)?cached:QString{};
+    };
+}
+std::function<QString(const PhysicalAssetSpec&)> PhysicalDataStore::plannedPathResolver() const {
+    return [cacheRoot=root_](const PhysicalAssetSpec& asset){return assetPath(cacheRoot,asset);};
+}
+QString PhysicalDataStore::candidateAssetPath(const QString& cacheRoot,const QString& externalRoot,
+                                            const QHash<QString,QString>& datasetRoots,const PhysicalAssetSpec& asset) {
+    const auto exists=[&](const QString& path){const QFileInfo file(path);
+        return !path.isEmpty()&&file.isFile()&&file.isReadable()&&file.size()==asset.bytes;};
+    const auto external=assetPath(datasetRoots.value(asset.dataset,externalRoot),asset);
+    if(exists(external))return external;
+    const auto cached=assetPath(cacheRoot,asset);return exists(cached)?cached:QString{};
+}
+QString PhysicalDataStore::candidatePath(const PhysicalAssetSpec& asset) const {
+    return candidateAssetPath(root_,externalRoot_,externalDatasetRoots_,asset);
+}
+std::function<QString(const PhysicalAssetSpec&)> PhysicalDataStore::candidatePathResolver() const {
+    return [cacheRoot=root_,externalRoot=externalRoot_,datasetRoots=externalDatasetRoots_](const PhysicalAssetSpec& asset){
+        return candidateAssetPath(cacheRoot,externalRoot,datasetRoots,asset);
+    };
 }
 bool PhysicalDataStore::installVerified(const PhysicalAssetSpec& asset,const QByteArray& bytes) {
     if(!validAsset(asset)||bytes.size()!=asset.bytes||digest(bytes)!=asset.sha256)return false;
@@ -96,7 +124,7 @@ bool PhysicalDataStore::installVerified(const PhysicalAssetSpec& asset,const QBy
     QFile file(part);if(!file.open(QIODevice::WriteOnly)||file.write(bytes)!=bytes.size()||!file.flush()){file.close();QFile::remove(part);return false;}
     file.close();if(!verified(part,asset)||!QFile::rename(part,target)){QFile::remove(part);return false;}return true;
 }
-bool PhysicalDataStore::verified(const QString& path,const PhysicalAssetSpec& asset) const {
+bool PhysicalDataStore::verified(const QString& path,const PhysicalAssetSpec& asset) {
     QFile file(path);if(!file.open(QIODevice::ReadOnly)||file.size()!=asset.bytes)return false;
     QCryptographicHash hash(QCryptographicHash::Sha256);
     while(!file.atEnd()){const auto chunk=file.read(256*1024);if(chunk.isEmpty()&&!file.atEnd())return false;hash.addData(chunk);}

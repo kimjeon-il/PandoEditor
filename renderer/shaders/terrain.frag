@@ -80,6 +80,9 @@ float effectiveLandPass;
     return baseColor * clamp(shade / flatSurfaceShade, 0.5, 1.2);
   }
 void main() {
+    // A tiny onscreen probe drives real QSG sampler commits independently of
+    // geographic/horizon/mask coverage, and never changes the framebuffer.
+    if(u.maskState.z>0.5||u.maskState.w>0.5)discard;
     if(u.flat1.w>0.5 && vDepth<0.0)discard;
     // Geographic world-mask triangles can extend beyond this tile.
     if(any(lessThan(vUv,u.uvBounds.xy))||any(greaterThan(vUv,u.uvBounds.zw)))discard;

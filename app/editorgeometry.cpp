@@ -3,6 +3,10 @@
 #include "retainedreferencerewriter.h"
 #include "territorialgeometry.h"
 #include "geometrycalculator.h"
+#include "../renderer/gpumapitem.h"
+#include "../renderer/maprenderitem.h"
+#include <pandoeditor/map/projectionengine.h>
+#include <pandoeditor/map/interactionstylepolicy.h>
 #include <pandoeditor/commands.h>
 #include <pandoeditor/map/editcoordinates.h>
 #include <pandoeditor/map/editgeometry.h>
@@ -55,6 +59,72 @@ QVariantMap EditorController::geometryEditState() const
         {"snapY",edit.snapPoint?projection_.project(*edit.snapPoint).y:std::numeric_limits<double>::quiet_NaN()}};
 }
 
+void EditorController::recordMapPresentationSource(QObject* source) {
+    if(!source||geometryPresentationSources_.count(source))return;
+    if(auto* gpu=qobject_cast<GpuMapItem*>(source))
+        connect(gpu,&GpuMapItem::framePresented,this,&EditorController::acceptMapPresentation);
+    else if(auto* cpu=qobject_cast<MapRenderItem*>(source))
+        connect(cpu,&MapRenderItem::framePresented,this,&EditorController::acceptMapPresentation);
+    else return;
+    geometryPresentationSources_.insert(source);
+    connect(source,&QObject::destroyed,this,[this,source]{geometryPresentationSources_.erase(source);});
+}
+void EditorController::acceptMapPresentation(const std::shared_ptr<const MapFrame>& frame,const QVariantList& inventory) {
+    if(geometryPresentationStrokes_.empty()||geometryPresentationInstance_!=project_.instanceId()||
+       geometryPresentationRevision_!=project_.revision()||!frame||frame!=sceneBridge_.frameSnapshot())return;
+    for(const auto& held:geometryPresentationStrokes_) {
+        bool found=false;
+        for(const auto& entry:inventory) {
+            const auto row=entry.toMap();
+            if(row.value("domain").toString().toStdString()!=held.object.domain||row.value("id").toString().toStdString()!=held.object.id)continue;
+            if(!held.successor)return;
+            if(row.value("geometryId").toString().toStdString()==held.successor->id&&
+               row.value("geometryVersion").toULongLong()==held.successor->version)found=true;
+            else return; // A predecessor is still in this actual render inventory.
+        }
+        if(held.successor&&!found)return;
+    }
+    geometryPresentationStrokes_.clear();emit geometryEditChanged();
+}
+QVariantList EditorController::geometryPresentationPaths() const {
+    QVariantList paths;
+    if(geometryPresentationInstance_!=project_.instanceId()||geometryPresentationRevision_!=project_.revision())return paths;
+    const auto view=sceneBridge_.viewState();
+    for(const auto& held:geometryPresentationStrokes_) {
+        const auto packet=makeStrokeGeometryPacket(*held.geometry);
+        const auto offsets=view.mode==ProjectionMode::Flat?visibleFlatWorldOffsets(view):std::vector<double>{0};
+        for(const auto offset:offsets) {
+            QString path;
+            for(std::size_t i=0;i<packet.segmentCount;++i) {
+                const auto& points=*packet.startsEnds;
+                Point sourceA{points[i*4],points[i*4+1]},sourceB{points[i*4+2],points[i*4+3]};
+                auto a=projectPoint(sourceA,view,offset),b=projectPoint(sourceB,view,offset);
+                if(!a.finite||!b.finite||(!a.visibleHemisphere&&!b.visibleHemisphere))continue;
+                if(a.visibleHemisphere!=b.visibleHemisphere) {
+                    auto visible=a.visibleHemisphere?sourceA:sourceB,hidden=a.visibleHemisphere?sourceB:sourceA;
+                    // Match the production stroke shader's geographic horizon clipping.
+                    for(int step=0;step<16;++step) {
+                        const Point mid{(visible.x+hidden.x)*.5,(visible.y+hidden.y)*.5};
+                        if(projectPoint(mid,view,offset).visibleHemisphere)visible=mid;else hidden=mid;
+                    }
+                    if(!a.visibleHemisphere)a=projectPoint(visible,view,offset);else b=projectPoint(visible,view,offset);
+                }
+                path+=QString("M%1 %2 L%3 %4 ").arg(a.x,0,'g',17).arg(a.y,0,'g',17).arg(b.x,0,'g',17).arg(b.y,0,'g',17);
+            }
+            if(!path.isEmpty())paths.append(QVariantMap{{"path",path},{"line",!held.geometry->lines.empty()},{"removed",!held.successor}});
+        }
+    }
+    return paths;
+}
+QVariantMap EditorController::mapInteractionStyle(const QString& role,bool direct,bool shared) const {
+    using namespace mapstyle;
+    const auto r=role=="candidate"?InteractionRole::Candidate:role=="hover"?InteractionRole::Hover:
+        role=="secondary"?InteractionRole::Secondary:role=="edit-target"?InteractionRole::EditTarget:InteractionRole::Primary;
+    Options options;options.dark=appearancePreferences().value("effectiveTheme").toString()=="dark";
+    options.directManipulation=direct;options.sharedBoundary=shared;
+    const auto v=sceneBridge_.viewState();const auto s=interactionStroke(r,options,{v.viewportWidth,v.viewportHeight,v.scale,v.mode==ProjectionMode::Flat});
+    return {{"color",QString("#%1").arg(s.color,6,16,QChar('0'))},{"width",s.width},{"alpha",s.alpha},{"fillAlpha",s.fillAlpha},{"dashOn",s.dashOn},{"dashOff",s.dashOff}};
+}
 QVariantList EditorController::geometryDraftPaths() const
 {
     QVariantList paths;if(!geometryEdit_)return paths;
@@ -430,17 +500,37 @@ bool EditorController::confirmGeometryEdit()
             }
         }
     }
-    if(!geometryEdit_||!geometryEdit_->preview)return false;MapProjection next;try{next.rebuild(geometryEdit_->preview->change().after());}catch(...){return false;}
+    if(!geometryEdit_||!geometryEdit_->preview)return false;
+    QElapsedTimer commitMeasurement;commitMeasurement.start();const auto measuredFlow=geometryEdit_->tool;
+    const QVariant measuredOwners=measuredFlow=="boundary"?QVariant::fromValue(qulonglong(geometryEdit_->boundaryOwners.size())):QVariant{};
+    MapProjection next;try{next.rebuild(geometryEdit_->preview->change().after());}catch(...){return false;}
     std::optional<ObjectRef> boundarySelectedAfter;
     if(geometryEdit_->tool=="boundary") {
         if(!staticParentRelation(geometryEdit_->base.document(),geometryEdit_->target.id).parentId.empty())boundarySelectedAfter=geometryEdit_->target;
         else if(const auto mutation=std::get_if<ApplyTerritorialMutation>(&geometryEdit_->preview->change().request().args.action))if(const auto boundary=std::get_if<SharedBoundaryIntent>(&mutation->plan.intent))if(!boundary->drafts.empty())boundarySelectedAfter=boundary->drafts.front().owner;
     }
     auto applied=CommandProcessor::confirm(project_,*geometryEdit_->preview);if(!applied.ok()){commandError(applied.error,QString::fromStdString(applied.detail));geometryEdit_->preview.reset();geometryEdit_->boundaryImpactConfirmation=false;geometryEdit_->boundaryImpactsApproved=false;geometryEdit_->stage="selection";geometryEdit_->error=QString::fromStdString(applied.detail);emit geometryEditChanged();return false;}
+    holdConfirmedGeometry(geometryEdit_->base.document(),applied.impact,geometryEdit_->target);
     noteAppliedImpact(applied.impact);
     projection_=std::move(next);const bool created=bool(geometryEdit_->createIntent);const bool content=geometryEdit_->content;geometryEdit_.reset();if(content){contentSession_.reset();emit contentEditChanged();}if(created)createDraft_.reset();hover_.reset();++hoverRevision_;closeObjectChooser();
     if(boundarySelectedAfter){auto selected=selection_;selected.replace(*boundarySelectedAfter,"map");applySelection(std::move(selected));}
-    publish(false);emit geometryChanged();emit structureChanged();emit geometryEditChanged();return true;
+    publish(false);emit geometryChanged();emit structureChanged();emit geometryEditChanged();
+    editingPerformance_.record("commit",measuredFlow,double(commitMeasurement.nsecsElapsed())/1e6,"completed",measuredOwners);
+    emit renderQualityChanged();return true;
+}
+
+void EditorController::holdConfirmedGeometry(const ProjectDocument& before,const ChangeImpact& impact,const ObjectRef& target)
+{
+    geometryPresentationStrokes_.clear();geometryPresentationInstance_=project_.instanceId();geometryPresentationRevision_=project_.revision();
+    const auto& after=project_.document();
+    const auto beforeIndex=validateDocument(before);auto affected=impact.changedObjects;
+    if(std::find(affected.begin(),affected.end(),target)==affected.end())affected.push_back(target);
+    for(const auto& ref:affected) {
+        const auto successor=objectGeometry(after,project_.index(),ref),previous=objectGeometry(before,beforeIndex,ref);
+        if(successor==previous)continue;
+        const auto geometry=successor?after.geometries.get(*successor):previous?before.geometries.get(*previous):nullptr;
+        if(geometry&&(!geometry->polygons.empty()||!geometry->lines.empty()))geometryPresentationStrokes_.push_back({ref,successor,geometry});
+    }
 }
 
 void EditorController::cancelGeometryEdit()

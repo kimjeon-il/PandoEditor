@@ -19,6 +19,11 @@ std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& 
     const auto id=value.value("id").toString().trimmed();
     if(id.isEmpty()) return {};
     const ObjectRef ref{domain.toStdString(),id.toStdString()};
+    if(ref.domain=="placeBuiltin"){
+        const auto requested=value.value("type").toString().trimmed();
+        if(!placeRuntime_.recordById(id)||copiedPlaceSourceIds(project_.document()).count(ref.id)||(!requested.isEmpty()&&requested!="placeBuiltin"))return {};
+        return ref;
+    }
     if(ref.domain=="hydroBuiltin"){
         const auto record=hydroRuntime_.recordById(id);
         const auto requested=value.value("type").toString().trimmed();
@@ -33,6 +38,10 @@ std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& 
     return ref;
 }
 QVariantMap EditorController::objectRefValue(const ObjectRef& ref) const {
+    if(ref.domain=="placeBuiltin"){
+        const auto id=q(ref.id);return {{"domain","placeBuiltin"},{"type","placeBuiltin"},{"id",id},
+            {"key",QStringLiteral("placeBuiltin:placeBuiltin:")+QString::fromLatin1(QUrl::toPercentEncoding(id,"-_.!~*'()"))}};
+    }
     if(ref.domain=="hydroBuiltin"){
         const auto id=q(ref.id);
         return {{"domain","hydroBuiltin"},{"type","hydroBuiltin"},{"id",id},
@@ -53,6 +62,8 @@ QVariantMap EditorController::rangeAnchor(const QString& scope) const {
     const auto ref=selection_.rangeAnchor(scope.toStdString());return ref?objectRefValue(*ref):QVariantMap{};
 }
 bool EditorController::objectVisible(const ObjectRef& ref) const {
+    if(ref.domain=="placeBuiltin")return placeRuntime_.recordById(q(ref.id)).has_value()&&
+        !copiedPlaceSourceIds(project_.document()).count(ref.id)&&groupVisible(project_.document().presentation.webPresentation,"labels");
     if(ref.domain=="hydroBuiltin"){
         const auto record=hydroRuntime_.recordById(q(ref.id));
         if(!record)return false;
@@ -103,11 +114,23 @@ QVariantList EditorController::objectRows() const {
             row["editable"]=false;row["selectionOnly"]=false;rows.append(row);
         }
     }
+    std::set<QString> placeIds;const auto copied=copiedPlaceSourceIds(project_.document());
+    const auto appendPlace=[&](const PlaceRecord& record) {
+        if(copied.count(record.id.toStdString())||!placeIds.insert(record.id).second)return;
+        const ObjectRef ref{"placeBuiltin",record.id.toStdString()};auto item=objectRefValue(ref);
+        item["name"]=record.name;item["sourceName"]=record.name;item["kind"]=record.kind;item["typeLabel"]=QStringLiteral("기본 지명");
+        item["visible"]=objectVisible(ref);item["locked"]=true;item["editable"]=false;item["lockEnabled"]=false;
+        item["selectionOnly"]=false;item["builtinSource"]=true;item["copyAvailable"]=true;rows.append(item);
+    };
+    if(const auto snapshot=placeRuntime_.snapshot())for(const auto& record:snapshot->records)appendPlace(record);
+    for(const auto& ref:selection_.items())if(ref.domain=="placeBuiltin")if(const auto record=placeRuntime_.recordById(q(ref.id)))appendPlace(*record);
     objectRowsCache_=rows;return rows;
 }
 void EditorController::setSearchQuery(const QString& query) {
     if(query==searchQuery_) return;
-    searchQuery_=query;emit searchChanged();
+    searchQuery_=query;
+    if(query.isEmpty())placeRuntime_.cancelSearch();else placeRuntime_.search(query);
+    emit searchChanged();
 }
 QVariantList EditorController::searchResults() const {
     const auto query=searchQuery_.trimmed().toLower();
@@ -128,6 +151,13 @@ QVariantList EditorController::searchResults() const {
             row["visible"]=objectVisible(ref);row["locked"]=true;
             row["editable"]=false;row["selectionOnly"]=false;rows.append(row);
         }
+    }
+    const auto copied=copiedPlaceSourceIds(project_.document());
+    for(const auto& record:placeRuntime_.searchResults())if(!copied.count(record.id.toStdString())){
+        const ObjectRef ref{"placeBuiltin",record.id.toStdString()};auto item=objectRefValue(ref);
+        item["name"]=record.name;item["sourceName"]=record.name;item["kind"]=record.kind;item["typeLabel"]=QStringLiteral("기본 지명");
+        item["visible"]=objectVisible(ref);item["locked"]=true;item["editable"]=false;item["lockEnabled"]=false;item["selectionOnly"]=false;
+        item["builtinSource"]=true;item["copyAvailable"]=true;rows.append(item);
     }
     std::set<QString> resultIds;
     rows.erase(std::remove_if(rows.begin(),rows.end(),[&](const QVariant& value){
@@ -185,6 +215,7 @@ void EditorController::applySelection(SelectionState next) {
     QScopedValueRollback<bool> guard(selectionTransition_,true);
     cancelColorEdit();fieldSessions_.clear();parkDrafts();selection_=std::move(next);
     selected_=selection_.primary()?q(selection_.primary()->id):QString();
+    requestPlaceResources();refreshBuiltinPlaceLabels();
     reloadDrafts();
     emit selectionChanged();
     emit stateChanged();emit draftsChanged();
@@ -192,7 +223,7 @@ void EditorController::applySelection(SelectionState next) {
     // Child split previews bind to the selection identity observed at request
     // time. Refresh their read-only readiness when that identity changes.
     if(geometryEdit_&&geometryEdit_->splitIntent&&!staticParentRelation(geometryEdit_->base.document(),geometryEdit_->target.id).parentId.empty())emit geometryEditChanged();
-    // No dirtyChanged, project revision, history, import epoch, preview or worker mutation.
+    // No dirtyChanged, project revision, history, import epoch or content preview mutation.
 }
 bool EditorController::selectObject(const QVariantMap& value,const QString& mode,const QString& scope,const QVariantList& ordered,bool additive) {
     const auto ref=existingObjectRef(value);if(!ref) return false;
@@ -247,6 +278,7 @@ QVariantMap EditorController::pickObjectScreen(double x,double y,double zoom) co
 QVariantMap EditorController::pickObjectFromCandidates(
     const std::vector<ObjectRef>& hits) const {
     const auto top=mapPicker_.topCandidate(project_.snapshot(),hits);
+    for(const auto& ref:hits)if(ref.domain=="placeBuiltin"&&objectVisible(ref)&&(!top||mapPicker_.candidateRank(project_.snapshot(),*top)<=mapPickOrder(project_.document(),{"label",ref.id})))return objectRefValue(ref);
     return top?objectRefValue(*top):QVariantMap{};
 }
 void EditorController::selectAt(double x,double y) { selectMapAt(x,y,false); }
@@ -261,11 +293,16 @@ bool EditorController::setHoverObject(const QVariantMap& value,const QString& so
            (!expectedKey.isEmpty()&&hoverObject().value("key").toString()!=expectedKey)) return false;
     } else {next=existingObjectRef(value);if(!next) return false;}
     if(next==hover_) {if(next) hoverSource_=source;return true;}
-    hover_=next;hoverSource_=next?source:QString();++hoverRevision_;emit hoverChanged();return true;
+    hover_=next;hoverSource_=next?source:QString();requestPlaceResources();++hoverRevision_;emit hoverChanged();return true;
 }
 bool EditorController::focusObject(const QVariantMap& value) {
     const auto ref=value.isEmpty()?selection_.primary():existingObjectRef(value);
     if(!ref) return false;
+    if(ref->domain=="placeBuiltin"){
+        const auto record=placeRuntime_.recordById(q(ref->id));if(!record||!objectVisible(*ref))return false;
+        const auto point=projection_.project(record->coordinates);focusMapCameraRect(point.x,point.y,.001,.001,mobileMode_?12:10);
+        emit focusRequested(point.x,point.y,.001,.001,mobileMode_?12:10);return true;
+    }
     if(ref->domain=="hydroBuiltin"){
         const auto record=hydroRuntime_.recordById(q(ref->id));
         if(!record||record->bounds.size()!=4)return false;
@@ -294,12 +331,12 @@ void EditorController::reconcileSelection() {
     if(replaced) {
         selectionInstance_=project_.instanceId();selection_.reset();hover_.reset();hoverSource_.clear();hoverRevision_=0;
         searchQuery_.clear();clearParkedDrafts();
-        labelEngine_.clear();labelFlagSources_.clear();labelSourcesDirty_=true;
+        labelEngine_.clear();++labelCounterGeneration_;labelFlagSources_.clear();labelSourcesDirty_=true;
         if(!placedLabels_.isEmpty()){placedLabels_.clear();emit labelLayoutChanged();}
     } else {
-        selection_.prune([this](const ObjectRef& ref){return ref.domain=="hydroBuiltin"?
+        selection_.prune([this](const ObjectRef& ref){if(ref.domain=="placeBuiltin")return placeRuntime_.recordById(q(ref.id)).has_value()&&!copiedPlaceSourceIds(project_.document()).count(ref.id);return ref.domain=="hydroBuiltin"?
             bool(hydroRuntime_.recordById(q(ref.id))):project_.index().objects.count(ref)!=0;});
-        if(hover_&&!(hover_->domain=="hydroBuiltin"?bool(hydroRuntime_.recordById(q(hover_->id))):
+        if(hover_&&!(hover_->domain=="placeBuiltin"?placeRuntime_.recordById(q(hover_->id)).has_value()&&!copiedPlaceSourceIds(project_.document()).count(hover_->id):hover_->domain=="hydroBuiltin"?bool(hydroRuntime_.recordById(q(hover_->id))):
             project_.index().objects.count(*hover_))) {hover_.reset();hoverSource_.clear();++hoverRevision_;}
     }
     selected_=selection_.primary()?q(selection_.primary()->id):QString();

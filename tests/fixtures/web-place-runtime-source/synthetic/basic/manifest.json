@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "revision": "synthetic-basic-v1",
+  "stages": [
+    {
+      "id": 0,
+      "minZoom": 0,
+      "columns": 1,
+      "rows": 1
+    }
+  ],
+  "tiles": {
+    "0/0-0": {
+      "shard": "0",
+      "offset": 0,
+      "length": 367,
+      "sha256": "886bf1c9539a52af14fdf35dc72a76089deb572d869ba5663a059bd96dbfa4b4"
+    }
+  },
+  "shards": {
+    "0": {
+      "url": "0.bin",
+      "bytes": 367,
+      "sha256": "886bf1c9539a52af14fdf35dc72a76089deb572d869ba5663a059bd96dbfa4b4"
+    }
+  },
+  "search": {
+    "서울": [
+      {
+        "shard": "0",
+        "offset": 0,
+        "length": 367,
+        "sha256": "886bf1c9539a52af14fdf35dc72a76089deb572d869ba5663a059bd96dbfa4b4",
+        "first": "서울",
+        "last": "서울 도시"
+      }
+    ]
+  }
+}

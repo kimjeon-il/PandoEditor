@@ -27,6 +27,7 @@ public:
     std::size_t queueDepth() const { return scheduler_.queueDepth(); }
 signals:
     void changed();
+    void operationMeasured(qulonglong jobId,QString operation,double milliseconds,int disposition);
 private:
     using Result=std::variant<pandoeditor::PrepareResult,GeometryJobResult>;
     using Worker=std::variant<Task,GeometryTask>;
@@ -38,7 +39,7 @@ private:
     static void invokeCompletion(Callback,std::uint64_t,pandoeditor::JobDisposition,Result);
     void pump();
     void flushStopped();
-    void complete(const pandoeditor::JobTicket&,Result);
+    void complete(const pandoeditor::JobTicket&,Result,std::optional<double> milliseconds=std::nullopt);
     std::function<const pandoeditor::Project&()> current_;
     pandoeditor::JobScheduler scheduler_;
     std::map<std::uint64_t,Entry> entries_;

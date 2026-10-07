@@ -89,7 +89,7 @@ bool EditorController::beginContentEdit(const QString& domain,const QString& typ
     if(contentSession_||hasPendingEdits()||structureDialogOpen()||jobBusy()||hasWebImportPreview()) return false;
     ContentEdit edit; edit.create=create;
     if(create) edit.target={domain.toStdString(),QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString()};
-    else {const auto ref=selection_.primary();if(!ref||ref->domain!=domain.toStdString())return false;edit.target=*ref;}
+    else {const auto ref=selection_.primary();if(!ref||ref->domain=="placeBuiltin"||ref->domain!=domain.toStdString())return false;edit.target=*ref;}
     const auto& d=project_.document(); const auto found=project_.index().objects.find(edit.target);
     const auto i=found==project_.index().objects.end()?0:found->second;
     if(domain=="label") {PlaceLabel v=create?PlaceLabel{}:d.labels.at(i);v.id=edit.target.id;if(create)v.kind=type.isEmpty()?"custom":type.toStdString();edit.value=v;}

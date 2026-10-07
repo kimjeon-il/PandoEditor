@@ -2,6 +2,7 @@
 #include <pandoeditor/map/renderpacket.h>
 #include <pandoeditor/map/countrymesh.h>
 #include <pandoeditor/map/drawplan.h>
+#include <pandoeditor/map/interactionstylepolicy.h>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -16,6 +17,7 @@ struct InteractionRenderPacket {
     std::vector<pandoeditor::ObjectRef> candidates;
     std::vector<pandoeditor::ObjectRef> selected;
     std::optional<pandoeditor::ObjectRef> primary,hover,editTarget;
+    mapstyle::Options styleOptions;
 };
 
 struct SceneDrawRef {

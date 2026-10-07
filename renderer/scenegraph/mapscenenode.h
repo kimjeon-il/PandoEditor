@@ -4,6 +4,7 @@
 #include <pandoeditor/map/mapviewstate.h>
 #include "uploadscheduler.h"
 #include <QSGNode>
+#include <QVariantList>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -35,6 +36,8 @@ public:
     void sync(const std::shared_ptr<const RenderScene>& scene,const MapViewState& view,
               const MapFlatViewport& flat,MapGpuStats& stats,std::size_t uploadBudgetBytes,
               const WorldRenderPlan* framePlan=nullptr);
+    // Actual retained QSG stroke buffers, not the candidate scene's packets.
+    QVariantList strokeInventory() const;
 private:
     std::shared_ptr<const RenderScene> lastScene_;
     std::vector<double> lastOffsets_;

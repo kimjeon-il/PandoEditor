@@ -69,6 +69,41 @@ private slots:
         const auto result=future.get();
         QVERIFY2(result.succeeded(),result.detail.c_str());QCOMPARE(planarArea(result.geometry),6.);
     }
+    void scalarPredicatesKeepStrictInputsAndCancellation() {
+        const auto a=box(0,0,4,4),b=box(2,0,6,4);
+        QCOMPARE(calculateGeometryArea({GeometryOperation::Intersection,a,b}).area,8.);
+        QCOMPARE(calculateGeometryArea({GeometryOperation::Difference,a,a}).status,GeometryOperationStatus::Empty);
+        QCOMPARE(calculateGeometryArea({GeometryOperation::Intersection,a,b},[]{return true;}).status,GeometryOperationStatus::Cancelled);
+        auto bad=a;bad.polygons[0][0][1].x=std::numeric_limits<double>::infinity();
+        QCOMPARE(calculateGeometryArea({GeometryOperation::Intersection,bad,b}).status,GeometryOperationStatus::Failed);
+        Geometry degenerate;degenerate.polygons={{{{0,0},{1,0},{2,0},{0,0}}}};
+        QCOMPARE(calculateGeometryArea({GeometryOperation::Intersection,degenerate,b}).status,GeometryOperationStatus::Failed);
+        QVERIFY_EXCEPTION_THROWN((GeometryStore{}.insert({"invalid",1},degenerate)),std::invalid_argument);
+    }
+    void boundedTransactionPreservesResultsAndFailureIsolation() {
+        const auto calculate=makeTransactionGeometryCalculator();const auto a=box(0,0,4,4),b=box(2,0,6,4);
+        for(const auto operation:{GeometryOperation::Union,GeometryOperation::Difference,GeometryOperation::Intersection}) {
+            const GeometryOperationRequest request{operation,a,b};const auto expected=calculateGeometry(request),actual=calculate(request,{});
+            QCOMPARE(actual.status,expected.status);QCOMPARE(actual.geometry.type,expected.geometry.type);
+            QCOMPARE(actual.geometry.polygons.size(),expected.geometry.polygons.size());
+            for(std::size_t p=0;p<actual.geometry.polygons.size();++p) {
+                QCOMPARE(actual.geometry.polygons[p].size(),expected.geometry.polygons[p].size());
+                for(std::size_t r=0;r<actual.geometry.polygons[p].size();++r) {
+                    QCOMPARE(actual.geometry.polygons[p][r].size(),expected.geometry.polygons[p][r].size());
+                    for(std::size_t i=0;i<actual.geometry.polygons[p][r].size();++i) {
+                        QCOMPARE(actual.geometry.polygons[p][r][i].x,expected.geometry.polygons[p][r][i].x);
+                        QCOMPARE(actual.geometry.polygons[p][r][i].y,expected.geometry.polygons[p][r][i].y);
+                    }
+                }
+            }
+        }
+        QVERIFY(calculate({GeometryOperation::Union,{},a},{}).status==GeometryOperationStatus::Failed);
+        QVERIFY(calculate({GeometryOperation::Union,a,b},[]{return true;}).status==GeometryOperationStatus::Cancelled);
+        const auto next=calculate({GeometryOperation::Difference,a,a},{});QCOMPARE(next.status,GeometryOperationStatus::Empty);
+        const auto foreign=std::async(std::launch::async,[&]{return calculate({GeometryOperation::Union,a,b},{});}).get();
+        QCOMPARE(foreign.status,GeometryOperationStatus::Failed);QCOMPARE(foreign.detail,std::string("GEOMETRY_TRANSACTION_THREAD_MISMATCH"));
+        QCOMPARE(calculate({GeometryOperation::Intersection,a,b},{}).status,GeometryOperationStatus::Completed);
+    }
     void cutLineReconstructsTwoExactRings() {
         const QJsonObject source{{"type","Polygon"},{"coordinates",QJsonArray{QJsonArray{QJsonArray{0,0},QJsonArray{0,10},QJsonArray{10,10},QJsonArray{10,0},QJsonArray{0,0}}}}};
         const QJsonObject view{{"kind","flat"},{"scale",500},{"translate",QJsonArray{512,384}},{"rotate",QJsonArray{0,0,0}},{"center",QJsonArray{5,5}},{"size",QJsonObject{{"width",1024},{"height",768}}},{"snapDistance",QJsonObject{{"mouse",10},{"touch",18}}},{"coarsePointer",false}};

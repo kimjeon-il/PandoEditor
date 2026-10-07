@@ -34,6 +34,18 @@ QJsonObject flagMetadata(const ProjectDocument& document,const ObjectRef& ref) {
         QJsonDocument::fromJson(QByteArray::fromStdString(unit->metadata)).object();
 }
 }
+QString resolveDefaultFlagSource(const QString& source) {
+    static const QRegularExpression pinned(QStringLiteral(
+        "^assets/vendor/country-flags/c09927e63705529bbf59ca6684cd9b23225dddad/svg/([a-z]{2})\\.svg$"));
+    const auto match=pinned.match(source);
+    if(!match.hasMatch())return source;
+    const auto code=match.captured(1);
+    static const std::set<QString> legacy={"cd","sm","ga","pg"};
+    const auto native=QStringLiteral("qrc:/defaults/flags/")+
+        (legacy.count(code)?"legacy/":"native/")+code+".svg";
+    // Rendering alias only: project/catalog metadata keeps the original URL.
+    return QFile::exists(QStringLiteral(":")+native.mid(4))?native:source;
+}
 DefaultFlagResult resolveDefaultFlag(const ProjectDocument& document,const ObjectRef& ref) {
     if(ref.domain!="territorial")return {{},QStringLiteral("대상 없음"),false};
     const auto owner=document.symbols.find(ref);
@@ -57,5 +69,6 @@ DefaultFlagResult resolveDefaultFlag(const ProjectDocument& document,const Objec
         source=override.contains("flagDataUrl")?normalizedFlag(override["flagDataUrl"]):currentFlag(converted["countryId"].toString());
     } else if(metadata["builtinSubunit"].isObject())source=currentFlag(metadata["builtinSubunit"].toObject()["sourceCountryId"].toString());
     else if(unit->kind==UnitKind::General)source=currentFlag(QString::fromStdString(unit->id));
+    source=resolveDefaultFlagSource(source);
     return {source,source.isEmpty()?QStringLiteral("기본 국기 자료 없음"):QString{},!source.isEmpty()};
 }

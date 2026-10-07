@@ -2,6 +2,7 @@
 #include <QFutureWatcher>
 #include <QPointer>
 #include <QThread>
+#include <QElapsedTimer>
 #include <QtConcurrentRun>
 #include <stdexcept>
 #include <algorithm>
@@ -127,19 +128,22 @@ void CommandJobRunner::pump()
     if(it==entries_.end()) { scheduler_.cancel(ticket.id()); scheduler_.finish(ticket,current_()); return; }
     auto task=std::move(it->second.task);
     const auto kind=task.index();
+    auto duration=std::make_shared<std::optional<double>>();
     try {
         auto watcher=std::make_unique<QFutureWatcher<Result>>(this);
         auto* receiver=watcher.get();
-        connect(receiver,&QFutureWatcher<Result>::finished,this,[this,receiver,ticket,kind]() {
+        connect(receiver,&QFutureWatcher<Result>::finished,this,[this,receiver,ticket,kind,duration]() {
             Result result;
             try { result=receiver->future().takeResult(); } catch(...) { result=failedResult(kind,exceptionDetail()); }
-            receiver->deleteLater(); complete(ticket,std::move(result));
+            receiver->deleteLater(); complete(ticket,std::move(result),*duration);
         });
-        receiver->setFuture(QtConcurrent::run([ticket,task=std::move(task),kind]() mutable ->Result {
+        receiver->setFuture(QtConcurrent::run([ticket,task=std::move(task),kind,duration]() mutable ->Result {
             if(ticket.token().cancelled()) return emptyResult(kind);
+            QElapsedTimer clock;clock.start();
             try {
-                return std::visit([&](auto& worker) ->Result {return worker(ticket.snapshot(),ticket.token());},task);
-            } catch(...) { return failedResult(kind,exceptionDetail()); }
+                auto result=std::visit([&](auto& worker) ->Result {return worker(ticket.snapshot(),ticket.token());},task);
+                *duration=double(clock.nsecsElapsed())/1e6;return result;
+            } catch(...) {*duration=double(clock.nsecsElapsed())/1e6;return failedResult(kind,exceptionDetail());}
         }));
         watcher.release();
     } catch(...) {
@@ -147,10 +151,13 @@ void CommandJobRunner::pump()
         QMetaObject::invokeMethod(this,[this,ticket,kind,detail=exceptionDetail()](){complete(ticket,failedResult(kind,detail));},Qt::QueuedConnection);
     }
 }
-void CommandJobRunner::complete(const JobTicket& ticket,Result result)
+void CommandJobRunner::complete(const JobTicket& ticket,Result result,std::optional<double> milliseconds)
 {
     Q_ASSERT(QThread::currentThread()==thread());
     const auto disposition=scheduler_.finish(ticket,current_());
+    QPointer<CommandJobRunner> measuredGuard(this);
+    if(milliseconds)emit operationMeasured(ticket.id(),QString::fromStdString(ticket.key()),*milliseconds,int(disposition));
+    if(!measuredGuard)return;
     Callback completion;
     auto it=entries_.find(ticket.id());
     if(it!=entries_.end()) { completion=std::move(it->second.completion); entries_.erase(it); }

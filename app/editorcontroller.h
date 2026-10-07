@@ -26,6 +26,7 @@
 #include <pandoeditor/map/builtinhydrochannel.h>
 #include <pandoeditor/map/labelengine.h>
 #include "hydroruntimeprovider.h"
+#include "placeruntimeprovider.h"
 #include "../renderer/terrainprovider.h"
 #include "giscontentimport.h"
 #include <pandoeditor/historicalinstantiation.h>
@@ -36,6 +37,7 @@
 #include <QRectF>
 #include <QTimer>
 #include <QElapsedTimer>
+#include "nativeperformancemetrics.h"
 #include <QHash>
 #include <map>
 #include <deque>
@@ -43,7 +45,7 @@
 #include <set>
 #include <optional>
 
-namespace pandoeditor { struct HistoricalSource; }
+namespace pandoeditor { struct HistoricalSource; class TerritorialLibraryCatalog; }
 namespace geometrysnap { class Provider; }
 
 struct EditorControllerConfig {
@@ -70,6 +72,9 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantMap distributionDisplay READ distributionDisplay NOTIFY visualChanged)
     Q_PROPERTY(QVariantMap hydroDataStatus READ hydroDataStatus NOTIFY stateChanged)
     Q_PROPERTY(QVariantMap terrainDataStatus READ terrainDataStatus NOTIFY terrainChanged)
+    Q_PROPERTY(QVariantMap historicalCatalogStatus READ historicalCatalogStatus NOTIFY historicalChanged)
+    Q_PROPERTY(QVariantMap editingPerformanceStats READ editingPerformanceStats NOTIFY renderQualityChanged)
+    Q_PROPERTY(QVariantList historicalLineages READ historicalLineages NOTIFY historicalChanged)
     Q_PROPERTY(QObject* terrainResourceBridge READ terrainResourceBridge CONSTANT)
     Q_PROPERTY(QVariantList terrainTiles READ terrainTiles NOTIFY terrainChanged)
     Q_PROPERTY(bool hydroViewportLoaded READ hydroViewportLoaded NOTIFY hydroFrameChanged)
@@ -169,8 +174,12 @@ class EditorController : public QObject {
     Q_PROPERTY(QVariantMap geometryEditState READ geometryEditState NOTIFY geometryEditChanged)
     Q_PROPERTY(QVariantMap contentEditState READ contentEditState NOTIFY contentEditChanged)
     Q_PROPERTY(QVariantList geometryDraftPaths READ geometryDraftPaths NOTIFY geometryEditChanged)
+    Q_PROPERTY(QVariantList geometryPresentationPaths READ geometryPresentationPaths NOTIFY geometryEditChanged)
 public:
     QVariantList historicalResults() const;
+    QVariantMap historicalCatalogStatus() const;
+    QVariantMap editingPerformanceStats() const {return editingPerformance_.snapshot();}
+    QVariantList historicalLineages() const;
     Q_INVOKABLE QVariantList historicalRegionOptions() const;
     QVariantList historicalSnapshots() const;
     QVariantMap historicalPreview() const;
@@ -245,6 +254,8 @@ public:
     void setValidFromDraft(const QString&);
     void setValidToDraft(const QString&);
     Q_INVOKABLE bool commitObjectField(const QString&);
+    Q_INVOKABLE QVariantMap parseTerritorialPeriodInput(const QString&) const;
+    Q_INVOKABLE bool commitTerritorialPeriod(const QString& token,const QString& input);
     Q_INVOKABLE QString beginPropertyEdit(const QString&);
     Q_INVOKABLE bool updatePropertyEdit(const QString& token,const QString& value);
     Q_INVOKABLE bool confirmPropertyEdit(const QString& token);
@@ -323,6 +334,11 @@ public:
     Q_INVOKABLE void recordMapFrame(double milliseconds);
     Q_INVOKABLE void beginMapInteraction();
     Q_INVOKABLE void endMapInteraction();
+    Q_INVOKABLE void setTerrainWindowVisible(bool visible);
+    Q_INVOKABLE bool configurePlaceData(const QUrl& manifest);
+    Q_INVOKABLE bool copySelectedPlaceForEditing();
+    Q_PROPERTY(QVariantMap placeDataStatus READ placeDataStatus NOTIFY placeDataChanged)
+    QVariantMap placeDataStatus() const;
     void setWorldResourceBudget(std::size_t bytes);
     Q_INVOKABLE void recordGpuResourceStats(QObject* source);
     QString worldStatus() const {return worldStatus_;}
@@ -393,6 +409,9 @@ public:
     bool beginTerritorialCreatePrepared(const pandoeditor::CreateTerritorialIntent& intent);
     QVariantMap geometryEditState() const;
     QVariantList geometryDraftPaths() const;
+    QVariantList geometryPresentationPaths() const;
+    Q_INVOKABLE void recordMapPresentationSource(QObject* source);
+    Q_INVOKABLE QVariantMap mapInteractionStyle(const QString& role,bool direct=false,bool shared=false) const;
     Q_INVOKABLE bool beginGeometryEdit(const QString& tool="edit");
     Q_INVOKABLE bool beginGeometryDraw();
     QVariantMap contentEditState() const;
@@ -511,6 +530,7 @@ signals:
     void geometryEditChanged();
     void contentEditChanged();
     void hydroFrameChanged();
+    void placeDataChanged();
     void worldStatusChanged();
     void startupBusyChanged();
     void terrainChanged();
@@ -531,6 +551,17 @@ private:
     void cancelWorldBootstrap();
     std::shared_ptr<const pandoeditor::HistoricalLibrary> historicalLibrary_;
     std::shared_ptr<const pandoeditor::HistoricalSource> historicalSource_;
+    std::shared_ptr<const pandoeditor::TerritorialLibraryCatalog> historicalCatalog_;
+    quint64 historicalCatalogGeneration_=0;
+    QByteArray historicalCatalogSha256_;
+    QString historicalCatalogRoot_;
+    QVariantMap historicalPreviewCache_;
+    std::shared_ptr<std::atomic_bool> historicalCatalogCancel_;
+    quint64 historicalPendingJobs_=0;
+    NativePerformanceMetrics editingPerformance_;
+    bool historicalPreviewLoading_=false;
+    void initializeTerritorialCatalog();
+    bool installTerritorialCatalog(const QByteArray&,const QByteArray&,const QString&,const QString&,bool);
     pandoeditor::HistoricalSearch historicalFilter_;
     QString historicalSelectedId_,historicalVersionId_,historicalReferenceDate_;
     QVariantMap historicalImpact_;
@@ -638,6 +669,13 @@ private:
     void invalidateViewportResources(ViewportResourceKind resources=ViewportResourceKind::All);
     void flushViewportResources();
     void executeTerrainResources(const ViewportResourceRequest&);
+    void updateTerrainDemand(bool prepareCpu);
+    void publishTerrainRenderInput();
+    void observeTerrainRender(const TerrainRenderObservation&);
+    void resetTerrainRender();
+    void initializePlaceRuntime();
+    void requestPlaceResources();
+    void refreshBuiltinPlaceLabels();
     void executeHydroResources(const ViewportResourceRequest&);
     void executeLabelResources(const ViewportResourceRequest&);
     void rebuildLabelSources();
@@ -756,6 +794,17 @@ private:
 
     };
     std::optional<GeometryEditSession> geometryEdit_;
+    struct HeldGeometryStroke {
+        pandoeditor::ObjectRef object;
+        std::optional<pandoeditor::GeometryRef> successor;
+        std::shared_ptr<const pandoeditor::Geometry> geometry;
+    };
+    std::vector<HeldGeometryStroke> geometryPresentationStrokes_;
+    std::string geometryPresentationInstance_;
+    std::uint64_t geometryPresentationRevision_=0;
+    std::set<QObject*> geometryPresentationSources_;
+    void acceptMapPresentation(const std::shared_ptr<const MapFrame>& frame,const QVariantList& inventory);
+    void holdConfirmedGeometry(const pandoeditor::ProjectDocument& before,const pandoeditor::ChangeImpact& impact,const pandoeditor::ObjectRef& target);
     std::uint64_t nextGeometrySession_=0;
     bool territoryGeometryReady() const;
     bool boundaryGeometryReady() const;
@@ -791,6 +840,11 @@ private:
     ViewportResourceScheduler viewportResources_;
     QTimer viewportResourceTimer_;
     MapLabelEngine labelEngine_;
+    qulonglong labelCounterGeneration_=1;
+    PlaceRuntimeProvider placeRuntime_;
+    QString placeManifestPath_=QStringLiteral(":/place/manifest.json");
+    quint64 placeLabelRevision_=0;
+    QString placeLabelSignature_;
     QVariantList placedLabels_;
     LabelPlacementModel placedLabelModel_{this};
     std::map<pandoeditor::ObjectRef,QString> labelFlagSources_;
@@ -825,6 +879,23 @@ private:
     std::shared_ptr<TerrainTileProvider> terrainRasterProvider_,terrainDemProvider_;
     std::unique_ptr<TerrainImageBridge> terrainResourceBridge_;
     TerrainDisplayState terrainDisplay_;
+    QTimer terrainPreparationTimer_;
+    TerrainDisplayDemand terrainDemand_;
+    std::map<QString,TerrainTileSpec> terrainDemandSpecs_;
+    std::set<QString> terrainFailedPreparation_;
+    std::map<TerrainDisplayResourceId,TerrainRenderResource> terrainPrepared_;
+    std::map<TerrainDisplayResourceId,TerrainTileSpec> terrainPreparedSpecs_;
+    std::string terrainProjectInstance_;
+    quint64 terrainProjectGeneration_=0,terrainRequestSequence_=0;
+    QString terrainUploadedTint_;
+    QImage terrainTint_;
+    QString terrainTintContentKey_;
+    TerrainRenderStats terrainRenderStats_;
+    std::vector<TerrainDisplayDraw> terrainFallbackDraws_;
+    quint64 terrainDecodeReservations_=0,terrainPreparationDeferred_=0;
+    QFutureWatcher<TerrainRenderResource>* terrainDecodeWatcher_=nullptr;
+    bool terrainPreparePending_=false;
+    bool terrainWindowVisible_=true;
     std::weak_ptr<TerrainTileProvider> terrainDisplaySource_;
     int terrainAssetPending_=0;
     QVariantList terrainTiles_;

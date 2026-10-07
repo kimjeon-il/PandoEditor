@@ -3,6 +3,108 @@
 #include <utility>
 #include <algorithm>
 #include <set>
+#include <QCryptographicHash>
+#include <QMetaObject>
+#include <QPointer>
+#include "../renderer/terrainrendercontract.h"
+
+TerrainImageBridge::TerrainImageBridge(QObject* parent):QObject(parent) {
+    qRegisterMetaType<TerrainRenderObservation>();qRegisterMetaType<TerrainRenderOwnerSnapshot>();
+}
+QString TerrainImageBridge::imageContentKey(const QImage& image,quint64 sourceEpoch) {
+    if(image.isNull())return {};
+    const auto rgba=image.convertToFormat(QImage::Format_RGBA8888);
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    const auto dimensions=QByteArray::number(sourceEpoch)+":"+QByteArray::number(rgba.width())+":"+
+        QByteArray::number(rgba.height())+":";
+    hash.addData(dimensions);
+    for(int y=0;y<rgba.height();++y)
+        hash.addData(QByteArrayView(reinterpret_cast<const char*>(rgba.constScanLine(y)),qsizetype(rgba.width())*4));
+    return QStringLiteral("rgba-sha256:")+QString::fromLatin1(hash.result().toHex());
+}
+TerrainRenderResource TerrainImageBridge::prepareRenderResource(const TerrainTileSpec& spec,bool gray) const {
+    QString knownTint;
+    const auto source=source_;const auto epoch=sourceEpoch_;
+    const auto tint=source&&source->isDem()?source->loadTint():QImage{};
+    if(!tint.isNull()) {
+        // QImage allocation identity is only a memoization key. The published
+        // identity is the SHA of immutable pixels and source, never cacheKey.
+        std::lock_guard lock(tintIdentityMutex_);
+        if(tintIdentityEpoch_!=epoch||tintIdentityImageKey_!=tint.cacheKey()) {
+            tintIdentity_=imageContentKey(tint,epoch);
+            tintIdentityEpoch_=epoch;tintIdentityImageKey_=tint.cacheKey();
+        }
+        knownTint=tintIdentity_;
+    }
+    return prepareRenderResource(source,epoch,spec,gray,knownTint,tint.cacheKey());
+}
+TerrainRenderResource TerrainImageBridge::prepareRenderResource(std::shared_ptr<TerrainTileProvider> source,
+    quint64 sourceEpoch,const TerrainTileSpec& spec,bool gray,const QString& knownTintContentKey,qint64 knownTintCacheKey) {
+    TerrainRenderResource result;result.gray=gray;result.frame.sourceEpoch=sourceEpoch;
+    if(!source||!source->available())return result;
+    result.frame.dem=source->isDem();result.frame.gutter=source->gutter();result.frame.levelSize=source->levelSize(spec.level);
+    result.frame.image=source->loadTile(spec.level,spec.column,spec.row,false);
+    if(result.frame.dem)result.frame.tint=source->loadTint();
+    result.tintContentKey=result.frame.tint.isNull()?QString{}:
+        knownTintContentKey.isEmpty()||result.frame.tint.cacheKey()!=knownTintCacheKey?
+            imageContentKey(result.frame.tint,sourceEpoch):knownTintContentKey;
+    if(!result.frame.dem)result.frame.image=TerrainRenderContract::rasterDisplayImage(result.frame.image,gray);
+    result.resource={QStringLiteral("%1/%2/%3").arg(spec.level).arg(spec.column).arg(spec.row)+
+        (result.frame.dem?QStringLiteral("/raw"):gray?QStringLiteral("/raster-gray"):QStringLiteral("/raster-color")),
+        imageContentKey(result.frame.image,result.frame.sourceEpoch),spec.level,
+        {spec.west,spec.north,spec.east,spec.south}};
+    return result;
+}
+void TerrainImageBridge::setRenderInput(TerrainRenderInput input) {
+    {std::lock_guard lock(renderMutex_);renderInput_=std::make_shared<const TerrainRenderInput>(std::move(input));}
+    emit renderInputChanged();
+}
+std::shared_ptr<const TerrainRenderInput> TerrainImageBridge::renderInput() const {
+    std::lock_guard lock(renderMutex_);return renderInput_;
+}
+TerrainRenderOwnerSnapshot TerrainImageBridge::ownerSnapshot() const {
+    std::lock_guard lock(renderMutex_);return renderOwner_;
+}
+TerrainRenderStats TerrainImageBridge::renderStats() const {
+    std::lock_guard lock(renderMutex_);return renderStats_;
+}
+std::optional<TerrainRenderAdoption> TerrainImageBridge::renderAdoption() const {
+    std::lock_guard lock(renderMutex_);return renderAdoption_;
+}
+void TerrainImageBridge::acknowledgeDisplay(const TerrainDisplayReceipt& receipt,std::vector<TerrainDisplayResourceId> protectedIds) {
+    {std::lock_guard lock(renderMutex_);
+        if(!renderInput_||renderInput_->scope!=receipt.scope||!lastRenderReceipt_||
+           lastRenderReceipt_->scope!=receipt.scope||lastRenderReceipt_->candidateId!=receipt.candidateId||
+           lastRenderReceipt_->frameSequence!=receipt.frameSequence||lastRenderReceipt_->draws!=receipt.draws)return;
+        renderAdoption_=TerrainRenderAdoption{receipt,std::move(protectedIds)};
+    }
+    emit renderInputChanged();
+}
+void TerrainImageBridge::observeRender(TerrainRenderObservation observation) {
+    QMetaObject::invokeMethod(this,[this,observation=std::move(observation)]() mutable {
+        {std::lock_guard lock(renderMutex_);if(!renderInput_)return;
+            const auto& a=renderInput_->scope;const auto& b=observation.scope;
+            const bool sameOwner=a.sourceEpoch==b.sourceEpoch&&a.windowEpoch==b.windowEpoch&&
+                a.contextEpoch==b.contextEpoch&&a.projectGeneration==b.projectGeneration;
+            if(observation.kind==TerrainRenderObservation::ResourceRetired?!sameOwner:a!=b)return;
+            if(observation.kind!=TerrainRenderObservation::ResourceRetired&&!renderInput_->enabled)return;
+            renderStats_=observation.stats;
+            if(observation.kind==TerrainRenderObservation::DisplayReceipt&&observation.receipt)
+                lastRenderReceipt_=observation.receipt;
+        }
+        emit renderObserved(std::move(observation));
+    },Qt::QueuedConnection);
+}
+void TerrainImageBridge::observeOwner(TerrainRenderOwnerSnapshot owner) {
+    QMetaObject::invokeMethod(this,[this,owner] {
+        {std::lock_guard lock(renderMutex_);
+            if(owner.windowEpoch<renderOwner_.windowEpoch||
+              (owner.windowEpoch==renderOwner_.windowEpoch&&owner.contextEpoch<renderOwner_.contextEpoch))return;
+            renderOwner_=owner;lastRenderReceipt_.reset();renderAdoption_.reset();
+        }
+        emit renderOwnerChanged(owner);
+    },Qt::QueuedConnection);
+}
 
 void TerrainImageProvider::setSource(std::shared_ptr<TerrainTileProvider> source) {
     std::lock_guard lock(mutex_);source_=std::move(source);

@@ -6,6 +6,8 @@
 #include <queue>
 #include <stdexcept>
 #include <tuple>
+#include <type_traits>
+#include <string_view>
 
 namespace {
 constexpr double CellDegrees=10.0;
@@ -30,6 +32,13 @@ bool finiteSource(const MapLabelSource& source) {
 bool sourceOrder(const MapLabelSource& left,const MapLabelSource& right) {
     if(left.pinned!=right.pinned)return left.pinned>right.pinned;
     if(left.priority!=right.priority)return left.priority>right.priority;
+    // Web builtin and editable places both use label:<id> as their source key.
+    // Keep the native readonly domain distinct while comparing canonical keys.
+    const auto domain=[](const pandoeditor::ObjectRef& ref)->std::string_view {
+        return ref.domain=="placeBuiltin"?std::string_view("label"):std::string_view(ref.domain);
+    };
+    if(domain(left.ref)!=domain(right.ref))return domain(left.ref)<domain(right.ref);
+    if(left.ref.id!=right.ref.id)return left.ref.id<right.ref.id;
     if(left.ref!=right.ref)return left.ref<right.ref;
     return left.text<right.text;
 }
@@ -39,9 +48,9 @@ struct CollisionBox {
     std::string group;
 };
 
-bool overlaps(const CollisionBox& a,const CollisionBox& b) {
-    return a.group==b.group&&a.left<b.right&&a.right>b.left&&
-        a.top<b.bottom&&a.bottom>b.top;
+bool overlaps(const CollisionBox& a,const CollisionBox& b,double padding) {
+    return a.group==b.group&&!(a.right+padding<b.left||a.left-padding>b.right||
+        a.bottom+padding<b.top||a.top-padding>b.bottom);
 }
 
 std::pair<int,int> collisionRange(double minimum,double maximum,double cellSize) {
@@ -62,7 +71,7 @@ int MapLabelEngine::latitudeCell(double latitude) noexcept {
 
 void MapLabelEngine::setSources(std::vector<MapLabelSource> sources,
                                 std::uint64_t sourceRevision) {
-    if(!sourceRevision)throw std::invalid_argument("label source revision must be nonzero");
+    if(!sourceRevision||sources.size()>=BuiltinIndexBase)throw std::invalid_argument("label source revision must be nonzero and size bounded");
     sourceByRef_.clear();cells_.clear();pinned_.clear();accepted_.clear();placements_.clear();placedRefs_.clear();
     sources_.clear();sources_.reserve(sources.size());
     for(auto& source:sources) {
@@ -91,25 +100,66 @@ void MapLabelEngine::setSources(std::vector<MapLabelSource> sources,
     accountSources();accountWorkingSet();
 }
 
+void MapLabelEngine::invalidatePlacements() {
+    accepted_.clear();placements_.clear();placedRefs_.clear();
+    stats_.layoutRevision=0;stats_.placements=0;
+}
+const MapLabelSource& MapLabelEngine::sourceAt(std::size_t index) const {
+    return index>=BuiltinIndexBase?builtinSources_.at(index-BuiltinIndexBase):sources_.at(index);
+}
+bool MapLabelEngine::sourceAvailable(std::size_t index) const {
+    if(index<BuiltinIndexBase)return index<sources_.size();
+    const auto local=index-BuiltinIndexBase;
+    return local<builtinSources_.size()&&!builtinSuppressedIds_.count(builtinSources_[local].ref.id);
+}
+void MapLabelEngine::setBuiltinSources(std::vector<MapLabelSource> sources,std::uint64_t revision) {
+    if(!revision||sources.size()>=BuiltinIndexBase)throw std::invalid_argument("invalid builtin label source revision or size");
+    builtinSourceByRef_.clear();builtinCells_.clear();builtinPinned_.clear();invalidatePlacements();
+    std::vector<MapLabelSource> snapshot;snapshot.reserve(sources.size());
+    for(auto& source:sources) {
+        if(!finiteSource(source))continue;
+        source.geographic.x=normalizeLongitude(source.geographic.x);
+        const auto index=BuiltinIndexBase+snapshot.size();snapshot.push_back(std::move(source));
+        const auto& stored=snapshot.back();builtinSourceByRef_[stored.ref]=index;
+        builtinCells_[cellKey(longitudeCell(stored.geographic.x),latitudeCell(stored.geographic.y))].push_back(index);
+        if(stored.pinned)builtinPinned_.push_back(index);
+    }
+    builtinSources_.swap(snapshot);
+    for(auto& [unused,indices]:builtinCells_) {
+        (void)unused;std::stable_sort(indices.begin(),indices.end(),[&](std::size_t a,std::size_t b){return sourceOrder(sourceAt(a),sourceAt(b));});
+    }
+    stats_.builtinSourceRevision=revision;++stats_.builtinSourceRebuilds;
+    stats_.builtinSourceCount=builtinSources_.size();stats_.builtinCellCount=builtinCells_.size();
+    accountSources();accountWorkingSet();
+}
+void MapLabelEngine::setBuiltinSuppressedIds(std::set<std::string> ids) {
+    if(ids==builtinSuppressedIds_)return;
+    builtinSuppressedIds_=std::move(ids);invalidatePlacements();accountSources();accountWorkingSet();
+}
+
 std::vector<int> MapLabelEngine::visibleCells(
-    const MapViewState& view,double paddingPixels) const {
+    const MapViewState& view,double paddingPixels,const std::map<int,std::vector<std::size_t>>& sourceCells,bool wrapped) const {
     std::vector<int> result;
-    if(cells_.empty())return result;
+    if(sourceCells.empty())return result;
     if(view.mode==ProjectionMode::Flat) {
         const auto topLeft=unprojectFlat(-paddingPixels,-paddingPixels,view);
         const auto bottomRight=unprojectFlat(view.viewportWidth+paddingPixels,
                                              view.viewportHeight+paddingPixels,view);
         const double south=std::max(-90.0,std::min(topLeft.y,bottomRight.y));
         const double north=std::min(90.0,std::max(topLeft.y,bottomRight.y));
-        const double west=std::min(topLeft.x,bottomRight.x);
-        const double east=std::max(topLeft.x,bottomRight.x);
-        if(east<-180||west>180)return result;
-        const int y0=latitudeCell(south),y1=latitudeCell(north);
-        const int x0=longitudeCell(std::max(-179.999999,west));
-        const int x1=longitudeCell(std::min(179.999999,east));
-        for(int y=y0;y<=y1;++y)for(int x=x0;x<=x1;++x) {
-            const int key=cellKey(x,y);
-            if(cells_.count(key))result.push_back(key);
+        const auto offsets=wrapped?visibleFlatWorldOffsets(view):std::vector<double>{0};
+        std::set<int> seen;
+        for(const double offset:offsets) {
+            const double west=std::min(topLeft.x,bottomRight.x)-offset;
+            const double east=std::max(topLeft.x,bottomRight.x)-offset;
+            if(east<-180||west>180)continue;
+            const int y0=latitudeCell(south),y1=latitudeCell(north);
+            const int x0=longitudeCell(std::max(-179.999999,west));
+            const int x1=longitudeCell(std::min(179.999999,east));
+            for(int y=y0;y<=y1;++y)for(int x=x0;x<=x1;++x) {
+                const int key=cellKey(x,y);
+                if(sourceCells.count(key)&&seen.insert(key).second)result.push_back(key);
+            }
         }
         return result;
     }
@@ -121,7 +171,7 @@ std::vector<int> MapLabelEngine::visibleCells(
     constexpr double cellRadiusRadians=8.0*3.14159265358979323846/180.0;
     const double projectedRadius=view.scale*std::sin(cellRadiusRadians);
     const double frontMargin=std::sin(cellRadiusRadians);
-    for(const auto& [key,unused]:cells_) {
+    for(const auto& [key,unused]:sourceCells) {
         (void)unused;
         const int x=key%36,y=key/36;
         const pandoeditor::Point center{
@@ -140,9 +190,19 @@ std::vector<int> MapLabelEngine::visibleCells(
 
 bool MapLabelEngine::projectPlacement(
     std::size_t index,const MapViewState& view,MapLabelPlacement& output) const {
-    if(index>=sources_.size())return false;
-    const auto& source=sources_[index];
-    const auto projected=projectPoint(source.geographic,view);
+    if(!sourceAvailable(index))return false;
+    const auto& source=sourceAt(index);
+    auto projected=projectPoint(source.geographic,view);
+    if(index>=BuiltinIndexBase&&view.mode==ProjectionMode::Flat) {
+        // Canonical provider identities stay fixed while drawing one nearest
+        // native world replica, including translation-based dateline panning.
+        double distance=std::numeric_limits<double>::infinity();
+        for(const double offset:visibleFlatWorldOffsets(view)) {
+            const auto candidate=projectPoint(source.geographic,view,offset);
+            const auto gap=std::abs(candidate.x-view.viewportWidth/2);
+            if(candidate.finite&&gap<distance){projected=candidate;distance=gap;}
+        }
+    }
     if(!projected.finite||!projected.visibleHemisphere)return false;
     output={source.ref,source.text,source.geographic,projected.x,projected.y,
             source.width,source.height,source.pinned,source.nameVisible,source.flagVisible};
@@ -161,50 +221,107 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
         throw std::invalid_argument("invalid label layout options");
 
     ++stats_.queries;++stats_.layouts;
-    const auto cells=visibleCells(view,64);
     struct Cursor {
         int key=0;
         std::size_t position=0,source=0;
+        bool builtin=false;
     };
     struct Worse {
-        const std::vector<MapLabelSource>* sources=nullptr;
+        const MapLabelEngine* engine=nullptr;
         bool operator()(const Cursor& a,const Cursor& b) const {
-            return sourceOrder(sources->at(b.source),sources->at(a.source));
+            return sourceOrder(engine->sourceAt(b.source),engine->sourceAt(a.source));
         }
     };
-    std::priority_queue<Cursor,std::vector<Cursor>,Worse> queue{Worse{&sources_}};
-    for(const auto key:cells)if(!cells_.at(key).empty()) {
-        const auto& bucket=cells_.at(key);
-        queue.push({key,0,bucket.front()});
-    }
+    std::priority_queue<Cursor,std::vector<Cursor>,Worse> queue{Worse{this}};
+    const auto enqueue=[&](const auto& sourceCells,bool builtin) {
+        for(const auto key:visibleCells(view,64,sourceCells,builtin))if(!sourceCells.at(key).empty()) {
+            const auto& bucket=sourceCells.at(key);queue.push({key,0,bucket.front(),builtin});
+        }
+    };
+    enqueue(cells_,false);enqueue(builtinCells_,true);
 
-    std::vector<std::size_t> candidates;
-    candidates.reserve(std::min(options.maxCandidates,sources_.size()));
-    std::set<std::size_t> seen;
+    const auto candidateLimit=std::min(options.maxCandidates,MapLabelCandidateLimit);
+    const double contentBottom=std::max(0.0,options.viewportHeight-options.bottomInset);
+    const auto orderedBefore=[&](std::size_t a,std::size_t b) {
+        const bool aSelected=selected.count(sourceAt(a).ref);
+        const bool bSelected=selected.count(sourceAt(b).ref);
+        if(aSelected!=bSelected)return aSelected>bSelected;
+        if(sourceOrder(sourceAt(a),sourceAt(b)))return true;
+        if(sourceOrder(sourceAt(b),sourceAt(a)))return false;
+        return a<b;
+    };
+    std::optional<std::set<std::size_t>> qualityCandidates;
+    const auto visibleCandidate=[&](std::size_t index,bool forced) {
+        if(!forced&&qualityCandidates&&!qualityCandidates->count(index))return false;
+        if(!sourceAvailable(index))return false;
+        const auto& source=sourceAt(index);
+        if(options.zoom<source.minZoom||options.zoom>source.maxZoom)return false;
+        if(!source.nameVisible&&(!source.flagVisible||options.zoom<MapFlagMinZoom))return false;
+        MapLabelPlacement p;if(!projectPlacement(index,view,p))return false;
+        return forced||(p.x-source.width/2>=0&&p.x+source.width/2<=options.viewportWidth&&
+            p.y-source.height/2>=0&&p.y+source.height/2<=contentBottom);
+    };
+    // The fixed Web cap follows zoom/projection/bounds filtering and includes
+    // selected/pinned sources. Bound their temporary storage even for a large
+    // selection, then fill remaining slots through the existing spatial heap.
+    std::set<std::size_t,decltype(orderedBefore)> forced(orderedBefore);
     const auto addForced=[&](std::size_t index) {
-        if(index<sources_.size()&&seen.insert(index).second)candidates.push_back(index);
+        if(!visibleCandidate(index,true))return;
+        forced.insert(index);if(forced.size()>candidateLimit)forced.erase(std::prev(forced.end()));
     };
     for(const auto index:pinned_)addForced(index);
-    for(const auto& ref:selected)
+    for(const auto index:builtinPinned_)addForced(index);
+    for(const auto& ref:selected) {
         if(const auto found=sourceByRef_.find(ref);found!=sourceByRef_.end())
             addForced(found->second);
+        else if(const auto found=builtinSourceByRef_.find(ref);found!=builtinSourceByRef_.end())
+            addForced(found->second);
+    }
 
-    while(!queue.empty()&&candidates.size()<options.maxCandidates) {
+    if(options.labelDensity) {
+        auto density=*options.labelDensity;
+        if(density==0||std::isnan(density))density=1; // Number(value) || 1
+        density=std::clamp(density,.25,1.);
+        const double backgroundLimit=density>=.99?double(MapLabelCandidateLimit):
+            std::max(density<.6?42.:72.,std::floor(options.viewportWidth*options.viewportHeight/8500*density));
+        const auto available=sources_.size()+builtinSources_.size();
+        const auto limit=backgroundLimit>=double(available)?available:std::size_t(backgroundLimit);
+        const auto qualityBefore=[&](std::size_t a,std::size_t b) {
+            const auto pa=sourceAt(a).priority,pb=sourceAt(b).priority;
+            return pa!=pb?pa>pb:a<b; // Web stable priority sort, original source order
+        };
+        std::set<std::size_t,decltype(qualityBefore)> background(qualityBefore);
+        auto scan=queue;
+        while(!scan.empty()) {
+            const auto cursor=scan.top();scan.pop();
+            const auto& bucket=cursor.builtin?builtinCells_.at(cursor.key):cells_.at(cursor.key);
+            const auto index=cursor.source;const auto& source=sourceAt(index);
+            // App prefilter runs after geographic projection/zoom and before
+            // layout box bounds. Selected and pinned sources have no quota here.
+            if(!source.pinned&&!selected.count(source.ref)&&visibleCandidate(index,true)) {
+                background.insert(index);
+                if(background.size()>limit)background.erase(std::prev(background.end()));
+            }
+            if(cursor.position+1<bucket.size())
+                scan.push({cursor.key,cursor.position+1,bucket[cursor.position+1],cursor.builtin});
+        }
+        qualityCandidates.emplace(background.begin(),background.end());
+    }
+
+    std::vector<std::size_t> candidates(forced.begin(),forced.end());
+    candidates.reserve(std::min(candidateLimit,sources_.size()+builtinSources_.size()));
+    while(!queue.empty()&&candidates.size()<candidateLimit) {
         const auto cursor=queue.top();queue.pop();
-        const auto& bucket=cells_.at(cursor.key);
+        const auto& bucket=cursor.builtin?builtinCells_.at(cursor.key):cells_.at(cursor.key);
         const auto index=cursor.source;
-        if(seen.insert(index).second)candidates.push_back(index);
+        const auto& source=sourceAt(index);
+        if(!source.pinned&&!selected.count(source.ref)&&visibleCandidate(index,false))candidates.push_back(index);
         if(cursor.position+1<bucket.size())
-            queue.push({cursor.key,cursor.position+1,bucket[cursor.position+1]});
+            queue.push({cursor.key,cursor.position+1,bucket[cursor.position+1],cursor.builtin});
     }
     stats_.candidatesExamined+=candidates.size();
 
-    std::stable_sort(candidates.begin(),candidates.end(),[&](std::size_t a,std::size_t b) {
-        const bool aSelected=selected.count(sources_[a].ref);
-        const bool bSelected=selected.count(sources_[b].ref);
-        if(aSelected!=bSelected)return aSelected>bSelected;
-        return sourceOrder(sources_[a],sources_[b]);
-    });
+    std::stable_sort(candidates.begin(),candidates.end(),orderedBefore);
 
     accepted_.clear();placements_.clear();placedRefs_.clear();
     accepted_.reserve(std::min(options.maxPlaced,candidates.size()));
@@ -213,11 +330,10 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
     placedBoxes.reserve(std::min(options.maxPlaced,candidates.size()));
     constexpr double CollisionCell=64.0;
     std::map<std::pair<int,int>,std::vector<std::size_t>> collisionGrid;
-    const double contentBottom=std::max(0.0,options.viewportHeight-options.bottomInset);
 
     for(const auto index:candidates) {
         if(accepted_.size()>=options.maxPlaced)break;
-        const auto& source=sources_[index];
+        const auto& source=sourceAt(index);
         if(options.zoom<source.minZoom||options.zoom>source.maxZoom)continue;
         if(!source.nameVisible&&(!source.flagVisible||options.zoom<MapFlagMinZoom))continue;
         MapLabelPlacement placement;
@@ -228,23 +344,25 @@ const std::vector<MapLabelPlacement>& MapLabelEngine::layout(
                     placement.y-halfH<0||placement.y+halfH>contentBottom))
             continue;
         CollisionBox box{
-            placement.x-halfW-options.collisionPadding,
-            placement.y-halfH-options.collisionPadding,
-            placement.x+halfW+options.collisionPadding,
-            placement.y+halfH+options.collisionPadding,
+            placement.x-halfW,
+            placement.y-halfH,
+            placement.x+halfW,
+            placement.y+halfH,
             source.collisionGroup};
         bool collision=false;
-        const auto xr=collisionRange(box.left,box.right,CollisionCell);
-        const auto yr=collisionRange(box.top,box.bottom,CollisionCell);
+        const auto xr=collisionRange(box.left-options.collisionPadding,box.right+options.collisionPadding,CollisionCell);
+        const auto yr=collisionRange(box.top-options.collisionPadding,box.bottom+options.collisionPadding,CollisionCell);
         if(!forced)for(int y=yr.first;y<=yr.second&&!collision;++y)
             for(int x=xr.first;x<=xr.second&&!collision;++x)
                 if(const auto cell=collisionGrid.find({x,y});cell!=collisionGrid.end())
                     for(const auto placedIndex:cell->second)
-                        if(overlaps(box,placedBoxes[placedIndex])){collision=true;break;}
+                        if(overlaps(box,placedBoxes[placedIndex],options.collisionPadding)){collision=true;break;}
         if(collision)continue;
         const auto placedIndex=placedBoxes.size();
         placedBoxes.push_back(std::move(box));
-        for(int y=yr.first;y<=yr.second;++y)for(int x=xr.first;x<=xr.second;++x)
+        const auto insertX=collisionRange(placedBoxes.back().left,placedBoxes.back().right,CollisionCell);
+        const auto insertY=collisionRange(placedBoxes.back().top,placedBoxes.back().bottom,CollisionCell);
+        for(int y=insertY.first;y<=insertY.second;++y)for(int x=insertX.first;x<=insertX.second;++x)
             collisionGrid[{x,y}].push_back(placedIndex);
         accepted_.push_back(index);
         placedRefs_.insert(placement.ref);
@@ -336,6 +454,8 @@ void MapLabelEngine::clear() {
     decltype(sources_){}.swap(sources_);sourceByRef_.clear();cells_.clear();
     decltype(pinned_){}.swap(pinned_);decltype(accepted_){}.swap(accepted_);
     decltype(placements_){}.swap(placements_);placedRefs_.clear();
+    decltype(builtinSources_){}.swap(builtinSources_);builtinSourceByRef_.clear();builtinCells_.clear();
+    decltype(builtinPinned_){}.swap(builtinPinned_);builtinSuppressedIds_.clear();
     stats_={};sourceBytes_=0;resourcePolicy_.resetScope();
 }
 
@@ -353,19 +473,26 @@ std::size_t labelStringStorage(const std::string& text) {
 }
 }
 void MapLabelEngine::accountSources() {
-    std::size_t bytes=0;labelBytesAdd(bytes,sources_.capacity(),sizeof(MapLabelSource));
-    for(const auto& source:sources_) {
-        labelBytesAdd(bytes,labelStringStorage(source.text));
-        labelBytesAdd(bytes,labelStringStorage(source.collisionGroup));
-        labelBytesAdd(bytes,labelStringStorage(source.ref.domain));
-        labelBytesAdd(bytes,labelStringStorage(source.ref.id));
-    }
-    // Container-node allocator bookkeeping is intentionally outside payload accounting.
-    labelBytesAdd(bytes,sourceByRef_.size(),sizeof(decltype(sourceByRef_)::value_type));
-    for(const auto& item:sourceByRef_){labelBytesAdd(bytes,labelStringStorage(item.first.domain));labelBytesAdd(bytes,labelStringStorage(item.first.id));}
-    labelBytesAdd(bytes,cells_.size(),sizeof(decltype(cells_)::value_type));
-    for(const auto& cell:cells_)labelBytesAdd(bytes,cell.second.capacity(),sizeof(std::size_t));
-    labelBytesAdd(bytes,pinned_.capacity(),sizeof(std::size_t));sourceBytes_=bytes;
+    std::size_t bytes=0;
+    const auto bucket=[&](const auto& sources,const auto& byRef,const auto& cells,const auto& pinned) {
+        labelBytesAdd(bytes,sources.capacity(),sizeof(MapLabelSource));
+        for(const auto& source:sources) {
+            labelBytesAdd(bytes,labelStringStorage(source.text));
+            labelBytesAdd(bytes,labelStringStorage(source.collisionGroup));
+            labelBytesAdd(bytes,labelStringStorage(source.ref.domain));
+            labelBytesAdd(bytes,labelStringStorage(source.ref.id));
+        }
+        // Container-node allocator bookkeeping stays outside payload accounting.
+        labelBytesAdd(bytes,byRef.size(),sizeof(typename std::decay_t<decltype(byRef)>::value_type));
+        for(const auto& item:byRef){labelBytesAdd(bytes,labelStringStorage(item.first.domain));labelBytesAdd(bytes,labelStringStorage(item.first.id));}
+        labelBytesAdd(bytes,cells.size(),sizeof(typename std::decay_t<decltype(cells)>::value_type));
+        for(const auto& cell:cells)labelBytesAdd(bytes,cell.second.capacity(),sizeof(std::size_t));
+        labelBytesAdd(bytes,pinned.capacity(),sizeof(std::size_t));
+    };
+    bucket(sources_,sourceByRef_,cells_,pinned_);bucket(builtinSources_,builtinSourceByRef_,builtinCells_,builtinPinned_);
+    labelBytesAdd(bytes,builtinSuppressedIds_.size(),sizeof(std::string));
+    for(const auto& id:builtinSuppressedIds_)labelBytesAdd(bytes,labelStringStorage(id));
+    sourceBytes_=bytes;
 }
 void MapLabelEngine::accountWorkingSet() {
     std::size_t bytes=sourceBytes_;

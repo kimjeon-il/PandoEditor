@@ -15,6 +15,9 @@ struct HistoricalAddRequest {
     // An unresolved historical subunit can explicitly become a country.
     bool asIndependentCountry=false;
     std::string countryName;
+    // Project identity is independent of immutable catalog source identity.
+    // Empty preserves explicit custom-source callers; production v2 supplies a UUID.
+    std::string instanceId;
 };
 struct HistoricalAddition {
     HistoricalSelection selection;
@@ -23,6 +26,10 @@ struct HistoricalAddition {
     bool partialApproved=false;
     bool asIndependentCountry=false;
     std::string countryName;
+    std::string instanceId;
+    std::optional<CountryDetails> initialCountryDetails;
+    std::optional<TerritorialSymbolStyle> initialSymbolStyle;
+    std::optional<ObjectStyle> initialObjectStyle;
 };
 struct HistoricalInstantiationPlan {
     std::string projectInstanceId,documentId;
@@ -37,6 +44,12 @@ struct HistoricalInstantiationPlan {
 };
 HistoricalInstantiationPlan planHistorical(const ProjectSnapshot&,
     const HistoricalLibrary&,const std::vector<HistoricalAddRequest>&,
+    const std::vector<GeometryReplacement>& territoryReplacements={},
+    const std::map<ObjectRef,ObjectRef>& territoryTransfers={});
+// Catalog adapter has already selected exact dated boundaries and copied source
+// provenance into static selections. No alternate catalog or JSON reader here.
+HistoricalInstantiationPlan planHistoricalSelections(const ProjectSnapshot&,
+    const std::vector<HistoricalAddition>&,
     const std::vector<GeometryReplacement>& territoryReplacements={},
     const std::map<ObjectRef,ObjectRef>& territoryTransfers={});
 HistoricalInstantiationPlan planIndependentHistorical(const ProjectSnapshot&,

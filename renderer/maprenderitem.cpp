@@ -1,10 +1,12 @@
 #include "maprenderitem.h"
+#include "interactionrenderstyle.h"
 #include <pandoeditor/map/projectionengine.h>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPen>
 #include <QPolygonF>
 #include <QElapsedTimer>
+#include <QQuickWindow>
 #include <algorithm>
 #include <cmath>
 #include <set>
@@ -32,11 +34,78 @@ bool visibleCountry(const std::vector<bool>& mask,std::size_t index) {
 }
 
 MapRenderItem::MapRenderItem(QQuickItem* parent):QQuickPaintedItem(parent) {
+    qRegisterMetaType<std::shared_ptr<const MapFrame>>();
+    connect(this,&QQuickItem::windowChanged,this,&MapRenderItem::attachPresentationWindow);
+    if(window())attachPresentationWindow(window());
     setAntialiasing(true);
     setOpaquePainting(false);
     connect(this,&QQuickItem::visibleChanged,this,[this] {
         if(isVisible()) {if(sceneBridge_)syncSceneBridge();else update();}
     });
+}
+
+MapRenderItem::~MapRenderItem() {
+    disconnect(this,nullptr,this,nullptr);
+    if(presentationWindow_)disconnect(presentationWindow_,nullptr,this,nullptr);
+    if(sceneBridge_)disconnect(sceneBridge_,nullptr,this,nullptr);
+    ++presentationWindowGeneration_;++presentationContextGeneration_;++presentationBridgeGeneration_;
+}
+
+void MapRenderItem::attachPresentationWindow(QQuickWindow* next) {
+    if(presentationWindow_)disconnect(presentationWindow_,nullptr,this,nullptr);
+    presentationWindow_=next;
+    const auto generation=++presentationWindowGeneration_;++presentationContextGeneration_;
+    {std::lock_guard lock(presentationMutex_);paintedFrame_.reset();presentationFrame_.reset();}
+    if(!next)return;
+    const auto invalidate=[this,generation] {
+        if(presentationWindowGeneration_.load()!=generation)return;
+        ++presentationContextGeneration_;
+        std::lock_guard lock(presentationMutex_);paintedFrame_.reset();presentationFrame_.reset();
+    };
+    connect(next,&QQuickWindow::sceneGraphInitialized,this,invalidate,Qt::DirectConnection);
+    connect(next,&QQuickWindow::sceneGraphInvalidated,this,invalidate,Qt::DirectConnection);
+    connect(next,&QQuickWindow::beforeFrameBegin,this,[this,generation] {
+        if(presentationWindowGeneration_.load()!=generation)return;
+        std::lock_guard lock(presentationMutex_);++presentationSequence_;
+        presentationFrame_.reset();presentationEnded_=presentationSwapped_=false;
+    },Qt::DirectConnection);
+    connect(next,&QQuickWindow::afterSynchronizing,this,[this,generation] {
+        if(presentationWindowGeneration_.load()!=generation)return;
+        std::lock_guard lock(presentationMutex_);
+        presentationFrame_=paintedFrame_;presentationStrokeInventory_=paintedStrokeInventory_;
+        capturedContextGeneration_=presentationContextGeneration_.load();
+        capturedBridgeGeneration_=presentationBridgeGeneration_.load();
+    },Qt::DirectConnection);
+    connect(next,&QQuickWindow::afterFrameEnd,this,[this,generation] {
+        if(presentationWindowGeneration_.load()!=generation)return;
+        {std::lock_guard lock(presentationMutex_);presentationEnded_=true;}publishPresentation();
+    },Qt::DirectConnection);
+    connect(next,&QQuickWindow::frameSwapped,this,[this,generation] {
+        if(presentationWindowGeneration_.load()!=generation)return;
+        {std::lock_guard lock(presentationMutex_);presentationSwapped_=true;}publishPresentation();
+    },Qt::DirectConnection);
+}
+
+void MapRenderItem::publishPresentation() {
+    std::shared_ptr<const MapFrame> frame;QVariantList inventory;
+    const auto windowGeneration=presentationWindowGeneration_.load();qulonglong contextGeneration=0,bridgeGeneration=0;
+    {std::lock_guard lock(presentationMutex_);
+        if(!presentationEnded_||!presentationSwapped_||!presentationFrame_||presentationSequence_==publishedPresentationSequence_)return;
+        frame=presentationFrame_;inventory=presentationStrokeInventory_;publishedPresentationSequence_=presentationSequence_;
+        contextGeneration=capturedContextGeneration_;bridgeGeneration=capturedBridgeGeneration_;}
+    QMetaObject::invokeMethod(this,[this,frame,inventory,windowGeneration,contextGeneration,bridgeGeneration] {
+        if(!isVisible()||presentationWindowGeneration_.load()!=windowGeneration||
+            presentationContextGeneration_.load()!=contextGeneration||presentationBridgeGeneration_.load()!=bridgeGeneration)return;
+        // Same actual Qt frame completed submission and swap. No GPU fence or
+        // compositor receipt is implied by this CPU fallback observation.
+        emit framePresented(frame,inventory);
+    },Qt::QueuedConnection);
+}
+
+QSGNode* MapRenderItem::updatePaintNode(QSGNode* previous,UpdatePaintNodeData* data) {
+    paintingForSceneGraph_=true;
+    auto* result=QQuickPaintedItem::updatePaintNode(previous,data);
+    paintingForSceneGraph_=false;return result;
 }
 
 void MapRenderItem::setSmoothLines(bool value) {
@@ -50,12 +119,16 @@ void MapRenderItem::setSmoothLines(bool value) {
 void MapRenderItem::setSceneBridge(QObject* value) {
     auto* next=qobject_cast<MapSceneBridge*>(value);
     if(sceneBridge_==next)return;
+    ++presentationBridgeGeneration_;
+    {std::lock_guard lock(presentationMutex_);paintedFrame_.reset();presentationFrame_.reset();}
     if(sceneBridge_)disconnect(sceneBridge_,nullptr,this,nullptr);
     sceneBridge_=next;
     if(sceneBridge_) {
         connect(sceneBridge_,&MapSceneBridge::sceneChanged,this,[this]{syncSceneBridge();});
         connect(sceneBridge_,&MapSceneBridge::viewChanged,this,[this]{syncSceneBridge();});
         connect(sceneBridge_,&QObject::destroyed,this,[this]{
+            ++presentationBridgeGeneration_;
+            {std::lock_guard lock(presentationMutex_);paintedFrame_.reset();presentationFrame_.reset();}
             sceneBridge_=nullptr;
             scene_.reset();frame_.reset();
             emit sceneBridgeChanged();
@@ -93,6 +166,13 @@ void MapRenderItem::paint(QPainter* painter) {
     const auto& worldPlan=*frame_->worldPlan;
     const auto copies=worldPlan.worldOffsets.empty()?
         visibleFlatWorldOffsets(view_):worldPlan.worldOffsets;
+    QVariantList actualStrokes;
+    const auto recordStroke=[&](const pandoeditor::ObjectRef& ref,const pandoeditor::GeometryRef& geometry,float alpha) {
+        if(ref.id.empty()||geometry.id.empty()||alpha<=0)return;
+        const QVariantMap identity{{"domain",QString::fromStdString(ref.domain)},{"id",QString::fromStdString(ref.id)},
+            {"geometryId",QString::fromStdString(geometry.id)},{"geometryVersion",qulonglong(geometry.version)}};
+        if(!actualStrokes.contains(identity))actualStrokes.push_back(identity);
+    };
 
     const auto drawPolygon=[&](QPainter* target,const PolygonDrawPacket& draw,double offset,
                                const RenderStyle* overrideStyle=nullptr) {
@@ -124,6 +204,7 @@ void MapRenderItem::paint(QPainter* painter) {
 
     const auto drawStroke=[&](const StrokeDrawPacket& draw,double offset,
                               const RenderStyle& style) {
+        if(style.width<=0||style.alpha<=0)return;
         const auto& packet=draw.geometryPacket;
         if(!packet.startsEnds||!packet.segmentCount)return;
         const auto& segments=*packet.startsEnds;
@@ -132,10 +213,10 @@ void MapRenderItem::paint(QPainter* painter) {
         painter->save();
         applyComposition(painter,style);
         if(!variable) {
-            QPen pen(colorFor(style),std::max(.1f,style.width),
+            QPen pen(colorFor(style),style.width,
                      Qt::SolidLine,Qt::RoundCap,Qt::RoundJoin);
             if(style.dashOn>0&&style.dashOff>0)
-                pen.setDashPattern({qreal(style.dashOn),qreal(style.dashOff)});
+                pen.setDashPattern({qreal(style.dashOn/style.width),qreal(style.dashOff/style.width)});
             painter->setPen(pen);painter->setBrush(Qt::NoBrush);
         } else {
             painter->setPen(Qt::NoPen);painter->setBrush(colorFor(style));
@@ -147,6 +228,7 @@ void MapRenderItem::paint(QPainter* painter) {
             if(!a.finite||!b.finite||!a.visibleHemisphere||!b.visibleHemisphere)continue;
             if(!variable) {
                 painter->drawLine(QPointF(a.x,a.y),QPointF(b.x,b.y));
+                recordStroke(draw.object,draw.geometry,style.alpha);
                 continue;
             }
             const double wa=std::max(.1,double(packet.endpointWidths->at(i*2))+style.width);
@@ -161,6 +243,7 @@ void MapRenderItem::paint(QPainter* painter) {
                                        pb-normal*hb,pa-normal*ha});
             shape.closeSubpath();
             painter->drawPath(shape);
+            recordStroke(draw.object,draw.geometry,style.alpha);
         }
         painter->restore();
     };
@@ -228,8 +311,11 @@ void MapRenderItem::paint(QPainter* painter) {
                     mesh.positionsMicrodegrees[ai*2+1]/1e6},view_,offset);
                 const auto b=projectPoint({mesh.positionsMicrodegrees[bi*2]/1e6,
                     mesh.positionsMicrodegrees[bi*2+1]/1e6},view_,offset);
-                if(a.finite&&b.finite&&a.visibleHemisphere&&b.visibleHemisphere)
+                if(a.finite&&b.finite&&a.visibleHemisphere&&b.visibleHemisphere) {
                     painter->drawLine(QPointF(a.x,a.y),QPointF(b.x,b.y));
+                    if(country<scene_->worldBase->ranges.size())recordStroke({"territorial",base.id},
+                        {scene_->worldBase->ranges[country].geometryId,1},style.alpha);
+                }
             }
         }
         painter->restore();
@@ -311,50 +397,62 @@ void MapRenderItem::paint(QPainter* painter) {
     };
 
     const auto outline=[&](const pandoeditor::ObjectRef& ref,double offset,
-                           std::uint32_t color,float width,bool vertices=false) {
+                           mapstyle::InteractionRole role,bool vertices=false) {
+        const auto highlight=fixedInteractionStyle(role,scene_->interaction.styleOptions,view_);
+        if(highlight.fillAlpha>0) {
+            auto tint=highlight;tint.alpha=highlight.fillAlpha;tint.fillAlpha=1;
+            for(const auto& draw:scene_->polygons)if(draw.object==ref)drawPolygon(painter,draw,offset,&tint);
+        }
         for(const auto& draw:scene_->strokes)if(draw.object==ref) {
-            auto style=draw.style;style.color=color;style.alpha=1;
-            style.width=width;style.dashOn=style.dashOff=0;
+            auto style=highlight;style.blendMode=draw.style.blendMode;
             drawStroke(draw,offset,style);
-            if(vertices)strokeVertices(draw,offset,color);
+            if(vertices)strokeVertices(draw,offset,highlight.color);
         }
         for(const auto& draw:scene_->points)if(draw.object==ref) {
-            RenderStyle style;style.color=color;style.alpha=1;
-            drawPoint(draw,offset,style,6);
+            drawPoint(draw,offset,highlight,6);
         }
     };
 
     for(const double offset:copies) {
         const auto worldOutline=[&](const pandoeditor::ObjectRef& ref,
-                                    std::uint32_t color,float width) {
+                                    mapstyle::InteractionRole role) {
             if(ref.domain!="territorial"||!scene_->worldBase||
                !scene_->worldBase->mesh||scene_->worldBase->startupPreview())return;
-            RenderStyle style;style.color=color;style.alpha=1;style.width=width;
+            const auto style=fixedInteractionStyle(role,scene_->interaction.styleOptions,view_);
+            if(style.fillAlpha>0) {
+                auto tint=style;tint.alpha=style.fillAlpha;tint.fillAlpha=1;
+                for(const auto index:worldRangeIndicesForOwner(*scene_->worldBase,ref.id))drawWorld(PrimitiveKind::WorldFill,index,offset,&tint);
+            }
+            if(style.width<=0||style.alpha<=0)return;
             for(const auto index:worldRangeIndicesForOwner(*scene_->worldBase,ref.id))
                 drawWorld(PrimitiveKind::WorldStroke,index,offset,&style);
         };
         for(const auto& candidate:scene_->interaction.candidates)
             if(!containsRef(scene_->interaction.selected,candidate)) {
-                outline(candidate,offset,0x8abddd,1.5f);
-                worldOutline(candidate,0x8abddd,1.5f);
+                outline(candidate,offset,mapstyle::InteractionRole::Candidate);
+                worldOutline(candidate,mapstyle::InteractionRole::Candidate);
             }
         if(scene_->interaction.hover&&
            !containsRef(scene_->interaction.selected,*scene_->interaction.hover)) {
-            outline(*scene_->interaction.hover,offset,0x4083bc,2.f);
-            worldOutline(*scene_->interaction.hover,0x4083bc,2.f);
+            outline(*scene_->interaction.hover,offset,mapstyle::InteractionRole::Hover);
+            worldOutline(*scene_->interaction.hover,mapstyle::InteractionRole::Hover);
         }
         for(const auto& selected:scene_->interaction.selected)
             if(!scene_->interaction.primary||selected!=*scene_->interaction.primary) {
-                outline(selected,offset,0x163e64,2.f,true);
-                worldOutline(selected,0x163e64,2.f);
+                outline(selected,offset,mapstyle::InteractionRole::Secondary,true);
+                worldOutline(selected,mapstyle::InteractionRole::Secondary);
             }
         if(scene_->interaction.primary) {
-            outline(*scene_->interaction.primary,offset,0x163e64,3.f,true);
-            worldOutline(*scene_->interaction.primary,0x163e64,3.f);
+            outline(*scene_->interaction.primary,offset,mapstyle::InteractionRole::Primary,true);
+            worldOutline(*scene_->interaction.primary,mapstyle::InteractionRole::Primary);
         }
         if(scene_->interaction.editTarget) {
-            outline(*scene_->interaction.editTarget,offset,0xe89b1a,3.5f,true);
-            worldOutline(*scene_->interaction.editTarget,0xe89b1a,3.5f);
+            outline(*scene_->interaction.editTarget,offset,mapstyle::InteractionRole::EditTarget,true);
+            worldOutline(*scene_->interaction.editTarget,mapstyle::InteractionRole::EditTarget);
         }
+    }
+    if(paintingForSceneGraph_) {
+        std::lock_guard lock(presentationMutex_);
+        paintedFrame_=frame_;paintedStrokeInventory_=std::move(actualStrokes);
     }
 }

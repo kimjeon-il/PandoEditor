@@ -60,9 +60,31 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         connect(projectPreview_.get(),&ProjectPreviewService::generationFailed,this,&EditorController::errorOccurred);
     }
     terrainResourceBridge_=std::make_unique<TerrainImageBridge>(this);
+    terrainPreparationTimer_.setSingleShot(true);terrainPreparationTimer_.setInterval(500);
+    connect(&terrainPreparationTimer_,&QTimer::timeout,this,[this]{updateTerrainDemand(true);});
+    connect(terrainResourceBridge_.get(),&TerrainImageBridge::renderObserved,this,&EditorController::observeTerrainRender);
+    connect(terrainResourceBridge_.get(),&TerrainImageBridge::renderOwnerChanged,this,[this](auto owner) {
+        updateTerrainDemand(false);
+        if(owner.alive&&terrainWindowVisible_&&activeMapInteractions_==0)terrainPreparationTimer_.start();
+    });
     connect(this,&EditorController::terrainChanged,this,[this]{terrainResourceBridge_->setSource(terrainProvider_);});
     connect(terrainResourceBridge_.get(),&TerrainImageBridge::displayBackingChanged,
         this,&EditorController::renderQualityChanged);
+    connect(&placeRuntime_,&PlaceRuntimeProvider::snapshotChanged,this,[this] {
+        refreshBuiltinPlaceLabels();objectRowsCache_.reset();
+        invalidateViewportResources(ViewportResourceKind::Labels);
+        emit placeDataChanged();emit searchChanged();emit stateChanged();
+    });
+    connect(&placeRuntime_,&PlaceRuntimeProvider::sourceChanged,this,[this] {
+        placeLabelSignature_.clear();refreshBuiltinPlaceLabels();objectRowsCache_.reset();
+        emit placeDataChanged();emit searchChanged();emit stateChanged();
+    });
+    connect(&placeRuntime_,&PlaceRuntimeProvider::searchCompleted,this,[this] {emit searchChanged();emit placeDataChanged();});
+    connect(&placeRuntime_,&PlaceRuntimeProvider::loadFailed,this,&EditorController::errorOccurred);
+    connect(this,&EditorController::appearanceChanged,this,[this] {
+        terrainResourceBridge_->setRenderStyle(appearancePreferences().value("effectiveTheme")=="dark",0);
+    });
+    terrainResourceBridge_->setRenderStyle(appearancePreferences().value("effectiveTheme")=="dark",0);
     QFile anchorFile(QStringLiteral(":/world/country-label-anchors-v0.10.1.json"));
     labelAnchors_=std::make_unique<CountryLabelAnchors>(
         anchorFile.open(QIODevice::ReadOnly)?anchorFile.readAll():QByteArray{},this);
@@ -138,6 +160,33 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::jobChanged,this,&EditorController::propertyChanged);
     connect(this,&EditorController::webImportChanged,this,&EditorController::propertyChanged);
     jobs_=std::make_unique<CommandJobRunner>([this]() ->const pandoeditor::Project& {return project_;});
+    connect(jobs_.get(),&CommandJobRunner::operationMeasured,this,[this](qulonglong id,const QString& operation,double milliseconds,int disposition) {
+        QString observedDisposition;
+        switch(pandoeditor::JobDisposition(disposition)) {
+        case pandoeditor::JobDisposition::Accepted:observedDisposition="accepted";break;
+        case pandoeditor::JobDisposition::Cancelled:observedDisposition="cancelled";break;
+        case pandoeditor::JobDisposition::Coalesced:observedDisposition="coalesced";break;
+        case pandoeditor::JobDisposition::Aborted:observedDisposition="aborted";break;
+        case pandoeditor::JobDisposition::Stale:observedDisposition="stale";break;
+        case pandoeditor::JobDisposition::Closed:observedDisposition="closed";break;
+        case pandoeditor::JobDisposition::Unknown:observedDisposition="unknown";break;
+        }
+        const auto stage=operation.contains("preview")?QStringLiteral("preview"):
+            operation.contains("apply")?QStringLiteral("prepareCommit"):QStringLiteral("compute");
+        const bool editOwner=geometryEdit_&&geometryEdit_->job&&geometryEdit_->job->id()==id;
+        const QVariant owners=editOwner&&geometryEdit_->tool=="boundary"?QVariant::fromValue(qulonglong(geometryEdit_->boundaryOwners.size())):QVariant{};
+        editingPerformance_.record(stage,operation,milliseconds,observedDisposition,owners,id);
+        if(operation.contains("snap"))editingPerformance_.observeCategory("snapQuery",milliseconds);
+        else if(operation.contains("river"))editingPerformance_.observeCategory("riverPartition",milliseconds);
+        else if(operation.contains("selection")&&!operation.contains("preview")&&!operation.contains("apply"))
+            editingPerformance_.observeCategory("selectionPreparation",milliseconds);
+        if(editOwner&&(stage=="preview"||operation=="territorial:geometry-edit")) {
+            if(geometryEdit_->tool=="split")editingPerformance_.observeCategory("splitPreparation",milliseconds);
+            else if(geometryEdit_->tool=="boundary")editingPerformance_.observeCategory("sharedBoundaryPreparation",milliseconds);
+            else if(geometryEdit_->tool=="annex")editingPerformance_.observeCategory("annexPreparation",milliseconds);
+        }
+        emit renderQualityChanged();
+    });
     snapProvider_=new geometrysnap::Provider(*jobs_,this);
     snapProvider_->synchronizeSources(project_.snapshot());
     connect(jobs_.get(),&CommandJobRunner::changed,this,&EditorController::jobChanged,Qt::QueuedConnection);
@@ -166,14 +215,14 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     connect(this,&EditorController::presentationChanged,this,refresh);
     connect(this,&EditorController::presentationChanged,this,[this] {
         labelSourcesDirty_=true;
-        labelEngine_.clear();labelFlagSources_.clear();
+        labelEngine_.clear();++labelCounterGeneration_;labelFlagSources_.clear();
         if(!placedLabels_.isEmpty()){placedLabels_.clear();placedLabelModel_.setRows({});emit labelLayoutChanged();}
         invalidateViewportResources(ViewportResourceKind::Labels);
     });
     connect(this,&EditorController::geometryChanged,this,refresh);
     connect(this,&EditorController::geometryChanged,this,[this] {
         labelSourcesDirty_=true;
-        labelEngine_.clear();labelFlagSources_.clear();
+        labelEngine_.clear();++labelCounterGeneration_;labelFlagSources_.clear();
         if(!placedLabels_.isEmpty()){placedLabels_.clear();placedLabelModel_.setRows({});emit labelLayoutChanged();}
         syncMapCameraMetrics();
         invalidateViewportResources(ViewportResourceKind::Labels);
@@ -187,10 +236,17 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     });
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
         camera_.acceptPublishedView(sceneBridge_.viewState());
+        terrainPreparationTimer_.stop();terrainPreparePending_=false;updateTerrainDemand(false);
+        if(terrainWindowVisible_&&activeMapInteractions_==0)terrainPreparationTimer_.start();
         reprojectLabelPlacements();
         scheduleViewportResources();
         emit viewStateChanged();
+        if(!geometryPresentationStrokes_.empty())emit geometryEditChanged();
         emit terrainChanged(); // Expose current scale/DPR demand, including terrain-off.
+    });
+    connect(&sceneBridge_,&MapSceneBridge::sceneChanged,this,[this] {
+        updateTerrainDemand(false);
+        if(terrainWindowVisible_&&activeMapInteractions_==0)terrainPreparationTimer_.start();
     });
     if(autosave_) {
         connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
@@ -199,9 +255,7 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         });
         connect(autosave_.get(),&ProjectAutosave::saveFailed,this,&EditorController::errorOccurred);
     }
-    QFile historicalFile(QStringLiteral(":/historical/historical-library-pilot.json"));
-    if(historicalFile.open(QIODevice::ReadOnly))
-        installHistoricalSource(historicalFile.readAll(),QStringLiteral("내장 pilot"),true);
+    initializeTerritorialCatalog();
     refreshTypedScene();
     scheduleViewportResources(ViewportResourceKind::Labels);
     if(startupBusy_)QTimer::singleShot(0,this,[this,useWorldBase=config.bootstrapWorld] {
@@ -210,6 +264,7 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
     else if(config.bootstrapWorld)QTimer::singleShot(0,this,[this,initial=project_.snapshot()] {
         if(initial.matches(project_))startWorldBootstrap();
     });
+    initializePlaceRuntime();
 }
 void EditorController::refreshTypedScene() {
     if(startupBusy_)return;
@@ -220,11 +275,14 @@ void EditorController::refreshTypedScene() {
             // Keep the previous publication solely for monotonic scene revisions.
             // Builder project identity invalidation still creates fresh preparation.
             packetCache_.clear();sceneInstance_=project_.instanceId();pendingSceneImpact_.reset();
+            placeRuntime_.close(QString::fromStdString(project_.instanceId()));
+            initializePlaceRuntime();
         }
         sceneBuilder_.setWorldBase(worldBase_);
         sceneBuilder_.setBuiltinHydro(builtinHydroScene_);
         sceneBuilder_.setQuality(quality_.profile());
         InteractionRenderPacket interaction;
+        interaction.styleOptions.dark=appearancePreferences().value("effectiveTheme").toString()=="dark";
         if(objectChooserOpen())interaction.candidates=chooserRefs_;
         interaction.selected=selection_.items();
         interaction.primary=selection_.primary();interaction.hover=hover_;
@@ -301,10 +359,25 @@ void EditorController::initializePhysicalData() {
         riverAssetFinished(path,false);physicalError_=message;emit terrainChanged();emit stateChanged();
     });
     connect(physicalStore_.get(),&PhysicalDataStore::assetReady,this,
-        [this](const QString& path,const QString&,bool) {
+        [this](const QString& path,const QString&,bool reused) {
             riverAssetFinished(path,true);physicalError_.clear();
-            if(path.startsWith("terrain/"))
+            if(path.startsWith("terrain/")) {
+                // A verified replacement may retry the exact failed source.
+                // Reusing the same bytes cannot turn a decoder error into a
+                // successful retry, and must not create a request/decode loop.
+                if(!reused)for(const auto& source:distinctTerrainProviders())
+                    if(source->retryVerifiedAsset(path)&&source==terrainProvider_) {
+                        for(auto it=terrainFailedPreparation_.begin();it!=terrainFailedPreparation_.end();) {
+                            const auto spec=terrainDemandSpecs_.find(*it);
+                            const bool repaired=spec!=terrainDemandSpecs_.end()&&
+                                (source->relativeTilePath(spec->second)==path||
+                                 (source->isDem()&&path=="terrain/v0.13.3/tint.webp"&&
+                                  !source->isDecodeFailure(source->relativeTilePath(spec->second))));
+                            if(repaired)it=terrainFailedPreparation_.erase(it);else ++it;
+                        }
+                    }
                 invalidateViewportResources(ViewportResourceKind::Terrain);
+            }
             if(path.startsWith("hydro/")) {
                 if(!hydroRuntime_.isOpen())QTimer::singleShot(0,this,[this]{if(!hydroRuntime_.isOpen())syncHydroData();});
                 invalidateViewportResources(ViewportResourceKind::Hydro);
@@ -319,6 +392,13 @@ QString EditorController::physicalAssetPath(const QString& relativePath) const {
     return existing.isEmpty()?physicalStore_->cachePath(*found):existing;
 }
 bool EditorController::physicalAssetReady(const QString& relativePath) const {
+    if(relativePath.startsWith("terrain/")) {
+        if(!physicalStore_)return false;
+        const auto found=physicalAssets_.constFind(relativePath);
+        // This is admission to a worker, never an integrity receipt. The cold
+        // decoder's verifier checks original bytes before publishing pixels.
+        return found!=physicalAssets_.cend()&&!physicalStore_->candidatePath(*found).isEmpty();
+    }
     return !verifiedPhysicalAssetPath(relativePath).isEmpty();
 }
 QString EditorController::verifiedPhysicalAssetPath(const QString& relativePath) const {
@@ -408,6 +488,8 @@ QVariantMap EditorController::renderQuality() const {
         {"displayBackingCount",qulonglong(displayBackingCount)},
         {"displayBackingScope","Extra GUI raster image storage; separate from raw cache, excludes staging and GPU textures"}});
     resourceCoordinator_.setDomain("hydro",hydroRuntime_.resourceCacheSnapshot(),"bounded",{{"activeFrameBytes",qulonglong(hydroRuntime_.activeFrameBytes())},{"frameBytesAvailable",true}});
+    resourceCoordinator_.setDomain("place",placeRuntime_.resourceCacheSnapshot(),"bounded",
+        {{"accountingScope",QStringLiteral("encoded/decoded source and retained value storage; allocator overhead and RSS excluded")}});
     resourceCoordinator_.setDomain("world",worldResources_.snapshot(),worldResources_.compatibilityBudget()?"compatibilityWorkingSet":"bounded");
     auto labels=labelEngine_.resourceCacheSnapshot();QVariantMap labelExtra;
     if(labelAnchors_) {
@@ -427,7 +509,18 @@ QVariantMap EditorController::renderQuality() const {
     const auto stats=packetCache_.stats();
     const auto tier=profile.tier==RenderQualityTier::Coarse?"coarse":
         profile.tier==RenderQualityTier::Medium?"medium":"high";
+    const auto running=[](const QObject* owner) {
+        qulonglong count=0;
+        for(const auto* watcher:owner->findChildren<QFutureWatcherBase*>())if(watcher->isRunning())++count;
+        return count;
+    };
+    // Count owned actual workers even when obsolete completions are withheld.
+    // Queue depth is separate from workers; cache-request counts are not jobs.
+    const auto pending=running(this)+running(&hydroRuntime_)+running(&placeRuntime_)+
+        (jobs_?running(jobs_.get())+qulonglong(jobs_->queueDepth()):0)+qulonglong(placeRuntime_.stats().queuedCount);
     return {{"resourceCaches",resourceCoordinator_.snapshot()},{"tier",tier},{"revision",qulonglong(profile.revision)},
+        {"pendingJobs",pending},{"pendingJobsScope",QStringLiteral("owned QFuture workers plus command/place queues; physical IO and QSG uploads reported separately")},
+        {"stalePublications",QVariant{}},{"stalePublicationScope",QStringLiteral("aggregate publication violations are unobserved; guarded stale completions remain domain-specific")},
         {"worldDetailRequested",worldDetailCanonical_?"canonical":"preview"},
         {"worldDetailDisplayed",worldBase_&&worldBase_->mesh?(worldBase_->mesh->preview?"preview":"canonical"):"none"},
         {"interaction",profile.interaction},{"dprCap",profile.dprCap},
@@ -476,6 +569,7 @@ QVariantMap EditorController::renderQuality() const {
         {"labelShardCount",qulonglong(labelEngine_.stats().cellCount)},
         {"labelQueries",qulonglong(labelEngine_.stats().queries)},
         {"labelLayouts",qulonglong(labelEngine_.stats().layouts)},
+        {"labelCounterGeneration",labelCounterGeneration_},
         {"labelReprojects",qulonglong(labelEngine_.stats().reprojects)},
         {"labelCandidatesExamined",qulonglong(labelEngine_.stats().candidatesExamined)},
         {"labelPlacements",qulonglong(labelEngine_.stats().placements)},
@@ -494,8 +588,11 @@ void EditorController::recordMapFrame(double milliseconds) {
     }
 }
 void EditorController::beginMapInteraction() {
+    terrainPreparationTimer_.stop();terrainPreparePending_=false;
     if(activeMapInteractions_==0)viewportResourceTimer_.stop();
     ++activeMapInteractions_;
+    if(activeMapInteractions_==1)placeRuntime_.beginInteraction();
+    updateTerrainDemand(false);
     viewportResources_.beginInteraction();
     if(activeMapInteractions_==1&&quality_.beginInteraction()) {
         viewportResources_.invalidate(ViewportResourceKind::Labels);
@@ -505,6 +602,9 @@ void EditorController::beginMapInteraction() {
 void EditorController::endMapInteraction() {
     if(activeMapInteractions_<=0)return;
     --activeMapInteractions_;
+    if(activeMapInteractions_==0)placeRuntime_.settle();
+    updateTerrainDemand(false);
+    if(terrainWindowVisible_&&activeMapInteractions_==0)terrainPreparationTimer_.start();
     if(activeMapInteractions_==0&&quality_.endInteraction()) {
         viewportResources_.invalidate(ViewportResourceKind::Labels);
         emit renderQualityChanged();
@@ -578,6 +678,8 @@ void EditorController::flushViewportResources() {
             executeTerrainResources(*request);
         if(anyViewportResource(request->resources&ViewportResourceKind::Hydro))
             executeHydroResources(*request);
+        if(anyViewportResource(request->resources&ViewportResourceKind::Labels))
+            requestPlaceResources();
         if(anyViewportResource(request->resources&ViewportResourceKind::Labels))
             executeLabelResources(*request);
         emit renderQualityChanged();
@@ -776,6 +878,9 @@ void EditorController::reloadDrafts()
 }
 void EditorController::publish(bool pruneSelection)
 {
+    if(!geometryPresentationStrokes_.empty()&&(geometryPresentationInstance_!=project_.instanceId()||geometryPresentationRevision_!=project_.revision())) {
+        geometryPresentationStrokes_.clear();emit geometryEditChanged();
+    }
     if(snapProvider_)snapProvider_->synchronizeInstallation(project_.snapshot());
     Q_UNUSED(pruneSelection);
     if(labelAnchors_)labelAnchors_->setProjectScope(text(project_.instanceId()));
@@ -827,6 +932,7 @@ void EditorController::moveCountry(const QString& layerId) {if(executeCommand("c
 void EditorController::undo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
+    QElapsedTimer measurement;measurement.start();
     const auto clearBoundarySelection=project_.nextUndoTerritorialMutationKind()==pandoeditor::TerritorialMutationKind::ReconcileSharedBoundary;
     const auto before=project_.document();
     cancelPreview();
@@ -840,11 +946,14 @@ void EditorController::undo()
         if(changed)projection_.rebuild(project_.document());
         if(clearBoundarySelection)clearSelection();
         publish();if(hydroChanged)syncHydroData();if(changed)emit geometryChanged();
+        editingPerformance_.record("undo",clearBoundarySelection?"shared-boundary":"document",double(measurement.nsecsElapsed())/1e6);
+        emit renderQualityChanged();
     }
 }
 void EditorController::redo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
+    QElapsedTimer measurement;measurement.start();
     const auto clearBoundarySelection=project_.nextRedoTerritorialMutationKind()==pandoeditor::TerritorialMutationKind::ReconcileSharedBoundary;
     const auto before=project_.document();
     cancelPreview();
@@ -858,6 +967,8 @@ void EditorController::redo()
         if(changed)projection_.rebuild(project_.document());
         if(clearBoundarySelection)clearSelection();
         publish();if(hydroChanged)syncHydroData();if(changed)emit geometryChanged();
+        editingPerformance_.record("redo",clearBoundarySelection?"shared-boundary":"document",double(measurement.nsecsElapsed())/1e6);
+        emit renderQualityChanged();
     }
 }
 bool EditorController::openFile(const QUrl& url)

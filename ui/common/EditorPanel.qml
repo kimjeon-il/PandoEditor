@@ -153,9 +153,17 @@ Rectangle {
                         Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
                         visible: editor.selectedId !== "" && !editor.selectedEditable
                         text: editor.selectionItems.length>1 ? "여러 객체가 선택되었습니다."
+                            : editor.primaryObject.domain === "placeBuiltin" ? "내장 지명은 읽기 전용입니다. 복사본을 만들어 편집할 수 있습니다."
                             : editor.primaryObject.type !== "general" ? "이 객체의 속성 편집은 후속 단계에서 지원합니다."
                             : "객체 또는 소속 레이어가 잠겨 있습니다."
                         wrapMode: Text.WordWrap
+                    }
+                    UiButton {
+                        objectName: "copyBuiltinPlaceForEditing"
+                        Layout.fillWidth: true; Layout.leftMargin: 12; Layout.rightMargin: 12
+                        visible: editor.primaryObject.domain === "placeBuiltin"
+                        text: "복사하여 편집"
+                        onClicked: editor.copySelectedPlaceForEditing()
                     }
                     GroupBox {
                         objectName: "territorialStructurePanel"

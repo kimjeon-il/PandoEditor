@@ -80,6 +80,11 @@ P2 LOD/demand mechanisms have a separate executed checkpoint in
 `terrain-p2-validation.md`. P3 progressive displayed coverage, resource admission
 and upload scheduling remain pending. The current CPU-ready bootstrap/old handoff
 does not prove them.
-P4 and M9.8 functional/structural/physical-device acceptance remain pending.
+The subsequent dirty-tree checkpoint is recorded in
+`p1-p8-m98-execution-followup.md`: actual D3D11 controller execution processed
+12 prepared-DEM transitions with native exit 0; pure coverage/state and
+mutation results remain separate from pixel or GPU completion claims.
+Additional pressure/source/context device cases and final M9.8 acceptance
+remain pending. These results do not change the scope of this earlier P1 gate.
 Future source changes require affected checks to run again; P1's result cannot
 certify a later candidate or replace final same-commit/fixture evidence.

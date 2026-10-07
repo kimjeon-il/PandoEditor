@@ -97,6 +97,7 @@ GisGeoJsonCollection exportGisDocumentLayer(const ProjectDocument& document,
                 {"pandolab_id",V::str(item.id)},
                 {"country_id",item.territory?V::str(item.territory->id):V{}},
                 {"notes",V::str(item.notes)}});
+            properties.object["source_place_id"]=V::str(item.sourcePlaceId.value_or(""));
             append(out,item.id,geometry(document,item.geometry),std::move(properties));
         }
     } else throw std::invalid_argument("UNSUPPORTED_GIS_EXPORT_LAYER");

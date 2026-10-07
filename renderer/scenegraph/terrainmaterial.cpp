@@ -7,6 +7,8 @@
 #include <cmath>
 #include <cstring>
 #include <functional>
+#include <QElapsedTimer>
+#include <rhi/qrhi.h>
 
 namespace {
 QSGMaterialType materialType;
@@ -20,6 +22,7 @@ public:
     bool updateUniformData(RenderState& state,QSGMaterial* current,QSGMaterial*) override {
         auto* bytes=state.uniformData();if(!bytes||bytes->size()<256)return false;
         const auto* m=static_cast<TerrainMaterial*>(current);
+        if(m->drawObserver)m->drawObserver();
         const auto matrix=state.combinedMatrix();std::memcpy(bytes->data(),matrix.constData(),64);
         const QVector4D vectors[]{m->flat0,m->flat1,m->globe0,m->globe1,m->bounds,
             m->uvBounds,m->dimensions,m->options,m->effects,m->maskTransform,m->maskMetrics,m->maskState};
@@ -33,7 +36,20 @@ public:
         auto* m=static_cast<TerrainMaterial*>(current);
         *texture=binding==1?m->terrainTexture:binding==2?(m->tintTexture?m->tintTexture:m->terrainTexture):
             binding==3?(m->landMaskTexture?m->landMaskTexture:m->emptyMaskTexture):nullptr;
-        if(*texture)(*texture)->commitTextureOperations(state.rhi(),state.resourceUpdateBatch());
+        if(*texture) {
+            QElapsedTimer elapsed;elapsed.start();
+            (*texture)->commitTextureOperations(state.rhi(),state.resourceUpdateBatch());
+            if(m->commitObserver) {
+                const auto* backing=(*texture)->rhiTexture();
+                const bool valid=backing&&const_cast<QRhiTexture*>(backing)->nativeTexture().object!=0&&
+                    backing->pixelSize()==(*texture)->textureSize();
+                m->commitObserver(*texture,double(elapsed.nsecsElapsed())/1000000.,valid);
+                if(!valid&&m->emptyMaskTexture&&m->emptyMaskTexture!=*texture) {
+                    *texture=m->emptyMaskTexture;
+                    (*texture)->commitTextureOperations(state.rhi(),state.resourceUpdateBatch());
+                }
+            }
+        }
     }
 };
 }
@@ -74,7 +90,7 @@ void TerrainMaterial::setLandMask(QSGTexture* texture,QSizeF logical,QVector4D t
     maskMetrics={logical.width()>0?float(1/logical.width()):0.f,
         logical.height()>0?float(1/logical.height()):0.f,
         size.width()>0?1.f/size.width():0.f,size.height()>0?1.f/size.height():0.f};
-    maskState={valid?1.f:0.f,tintTexture?1.f:0.f,0.f,0.f};
+    maskState={valid?1.f:0.f,tintTexture?1.f:0.f,maskState.z(),maskState.w()};
     if(texture) {
         texture->setFiltering(QSGTexture::Nearest);texture->setMipmapFiltering(QSGTexture::None);
         texture->setHorizontalWrapMode(QSGTexture::ClampToEdge);

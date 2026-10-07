@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -50,6 +51,8 @@ struct PlaceLabel {
     GeometryRef geometry;
     std::optional<ObjectRef> territory;
     SourceProvenance source;
+    // The immutable built-in record that this ordinary user label copied.
+    std::optional<std::string> sourcePlaceId;
 };
 struct HydroFeature {
     std::string id, name, kind="river", notes;
@@ -173,6 +176,8 @@ struct DocumentIndex {
 DocumentIndex validateDocument(const ProjectDocument& document);
 void indexContent(const ProjectDocument&, DocumentIndex&);
 bool sameContent(const ProjectDocument&, const ProjectDocument&);
+// Derived from live canonical content; Undo needs no separate hidden-ID state.
+std::set<std::string> copiedPlaceSourceIds(const ProjectDocument&);
 std::optional<GeometryRef> objectGeometry(const ProjectDocument&,const DocumentIndex&,const ObjectRef&);
 bool objectLocked(const ProjectDocument&,const DocumentIndex&,const ObjectRef&);
 std::string contentGroup(const ProjectDocument&,const ObjectRef&);

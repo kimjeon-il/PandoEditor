@@ -30,7 +30,7 @@ ColumnLayout {
         if(current){if(edited&&(force===true||!holdCommits)&&owner===editor.selectedId)editor.confirmPropertyEdit(current);else editor.endPropertyEdit(current)}
         edited=false
     }
-    Label {text:entry.field==="name"?(editor.primaryObject.type==="general"?"국명":"이름"):"메모";color:entry.colors.muted;font.pixelSize:14}
+    Label {text:entry.field==="name"?(editor.primaryObject.type==="general"?"국명":"이름"):"비고";color:entry.colors.muted;font.pixelSize:14}
     UiTextField {
         id:nameInput;objectName:entry.field==="name"?"detailObjectName":"";visible:entry.field==="name";Layout.fillWidth:true;Layout.preferredHeight:36
         text:editor.nameDraft;enabled:!!editor.objectProperties.editable;selectByMouse:true
@@ -44,7 +44,7 @@ ColumnLayout {
         visible:entry.field==="notes";Layout.fillWidth:true;Layout.preferredHeight:112;clip:true
         UiTextArea {
             id:notesInput;objectName:entry.field==="notes"?"detailObjectNotes":"";text:editor.memoDraft;readOnly:!editor.objectProperties.editable
-            placeholderText:"객체에 대한 메모를 입력하세요.";wrapMode:TextEdit.Wrap;selectByMouse:true
+            wrapMode:TextEdit.Wrap;selectByMouse:true
             font.pixelSize:14;color:entry.colors.text;padding:10
             background:Rectangle {color:entry.colors.input;border.color:notesInput.activeFocus?entry.colors.accent:entry.colors.border;radius:6}
             onActiveFocusChanged:{if(activeFocus)entry.begin();else entry.finish()}
