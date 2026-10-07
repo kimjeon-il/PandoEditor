@@ -2,6 +2,7 @@
 #include "gpumapitem.h"
 #include "maprenderitem.h"
 #include "terrainimageprovider.h"
+#include "native_performance_input_state.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -156,6 +157,10 @@ static void runNativePerformanceProbe()
         if(!frame||!frame->scene)return state;
         state["viewRevision"]=double(frame->view.revision);
         state["sceneRevision"]=double(frame->scene->revision);
+        state["documentRevision"]=double(frame->scene->revisions.document);
+        state["geometryRevision"]=double(frame->scene->revisions.geometry);
+        state["presentationRevision"]=double(frame->scene->revisions.presentation);
+        state["datasetRevision"]=double(frame->scene->revisions.dataset);
         state["selectionRevision"]=double(frame->scene->revisions.selection);
         state["projection"]=frame->view.mode==ProjectionMode::Globe?"globe":"flat";
         state["selectedId"]=frame->scene->interaction.primary?QString::fromStdString(frame->scene->interaction.primary->id):QString{};
@@ -350,6 +355,7 @@ static void runNativePerformanceProbe()
         result["contentEditActive"]=editor.contentEditState().value("active").toBool();
         return result;
     };
+    bool inputAssociationFailed=false;
     const auto input=[&](int kind,const std::function<void()>& action,const std::function<bool()>& ready=std::function<bool()>{}) {
         phase.store(kind);
         const auto before=currentState();
@@ -370,13 +376,26 @@ static void runNativePerformanceProbe()
         while(!frameMatchesGui()&&clock.nsecsElapsed()-start<5'000'000'000LL)QTest::qWait(5);
         while(ready&&!ready()&&clock.nsecsElapsed()-start<5'000'000'000LL)QTest::qWait(5);
         const bool completionReady=frameMatchesGui()&&(!ready||ready());
-        const auto expected=currentState();
+        auto expected=currentState();
+        const auto initialExpected=expected;QJsonArray targetAdvances;
         {std::lock_guard<std::mutex> lock(frameMutex);
             expectedState=expected;expectedRenderFrame=sceneBridge->frameSnapshot();guiState=QJsonObject{{"menuVisible",expected.value("menuVisible")},{"hasPreparedPreview",expected.value("hasPreparedPreview")},{"geometryEdit",expected.value("geometryEdit")},{"contentEdit",expected.value("contentEdit")}};
             sequence=++requested;}
-        window->update();
+        QTimer refreshTarget;refreshTarget.setInterval(5);
+        QObject::connect(&refreshTarget,&QTimer::timeout,&presentedLoop,[&]{
+            if(presented.load()>=sequence)return;
+            const auto next=currentState();const auto frame=sceneBridge->frameSnapshot();
+            if(next==expected||!nativePerfSameInputState(initialExpected,next))return;
+            {std::lock_guard<std::mutex> lock(frameMutex);
+                expected=next;expectedState=next;expectedRenderFrame=frame;
+                synchronized.store(sequence-1);
+            }
+            targetAdvances.append(QJsonObject{{"elapsedMs",clock.nsecsElapsed()/1.e6},{"state",next}});
+            window->update();
+        });
+        refreshTarget.start();window->update();
         if(presented.load()<sequence&&clock.nsecsElapsed()-start<5'000'000'000LL)presentedLoop.exec();
-        QObject::disconnect(wake);
+        refreshTarget.stop();QObject::disconnect(wake);
         const bool delivered=presented.load()>=sequence;
         QJsonObject actual,owner;{std::lock_guard<std::mutex> lock(frameMutex);actual=presentedState;owner=presentedOwner;}
         QJsonObject observation{{"event","input"},{"scenarioId",repeatPhase.load()?QString("long-run"):ids.value(kind)},{"elapsedMs",start/1.e6},
@@ -386,7 +405,14 @@ static void runNativePerformanceProbe()
             {"renderOwner",owner},{"renderSnapshotMatched",delivered},{"renderUploadsPending",delivered?QJsonValue(false):QJsonValue(QJsonValue::Null)},
             {"delivered",delivered&&completionReady},{"stateChanged",before!=expected},{"matched",delivered&&completionReady&&actual==expected},
             {"expectedState",expected},{"renderState",actual}};
+        const auto lastObserved=gpu->renderObservation();
+        observation["initialExpectedState"]=initialExpected;observation["targetAdvances"]=targetAdvances;
+        observation["lastObservedRenderState"]=lastObserved?frameState(lastObserved->frame):QJsonObject{};
+        observation["lastObservedUploadsPending"]=lastObserved?QJsonValue(lastObserved->stats.uploadsPending):QJsonValue(QJsonValue::Null);
+        observation["lastObservedRendererReady"]=lastObserved&&lastObserved->rendererReady;
+        observation["currentBridgeState"]=frameState(sceneBridge->frameSnapshot());
         observation["actionMs"]=actionNs/1.e6;
+        inputAssociationFailed|=!observation["matched"].toBool();
         observation["selectedId"]=editor.selectedId();
         if(auto* popup=window->findChild<QObject*>("fileMenu"))observation["menuVisible"]=popup->property("visible").toBool();
         inputs.append(observation);
@@ -411,11 +437,11 @@ static void runNativePerformanceProbe()
     };
     const auto pan=[&](int kind,int count) {
         QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,panStart,0);
-        for(int i=0;i<count;++i)input(kind,[&]{QTest::mouseMove(window,panStart+QPoint(20+int(120*std::sin(i*.045)),int(25*std::sin(i*.07))),0);});
+        for(int i=0;i<count&&!inputAssociationFailed;++i)input(kind,[&]{QTest::mouseMove(window,panStart+QPoint(20+int(120*std::sin(i*.045)),int(25*std::sin(i*.07))),0);});
         QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,panStart,0);
     };
     const auto zoom=[&](int kind,int count,bool reverse=false,bool oneDirection=false) {
-        for(int i=0;i<count;++i)input(kind,[&]{
+        for(int i=0;i<count&&!inputAssociationFailed;++i)input(kind,[&]{
             const int direction=oneDirection?1:i<count/2?1:-1;
             QWheelEvent wheel(panStart,window->mapToGlobal(panStart),{},QPoint(0,(reverse?-1:1)*direction*5),Qt::NoButton,Qt::NoModifier,Qt::NoScrollPhase,false);
             QCoreApplication::sendEvent(window,&wheel);
@@ -482,6 +508,7 @@ static void runNativePerformanceProbe()
         }
         else if(kind==8){pan(kind,120);zoom(kind,90);}
         else if(kind==13){auto* menu=navigationItem(window->contentItem(),"fileMenuButton");QVERIFY(menu);for(int i=0;i<20;++i)input(kind,[&]{if(i%2)QTest::keyClick(window,Qt::Key_Escape,Qt::NoModifier,0);else QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,menu->mapToScene({menu->width()/2,menu->height()/2}).toPoint(),0);});}
+        QVERIFY2(!inputAssociationFailed,"Actual input-to-render association failed; raw states retained in journal");
         QTest::qWait(400);
         const auto expected=fixtureContracts.value(fixtureId).value("expectedFinalStates").toObject().value(ids[kind]).toObject();
         const auto state=currentState();QJsonObject actual;
@@ -496,6 +523,7 @@ static void runNativePerformanceProbe()
         const auto started=clock.elapsed();loadFixture("dense-view");phase.store(12);pan(12,120);zoom(12,90);
         projectionInput(12,"globe");pan(12,120);zoom(12,90);projectionInput(12,"flat");
         loadFixture("editing-heavy");phase.store(12);previewCancel();loadFixture("dense-view");phase.store(12);
+        QVERIFY2(!inputAssociationFailed,"Long-run input-to-render association failed; raw states retained in journal");
         while(clock.elapsed()-started<60000)QTest::qWait(100);
         const auto resource=editor.terrainDataStatus(),quality=editor.renderQuality();
         const bool settled=quality.contains("pendingJobs")&&quality.value("pendingJobs").isValid()&&quality.value("pendingJobs").toInt()==0&&

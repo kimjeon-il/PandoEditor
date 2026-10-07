@@ -24,7 +24,7 @@ New-Item -ItemType Directory -Path $OutputDirectory | Out-Null
 $reportRoot=(Resolve-Path -LiteralPath $OutputDirectory).Path
 $manifest=Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 $fixtureRoot=Split-Path -Parent $manifestPath
-$missing=[Collections.Generic.List[string]]::new();$hashes=@{}
+$missing=[Collections.Generic.List[string]]::new();$invalidProjects=[Collections.Generic.List[string]]::new();$hashes=@{}
 $hashes[$manifestPath]=(Get-FileHash -LiteralPath $manifestPath).Hash
 if($AdditionalQtPluginDirectory){
  $AdditionalQtPluginDirectory=(Resolve-Path -LiteralPath $AdditionalQtPluginDirectory).Path
@@ -46,6 +46,16 @@ foreach($id in @('world-standard','dense-view','editing-heavy','large-project'))
  if($fixture.Count -ne 1){$missing.Add("Missing/duplicate fixture: $id");continue}
  $fixture=$fixture[0]
  Test-ImmutableInput $fixture.projectPath $fixture.projectSha256
+ if($fixture.projectPath){
+  $projectInput=[IO.Path]::GetFullPath((Join-Path $fixtureRoot $fixture.projectPath))
+  if($hashes.ContainsKey($projectInput)){
+   $projectHeader=Get-Content -LiteralPath $projectInput -Raw -Encoding utf8 | ConvertFrom-Json
+   if($projectHeader.format -ne 'pandoeditor-project' -or $projectHeader.version -ne 10){
+    $invalidProjects.Add("Native project format/version required: $id ($projectInput)")
+    $missing.Add("Unsupported measurement project format/version: $id")
+   }
+  }
+ }
  Test-ImmutableInput $fixture.viewPath $fixture.viewSha256
  if(!$fixture.assets -or !$fixture.expectedFinalStates -or !$fixture.inputContractPath){$missing.Add("Incomplete fixture contract: $id")}
  Test-ImmutableInput $fixture.inputContractPath $fixture.inputContractSha256
@@ -65,6 +75,7 @@ else{
 }
 $preflight=[ordered]@{status=if($missing.Count){'BLOCKED'}else{'PASS'};missing=@($missing);placeDatasetVersion=$productionPlaceRevision;productionPlaceManifestSha256=$productionPlaceSha;fixtureManifestSha256=(Get-FileHash -LiteralPath $manifestPath).Hash}
 $preflight | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath "$reportRoot/preflight.json" -Encoding utf8
+if($invalidProjects.Count){throw ($invalidProjects -join '; ')}
 if($Mode -eq 'acceptance' -and $missing.Count){throw "Acceptance preflight BLOCKED; see $reportRoot/preflight.json"}
 if($Mode -eq 'diagnostic' -and !$DiagnosticReason){throw 'Diagnostic mode requires an explicit reduction/synthetic reason'}
 if($TimeoutSeconds*1000 -lt $WarmupMs+$RepeatMs+180000){throw 'Timeout cannot cover warm-up, long run and scenario sequence'}

@@ -2,6 +2,7 @@
 #include "commandjobrunner.h"
 #include "mapscenebridge.h"
 #include "nativeperformancemetrics.h"
+#include "native_performance_input_state.h"
 #include <QElapsedTimer>
 #include <QFile>
 #include <QSemaphore>
@@ -77,6 +78,25 @@ void recordMeasured(NativePerformanceMetrics& metrics,const QList<QVariant>& sig
 class NativePerformanceStructureTests final:public QObject {
     Q_OBJECT
 private slots:
+    void inputRetargetingPreservesEveryContentOwnerAndActualState() {
+        const QJsonObject expected{{"sceneRevision",9},{"documentRevision",1},{"geometryRevision",2},
+            {"presentationRevision",3},{"datasetRevision",4},{"viewRevision",5},{"selectionRevision",6},
+            {"selectedId","A"},{"hoveredId","B"},{"scale",9000},{"projection","flat"},
+            {"geometryEdit",QJsonObject{{"active",false}}},{"menuVisible",false}};
+        auto next=expected;next["sceneRevision"]=10;
+        QVERIFY(nativePerfSameInputState(expected,next));
+        for(const auto* key:{"documentRevision","geometryRevision","presentationRevision","datasetRevision","viewRevision","selectionRevision","scale"}) {
+            auto changed=next;changed[key]=next[key].toDouble()+1;
+            QVERIFY2(!nativePerfSameInputState(expected,changed),key);
+        }
+        for(const auto* key:{"selectedId","hoveredId","projection"}) {
+            auto changed=next;changed[key]="other";QVERIFY2(!nativePerfSameInputState(expected,changed),key);
+        }
+        auto edited=next;edited["geometryEdit"]=QJsonObject{{"active",true}};
+        QVERIFY(!nativePerfSameInputState(expected,edited));
+        QVERIFY(!nativePerfSameInputState({},{}));
+    }
+
     void cameraChangeRetainsActualSceneAndGeometry() {
         EditorFixture fixture;QVERIFY(fixture.open());auto& editor=fixture.editor;
         auto* bridge=fixture.bridge();QVERIFY(bridge);
