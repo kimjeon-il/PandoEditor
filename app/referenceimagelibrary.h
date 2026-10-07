@@ -23,8 +23,8 @@ public:
 
     QVariantList images() const;
     QAbstractItemModel *imageModel() { return &imageModel_; }
-    bool canUndo() const { return !undo_.isEmpty(); }
-    bool canRedo() const { return !redo_.isEmpty(); }
+    bool canUndo() const;
+    bool canRedo() const;
     QString lastError() const { return lastError_; }
 
     QVariantMap calibrationSession() const;
@@ -36,6 +36,11 @@ public:
     Q_INVOKABLE bool finishTrace();
     Q_INVOKABLE void redrawTrace();
     Q_INVOKABLE void cancelTrace();
+    Q_INVOKABLE bool flipPlacement(bool horizontal);
+    Q_INVOKABLE bool rotatePlacement(double angle,QObject *projection);
+    Q_INVOKABLE bool resetPlacement(QObject *projection,double viewportWidth,double viewportHeight);
+    Q_INVOKABLE double placementAngle(QObject *projection) const;
+    Q_INVOKABLE bool editCalibrationImagePoint(const QString &pointId);
     Q_INVOKABLE bool setPlacementQuad(const QVariantList &quad,const QVariantList &screenQuad);
     Q_INVOKABLE bool setCornerQuad(const QVariantList &quad,const QVariantList &screenQuad);
     Q_INVOKABLE bool beginAnchor();
@@ -78,7 +83,7 @@ private:
     struct Record {
         QString id, name, fileName, blend = QStringLiteral("normal"), warpMode = QStringLiteral("auto");
         bool visible = true, locked = false, flipX = false, flipY = false;
-        double opacity = 1, x = 0, y = 0, width = 0, height = 0, rotation = 0;
+        double opacity = .55, x = 0, y = 0, width = 0, height = 0, rotation = 0;
         QVariantList controlPoints;
         QVariantList geographicPoints,mapQuad;
         QVariantMap anchor;
@@ -105,6 +110,6 @@ private:
     QString gestureId_;
     QString lastError_;
     QString calibrationId_,editingPointId_;
-    bool anchorPicking_=false,freeTransformEditing_=false;
+    bool editingImagePoint_=false,anchorPicking_=false,freeTransformEditing_=false;
     std::optional<QPointF> pendingUv_;
 };

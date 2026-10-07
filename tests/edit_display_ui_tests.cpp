@@ -159,7 +159,7 @@ Window {
         const auto before=editor.mapViewState();
         if(!editor.zoomMapCameraAt(15./before["mapScale"].toDouble(),140,170))return {};
         const auto camera=editor.mapViewState();
-        if(!images->updateImage(id,{{"x",(95.-camera["originX"].toDouble())/camera["mapScale"].toDouble()},
+        if(!images->updateImage(id,{{"opacity",1.},{"x",(95.-camera["originX"].toDouble())/camera["mapScale"].toDouble()},
             {"y",(145.-camera["originY"].toDouble())/camera["mapScale"].toDouble()},
             {"width",120./camera["mapScale"].toDouble()},
             {"height",90./camera["mapScale"].toDouble()}}))return {};
@@ -225,6 +225,23 @@ private slots:
         QVERIFY(ui.editor.geometryUndoDraft());QCOMPARE(ui.editor.referenceDraftCoordinates(),before);QVERIFY(ui.editor.geometryRedoDraft());
         QVERIFY(navigationClick(ui.window,"referenceRefineStart"));QVERIFY(!ui.open(fixture(),"replacement.json"));QCOMPARE(ui.editor.documentBytes(),bytes);ui.editor.cancelContentEdit();QVERIFY(ui.open(fixture(),"replacement.json"));QTest::qWait(100);QVERIFY(library->traceSession().isEmpty());
         QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
+    void placementControlsActualWindowRemainLocal()
+    {
+        Ui ui(1100);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));const auto id=ui.addImage(true);QVERIFY(!id.isEmpty());const auto document=ui.editor.documentBytes();const auto projectUndo=ui.editor.canUndo();
+        auto* menu=ui.window->findChild<QObject*>("referenceImageMenu");auto* imageMenu=qvariant_cast<QObject*>(ui.evaluate(menu,"menuAt(4)"));QVERIFY(imageMenu);ui.evaluate(imageMenu,"itemAt(8).triggered()");QTest::qWait(50);
+        auto* library=ui.library();QVERIFY(ui.evaluate(ui.map,"ensureReferenceQuad(false)").toBool());
+        QVERIFY(navigationClick(ui.window,"referenceFlipX"));QVERIFY(library->images().front().toMap()["flipX"].toBool());QTest::qWait(80);const auto flippedFrame=ui.window->grabWindow();const auto pixelPosition=ui.map->mapToScene({110,160});const double dpr=double(flippedFrame.width())/ui.window->width();const auto pixel=flippedFrame.pixelColor(qRound(pixelPosition.x()*dpr),qRound(pixelPosition.y()*dpr));QVERIFY2(pixel.red()>240&&pixel.green()>240&&pixel.blue()>240,qPrintable(pixel.name()));QVERIFY(navigationClick(ui.window,"referenceFlipY"));QVERIFY(library->images().front().toMap()["flipY"].toBool());QVERIFY(library->undo());QVERIFY(!library->images().front().toMap()["flipY"].toBool());QVERIFY(library->redo());
+        const auto before=library->images().front().toMap()["mapQuad"].toList();QVector<QPointF> oldScreen;QPointF center;
+        for(const auto value:before){const auto pair=value.toList();const auto p=ui.editor.referenceScreenAtCoordinate(pair[0].toDouble(),pair[1].toDouble());oldScreen.append({p["x"].toDouble(),p["y"].toDouble()});center+=oldScreen.back();}center/=4;
+        auto* field=ui.window->findChild<QQuickItem*>("referencePlacementRotation");QVERIFY(field);QTest::mouseClick(ui.window,Qt::LeftButton,Qt::NoModifier,field->mapToScene({field->width()/2,field->height()/2}).toPoint());QTest::keyClick(ui.window,Qt::Key_A,Qt::ControlModifier);QTest::keyClick(ui.window,Qt::Key_3);QTest::keyClick(ui.window,Qt::Key_5);QTest::keyClick(ui.window,Qt::Key_Period);QTest::keyClick(ui.window,Qt::Key_5);QTest::keyClick(ui.window,Qt::Key_Return);
+        const auto rotated=library->images().front().toMap()["mapQuad"].toList();QVERIFY(rotated!=before);QVERIFY(std::abs(library->placementAngle(&ui.editor)-35.5)<1e-8);
+        const double angle=35.5*std::acos(-1.)/180.;for(int i=0;i<4;i++){const auto pair=rotated[i].toList();const auto p=ui.editor.referenceScreenAtCoordinate(pair[0].toDouble(),pair[1].toDouble());const auto d=oldScreen[i]-center;const QPointF expected=center+QPointF(d.x()*std::cos(angle)-d.y()*std::sin(angle),d.x()*std::sin(angle)+d.y()*std::cos(angle));QVERIFY(std::abs(p["x"].toDouble()-expected.x())<1e-7);QVERIFY(std::abs(p["y"].toDouble()-expected.y())<1e-7);}
+        QVERIFY(library->undo());QCOMPARE(library->images().front().toMap()["mapQuad"].toList(),before);QVERIFY(library->redo());QVERIFY(navigationClick(ui.window,"referencePlacementReset"));const auto reset=library->images().front().toMap();QVERIFY(!reset["cornerPinEnabled"].toBool());QVERIFY(reset["anchor"].toMap().isEmpty());QVERIFY(std::abs(library->placementAngle(&ui.editor))<1e-8);
+        const auto quad=reset["mapQuad"].toList();const auto a=quad[0].toList(),b=quad[2].toList();const auto nw=ui.editor.referenceScreenAtCoordinate(a[0].toDouble(),a[1].toDouble()),se=ui.editor.referenceScreenAtCoordinate(b[0].toDouble(),b[1].toDouble());const double width=std::max(180.,ui.map->width()*.62),height=std::max(140.,ui.map->height()*.62),scale=std::min(width/64,height/64);QVERIFY(std::abs(se["x"].toDouble()-nw["x"].toDouble()-std::max(80.,64*scale))<1e-7);QVERIFY(std::abs(se["y"].toDouble()-nw["y"].toDouble()-std::max(60.,64*scale))<1e-7);
+        ReferenceImageLibrary reopened;QCOMPARE(reopened.images().front().toMap()["mapQuad"],reset["mapQuad"]);QVERIFY(library->updateImage(id,{{"locked",true}}));QVERIFY(!field->isEnabled());QVERIFY(!library->flipPlacement(true));QVERIFY(!library->canUndo());QVERIFY(library->updateImage(id,{{"locked",false}}));
+        QCOMPARE(ui.editor.documentBytes(),document);QCOMPARE(ui.editor.canUndo(),projectUndo);QVERIFY(!ui.window->grabWindow().isNull());QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
     }
 
     void geographicCalibrationActualWindowFlow()

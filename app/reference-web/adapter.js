@@ -54,3 +54,17 @@ export function refine(input) {
  const result=refineReferenceImageLine({field,roughPoints,corridorRadius:12,simplifyTolerance:1.5});
  return result.ok?{ok:true,coordinates:referenceImagePixelsToCoordinates(result.points,{sourceWidth:input.sourceWidth,sourceHeight:input.sourceHeight,warp}),uv:result.points.map(p=>[p[0]/Math.max(1,input.sourceWidth-1),p[1]/Math.max(1,input.sourceHeight-1)])}:{ok:false,reason:result.reason};
 }
+
+import {defaultReferenceImageMapQuad,setReferenceImagePlacementRotation,referenceImagePlacementRotation} from './reference-image-transform.js';
+function nativeHost(projection) {
+ return {project:c=>{const p=projection.referenceScreenAtCoordinate(c[0],c[1]);return p.visible?[p.x,p.y]:null},unproject:p=>JSON.parse(JSON.stringify(projection.referenceCoordinateAtScreen(p[0],p[1]))),getProjectionKind:()=>projection.projectionMode};
+}
+export function placementRotate(input,projection) {
+ const record={...input.record};const ok=setReferenceImagePlacementRotation(record,nativeHost(projection),input.angle);
+ return {ok,mapQuad:record.mapQuad,rotation:referenceImagePlacementRotation(record,nativeHost(projection))};
+}
+export function placementDefault(input,projection) {
+ const mapQuad=defaultReferenceImageMapQuad({naturalWidth:input.width,naturalHeight:input.height},{getBoundingClientRect:()=>input.viewport},nativeHost(projection));
+ return {ok:!!mapQuad,mapQuad};
+}
+export function placementAngle(input,projection) { return {angle:referenceImagePlacementRotation(input.record,nativeHost(projection))}; }

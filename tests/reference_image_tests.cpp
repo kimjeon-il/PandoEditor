@@ -76,6 +76,21 @@ private slots:
         QImage repaired(64,64,QImage::Format_RGB32);repaired.fill(Qt::gray);QVERIFY(repaired.save(source));
     }
 
+    void placementDefaultsAndLockHistoryMatchWeb()
+    {
+        QTemporaryDir dir;const auto path=dir.filePath("placement.png");QImage image(64,32,QImage::Format_RGB32);image.fill(Qt::red);QVERIFY(image.save(path));
+        ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(path)));const auto id=library.images().back().toMap()["id"].toString();
+        QCOMPARE(library.images().back().toMap()["opacity"].toDouble(),.55);
+        QVERIFY(library.beginCalibration(id));QVERIFY(library.flipPlacement(true));QVERIFY(library.images().back().toMap()["flipX"].toBool());QVERIFY(library.undo());QVERIFY(!library.images().back().toMap()["flipX"].toBool());QVERIFY(library.redo());
+        QVERIFY(library.updateImage(id,{{"locked",true}}));QVERIFY(!library.canUndo());QVERIFY(!library.undo());QVERIFY(!library.flipPlacement(false));QVERIFY(library.updateImage(id,{{"locked",false}}));QVERIFY(library.undo());QVERIFY(!library.images().back().toMap()["locked"].toBool());QVERIFY(!library.images().back().toMap()["flipX"].toBool());
+        QVERIFY(library.pickImagePoint(.25,.75));QVERIFY(library.pickMapCoordinate(126,37));const auto point=library.images().back().toMap()["geographicPoints"].toList().front().toMap();QVERIFY(!library.flipPlacement(true));QVERIFY(library.editCalibrationImagePoint(point["id"].toString()));QVERIFY(library.pickImagePoint(.35,.65));const auto moved=library.images().back().toMap()["geographicPoints"].toList().front().toMap();QCOMPARE(moved["id"],point["id"]);QCOMPARE(moved["coordinate"],point["coordinate"]);QCOMPARE(moved["image"].toList(),(QVariantList{.35,.65}));QVERIFY(library.undo());QCOMPARE(library.images().back().toMap()["geographicPoints"].toList().front().toMap(),point);
+    }
+
+    void historyNeverRestoresAnOldLock()
+    {
+        QTemporaryDir dir;const auto path=dir.filePath("lock.png");QImage image(4,4,QImage::Format_RGB32);image.fill(Qt::red);QVERIFY(image.save(path));ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(path)));const auto id=library.images().back().toMap()["id"].toString();QVERIFY(library.updateImage(id,{{"locked",true}}));QVERIFY(library.importImage(QUrl::fromLocalFile(path)));QVERIFY(library.updateImage(id,{{"locked",false}}));QVERIFY(library.undo());bool locked=false;for(const auto &value:library.images())if(value.toMap()["id"]==id)locked=value.toMap()["locked"].toBool();library.updateImage(id,{{"locked",false}});QVERIFY2(!locked,"Image Undo restored an obsolete lock");
+    }
+
     void geographicCalibrationUsesNormalizedUvAndMeters()
     {
         ReferenceImageLibrary library;
@@ -142,12 +157,12 @@ private slots:
         const auto root=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+"/reference-images";
         QTemporaryDir source;const auto imagePath=source.filePath("atomic.png");QImage image(4,4,QImage::Format_RGB32);image.fill(Qt::red);QVERIFY(image.save(imagePath));
         ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(imagePath)));
-        const auto before=library.images();const auto index=root+"/library.json";const auto backup=root+"/library.backup";
+        QVERIFY(library.beginCalibration(library.images().front().toMap()["id"].toString()));const auto before=library.images();const auto index=root+"/library.json";const auto backup=root+"/library.backup";
         QVERIFY(QFile::rename(index,backup));QVERIFY(QDir().mkdir(index));
-        const bool result=library.undo();const bool historyPreserved=library.canUndo();const auto after=library.images();
+        const bool flipResult=library.flipPlacement(true);const bool result=library.undo();const bool historyPreserved=library.canUndo();const auto after=library.images();
         QVERIFY(QDir().rmdir(index));QVERIFY(QFile::rename(backup,index));
         QCoreApplication::setApplicationName(previous);
-        QVERIFY(!result);QCOMPARE(after,before);QVERIFY2(historyPreserved,"Failed save consumed the Undo history entry");
+        QVERIFY(!flipResult);QVERIFY(!result);QCOMPARE(after,before);QVERIFY(!library.canRedo());QVERIFY2(historyPreserved,"Failed save consumed the Undo history entry");
     }
 
     void cornerPinAnchorAndCanceledGesturePreserveGeographicState()

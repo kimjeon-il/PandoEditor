@@ -40,6 +40,9 @@ var ReferenceWeb = (() => {
     anchor: () => anchor,
     calibration: () => calibration,
     cornerQuad: () => cornerQuad,
+    placementAngle: () => placementAngle,
+    placementDefault: () => placementDefault,
+    placementRotate: () => placementRotate,
     refine: () => refine,
     trace: () => trace
   });
@@ -571,6 +574,8 @@ var ReferenceWeb = (() => {
     minimumWidth: 48,
     minimumHeight: 36
   });
+  var radians = (value) => Number(value) * Math.PI / 180;
+  var degrees = (value) => Number(value) * 180 / Math.PI;
   var HANDLE_ORDER = Object.freeze(["nw", "n", "ne", "e", "se", "s", "sw", "w"]);
   function finitePair2(value) {
     if (!Array.isArray(value) || value.length < 2) return null;
@@ -585,6 +590,41 @@ var ReferenceWeb = (() => {
     while (lon > 180) lon -= 360;
     while (lon < -180) lon += 360;
     return [lon, Math.max(-90, Math.min(90, pair[1]))];
+  }
+  function add(a, b) {
+    return [a[0] + b[0], a[1] + b[1]];
+  }
+  function subtract(a, b) {
+    return [a[0] - b[0], a[1] - b[1]];
+  }
+  function multiply(vector, scalar) {
+    return [vector[0] * scalar, vector[1] * scalar];
+  }
+  function midpoint(a, b) {
+    return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  }
+  function average(points) {
+    return [
+      points.reduce((sum, point) => sum + point[0], 0) / points.length,
+      points.reduce((sum, point) => sum + point[1], 0) / points.length
+    ];
+  }
+  function length(vector) {
+    return Math.hypot(vector[0], vector[1]);
+  }
+  function normalizeVector(vector) {
+    const magnitude = length(vector);
+    return magnitude > 1e-9 ? [vector[0] / magnitude, vector[1] / magnitude] : null;
+  }
+  function rotatePoint(point, center, angleDegrees) {
+    const angle = radians(angleDegrees);
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const delta = subtract(point, center);
+    return [
+      center[0] + delta[0] * cos - delta[1] * sin,
+      center[1] + delta[0] * sin + delta[1] * cos
+    ];
   }
   function angularDistanceDegrees(a, b) {
     if (!a || !b) return Number.POSITIVE_INFINITY;
@@ -604,10 +644,98 @@ var ReferenceWeb = (() => {
     const roundTrip = normalizeCoordinate((_c = host.unproject) == null ? void 0 : _c.call(host, projected));
     return angularDistanceDegrees(coordinate, roundTrip) <= 0.25 ? projected : null;
   }
+  function unprojectCorners(host, corners) {
+    if (!(host == null ? void 0 : host.unproject) || !Array.isArray(corners) || corners.length !== 4) return null;
+    const quad = [];
+    for (const corner of corners) {
+      const coordinate = normalizeCoordinate(host.unproject(corner));
+      if (!coordinate) return null;
+      quad.push(coordinate);
+    }
+    return quad;
+  }
+  function applyScreenCorners(record, corners, host) {
+    const quad = unprojectCorners(host, corners);
+    if (!record || !quad) return false;
+    record.mapQuad = quad;
+    return true;
+  }
+  function normalizeReferenceImageRotation(value) {
+    let angle = Number(value);
+    if (!Number.isFinite(angle)) angle = 0;
+    angle %= 360;
+    if (angle > 180) angle -= 360;
+    if (angle <= -180) angle += 360;
+    return angle;
+  }
+  function normalizeReferenceImageScreenRect(value) {
+    if (!value || typeof value !== "object") return null;
+    const x = Number(value.x);
+    const y = Number(value.y);
+    const width = Number(value.width);
+    const height = Number(value.height);
+    if (![x, y, width, height].every(Number.isFinite)) return null;
+    return {
+      x,
+      y,
+      width: Math.max(REFERENCE_IMAGE_TRANSFORM.minimumWidth, width),
+      height: Math.max(REFERENCE_IMAGE_TRANSFORM.minimumHeight, height)
+    };
+  }
+  function defaultReferenceImageScreenRect(image, mapElement) {
+    const bounds = mapElement.getBoundingClientRect();
+    const maxWidth = Math.max(180, bounds.width * 0.62);
+    const maxHeight = Math.max(140, bounds.height * 0.62);
+    const naturalWidth = Math.max(1, Number(image == null ? void 0 : image.naturalWidth) || 1);
+    const naturalHeight = Math.max(1, Number(image == null ? void 0 : image.naturalHeight) || 1);
+    const scale = Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight);
+    const width = Math.max(80, naturalWidth * scale);
+    const height = Math.max(60, naturalHeight * scale);
+    return {
+      x: (bounds.width - width) / 2,
+      y: (bounds.height - height) / 2,
+      width,
+      height
+    };
+  }
+  function referenceImageScreenRectToMapQuad(screenRect, rotation, host) {
+    const rect = normalizeReferenceImageScreenRect(screenRect);
+    if (!rect || !(host == null ? void 0 : host.unproject)) return null;
+    const center = [rect.x + rect.width / 2, rect.y + rect.height / 2];
+    const corners = [
+      [rect.x, rect.y],
+      [rect.x + rect.width, rect.y],
+      [rect.x + rect.width, rect.y + rect.height],
+      [rect.x, rect.y + rect.height]
+    ].map((point) => rotatePoint(point, center, normalizeReferenceImageRotation(rotation)));
+    return unprojectCorners(host, corners);
+  }
+  function defaultReferenceImageMapQuad(image, mapElement, host) {
+    let rect = defaultReferenceImageScreenRect(image, mapElement);
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const quad = referenceImageScreenRectToMapQuad(rect, 0, host);
+      if (quad) return quad;
+      const center = [rect.x + rect.width / 2, rect.y + rect.height / 2];
+      const width = Math.max(REFERENCE_IMAGE_TRANSFORM.minimumWidth, rect.width * 0.82);
+      const height = Math.max(REFERENCE_IMAGE_TRANSFORM.minimumHeight, rect.height * 0.82);
+      rect = {
+        x: center[0] - width / 2,
+        y: center[1] - height / 2,
+        width,
+        height
+      };
+    }
+    return null;
+  }
   function projectReferenceImageMapQuad(record, host) {
     if (!(record == null ? void 0 : record.mapQuad) || record.mapQuad.length !== 4 || !(host == null ? void 0 : host.project)) return null;
     const corners = record.mapQuad.map((coordinate) => projectVisible(host, coordinate));
     return corners.every(Boolean) ? corners : null;
+  }
+  function referenceImageAnchorScreenPoint(record, host) {
+    var _a;
+    const coordinate = (_a = record == null ? void 0 : record.anchor) == null ? void 0 : _a.coordinate;
+    return coordinate ? projectVisible(host, coordinate) : null;
   }
   function buildReferenceImagePlacementWarp(record) {
     if (!(record == null ? void 0 : record.mapQuad) || record.mapQuad.length !== 4) {
@@ -654,6 +782,64 @@ var ReferenceWeb = (() => {
       return false;
     }
     return true;
+  }
+  function referenceImagePlacementGeometry(record, host) {
+    const corners = projectReferenceImageMapQuad(record, host);
+    if (!corners) return null;
+    const [nw, ne, se, sw] = corners;
+    const center = average(corners);
+    const topMid = midpoint(nw, ne);
+    const rightMid = midpoint(ne, se);
+    const bottomMid = midpoint(sw, se);
+    const leftMid = midpoint(nw, sw);
+    const topVector = subtract(ne, nw);
+    const bottomVector = subtract(se, sw);
+    const leftVector = subtract(sw, nw);
+    const rightVector = subtract(se, ne);
+    const widthVector = multiply(add(topVector, bottomVector), 0.5);
+    const heightVector = multiply(add(leftVector, rightVector), 0.5);
+    const u = normalizeVector(widthVector);
+    const v = normalizeVector(heightVector);
+    const topUnit = normalizeVector(topVector);
+    if (!u || !v || !topUnit) return null;
+    const outward = [topUnit[1], -topUnit[0]];
+    const rotateHandle = add(topMid, multiply(outward, REFERENCE_IMAGE_TRANSFORM.rotateHandleOffset));
+    const handles = Object.freeze({
+      nw,
+      n: topMid,
+      ne,
+      e: rightMid,
+      se,
+      s: bottomMid,
+      sw,
+      w: leftMid
+    });
+    return Object.freeze({
+      corners,
+      center,
+      handles,
+      rotateHandle,
+      width: Math.max(1e-9, length(widthVector)),
+      height: Math.max(1e-9, length(heightVector)),
+      u,
+      v,
+      rotation: normalizeReferenceImageRotation(degrees(Math.atan2(topVector[1], topVector[0])))
+    });
+  }
+  function referenceImagePlacementRotation(record, host) {
+    var _a, _b;
+    return (_b = (_a = referenceImagePlacementGeometry(record, host)) == null ? void 0 : _a.rotation) != null ? _b : 0;
+  }
+  function setReferenceImagePlacementRotation(record, host, value) {
+    const geometry = referenceImagePlacementGeometry(record, host);
+    if (!geometry) return false;
+    const target = normalizeReferenceImageRotation(value);
+    const delta = normalizeReferenceImageRotation(target - geometry.rotation);
+    const anchorPoint = referenceImageAnchorScreenPoint(record, host);
+    if (record.anchor && !anchorPoint) return false;
+    const pivot = anchorPoint || geometry.center;
+    const changed = applyScreenCorners(record, geometry.corners.map((corner) => rotatePoint(corner, pivot, delta)), host);
+    return changed && (!record.anchor || alignReferenceImageAnchor(record));
   }
   function unwrapLongitude2(value, reference) {
     let result = value;
@@ -885,10 +1071,10 @@ var ReferenceWeb = (() => {
     const index = y * field.width + x;
     const gx = Number(((_a = field.gradientX) == null ? void 0 : _a[index]) || 0);
     const gy = Number(((_b = field.gradientY) == null ? void 0 : _b[index]) || 0);
-    const length = Math.hypot(gx, gy);
-    if (length < 1e-5) return 1;
-    const tangentX = -gy / length;
-    const tangentY = gx / length;
+    const length2 = Math.hypot(gx, gy);
+    if (length2 < 1e-5) return 1;
+    const tangentX = -gy / length2;
+    const tangentY = gx / length2;
     return 1 - Math.abs(move.ux * tangentX + move.uy * tangentY);
   }
   function turnCost(previousDirection, nextDirection) {
@@ -1273,17 +1459,17 @@ var ReferenceWeb = (() => {
       const target = source[index];
       let dx = target[0] - previous[0];
       let dy = target[1] - previous[1];
-      let length = Math.hypot(dx, dy);
-      while (length >= remaining && length > 1e-9) {
-        const ratio = remaining / length;
+      let length2 = Math.hypot(dx, dy);
+      while (length2 >= remaining && length2 > 1e-9) {
+        const ratio = remaining / length2;
         previous = [previous[0] + dx * ratio, previous[1] + dy * ratio];
         result.push(clonePoint2(previous));
         dx = target[0] - previous[0];
         dy = target[1] - previous[1];
-        length = Math.hypot(dx, dy);
+        length2 = Math.hypot(dx, dy);
         remaining = spacing;
       }
-      remaining -= length;
+      remaining -= length2;
       previous = clonePoint2(target);
       if (remaining <= 1e-9) remaining = spacing;
     }
@@ -1527,6 +1713,24 @@ var ReferenceWeb = (() => {
     const roughPoints = input.anchors.map((p) => [p[0] * (input.sourceWidth - 1), p[1] * (input.sourceHeight - 1)]);
     const result = refineReferenceImageLine({ field, roughPoints, corridorRadius: 12, simplifyTolerance: 1.5 });
     return result.ok ? { ok: true, coordinates: referenceImagePixelsToCoordinates(result.points, { sourceWidth: input.sourceWidth, sourceHeight: input.sourceHeight, warp }), uv: result.points.map((p) => [p[0] / Math.max(1, input.sourceWidth - 1), p[1] / Math.max(1, input.sourceHeight - 1)]) } : { ok: false, reason: result.reason };
+  }
+  function nativeHost(projection) {
+    return { project: (c) => {
+      const p = projection.referenceScreenAtCoordinate(c[0], c[1]);
+      return p.visible ? [p.x, p.y] : null;
+    }, unproject: (p) => JSON.parse(JSON.stringify(projection.referenceCoordinateAtScreen(p[0], p[1]))), getProjectionKind: () => projection.projectionMode };
+  }
+  function placementRotate(input, projection) {
+    const record = __spreadValues({}, input.record);
+    const ok = setReferenceImagePlacementRotation(record, nativeHost(projection), input.angle);
+    return { ok, mapQuad: record.mapQuad, rotation: referenceImagePlacementRotation(record, nativeHost(projection)) };
+  }
+  function placementDefault(input, projection) {
+    const mapQuad = defaultReferenceImageMapQuad({ naturalWidth: input.width, naturalHeight: input.height }, { getBoundingClientRect: () => input.viewport }, nativeHost(projection));
+    return { ok: !!mapQuad, mapQuad };
+  }
+  function placementAngle(input, projection) {
+    return { angle: referenceImagePlacementRotation(input.record, nativeHost(projection)) };
   }
   return __toCommonJS(adapter_exports);
 })();

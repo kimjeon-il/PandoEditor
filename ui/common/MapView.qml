@@ -256,7 +256,24 @@ Rectangle {
                     UiButton { objectName: "referenceAnchorButton"; text: "고정점 지정"; enabled: !calibrationPanel.record.locked; onClicked: { if(view.ensureReferenceQuad(false))referenceImages.beginAnchor() } }
                     UiButton { text: "고정 해제"; visible: !!calibrationPanel.record.anchor && Object.keys(calibrationPanel.record.anchor).length>0; onClicked: referenceImages.clearAnchor() }
                 }
-                Label { width: parent.width; wrapMode: Text.Wrap; text: calibrationPanel.session.anchorPicking ? (calibrationPanel.session.pendingMap ? "지도에서 고정점 위치를 누르세요." : "이미지에서 고정점을 누르세요.") : calibrationPanel.session.pendingMap ? "지도에서 대응 위치를 누르세요." : "이미지에서 기준점을 누른 뒤 지도 위치를 누르세요." }
+                Row {
+                    spacing: 4
+                    UiButton { objectName: "referenceFlipX"; text: "좌우 반전"; enabled: !calibrationPanel.record.locked && !(calibrationPanel.record.controlPoints || []).length && !calibrationPanel.record.anchor && !calibrationPanel.session.pendingMap && !referenceImages.traceSession.active; onClicked: referenceImages.flipPlacement(true) }
+                    UiButton { objectName: "referenceFlipY"; text: "상하 반전"; enabled: !calibrationPanel.record.locked && !(calibrationPanel.record.controlPoints || []).length && !calibrationPanel.record.anchor && !calibrationPanel.session.pendingMap && !referenceImages.traceSession.active; onClicked: referenceImages.flipPlacement(false) }
+                    UiButton { objectName: "referencePlacementReset"; text: "배치 초기화"; enabled: !calibrationPanel.record.locked && !(calibrationPanel.session.result && calibrationPanel.session.result.calibrationOk) && !calibrationPanel.session.pendingMap && !referenceImages.traceSession.active; onClicked: referenceImages.resetPlacement(editor,view.width,view.height) }
+                }
+                Row {
+                    spacing: 4
+                    Label { text: "회전 °" }
+                    TextField {
+                        objectName: "referencePlacementRotation"; width: 100
+                        enabled: !calibrationPanel.record.locked && !(calibrationPanel.session.result && calibrationPanel.session.result.calibrationOk) && !calibrationPanel.session.pendingMap && !referenceImages.traceSession.active
+                        text: { view.cameraState; calibrationPanel.session; return referenceImages.placementAngle(editor).toFixed(1) }
+                        validator: DoubleValidator { bottom: -180; top: 180; decimals: 1; notation: DoubleValidator.StandardNotation }
+                        onEditingFinished: { if(acceptableInput && view.ensureReferenceQuad(false))referenceImages.rotatePlacement(Number(text),editor);text=referenceImages.placementAngle(editor).toFixed(1) }
+                    }
+                }
+                Label { width: parent.width; wrapMode: Text.Wrap; text: calibrationPanel.session.editingImagePoint ? "이미지에서 기준점의 새 위치를 누르세요." : calibrationPanel.session.anchorPicking ? (calibrationPanel.session.pendingMap ? "지도에서 고정점 위치를 누르세요." : "이미지에서 고정점을 누르세요.") : calibrationPanel.session.pendingMap ? "지도에서 대응 위치를 누르세요." : "이미지에서 기준점을 누른 뒤 지도 위치를 누르세요." }
                 UiComboBox {
                     objectName: "referenceWarpMode"; width: parent.width
                     model: ["auto","similarity","affine","projective","tps"]
@@ -275,7 +292,8 @@ Rectangle {
                         required property var modelData; required property int index
                         spacing: 4
                         Label { text: "기준점 "+(index+1) }
-                        UiButton { text: "이동"; onClicked: referenceImages.editCalibrationPoint(modelData.id) }
+                        UiButton { text: "이미지 이동"; onClicked: referenceImages.editCalibrationImagePoint(modelData.id) }
+                        UiButton { text: "지도 이동"; onClicked: referenceImages.editCalibrationPoint(modelData.id) }
                         UiButton { text: "삭제"; onClicked: referenceImages.deleteCalibrationPoint(modelData.id) }
                     }
                 }

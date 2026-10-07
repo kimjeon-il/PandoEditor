@@ -19,7 +19,7 @@
 #include <QUuid>
 
 namespace {
-QVariantMap referenceWeb(const QString &name,const QVariantMap &input)
+QVariantMap referenceWeb(const QString &name,const QVariantMap &input,QObject *projection=nullptr)
 {
     QJSEngine engine;QFile script(":/reference-web/runtime.js");
     if(!script.open(QIODevice::ReadOnly))return {{"ok",false},{"reason",script.errorString()}};
@@ -28,7 +28,8 @@ QVariantMap referenceWeb(const QString &name,const QVariantMap &input)
     if(module.isError())return {{"ok",false},{"reason",module.toString()}};
     const auto json=QString::fromUtf8(QJsonDocument::fromVariant(input).toJson(QJsonDocument::Compact));
     const auto argument=engine.globalObject().property("JSON").property("parse").call({json});
-    const auto result=module.property(name).call({argument});
+    if(projection)QJSEngine::setObjectOwnership(projection,QJSEngine::CppOwnership);
+    const auto result=module.property(name).call({argument,projection?engine.newQObject(projection):QJSValue(QJSValue::NullValue)});
     return result.isError()?QVariantMap{{"ok",false},{"reason",result.toString()}}:result.toVariant().toMap();
 }
 bool finiteQuad(const QVariantList &quad,bool geographic)
@@ -147,7 +148,7 @@ bool ReferenceImageLibrary::removeImage(const QString &id)
 bool ReferenceImageLibrary::updateImage(const QString &id,const QVariantMap &changes)
 {
     auto next=state_;const auto found=std::find_if(next.begin(),next.end(),[&](const auto&i){return i.id==id;});if(found==next.end()||(found->locked&&changes.keys()!=QStringList{"locked"}))return false;
-    if(changes.contains("name"))found->name=changes["name"].toString().trimmed();if(changes.contains("visible"))found->visible=changes["visible"].toBool();if(changes.contains("locked"))found->locked=changes["locked"].toBool();if(changes.contains("opacity"))found->opacity=std::clamp(changes["opacity"].toDouble(),0.,1.);if(changes.contains("x"))found->x=changes["x"].toDouble();if(changes.contains("y"))found->y=changes["y"].toDouble();if(changes.contains("width"))found->width=std::max(1.,changes["width"].toDouble());if(changes.contains("height"))found->height=std::max(1.,changes["height"].toDouble());if(changes.contains("rotation"))found->rotation=changes["rotation"].toDouble();if(changes.contains("flipX"))found->flipX=changes["flipX"].toBool();if(changes.contains("flipY"))found->flipY=changes["flipY"].toBool();if(changes.contains("blend"))found->blend=normalizedBlend(changes["blend"].toString());if(changes.contains("warpMode"))found->warpMode=normalizedWarp(changes["warpMode"].toString());if(changes.contains("controlPoints"))found->controlPoints=changes["controlPoints"].toList();return setState(std::move(next),true);
+    if(changes.contains("name"))found->name=changes["name"].toString().trimmed();if(changes.contains("visible"))found->visible=changes["visible"].toBool();if(changes.contains("locked"))found->locked=changes["locked"].toBool();if(changes.contains("opacity"))found->opacity=std::clamp(changes["opacity"].toDouble(),0.,1.);if(changes.contains("x"))found->x=changes["x"].toDouble();if(changes.contains("y"))found->y=changes["y"].toDouble();if(changes.contains("width"))found->width=std::max(1.,changes["width"].toDouble());if(changes.contains("height"))found->height=std::max(1.,changes["height"].toDouble());if(changes.contains("rotation"))found->rotation=changes["rotation"].toDouble();if(changes.contains("flipX"))found->flipX=changes["flipX"].toBool();if(changes.contains("flipY"))found->flipY=changes["flipY"].toBool();if(changes.contains("blend"))found->blend=normalizedBlend(changes["blend"].toString());if(changes.contains("warpMode"))found->warpMode=normalizedWarp(changes["warpMode"].toString());if(changes.contains("controlPoints"))found->controlPoints=changes["controlPoints"].toList();return setState(std::move(next),changes.keys()!=QStringList{"locked"});
 }
 bool ReferenceImageLibrary::moveImage(const QString &id,int destination)
 {
@@ -168,8 +169,8 @@ bool ReferenceImageLibrary::updateGesture(const QVariantMap &changes)
 bool ReferenceImageLibrary::commitGesture()
 {if(!gestureBefore_)return false;const auto before=std::move(*gestureBefore_);gestureBefore_.reset();gestureId_.clear();if(!save(state_)){state_=before;emit imagesChanged();return false;}undo_.push_back(before);if(undo_.size()>50)undo_.removeFirst();redo_.clear();emit historyChanged();return true;}
 void ReferenceImageLibrary::cancelGesture(){if(!gestureBefore_)return;state_=std::move(*gestureBefore_);gestureBefore_.reset();gestureId_.clear();emit imagesChanged();}
-bool ReferenceImageLibrary::undo(){if(undo_.isEmpty())return false;auto previous=undo_.last();if(!save(previous))return false;undo_.removeLast();redo_.push_back(state_);state_=std::move(previous);emit imagesChanged();emit historyChanged();return true;}
-bool ReferenceImageLibrary::redo(){if(redo_.isEmpty())return false;auto next=redo_.last();if(!save(next))return false;redo_.removeLast();undo_.push_back(state_);state_=std::move(next);emit imagesChanged();emit historyChanged();return true;}
+bool ReferenceImageLibrary::undo(){if(!canUndo())return false;auto previous=undo_.last();for(auto &record:previous)if(const auto current=find(record.id))record.locked=current->locked;else record.locked=false;if(!save(previous))return false;undo_.removeLast();redo_.push_back(state_);state_=std::move(previous);emit imagesChanged();emit historyChanged();return true;}
+bool ReferenceImageLibrary::redo(){if(!canRedo())return false;auto next=redo_.last();for(auto &record:next)if(const auto current=find(record.id))record.locked=current->locked;else record.locked=false;if(!save(next))return false;redo_.removeLast();undo_.push_back(state_);state_=std::move(next);emit imagesChanged();emit historyChanged();return true;}
 QVariantMap ReferenceImageLibrary::solveWarp(const QString &id,const QVariantList &values,const QString &mode) const
 {
     if(std::none_of(state_.begin(),state_.end(),[&](const auto&i){return i.id==id;}))return {{"valid",false},{"error",QStringLiteral("이미지를 찾을 수 없습니다.")}};QVector<ReferenceControlPoint> points;for(const auto &value:values){const auto map=value.toMap();points.push_back({{map["sourceX"].toDouble(),map["sourceY"].toDouble()},{map["destinationX"].toDouble(),map["destinationY"].toDouble()}});}const auto result=solveReferenceWarp(warpMode(normalizedWarp(mode)),points);return {{"valid",result.valid},{"error",result.error},{"rms",result.rmsError},{"maximum",result.maximumError},{"resolvedMode",int(result.resolvedMode)}};
@@ -198,19 +199,20 @@ QVariantMap ReferenceImageLibrary::calibrationSession() const
     auto record=variant(*item,directory());
     record["controlPoints"]=item->geographicPoints;
     return {{"active",true},{"record",record},{"pendingMap",pendingUv_.has_value()},
-        {"editingPointId",editingPointId_},{"anchorPicking",anchorPicking_},{"freeTransformEditing",freeTransformEditing_},{"result",calibration(record)}};
+        {"editingPointId",editingPointId_},{"editingImagePoint",editingImagePoint_},{"anchorPicking",anchorPicking_},{"freeTransformEditing",freeTransformEditing_},{"result",calibration(record)}};
 }
 bool ReferenceImageLibrary::beginCalibration(const QString &id)
 {
     const auto item=find(id);if(!item||item->locked||gestureBefore_)return false;
-    cancelTrace();calibrationId_=id;anchorPicking_=false;freeTransformEditing_=false;editingPointId_.clear();pendingUv_.reset();emit calibrationSessionChanged();return true;
+    cancelTrace();calibrationId_=id;editingImagePoint_=false;anchorPicking_=false;freeTransformEditing_=false;editingPointId_.clear();pendingUv_.reset();emit calibrationSessionChanged();return true;
 }
 void ReferenceImageLibrary::cancelCalibration()
-{cancelTrace();cancelGesture();calibrationId_.clear();anchorPicking_=false;freeTransformEditing_=false;editingPointId_.clear();pendingUv_.reset();emit calibrationSessionChanged();}
+{cancelTrace();cancelGesture();calibrationId_.clear();editingImagePoint_=false;anchorPicking_=false;freeTransformEditing_=false;editingPointId_.clear();pendingUv_.reset();emit calibrationSessionChanged();}
 bool ReferenceImageLibrary::pickImagePoint(double u,double v)
 {
     const auto item=find(calibrationId_);
     if(!item||item->locked||!std::isfinite(u)||!std::isfinite(v)||u<0||u>1||v<0||v>1)return false;
+    if(editingImagePoint_){auto points=item->geographicPoints;bool found=false;for(auto &point:points){auto value=point.toMap();if(value["id"]!=editingPointId_)continue;value["image"]=QVariantList{u,v};point=value;found=true;break;}if(!found||!setCalibration(item->id,points,item->warpMode))return false;editingImagePoint_=false;editingPointId_.clear();emit calibrationSessionChanged();return true;}
     pendingUv_=QPointF(u,v);editingPointId_.clear();emit calibrationSessionChanged();return true;
 }
 bool ReferenceImageLibrary::pickMapCoordinate(double longitude,double latitude)
@@ -233,14 +235,14 @@ bool ReferenceImageLibrary::pickMapCoordinate(double longitude,double latitude)
     bool replaced=false;for(auto &value:points)if(value.toMap()["id"].toString()==id){value=point;replaced=true;break;}
     if(!replaced)points.append(point);
     if(!setCalibration(calibrationId_,points,item->warpMode))return false;
-    pendingUv_.reset();editingPointId_.clear();emit calibrationSessionChanged();return true;
+    pendingUv_.reset();editingImagePoint_=false;editingPointId_.clear();emit calibrationSessionChanged();return true;
 }
 bool ReferenceImageLibrary::editCalibrationPoint(const QString &id)
 {
     const auto item=find(calibrationId_);if(!item||item->locked)return false;
     for(const auto &value:item->geographicPoints){const auto point=value.toMap();if(point["id"].toString()!=id)continue;
         const auto uv=point["image"].toList();if(uv.size()!=2)return false;
-        editingPointId_=id;pendingUv_=QPointF(uv[0].toDouble(),uv[1].toDouble());emit calibrationSessionChanged();return true;}
+        editingImagePoint_=false;editingPointId_=id;pendingUv_=QPointF(uv[0].toDouble(),uv[1].toDouble());emit calibrationSessionChanged();return true;}
     return false;
 }
 bool ReferenceImageLibrary::deleteCalibrationPoint(const QString &id)
@@ -249,10 +251,10 @@ bool ReferenceImageLibrary::deleteCalibrationPoint(const QString &id)
     auto points=item->geographicPoints;auto end=std::remove_if(points.begin(),points.end(),[&](const auto &v){return v.toMap()["id"].toString()==id;});
     if(end==points.end())return false;points.erase(end,points.end());
     if(!setCalibration(calibrationId_,points,item->warpMode))return false;
-    pendingUv_.reset();editingPointId_.clear();emit calibrationSessionChanged();return true;
+    pendingUv_.reset();editingImagePoint_=false;editingPointId_.clear();emit calibrationSessionChanged();return true;
 }
 bool ReferenceImageLibrary::clearCalibrationPoints()
-{const auto item=find(calibrationId_);if(!item||!setCalibration(calibrationId_,{},item->warpMode))return false;pendingUv_.reset();editingPointId_.clear();emit calibrationSessionChanged();return true;}
+{const auto item=find(calibrationId_);if(!item||!setCalibration(calibrationId_,{},item->warpMode))return false;pendingUv_.reset();editingImagePoint_=false;editingPointId_.clear();emit calibrationSessionChanged();return true;}
 bool ReferenceImageLibrary::setCalibrationMode(const QString &mode)
 {const auto item=find(calibrationId_);return item&&setCalibration(calibrationId_,item->geographicPoints,mode);}
 
@@ -269,7 +271,7 @@ bool ReferenceImageLibrary::storeQuad(const QVariantList &quad,const QVariantLis
     return setState(std::move(next),true);
 }
 bool ReferenceImageLibrary::beginAnchor()
-{const auto item=find(calibrationId_);if(!item||item->locked||gestureBefore_)return false;anchorPicking_=true;pendingUv_.reset();editingPointId_.clear();freeTransformEditing_=false;emit calibrationSessionChanged();return true;}
+{const auto item=find(calibrationId_);if(!item||item->locked||gestureBefore_)return false;anchorPicking_=true;pendingUv_.reset();editingImagePoint_=false;editingPointId_.clear();freeTransformEditing_=false;emit calibrationSessionChanged();return true;}
 bool ReferenceImageLibrary::clearAnchor()
 {const auto item=find(calibrationId_);if(!item||item->locked||gestureBefore_)return false;auto next=state_;auto changed=std::find_if(next.begin(),next.end(),[&](const auto &r){return r.id==calibrationId_;});changed->anchor.clear();return setState(std::move(next),true);}
 bool ReferenceImageLibrary::setFreeTransformEditing(bool enabled)
@@ -278,7 +280,7 @@ bool ReferenceImageLibrary::setFreeTransformEditing(bool enabled)
 void ReferenceImageLibrary::cancelTrace(){++traceEpoch_;if(trace_.isEmpty())return;trace_.clear();emit traceSessionChanged();}
 bool ReferenceImageLibrary::beginTrace(const QVariantMap &context) {
  const auto item=find(calibrationId_);if(!item||item->locked||context.isEmpty()||(!item->cornerPinEnabled&&!calibrationSession()["result"].toMap()["calibrationOk"].toBool()))return false;
- cancelTrace();pendingUv_.reset();anchorPicking_=freeTransformEditing_=false;
+ cancelTrace();pendingUv_.reset();editingImagePoint_=anchorPicking_=freeTransformEditing_=false;
  trace_={{"active",true},{"busy",false},{"phase","armed"},{"mode","trace"},{"anchors",QVariantList{}},{"coordinates",QVariantList{}},{"context",context},{"id",item->id}};
  emit calibrationSessionChanged();emit traceSessionChanged();return true;
 }
@@ -316,3 +318,20 @@ bool ReferenceImageLibrary::beginRefine(const QVariantMap &context,const QVarian
  for(const auto &value:uv){const auto pair=value.toList();if(pair.size()!=2)return false;for(const auto c:pair){bool ok=false;const double v=c.toDouble(&ok);if(!ok||!std::isfinite(v)||v<0||v>1)return false;}}
  if(!beginTrace(context))return false;trace_["mode"]="refine";trace_["anchors"]=uv;trace_["phase"]="analyzing";calculateTrace();return true;
 }
+
+bool ReferenceImageLibrary::canUndo() const{return !gestureBefore_&&!undo_.empty()&&std::none_of(state_.begin(),state_.end(),[](const auto &r){return r.locked;});}
+bool ReferenceImageLibrary::canRedo() const{return !gestureBefore_&&!redo_.empty()&&std::none_of(state_.begin(),state_.end(),[](const auto &r){return r.locked;});}
+bool ReferenceImageLibrary::flipPlacement(bool horizontal){const auto item=find(calibrationId_);if(!item||item->locked||!item->geographicPoints.empty()||!item->controlPoints.empty()||!item->anchor.empty()||pendingUv_||!trace_.empty())return false;return updateImage(item->id,{{horizontal?"flipX":"flipY",horizontal?!item->flipX:!item->flipY}});}
+bool ReferenceImageLibrary::rotatePlacement(double angle,QObject *projection){
+ const auto item=find(calibrationId_);if(!item||!projection||item->locked||!std::isfinite(angle)||pendingUv_||!trace_.empty()||calibrationSession()["result"].toMap()["calibrationOk"].toBool())return false;
+ auto input=variant(*item,directory());input["controlPoints"]=item->geographicPoints;const auto result=referenceWeb("placementRotate",{{"record",input},{"angle",angle}},projection);if(!result["ok"].toBool()||!finiteQuad(result["mapQuad"].toList(),true))return false;
+ auto next=state_;for(auto &record:next)if(record.id==item->id){record.mapQuad=result["mapQuad"].toList();record.rotation=result["rotation"].toDouble();}return setState(std::move(next),true);
+}
+bool ReferenceImageLibrary::resetPlacement(QObject *projection,double viewportWidth,double viewportHeight){
+ const auto item=find(calibrationId_);if(!item||!projection||item->locked||!std::isfinite(viewportWidth)||!std::isfinite(viewportHeight)||viewportWidth<=0||viewportHeight<=0||pendingUv_||!trace_.empty()||calibrationSession()["result"].toMap()["calibrationOk"].toBool())return false;
+ QImageReader reader(directory()+"/"+item->fileName);reader.setAutoTransform(true);const auto image=reader.read();if(image.isNull()){fail(QStringLiteral("손상된 이미지는 초기화할 수 없습니다."));return false;}
+ const auto result=referenceWeb("placementDefault",{{"width",image.width()},{"height",image.height()},{"viewport",QVariantMap{{"width",viewportWidth},{"height",viewportHeight}}}},projection);if(!result["ok"].toBool()||!finiteQuad(result["mapQuad"].toList(),true))return false;
+ auto next=state_;for(auto &record:next)if(record.id==item->id){record.mapQuad=result["mapQuad"].toList();record.rotation=0;record.anchor.clear();record.cornerPinEnabled=false;}return setState(std::move(next),true);
+}
+double ReferenceImageLibrary::placementAngle(QObject *projection) const {if(!projection)return 0;const auto item=find(calibrationId_);if(!item)return 0;return referenceWeb("placementAngle",{{"record",variant(*item,directory())}},projection)["angle"].toDouble();}
+bool ReferenceImageLibrary::editCalibrationImagePoint(const QString &id){const auto item=find(calibrationId_);if(!item||item->locked)return false;for(const auto &value:item->geographicPoints)if(value.toMap()["id"]==id){editingPointId_=id;editingImagePoint_=true;pendingUv_.reset();anchorPicking_=false;emit calibrationSessionChanged();return true;}return false;}
