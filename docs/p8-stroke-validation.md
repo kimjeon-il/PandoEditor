@@ -61,3 +61,16 @@ Final related execution before commit:
   successor receipts retire retained predecessor strokes and preserve archive.
   `stroke-presentation-final-40` failed initial GPU exposure under hidden native
   startup. The explicitly exposed rerun, not that failed run, supplies evidence.
+
+Independent final review found an obsolete 4x7 endpoint-width test layout,
+omitted clipped-painted stroke identity, and missing variable-width miter joins.
+RED48 (PID20400/exit1) and RED49 (PID20904/exit2) reproduced those failures.
+The layout now checks all12 vertices/14 floats and keeps upload/retirement
+assertions. Actual clipped draws publish their identity; the painted variable
+body uses the same .08/4 bounded-miter endpoint rule as the fixed GPU path.
+GREEN50 (PID10064/exit0) and DPR2 GREEN51 (PID15016/exit0) each run6 Qt rows,
+16 GPU/15 painted pixel predicates and an actual current-frame painted horizon
+inventory assertion. Related63 (PID22232/exit0) runs8 Qt rows with no failure/skip.
+The same independent reviewer confirmed all three fixes by source/log inspection;
+no reviewer build or device execution ran concurrently. These checkpoint results
+are separate from the forthcoming frozen-source executions.

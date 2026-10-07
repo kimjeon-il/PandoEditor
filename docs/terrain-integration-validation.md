@@ -127,3 +127,41 @@ unobserved/blocked respectively. These results do not enlarge the earlier P1
 corpus gate or relabel synthetic inputs as authentic DEM parity.
 Future source changes require affected checks to run again; P1's result cannot
 certify a later candidate or replace final same-commit/fixture evidence.
+
+## Remaining-work retirement and display-state correction
+
+Actual Windows D3D11 controller runs47/52/53/54/57/58 retained failures.
+Run58 (PID10320/exit1) proved that reverse-zoom candidate26/27 selected
+`1/0/0/raw` and `1/1/0/raw`, although the actual retained render owner had
+already destroyed those backings. Their older retirement acknowledgements were
+queued until a new unsubmitted candidate protected the stale GUI metadata.
+The current physical mask was ready; logs/Actions success did not establish
+current display. Raw native diagnostics remain outside the repository.
+
+RED55 (PID19688/exit1) separately catches current display evidence erased by
+unrelated readiness. Acceptance now persists within its demand; new demand,
+cancel and reset invalidate it. RED59 failed the authored domain setup before
+the intended assertion; corrected RED60 (PID7412/exit1) catches the actual older
+retirement/soft-lease race. An older request's same-owner acknowledgement can
+remove only an unsubmitted candidate/target lease. Actual displayed/submitted/
+base and current/future-request leases remain protected. Successful retirement
+rebuilds a resident-only candidate and schedules missing current requests even
+when deferred is0. That zero-deferred controller edge was reviewed but has no
+separate executed controller regression result at this checkpoint.
+
+State61 (PID11576/exit0) runs22/22 independent cases, failure/skip0. Controller62
+(PID17904/exit0) actually runs12/12 transitions, Qt3/3, with8 Windows captures;
+same original DEM, D3D11, unchanged deadlines/assertions. Its final scope-guard
+diagnostic occurs after window close and includes the intended teardown
+invalidation; it is not the receipt used by the12 transition assertions.
+The same reviewer checked the fixes and current/future/submitted protection.
+Temporary render-owner logging was removed. New isolated negative execution
+and final-source device results are recorded separately when actually complete.
+
+`terrain-state-final-mutants-64/terrain-display-mutations-20261007T100629Z-ea55065d/results.json`
+actually completes the unmodified22-case baseline and all6 compiled negative
+variants. Each negative exits1 at its unique original assertion, including the
+receipt pulse and older retirement race; baseline exits0. Original production
+header and tests stay hash-identical throughout; no shared build is modified.
+Runner exits0 and originalSourcesUnchanged=true. This is a pure-state negative
+gate, separate from actual controller62 and original-data pixel evidence.

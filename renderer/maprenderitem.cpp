@@ -251,6 +251,7 @@ void MapRenderItem::paint(QPainter* painter) {
                         }
                         painter->setPen(Qt::NoPen);painter->setBrush(colorFor(style));painter->drawPath(shape);
                         painter->setPen(pen);painter->setBrush(Qt::NoBrush);
+                        recordStroke(draw.object,draw.geometry,style.alpha);
                     }
                     connected=false;continue;
                 }
@@ -267,12 +268,33 @@ void MapRenderItem::paint(QPainter* painter) {
                 const double hb=std::max(.1,double(packet.endpointWidths->at(i*2+1))+style.width)/2;
                 const double dx=b.x-a.x,dy=b.y-a.y,length=std::hypot(dx,dy);if(length<1e-9)continue;
                 const QPointF normal(-dy/length,dx/length),delta=pb-pa;
+                // The production Web bounded miter applies to each body's
+                // connected endpoint, including variable-width and dashed bodies.
+                const auto direction=[](QPointF d){const double n=std::hypot(d.x(),d.y());return n>.0001?d/n:QPointF(1,0);};
+                const auto miter=[&](QPointF incoming,QPointF outgoing,double half) {
+                    const auto sum=direction(incoming+outgoing);const QPointF n(-sum.y(),sum.x());
+                    const double denominator=QPointF::dotProduct(n,normal);
+                    if(std::abs(denominator)<.08)return normal*half;
+                    const double scale=half/denominator;
+                    return std::abs(scale)>half*4?normal*half:n*scale;
+                };
+                QPointF startOffset=normal*ha,endOffset=normal*hb;
+                if(style.join==mapstyle::Join::Miter) {
+                    if(originalStartVisible&&(segment.flags&1)) {
+                        const auto previous=projectPoint({segment.previous[0],segment.previous[1]},view_,offset);
+                        startOffset=miter(direction(pa-QPointF(previous.x,previous.y)),direction(delta),ha);
+                    }
+                    if(originalEndVisible&&(segment.flags&2)) {
+                        const auto next=projectPoint({segment.next[0],segment.next[1]},view_,offset);
+                        endOffset=miter(direction(delta),direction(QPointF(next.x,next.y)-pb),hb);
+                    }
+                }
                 const auto body=[&](double from,double to) {
                     const auto left=pa+delta*(from/length),right=pa+delta*(to/length);
-                    const auto wl=ha+(hb-ha)*from/length,wr=ha+(hb-ha)*to/length;
+                    const auto wl=startOffset+(endOffset-startOffset)*(from/length),wr=startOffset+(endOffset-startOffset)*(to/length);
                     // Match addEllipse's winding so shared filled coverage is
                     // a union rather than cancelling at a variable-width cap.
-                    variableShape.addPolygon(QPolygonF{left-normal*wl,right-normal*wr,right+normal*wr,left+normal*wl});variableShape.closeSubpath();
+                    variableShape.addPolygon(QPolygonF{left-wl,right-wr,right+wr,left+wl});variableShape.closeSubpath();
                 };
                 if(dashed) {
                     const double period=std::max(1.,double(style.dashOn+style.dashOff));

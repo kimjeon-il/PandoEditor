@@ -49,6 +49,39 @@ void coldDetailWaitsForSubmittedBase() {
     require(state.acceptDisplayReceipt({candidate->scope,candidate->id,1,candidate->draws}),"current displayed receipt accepted");
     require(contains(state.snapshot().protectedKeys,west.key)&&contains(state.snapshot().protectedKeys,east.key),"base remains protected even when not drawn");
 }
+void acceptedDisplaySurvivesUnrelatedReadinessAndRejectedEvents() {
+    TerrainDisplayState state;auto current=demand({west,east});current.prefetch={nw};state.beginDemand(current);
+    upload(state,current.scope,west);upload(state,current.scope,east);present(state,1);
+    const auto displayed=state.snapshot().displayed;
+    require(state.snapshot().receiptAccepted,"actual current frame was accepted");
+    upload(state,current.scope,nw);
+    require(state.snapshot().receiptAccepted&&state.snapshot().displayed==displayed,"prefetch readiness cannot erase actual current display evidence");
+    auto stale=current.scope;--stale.viewGeneration;
+    require(!state.cpuReady(stale,sw),"stale completion rejected");
+    require(state.snapshot().receiptAccepted,"rejected events cannot erase the current receipt");
+    require(state.buildCandidate().has_value()&&state.snapshot().receiptAccepted,"candidate preparation does not revoke the displayed frame");
+    auto next=current;++next.scope.viewGeneration;++next.scope.requestSequence;++next.scope.candidateSequence;
+    state.beginDemand(next);require(!state.snapshot().receiptAccepted,"a new view requires its own actual receipt");
+    present(state,2);require(state.snapshot().receiptAccepted,"new view has its own actual receipt");
+    require(state.cancel(next.scope)&&!state.snapshot().receiptAccepted,"cancel clears current receipt while retaining fallback");
+}
+void olderOwnerRetirementInvalidatesOnlyAnUnsubmittedCandidateLease() {
+    TerrainDisplayState state;auto first=demand({west,east});first.prefetch={nw};state.beginDemand(first);
+    upload(state,first.scope,west);upload(state,first.scope,east);upload(state,first.scope,nw);present(state,1);
+    // The owner retired a non-displayed prefetch under first scope; its queued
+    // acknowledgement arrives after a new view selected that stale backing.
+    auto next=demand({nw});next.domains={nw.interior};next.scope=first.scope;++next.scope.viewGeneration;++next.scope.requestSequence;++next.scope.candidateSequence;
+    state.beginDemand(next);const auto candidate=state.buildCandidate();require(candidate.has_value(),"candidate selected resident metadata");
+    require(!state.retireResource(next.scope,nw.key,nw.contentKey),"current-owner protected candidate cannot retire");
+    auto future=next.scope;++future.requestSequence;
+    require(!state.retireResource(future,nw.key,nw.contentKey),"future retirement cannot invalidate a protected candidate");
+    auto submitted=state;require(submitted.submitCandidate(*candidate,2,candidate->draws),"actual submission lease recorded");
+    require(!submitted.retireResource(first.scope,nw.key,nw.contentKey),"older retirement cannot erase an actually submitted backing");
+    require(state.retireResource(first.scope,nw.key,nw.contentKey),"older owner retirement must remove an unsubmitted candidate's phantom backing");
+    require(!state.snapshot().candidate&&!contains(state.snapshot().uploadSubmittedKeys,nw.key),"retirement invalidates the unsubmitted candidate and stale readiness");
+    require(!state.retireResource(first.scope,west.key,west.contentKey),"older retirement still cannot erase actual displayed/base backing");
+    const auto reserve=state.buildCandidate();require(reserve&&TerrainDisplayState::coverageGaps(reserve->draws,next.domains).empty(),"actual resident reserve supplies replacement coverage");
+}
 void partialReplacementRetiresOnlyAfterDisplay() {
     TerrainDisplayState state;auto initial=demand({oldWest,coarseEast});state.beginDemand(initial);
     upload(state,initial.scope,west);upload(state,initial.scope,east);upload(state,initial.scope,oldWest);present(state,1);
@@ -337,7 +370,8 @@ int main() {
             cancellationRetainsDisplayedFallbackAndRejectsPendingEvents,submittedPrefetchSuppliesFallbackAfterPan,
             replacementContentsShareKeyWithoutBlockingHandoff,demandSequenceFencePreventsCancelledScopeReactivation,
             displayedFrameSequenceIsMonotoneAcrossViews,cancelledUnshownResourcesCanRetireWithoutFalseReuse,
-            cancelledSubmittedBackingWaitsForExactOwnerAbandonment};
+            cancelledSubmittedBackingWaitsForExactOwnerAbandonment,acceptedDisplaySurvivesUnrelatedReadinessAndRejectedEvents,
+            olderOwnerRetirementInvalidatesOnlyAnUnsubmittedCandidateLease};
         std::size_t passed=0;for(const auto run:cases){run();++passed;}
         std::cout<<"terrain display state: processed="<<std::size(cases)<<" passed="<<passed<<" failed=0 skip=0\n";return 0;
     }catch(const std::exception& error){std::cerr<<"terrain display state FAIL: "<<error.what()<<'\n';return 1;}

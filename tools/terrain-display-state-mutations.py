@@ -1,6 +1,6 @@
 """Build/run isolated native regression mutations when invoked by the gate owner.
 
-Only copied headers are mutated. The actual 20-case C++ test source is copied
+Only copied headers are mutated. The actual 22-case C++ test source is copied
 byte-for-byte; no assertion, expectation, or production source is rewritten.
 Every invocation creates a new external evidence directory and deletes nothing.
 Process receipts prove local subprocess execution, not trusted remote attestation.
@@ -38,6 +38,22 @@ def save_json(path: Path, value: dict) -> None:
 
 
 MUTATIONS = (
+    {
+        "name": "older-retirement-soft-lease-rejection",
+        "regression": "A new unsubmitted candidate lease hides an older owner's actual retirement acknowledgement.",
+        "case": "olderOwnerRetirementInvalidatesOnlyAnUnsubmittedCandidateLease",
+        "message": "older owner retirement must remove an unsubmitted candidate's phantom backing",
+        "before": "        if(isProtected(id)) {",
+        "after": "        if(isProtected(id))return reject();\n        if(isProtected(id)) {",
+    },
+    {
+        "name": "display-receipt-as-event-pulse",
+        "regression": "Erase an actual current display receipt on unrelated or rejected readiness events.",
+        "case": "acceptedDisplaySurvivesUnrelatedReadinessAndRejectedEvents",
+        "message": "prefetch readiness cannot erase actual current display evidence",
+        "before": "    void startEvent(){released_.clear();}",
+        "after": "    void startEvent(){receiptAccepted_=false;released_.clear();}",
+    },
     {
         "name": "displayed-only-fallback",
         "regression": "Ignore submitted resident prefetch that was never displayed.",
@@ -77,8 +93,8 @@ MUTATIONS = (
         "regression": "Reject actual unprotected backing retirement acknowledgements while scheduling is cancelled.",
         "case": "cancelledUnshownResourcesCanRetireWithoutFalseReuse",
         "message": "cancelled owner retirement acknowledgements update resident inventory",
-        "before": "        if(!demand_||!ownerMatches(scope,demand_->scope)||isProtected(id))return reject();",
-        "after": "        if(!demand_||cancelled_||!ownerMatches(scope,demand_->scope)||isProtected(id))return reject();",
+        "before": "        if(!demand_||!ownerMatches(scope,demand_->scope))return reject();",
+        "after": "        if(!demand_||cancelled_||!ownerMatches(scope,demand_->scope))return reject();",
     },
 )
 
@@ -106,8 +122,8 @@ def validate_mutations(header: bytes, tests: bytes) -> list[dict]:
     if table is None:
         raise ValueError("Actual native case table was not found.")
     names = [name.strip() for name in table.group(1).split(",") if name.strip()]
-    if len(names) != 20 or len(set(names)) != 20:
-        raise ValueError(f"Expected the actual 20 distinct native cases; found {len(names)}.")
+    if len(names) != 22 or len(set(names)) != 22:
+        raise ValueError(f"Expected the actual 22 distinct native cases; found {len(names)}.")
     prepared = []
     for mutation in MUTATIONS:
         before, after = encoded_anchor(mutation["before"], header), encoded_anchor(mutation["after"], header)
@@ -182,7 +198,7 @@ def native_result(execution: dict, mutation: dict | None) -> dict:
               "caseCountEvidence": "native summary" if reported else "native abort does not report executed/passed counts"}
     if mutation is None:
         result["accepted"] = (execution["exitCode"] == 0 and not execution["timedOut"] and not execution["interrupted"]
-                              and reported == {"processed": 20, "passed": 20, "failed": 0, "skip": 0}
+                              and reported == {"processed": 22, "passed": 22, "failed": 0, "skip": 0}
                               and not failures)
     else:
         if failures == [mutation["message"]]:
@@ -244,7 +260,7 @@ def main() -> int:
                 "originalTests": file_record(tests_path), "tools": {key: file_record(value) for key, value in paths.items()},
                 "qtCoreRuntime": file_record(qt_core), "qtVersionRequired": args.qt_version,
                 "execution": "local-native-subprocess", "buildIsolation": "fresh standalone CMake/MinGW/Ninja per variant",
-                "instrumentation": "none; byte-identical actual 20-case test source",
+                "instrumentation": "none; byte-identical actual 22-case test source",
                 "processEvidence": "direct child PIDs; verbose compiler argv, but compiler descendant PIDs are not separately attested",
                 "variants": [], "accepted": False}
     receipt_path = run / "results.json"
@@ -314,7 +330,7 @@ def main() -> int:
                 break
         check_originals(originals)
         manifest["originalSourcesUnchanged"] = True
-        manifest["accepted"] = len(manifest["variants"]) == 5 and all(item["accepted"] for item in manifest["variants"])
+        manifest["accepted"] = len(manifest["variants"]) == 1 + len(MUTATIONS) and all(item["accepted"] for item in manifest["variants"])
     except Exception as error:
         manifest["runnerError"] = f"{type(error).__name__}: {error}"
         manifest["accepted"] = False

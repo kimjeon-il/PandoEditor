@@ -212,7 +212,17 @@ public:
         // Retirement is tied to actual owner/backing lifetime, not demand
         // activity. A cancelled or older view may acknowledge an unprotected
         // texture's destruction, so it cannot later be reused as resident.
-        if(!demand_||!ownerMatches(scope,demand_->scope)||isProtected(id))return reject();
+        if(!demand_||!ownerMatches(scope,demand_->scope))return reject();
+        if(isProtected(id)) {
+            // A queued older-owner acknowledgement can arrive after a new
+            // demand tentatively selected the already destroyed backing. Only
+            // unsubmitted candidate/target leases may yield to that evidence.
+            if(scope.requestSequence>=demand_->scope.requestSequence||
+               std::any_of(displayed_.begin(),displayed_.end(),[&](const auto& draw){return identity(draw.resource)==id;})||
+               (submitted_&&std::any_of(submitted_->draws.begin(),submitted_->draws.end(),[&](const auto& draw){return identity(draw.resource)==id;}))||
+               std::any_of(demand_->base.begin(),demand_->base.end(),[&](const auto& base){const auto* r=resident(base);return r&&identity(*r)==id;}))return reject();
+            if(candidate_&&std::any_of(candidate_->draws.begin(),candidate_->draws.end(),[&](const auto& draw){return identity(draw.resource)==id;}))candidate_.reset();
+        }
         const auto found=uploaded_.find(id);
         if(found==uploaded_.end())return reject();
         uploaded_.erase(found);cpu_.erase(id);uploadOrder_.erase(id);
@@ -223,7 +233,7 @@ public:
     bool cancel(const TerrainDisplayScope& scope) {
         startEvent();if(!current(scope))return reject();
         const auto before=protectedResources();
-        cancelled_=true;candidate_.reset();
+        cancelled_=true;receiptAccepted_=false;candidate_.reset();
         // Preserve displayed/base and an actually submitted inventory; mere
         // undisplayed target residency no longer holds a cancellation lease.
         for(auto it=cpu_.begin();it!=cpu_.end();) {
@@ -407,7 +417,10 @@ private:
         if(currentDisplayed!=oldDisplayed)return currentDisplayed;
         return uploadOrder_.at(identity(resource))>uploadOrder_.at(identity(old));
     }
-    void startEvent(){receiptAccepted_=false;released_.clear();}
+    // Acceptance is current-demand display state, not a one-event pulse.
+    // Readiness, candidate preparation and rejected events cannot revoke an
+    // actually presented frame. beginDemand/cancel/reset invalidate it.
+    void startEvent(){released_.clear();}
     bool reject(){++rejectedEvents_;return false;}
     std::optional<TerrainDisplayDemand> demand_;
     std::map<TerrainDisplayResourceId,TerrainDisplayResource> cpu_,uploaded_;

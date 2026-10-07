@@ -21,8 +21,9 @@ private slots:
         draw.style.color=0;draw.style.width=12;
         draw.geometryPacket=makeStrokeGeometryPacket(pandoeditor::Geometry{"LineString",{},{{{-20,0},{120,0}}},{}});
         scene->strokes.push_back(draw);scene->drawSequence.push_back({PrimitiveKind::Stroke,0,{},-1});bridge.publishScene(scene);
-        QQuickItem* item;
-        if(painted){auto* renderer=new MapRenderItem(window.contentItem());renderer->setSceneBridge(&bridge);item=renderer;}
+        QQuickItem* item;QVariantList displayedStrokes;int receipts=0;
+        if(painted){auto* renderer=new MapRenderItem(window.contentItem());renderer->setSceneBridge(&bridge);item=renderer;
+            connect(renderer,&MapRenderItem::framePresented,this,[&](std::shared_ptr<const MapFrame> frame,QVariantList inventory){if(frame==bridge.frameSnapshot()){displayedStrokes=inventory;++receipts;}});}
         else {auto* renderer=new GpuMapItem(window.contentItem());renderer->setSceneBridge(&bridge);item=renderer;}
         item->setWidth(192);item->setHeight(160);window.show();window.hide();window.show();QVERIFY(QTest::qWaitForWindowExposed(&window,10000));
         auto image=window.grabWindow();QVERIFY(!image.isNull());
@@ -30,6 +31,7 @@ private slots:
         QVERIFY2(pixel(150,80).red()<20,"visible portion must reach the geographic horizon");
         QVERIFY2(pixel(159,80).red()>240,"clipping must not create a round endpoint beyond the horizon");
         QVERIFY2(pixel(73,80).red()<20,"the original visible round start cap must remain");
+        if(painted){QTRY_VERIFY_WITH_TIMEOUT(receipts>0,3000);QVERIFY2(!displayedStrokes.isEmpty(),"an actually displayed clipped stroke must appear in the presentation receipt");}
         qInfo()<<"STROKE_HORIZON backend="<<(painted?"painted":"GPU")<<"processed=3 mismatch=0 skip=0 dpr="<<window.devicePixelRatio();
     }
     void chainPixels_data(){QTest::addColumn<bool>("painted");QTest::newRow("GPU")<<false;QTest::newRow("painted")<<true;}
@@ -93,6 +95,10 @@ private slots:
         bridge.publishScene(variable);image=window.grabWindow();
         QVERIFY2(pixel(80,107).red()<20,"endpoint widths must interpolate along the actual displayed body");++processed;
         QVERIFY(image.save(path+(painted?"/painted-variable.png":"/GPU-variable.png")));
+        variable=std::make_shared<RenderScene>(*variable);++variable->revision;
+        variable->strokes.front().style.join=mapstyle::Join::Miter;
+        bridge.publishScene(variable);image=window.grabWindow();
+        QVERIFY2(pixel(104,104).red()<20,"variable endpoint widths must retain the connected miter corner");++processed;
         qInfo()<<"STROKE_PIXEL backend="<<(painted?"painted":"GPU")<<"processed="<<processed<<"mismatch=0 skip=0 dpr="<<window.devicePixelRatio();
     }
 };

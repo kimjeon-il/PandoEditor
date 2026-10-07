@@ -255,9 +255,9 @@ private slots:
         const auto checkWidths=[&](float start,float end) {
             QCOMPARE(node.childCount(),1);
             const auto* geometry=static_cast<QSGGeometryNode*>(node.firstChild())->geometry();
-            QCOMPARE(geometry->vertexCount(),4);QCOMPARE(geometry->sizeOfVertex(),int(sizeof(float)*7));
+            QCOMPARE(geometry->vertexCount(),12);QCOMPARE(geometry->sizeOfVertex(),int(sizeof(float)*14));
             const auto* vertex=static_cast<const float*>(geometry->vertexData());
-            QCOMPARE(vertex[6],start);QCOMPARE(vertex[13],start);QCOMPARE(vertex[20],end);QCOMPARE(vertex[27],end);
+            for(int i=0;i<12;++i)QCOMPARE(vertex[i*14+6],i<2||(i>=4&&i<8)?start:end);
         };
         checkWidths(2,4);
         auto replacement=std::make_shared<RenderScene>(*original);++replacement->revision;++replacement->revisions.geometry;

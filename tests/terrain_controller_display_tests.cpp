@@ -1,5 +1,6 @@
 #include "editorcontroller.h"
 #include "windowsframe.h"
+#include "../renderer/terrainlandmaskitem.h"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -10,6 +11,8 @@
 #include <QFile>
 #include <QDir>
 #include <QSGRendererInterface>
+#include <QJsonDocument>
+#include <QScopeGuard>
 
 // Actual pinned DEM + application controller/QML/QSG path. These are device
 // diagnostics; full corpus pixel parity and performance acceptance are separate.
@@ -32,7 +35,10 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(editor.worldStatus()=="canonical",30000);
         QCOMPARE(window->rendererInterface()->graphicsApi(),QSGRendererInterface::Direct3D11);
         int processed=0;const int expected=12;
-        const auto status=[&]{return editor.terrainDataStatus();};
+        const auto status=[&]{auto s=editor.terrainDataStatus();s["viewRevision"]=qulonglong(qobject_cast<MapSceneBridge*>(editor.mapSceneBridge())->viewState().revision);
+            QVariantList masks;for(auto* mask:window->findChildren<TerrainLandMaskItem*>())masks.append(QVariantMap{{"ready",mask->maskReady()},{"view",qulonglong(mask->maskViewRevision())},{"scene",qulonglong(mask->maskSceneRevision())}});
+            s["masks"]=masks;return s;};
+        const auto finalState=qScopeGuard([&]{qInfo().noquote()<<"TERRAIN_FINAL_STATE"<<QJsonDocument::fromVariant(status()).toJson(QJsonDocument::Compact);});
         const auto receipt=[&]{return status().value("displayReceiptAccepted").toBool()&&status().value("displayedDraws").toULongLong()>0;};
         const auto settled=[&]{const auto s=status();return receipt()&&!s.value("cpuPreparationPending").toBool()&&!s.value("cpuPreparationScheduled").toBool()&&s.value("pendingJobs").toULongLong()==0&&!s.value("uploadWorkPending").toBool();};
         QTRY_VERIFY_WITH_TIMEOUT(receipt(),15000);
@@ -62,7 +68,7 @@ private slots:
         QVERIFY(editor.publishMapView({{"scale",view.value("scale").toDouble()*5}}));
         QVERIFY(editor.publishMapView({{"scale",view.value("scale").toDouble()}}));
         QTest::qWait(550);QCOMPARE(status().value("uploadOperations").toULongLong(),beforeReverse);
-        editor.endMapInteraction();QTRY_VERIFY_WITH_TIMEOUT(receipt(),15000);++processed;
+        editor.endMapInteraction();QTRY_VERIFY2_WITH_TIMEOUT(receipt(),qPrintable(QJsonDocument::fromVariant(status()).toJson(QJsonDocument::Compact)),15000);++processed;
         QVERIFY(editor.publishMapView({{"centerLongitude",180.},{"translateX",550.}}));
         QTRY_VERIFY_WITH_TIMEOUT(receipt(),15000);QVERIFY(shot("06-dateline"));++processed;
         QVERIFY(editor.setProjectionMode("globe"));QTRY_VERIFY_WITH_TIMEOUT(receipt(),15000);

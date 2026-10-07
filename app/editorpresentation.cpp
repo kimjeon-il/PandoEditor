@@ -338,13 +338,17 @@ void EditorController::observeTerrainRender(const TerrainRenderObservation& even
             publishTerrainRenderInput();
         }
     } else if(event.kind==TerrainRenderObservation::ResourceRetired) {
+        bool changed=false,requiredMissing=false;
         for(const auto& id:event.retired) {
             if(id.key=="@terrain/tint") {if(id.contentKey==terrainUploadedTint_)terrainUploadedTint_.clear();continue;}
             if(terrainDisplay_.retireResource(event.scope,id.key,id.contentKey)) {
                 terrainPrepared_.erase(id);terrainPreparedSpecs_.erase(id);
+                changed=true;
+                requiredMissing=requiredMissing||terrainDemandSpecs_.count(id.key)>0;
             }
         }
-        if(terrainWindowVisible_&&activeMapInteractions_==0&&terrainPreparationDeferred_)
+        if(changed){terrainDisplay_.buildCandidate();publishTerrainRenderInput();}
+        if(terrainWindowVisible_&&activeMapInteractions_==0&&(terrainPreparationDeferred_||requiredMissing))
             QTimer::singleShot(0,this,[this]{updateTerrainDemand(true);});
     }
     const auto snap=terrainDisplay_.snapshot();std::vector<TerrainTileSpec> retained;
