@@ -279,7 +279,7 @@ void ReferenceImageLibrary::cancelTrace(){++traceEpoch_;if(trace_.isEmpty())retu
 bool ReferenceImageLibrary::beginTrace(const QVariantMap &context) {
  const auto item=find(calibrationId_);if(!item||item->locked||context.isEmpty()||(!item->cornerPinEnabled&&!calibrationSession()["result"].toMap()["calibrationOk"].toBool()))return false;
  cancelTrace();pendingUv_.reset();anchorPicking_=freeTransformEditing_=false;
- trace_={{"active",true},{"busy",false},{"phase","armed"},{"anchors",QVariantList{}},{"coordinates",QVariantList{}},{"context",context},{"id",item->id}};
+ trace_={{"active",true},{"busy",false},{"phase","armed"},{"mode","trace"},{"anchors",QVariantList{}},{"coordinates",QVariantList{}},{"context",context},{"id",item->id}};
  emit calibrationSessionChanged();emit traceSessionChanged();return true;
 }
 bool ReferenceImageLibrary::traceAnchor(double u,double v) {
@@ -292,21 +292,27 @@ void ReferenceImageLibrary::redrawTrace(){if(trace_.isEmpty())return;++traceEpoc
 void ReferenceImageLibrary::calculateTrace() {
  const auto item=find(trace_["id"].toString());if(!item){cancelTrace();return;}
  auto record=variant(*item,directory());record["controlPoints"]=item->geographicPoints;
- const auto source=directory()+"/"+item->fileName;const auto anchors=trace_["anchors"].toList();const auto epoch=++traceEpoch_;
+ const auto source=directory()+"/"+item->fileName;const auto anchors=trace_["anchors"].toList();const auto mode=trace_["mode"].toString();const auto epoch=++traceEpoch_;
  trace_["busy"]=true;emit traceSessionChanged();auto *watcher=new QFutureWatcher<QVariantMap>(this);
  connect(watcher,&QFutureWatcher<QVariantMap>::finished,this,[this,watcher,epoch]{
   const auto result=watcher->result();watcher->deleteLater();if(epoch!=traceEpoch_||trace_.isEmpty())return;
   trace_["busy"]=false;
-  if(result["ok"].toBool()){trace_["coordinates"]=result["coordinates"];trace_["uv"]=result["uv"];trace_["error"]="";}
-  else {trace_["error"]=result["reason"];auto anchors=trace_["anchors"].toList();if(!anchors.empty())anchors.removeLast();trace_["anchors"]=anchors;}
+  if(result["ok"].toBool()){trace_["coordinates"]=result["coordinates"];trace_["uv"]=result["uv"];trace_["error"]="";if(trace_["mode"]=="refine")trace_["phase"]="preview";}
+  else {trace_["error"]=result["reason"];if(trace_["mode"]=="refine")trace_["phase"]="error";else {auto anchors=trace_["anchors"].toList();if(!anchors.empty())anchors.removeLast();trace_["anchors"]=anchors;}}
   emit traceSessionChanged();
  });
- watcher->setFuture(QtConcurrent::run([source,record,anchors]{
+ watcher->setFuture(QtConcurrent::run([source,record,anchors,mode]{
   QImageReader reader(source);reader.setAutoTransform(true);auto image=reader.read();
   if(image.isNull())return QVariantMap{{"ok",false},{"reason","invalid-image"}};
   const auto original=image.size();if(std::max(image.width(),image.height())>1024)image=image.scaled(1024,1024,Qt::KeepAspectRatio,Qt::SmoothTransformation);
   image=image.convertToFormat(QImage::Format_RGBA8888);QVariantList data;data.reserve(image.width()*image.height()*4);
   for(int y=0;y<image.height();++y)for(int x=0;x<image.width()*4;++x)data.append(int(image.constScanLine(y)[x]));
-  return referenceWeb("trace",{{"record",record},{"anchors",anchors},{"sourceWidth",original.width()},{"sourceHeight",original.height()},{"image",QVariantMap{{"width",image.width()},{"height",image.height()},{"data",data}}}});
+  return referenceWeb(mode=="refine"?"refine":"trace",{{"record",record},{"anchors",anchors},{"sourceWidth",original.width()},{"sourceHeight",original.height()},{"image",QVariantMap{{"width",image.width()},{"height",image.height()},{"data",data}}}});
  }));
+}
+
+bool ReferenceImageLibrary::beginRefine(const QVariantMap &context,const QVariantList &uv) {
+ if(uv.size()<2){fail(QStringLiteral("보정할 초안 선이 이미지 범위 안에 있어야 합니다."));return false;}
+ for(const auto &value:uv){const auto pair=value.toList();if(pair.size()!=2)return false;for(const auto c:pair){bool ok=false;const double v=c.toDouble(&ok);if(!ok||!std::isfinite(v)||v<0||v>1)return false;}}
+ if(!beginTrace(context))return false;trace_["mode"]="refine";trace_["anchors"]=uv;trace_["phase"]="analyzing";calculateTrace();return true;
 }

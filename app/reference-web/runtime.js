@@ -40,6 +40,7 @@ var ReferenceWeb = (() => {
     anchor: () => anchor,
     calibration: () => calibration,
     cornerQuad: () => cornerQuad,
+    refine: () => refine,
     trace: () => trace
   });
 
@@ -1112,6 +1113,372 @@ var ReferenceWeb = (() => {
     }));
   }
 
+  // app/reference-web/reference-image-line-refiner.js
+  var DEFAULT_MAX_DIMENSION2 = 1024;
+  var DEFAULT_CORRIDOR_RADIUS = 12;
+  var DEFAULT_SIMPLIFY_TOLERANCE2 = 1.5;
+  var MINIMUM_PEAK_EDGE2 = 0.02;
+  var MINIMUM_MEAN_EDGE2 = 0.06;
+  var SQRT22 = Math.SQRT2;
+  var SOBEL_MAX2 = 4 * SQRT22 * 255;
+  var clamp3 = (value, min, max) => Math.max(min, Math.min(max, value));
+  var finitePoint2 = (value) => Array.isArray(value) && value.length >= 2 && Number.isFinite(Number(value[0])) && Number.isFinite(Number(value[1]));
+  var clonePoint2 = (value) => [Number(value[0]), Number(value[1])];
+  var squaredDistance2 = (left, right) => {
+    const dx = Number(left[0]) - Number(right[0]);
+    const dy = Number(left[1]) - Number(right[1]);
+    return dx * dx + dy * dy;
+  };
+  function pointSegmentDistanceSquared2(point, start, end) {
+    const dx = end[0] - start[0];
+    const dy = end[1] - start[1];
+    const length2 = dx * dx + dy * dy;
+    if (length2 <= 1e-12) return squaredDistance2(point, start);
+    const t = clamp3(((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / length2, 0, 1);
+    return squaredDistance2(point, [start[0] + dx * t, start[1] + dy * t]);
+  }
+  function rdp2(points, tolerance) {
+    if (points.length <= 2 || !(tolerance > 0)) return points.map(clonePoint2);
+    const tolerance2 = tolerance * tolerance;
+    const keep = new Uint8Array(points.length);
+    keep[0] = 1;
+    keep[points.length - 1] = 1;
+    const stack = [[0, points.length - 1]];
+    while (stack.length) {
+      const [startIndex, endIndex] = stack.pop();
+      let farthestIndex = -1;
+      let farthestDistance2 = tolerance2;
+      for (let index = startIndex + 1; index < endIndex; index += 1) {
+        const distance2 = pointSegmentDistanceSquared2(points[index], points[startIndex], points[endIndex]);
+        if (distance2 <= farthestDistance2) continue;
+        farthestDistance2 = distance2;
+        farthestIndex = index;
+      }
+      if (farthestIndex < 0) continue;
+      keep[farthestIndex] = 1;
+      stack.push([startIndex, farthestIndex], [farthestIndex, endIndex]);
+    }
+    return points.filter((_, index) => keep[index]).map(clonePoint2);
+  }
+  function removeDuplicatePoints(points) {
+    const result = [];
+    for (const point of points) {
+      if (!finitePoint2(point)) continue;
+      const next = clonePoint2(point);
+      if (result.length && squaredDistance2(result.at(-1), next) <= 1e-12) continue;
+      result.push(next);
+    }
+    return result;
+  }
+  function grayscaleAt2(data, offset) {
+    var _a;
+    const alpha = Number((_a = data[offset + 3]) != null ? _a : 255) / 255;
+    const value = 0.2126 * Number(data[offset] || 0) + 0.7152 * Number(data[offset + 1] || 0) + 0.0722 * Number(data[offset + 2] || 0);
+    return value * alpha + 255 * (1 - alpha);
+  }
+  function buildReferenceImageGradientField(imageData, {
+    sourceWidth = imageData == null ? void 0 : imageData.width,
+    sourceHeight = imageData == null ? void 0 : imageData.height
+  } = {}) {
+    const width = Math.max(1, Math.floor(Number(imageData == null ? void 0 : imageData.width) || 0));
+    const height = Math.max(1, Math.floor(Number(imageData == null ? void 0 : imageData.height) || 0));
+    const data = imageData == null ? void 0 : imageData.data;
+    if (!data || data.length < width * height * 4) throw new TypeError("RGBA image data is required.");
+    const naturalWidth = Math.max(1, Number(sourceWidth) || width);
+    const naturalHeight = Math.max(1, Number(sourceHeight) || height);
+    const gray = new Float32Array(width * height);
+    for (let index = 0; index < width * height; index += 1) gray[index] = grayscaleAt2(data, index * 4);
+    const gradient = new Float32Array(width * height);
+    let peak = 0;
+    let sum = 0;
+    if (width >= 3 && height >= 3) {
+      for (let y = 1; y < height - 1; y += 1) {
+        for (let x = 1; x < width - 1; x += 1) {
+          const top = (y - 1) * width;
+          const mid = y * width;
+          const bottom = (y + 1) * width;
+          const gx = -gray[top + x - 1] + gray[top + x + 1] - 2 * gray[mid + x - 1] + 2 * gray[mid + x + 1] - gray[bottom + x - 1] + gray[bottom + x + 1];
+          const gy = -gray[top + x - 1] - 2 * gray[top + x] - gray[top + x + 1] + gray[bottom + x - 1] + 2 * gray[bottom + x] + gray[bottom + x + 1];
+          const magnitude = clamp3(Math.hypot(gx, gy) / SOBEL_MAX2, 0, 1);
+          gradient[mid + x] = magnitude;
+          peak = Math.max(peak, magnitude);
+          sum += magnitude;
+        }
+      }
+    }
+    const interiorCount = Math.max(1, Math.max(0, width - 2) * Math.max(0, height - 2));
+    return Object.freeze({
+      width,
+      height,
+      sourceWidth: naturalWidth,
+      sourceHeight: naturalHeight,
+      scaleX: (width - 1) / Math.max(1, naturalWidth - 1),
+      scaleY: (height - 1) / Math.max(1, naturalHeight - 1),
+      gradient,
+      peakEdgeStrength: peak,
+      meanEdgeStrength: sum / interiorCount
+    });
+  }
+  var MinHeap2 = class {
+    constructor() {
+      this.items = [];
+    }
+    push(value) {
+      const items = this.items;
+      items.push(value);
+      let index = items.length - 1;
+      while (index > 0) {
+        const parent = Math.floor((index - 1) / 2);
+        if (items[parent].priority <= value.priority) break;
+        items[index] = items[parent];
+        index = parent;
+      }
+      items[index] = value;
+    }
+    pop() {
+      const items = this.items;
+      if (!items.length) return null;
+      const root = items[0];
+      const tail = items.pop();
+      if (!items.length) return root;
+      let index = 0;
+      while (true) {
+        const left = index * 2 + 1;
+        const right = left + 1;
+        if (left >= items.length) break;
+        let child = left;
+        if (right < items.length && items[right].priority < items[left].priority) child = right;
+        if (items[child].priority >= tail.priority) break;
+        items[index] = items[child];
+        index = child;
+      }
+      items[index] = tail;
+      return root;
+    }
+    get size() {
+      return this.items.length;
+    }
+  };
+  function fieldGradient2(field, x, y) {
+    if (x < 0 || y < 0 || x >= field.width || y >= field.height) return 0;
+    return Number(field.gradient[y * field.width + x] || 0);
+  }
+  function resamplePolyline(points, spacing) {
+    const source = removeDuplicatePoints(points);
+    if (source.length <= 1 || !(spacing > 0)) return source;
+    const result = [clonePoint2(source[0])];
+    let previous = clonePoint2(source[0]);
+    let remaining = spacing;
+    for (let index = 1; index < source.length; index += 1) {
+      const target = source[index];
+      let dx = target[0] - previous[0];
+      let dy = target[1] - previous[1];
+      let length = Math.hypot(dx, dy);
+      while (length >= remaining && length > 1e-9) {
+        const ratio = remaining / length;
+        previous = [previous[0] + dx * ratio, previous[1] + dy * ratio];
+        result.push(clonePoint2(previous));
+        dx = target[0] - previous[0];
+        dy = target[1] - previous[1];
+        length = Math.hypot(dx, dy);
+        remaining = spacing;
+      }
+      remaining -= length;
+      previous = clonePoint2(target);
+      if (remaining <= 1e-9) remaining = spacing;
+    }
+    const last = source.at(-1);
+    if (squaredDistance2(result.at(-1), last) > 1e-8) result.push(clonePoint2(last));
+    return result;
+  }
+  function snapToEdge(field, point, radius) {
+    const centerX = clamp3(Math.round(point[0]), 0, field.width - 1);
+    const centerY = clamp3(Math.round(point[1]), 0, field.height - 1);
+    const search = Math.max(1, Math.ceil(radius));
+    const radius2 = radius * radius;
+    let best = [centerX, centerY];
+    let bestScore = fieldGradient2(field, centerX, centerY);
+    let bestDistance2 = 0;
+    for (let y = Math.max(0, centerY - search); y <= Math.min(field.height - 1, centerY + search); y += 1) {
+      for (let x = Math.max(0, centerX - search); x <= Math.min(field.width - 1, centerX + search); x += 1) {
+        const distance2 = squaredDistance2([x, y], point);
+        if (distance2 > radius2) continue;
+        const edge = fieldGradient2(field, x, y);
+        const score = edge - 6e-3 * Math.sqrt(distance2);
+        if (score < bestScore - 1e-9 || Math.abs(score - bestScore) <= 1e-9 && distance2 >= bestDistance2) continue;
+        best = [x, y];
+        bestScore = score;
+        bestDistance2 = distance2;
+      }
+    }
+    return best;
+  }
+  var NEIGHBORS2 = Object.freeze([
+    [-1, -1, SQRT22],
+    [0, -1, 1],
+    [1, -1, SQRT22],
+    [-1, 0, 1],
+    [1, 0, 1],
+    [-1, 1, SQRT22],
+    [0, 1, 1],
+    [1, 1, SQRT22]
+  ]);
+  function traceCorridorSegment(field, roughStart, roughEnd, start, end, radius) {
+    var _a, _b;
+    const margin = Math.ceil(radius) + 2;
+    const minX = clamp3(Math.floor(Math.min(roughStart[0], roughEnd[0], start[0], end[0]) - margin), 0, field.width - 1);
+    const maxX = clamp3(Math.ceil(Math.max(roughStart[0], roughEnd[0], start[0], end[0]) + margin), 0, field.width - 1);
+    const minY = clamp3(Math.floor(Math.min(roughStart[1], roughEnd[1], start[1], end[1]) - margin), 0, field.height - 1);
+    const maxY = clamp3(Math.ceil(Math.max(roughStart[1], roughEnd[1], start[1], end[1]) + margin), 0, field.height - 1);
+    const boxWidth = maxX - minX + 1;
+    const boxHeight = maxY - minY + 1;
+    const cellCount = boxWidth * boxHeight;
+    const distances = new Float64Array(cellCount);
+    distances.fill(Number.POSITIVE_INFINITY);
+    const parents = new Int32Array(cellCount);
+    parents.fill(-1);
+    const closed = new Uint8Array(cellCount);
+    const toLocalIndex = (x, y) => (y - minY) * boxWidth + (x - minX);
+    const fromLocalIndex = (index) => [minX + index % boxWidth, minY + Math.floor(index / boxWidth)];
+    const startPoint = [clamp3(Math.round(start[0]), minX, maxX), clamp3(Math.round(start[1]), minY, maxY)];
+    const endPoint = [clamp3(Math.round(end[0]), minX, maxX), clamp3(Math.round(end[1]), minY, maxY)];
+    const startIndex = toLocalIndex(startPoint[0], startPoint[1]);
+    const endIndex = toLocalIndex(endPoint[0], endPoint[1]);
+    const radius2 = radius * radius;
+    const allowed = (x, y) => {
+      if (x === startPoint[0] && y === startPoint[1]) return true;
+      if (x === endPoint[0] && y === endPoint[1]) return true;
+      return pointSegmentDistanceSquared2([x, y], roughStart, roughEnd) <= radius2 + 1e-9;
+    };
+    const heap = new MinHeap2();
+    distances[startIndex] = 0;
+    heap.push({ index: startIndex, priority: 0 });
+    let expansions = 0;
+    const maxExpansions = Math.min(15e4, Math.max(2e3, cellCount * 2));
+    while (heap.size && expansions < maxExpansions) {
+      const current = heap.pop();
+      if (!current || closed[current.index]) continue;
+      closed[current.index] = 1;
+      expansions += 1;
+      if (current.index === endIndex) break;
+      const [x, y] = fromLocalIndex(current.index);
+      for (const [dx, dy, stepDistance] of NEIGHBORS2) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < minX || nx > maxX || ny < minY || ny > maxY || !allowed(nx, ny)) continue;
+        const nextIndex = toLocalIndex(nx, ny);
+        if (closed[nextIndex]) continue;
+        const edge = fieldGradient2(field, nx, ny);
+        const corridorDistance = Math.sqrt(pointSegmentDistanceSquared2([nx, ny], roughStart, roughEnd));
+        const edgeCost = 0.08 + 3.4 * (1 - edge) * (1 - edge);
+        const corridorCost = 0.18 * Math.pow(corridorDistance / Math.max(1, radius), 2);
+        const candidate = distances[current.index] + stepDistance * (edgeCost + corridorCost);
+        if (candidate >= distances[nextIndex]) continue;
+        distances[nextIndex] = candidate;
+        parents[nextIndex] = current.index;
+        const heuristic = Math.hypot(nx - endPoint[0], ny - endPoint[1]) * 0.08;
+        heap.push({ index: nextIndex, priority: candidate + heuristic });
+      }
+    }
+    if (!Number.isFinite(distances[endIndex])) return null;
+    const path = [];
+    let cursor = endIndex;
+    let guard = cellCount + 1;
+    while (cursor >= 0 && guard-- > 0) {
+      path.push(fromLocalIndex(cursor));
+      if (cursor === startIndex) break;
+      cursor = parents[cursor];
+    }
+    if (((_a = path.at(-1)) == null ? void 0 : _a[0]) !== startPoint[0] || ((_b = path.at(-1)) == null ? void 0 : _b[1]) !== startPoint[1]) return null;
+    return path.reverse();
+  }
+  function toAnalysisPoint(field, point) {
+    return [
+      clamp3(Number(point[0]) * field.scaleX, 0, field.width - 1),
+      clamp3(Number(point[1]) * field.scaleY, 0, field.height - 1)
+    ];
+  }
+  function toSourcePoint(field, point) {
+    return [
+      field.scaleX > 0 ? Number(point[0]) / field.scaleX : 0,
+      field.scaleY > 0 ? Number(point[1]) / field.scaleY : 0
+    ];
+  }
+  function refineReferenceImageLine({
+    field,
+    roughPoints,
+    corridorRadius = DEFAULT_CORRIDOR_RADIUS,
+    simplifyTolerance = DEFAULT_SIMPLIFY_TOLERANCE2,
+    minimumPeakEdge = MINIMUM_PEAK_EDGE2,
+    minimumMeanEdge = MINIMUM_MEAN_EDGE2
+  } = {}) {
+    if (!(field == null ? void 0 : field.gradient) || !Number.isFinite(field.width) || !Number.isFinite(field.height)) {
+      return Object.freeze({ ok: false, reason: "invalid-gradient-field", points: [] });
+    }
+    const source = removeDuplicatePoints(roughPoints || []);
+    if (source.length < 2) return Object.freeze({ ok: false, reason: "too-few-points", points: [] });
+    if (Number(field.peakEdgeStrength || 0) < minimumPeakEdge) {
+      return Object.freeze({ ok: false, reason: "insufficient-edge-strength", points: [] });
+    }
+    const analysisRough = source.map((point) => toAnalysisPoint(field, point));
+    const analysisScale = Math.max(1e-6, Math.min(field.scaleX || 1, field.scaleY || 1));
+    const radius = Math.max(2, Number(corridorRadius) * analysisScale);
+    const spacing = Math.max(4, Math.min(18, radius * 1.15));
+    const anchors = resamplePolyline(analysisRough, spacing);
+    if (anchors.length < 2) return Object.freeze({ ok: false, reason: "too-few-points", points: [] });
+    const snapRadius = Math.max(1.5, Math.min(radius * 0.9, 8));
+    const snapped = anchors.map((point) => snapToEdge(field, point, snapRadius));
+    const traced = [];
+    for (let index = 1; index < anchors.length; index += 1) {
+      const segment = traceCorridorSegment(
+        field,
+        anchors[index - 1],
+        anchors[index],
+        snapped[index - 1],
+        snapped[index],
+        radius
+      );
+      if (!(segment == null ? void 0 : segment.length)) return Object.freeze({ ok: false, reason: "path-not-found", points: [] });
+      if (traced.length && squaredDistance2(traced.at(-1), segment[0]) <= 1e-12) traced.push(...segment.slice(1));
+      else traced.push(...segment);
+    }
+    const uniqueTrace = removeDuplicatePoints(traced);
+    if (uniqueTrace.length < 2) return Object.freeze({ ok: false, reason: "path-not-found", points: [] });
+    const meanEdgeStrength = uniqueTrace.reduce((sum, point) => sum + fieldGradient2(field, Math.round(point[0]), Math.round(point[1])), 0) / uniqueTrace.length;
+    if (meanEdgeStrength < minimumMeanEdge) {
+      return Object.freeze({ ok: false, reason: "insufficient-edge-strength", points: [], meanEdgeStrength });
+    }
+    const sourceTrace = uniqueTrace.map((point) => toSourcePoint(field, point));
+    const points = rdp2(sourceTrace, Math.max(0, Number(simplifyTolerance) || 0));
+    return Object.freeze({
+      ok: true,
+      reason: "",
+      points: Object.freeze(points.map((point) => Object.freeze(point))),
+      rawPointCount: uniqueTrace.length,
+      simplifiedPointCount: points.length,
+      meanEdgeStrength,
+      corridorRadius: Number(corridorRadius)
+    });
+  }
+  function referenceImagePixelsToCoordinates(points, { sourceWidth, sourceHeight, warp } = {}) {
+    if (!(warp == null ? void 0 : warp.ok) || typeof warp.project !== "function") throw new Error("A ready reference image warp is required.");
+    const width = Math.max(2, Number(sourceWidth) || 0);
+    const height = Math.max(2, Number(sourceHeight) || 0);
+    const xDenominator = width - 1;
+    const yDenominator = height - 1;
+    return (points || []).filter(finitePoint2).map((point) => {
+      const uv = [clamp3(Number(point[0]) / xDenominator, 0, 1), clamp3(Number(point[1]) / yDenominator, 0, 1)];
+      const projected = warp.project(uv);
+      if (!finitePoint2(projected)) throw new Error("Reference image warp returned an invalid coordinate.");
+      return clonePoint2(projected);
+    });
+  }
+  var REFERENCE_IMAGE_LINE_REFINER_DEFAULTS = Object.freeze({
+    maxDimension: DEFAULT_MAX_DIMENSION2,
+    corridorRadius: DEFAULT_CORRIDOR_RADIUS,
+    simplifyTolerance: DEFAULT_SIMPLIFY_TOLERANCE2
+  });
+
   // app/reference-web/adapter.js
   function calibration(record) {
     const calibrated = buildReferenceImageCalibrationWarp(__spreadProps(__spreadValues({}, record), { mode: record.warpMode }));
@@ -1152,6 +1519,14 @@ var ReferenceWeb = (() => {
     const uv = points.map((p) => [p[0] / Math.max(1, input.sourceWidth - 1), p[1] / Math.max(1, input.sourceHeight - 1)]);
     const coordinates = uv.map((p) => warp.project(p));
     return { ok: true, reason: "", coordinates, uv };
+  }
+  function refine(input) {
+    const field = buildReferenceImageGradientField(input.image, { sourceWidth: input.sourceWidth, sourceHeight: input.sourceHeight });
+    const warp = buildReferenceImageSourceMapping(input.record);
+    if (!warp.ok) return { ok: false, reason: warp.reason };
+    const roughPoints = input.anchors.map((p) => [p[0] * (input.sourceWidth - 1), p[1] * (input.sourceHeight - 1)]);
+    const result = refineReferenceImageLine({ field, roughPoints, corridorRadius: 12, simplifyTolerance: 1.5 });
+    return result.ok ? { ok: true, coordinates: referenceImagePixelsToCoordinates(result.points, { sourceWidth: input.sourceWidth, sourceHeight: input.sourceHeight, warp }), uv: result.points.map((p) => [p[0] / Math.max(1, input.sourceWidth - 1), p[1] / Math.max(1, input.sourceHeight - 1)]) } : { ok: false, reason: result.reason };
   }
   return __toCommonJS(adapter_exports);
 })();

@@ -17,6 +17,10 @@
     {
       "path": "assets/js/modules/reference-image-source-mapping.js",
       "sha256": "e16d1ac4f67abdcb6759932d419aede9a7ea2a4ecfd11cb917685edac14d918c"
+    },
+    {
+      "path": "assets/js/modules/reference-image-line-refiner.js",
+      "sha256": "a1d46b6f1d4488b22d39ff84c416b3f217cd7fcf4561a60c3b30ffce20976830"
     }
   ]
 }

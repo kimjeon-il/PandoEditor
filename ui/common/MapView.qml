@@ -75,6 +75,12 @@ Rectangle {
         }
         return []
     }
+    function beginReferenceRefine() {
+        const coordinates=editor.referenceDraftCoordinates()
+        let uv=[]
+        for(const c of coordinates){const p=editor.referenceScreenAtCoordinate(c[0],c[1]);if(!p.visible){uv=[];break}const hit=referenceUvAtScreen(p.x,p.y);if(hit.length!==2){uv=[];break}uv.push(hit)}
+        return referenceImages.beginRefine(editor.referenceDraftContext(),uv)
+    }
     focus: true
     Keys.onPressed: function(event) {
         if (!geometryEditing) return
@@ -233,10 +239,11 @@ Rectangle {
                         UiButton { objectName: "referenceTraceUndo"; text: "마지막 점 취소"; enabled: !!referenceImages.traceSession.active && !referenceImages.traceSession.busy; onClicked: referenceImages.undoTraceAnchor() }
                         UiButton { objectName: "referenceTraceFinish"; text: "완료"; enabled: !!referenceImages.traceSession.active && !referenceImages.traceSession.busy; onClicked: referenceImages.finishTrace() }
                     }
+                    UiButton { objectName: "referenceRefineStart"; text: "현재 초안 선 보정"; enabled: view.geometryEditing && !referenceImages.traceSession.active && (!!calibrationPanel.record.cornerPinEnabled || !!(calibrationPanel.session.result && calibrationPanel.session.result.calibrationOk)); onClicked: view.beginReferenceRefine() }
                     Row {
                         spacing: 4
                         UiButton { objectName: "referenceTraceApply"; text: "적용"; enabled: referenceImages.traceSession.phase === "preview"; onClicked: { const session=referenceImages.traceSession;if(editor.replaceReferenceDraft(session.coordinates,session.context))referenceImages.cancelTrace() } }
-                        UiButton { objectName: "referenceTraceRedraw"; text: "다시 그리기"; enabled: !!referenceImages.traceSession.active; onClicked: referenceImages.redrawTrace() }
+                        UiButton { objectName: "referenceTraceRedraw"; text: "다시 그리기"; enabled: !!referenceImages.traceSession.active; onClicked: { if(referenceImages.traceSession.mode === "refine"){referenceImages.cancelTrace();view.beginReferenceRefine()}else referenceImages.redrawTrace() } }
                         UiButton { objectName: "referenceTraceCancel"; text: "추적 취소"; enabled: !!referenceImages.traceSession.active; onClicked: referenceImages.cancelTrace() }
                     }
                     Label { width: parent.width; wrapMode: Text.Wrap; visible: !!referenceImages.traceSession.active; text: referenceImages.traceSession.busy ? "자동 추적 계산 중…" : referenceImages.traceSession.error || (referenceImages.traceSession.phase === "preview" ? "추적 미리보기 · 적용 또는 다시 그리기" : "이미지 위 지도에서 점을 지정한 뒤 완료하세요.") }
@@ -301,7 +308,7 @@ Rectangle {
         }
     }
     MouseArea {
-        anchors.fill: parent; z: 24; enabled: !!referenceImages.traceSession.active && referenceImages.traceSession.phase !== "preview"
+        anchors.fill: parent; z: 24; enabled: !!referenceImages.traceSession.active && referenceImages.traceSession.phase !== "preview" && referenceImages.traceSession.mode !== "refine"
         onClicked: function(mouse) { const uv=view.referenceUvAtScreen(mouse.x,mouse.y);if(uv.length===2)referenceImages.traceAnchor(uv[0],uv[1]) }
     }
     Shape {

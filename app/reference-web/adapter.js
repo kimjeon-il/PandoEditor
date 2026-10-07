@@ -44,3 +44,13 @@ export function trace(input) {
  const coordinates=uv.map(p=>warp.project(p));
  return {ok:true,reason:'',coordinates,uv};
 }
+
+import {buildReferenceImageGradientField,refineReferenceImageLine,referenceImagePixelsToCoordinates} from './reference-image-line-refiner.js';
+export function refine(input) {
+ const field=buildReferenceImageGradientField(input.image,{sourceWidth:input.sourceWidth,sourceHeight:input.sourceHeight});
+ const warp=buildReferenceImageSourceMapping(input.record);
+ if(!warp.ok)return {ok:false,reason:warp.reason};
+ const roughPoints=input.anchors.map(p=>[p[0]*(input.sourceWidth-1),p[1]*(input.sourceHeight-1)]);
+ const result=refineReferenceImageLine({field,roughPoints,corridorRadius:12,simplifyTolerance:1.5});
+ return result.ok?{ok:true,coordinates:referenceImagePixelsToCoordinates(result.points,{sourceWidth:input.sourceWidth,sourceHeight:input.sourceHeight,warp}),uv:result.points.map(p=>[p[0]/Math.max(1,input.sourceWidth-1),p[1]/Math.max(1,input.sourceHeight-1)])}:{ok:false,reason:result.reason};
+}

@@ -212,6 +212,21 @@ private slots:
         QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
     }
 
+    void lineRefinementActualWindowPreservesDraftUntilApply()
+    {
+        Ui ui(1100);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));
+        auto document=fixture();Geometry line;line.type="LineString";line.lines={{{41,60},{43,60}}};const GeometryRef geometry{"river-geometry",1};document.geometries.insert(geometry,line);HydroFeature river;river.id="river";river.name="River";river.geometry=geometry;document.hydro.push_back(river);QVERIFY(ui.open(document));
+        const auto id=ui.addImage(true);QVERIFY(!id.isEmpty());QVERIFY(ui.editor.selectObject({{"domain","hydro"},{"id","river"}},"replace","test"));QVERIFY(ui.editor.beginContentEdit("hydro",QString(),false));QVERIFY(ui.editor.beginContentGeometry());
+        QVariantList rough{ui.editor.referenceCoordinateAtScreen(149,160),ui.editor.referenceCoordinateAtScreen(149,215)};QVERIFY(ui.editor.replaceReferenceDraft(rough,ui.editor.referenceDraftContext()));const auto before=ui.editor.referenceDraftCoordinates();const auto bytes=ui.editor.documentBytes();
+        auto* menu=ui.window->findChild<QObject*>("referenceImageMenu");auto* imageMenu=qvariant_cast<QObject*>(ui.evaluate(menu,"menuAt(4)"));QVERIFY(imageMenu);ui.evaluate(imageMenu,"itemAt(8).triggered()");QTest::qWait(50);QVERIFY(navigationClick(ui.window,"referenceFreeTransformButton"));
+        auto* library=ui.library();QVERIFY(navigationClick(ui.window,"referenceRefineStart"));QTRY_VERIFY(!library->traceSession()["busy"].toBool());QCOMPARE(library->traceSession()["phase"].toString(),QString("preview"));QCOMPARE(ui.editor.referenceDraftCoordinates(),before);QVERIFY(!ui.window->grabWindow().isNull());
+        QVERIFY(navigationClick(ui.window,"referenceTraceCancel"));QCOMPARE(ui.editor.referenceDraftCoordinates(),before);
+        QVERIFY(navigationClick(ui.window,"referenceRefineStart"));QTRY_VERIFY(!library->traceSession()["busy"].toBool());const auto preview=library->traceSession()["coordinates"].toList();QVERIFY(preview.size()>=2);QVERIFY(navigationClick(ui.window,"referenceTraceApply"));QVERIFY(ui.editor.referenceDraftCoordinates()!=before);QCOMPARE(ui.editor.documentBytes(),bytes);
+        QVERIFY(ui.editor.geometryUndoDraft());QCOMPARE(ui.editor.referenceDraftCoordinates(),before);QVERIFY(ui.editor.geometryRedoDraft());
+        QVERIFY(navigationClick(ui.window,"referenceRefineStart"));QVERIFY(!ui.open(fixture(),"replacement.json"));QCOMPARE(ui.editor.documentBytes(),bytes);ui.editor.cancelContentEdit();QVERIFY(ui.open(fixture(),"replacement.json"));QTest::qWait(100);QVERIFY(library->traceSession().isEmpty());
+        QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
     void geographicCalibrationActualWindowFlow()
     {
         Ui ui(1100);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));

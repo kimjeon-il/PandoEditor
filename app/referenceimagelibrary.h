@@ -29,6 +29,7 @@ public:
 
     QVariantMap calibrationSession() const;
     QVariantMap traceSession() const { return trace_; }
+    Q_INVOKABLE bool beginRefine(const QVariantMap &context,const QVariantList &uv);
     Q_INVOKABLE bool beginTrace(const QVariantMap &context);
     Q_INVOKABLE bool traceAnchor(double u,double v);
     Q_INVOKABLE bool undoTraceAnchor();
