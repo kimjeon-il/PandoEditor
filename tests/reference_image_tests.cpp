@@ -149,6 +149,27 @@ private slots:
         QCOMPARE(processed,7);
     }
 
+    void inputModesCancelTracingAndPointEditState()
+    {
+        QTemporaryDir dir;const auto path=dir.filePath("mode.png");QImage image(20,20,QImage::Format_RGB32);image.fill(Qt::red);QVERIFY(image.save(path));ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(path)));const auto id=library.images().back().toMap()["id"].toString();QVERIFY(library.beginCalibration(id));
+        const QVariantList quad{QVariantList{10.,40.},QVariantList{20.,40.},QVariantList{20.,30.},QVariantList{10.,30.}},screen{QVariantList{0.,0.},QVariantList{100.,0.},QVariantList{100.,100.},QVariantList{0.,100.}};QVERIFY(library.setCornerQuad(quad,screen));QVERIFY(library.pickImagePoint(.5,.5));QVERIFY(library.pickMapCoordinate(15.,35.));const auto pointId=library.calibrationSession()["record"].toMap()["controlPoints"].toList().front().toMap()["id"].toString();
+        QVERIFY(library.beginTrace({{"session","mode"}}));QVERIFY(library.beginAnchor());QVERIFY(library.traceSession().isEmpty());QVERIFY(library.beginTrace({{"session","mode"}}));QVERIFY(library.editCalibrationPoint(pointId));QVERIFY(library.traceSession().isEmpty());QVERIFY(library.beginTrace({{"session","mode"}}));QVERIFY(library.editCalibrationImagePoint(pointId));QVERIFY(library.traceSession().isEmpty());QVERIFY(library.calibrationSession()["editingImagePoint"].toBool());QVERIFY(library.setFreeTransformEditing(true));QVERIFY(!library.calibrationSession()["editingImagePoint"].toBool());QVERIFY(library.calibrationSession()["editingPointId"].toString().isEmpty());QVERIFY(library.beginTrace({{"session","mode"}}));QVERIFY(library.setFreeTransformEditing(true));QVERIFY(library.traceSession().isEmpty());
+    }
+
+    void constraintRemovalKeepsPreviouslyDisplayedCorners()
+    {
+        QTemporaryDir dir;const auto path=dir.filePath("fallback.png");QImage image(20,20,QImage::Format_RGB32);image.fill(Qt::red);QVERIFY(image.save(path));ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(path)));const auto id=library.images().back().toMap()["id"].toString();QVERIFY(library.beginCalibration(id));
+        const QVariantList quad{QVariantList{10.,40.},QVariantList{20.,40.},QVariantList{20.,30.},QVariantList{10.,30.}},screen{QVariantList{0.,0.},QVariantList{100.,0.},QVariantList{100.,100.},QVariantList{0.,100.}};QVERIFY(library.setPlacementQuad(quad,screen));QVERIFY(library.pickImagePoint(.1,.1));QVERIFY(library.pickMapCoordinate(12.,39.));QVERIFY(library.beginAnchor());QVERIFY(library.pickImagePoint(.9,.9));QVERIFY(library.pickMapCoordinate(19.,32.));QVERIFY(library.calibrationSession()["result"].toMap()["calibrationOk"].toBool());
+        auto corners=[&](){const auto vertices=library.calibrationSession()["result"].toMap()["mesh"].toMap()["vertices"].toList();QVariantList result;for(int i:{0,24,424,400})result.append(QVariant(vertices[i].toMap()["coordinate"]));return result;};
+        const auto before=corners();QVERIFY(library.clearAnchor());QVERIFY(!library.calibrationSession()["result"].toMap()["calibrationOk"].toBool());QCOMPARE(library.calibrationSession()["record"].toMap()["mapQuad"].toList(),before);QVERIFY(library.undo());QCOMPARE(corners(),before);
+        QVERIFY(library.pickImagePoint(.85,.85));QVERIFY(library.pickMapCoordinate(18.,33.));const auto calibrated=corners();QVERIFY(library.clearCalibrationPoints());QCOMPARE(library.calibrationSession()["record"].toMap()["mapQuad"].toList().size(),4);const auto after=corners();for(int i=0;i<4;i++){const auto a=after[i].toList(),b=calibrated[i].toList();QVERIFY(std::abs(a[0].toDouble()-b[0].toDouble())<1e-10);QVERIFY(std::abs(a[1].toDouble()-b[1].toDouble())<1e-10);}
+    }
+    void calibratedTextureUsesUnflippedSourceCoordinates()
+    {
+        ReferenceImageLibrary library;QVariantMap record{{"controlPoints",QVariantList{QVariantMap{{"id","a"},{"image",QVariantList{0.,0.}},{"coordinate",QVariantList{10.,40.}}},QVariantMap{{"id","b"},{"image",QVariantList{1.,1.}},{"coordinate",QVariantList{20.,30.}}}}},{"warpMode","auto"},{"flipX",true},{"flipY",true}};
+        const auto result=library.calibration(record);QVERIFY(result["calibrationOk"].toBool());QCOMPARE(result["mesh"].toMap()["vertices"].toList().front().toMap()["uv"].toList(),(QVariantList{0.,0.}));
+    }
+
     void failedUndoKeepsTheHistoryEntry()
     {
         // Unique app-data namespace: never touch the user's library or another test's records.
@@ -185,6 +206,7 @@ private slots:
         QVERIFY(library.updateGesture({{"mapQuad",changed},{"screenQuad",screen}}));library.cancelGesture();QCOMPARE(library.images().back().toMap(),record);
         const QVariantList invalidScreen{QVariantList{0.,0.},QVariantList{100.,100.},QVariantList{100.,0.},QVariantList{0.,100.}};
         QVERIFY(QMetaObject::invokeMethod(&library,"setCornerQuad",Qt::DirectConnection,Q_RETURN_ARG(bool,result),Q_ARG(QVariantList,quad),Q_ARG(QVariantList,invalidScreen)));QVERIFY(!result);QCOMPARE(library.images().back().toMap(),record);
+        QVERIFY(library.beginGesture(id));QVERIFY(!library.updateGesture({{"x",999.},{"mapQuad",quad},{"screenQuad",invalidScreen}}));QCOMPARE(library.images().back().toMap(),record);library.cancelGesture();
         ReferenceImageLibrary reopened;QCOMPARE(reopened.images().back().toMap()["anchor"],record["anchor"]);QCOMPARE(reopened.images().back().toMap()["mapQuad"],record["mapQuad"]);
     }
 

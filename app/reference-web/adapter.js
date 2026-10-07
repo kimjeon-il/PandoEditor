@@ -1,11 +1,19 @@
-import {buildReferenceImageCalibrationWarp,buildReferenceImageProjectiveWarpFromQuad,buildReferenceImageMesh} from './reference-image-georef.js';
+import {buildReferenceImageCalibrationWarp,buildReferenceImageProjectiveWarpFromQuad,buildReferenceImageMesh,referenceImageWarpQuad} from './reference-image-georef.js';
 import {alignReferenceImageAnchor,applyReferenceImageFreeTransformDrag} from './reference-image-transform.js';
 export function calibration(record) {
  const calibrated=buildReferenceImageCalibrationWarp({...record,mode:record.warpMode});
  let warp=calibrated;
  if(!warp.ok&&record.mapQuad)warp=buildReferenceImageProjectiveWarpFromQuad(record.mapQuad);
  const mesh=warp.ok?buildReferenceImageMesh(warp):null;
- return {ok:warp.ok,calibrationOk:calibrated.ok,calibrationReason:calibrated.reason||'',mode:warp.mode,reason:warp.reason||'',diagnostics:calibrated.diagnostics||{},mesh:mesh?{...mesh,vertices:mesh.vertices.map(vertex=>({...vertex,uv:[record.flipX?1-vertex.uv[0]:vertex.uv[0],record.flipY?1-vertex.uv[1]:vertex.uv[1]]}))}:null};
+ return {ok:warp.ok,calibrationOk:calibrated.ok,calibrationReason:calibrated.reason||'',mode:warp.mode,reason:warp.reason||'',diagnostics:calibrated.diagnostics||{},mesh:mesh?{...mesh,vertices:mesh.vertices.map(vertex=>({...vertex,uv:calibrated.ok?vertex.uv:[record.flipX?1-vertex.uv[0]:vertex.uv[0],record.flipY?1-vertex.uv[1]:vertex.uv[1]]}))}:null};
+}
+export function constraintRemoval(input) {
+ const before=buildReferenceImageCalibrationWarp({...input.before,mode:input.before.warpMode});
+ const record={...input.after};
+ const after=buildReferenceImageCalibrationWarp({...record,mode:record.warpMode});
+ const fallback=referenceImageWarpQuad(before);
+ if(!after.ok&&fallback){record.mapQuad=fallback;if(record.anchor)alignReferenceImageAnchor(record);}
+ return {ok:true,mapQuad:record.mapQuad};
 }
 export function cornerQuad(input) {
  const record={...input.record,mapQuad:input.quad};

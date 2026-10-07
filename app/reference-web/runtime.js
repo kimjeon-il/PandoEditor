@@ -39,6 +39,7 @@ var ReferenceWeb = (() => {
   __export(adapter_exports, {
     anchor: () => anchor,
     calibration: () => calibration,
+    constraintRemoval: () => constraintRemoval,
     cornerQuad: () => cornerQuad,
     placementAngle: () => placementAngle,
     placementDefault: () => placementDefault,
@@ -470,6 +471,11 @@ var ReferenceWeb = (() => {
       diagnostics,
       project
     });
+  }
+  function referenceImageWarpQuad(warp) {
+    if (!(warp == null ? void 0 : warp.ok) || typeof warp.project !== "function") return null;
+    const corners = [[0, 0], [1, 0], [1, 1], [0, 1]].map((image) => warp.project(image));
+    return corners.every((coordinate) => coordinate == null ? void 0 : coordinate.every(Number.isFinite)) ? corners.map((coordinate) => [...coordinate]) : null;
   }
   function buildReferenceImageCalibrationWarp({
     controlPoints = [],
@@ -1671,7 +1677,18 @@ var ReferenceWeb = (() => {
     let warp = calibrated;
     if (!warp.ok && record.mapQuad) warp = buildReferenceImageProjectiveWarpFromQuad(record.mapQuad);
     const mesh = warp.ok ? buildReferenceImageMesh(warp) : null;
-    return { ok: warp.ok, calibrationOk: calibrated.ok, calibrationReason: calibrated.reason || "", mode: warp.mode, reason: warp.reason || "", diagnostics: calibrated.diagnostics || {}, mesh: mesh ? __spreadProps(__spreadValues({}, mesh), { vertices: mesh.vertices.map((vertex) => __spreadProps(__spreadValues({}, vertex), { uv: [record.flipX ? 1 - vertex.uv[0] : vertex.uv[0], record.flipY ? 1 - vertex.uv[1] : vertex.uv[1]] })) }) : null };
+    return { ok: warp.ok, calibrationOk: calibrated.ok, calibrationReason: calibrated.reason || "", mode: warp.mode, reason: warp.reason || "", diagnostics: calibrated.diagnostics || {}, mesh: mesh ? __spreadProps(__spreadValues({}, mesh), { vertices: mesh.vertices.map((vertex) => __spreadProps(__spreadValues({}, vertex), { uv: calibrated.ok ? vertex.uv : [record.flipX ? 1 - vertex.uv[0] : vertex.uv[0], record.flipY ? 1 - vertex.uv[1] : vertex.uv[1]] })) }) : null };
+  }
+  function constraintRemoval(input) {
+    const before = buildReferenceImageCalibrationWarp(__spreadProps(__spreadValues({}, input.before), { mode: input.before.warpMode }));
+    const record = __spreadValues({}, input.after);
+    const after = buildReferenceImageCalibrationWarp(__spreadProps(__spreadValues({}, record), { mode: record.warpMode }));
+    const fallback = referenceImageWarpQuad(before);
+    if (!after.ok && fallback) {
+      record.mapQuad = fallback;
+      if (record.anchor) alignReferenceImageAnchor(record);
+    }
+    return { ok: true, mapQuad: record.mapQuad };
   }
   function cornerQuad(input) {
     const record = __spreadProps(__spreadValues({}, input.record), { mapQuad: input.quad });

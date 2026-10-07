@@ -54,7 +54,7 @@ QVariantMap EditorController::geometryEditState() const
         {"phase",edit.preview?"preview":edit.job?"calculating":"editing"},{"previewReady",bool(edit.preview)},
         {"calculating",bool(edit.job)||edit.boundaryStatus=="preparing"},
         {"snapIndicator",edit.snapIndicator},{"boundaryStatus",edit.tool=="boundary"&&edit.boundaryStatus=="ready"&&!boundaryGeometryReady()?QStringLiteral("error"):edit.boundaryStatus},{"boundaryImpacts",boundaryImpacts},{"boundaryImpactConfirmation",edit.boundaryImpactConfirmation},{"boundaryCanPreview",boundaryGeometryReady()&&!edit.boundarySession->dragging()&&!edit.boundarySession->changedDrafts().empty()},
-        {"selectedVertex",edit.vertex},{"error",edit.error},{"canUndo",edit.tool=="boundary"?boundaryGeometryReady()&&edit.boundarySession->canUndo():edit.tool=="split"?!edit.lineDraft.empty():!edit.undo.empty()},{"canRedo",edit.tool=="boundary"?boundaryGeometryReady()&&edit.boundarySession->canRedo():!edit.redo.empty()},
+        {"selectedVertex",edit.vertex},{"error",edit.error},{"canUndo",edit.tool=="boundary"?boundaryGeometryReady()&&edit.boundarySession->canUndo():edit.tool=="split"?!edit.lineDraft.empty():!edit.undo.empty()},{"canRedo",edit.tool=="boundary"?boundaryGeometryReady()&&edit.boundarySession->canRedo():edit.tool=="split"?!edit.lineRedo.empty():!edit.redo.empty()},
         {"target",objectRefValue(edit.target)},{"targets",targets},
         {"snapX",edit.snapPoint?projection_.project(*edit.snapPoint).x:std::numeric_limits<double>::quiet_NaN()},
         {"snapY",edit.snapPoint?projection_.project(*edit.snapPoint).y:std::numeric_limits<double>::quiet_NaN()}};

@@ -265,6 +265,15 @@ private slots:
         QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
     }
 
+    void referenceLineHistoryHasVisibleRedoAndResetsWithMethod()
+    {
+        Ui ui(1100);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));ui.editor.selectCountry("A");QVERIFY(ui.editor.beginSplitGeometry());QVERIFY(ui.editor.geometryAdvanceStage());QVERIFY(ui.editor.geometrySelectTerritoryMethod("line"));QTRY_VERIFY(!ui.editor.geometryEditState()["calculating"].toBool());
+        const QVariantList first{QVariantList{41.,60.},QVariantList{43.,62.}};QVERIFY(ui.editor.replaceReferenceDraft(first,ui.editor.referenceDraftContext()));QVERIFY(navigationClick(ui.window,"geometryUndoDraft"));QVERIFY(ui.editor.referenceDraftCoordinates().isEmpty());QVERIFY(ui.editor.geometryEditState()["canRedo"].toBool());QVERIFY(navigationClick(ui.window,"geometryRedoDraft"));QCOMPARE(ui.editor.referenceDraftCoordinates(),first);QVERIFY(ui.editor.geometryUndoDraft());QVERIFY(ui.editor.geometryEditState()["canRedo"].toBool());
+        QVERIFY(ui.editor.geometrySelectTerritoryMethod("polygon"));QVERIFY(ui.editor.geometryConfirmTerritoryChange());QTRY_VERIFY(!ui.editor.geometryEditState()["calculating"].toBool());QVERIFY(ui.editor.geometrySelectTerritoryMethod("line"));QVERIFY(ui.editor.geometryConfirmTerritoryChange());QTRY_VERIFY(!ui.editor.geometryEditState()["calculating"].toBool());
+        QVERIFY(!ui.editor.geometryEditState()["canRedo"].toBool());QVERIFY(!ui.editor.geometryRedoDraft());
+        const QVariantList second{QVariantList{42.,60.},QVariantList{42.,62.}};QVERIFY(ui.editor.replaceReferenceDraft(second,ui.editor.referenceDraftContext()));QVERIFY(ui.editor.geometryUndoDraft());QVERIFY(ui.editor.referenceDraftCoordinates().isEmpty());QVERIFY(!ui.editor.geometryUndoDraft());QVERIFY(ui.editor.geometryRedoDraft());QCOMPARE(ui.editor.referenceDraftCoordinates(),second);QVERIFY(!ui.editor.geometryRedoDraft());QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
     void spaceTemporaryPanReturnsToEditingAcrossCancellation()
     {
         Ui ui(1100);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));ui.editor.selectCountry("A");QVERIFY(ui.editor.beginGeometryDraw());ui.map->forceActiveFocus();const auto document=ui.editor.documentBytes();const auto draft=ui.editor.referenceDraftCoordinates();const auto camera=ui.editor.mapViewState();
