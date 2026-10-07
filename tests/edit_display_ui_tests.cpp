@@ -144,14 +144,15 @@ Window {
         return result.metaType()==QMetaType::fromType<QJSValue>()?result.value<QJSValue>().toVariant():result;
     }
     ReferenceImageLibrary* library() const {return window->findChild<ReferenceImageLibrary*>();}
-    QString addImage()
+    QString addImage(bool edge=false)
     {
         auto* images=library();if(!images)return {};
         for(const auto& row:images->images()) {
             const auto id=row.toMap()["id"].toString();
             images->updateImage(id,{{"locked",false}});if(!images->removeImage(id))return {};
         }
-        QImage image(8,6,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::red);
+        QImage image(edge?64:8,edge?64:6,QImage::Format_ARGB32_Premultiplied);image.fill(Qt::red);
+        if(edge)for(int y=0;y<64;y++)for(int x=0;x<64;x++)image.setPixelColor(x,y,x>=32&&y<54?Qt::white:Qt::black);
         const auto path=files.filePath("reference.png");
         if(!image.save(path)||!images->importImage(QUrl::fromLocalFile(path),"coordinate fixture"))return {};
         const auto id=images->images().front().toMap()["id"].toString();
@@ -188,6 +189,29 @@ class EditDisplayUiTests:public QObject {
     Q_OBJECT
 private slots:
     void init(){QTest::failOnWarning();}
+    void liveWireActualWindowToDraftFlow()
+    {
+        Ui ui(1100);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));const auto id=ui.addImage(true);QVERIFY(!id.isEmpty());
+        ui.editor.selectCountry("A");QVERIFY(ui.editor.beginGeometryDraw());const auto before=ui.editor.referenceDraftCoordinates();const auto document=ui.editor.documentBytes();
+        auto* menu=ui.window->findChild<QObject*>("referenceImageMenu");auto* imageMenu=qvariant_cast<QObject*>(ui.evaluate(menu,"menuAt(4)"));QVERIFY(imageMenu);ui.evaluate(imageMenu,"itemAt(8).triggered()");QTest::qWait(50);
+        auto* library=ui.library();QVERIFY(navigationClick(ui.window,"referenceFreeTransformButton"));QVERIFY(navigationClick(ui.window,"referenceTraceStart"));QVERIFY(library->traceSession()["active"].toBool());
+        const auto click=[&](QPointF p){QTest::mouseClick(ui.window,Qt::LeftButton,Qt::NoModifier,ui.map->mapToScene(p).toPoint());};
+        click({155,160});QTRY_VERIFY(!library->traceSession()["busy"].toBool());QCOMPARE(library->traceSession()["anchors"].toList().size(),1);
+        click({155,221});QTRY_VERIFY(!library->traceSession()["busy"].toBool());QCOMPARE(library->traceSession()["anchors"].toList().size(),2);
+        QVERIFY(navigationClick(ui.window,"referenceTraceUndo"));QTRY_VERIFY(!library->traceSession()["busy"].toBool());QCOMPARE(library->traceSession()["anchors"].toList().size(),1);
+        click({155,221});QTRY_VERIFY(!library->traceSession()["busy"].toBool());click({195,221});QTRY_VERIFY(!library->traceSession()["busy"].toBool());
+        QVERIFY2(library->traceSession()["error"].toString().isEmpty(),qPrintable(library->traceSession()["error"].toString()));
+        QVERIFY(navigationClick(ui.window,"referenceTraceFinish"));QCOMPARE(library->traceSession()["phase"].toString(),QString("preview"));QVERIFY(!ui.window->grabWindow().isNull());
+        const auto coordinates=library->traceSession()["coordinates"].toList();QVERIFY(coordinates.size()>=3);
+        QVERIFY(navigationClick(ui.window,"referenceTraceApply"));QVERIFY(library->traceSession().isEmpty());QVERIFY(ui.editor.referenceDraftCoordinates()!=before);QCOMPARE(ui.editor.documentBytes(),document);
+        QVERIFY(ui.editor.geometryUndoDraft());QCOMPARE(ui.editor.referenceDraftCoordinates(),before);QVERIFY(ui.editor.geometryRedoDraft());
+        const auto old=ui.editor.referenceDraftContext();QVERIFY(ui.editor.geometryUndoDraft());QVERIFY(!ui.editor.replaceReferenceDraft(coordinates,old));QCOMPARE(ui.editor.referenceDraftCoordinates(),before);
+        QVERIFY(navigationClick(ui.window,"referenceTraceStart"));click({155,160});library->cancelTrace();QTest::qWait(80);QVERIFY(library->traceSession().isEmpty());QCOMPARE(ui.editor.documentBytes(),document);
+        QVERIFY(ui.editor.geometryRedoDraft());auto* panel=ui.window->findChild<QObject*>("referenceCalibrationPanel");ui.evaluate(panel,"close()");QTest::qWait(50);
+        QVERIFY(navigationClick(ui.window,"geometryPreview"));QTRY_VERIFY(ui.editor.geometryEditState()["previewReady"].toBool());QVERIFY(navigationClick(ui.window,"geometryConfirm"));QTRY_VERIFY(!ui.editor.geometryEditState()["active"].toBool());QVERIFY(ui.editor.documentBytes()!=document);QVERIFY(ui.editor.canUndo());ui.editor.undo();QCOMPARE(ui.editor.documentBytes(),document);
+        QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
     void geographicCalibrationActualWindowFlow()
     {
         Ui ui(1100);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));

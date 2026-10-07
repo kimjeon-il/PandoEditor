@@ -16,6 +16,7 @@ class ReferenceImageLibrary : public QObject
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY historyChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY historyChanged)
     Q_PROPERTY(QVariantMap calibrationSession READ calibrationSession NOTIFY calibrationSessionChanged)
+    Q_PROPERTY(QVariantMap traceSession READ traceSession NOTIFY traceSessionChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
 public:
     explicit ReferenceImageLibrary(QObject *parent = nullptr);
@@ -27,6 +28,13 @@ public:
     QString lastError() const { return lastError_; }
 
     QVariantMap calibrationSession() const;
+    QVariantMap traceSession() const { return trace_; }
+    Q_INVOKABLE bool beginTrace(const QVariantMap &context);
+    Q_INVOKABLE bool traceAnchor(double u,double v);
+    Q_INVOKABLE bool undoTraceAnchor();
+    Q_INVOKABLE bool finishTrace();
+    Q_INVOKABLE void redrawTrace();
+    Q_INVOKABLE void cancelTrace();
     Q_INVOKABLE bool setPlacementQuad(const QVariantList &quad,const QVariantList &screenQuad);
     Q_INVOKABLE bool setCornerQuad(const QVariantList &quad,const QVariantList &screenQuad);
     Q_INVOKABLE bool beginAnchor();
@@ -60,6 +68,7 @@ public:
 
 signals:
     void calibrationSessionChanged();
+    void traceSessionChanged();
     void imagesChanged();
     void historyChanged();
     void lastErrorChanged();
@@ -85,6 +94,9 @@ private:
     static QJsonObject json(const Record &record);
     static std::optional<Record> record(const QJsonObject &json);
     const Record *find(const QString &id) const;
+    void calculateTrace();
+    QVariantMap trace_;
+    quint64 traceEpoch_=0;
     ReferenceImageModel imageModel_;
     State state_;
     QVector<State> undo_, redo_;

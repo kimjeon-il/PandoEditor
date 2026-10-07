@@ -1,4 +1,5 @@
 #pragma once
+#include <QUuid>
 #include "worldresourcecache.h"
 #include "resourcecachecoordinator.h"
 #include "terrainimageprovider.h"
@@ -443,6 +444,9 @@ public:
     Q_INVOKABLE bool geometryInsertNearest(double x,double y,double tolerance);
     Q_INVOKABLE bool geometryInsertNearestScreen(double x,double y,double radiusPixels);
     Q_INVOKABLE bool geometryDeleteSelectedVertex();
+    Q_INVOKABLE QVariantMap referenceDraftContext() const;
+    Q_INVOKABLE QVariantList referenceDraftCoordinates() const;
+    Q_INVOKABLE bool replaceReferenceDraft(const QVariantList &coordinates,const QVariantMap &context);
     Q_INVOKABLE bool geometryUndoDraft();
     Q_INVOKABLE bool geometryRedoDraft();
     Q_INVOKABLE bool requestGeometryPreview();
@@ -744,6 +748,8 @@ private:
         std::uint64_t request=0;
         QString error;
         pandoeditor::Ring lineDraft;
+        std::vector<pandoeditor::Ring> lineUndo,lineRedo;
+        QString referenceSessionId=QUuid::createUuid().toString(QUuid::WithoutBraces);
         std::optional<pandoeditor::AnnexTerritoryIntent> annexIntent;
         std::optional<pandoeditor::SplitTerritorialIntent> splitIntent;
         std::vector<pandoeditor::ObjectRef> boundaryOwners;

@@ -229,9 +229,9 @@ bool EditorController::geometryAddPoint(double x,double y,double tolerance,const
     auto& edit=*geometryEdit_;
     if(edit.territorySelection) {
         if(edit.stage!="selection"||edit.territorySelection->state().activePhase!=TerritorySelectionPhase::Drawing||edit.applying||edit.selectionPending||edit.sourceChange||edit.territorySelection->state().methodChangeConfirmation)return false;
-        if(edit.territorySelection->state().activeMethod==TerritorySelectionMethod::Line) {edit.lineDraft.push_back(snappedGeometryPoint(x,y,tolerance,pointerType));++edit.request;emit geometryEditChanged();return true;}
+        if(edit.territorySelection->state().activeMethod==TerritorySelectionMethod::Line) {edit.lineUndo.push_back(edit.lineDraft);edit.lineRedo.clear();edit.lineDraft.push_back(snappedGeometryPoint(x,y,tolerance,pointerType));++edit.request;emit geometryEditChanged();return true;}
     }
-    if(edit.tool=="split"&&!edit.territorySelection){edit.lineDraft.push_back(snappedGeometryPoint(x,y,tolerance,pointerType));++edit.request;emit geometryEditChanged();return true;}if(edit.tool!="draw"&&edit.tool!="annex"&&!edit.territorySelection)return false;
+    if(edit.tool=="split"&&!edit.territorySelection){edit.lineUndo.push_back(edit.lineDraft);edit.lineRedo.clear();edit.lineDraft.push_back(snappedGeometryPoint(x,y,tolerance,pointerType));++edit.request;emit geometryEditChanged();return true;}if(edit.tool!="draw"&&edit.tool!="annex"&&!edit.territorySelection)return false;
     if(!isArea(edit.draft)) {
         edit.undo.push_back(edit.draft);edit.redo.clear();
         const auto point=snappedGeometryPoint(x,y,tolerance,pointerType);
@@ -383,12 +383,13 @@ bool EditorController::geometryUndoDraft()
     if(geometryEdit_&&geometryEdit_->territorySelection) {
         if(geometryEdit_->applying||geometryEdit_->sourceChange||geometryEdit_->territorySelection->state().methodChangeConfirmation)return false;
         if(geometryEdit_->territorySelection->state().activePhase!=TerritorySelectionPhase::Drawing)return geometryUndoTerritoryPart();
-        if(geometryEdit_->territorySelection->state().activeMethod==TerritorySelectionMethod::Line) {if(geometryEdit_->lineDraft.empty())return false;geometryEdit_->lineDraft.pop_back();++geometryEdit_->request;emit geometryEditChanged();return true;}
+        if(geometryEdit_->territorySelection->state().activeMethod==TerritorySelectionMethod::Line) {if(geometryEdit_->lineDraft.empty())return false;if(geometryEdit_->lineUndo.empty())geometryEdit_->lineDraft.pop_back();else {geometryEdit_->lineRedo.push_back(geometryEdit_->lineDraft);geometryEdit_->lineDraft=std::move(geometryEdit_->lineUndo.back());geometryEdit_->lineUndo.pop_back();}++geometryEdit_->request;emit geometryEditChanged();return true;}
     }
-    if(!geometryEdit_||geometryEdit_->preview)return false;if(geometryEdit_->tool=="split"&&!geometryEdit_->territorySelection){if(geometryEdit_->lineDraft.empty())return false;geometryEdit_->lineDraft.pop_back();++geometryEdit_->request;emit geometryEditChanged();return true;}if(geometryEdit_->undo.empty())return false;geometryEdit_->redo.push_back(geometryEdit_->draft);geometryEdit_->draft=std::move(geometryEdit_->undo.back());geometryEdit_->undo.pop_back();geometryEdit_->vertex=-1;++geometryEdit_->request;emit geometryEditChanged();return true;
+    if(!geometryEdit_||geometryEdit_->preview)return false;if(geometryEdit_->tool=="split"&&!geometryEdit_->territorySelection){if(geometryEdit_->lineDraft.empty())return false;if(geometryEdit_->lineUndo.empty())geometryEdit_->lineDraft.pop_back();else {geometryEdit_->lineRedo.push_back(geometryEdit_->lineDraft);geometryEdit_->lineDraft=std::move(geometryEdit_->lineUndo.back());geometryEdit_->lineUndo.pop_back();}++geometryEdit_->request;emit geometryEditChanged();return true;}if(geometryEdit_->undo.empty())return false;geometryEdit_->redo.push_back(geometryEdit_->draft);geometryEdit_->draft=std::move(geometryEdit_->undo.back());geometryEdit_->undo.pop_back();geometryEdit_->vertex=-1;++geometryEdit_->request;emit geometryEditChanged();return true;
 }
 
 bool EditorController::geometryRedoDraft(){
+ if(geometryEdit_&&!geometryEdit_->preview&&!referenceDraftContext().isEmpty()&&!geometryEdit_->lineRedo.empty()&&(geometryEdit_->tool=="split"||(geometryEdit_->territorySelection&&geometryEdit_->territorySelection->state().activeMethod==TerritorySelectionMethod::Line))){auto &edit=*geometryEdit_;edit.lineUndo.push_back(edit.lineDraft);edit.lineDraft=std::move(edit.lineRedo.back());edit.lineRedo.pop_back();++edit.request;emit geometryEditChanged();return true;}
     if(geometryEdit_&&geometryEdit_->tool=="boundary") {auto& edit=*geometryEdit_;if(!boundaryGeometryReady()||edit.preview||edit.job||!edit.boundarySession->redo())return false;edit.draft=edit.boundarySession->drafts().at(edit.target.id);edit.vertex=-1;++edit.request;emit geometryEditChanged();return true;}
 if(!geometryEdit_||geometryEdit_->preview||geometryEdit_->redo.empty()||(geometryEdit_->tool=="split"&&!geometryEdit_->territorySelection))return false;geometryEdit_->undo.push_back(geometryEdit_->draft);geometryEdit_->draft=std::move(geometryEdit_->redo.back());geometryEdit_->redo.pop_back();geometryEdit_->vertex=-1;++geometryEdit_->request;emit geometryEditChanged();return true;}
 
@@ -592,4 +593,31 @@ bool EditorController::geometryBack() {
     if(edit.tool=="boundary"){cancelGeometryEdit();return true;}
     if(edit.stage=="selection"){edit.stage="setup";edit.error.clear();emit geometryEditChanged();return true;}
     cancelGeometryEdit();return true;
+}
+
+QVariantMap EditorController::referenceDraftContext() const {
+ if(!geometryEdit_)return {};
+ const auto &edit=*geometryEdit_;
+ if(edit.preview||edit.job||edit.applying||edit.selectionPending||edit.previewPending||edit.dragBefore||edit.sourceChange||edit.stage=="setup"||edit.choosingProviders||edit.tool=="boundary"||edit.tool=="move"||edit.tool=="coast")return {};
+ if(edit.territorySelection&&(edit.stage!="selection"||edit.territorySelection->state().activePhase!=TerritorySelectionPhase::Drawing||edit.territorySelection->state().methodChangeConfirmation))return {};
+ if(edit.polygon<0||edit.ring<0)return {};
+ if(!isArea(edit.draft)&&edit.draft.type!="LineString"&&edit.draft.type!="MultiLineString"&&edit.tool!="split")return {};
+ return {{"project",projectInstanceId()},{"session",edit.referenceSessionId},{"request",qulonglong(edit.request)}};
+}
+QVariantList EditorController::referenceDraftCoordinates() const {
+ if(referenceDraftContext().isEmpty())return {};const auto &edit=*geometryEdit_;Ring path;
+ if(edit.tool=="split"||(edit.territorySelection&&edit.territorySelection->state().activeMethod==TerritorySelectionMethod::Line))path=edit.lineDraft;
+ else if(isArea(edit.draft)){if(edit.polygon<0||edit.ring<0||size_t(edit.polygon)>=edit.draft.polygons.size()||size_t(edit.ring)>=edit.draft.polygons[edit.polygon].size())return {};path=edit.draft.polygons[edit.polygon][edit.ring];}
+ else if(edit.polygon>=0&&size_t(edit.polygon)<edit.draft.lines.size())path=edit.draft.lines[edit.polygon];
+ QVariantList result;for(const auto p:path){const auto geo=projection_.unproject(p.x,p.y);result.append(QVariant(QVariantList{geo.x,geo.y}));}return result;
+}
+bool EditorController::replaceReferenceDraft(const QVariantList &coordinates,const QVariantMap &context) {
+ if(context.isEmpty()||context!=referenceDraftContext()||coordinates.size()<2)return false;
+ Ring path;for(const auto &value:coordinates){const auto pair=value.toList();if(pair.size()!=2)return false;bool a=false,b=false;const double lon=pair[0].toDouble(&a),lat=pair[1].toDouble(&b);if(!a||!b||!std::isfinite(lon)||!std::isfinite(lat)||lon< -180||lon>180||lat< -90||lat>90)return false;path.push_back(projection_.project({lon,lat}));}
+ auto &edit=*geometryEdit_;
+ if(isArea(edit.draft)&&!edit.draft.polygons.empty()&&(size_t(edit.polygon)>=edit.draft.polygons.size()||size_t(edit.ring)>=edit.draft.polygons[edit.polygon].size()))return false;
+ if(!isArea(edit.draft)&&!edit.draft.lines.empty()&&size_t(edit.polygon)>=edit.draft.lines.size())return false;
+ if(edit.tool=="split"||(edit.territorySelection&&edit.territorySelection->state().activeMethod==TerritorySelectionMethod::Line)){edit.lineUndo.push_back(edit.lineDraft);edit.lineRedo.clear();edit.lineDraft=std::move(path);}
+ else {edit.undo.push_back(edit.draft);edit.redo.clear();if(isArea(edit.draft)){if(path.size()>=3)closeRing(path);if(edit.draft.polygons.empty())edit.draft.polygons={{Ring{}}};edit.draft.polygons[edit.polygon][edit.ring]=std::move(path);}else {if(edit.draft.lines.empty())edit.draft.lines.emplace_back();edit.draft.lines[edit.polygon]=std::move(path);}}
+ edit.vertex=-1;edit.error.clear();++edit.request;emit geometryEditChanged();return true;
 }

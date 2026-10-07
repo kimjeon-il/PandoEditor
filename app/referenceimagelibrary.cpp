@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cmath>
 #include <QJSEngine>
+#include <QFutureWatcher>
+#include <QtConcurrent>
 #include <QJSValue>
 #include <QDir>
 #include <QFile>
@@ -21,6 +23,7 @@ QVariantMap referenceWeb(const QString &name,const QVariantMap &input)
 {
     QJSEngine engine;QFile script(":/reference-web/runtime.js");
     if(!script.open(QIODevice::ReadOnly))return {{"ok",false},{"reason",script.errorString()}};
+    engine.evaluate("if(!Array.prototype.at)Array.prototype.at=function(i){return this[i<0?this.length+i:i]};");
     const auto module=engine.evaluate(QString::fromUtf8(script.readAll())+";ReferenceWeb",script.fileName());
     if(module.isError())return {{"ok",false},{"reason",module.toString()}};
     const auto json=QString::fromUtf8(QJsonDocument::fromVariant(input).toJson(QJsonDocument::Compact));
@@ -63,6 +66,7 @@ ReferenceImageLibrary::ReferenceImageLibrary(QObject *parent) : QObject(parent),
     // each preview, cancellation, reload, or history transition.
     connect(this, &ReferenceImageLibrary::imagesChanged, this, [this] { imageModel_.setRows(images()); });
     connect(this,&ReferenceImageLibrary::imagesChanged,this,&ReferenceImageLibrary::calibrationSessionChanged);
+    connect(this,&ReferenceImageLibrary::imagesChanged,this,&ReferenceImageLibrary::cancelTrace);
     reload();
 }
 
@@ -199,10 +203,10 @@ QVariantMap ReferenceImageLibrary::calibrationSession() const
 bool ReferenceImageLibrary::beginCalibration(const QString &id)
 {
     const auto item=find(id);if(!item||item->locked||gestureBefore_)return false;
-    calibrationId_=id;anchorPicking_=false;freeTransformEditing_=false;editingPointId_.clear();pendingUv_.reset();emit calibrationSessionChanged();return true;
+    cancelTrace();calibrationId_=id;anchorPicking_=false;freeTransformEditing_=false;editingPointId_.clear();pendingUv_.reset();emit calibrationSessionChanged();return true;
 }
 void ReferenceImageLibrary::cancelCalibration()
-{cancelGesture();calibrationId_.clear();anchorPicking_=false;freeTransformEditing_=false;editingPointId_.clear();pendingUv_.reset();emit calibrationSessionChanged();}
+{cancelTrace();cancelGesture();calibrationId_.clear();anchorPicking_=false;freeTransformEditing_=false;editingPointId_.clear();pendingUv_.reset();emit calibrationSessionChanged();}
 bool ReferenceImageLibrary::pickImagePoint(double u,double v)
 {
     const auto item=find(calibrationId_);
@@ -270,3 +274,39 @@ bool ReferenceImageLibrary::clearAnchor()
 {const auto item=find(calibrationId_);if(!item||item->locked||gestureBefore_)return false;auto next=state_;auto changed=std::find_if(next.begin(),next.end(),[&](const auto &r){return r.id==calibrationId_;});changed->anchor.clear();return setState(std::move(next),true);}
 bool ReferenceImageLibrary::setFreeTransformEditing(bool enabled)
 {const auto item=find(calibrationId_);if(!item||item->locked||gestureBefore_)return false;freeTransformEditing_=enabled;pendingUv_.reset();anchorPicking_=false;emit calibrationSessionChanged();return true;}
+
+void ReferenceImageLibrary::cancelTrace(){++traceEpoch_;if(trace_.isEmpty())return;trace_.clear();emit traceSessionChanged();}
+bool ReferenceImageLibrary::beginTrace(const QVariantMap &context) {
+ const auto item=find(calibrationId_);if(!item||item->locked||context.isEmpty()||(!item->cornerPinEnabled&&!calibrationSession()["result"].toMap()["calibrationOk"].toBool()))return false;
+ cancelTrace();pendingUv_.reset();anchorPicking_=freeTransformEditing_=false;
+ trace_={{"active",true},{"busy",false},{"phase","armed"},{"anchors",QVariantList{}},{"coordinates",QVariantList{}},{"context",context},{"id",item->id}};
+ emit calibrationSessionChanged();emit traceSessionChanged();return true;
+}
+bool ReferenceImageLibrary::traceAnchor(double u,double v) {
+ if(trace_.isEmpty()||trace_["busy"].toBool()||trace_["phase"]=="preview"||!std::isfinite(u)||!std::isfinite(v)||u<0||u>1||v<0||v>1)return false;
+ auto anchors=trace_["anchors"].toList();anchors.append(QVariant(QVariantList{u,v}));trace_["anchors"]=anchors;trace_["phase"]="tracking";calculateTrace();return true;
+}
+bool ReferenceImageLibrary::undoTraceAnchor(){if(trace_.isEmpty()||trace_["busy"].toBool())return false;auto anchors=trace_["anchors"].toList();if(anchors.empty())return false;anchors.removeLast();trace_["anchors"]=anchors;trace_["phase"]=anchors.empty()?"armed":"tracking";calculateTrace();return true;}
+bool ReferenceImageLibrary::finishTrace(){if(trace_.isEmpty()||trace_["busy"].toBool()||trace_["coordinates"].toList().size()<2)return false;trace_["phase"]="preview";emit traceSessionChanged();return true;}
+void ReferenceImageLibrary::redrawTrace(){if(trace_.isEmpty())return;++traceEpoch_;trace_["busy"]=false;trace_["phase"]="armed";trace_["anchors"]=QVariantList{};trace_["coordinates"]=QVariantList{};trace_["uv"]=QVariantList{};trace_["error"]="";emit traceSessionChanged();}
+void ReferenceImageLibrary::calculateTrace() {
+ const auto item=find(trace_["id"].toString());if(!item){cancelTrace();return;}
+ auto record=variant(*item,directory());record["controlPoints"]=item->geographicPoints;
+ const auto source=directory()+"/"+item->fileName;const auto anchors=trace_["anchors"].toList();const auto epoch=++traceEpoch_;
+ trace_["busy"]=true;emit traceSessionChanged();auto *watcher=new QFutureWatcher<QVariantMap>(this);
+ connect(watcher,&QFutureWatcher<QVariantMap>::finished,this,[this,watcher,epoch]{
+  const auto result=watcher->result();watcher->deleteLater();if(epoch!=traceEpoch_||trace_.isEmpty())return;
+  trace_["busy"]=false;
+  if(result["ok"].toBool()){trace_["coordinates"]=result["coordinates"];trace_["uv"]=result["uv"];trace_["error"]="";}
+  else {trace_["error"]=result["reason"];auto anchors=trace_["anchors"].toList();if(!anchors.empty())anchors.removeLast();trace_["anchors"]=anchors;}
+  emit traceSessionChanged();
+ });
+ watcher->setFuture(QtConcurrent::run([source,record,anchors]{
+  QImageReader reader(source);reader.setAutoTransform(true);auto image=reader.read();
+  if(image.isNull())return QVariantMap{{"ok",false},{"reason","invalid-image"}};
+  const auto original=image.size();if(std::max(image.width(),image.height())>1024)image=image.scaled(1024,1024,Qt::KeepAspectRatio,Qt::SmoothTransformation);
+  image=image.convertToFormat(QImage::Format_RGBA8888);QVariantList data;data.reserve(image.width()*image.height()*4);
+  for(int y=0;y<image.height();++y)for(int x=0;x<image.width()*4;++x)data.append(int(image.constScanLine(y)[x]));
+  return referenceWeb("trace",{{"record",record},{"anchors",anchors},{"sourceWidth",original.width()},{"sourceHeight",original.height()},{"image",QVariantMap{{"width",image.width()},{"height",image.height()},{"data",data}}}});
+ }));
+}

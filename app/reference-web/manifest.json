@@ -9,6 +9,14 @@
     {
       "path": "assets/js/modules/reference-image-transform.js",
       "sha256": "a8c7dab3d04d1ff8e0660432335306e771ecfbb1d2a48400a0767b2b65db65d9"
+    },
+    {
+      "path": "assets/js/modules/reference-image-live-wire.js",
+      "sha256": "c3ae32d58ac46511aa4768a12382bcc54d2a9f8bf69a85b46084394a5f44eb2e"
+    },
+    {
+      "path": "assets/js/modules/reference-image-source-mapping.js",
+      "sha256": "e16d1ac4f67abdcb6759932d419aede9a7ea2a4ecfd11cb917685edac14d918c"
     }
   ]
 }

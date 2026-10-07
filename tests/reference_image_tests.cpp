@@ -23,6 +23,42 @@ private slots:
     void init(){QTest::failOnWarning();}
     void initTestCase() { QStandardPaths::setTestModeEnabled(true); }
 
+    void liveWireSessionRejectsWeakEdgesAndStaleResults()
+    {
+        QTemporaryDir dir;const auto path=dir.filePath("edge.png");QImage image(64,64,QImage::Format_RGB32);
+        for(int y=0;y<64;++y)for(int x=0;x<64;++x)image.setPixelColor(x,y,x<32?Qt::black:Qt::white);QVERIFY(image.save(path));
+        ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(path)));const auto id=library.images().back().toMap()["id"].toString();
+        QVERIFY(library.beginCalibration(id));
+        QVERIFY(library.setCornerQuad({QVariantList{10.,40.},QVariantList{20.,40.},QVariantList{20.,30.},QVariantList{10.,30.}}, {QVariantList{0,0},QVariantList{100,0},QVariantList{100,100},QVariantList{0,100}}));
+        QVERIFY(library.beginTrace({{"session","test"}}));QVERIFY(library.traceAnchor(.5,.15));QTRY_VERIFY(!library.traceSession()["busy"].toBool());
+        QVERIFY(library.traceAnchor(.5,.85));QTRY_VERIFY(!library.traceSession()["busy"].toBool());
+        QVERIFY2(library.traceSession()["error"].toString().isEmpty(),qPrintable(library.traceSession()["error"].toString()));
+        QVERIFY(library.traceSession()["coordinates"].toList().size()>=2);QVERIFY(library.finishTrace());
+        library.redrawTrace();QVERIFY(library.traceSession()["coordinates"].toList().isEmpty());
+        QVERIFY(library.traceAnchor(.5,.2));library.cancelTrace();QTest::qWait(100);QVERIFY(library.traceSession().isEmpty());
+        QVERIFY(library.beginTrace({{"session","test"}}));QVERIFY(library.traceAnchor(.5,.2));QVERIFY(library.updateImage(id,{{"locked",true}}));QTest::qWait(100);QVERIFY(library.traceSession().isEmpty());
+        QVERIFY(library.updateImage(id,{{"locked",false}}));
+        image.fill(Qt::red);const auto weak=dir.filePath("weak.png");QVERIFY(image.save(weak));QVERIFY(library.importImage(QUrl::fromLocalFile(weak)));
+        const auto weakId=library.images().back().toMap()["id"].toString();QVERIFY(library.beginCalibration(weakId));QVERIFY(library.setCornerQuad({QVariantList{10.,40.},QVariantList{20.,40.},QVariantList{20.,30.},QVariantList{10.,30.}}, {QVariantList{0,0},QVariantList{100,0},QVariantList{100,100},QVariantList{0,100}}));
+        QVERIFY(library.beginTrace({{"session","weak"}}));QVERIFY(library.traceAnchor(.5,.2));QTRY_VERIFY(!library.traceSession()["busy"].toBool());
+        QVERIFY(library.traceAnchor(.5,.8));QTRY_VERIFY(!library.traceSession()["busy"].toBool());QCOMPARE(library.traceSession()["error"].toString(),QString("insufficient-edge-strength"));QVERIFY(!library.finishTrace());
+    }
+
+    void fixedWebLiveWireCorpus()
+    {
+        QFile file(QFileInfo(QString::fromUtf8(__FILE__)).absoluteDir().filePath("fixtures/reference-trace.json"));QVERIFY(file.open(QIODevice::ReadOnly));const auto fixtures=QJsonDocument::fromJson(file.readAll()).array();QCOMPARE(fixtures.size(),3);
+        QTemporaryDir dir;ReferenceImageLibrary library;int processed=0;
+        for(const auto value:fixtures){const auto row=value.toObject();const auto input=row["input"].toObject(),expected=row["expected"].toObject();const auto edge=input["edge"].toString();QImage image(64,64,QImage::Format_RGB32);
+            for(int y=0;y<64;++y)for(int x=0;x<64;++x){int c=edge=="weak"?128:(x>=32&&(edge!="turn"||y<54))?255:0;image.setPixelColor(x,y,QColor(c,c,c));}
+            const auto path=dir.filePath(edge+".png");QVERIFY(image.save(path));QVERIFY(library.importImage(QUrl::fromLocalFile(path)));const auto id=library.images().back().toMap()["id"].toString();QVERIFY(library.beginCalibration(id));
+            QVERIFY(library.setCornerQuad({QVariantList{10.,40.},QVariantList{20.,40.},QVariantList{20.,30.},QVariantList{10.,30.}}, {QVariantList{0,0},QVariantList{100,0},QVariantList{100,100},QVariantList{0,100}}));QVERIFY(library.beginTrace({{"session",edge}}));
+            for(const auto anchor:input["anchors"].toArray()){const auto uv=anchor.toArray();QVERIFY(library.traceAnchor(uv[0].toDouble(),uv[1].toDouble()));QTRY_VERIFY(!library.traceSession()["busy"].toBool());}
+            if(expected["ok"].toBool()){QVERIFY2(library.finishTrace(),qPrintable(library.traceSession()["error"].toString()));const auto actual=library.traceSession()["coordinates"].toList(),wanted=expected["coordinates"].toArray().toVariantList();QCOMPARE(actual.size(),wanted.size());for(int i=0;i<actual.size();i++)for(int j=0;j<2;j++)QVERIFY(std::abs(actual[i].toList()[j].toDouble()-wanted[i].toList()[j].toDouble())<1e-10);}
+            else {QCOMPARE(library.traceSession()["error"].toString(),expected["reason"].toString());QVERIFY(!library.finishTrace());}
+            library.cancelTrace();++processed;
+        }QCOMPARE(processed,3);
+    }
+
     void geographicCalibrationUsesNormalizedUvAndMeters()
     {
         ReferenceImageLibrary library;

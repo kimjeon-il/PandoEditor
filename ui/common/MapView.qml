@@ -56,6 +56,25 @@ Rectangle {
     onGeometryEditingChanged: if(mapHover) mapHover.resetEditingPointer()
     readonly property bool territorySelectionEditing: geometryEditing && editor.geometryEditState.territorySelection === true
     readonly property bool territoryDrawing: territorySelectionEditing && editor.geometryEditState.stage === "selection" && editor.geometryEditState.selectionPhase === "drawing" && !editor.geometryEditState.confirmationKind && !editor.geometryEditState.applying
+    readonly property string referenceDraftRevision: { editor.geometryEditState; return JSON.stringify(editor.referenceDraftContext()) }
+    onReferenceDraftRevisionChanged: if(referenceImages)referenceImages.cancelTrace()
+    function referenceUvAtScreen(x,y) {
+        const mesh=calibrationPanel.session.result && calibrationPanel.session.result.mesh
+        if(!mesh)return []
+        for(let i=0;i<mesh.triangles.length;i++) {
+            const vertices=[mesh.vertices[mesh.triangles[i][0]],mesh.vertices[mesh.triangles[i][1]],mesh.vertices[mesh.triangles[i][2]]]
+            const points=vertices.map(v=>editor.referenceScreenAtCoordinate(v.coordinate[0],v.coordinate[1]))
+            if(points.some(p=>!p.visible))continue
+            const a=points[0],b=points[1],c=points[2]
+            const d=(b.y-c.y)*(a.x-c.x)+(c.x-b.x)*(a.y-c.y)
+            if(Math.abs(d)<1e-8)continue
+            const w0=((b.y-c.y)*(x-c.x)+(c.x-b.x)*(y-c.y))/d
+            const w1=((c.y-a.y)*(x-c.x)+(a.x-c.x)*(y-c.y))/d
+            const w2=1-w0-w1
+            if(w0>=-.002&&w1>=-.002&&w2>=-.002)return [w0*vertices[0].uv[0]+w1*vertices[1].uv[0]+w2*vertices[2].uv[0],w0*vertices[0].uv[1]+w1*vertices[1].uv[1]+w2*vertices[2].uv[1]]
+        }
+        return []
+    }
     focus: true
     Keys.onPressed: function(event) {
         if (!geometryEditing) return
@@ -203,8 +222,24 @@ Rectangle {
                     MouseArea { anchors.fill: parent; onClicked: function(mouse) {
                         const u=(mouse.x-(parent.width-parent.paintedWidth)/2)/parent.paintedWidth
                         const v=(mouse.y-(parent.height-parent.paintedHeight)/2)/parent.paintedHeight
-                        referenceImages.pickImagePoint(u,v)
+                        if(referenceImages.traceSession.active)referenceImages.traceAnchor(u,v);else referenceImages.pickImagePoint(u,v)
                     } }
+                }
+                Column {
+                    width: parent.width; spacing: 4
+                    Row {
+                        spacing: 4
+                        UiButton { objectName: "referenceTraceStart"; text: "자동 추적"; enabled: view.geometryEditing && !referenceImages.traceSession.active && (!!calibrationPanel.record.cornerPinEnabled || !!(calibrationPanel.session.result && calibrationPanel.session.result.calibrationOk)); onClicked: { if(view.ensureReferenceQuad(false))referenceImages.beginTrace(editor.referenceDraftContext()) } }
+                        UiButton { objectName: "referenceTraceUndo"; text: "마지막 점 취소"; enabled: !!referenceImages.traceSession.active && !referenceImages.traceSession.busy; onClicked: referenceImages.undoTraceAnchor() }
+                        UiButton { objectName: "referenceTraceFinish"; text: "완료"; enabled: !!referenceImages.traceSession.active && !referenceImages.traceSession.busy; onClicked: referenceImages.finishTrace() }
+                    }
+                    Row {
+                        spacing: 4
+                        UiButton { objectName: "referenceTraceApply"; text: "적용"; enabled: referenceImages.traceSession.phase === "preview"; onClicked: { const session=referenceImages.traceSession;if(editor.replaceReferenceDraft(session.coordinates,session.context))referenceImages.cancelTrace() } }
+                        UiButton { objectName: "referenceTraceRedraw"; text: "다시 그리기"; enabled: !!referenceImages.traceSession.active; onClicked: referenceImages.redrawTrace() }
+                        UiButton { objectName: "referenceTraceCancel"; text: "추적 취소"; enabled: !!referenceImages.traceSession.active; onClicked: referenceImages.cancelTrace() }
+                    }
+                    Label { width: parent.width; wrapMode: Text.Wrap; visible: !!referenceImages.traceSession.active; text: referenceImages.traceSession.busy ? "자동 추적 계산 중…" : referenceImages.traceSession.error || (referenceImages.traceSession.phase === "preview" ? "추적 미리보기 · 적용 또는 다시 그리기" : "이미지 위 지도에서 점을 지정한 뒤 완료하세요.") }
                 }
                 Row {
                     spacing: 4
@@ -263,6 +298,23 @@ Rectangle {
                     if(coordinate.length===2)referenceImages.pickMapCoordinate(coordinate[0],coordinate[1])
                 }
             }
+        }
+    }
+    MouseArea {
+        anchors.fill: parent; z: 24; enabled: !!referenceImages.traceSession.active && referenceImages.traceSession.phase !== "preview"
+        onClicked: function(mouse) { const uv=view.referenceUvAtScreen(mouse.x,mouse.y);if(uv.length===2)referenceImages.traceAnchor(uv[0],uv[1]) }
+    }
+    Shape {
+        anchors.fill: parent; z: 23; visible: !!referenceImages.traceSession.active
+        ShapePath {
+            strokeColor: "#e11d48"; strokeWidth: 3; fillColor: "transparent"
+            PathSvg { path: {
+                view.cameraState
+                const coordinates=referenceImages.traceSession.coordinates || []
+                let path=""
+                for(const c of coordinates){const p=editor.referenceScreenAtCoordinate(c[0],c[1]);if(!p.visible)return "";path+=(path.length?" L ":"M ")+p.x+" "+p.y}
+                return path
+            } }
         }
     }
     Repeater {
@@ -643,7 +695,7 @@ Rectangle {
     }
     TapHandler {
         id: geometryTap
-        enabled: view.geometryEditing && !objectChooser.visible
+        enabled: view.geometryEditing && !objectChooser.visible && !referenceImages.traceSession.active
         acceptedButtons: Qt.LeftButton
         onTapped: function(eventPoint) {
             mapHover.claimEditingPointer(eventPoint.device)
@@ -731,7 +783,7 @@ Rectangle {
     }
     DragHandler {
         id: geometryDrag
-        enabled: view.geometryEditing && (!view.territorySelectionEditing || view.territoryDrawing) && editor.geometryEditState.tool !== "move" && editor.geometryEditState.selectedVertex >= 0 && !objectChooser.visible
+        enabled: view.geometryEditing && !referenceImages.traceSession.active && (!view.territorySelectionEditing || view.territoryDrawing) && editor.geometryEditState.tool !== "move" && editor.geometryEditState.selectedVertex >= 0 && !objectChooser.visible
         target: null
         maximumPointCount: 1
         onActiveChanged: {
@@ -746,7 +798,7 @@ Rectangle {
     }
     DragHandler {
         id: geometryObjectDrag
-        enabled: view.geometryEditing && editor.geometryEditState.tool === "move" && !objectChooser.visible
+        enabled: view.geometryEditing && !referenceImages.traceSession.active && editor.geometryEditState.tool === "move" && !objectChooser.visible
         acceptedButtons: Qt.LeftButton
         target: null; maximumPointCount: 1
         onActiveChanged: {
@@ -758,7 +810,7 @@ Rectangle {
     }
     DragHandler {
         id: geometryTwoFingerPan
-        enabled: view.geometryEditing && !objectChooser.visible
+        enabled: view.geometryEditing && !objectChooser.visible && !referenceImages.traceSession.active
         target: null; minimumPointCount: 2; maximumPointCount: 2
         onActiveChanged: {
             if (active) { editor.beginMapInteraction(); editor.geometryEndVertexDrag(true);
