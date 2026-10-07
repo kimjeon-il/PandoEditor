@@ -101,3 +101,13 @@ fixture/source/binary drift, wrong CTest executable and deleted report cases.
 Dependencies: every adapter consumes a registry case and emits observations;
 the runner records evidence without inventing missing observations; the gate
 requires complete case accounting and verified source/build identity.
+
+## Publication candidate (2026-10-08)
+
+Web incorporated remote main dd9d585 before publication. The merged candidate
+1c47399 re-ran the 22 parity unit tests: 21 pass, 1 fail. The catalog query
+contract differs for korean-lineage, korean-name and germany-1900 after the
+upstream date-aware library changes. Original expectations and production
+behavior remain unchanged. Earlier reports describe their original source pair,
+not this publication candidate. App framework tests remain 8/8 passing.
+Publication does not assert complete CI or behavioral parity.
