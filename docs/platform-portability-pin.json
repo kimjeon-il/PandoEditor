@@ -1,0 +1,11 @@
+{
+  "webContractCommit": "ea3f690c2aebaafa2ee15128f149f016eec4bcd1",
+  "sha256": {
+    "tests/fixtures/portability/manifest.json": "3de28e406deae6bbb11c8afc37fd16901659cdfd9d6120d060029ddde8b886cc",
+    "tests/fixtures/portability/selection.json": "22b960c42f494449953853cd1e0d06083905660794f683b4648240074d16a02d",
+    "tests/fixtures/portability/baseline-selection.mjs": "61e5b9b1fc6592cdaae2306853bc60ec93c6668a5449f6d2e39ba3b7811ac453",
+    "tests/fixtures/portability/README.md": "d708a43782870127bb46845ea779ca7aafb6192cf3f1b9397920010ccfe60827",
+    "tools/check-platform-portability.mjs": "94d030afce1ee7b992c29fab0d0dd8a5fb2e5ab6a2dbb97c6424d9a6630881d7",
+    "docs/architecture/platform-boundaries.md": "141c23aa5bda3c897ee48b27bdb50cb9f909186a538f61b51aeedd58ac6ce01b"
+  }
+}

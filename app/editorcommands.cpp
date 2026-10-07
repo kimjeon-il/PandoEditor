@@ -65,7 +65,7 @@ bool EditorController::collectPendingEdits(pandoeditor::CommandArguments& args)
     };
     for(const auto& [id,draft]:parkedCountryDrafts_) if(!country(id,draft))return false;
     for(const auto& [id,draft]:parkedLayerDrafts_) if(!layer(id,draft))return false;
-    if(selectedUnit()&&!country(selected_,{nameDraft_,memoDraft_,colorDraft_,opacityPreview_,validFromDraft_,validToDraft_}))return false;
+    if(selectedUnit()&&!country(selectedId(),{nameDraft_,memoDraft_,colorDraft_,opacityPreview_,validFromDraft_,validToDraft_}))return false;
     if(project_.layer(selectedLayer_.toStdString())&&!layer(selectedLayer_,{layerNameDraft_,layerOpacityPreview_}))return false;
     return true;
 }
@@ -131,5 +131,5 @@ bool EditorController::commitPendingEdits(){
 void EditorController::setColor(const QString& color)
 {
     if(!validColor(color)){commandError(pandoeditor::CommandError::InvalidArguments);return;}
-    if(executeCommand("country.color",pandoeditor::SetCountryColor{selected_.toStdString(),color.mid(1).toUInt(nullptr,16)}))publish(false);
+    if(executeCommand("country.color",pandoeditor::SetCountryColor{selectedId().toStdString(),color.mid(1).toUInt(nullptr,16)}))publish(false);
 }

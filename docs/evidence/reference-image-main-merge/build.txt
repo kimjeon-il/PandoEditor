@@ -1,0 +1,45 @@
+[0/2] Re-checking globbed directories...
+[1/47] Running qmlimportscanner for pandoeditor
+[2/47] Building CXX object engine/CMakeFiles/pandoeditor_map_engine.dir/src/editgeometry.cpp.obj
+[3/47] Linking CXX static library engine\libpandoeditor_map_engine.a
+[4/47] Building CXX object engine/CMakeFiles/edit_geometry_tests.dir/__/tests/edit_geometry_tests.cpp.obj
+[5/47] Linking CXX executable engine\edit_geometry_tests.exe
+[6/47] Automatic MOC and UIC for target pandoeditor_editor
+[7/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorplace.cpp.obj
+[8/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/pandoeditor_editor_autogen/mocs_compilation.cpp.obj
+[9/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/worldbootstrap.cpp.obj
+[10/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorwebimport.cpp.obj
+[11/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorpresentation.cpp.obj
+[12/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorstructure.cpp.obj
+[13/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorgeometry.cpp.obj
+[14/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorterritoryselection.cpp.obj
+[15/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorriverselection.cpp.obj
+[16/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorhistorical.cpp.obj
+[17/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorprojectgeopackage.cpp.obj
+[18/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorgisexport.cpp.obj
+[19/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorgis.cpp.obj
+[20/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorcontent.cpp.obj
+[21/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorcontroller.cpp.obj
+[22/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorview.cpp.obj
+[23/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorcommands.cpp.obj
+[24/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorjobs.cpp.obj
+[25/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorfields.cpp.obj
+[26/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/sharedboundarycontroller.cpp.obj
+[27/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorsnapping.cpp.obj
+[28/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorpicking.cpp.obj
+[29/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorselection.cpp.obj
+[30/47] Building CXX object app/CMakeFiles/pandoeditor_editor.dir/editorproperties.cpp.obj
+[31/47] Linking CXX static library app\libpandoeditor_editor.a
+[32/47] Automatic MOC and UIC for target pandoeditor
+[33/46] Running rcc for resource ui
+[34/46] Automatic MOC and UIC for target edit_display_ui_tests
+[35/45] Automatic MOC and UIC for target selection_editor_tests
+[36/45] Building CXX object app/CMakeFiles/pandoeditor.dir/.qt/rcc/qrc_ui.cpp.obj
+[37/45] Building CXX object app/CMakeFiles/pandoeditor.dir/main.cpp.obj
+[38/45] Building CXX object app/CMakeFiles/selection_editor_tests.dir/selection_editor_tests_autogen/mocs_compilation.cpp.obj
+[39/45] Building CXX object app/CMakeFiles/edit_display_ui_tests.dir/__/tests/edit_display_ui_tests.cpp.obj
+[40/45] Building CXX object app/CMakeFiles/selection_editor_tests.dir/.qt/rcc/qrc_sample.cpp.obj
+[41/45] Building CXX object app/CMakeFiles/selection_editor_tests.dir/__/tests/selection_editor_tests.cpp.obj
+[42/45] Linking CXX executable selection_editor_tests.exe
+[43/45] Linking CXX executable pandoeditor.exe
+[44/45] Linking CXX executable edit_display_ui_tests.exe

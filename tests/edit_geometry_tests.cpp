@@ -192,10 +192,32 @@ void validationPolicy() {
     require(!validateEditGeometry(open),"validation without detail must still catch exceptions");
 }
 }
+void draftHistoryPolicy() {
+    GeometryDraft session{Geometry{"LineString",{},{{{0,0},{1,1}}},{}}};
+    const auto original=session.draft;
+    require(!session.undoDraft()&&!session.redoDraft(),"empty draft history is a no-op");
+    session.checkpointDraft();session.draft.lines[0][1]={2,3};session.vertex=1;
+    const auto changed=session.draft;
+    require(session.undoDraft()&&same(session.draft,original)&&session.vertex==-1,"draft undo restores exact geometry");
+    require(session.redoDraft()&&same(session.draft,changed),"draft redo restores exact geometry");
+    session.dragBefore=session.draft;session.draft.lines[0][1]={4,5};
+    const auto historySize=session.undo.size();
+    require(session.finishVertexDrag(true)&&same(session.draft,changed)&&session.undo.size()==historySize,"cancel vertex drag restores without history");
+    session.dragBefore=session.draft;session.objectDragMoved=false;
+    require(session.finishObjectDrag(false)&&session.undo.size()==historySize,"unmoved object drag adds no history");
+    session.dragBefore=session.draft;session.draft.lines[0][1]={7,8};session.objectDragMoved=true;
+    require(session.finishObjectDrag(false)&&session.undo.size()==historySize+1&&!session.dragBefore&&!session.objectDragMoved,"object drag commits one draft step");
+    require(session.undoDraft()&&same(session.draft,changed),"object drag undo");
+    const auto beforeMove=session.undo.size();session.dragBefore=session.draft;
+    session.recordVertexMove();require(session.redo.empty()&&session.undo.size()==beforeMove,"drag move clears redo without per-move history");
+    require(session.finishVertexDrag(true)&&same(session.draft,changed),"cancel after redo invalidation restores geometry");
+    session.checkpointDraft();require(session.redo.empty(),"new edit discards draft redo");
+}
+
 int main() {
     int failures=0;
-    for(const auto& test:std::array<std::pair<const char*,void(*)()>,6>{{
-        {"vertex policy",vertexPolicy},{"segment policy",segmentPolicy},{"boundary policy",boundaryPolicy},
+    for(const auto& test:std::array<std::pair<const char*,void(*)()>,7>{{
+        {"draft history policy",draftHistoryPolicy},{"vertex policy",vertexPolicy},{"segment policy",segmentPolicy},{"boundary policy",boundaryPolicy},
         {"containment policy",containmentPolicy},{"translation policy",translationPolicy},{"validation policy",validationPolicy}}}) {
         try {test.second();std::cout<<"PASS "<<test.first<<'\n';}
         catch(const std::exception& error){++failures;std::cerr<<"FAIL "<<test.first<<": "<<error.what()<<'\n';}

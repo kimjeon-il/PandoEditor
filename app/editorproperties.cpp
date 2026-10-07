@@ -22,7 +22,7 @@ std::optional<TerritorialField> fieldKind(const QString& field) {
 }
 const TerritorialUnit* EditorController::selectedUnit() const {
  if(selection_.primary() && selection_.primary()->domain!="territorial") return nullptr;
- const auto pos=project_.index().objects.find(territorialRef(selected_.toStdString()));
+ const auto pos=project_.index().objects.find(territorialRef(selectedId().toStdString()));
  return pos==project_.index().objects.end()?nullptr:&project_.document().units.at(pos->second);
 }
 bool EditorController::propertyBusy() const {return jobBusy() || webImportBusy() || hasWebImportPreview();}
@@ -179,7 +179,7 @@ QString EditorController::beginPropertyEdit(const QString& field) {
  fieldSessions_.emplace(token,FieldSession{project_.snapshot(),territorialRef(u->id),field});refreshTypedScene();return token;
 }
 bool EditorController::updatePropertyEdit(const QString& token,const QString& value) {
- auto it=fieldSessions_.find(token);if(it==fieldSessions_.end()||!it->second.base.matches(project_)||it->second.ref.id!=selected_.toStdString())return false;
+ auto it=fieldSessions_.find(token);if(it==fieldSessions_.end()||!it->second.base.matches(project_)||it->second.ref.id!=selectedId().toStdString())return false;
  const auto field=it->second.field;
  if(field=="validity")return false; // Its complete input is owned by the QML field.
  if(field=="name")setNameDraft(value);else if(field=="notes")setMemoDraft(value);else if(field=="validFrom")setValidFromDraft(value);else setValidToDraft(value);
@@ -189,7 +189,7 @@ bool EditorController::confirmPropertyEdit(const QString& token) {
  auto it=fieldSessions_.find(token);if(it==fieldSessions_.end())return false;
  const auto session=it->second;fieldSessions_.erase(it);
  refreshTypedScene();
- if(!session.base.matches(project_) || session.ref.id!=selected_.toStdString())return false;
+ if(!session.base.matches(project_) || session.ref.id!=selectedId().toStdString())return false;
  return commitObjectField(session.field);
 }
 void EditorController::endPropertyEdit(const QString& token){if(fieldSessions_.erase(token))refreshTypedScene();}

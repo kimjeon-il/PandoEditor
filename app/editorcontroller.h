@@ -8,6 +8,7 @@
 #include "../platform/screencolorpicker.h"
 #include "commandjobrunner.h"
 #include <pandoeditor/map/territoryselection.h>
+#include <pandoeditor/map/editgeometry.h>
 #include "territorialgeometry.h"
 #include <pandoeditor/map/sharedboundary.h>
 #include <atomic>
@@ -354,7 +355,10 @@ public:
     QVariantMap layerVisuals() const;
     QVariantList layers() const;
     QVariantList countryRows() const;
-    QString selectedId() const { return selected_; }
+    QString selectedId() const {
+        return selectionInstance_==project_.instanceId() && selection_.primary()
+            ? QString::fromStdString(selection_.primary()->id) : QString();
+    }
     QString selectedName() const;
     bool selectedEditable() const;
     QString countryLayerId() const;
@@ -733,13 +737,14 @@ private:
     };
     std::optional<ContentSession> contentSession_;
     void refreshContentSession();
-    struct GeometryEditSession {
+    struct GeometryEditSession : pandoeditor::map::GeometryDraft {
+        GeometryEditSession(pandoeditor::ProjectSnapshot snapshot,pandoeditor::ObjectRef ref,
+                            pandoeditor::Geometry geometry,QString editTool,
+                            std::optional<pandoeditor::CreateTerritorialIntent> intent={})
+            : GeometryDraft{std::move(geometry)},base(std::move(snapshot)),target(std::move(ref)),
+              tool(std::move(editTool)),createIntent(std::move(intent)) {}
         pandoeditor::ProjectSnapshot base;
         pandoeditor::ObjectRef target;
-        pandoeditor::Geometry draft;
-        std::vector<pandoeditor::Geometry> undo;
-        std::vector<pandoeditor::Geometry> redo;
-        int polygon=0,ring=0,vertex=-1;
         QString tool;
         // A draw session may create a new territorial unit.  The incomplete
         // setup stays outside ProjectDocument until a valid geometry has been
@@ -763,8 +768,6 @@ private:
         bool boundaryImpactConfirmation=false,boundaryImpactsApproved=false;
         QString boundaryPreviewSelectionId;
         std::optional<pandoeditor::CoastlineIntent> coastIntent;
-        std::optional<pandoeditor::Geometry> dragBefore;
-        bool objectDragMoved=false;
         std::optional<pandoeditor::Point> snapPoint;
         QVariantMap snapIndicator;
         QString snapExcludedNodeKey;
@@ -923,7 +926,7 @@ private:
     std::uint64_t scenePatchCount_=0,sceneFullBuildCount_=0;
     std::size_t lastEditAffectedObjects_=0,lastEditRetainedGeometries_=0,lastEditNewGeometryBytes_=0;
     std::string sceneInstance_;
-    QString selected_,selectedLayer_="countries",filePath_;
+    QString selectedLayer_="countries",filePath_;
     QString nameDraft_,memoDraft_,colorDraft_,layerNameDraft_;
     std::optional<double> opacityPreview_,layerOpacityPreview_;
     ProjectStorage storage_;

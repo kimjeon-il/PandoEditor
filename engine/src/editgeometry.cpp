@@ -6,6 +6,30 @@
 #include <cmath>
 
 namespace pandoeditor::map {
+void GeometryDraft::checkpointDraft() { undo.push_back(draft);redo.clear(); }
+void GeometryDraft::recordVertexMove() {
+    if(!dragBefore)undo.push_back(draft);
+    redo.clear();
+}
+bool GeometryDraft::undoDraft() {
+    if(undo.empty())return false;
+    redo.push_back(draft);draft=std::move(undo.back());undo.pop_back();vertex=-1;return true;
+}
+bool GeometryDraft::redoDraft() {
+    if(redo.empty())return false;
+    undo.push_back(draft);draft=std::move(redo.back());redo.pop_back();vertex=-1;return true;
+}
+bool GeometryDraft::finishVertexDrag(bool cancel) {
+    if(!dragBefore)return false;
+    if(cancel)draft=*dragBefore;else undo.push_back(*dragBefore);
+    dragBefore.reset();return true;
+}
+bool GeometryDraft::finishObjectDrag(bool cancel) {
+    if(!dragBefore)return false;
+    if(cancel)draft=*dragBefore;
+    else if(objectDragMoved){undo.push_back(*dragBefore);redo.clear();}
+    dragBefore.reset();objectDragMoved=false;return true;
+}
 namespace {
 bool isArea(const Geometry& geometry) {
     return geometry.type=="Polygon"||geometry.type=="MultiPolygon";

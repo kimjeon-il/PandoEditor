@@ -1,0 +1,7 @@
+PASS draft history policy
+PASS vertex policy
+PASS segment policy
+PASS boundary policy
+PASS containment policy
+PASS translation policy
+PASS validation policy

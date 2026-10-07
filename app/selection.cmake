@@ -150,7 +150,7 @@ foreach(target_name pandoeditor ui_tests terrain_controller_display_tests river_
                   "${PROJECT_SOURCE_DIR}/ui/fonts/LICENSE.Pretendard.txt")
     endif()
 endforeach()
-foreach(target_name property_ui_tests territorial_info_ui_tests)
+foreach(target_name property_ui_tests territorial_info_ui_tests selection_ui_tests)
 if(TARGET ${target_name})
     file(GLOB_RECURSE M4_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/assets/defaults/flags/*")
     qt_add_resources(${target_name} property_flags PREFIX "/defaults/flags"

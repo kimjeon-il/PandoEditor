@@ -1,0 +1,18 @@
+[
+  {
+    "path": "D:\\build\\Pandoeditor-reference-parity\\pandoeditor.exe",
+    "sha256": "cf5a3040040d9d9c9de94b493199c1420ec2ff82d921c2851689c110a66c9ca8"
+  },
+  {
+    "path": "D:\\build\\Pandoeditor-reference-parity\\engine\\edit_geometry_tests.exe",
+    "sha256": "e431c9464f5354c349b1c5a4216ecbe4df1ac7240e27be25f571235b816e9d32"
+  },
+  {
+    "path": "D:\\build\\Pandoeditor-reference-parity\\selection_editor_tests.exe",
+    "sha256": "54a21cc47b0eb8b8806c1ef3d4dac15f450c685fb48f3ea70ee4392b12d37c84"
+  },
+  {
+    "path": "D:\\build\\Pandoeditor-reference-parity\\edit_display_ui_tests.exe",
+    "sha256": "a05a6a1375217627b2203f700f5afd59ce6908261030287e88056fc55e24c1a5"
+  }
+]

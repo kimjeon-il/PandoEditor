@@ -1,0 +1,9 @@
+********* Start testing of SelectionEditorTests *********
+Config: Using QtTest library 6.8.3, Qt 6.8.3 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 13.1.0), windows 11
+PASS   : SelectionEditorTests::initTestCase()
+PASS   : SelectionEditorTests::selectingDoesNotCommitOrDiscardDrafts()
+PASS   : SelectionEditorTests::scopesPrimaryAndInvalidReferences()
+PASS   : SelectionEditorTests::sessionActionsPreserveHistoryAndBytes(desktop)
+PASS   : SelectionEditorTests::cleanupTestCase()
+Totals: 5 passed, 0 failed, 0 skipped, 0 blacklisted, 225ms
+********* Finished testing of SelectionEditorTests *********

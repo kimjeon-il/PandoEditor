@@ -735,7 +735,7 @@ QVariantMap EditorController::countryVisuals() const
             {"drawGroup",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).group},
             {"drawObject",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).object},
             {"visible",objectVisible(ref)},
-            {"opacity",(text(unit.id)==selected_&&opacityPreview_?*opacityPreview_:style->second.opacity)*resolved.opacity}};
+            {"opacity",(text(unit.id)==selectedId()&&opacityPreview_?*opacityPreview_:style->second.opacity)*resolved.opacity}};
     }
     for(const auto& [ref,index]:project_.index().objects) if(ref.domain!="territorial") {
         const auto properties=project_.propertyView(ref); if(!properties) continue;
@@ -812,13 +812,13 @@ QString EditorController::selectedName() const
 }
 QString EditorController::countryLayerId() const
 {
-    const auto it=project_.document().presentation.membership.find(pandoeditor::territorialRef(selected_.toStdString()));
+    const auto it=project_.document().presentation.membership.find(pandoeditor::territorialRef(selectedId().toStdString()));
     return it==project_.document().presentation.membership.end()?QString():text(it->second);
 }
 double EditorController::countryOpacity() const
 {
     if(opacityPreview_) return *opacityPreview_;
-    const auto c=project_.country(selected_.toStdString());return c?c->opacity:1;
+    const auto c=project_.country(selectedId().toStdString());return c?c->opacity:1;
 }
 double EditorController::layerOpacity() const
 {
@@ -928,7 +928,7 @@ void EditorController::removeLayer() {if(executeCommand("layer.remove",pandoedit
 void EditorController::moveLayer(int delta) {if(executeCommand("layer.move",pandoeditor::MoveLayer{selectedLayer_.toStdString(),delta}))publish(false);}
 void EditorController::setLayerVisible(bool value) {if(executeCommand("layer.visibility",pandoeditor::SetLayerVisible{selectedLayer_.toStdString(),value}))publish();}
 void EditorController::setLayerLocked(bool value) {if(executeCommand("layer.lock",pandoeditor::SetLayerLocked{selectedLayer_.toStdString(),value}))publish();}
-void EditorController::moveCountry(const QString& layerId) {if(executeCommand("country.move",pandoeditor::MoveCountry{selected_.toStdString(),layerId.toStdString()}))publish();}
+void EditorController::moveCountry(const QString& layerId) {if(executeCommand("country.move",pandoeditor::MoveCountry{selectedId().toStdString(),layerId.toStdString()}))publish();}
 void EditorController::undo()
 {
     if(hasPendingEdits()){emit errorOccurred(QStringLiteral("PENDING_EDITS: 편집 중인 내용을 먼저 적용하거나 취소하세요."));return;}
@@ -1034,7 +1034,7 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
     recordRestore("restoreProjection");
     cancelWorldBootstrap();
     cancelPreview();cancelStructureMutation();project_=std::move(candidate);projection_=std::move(nextProjection);
-    filePath_=path;importedDirty_=imported;selected_.clear();selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
+    filePath_=path;importedDirty_=imported;selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
     refreshHistoricalCatalog();
     recordRestore("restoreSwitch");
     emit geometryChanged();publish(false);recordRestore("restorePublish");
