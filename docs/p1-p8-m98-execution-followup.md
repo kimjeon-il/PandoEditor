@@ -69,8 +69,10 @@ performance acceptance.
 - Final App/Web production exchange, M32 counts, source/binary hashes, final
   discovery audit, structural mutations and repeated device diagnostics are
   pending and must be recorded separately when executed.
-- Additional actual terrain pressure/source/context cases and
-  cap/join/antialiasing visual differences are not complete. Density prefilter
+- Retained terrain pressure/source/context/mask mechanisms now have the actual
+  Windows execution and caught device regressions below. Official DEM pixel
+  parity is a separate corpus gate. Cap/join/antialiasing visual differences
+  remain incomplete. Density prefilter
   implementation and the listed fixed-Web mechanism comparison are green.
 - Android physical-device execution is NOT RUN; no connected physical device
   was observed. No package is authorized.
@@ -78,3 +80,62 @@ performance acceptance.
 
 Work remains on `codex/m97-web-editing-parity`. No main merge, deployment,
 tag, release, installer or portable package is part of this continuation.
+
+## Regional edit pixels and current source checkpoint
+
+App `6afe93deb83363c69674276eb7d5c2b4fdf11a18`, fixed Web unchanged.
+The fixed Web `app-map-projection.js` uses `d3.geo.equirectangular` for flat
+rendering and editing. Native regional edit coordinates previously applied a
+separate latitude cosine while the geographic renderer used uniform axes.
+An adopted camera was also clamped while merely deriving display coordinates.
+These App defects put Germany's edit points outside the actual visible map.
+The correction aligns regional local coordinates and leaves interactive zoom
+bounds on zoom mutations. Stored geometry, schema and exchange inputs did not
+change. The selected integer vertex coordinates were not moved or loosened.
+
+| Execution | Actual result | Scope |
+| --- | --- | --- |
+| `native-geometry-pointer-diagnostic-02` | PID 11992, exit 1; 2 Qt pass, 1 fail, 0 skip | Real D3D11 window: selection and edit button work, vertex selection fails; nearest old overlay point was outside the viewport |
+| `regional-projection-red-02` | PID 19644, exit 3 | Independent geographic pixel formula detects native mismatch |
+| `regional-projection-green-03` | PID 15844, exit 3 | Latitude-only correction insufficient: adopted-view display clamp still mismatched |
+| `regional-projection-green-07` | PID 15068, exit 0; 4 checks, 0 failures | Regional geographic pixel formula after both corrections |
+| `regional-camera-green-08` | PID 7120, exit 0; 5 groups, 3 restored centers, 0 failures | Cursor geographic anchor and existing camera controls |
+| `regional-edit-coordinates-green-09` | PID 21944, exit 0; 4 groups | Existing pure expression/snap contracts unchanged |
+| `regional-edit-controller-green-10` | PID 17012, exit 0; 56 Qt pass, 0 fail/skip | Territory/content pointer and component state |
+| `native-geometry-pointer-draft-green-04` | PID 11284, exit 0; 3 Qt pass, 0 fail/skip | Actual D3D11 point selection, changed draft, edit Undo availability, preview and cancel; document/dirty/Undo/Redo preserved; fixed vertex difference 0.482465 CSS pixels |
+| `web10-current-6afe93d-06` | Node exit 0; 16/16, 0 mismatch/fail/skip; 24/24 traces, 28/28 real native processes | Same fixed Web; web-app-web 6/6, app-web-app 6/6, rejection 4/4; intermediate production codec output compared |
+| `m32-current-6afe93d-05` | Actual native exit 0; expected/processed 2525/2525, mismatch 0 | Historical property oracle, separate from current-Web exchange evidence |
+| `timeline-storage-current-6afe93d-03` | PID 22396, exit 0; 74 checks, 0 fail/skip | Native and production Web intervals, full archive and strict storage |
+| `timeline-focused-current-6afe93d-03` | PID 20616, exit 1; 0 selected, 1 failure | Shell argument list was interpreted as one Qt function; no selected tests executed, not passing evidence |
+| `timeline-focused-current-6afe93d-04` | PID 13776, exit 0; 26 Qt pass, 0 fail/skip | Correct argument array; atomicity, history/archive and explicit native-only Web export refusal |
+
+The ordinary measurement harness additionally requires the real pointer drag
+to change the draft and preserves dirty/Undo/Redo on cancel. Its per-input
+snapshot includes the real `geometryEditChanged` revision. GUI edit/menu fields
+are captured after input and attached at the same window's synchronization;
+the immutable base render frame and owner are independently observed. This is
+not a claim of independent edit-overlay pixel latency, GPU fences or DWM.
+
+## Retained terrain device mechanisms
+
+| Execution | Actual result | Scope |
+| --- | --- | --- |
+| `retained-terrain-handoff-native-01` | PID 20720, exit 1; 2 Qt pass, 1 fail | Test mask omitted its geographic viewport transform; harness corrected, production unchanged |
+| `retained-terrain-handoff-native-02` | PID 18344, exit 1; 2 Qt pass, 1 fail | Read a transitional retirement statistic; settle now requires bytes, zero overflow and zero staging together |
+| `retained-terrain-device-mutations-01` | Negative PID 8572, exit 0; mutant survived | Earlier post-adoption readback could conceal the broken first gray frame. This execution is FAIL and superseded by the strengthened test, not counted as caught |
+| `retained-terrain-device-mutations-02` | 2/2 compiled device mutants caught, generator exit 0 | Baseline PIDs 3828/20668, exit 0, 3 Qt pass each; negative PIDs 21748/11272, exit 1, named 2 pass/1 fail/0 skip assertions; production/shared object/library/binary hashes unchanged |
+| `retained-terrain-owner-full-04` | PID 12576, exit 0; 8 Qt pass, 0 fail/skip; new internal checks 8/8 | Actual Windows GTX 1650 D3D11 retained owner/material/mask/window path with explicit synthetic pixels |
+| `retained-terrain-device-mutations-03` | 2/2 caught after explicit ready prefetch was added; generator exit 0 | Baseline PIDs 10980/19108, exit 0, 3 Qt pass each; negative PIDs 4088/19484, exit 1, named 2 pass/1 fail/0 skip assertions; shared inputs unchanged |
+| `retained-terrain-owner-prefetch-full-05` | PID 5848, exit 0; 8 Qt pass, 0 fail/skip; new internal checks 8/8 | Current detail plus prefetch pressure inputs and complete original owner test list |
+
+The eight new checks cover baseline receipts, detail deferral at a 96-byte
+nominal backing budget (including a separately prepared prefetch), incomplete
+new-source reserve, delayed physical mask,
+first gray sea suppression while old source backing is still resident,
+settled zero overflow/staging, actual replacement window/context re-upload and
+old receipt refusal, and final resource release. GUI adoption is held only
+after a real current display receipt so readback cannot retire the old source
+and mask a same-frame defect. Two isolated regressions disable that suppression
+or evict the adopted reserve before replacement; both fail actual RHI pixel
+assertions. These are synthetic mechanism checks, separate from the preserved
+1,282-file DEM inventory and real controller/corpus results.

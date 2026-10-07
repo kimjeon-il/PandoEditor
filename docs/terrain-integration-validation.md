@@ -77,14 +77,24 @@ HEAD and is not final-commit aggregate acceptance.
 ## Remaining stages
 
 P2 LOD/demand mechanisms have a separate executed checkpoint in
-`terrain-p2-validation.md`. P3 progressive displayed coverage, resource admission
-and upload scheduling remain pending. The current CPU-ready bootstrap/old handoff
-does not prove them.
+`terrain-p2-validation.md`. The original P1 CPU-ready bootstrap/old handoff did
+not prove P3 progressive displayed coverage, resource admission or upload
+scheduling. Later P3/P4 implementation and execution is recorded separately.
 The subsequent dirty-tree checkpoint is recorded in
 `p1-p8-m98-execution-followup.md`: actual D3D11 controller execution processed
 12 prepared-DEM transitions with native exit 0; pure coverage/state and
 mutation results remain separate from pixel or GPU completion claims.
-Additional pressure/source/context device cases and final M9.8 acceptance
-remain pending. These results do not change the scope of this earlier P1 gate.
+`retained-terrain-owner-prefetch-full-05` additionally executed eight retained
+owner pressure/source/delayed-mask/window checks in actual Windows D3D11,
+PID 5848, native exit 0, 8 Qt pass and zero failure/skip. The new checks use
+explicit synthetic pixels, include pre-adoption readback while old backing is
+still resident, zero settled overflow/staging, context re-upload and stale
+receipt refusal. `retained-terrain-device-mutations-03` caught two actual
+compiled device regressions (negative native exits 1; named pixel assertions),
+without changing shared build/source bytes. The earlier surviving suppression
+mutant and failed harness executions remain recorded as failures in the
+follow-up ledger. Actual driver memory and full-data M9.8 acceptance remain
+unobserved/blocked respectively. These results do not enlarge the earlier P1
+corpus gate or relabel synthetic inputs as authentic DEM parity.
 Future source changes require affected checks to run again; P1's result cannot
 certify a later candidate or replace final same-commit/fixture evidence.

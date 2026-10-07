@@ -275,3 +275,53 @@ commit-pair execution. That exact SHA and its actual results are recorded
 externally after commit in `lineage-final-commit-pair.json`; this text alone does
 not assert that an unexecuted later run passed. No renderer/GPU/device performance,
 P1–P8/M9.8 implementation completion, deployment or portable packaging is claimed.
+
+## P1–P8 follow-up: exact current codec checkpoint
+
+WEB_CANDIDATE_SHA: `ebcfae4d27b29cbbea6416a7045a4806930204be`.
+APP_BASE_SHA: `2e65cf9f4a1d29e01d406029de60c5c9ff0b6eb5`.
+APP_CANDIDATE_SHA for this executed checkpoint:
+`6afe93deb83363c69674276eb7d5c2b4fdf11a18` (clean source at launch).
+
+`web10-current-6afe93d-06` actually ran production Web serializer/GIS Worker
+and native project/GIS codecs: Node exit 0, 16/16 mandatory cases, zero
+failure/mismatch/skip; web-app-web 6/6 and app-web-app 6/6, four rejection cases,
+24/24 completed intermediate traces and 28/28 observed native process exits.
+Each intermediate literal output and restored canonical output was checked;
+full geometry archive, stable logical IDs, records and endpoint precision are
+included. Container byte identity is not substituted for canonical identity.
+The original nine-file manifest and 30 source blobs are unchanged:
+
+- FIXTURE_MANIFEST SHA256:
+  `852af3bf7f59cab73a44862c91eb1d60e9db45f8e0ee561f9a265a702b93721c`.
+- Source manifest SHA256:
+  `d6a128f9f9a9ce6b81590d0c768a5f3d2911906eec537d7e1abf7b1db69aebdd`.
+- CONTRACT_HASHES: App working file CRLF bytes
+  `49194028cee9b18bdfe8af331e920ebec9be7df37f2137a998fc0a1791afef29`;
+  fixed Web Git blob and App LF-normalized content
+  `6faaa45917b6322d6cbb94bfa85c6eb10518a17e2400b62adea42b49f91e66cc`.
+  This is an existing newline conversion, not a contract content change.
+
+Current M32 `m32-current-6afe93d-05` actually ran root `property_probe.exe`,
+PID 6396, native exit 0, declared/generated/processed 2525/2525/2525,
+mismatch 0. Its historical property/temporal pins remain separate from current
+Web10 exchange, and the corrected workflow/probe_only/error propagation is
+retained. Native binary SHA256:
+`ff397fc5ab87cc2e58cb962fa7004ae8a9b779975d3ab2d4182b7326521ca42e`.
+
+`timeline-storage-current-6afe93d-03`: PID 22396, exit 0, 74 actual storage/
+interval/content checks, zero failure/skip. `timeline-focused-current-6afe93d-04`:
+PID 13776, exit 0, 26 Qt rows, zero failure/skip. These cover static activation,
+complex activation refusal, failure atomicity, native full archive/history,
+native-only defaults retained and explicit unsupported Web export refusal.
+The earlier misquoted launch `timeline-focused-current-6afe93d-03` selected
+zero tests, exited 1 and is preserved as a failure. Common fixtures do not
+contain populated inline flag/content rows; native-specific refusal and
+preservation are separate gates, not invented common corpus coverage.
+
+Environment: Windows 11, Qt 6.8.3 MinGW 13.1, Node 24.21, ordinary local
+Release build; codec execution is headless. This checkpoint establishes
+production file exchange for the stated pair and corpus. Subsequent code or
+fixture changes require affected executions again and are not certified by
+this record. No device performance, full P1–P8/M9.8 acceptance or packaging
+completion is inferred.
