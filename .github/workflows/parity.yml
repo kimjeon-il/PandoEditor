@@ -32,7 +32,12 @@ jobs:
       - name: Collect registered web/native Oracle evidence
         if: always()
         continue-on-error: true
-        run: node tools/run-final-oracles.mjs --build-dir build --out final-oracles.json
+        run: |
+          peer_sha=$(git ls-remote https://github.com/kimjeon-il/Pando.git refs/heads/main | cut -f1)
+          test ${#peer_sha} -eq 40
+          git clone --no-checkout https://github.com/kimjeon-il/Pando.git "$RUNNER_TEMP/parity-web"
+          git -C "$RUNNER_TEMP/parity-web" checkout --detach "$peer_sha"
+          node tools/run-final-oracles.mjs --web-root "$RUNNER_TEMP/parity-web" --build-dir build --build --out final-oracles.json
       - name: Evaluate release gate
         if: always()
         run: node tools/evaluate-release-gate.mjs --ctest-report build/ctest-results.xml --oracle-report final-oracles.json --asset-report release-assets.json --out release-gate.json

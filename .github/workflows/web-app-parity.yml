@@ -1,0 +1,105 @@
+name: Web App parity
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      web_sha:
+        description: Exact Web candidate SHA (empty uses current repository or peer main)
+        required: false
+      app_sha:
+        description: Exact App candidate SHA (empty uses current repository or peer main)
+        required: false
+permissions:
+  contents: read
+jobs:
+  parity:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Preserve committed fixture bytes
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+        with:
+          path: app
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.app_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Resolve immutable comparison pair
+        id: pair
+        working-directory: app
+        shell: bash
+        env:
+          PARITY_SIDE: app
+          WEB_SHA: ${{ inputs.web_sha }}
+          APP_SHA: ${{ inputs.app_sha }}
+          PARITY_BASE: ${{ github.event.pull_request.base.sha || '' }}
+          PARITY_CHANGES: ${{ github.workspace }}/changes.json
+        run: node tools/parity/ci-pair.mjs
+      - uses: actions/checkout@v4
+        with:
+          repository: kimjeon-il/Pando
+          ref: ${{ steps.pair.outputs.web }}
+          path: web
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - name: Install Web dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          arch: ${{ runner.os == 'Windows' && 'win64_msvc2022_64' || 'linux_gcc_64' }}
+          modules: qtshadertools qtimageformats
+          cache: true
+      - name: Install Windows zlib
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: vcpkg install zlib:x64-windows
+      - name: Configure Linux build
+        if: runner.os == 'Linux'
+        run: cmake -S app -B native-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+      - name: Configure Windows build
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cmake -S app -B native-build -A x64 -DBUILD_TESTING=ON "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+      - name: Install browser for Windows input tests
+        if: runner.os == 'Windows'
+        working-directory: web
+        run: pnpm exec playwright install chromium
+      - name: Test the verification framework
+        shell: bash
+        run: |
+          node --test web/tests/unit/web-app-parity-*.test.mjs
+          node --test app/tools/parity/*.test.mjs
+      - name: Run selected or complete registered evidence
+        shell: bash
+        run: |
+          options=()
+          if [ -f changes.json ]; then options+=(--changed "$PWD/changes.json"); fi
+          if [ "${{ runner.os }}" = Windows ]; then options+=(--ui); fi
+          node app/tools/run-final-oracles.mjs --root app --web-root web --build-dir native-build --build --official --out evidence/parity.json "${options[@]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-app-parity-${{ runner.os }}-${{ github.sha }}
+          path: |
+            evidence/
+            native-build/parity-build-receipt.json
+            native-build/Testing/Temporary/
+          if-no-files-found: error
+          retention-days: 14

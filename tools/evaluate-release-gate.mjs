@@ -3,6 +3,7 @@
 // can be promoted to a final migration PASS.
 import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
+import {validateApprovedReport} from './parity/report.mjs';
 
 function option(flag) {const i=process.argv.indexOf(flag);return i<0?null:process.argv[i+1];}
 function read(path) {return path&&existsSync(resolve(path))?JSON.parse(readFileSync(resolve(path),'utf8')):null;}
@@ -30,14 +31,15 @@ try {
   }
   if(build?.release?.status!=='PASS')blockers.push('Release build/smoke NOT RUN/failed');
   if(build?.asanUbsan?.status!=='PASS')blockers.push('ASan/UBSan NOT RUN/failed');
-  if(!oracle||oracle.schema!=='pandoeditor-final-oracle-report')blockers.push('Oracle report NOT RUN');
-  else {
-    if(oracle.worldMapHead!==manifest.worldMapHead)blockers.push('Oracle/upstream SHA mismatch');
-    if(!oracle.totals?.cases||oracle.totals.passed+oracle.totals.failed+oracle.totals.skipped!==oracle.totals.cases)
-      blockers.push('Oracle report has no complete suite accounting');
-    else if(oracle.totals.failed||oracle.totals.skipped)
-      blockers.push(`Oracle failures/skips ${oracle.totals.failed}/${oracle.totals.skipped}`);
-  }
+  try {
+    validateApprovedReport(oracle ?? {}, read(`${root}/docs/platform-portability-pin.json`) ?? {});
+    if (!oracle.sources.web.clean || !oracle.sources.app.clean) blockers.push('Parity evidence uses dirty checkouts');
+    if (oracle.selected.length !== oracle.matrix.length || oracle.matrix.some(row => !row.selected)) blockers.push('Parity report is partial');
+    if (oracle.cases.some(row => !['PASS','N/A'].includes(row.status)) ||
+        oracle.matrix.some(row => Object.values(row.axes).some(axis => !['PASS','N/A'].includes(axis.status))))
+      blockers.push('Behavioral parity contains differences, unsupported cases or missing evidence');
+    if (oracle.problems.length || oracle.unclassifiedPaths.length || oracle.gates.behavioral !== 'PASS') blockers.push('Behavioral parity gate is blocked');
+  } catch (error) { blockers.push('Current parity report invalid: ' + error.message); }
   if(!assets||assets.schema!=='pandoeditor-release-assets')blockers.push('asset report NOT RUN');
   else if(assets.status!=='source-verified'||assets.windowsDeployedPackage!=='PASS'||
           assets.androidApkOrAab!=='PASS')blockers.push('deployed asset integrity NOT RUN/failed');
