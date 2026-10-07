@@ -53,7 +53,7 @@ Rectangle {
     property point chooserPoint: Qt.point(0,0)
     property string mapHoverKey: ""
     readonly property bool geometryEditing: editor.geometryEditState.active === true
-    onGeometryEditingChanged: if(mapHover) mapHover.resetEditingPointer()
+    onGeometryEditingChanged: {if(mapHover)mapHover.resetEditingPointer();if(!geometryEditing)releaseSpacePan(true)}
     readonly property bool territorySelectionEditing: geometryEditing && editor.geometryEditState.territorySelection === true
     readonly property bool territoryDrawing: territorySelectionEditing && editor.geometryEditState.stage === "selection" && editor.geometryEditState.selectionPhase === "drawing" && !editor.geometryEditState.confirmationKind && !editor.geometryEditState.applying
     readonly property string referenceDraftRevision: { editor.geometryEditState; editor.projectInstanceId; return JSON.stringify(editor.referenceDraftContext()) }
@@ -81,9 +81,32 @@ Rectangle {
         for(const c of coordinates){const p=editor.referenceScreenAtCoordinate(c[0],c[1]);if(!p.visible){uv=[];break}const hit=referenceUvAtScreen(p.x,p.y);if(hit.length!==2){uv=[];break}uv.push(hit)}
         return referenceImages.beginRefine(editor.referenceDraftContext(),uv)
     }
+    property bool spacePanActive: false
+    property bool spacePanGesture: false
+    readonly property bool spacePanRouting: spacePanActive || spacePanGesture
+    function releaseSpacePan(cancelPointer) {
+        if(!spacePanActive && !spacePanGesture)return
+        spacePanActive=false
+        editor.endMapCameraPan();editor.endMapInteraction()
+        if(cancelPointer)spacePanGesture=false
+    }
+    onActiveFocusChanged: if(!activeFocus)releaseSpacePan(true)
+    Connections {
+        target: view.mapWindow
+        function onActiveChanged(){if(!view.mapWindow.active)view.releaseSpacePan(true)}
+        function onVisibilityChanged(){if(!view.terrainWindowVisible)view.releaseSpacePan(true)}
+    }
+    onSpacePanRoutingChanged: if(spacePanRouting)editor.clearGeometrySnapIndicator()
+    Component.onDestruction: releaseSpacePan(true)
     focus: true
+    Keys.onReleased: function(event) { if(event.key===Qt.Key_Space && !event.isAutoRepeat){const wasActive=spacePanRouting;releaseSpacePan(false);event.accepted=wasActive} }
     Keys.onPressed: function(event) {
-        if (!geometryEditing || editor.mapKeyboardInputBlocked(mapWindow) || objectChooser.visible || referenceImages.traceSession.active) return
+        if(editor.mapKeyboardInputBlocked(mapWindow) || objectChooser.visible)return
+        if(event.key===Qt.Key_Space && (geometryEditing || referenceImages.calibrationSession.active || referenceImages.traceSession.active)) {
+            if(!event.isAutoRepeat){editor.geometryEndVertexDrag(true);editor.geometryEndObjectDrag(true);referenceImages.cancelGesture();spacePanActive=true}
+            event.accepted=true;return
+        }
+        if (!geometryEditing || spacePanRouting || referenceImages.traceSession.active) return
         if ([Qt.Key_Left,Qt.Key_Right,Qt.Key_Up,Qt.Key_Down].indexOf(event.key)>=0) {
             const pixels=event.modifiers & Qt.ShiftModifier ? 10 : 1
             event.accepted=editor.geometryNudgeSelectedVertex(event.key===Qt.Key_Left ? -pixels : event.key===Qt.Key_Right ? pixels : 0,event.key===Qt.Key_Up ? -pixels : event.key===Qt.Key_Down ? pixels : 0)
@@ -211,7 +234,7 @@ Rectangle {
 
     ReferenceImageLibrary { id: referenceImages; objectName: "referenceImageLibrary" }
     property string referenceProjectInstance: editor.projectInstanceId
-    onReferenceProjectInstanceChanged: { if(referenceImages)referenceImages.cancelCalibration(); if(calibrationPanel)calibrationPanel.close() }
+    onReferenceProjectInstanceChanged: { releaseSpacePan(true); if(referenceImages)referenceImages.cancelCalibration(); if(calibrationPanel)calibrationPanel.close() }
     Popup {
         id: calibrationPanel
         objectName: "referenceCalibrationPanel"
@@ -240,11 +263,11 @@ Rectangle {
                     width: parent.width; spacing: 4
                     Row {
                         spacing: 4
-                        UiButton { objectName: "referenceTraceStart"; text: "자동 추적"; enabled: view.geometryEditing && !referenceImages.traceSession.active && (!!calibrationPanel.record.cornerPinEnabled || !!(calibrationPanel.session.result && calibrationPanel.session.result.calibrationOk)); onClicked: { if(view.ensureReferenceQuad(false))referenceImages.beginTrace(editor.referenceDraftContext()) } }
-                        UiButton { objectName: "referenceTraceUndo"; text: "마지막 점 취소"; enabled: !!referenceImages.traceSession.active && !referenceImages.traceSession.busy; onClicked: referenceImages.undoTraceAnchor() }
-                        UiButton { objectName: "referenceTraceFinish"; text: "완료"; enabled: !!referenceImages.traceSession.active && !referenceImages.traceSession.busy; onClicked: referenceImages.finishTrace() }
+                        UiButton { objectName: "referenceTraceStart"; text: "자동 추적"; enabled: !view.spacePanRouting && view.geometryEditing && !referenceImages.traceSession.active && (!!calibrationPanel.record.cornerPinEnabled || !!(calibrationPanel.session.result && calibrationPanel.session.result.calibrationOk)); onClicked: { if(view.ensureReferenceQuad(false))referenceImages.beginTrace(editor.referenceDraftContext()) } }
+                        UiButton { objectName: "referenceTraceUndo"; text: "마지막 점 취소"; enabled: !view.spacePanRouting && !!referenceImages.traceSession.active && !referenceImages.traceSession.busy; onClicked: referenceImages.undoTraceAnchor() }
+                        UiButton { objectName: "referenceTraceFinish"; text: "완료"; enabled: !view.spacePanRouting && !!referenceImages.traceSession.active && !referenceImages.traceSession.busy; onClicked: referenceImages.finishTrace() }
                     }
-                    UiButton { objectName: "referenceRefineStart"; text: "현재 초안 선 보정"; enabled: view.geometryEditing && !referenceImages.traceSession.active && (!!calibrationPanel.record.cornerPinEnabled || !!(calibrationPanel.session.result && calibrationPanel.session.result.calibrationOk)); onClicked: view.beginReferenceRefine() }
+                    UiButton { objectName: "referenceRefineStart"; text: "현재 초안 선 보정"; enabled: !view.spacePanRouting && view.geometryEditing && !referenceImages.traceSession.active && (!!calibrationPanel.record.cornerPinEnabled || !!(calibrationPanel.session.result && calibrationPanel.session.result.calibrationOk)); onClicked: view.beginReferenceRefine() }
                     Row {
                         spacing: 4
                         UiButton { objectName: "referenceTraceApply"; text: "적용"; enabled: referenceImages.traceSession.phase === "preview"; onClicked: { const session=referenceImages.traceSession;if(editor.replaceReferenceDraft(session.coordinates,session.context))referenceImages.cancelTrace() } }
@@ -320,7 +343,7 @@ Rectangle {
             x: screen.x-width/2; y: screen.y-height/2; width: 22; height: 22; radius: 11; z: 21
             color: "#ffffff"; border.color: "#0066cc"; border.width: 2; visible: screen.visible
             Label { anchors.centerIn: parent; text: index+1; color: "#003366" }
-            MouseArea { anchors.fill: parent
+            MouseArea { anchors.fill: parent; enabled: !view.spacePanRouting
                 onPressed: referenceImages.editCalibrationPoint(parent.modelData.id)
                 onReleased: function(mouse) {
                     const point=mapToItem(view,mouse.x,mouse.y)
@@ -331,7 +354,7 @@ Rectangle {
         }
     }
     MouseArea {
-        anchors.fill: parent; z: 24; enabled: !!referenceImages.traceSession.active && referenceImages.traceSession.phase !== "preview" && referenceImages.traceSession.mode !== "refine"
+        anchors.fill: parent; z: 24; enabled: !view.spacePanRouting && !!referenceImages.traceSession.active && referenceImages.traceSession.phase !== "preview" && referenceImages.traceSession.mode !== "refine"
         onClicked: function(mouse) { const uv=view.referenceUvAtScreen(mouse.x,mouse.y);if(uv.length===2)referenceImages.traceAnchor(uv[0],uv[1]) }
     }
     Shape {
@@ -357,7 +380,7 @@ Rectangle {
             x: screen.x-8; y: screen.y-8; width: 16; height: 16; z: 22
             color: "#ffffff"; border.color: "#0066cc"; border.width: 2; visible: screen.visible
             objectName: "referenceCornerHandle"+index
-            MouseArea { anchors.fill: parent
+            MouseArea { anchors.fill: parent; enabled: !view.spacePanRouting
                 onPressed: referenceImages.beginGesture(referenceImages.calibrationSession.record.id)
                 onPositionChanged: function(mouse) {
                     if(!pressed)return
@@ -375,7 +398,7 @@ Rectangle {
     }
     MouseArea {
         anchors.fill: parent; z: 20
-        enabled: referenceImages.calibrationSession.pendingMap === true
+        enabled: !view.spacePanRouting && referenceImages.calibrationSession.pendingMap === true
         onClicked: function(mouse) {
             const coordinate=editor.referenceCoordinateAtScreen(mouse.x,mouse.y)
             if(coordinate.length===2)referenceImages.pickMapCoordinate(coordinate[0],coordinate[1])
@@ -418,7 +441,7 @@ Rectangle {
             transformOrigin: Item.Center
             z: 0.5
             DragHandler {
-                enabled: !parent.modelData.locked && !view.geometryEditing
+                enabled: !view.spacePanRouting && !parent.modelData.locked && !view.geometryEditing
                 target: null
                 onActiveChanged: {
                     if (active) {
@@ -453,7 +476,7 @@ Rectangle {
                 }
             }
             PinchHandler {
-                enabled: !parent.modelData.locked && !view.geometryEditing
+                enabled: !view.spacePanRouting && !parent.modelData.locked && !view.geometryEditing
                 target: null
                 property real startWidth: 0
                 property real startHeight: 0
@@ -471,7 +494,7 @@ Rectangle {
                 })
             }
             WheelHandler {
-                enabled: !parent.modelData.locked && !view.geometryEditing
+                enabled: !view.spacePanRouting && !parent.modelData.locked && !view.geometryEditing
                 target: null
                 onWheel: function(event) {
                     let factor=Math.pow(1.0015,event.angleDelta.y)
@@ -705,7 +728,7 @@ Rectangle {
     }
     TapHandler {
         id: mapTap
-        enabled: !objectChooser.visible && !view.geometryEditing && !view.labelPress
+        enabled: !view.spacePanRouting && !objectChooser.visible && !view.geometryEditing && !view.labelPress
         acceptedButtons: Qt.LeftButton
         property int gestureModifiers: Qt.NoModifier
         onPressedChanged: {
@@ -725,7 +748,7 @@ Rectangle {
     }
     TapHandler {
         id: geometryTap
-        enabled: view.geometryEditing && !objectChooser.visible && !referenceImages.traceSession.active
+        enabled: !view.spacePanRouting && view.geometryEditing && !objectChooser.visible && !referenceImages.traceSession.active
         acceptedButtons: Qt.LeftButton
         onTapped: function(eventPoint) {
             mapHover.claimEditingPointer(eventPoint.device)
@@ -773,7 +796,7 @@ Rectangle {
         }
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
         function updateHover() {
-            if (!hovered || editor.objectChooserOpen) return
+            if (!hovered || editor.objectChooserOpen || view.spacePanRouting) return
             if (view.geometryEditing) {
                 // Touch can make Qt re-send or leave the stationary mouse hover.
                 // Only a moved or changed hover device may replace its snap.
@@ -801,7 +824,7 @@ Rectangle {
         }
     }
     DragHandler {
-        enabled: !objectChooser.visible && !view.geometryEditing
+        enabled: !view.spacePanRouting && !objectChooser.visible && !view.geometryEditing
         target: null
         maximumPointCount: 1
         onActiveChanged: {
@@ -812,8 +835,19 @@ Rectangle {
             editor.updateMapCameraPan(activeTranslation.x,activeTranslation.y)
     }
     DragHandler {
+        id: temporaryPan; objectName: "spaceTemporaryPanHandler"
+        enabled: view.spacePanRouting
+        target: null; maximumPointCount: 1
+        onActiveChanged: {
+            if(active){view.spacePanGesture=true;editor.beginMapInteraction();editor.beginMapCameraPan()}
+            else {view.spacePanGesture=false;editor.endMapCameraPan();editor.endMapInteraction()}
+        }
+        onActiveTranslationChanged: if(active && view.spacePanActive)editor.updateMapCameraPan(activeTranslation.x,activeTranslation.y)
+        onCanceled: view.releaseSpacePan(true)
+    }
+    DragHandler {
         id: geometryDrag
-        enabled: view.geometryEditing && !referenceImages.traceSession.active && (!view.territorySelectionEditing || view.territoryDrawing) && editor.geometryEditState.tool !== "move" && editor.geometryEditState.selectedVertex >= 0 && !objectChooser.visible
+        enabled: !view.spacePanRouting && view.geometryEditing && !referenceImages.traceSession.active && (!view.territorySelectionEditing || view.territoryDrawing) && editor.geometryEditState.tool !== "move" && editor.geometryEditState.selectedVertex >= 0 && !objectChooser.visible
         target: null
         maximumPointCount: 1
         onActiveChanged: {
@@ -828,7 +862,7 @@ Rectangle {
     }
     DragHandler {
         id: geometryObjectDrag
-        enabled: view.geometryEditing && !referenceImages.traceSession.active && editor.geometryEditState.tool === "move" && !objectChooser.visible
+        enabled: !view.spacePanRouting && view.geometryEditing && !referenceImages.traceSession.active && editor.geometryEditState.tool === "move" && !objectChooser.visible
         acceptedButtons: Qt.LeftButton
         target: null; maximumPointCount: 1
         onActiveChanged: {
@@ -840,7 +874,7 @@ Rectangle {
     }
     DragHandler {
         id: geometryTwoFingerPan
-        enabled: view.geometryEditing && !objectChooser.visible && !referenceImages.traceSession.active
+        enabled: !view.spacePanRouting && view.geometryEditing && !objectChooser.visible && !referenceImages.traceSession.active
         target: null; minimumPointCount: 2; maximumPointCount: 2
         onActiveChanged: {
             if (active) { editor.beginMapInteraction(); editor.geometryEndVertexDrag(true);

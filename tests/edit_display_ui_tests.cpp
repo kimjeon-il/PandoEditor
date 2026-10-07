@@ -15,6 +15,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QVector2D>
+#include <QTouchEvent>
 #include <cmath>
 
 using namespace pandoeditor;
@@ -262,6 +263,19 @@ private slots:
         const auto select=vertexScreen();QVERIFY(ui.editor.geometrySelectNearestScreen(select.x(),select.y(),10));ui.map->forceActiveFocus();QTest::keyClick(ui.window,Qt::Key_Right);const auto pendingDraft=vertices();QVERIFY(pendingDraft!=initial);
         QVERIFY(ui.editor.requestGeometryPreview());QVERIFY(ui.editor.geometryEditState()["previewReady"].toBool());QVERIFY(!ui.editor.geometryNudgeSelectedVertex(1,0));ui.map->forceActiveFocus();QTest::keyClick(ui.window,Qt::Key_Right);QVERIFY(ui.editor.geometryBack());QCOMPARE(vertices(),pendingDraft);QCOMPARE(ui.editor.documentBytes(),bytes);
         QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
+    void spaceTemporaryPanReturnsToEditingAcrossCancellation()
+    {
+        Ui ui(1100);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));ui.editor.selectCountry("A");QVERIFY(ui.editor.beginGeometryDraw());ui.map->forceActiveFocus();const auto document=ui.editor.documentBytes();const auto draft=ui.editor.referenceDraftCoordinates();const auto camera=ui.editor.mapViewState();
+        QTest::keyPress(ui.window,Qt::Key_Space);QVERIFY2(ui.map->property("spacePanActive").toBool(),"Space must route editing pointers to temporary map pan");
+        const auto start=ui.map->mapToScene({300,300}).toPoint();QTest::mousePress(ui.window,Qt::LeftButton,Qt::NoModifier,start);QTest::mouseMove(ui.window,start+QPoint(25,18),20);QTest::mouseMove(ui.window,start+QPoint(65,43),20);QVERIFY(ui.editor.mapViewState()!=camera);QCOMPARE(ui.editor.referenceDraftCoordinates(),draft);QCOMPARE(ui.editor.documentBytes(),document);
+        QTest::keyRelease(ui.window,Qt::Key_Space);QVERIFY(!ui.map->property("spacePanActive").toBool());QTest::mouseRelease(ui.window,Qt::LeftButton,Qt::NoModifier,start+QPoint(65,43));QCOMPARE(ui.editor.referenceDraftCoordinates(),draft);QVERIFY(!ui.map->property("spacePanGesture").toBool());
+        QTest::mouseClick(ui.window,Qt::LeftButton,Qt::NoModifier,start);QCOMPARE(ui.editor.referenceDraftCoordinates().size(),1);QVERIFY(ui.editor.geometryUndoDraft());QCOMPARE(ui.editor.referenceDraftCoordinates(),draft);
+        ui.map->forceActiveFocus();QTest::keyPress(ui.window,Qt::Key_Space);auto* button=ui.window->findChild<QQuickItem*>("geometryPreview");QVERIFY(button);button->forceActiveFocus();QVERIFY(!ui.map->property("spacePanActive").toBool());QTest::keyRelease(ui.window,Qt::Key_Space);ui.map->forceActiveFocus();
+        ui.window->requestActivate();QTRY_VERIFY(ui.window->isActive());QTest::keyPress(ui.window,Qt::Key_Space);QQuickWindow other;other.resize(160,100);other.show();other.requestActivate();QTRY_VERIFY(other.isActive());QVERIFY(!ui.map->property("spacePanActive").toBool());other.close();ui.window->requestActivate();QTRY_VERIFY(ui.window->isActive());ui.map->forceActiveFocus();QTest::keyRelease(ui.window,Qt::Key_Space);
+        static auto* device=QTest::createTouchDevice();QTest::keyPress(ui.window,Qt::Key_Space);QTest::touchEvent(ui.window,device).press(0,start,ui.window).commit();QTest::touchEvent(ui.window,device).move(0,start+QPoint(25,15),ui.window).commit();QTest::touchEvent(ui.window,device).move(0,start+QPoint(55,35),ui.window).commit();QTouchEvent cancel(QEvent::TouchCancel,device);QCoreApplication::sendEvent(ui.window,&cancel);QVERIFY(!ui.map->property("spacePanActive").toBool());QVERIFY(!ui.map->property("spacePanGesture").toBool());QTest::keyRelease(ui.window,Qt::Key_Space);
+        QCOMPARE(ui.editor.referenceDraftCoordinates(),draft);QCOMPARE(ui.editor.documentBytes(),document);QVERIFY(!ui.editor.canUndo());QVERIFY(!ui.window->grabWindow().isNull());QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
     }
 
     void geographicCalibrationActualWindowFlow()
