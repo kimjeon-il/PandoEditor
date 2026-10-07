@@ -67,7 +67,13 @@ static void runNativePerformanceProbe()
         const auto contract=nativePerfJsonFile(inputPath);
         QCOMPARE(contract.value("schema").toString(),QString("pandoeditor-native-performance-inputs"));
         QCOMPARE(contract.value("version").toInt(),2);
-        QCOMPARE(contract.value("sequenceId").toString(),QString("m98-native-v2"));
+        QCOMPARE(contract.value("sequenceId").toString(),QString("m98-native-v3-prepared-drag"));
+        const auto script=contract.value("script").toObject();
+        QCOMPARE(script.value("panCount").toInt(),120);QCOMPARE(script.value("zoomCount").toInt(),90);
+        QCOMPARE(script.value("wheelAngleDelta").toInt(),5);
+        QCOMPARE(script.value("panSampleStart").toInt(),1);
+        QCOMPARE(script.value("panPreparationOffset").toArray(),QJsonArray({20,0}));
+        QCOMPARE(script.value("demZoomOutInitialScaleMultiplier").toDouble(),2.);
         inputContracts.insert(fixture.value("id").toString(),contract);
     }
     for(const auto* id:{"world-standard","dense-view","editing-heavy","large-project"})QVERIFY(fixtureContracts.contains(id));
@@ -146,7 +152,7 @@ static void runNativePerformanceProbe()
         copy();gpu->setSceneBridge(diagnostic);
     }
     std::atomic<quint64> presents{0};
-    std::atomic<int> phase{0},requested{0},synchronized{0},presented{0};
+    std::atomic<int> phase{-1},requested{0},synchronized{0},presented{0};
     std::atomic<bool> repeatPhase{false};
     std::atomic<qint64> synchronizedNs{0},presentedNs{0};
     std::atomic<quint64> presentedFrame{0};
@@ -213,8 +219,12 @@ static void runNativePerformanceProbe()
     qulonglong lastEditingEventSerial=0;
     quint64 projectGeneration=1;
     const QStringList cumulativeMetrics={"sceneFullBuildCount","scenePreparationCount","sceneDeltaUpdateCount","scenePresentationUpdateCount","sceneTransientUpdateCount","sceneGraphRebuildCount","geometryUploads","uploadedBytes","uploadContinuationCount","viewUniformUpdateCount","labelLayouts","labelReprojects","labelCandidatesExamined"};
-    const QStringList editingCounts={"computeCount","previewCount","prepareCommitCount","commitCount","undoCount","redoCount","snapQueryCount","snapCandidatesExamined","selectionPreparationCount","riverPartitionCount","splitPreparationCount","annexPreparationCount","sharedBoundaryPreparationCount"};
-    const QStringList editingTimes={"computeMs","previewMs","prepareCommitMs","commitMs","undoMs","redoMs","computeTotalMs","previewTotalMs","prepareCommitTotalMs","commitTotalMs","undoTotalMs","redoTotalMs","snapQueryMs","selectionPreparationMs","riverPartitionMs","splitPreparationMs","annexPreparationMs","sharedBoundaryPreparationMs","previewLatencyMs","commitLatencyMs","undoLatencyMs"};
+    QStringList editingCounts={"computeCount","previewCount","prepareCommitCount","commitCount","undoCount","redoCount","snapQueryCount","snapCandidatesExamined","selectionPreparationCount","riverPartitionCount","splitPreparationCount","annexPreparationCount","sharedBoundaryPreparationCount"};
+    QStringList editingTimes={"computeMs","previewMs","prepareCommitMs","commitMs","undoMs","redoMs","computeTotalMs","previewTotalMs","prepareCommitTotalMs","commitTotalMs","undoTotalMs","redoTotalMs","snapQueryMs","selectionPreparationMs","riverPartitionMs","splitPreparationMs","annexPreparationMs","sharedBoundaryPreparationMs","previewLatencyMs","commitLatencyMs","undoLatencyMs"};
+    for(const auto* stage:{"restoreDecode","restoreValidate","restoreProjection","restoreSwitch","restorePublish","restoreHydro"}) {
+        const auto prefix=QString::fromLatin1(stage);editingCounts.append(prefix+"Count");
+        editingTimes.append(prefix+"Ms");editingTimes.append(prefix+"TotalMs");
+    }
     const auto disconnectFrames=qScopeGuard([&]{
         QObject::disconnect(syncConnection);QObject::disconnect(presentConnection);
         QObject::disconnect(gpu,nullptr,&engine,nullptr);
@@ -451,8 +461,14 @@ static void runNativePerformanceProbe()
         QTest::qWait(1000);return true;
     };
     const auto pan=[&](int kind,int count) {
+        const auto started=clock.nsecsElapsed();phase.store(-1);
         QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,panStart,0);
-        for(int i=0;i<count&&!inputAssociationFailed;++i)input(kind,[&]{QTest::mouseMove(window,panStart+QPoint(20+int(120*std::sin(i*.045)),int(25*std::sin(i*.07))),0);});
+        // QML's first move starts the drag without changing the camera. Keep
+        // that real event as explicit setup, then measure all 120 changing moves.
+        QTest::mouseMove(window,panStart+QPoint(20,0),0);QCoreApplication::processEvents();
+        journal.write(QJsonDocument(QJsonObject{{"event","gesture-preparation"},{"scenarioId",repeatPhase.load()?QString("long-run"):ids.value(kind)},
+            {"startedNs",double(started)},{"completedNs",double(clock.nsecsElapsed())},{"pointerOffset",QJsonArray({20,0})}}).toJson(QJsonDocument::Compact)+'\n');journal.flush();
+        for(int i=1;i<=count&&!inputAssociationFailed;++i)input(kind,[&]{QTest::mouseMove(window,panStart+QPoint(20+int(120*std::sin(i*.045)),int(25*std::sin(i*.07))),0);});
         QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,panStart,0);
     };
     const auto zoom=[&](int kind,int count,bool reverse=false,bool oneDirection=false) {
@@ -523,6 +539,16 @@ static void runNativePerformanceProbe()
         QVERIFY2(loadFixture(fixtureId),qPrintable(lastStepFailure));
         if(kind==3||kind==4)QVERIFY(editor.setProjectionMode("globe"));
         if(kind==10||kind==11)QVERIFY(editor.setTerrainMode("color"));
+        if(kind==11) {
+            // Same 90 original wheel events (delta -5), with a separately
+            // pinned starting view that stays above the production zoom floor.
+            const auto before=editor.mapViewState();
+            const double multiplier=inputContracts.value(fixtureId).value("script").toObject().value("demZoomOutInitialScaleMultiplier").toDouble();
+            QVERIFY(editor.publishMapView({{"scale",before.value("scale").toDouble()*multiplier}}));
+            journal.write(QJsonDocument(QJsonObject{{"event","scenario-view-preparation"},{"scenarioId",ids[kind]},
+                {"before",QJsonObject::fromVariantMap(before)},{"after",QJsonObject::fromVariantMap(editor.mapViewState())}}).toJson(QJsonDocument::Compact)+'\n');journal.flush();
+            QTest::qWait(400);
+        }
         phase.store(kind);const auto started=clock.elapsed();
         if(kind==0)QTest::qWait(30000);
         else if(kind==1||kind==3||kind==9||kind==12||kind==14)pan(kind,120);
@@ -576,7 +602,7 @@ static void runNativePerformanceProbe()
             {"returnState",returnState()},{"resourceCaches",caches}};
         cycles.append(cycleRecord);journal.write(QJsonDocument(cycleRecord).toJson(QJsonDocument::Compact)+'\n');journal.flush();
     }
-    phase.store(0);QTest::qWait(1000);
+    phase.store(-1);QTest::qWait(1000);
     pulse.stop();sample.stop();
     QObject::disconnect(syncConnection);QObject::disconnect(presentConnection);
     QJsonArray submittedFrames;{std::lock_guard<std::mutex> lock(frameMutex);submittedFrames=presentationFrames;}
@@ -611,7 +637,7 @@ static void runNativePerformanceProbe()
     for(auto it=fixtureContracts.begin();it!=fixtureContracts.end();++it)fixtureReceipts.append(QJsonObject{{"id",it.key()},{"manifestSha256",nativePerfFileHash(manifestPath)},{"fullStack",it.value().value("fullStack")}});
     QJsonObject result{{"schema","pandoeditor-native-performance"},{"version",2},
         {"completed",true},{"measurementMode",mode},{"diagnosticReason",qEnvironmentVariable("PANDOEDITOR_NATIVE_PERF_REASON")},
-        {"warmupMs",warmup},{"repeatMs",repeatMs},{"ablation",ablation},
+        {"warmupMs",warmup},{"repeatMs",repeatMs},{"ablation",ablation},{"inputRevision",QStringLiteral("m98-native-v3-prepared-drag")},
         {"logicalProcessors",logicalProcessors},{"cpuNormalization","process-time/all-active-logical-processors"},
         {"provenance",provenance},{"preflight",preflight},{"fixtures",fixtureReceipts},{"metrics",metrics},{"scenarios",scenarios},{"cycles",cycles},
         {"initialView",initialView},

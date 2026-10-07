@@ -78,6 +78,19 @@ void recordMeasured(NativePerformanceMetrics& metrics,const QList<QVariant>& sig
 class NativePerformanceStructureTests final:public QObject {
     Q_OBJECT
 private slots:
+    void restoreStagesObserveProductionWork() {
+        EditorFixture fixture;QVERIFY(fixture.open());
+        const auto metrics=fixture.editor.property("editingPerformanceStats").toMap();
+        for(const auto* stage:{"restoreDecode","restoreValidate","restoreProjection","restoreSwitch","restorePublish","restoreHydro"}) {
+            const auto prefix=QString::fromLatin1(stage);
+            QCOMPARE(metrics.value(prefix+"Count").toULongLong(),qulonglong(1));
+            QVERIFY(metrics.value(prefix+"Ms").isValid());QVERIFY(metrics.value(prefix+"Ms").toDouble()>=0);
+            QCOMPARE(metrics.value(prefix+"TotalMs"),metrics.value(prefix+"Ms"));
+        }
+        int events=0;
+        for(const auto& value:metrics.value("events").toList())if(value.toMap().value("flow").toString()=="project-restore")++events;
+        QCOMPARE(events,6);
+    }
     void inputRetargetingPreservesEveryContentOwnerAndActualState() {
         const QJsonObject expected{{"projectInstanceId","same-project-instance"},{"documentSha256",QString(64,'a')},{"projectGeneration",1},{"sceneRevision",9},{"documentRevision",1},{"geometryRevision",2},
             {"presentationRevision",3},{"datasetRevision",4},{"viewRevision",5},{"selectionRevision",6},
@@ -234,8 +247,18 @@ private slots:
         QCOMPARE(number(before,"undoCount"),qulonglong(1));QCOMPARE(number(before,"redoCount"),qulonglong(1));
         const auto sceneCount=fixture.bridge()->scenePublicationCount();const auto oldInstance=editor.projectInstanceId();
         QVERIFY(editor.openFile(QUrl::fromLocalFile(fixture.path())));QVERIFY(editor.projectInstanceId()!=oldInstance);
-        QCOMPARE(editor.editingPerformanceStats(),before);QVERIFY(fixture.bridge()->scenePublicationCount()>sceneCount);
-        EditorFixture fresh;QVERIFY(fresh.open());const auto empty=fresh.editor.editingPerformanceStats();
+        const auto after=editor.editingPerformanceStats();auto stableBefore=before,stableAfter=after;
+        for(const auto& key:after.keys())if(key.startsWith("restore")||key=="events"||key=="eventSerial") {
+            stableBefore.remove(key);stableAfter.remove(key);
+        }
+        QCOMPARE(stableAfter,stableBefore);
+        QCOMPARE(number(after,"eventSerial"),number(before,"eventSerial")+6);
+        const auto priorEvents=before.value("events").toList(),currentEvents=after.value("events").toList();
+        QCOMPARE(currentEvents.mid(0,priorEvents.size()),priorEvents);
+        for(const auto* stage:{"restoreDecode","restoreValidate","restoreProjection","restoreSwitch","restorePublish","restoreHydro"})
+            QCOMPARE(number(after,qPrintable(QString::fromLatin1(stage)+"Count")),qulonglong(2));
+        QVERIFY(fixture.bridge()->scenePublicationCount()>sceneCount);
+        EditorFixture fresh;const auto empty=fresh.editor.editingPerformanceStats();
         QCOMPARE(empty.value("resetDomain").toString(),QString("controller lifetime; counters cumulative, latest durations gauges"));
         QCOMPARE(number(empty,"eventSerial"),qulonglong(0));QCOMPARE(number(empty,"undoCount"),qulonglong(0));
         for(const char* key:{"computeMs","computeTotalMs","undoMs","redoMs","snapCandidatesExamined","previewLatencyMs","commitLatencyMs","undoLatencyMs"}) {

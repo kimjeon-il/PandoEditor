@@ -1021,14 +1021,24 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
 {
     if(startupBusy_)return false;
     if(geometryEdit_){emit errorOccurred(QStringLiteral("GEOMETRY_EDIT_ACTIVE: 도형 편집을 확인하거나 취소한 뒤 프로젝트를 바꾸세요."));return false;}
+    QElapsedTimer restoreStage;restoreStage.start();
+    const auto recordRestore=[&](const char* stage) {
+        editingPerformance_.record(QString::fromLatin1(stage),QStringLiteral("project-restore"),restoreStage.nsecsElapsed()/1.e6);
+        restoreStage.restart();
+    };
     auto document=projectcodec::decode(bytes);pandoeditor::requireStaticTimeline(document);
+    recordRestore("restoreDecode");
     pandoeditor::Project candidate;candidate.replace(std::move(document));
+    recordRestore("restoreValidate");
     MapProjection nextProjection;nextProjection.rebuild(candidate.document());
+    recordRestore("restoreProjection");
     cancelWorldBootstrap();
     cancelPreview();cancelStructureMutation();project_=std::move(candidate);projection_=std::move(nextProjection);
     filePath_=path;importedDirty_=imported;selected_.clear();selectedLayer_=project_.layers().empty()?QString():text(project_.layers().back().id);
     refreshHistoricalCatalog();
-    emit geometryChanged();publish(false);syncHydroData();
+    recordRestore("restoreSwitch");
+    emit geometryChanged();publish(false);recordRestore("restorePublish");
+    syncHydroData();recordRestore("restoreHydro");
     // A saved built-in world keeps canonical document geometry. Attach its
     // optional render meshes on a worker after validating actual coordinates.
     if(bootstrapWorldEnabled_&&std::any_of(project_.document().units.begin(),project_.document().units.end(),

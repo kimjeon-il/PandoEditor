@@ -128,6 +128,12 @@ def build_executor_plans(args, rows):
                 destination = shadow / header.relative_to(repo)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_bytes(header.read_bytes())
+        # The current structure test also includes local test-only headers.
+        # Compile the actual copied source with its exact adjacent dependencies.
+        for header in (repo / "tests").glob("*.h"):
+            destination = shadow / header.relative_to(repo)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(header.read_bytes())
         source = repo / row["source"]
         old, new = next((item[2], item[3]) for item in MUTANTS if item[0] == row["mutant"])
         destination = shadow / row["source"]

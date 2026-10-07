@@ -24,7 +24,8 @@ public:
         QVariantMap result{{"schema",QStringLiteral("pandoeditor-native-performance")},{"version",2},
             {"resetDomain",QStringLiteral("controller lifetime; counters cumulative, latest durations gauges")},
             {"durationUnit",QStringLiteral("ms")},{"eventSerial",serial_},{"eventsDropped",dropped_},{"events",events_}};
-        for(const auto& key:{"compute","preview","prepareCommit","commit","undo","redo"}) {
+        for(const auto& key:{"compute","preview","prepareCommit","commit","undo","redo",
+            "restoreDecode","restoreValidate","restoreProjection","restoreSwitch","restorePublish","restoreHydro"}) {
             const auto at=stages_.find(QString::fromLatin1(key));const auto prefix=QString::fromLatin1(key);
             result.insert(prefix+"Count",at==stages_.end()?qulonglong(0):at->second.count);
             result.insert(prefix+"Ms",at==stages_.end()?QVariant{}:QVariant(at->second.latest));
