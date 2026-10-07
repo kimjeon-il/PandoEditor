@@ -495,6 +495,22 @@ private slots:
         }
         QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
     }
+    void relationParentChoiceCommitsWithoutASecondConfirmation_data(){modes();}
+    void relationParentChoiceCommitsWithoutASecondConfirmation(){
+        QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
+        auto d=fixture();Geometry outer;outer.type="Polygon";outer.polygons={{{{-1,-1},{11,-1},{11,11},{-1,11},{-1,-1}}}};d.geometries.insert({"G",1},outer);
+        appendTerritory(d,{"G","Grandparent","",UnitKind::General,false},{"G",1});d.presentation.objectStyles[territorialRef("G")]={};
+        setFixtureParent(d,territorialRef("A"),territorialRef("G"));validateDocument(d);
+        Project p;p.replace(d);const auto path=h.dir.filePath("relation.json");QFile f(path);QVERIFY(f.open(QIODevice::WriteOnly));f.write(projectcodec::encode(p));f.close();
+        QVERIFY(h.editor.openFile(QUrl::fromLocalFile(path)));QVERIFY(h.editor.selectObject(ref("S","general")));QVERIFY(h.editor.toggleObjectLock());
+        QVERIFY(h.click("openObjectEditor"));QVERIFY(h.click("objectRelationsTab"));
+        const auto before=h.editor.documentBytes();const auto revision=h.editor.revision();
+        QVERIFY(h.click("relationParentPicker"));QTest::keyClick(h.window,Qt::Key_End);QTest::keyClick(h.window,Qt::Key_Return);
+        QTRY_COMPARE(h.editor.objectProperties().value("parentId").toString(),QString("G"));
+        QVERIFY(h.editor.documentBytes()!=before);QCOMPARE(h.editor.revision(),revision+1);QVERIFY(!h.editor.structureDialogOpen());
+        h.editor.undo();QCOMPARE(h.editor.objectProperties().value("parentId").toString(),QString("A"));
+        QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
+    }
     void commonPresentationAndSheets_data(){modes();}
     void commonPresentationAndSheets(){
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);h.editor.selectCountry("A");

@@ -185,7 +185,7 @@ Rectangle {
                                 visible: editor.primaryObject.type === "general"
                                 text: "상위 영역 변경"
                                 enabled: parentChoice.currentValue !== ""
-                                onClicked: editor.changeSelectedParent(parentChoice.currentValue)
+                                onClicked: editor.commitSelectedParent(parentChoice.currentValue)
                             }
                             UiComboBox {
                                 id: transferCountry

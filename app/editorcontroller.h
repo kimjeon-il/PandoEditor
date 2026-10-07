@@ -392,6 +392,7 @@ public:
     QVariantList relationParentOptions() const;
     bool structureDialogOpen() const { return structureSession_.has_value() || conversionDraft_.has_value() || createDraft_.has_value(); }
     Q_INVOKABLE bool changeSelectedParent(const QString& parentId);
+    Q_INVOKABLE bool commitSelectedParent(const QString& parentId);
     Q_INVOKABLE bool transferSelectedSubunit(const QString& countryId);
     Q_INVOKABLE bool beginDeleteSelection();
     Q_INVOKABLE bool beginMergeSelection();

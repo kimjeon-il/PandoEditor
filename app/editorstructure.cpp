@@ -67,6 +67,13 @@ bool EditorController::transferSelectedSubunit(const QString& countryId) {
     return u&&u->kind==UnitKind::General&&setStructurePlan(TransferSubunitIntent{territorialRef(u->id),territorialRef(countryId.toStdString())});
 }
 bool EditorController::changeSelectedParent(const QString& parentId){const auto u=selectedUnit();return u&&u->kind==UnitKind::General&&setStructurePlan(ChangeParentIntent{territorialRef(u->id),territorialRef(parentId.toStdString())});}
+bool EditorController::commitSelectedParent(const QString& parentId){
+    const auto u=selectedUnit();
+    if(!u||parentId.isEmpty()||staticParentRelation(project_.document(),u->id).parentId==parentId.toStdString())return false;
+    if(!changeSelectedParent(parentId))return false;
+    if(confirmStructureMutation())return true;
+    cancelStructureMutation();return false;
+}
 bool EditorController::beginDeleteSelection(){return !selection_.items().empty()&&setStructurePlan(DeleteTerritorialIntent{selection_.items()});}
 bool EditorController::beginMergeSelection(){
     const auto primary=selection_.primary();const auto unit=selectedUnit();

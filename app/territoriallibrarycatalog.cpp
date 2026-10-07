@@ -261,7 +261,9 @@ QJsonArray TerritorialLibraryCatalog::search(const QString& query,const QString&
     for(const auto& raw:lineages()) {
         const auto lineage=raw.toObject();const bool groupMatch=needle.isEmpty()||namesMatch(lineage.value("names").toObject());QJsonArray entities;
         for(const auto& ref:lineage.value("entityRefs").toArray()) {
-            auto entity=entry(ref.toString());if(!existsAt(entity.value("lifetime").toObject(),point))continue;
+            auto entity=entry(ref.toString());const auto lifetime=entity.value("lifetime").toObject();
+            if(lifetime.value("validFrom").isNull()&&lifetime.value("validTo").isNull())continue;
+            if(!existsAt(lifetime,point))continue;
             bool entityMatch=groupMatch||namesMatch(entity.value("names").toObject());
             for(const auto& alias:entity.value("alternateNames").toArray())entityMatch=entityMatch||alias.toString().toLower().contains(needle);
             if(!entityMatch)continue;const auto selected=selectVersion(entity,point);

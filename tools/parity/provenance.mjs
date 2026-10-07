@@ -35,7 +35,17 @@ export function verifyContractPin(webRoot, pin) {
     const file = containedFile(webRoot, path);
     const committed = git(webRoot, ['show', `${pin.webContractCommit}:${path}`]);
     if (sha256(committed) !== expected) throw new Error(`Pinned contract hash mismatch: ${path}`);
-    if (sha256(readFileSync(file)) !== expected) throw new Error(`Candidate contract changed: ${path}`);
+    const candidate = readFileSync(file);
+    if (sha256(candidate) !== expected) {
+      // Git can check out pinned UTF-8 text with CRLF on Windows. Accept only
+      // that exact byte conversion; all other changes still fail the pin.
+      let windowsText = null;
+      if (/\.(?:json|mjs|js|md|py|txt|html|css)$/.test(path)) {
+        try { windowsText = Buffer.from(new TextDecoder('utf-8', { fatal: true }).decode(committed).replace(/\r?\n/g, '\r\n')); }
+        catch { /* Binary or invalid UTF-8 is never normalized. */ }
+      }
+      if (!windowsText?.equals(candidate)) throw new Error(`Candidate contract changed: ${path}`);
+    }
     files.push({ path, sha256: expected });
   }
   if (!files.some(row => row.path === 'tests/fixtures/portability/index.json')) throw new Error('Parity index is not approved by the source pin');

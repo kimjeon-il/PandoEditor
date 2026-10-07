@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -28,6 +28,22 @@ test('wrong commits, contract bytes and path traversal cannot pass provenance', 
   assert.throws(() => containedFile(root, '../escape'), /Unsafe/);
   assert.throws(() => verifyContractPin(root, { webContractCommit: identity.head, sha256: { 'source.txt': sha256('tampered') } }), /hash mismatch/);
   assert.throws(() => verifyContractPin(root, { webContractCommit: 'wrong', sha256: {} }), /pin/);
+});
+test('a Windows CRLF checkout preserves pinned text while changed content still fails', t => {
+  const root = repository(t);
+  const git = args => execFileSync('git', args, { cwd: root, stdio: 'pipe' });
+  git(['config', 'core.autocrlf', 'true']);
+  mkdirSync(join(root, 'tests/fixtures/portability'), { recursive: true });
+  writeFileSync(join(root, 'tests/fixtures/portability/index.json'), '{}\n');
+  writeFileSync(join(root, 'lines.json'), '{"value":1}\n');
+  git(['add', 'lines.json', 'tests/fixtures/portability/index.json']);
+  git(['-c', 'user.name=Parity Test', '-c', 'user.email=parity@example.invalid', 'commit', '-m', 'lines']);
+  const pin = { webContractCommit: sourceIdentity(root).head, sha256: {
+    'tests/fixtures/portability/index.json': sha256('{}\n'), 'lines.json': sha256('{"value":1}\n') } };
+  writeFileSync(join(root, 'lines.json'), '{"value":1}\r\n');
+  assert.equal(verifyContractPin(root, pin).files.length, 2);
+  writeFileSync(join(root, 'lines.json'), '{"value":2}\r\n');
+  assert.throws(() => verifyContractPin(root, pin), /Candidate contract changed/);
 });
 test('stale source and substituted native binary cannot pass a build receipt', t => {
   const root = repository(t); writeFileSync(join(root, 'probe'), 'built');

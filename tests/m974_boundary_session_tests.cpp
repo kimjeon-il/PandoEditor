@@ -189,6 +189,15 @@ private slots:
         if(accepted){QVERIFY(c.documentBytes()!=before);c.undo();QCOMPARE(c.documentBytes(),before);}
         else {QCOMPARE(c.documentBytes(),before);QVERIFY(!c.canUndo());QCOMPARE(c.geometryEditState()["boundaryStatus"].toString(),QString("ready"));QVERIFY(c.geometryEditState()["previewReady"].toBool());QVERIFY(!c.geometryEditState()["boundaryImpactConfirmation"].toBool());c.selectCountry("B");QVERIFY(!c.confirmGeometryEdit());QVERIFY(c.geometryConfirmBoundaryImpacts());}
     }
+    void parentChoiceCommitsImmediatelyAsOneUndoableChange() {
+        auto d=triple();addParent(d);for(const auto id:{"A","B","C"})staticParentRelation(d,id).parentId="P";
+        d.geometries.insert({"G",1},box(-2,-2,6,6));appendTerritory(d,{"G","Grandparent","",UnitKind::General,false},{"G",1});d.presentation.objectStyles[territorialRef("G")]={};staticParentRelation(d,"P").parentId="G";
+        QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});QVERIFY(open(c,d,dir));c.selectCountry("C");
+        const auto before=c.documentBytes();const auto revision=c.revision();QVERIFY(c.commitSelectedParent("G"));
+        QCOMPARE(c.objectProperties().value("parentId").toString(),QString("G"));QVERIFY(!c.structureDialogOpen());QVERIFY(c.canUndo());QCOMPARE(c.revision(),revision+1);
+        const auto changed=c.documentBytes();QVERIFY(changed!=before);c.undo();QCOMPARE(c.documentBytes(),before);c.redo();QCOMPARE(c.documentBytes(),changed);
+        QVERIFY(!c.commitSelectedParent("U"));QCOMPARE(c.documentBytes(),changed);QVERIFY(!c.structureDialogOpen());
+    }
     void realDocumentChangesStillInvalidateBoundary_data() {
         QTest::addColumn<QString>("phase");QTest::addColumn<QString>("change");
         for(const auto* phase:{"prepare-queued","ready","preview-queued","apply"})for(const auto* change:{"property","lock","parent"})

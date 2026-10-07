@@ -105,6 +105,16 @@ Rectangle {
                 ColumnLayout {
                     visible:tabs.currentIndex===2;Layout.fillWidth:true
                     Label {textFormat:Text.PlainText;objectName:"relationParent";text:"상위 단위: "+(editor.objectProperties.parentName||"없음");Layout.fillWidth:true;wrapMode:Text.Wrap}
+                    UiComboBox {
+                        objectName:"relationParentPicker"
+                        visible:editor.primaryObject.domain==="territorial"&&editor.primaryObject.type==="general"
+                        enabled:editor.selectedEditable
+                        Layout.fillWidth:true
+                        model:editor.relationParentOptions
+                        textRole:"name";valueRole:"id";currentIndex:-1
+                        displayText:editor.objectProperties.parentName||"상위 단위 선택"
+                        onActivated:if(currentValue&&currentValue!==editor.objectProperties.parentId)editor.commitSelectedParent(currentValue)
+                    }
                     UiButton {text:"종류 전환";symbol:"type";description:"영토의 종류와 소속을 변경합니다.";visible:editor.primaryObject.domain==="territorial";outlined:true;enabled:editor.selectedEditable;onClicked:editor.beginTypeConversion()}
                 }
             }

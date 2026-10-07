@@ -1,5 +1,5 @@
 {
-  "webContractCommit": "cb1e2049135be9d12244b2522627a97bfeedbbdc",
+  "webContractCommit": "a2512be9e50f619f9962eca2e5594290e77b4c23",
   "sha256": {
     "assets/data/territorial-entities/generated/v2/index.json": "63c072095fd6c95034365f6d7f9d4e4ff99f71684890bffc8e678fe741b4334c",
     "assets/data/territorial-entities/generated/v2/state-VAT.json.gz": "ae64d5f4f50112ac01dcc82495c29361e7b3ef799f42a6f6cbbc351faecffe19",
@@ -14,7 +14,7 @@
     "tests/fixtures/portability/geometry-clipping.json": "24ed959c1cd0b5e1619aef718bef2e939fc6ff9d8a124528b7ce5f3df1594c7b",
     "tests/fixtures/portability/geometry-containment.json": "883ad4f3a2701754857b430699739434e311eebea294452f8a1ed778a82c95fb",
     "tests/fixtures/portability/index.json": "8b183beef1ace5cc88d69a6980c838af34e6bc86409bbbc236d85cc3bcdda2af",
-    "tests/fixtures/portability/known-differences.json": "471e8b3f2bf39a3cbdeb23814d1c0741e2d6ebb6b21b46469cefaf633e59cad0",
+    "tests/fixtures/portability/known-differences.json": "29b84215114a81adc5357607f8c64722e7cbe04caea601bf2f95e3c34cdbdddd",
     "tests/fixtures/portability/library-loading.json": "81f2c8cbe617919f2c8c2bd1b1f9c4f7f155d727dadbf85ad8f2771f3dd1f243",
     "tests/fixtures/portability/library-queries.json": "20ce95a5f5f73e96c5715cf5aff907f1ed5d09feeea449439009767cf047f96d",
     "tests/fixtures/portability/manifest.json": "3de28e406deae6bbb11c8afc37fd16901659cdfd9d6120d060029ddde8b886cc",
@@ -37,7 +37,7 @@
     "tests/helpers/production-geopackage.mjs": "06646bab2bd180bb9fd8e343359da39c907afae32b41f1130705076e26912efd",
     "tools/check-platform-portability.mjs": "94d030afce1ee7b992c29fab0d0dd8a5fb2e5ab6a2dbb97c6424d9a6630881d7",
     "tools/parity/async.mjs": "f646fe1102f759bb3a50df785fc4ff5e5f1a4c9fafcc480c522952412c749dcb",
-    "tools/parity/command-history.mjs": "b310c6bd5722203bb20de547f2b184f3a17350b35dd2f48984ff14050b0a6839",
+    "tools/parity/command-history.mjs": "e895a4f3d8144e111d2184de9117d99d2fb7db1d61253d72930ee10f01385f77",
     "tools/parity/contract.mjs": "844ec1f4c72e0614ba7f13036e1e59f83e7303ca9d4f1e35ebb15aebe8837bb4",
     "tools/parity/distribution.mjs": "af4d3e12c4fb1e0ef327ea7134d850533b7a9a6ee50b2a543d1ec34ea2aeef43",
     "tools/parity/exchange.mjs": "f5e41672c3a2577cd9733ad4c2f9811b3b2e13ae28715c59eaebfb18c8112dff",

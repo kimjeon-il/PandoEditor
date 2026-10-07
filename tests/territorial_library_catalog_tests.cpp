@@ -65,14 +65,14 @@ int main(int argc,char** argv) {
         });
         test("case-insensitive lineage search preserves Korean names and order",[&] {
             const auto value=catalog();
-            require(searchedIds(value->search("kOrEa","2026-10-06"))==QStringList{"state:KOR","state:PRK"},"lineage name match");
+            require(searchedIds(value->search("kOrEa","2026-10-06"))==QStringList{},"dated search excludes unknown-lifetime lineage members");
             require(value->entry("state:KOR").value("names").toObject().value("ko")==QStringLiteral("대한민국"),"current source names schema");
-            require(searchedIds(value->search("대한민국","2026"))==QStringList{"state:KOR"},"entity-specific name match");
+            require(searchedIds(value->search("대한민국","2026"))==QStringList{},"dated search excludes unknown-lifetime entity");
         });
         test("search by lineage includes alive historical entities at exact date",[&] {
             const auto value=catalog();
             require(searchedIds(value->search("Germany","1900-01-01"))==
-                QStringList{"state:DEU","state:east-prussia","state:west-prussia"},"lineage historical search");
+                QStringList{"state:east-prussia","state:west-prussia"},"lineage historical search");
         });
         test("alive DDR remains searchable with explicit null geometry gap",[&] {
             const auto value=catalog();const auto result=value->search("독일 민주공화국","1989-04-24");
