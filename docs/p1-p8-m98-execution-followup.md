@@ -5,8 +5,9 @@ App base: `2e65cf9f4a1d29e01d406029de60c5c9ff0b6eb5`.
 Evidence root: `D:/Codex/evidence/p1-p8-m98-20261006`.
 
 This file distinguishes actual dirty-tree executions from final-commit gates.
-The final App candidate, final exchange and repeated device measurements are
-not established by the executions below. Failed raw logs remain preserved.
+The latest fixed-source exchange and repeated device checkpoint are recorded
+at the end and in `m98-windows-measurement-e01f0e6.md`. They establish scoped
+execution evidence; full P1–P8/M9.8 acceptance remains FAIL/BLOCKED. Failed raw logs remain preserved.
 
 | Execution | Actual result | Scope and limit |
 | --- | --- | --- |
@@ -184,3 +185,22 @@ and 720000-ms repeat. No scenario timing, performance budget, assertion,
 required case count or production code changes. TimeoutSeconds also rejects
 values that would overflow Qt's signed millisecond value. PowerShell parsing
 and whitespace checks passed. A complete rerun is still required.
+
+
+## Latest fixed-source execution and remaining failures
+
+Tested App `e01f0e6f2383022017ad947eb18d1a4269e2eee3` / fixed Web `ebcfae4d27b29cbbea6416a7045a4806930204be`, clean source at launch.
+`web10-current-e01f0e6-08`: Node exit 0, 16/16 cases, mismatch/fail/skip 0,
+24/24 completed traces and 28/28 native processes (6 exchanges each way,
+four expected rejections). `m32-current-e01f0e6-07`: PID 21944/exit 0,
+expected/generated/processed 2525/2525/2525, mismatch 0.
+Discovery checkpoint 02 found 206 registered CTests; this is not 206 executions.
+
+`m98-device-sample-e01f0e6-09`: actual PIDs 5772/21320/3460, exits 0/0/0,
+Qt 3 pass/0 fail/0 skip each, 15 scenarios and 12 repeat cycles each.
+The production assessment exits 1, status FAIL: 318 unchanged-state input
+receipts, 3 idle out-of-interval frame faults, 36 unobserved stale-publication
+cycle faults and three per-run heartbeat violations (30 actual stalls each).
+All raw failures remain. Authentic full-data places/fixtures remain BLOCKED.
+The complete hash/environment/distribution/reproduction/gate receipt is
+`m98-windows-measurement-e01f0e6.md`. No final whole-plan success is claimed.

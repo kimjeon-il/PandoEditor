@@ -1,7 +1,9 @@
-Native M98 evidence receipt template
+Native M98 evidence receipts and historical template
 ===================================
 
-This is a recording template. PENDING rows are not executed evidence, and no
+The table below is the original recording template, retained as historical
+pre-execution state. Current execution is recorded at the end. PENDING rows
+are not executed evidence, and no
 result below grants acceptance. Record the final source identity before the
 serialized Release/device phase; do not relabel an earlier binary as final.
 
@@ -65,3 +67,19 @@ Final handoff receipt:
 Build execution, device runs, final integration, and evidence adjudication remain
 owned by the root. No package, portable output, deployment, or main merge is
 created by these measurement runners.
+
+
+Current executed receipt (e01f0e6f2383022017ad947eb18d1a4269e2eee3)
+-----------------------------------------------
+
+See `docs/m98-windows-measurement-e01f0e6.md` for the full actual gate table.
+Gate A: production exchange 16/16 and M32 2525/2525, mismatch 0; exact fixed pair.
+Gate B: selected native structure/actual compiled mutations and retained terrain
+device mechanisms executed; 206 CTests discovered, no whole-CTest pass claimed.
+Gate C: three native exits 0, Qt3/0/0 each, 45 scenarios/36 cycles executed;
+assessment exit 1/FAIL. Input no-ops, warmup idle tagging, heartbeat >=500ms and
+unobserved aggregate stale publication all remain failures. Full-data acceptance
+BLOCKED by authentic fixtures and pinned production places empty-v1.
+Current binary `46b039251888abdf69d226fd02c7c0d4916cb6989b33fd7c8d30d70e605f4343`; native fixture
+`9af0e521085c093596c4b1ab051c90fe1ceb2bc82d73ed4bdaedcafcbfb129e4`; acceptedBy=null.
+Android/final independent review NOT RUN. No package artifacts.

@@ -37,3 +37,25 @@ Report PASS/FAIL/BLOCKED/NOT RUN separately, with exact process exits, cases, sk
 GPU submission/window swap evidence is not a GPU fence or VRAM measurement.
 Commit and push only this branch. No main merge, release, deployment, installer or portable packaging.
 After review-driven changes, rerun affected checks before claiming completion.
+
+
+## Executed checkpoint adjudication
+
+Fixed App e01f0e6 / Web ebcfae4; see `docs/m98-windows-measurement-e01f0e6.md`.
+Original unchecked completion rows remain unchecked when full acceptance is not established.
+
+| Stage | Current result |
+| --- | --- |
+| P3/P4 | PASS scoped lifecycle, actual retained owner/source/mask/window/pressure mechanisms and compiled device regressions; official DEM pixel parity remains separate |
+| P5 | BLOCKED actual empty-v1; original64 decisions and provenance audited, no positive runtime invented |
+| P6 | PASS scoped store/provider/controller/copy/persistence mechanisms; actual data not supplied |
+| P7 | PASS42 synthetic comparisons/mismatch0; actual populated comparison BLOCKED, font differences recorded |
+| P8 | Scoped catalog/lazy/date/period/instance metadata and production exchange executed; cap/join/AA closure and final independent review remain incomplete |
+| M9.8.1 | BLOCKED four authentic full inputs/places; reduced diagnostic inventory and rejection preflight executed |
+| M9.8.2–3 | Selected production telemetry/structure/parser/actual compiled mutation evidence executed; aggregate stale publications unobserved |
+| M9.8.4–5 | Actual15-scenario runs and14 editing diagnostics/1200 queries executed; no new editing budgets approved |
+| M9.8.6–7 | Three native exits0, 36 settled cycles, raw distributions retained; assessment FAIL, full acceptance BLOCKED, acceptedBy=null |
+| M9.8.8 |206 discovered, selected execution audit recorded; whole CTest, physical Android and fresh independent final review NOT RUN |
+
+No main merge, deployment or packaging. Report-only commit follows the tested
+source checkpoint without changing its implementation, binary or fixtures.

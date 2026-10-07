@@ -325,3 +325,35 @@ production file exchange for the stated pair and corpus. Subsequent code or
 fixture changes require affected executions again and are not certified by
 this record. No device performance, full P1–P8/M9.8 acceptance or packaging
 completion is inferred.
+
+
+## Fixed-source exchange checkpoint e01f0e6
+
+Exact executed App/Web pair: `e01f0e6f2383022017ad947eb18d1a4269e2eee3` / `ebcfae4d27b29cbbea6416a7045a4806930204be`.
+`web10-current-e01f0e6-08`: Node exit 0; 16/16 mandatory cases,
+failure/mismatch/skip 0; web-app-web 6/6, app-web-app 6/6, rejection 4/4;
+24/24 complete traces and 28/28 actual native processes. Each intermediate
+production serializer/Worker/native codec output was compared to the unchanged
+original expected data. Original nine-file fixture manifest `852af3bf7f59cab73a44862c91eb1d60e9db45f8e0ee561f9a265a702b93721c`;
+original source manifest `d6a128f9f9a9ce6b81590d0c768a5f3d2911906eec537d7e1abf7b1db69aebdd`.
+Native probe binary `d106740744ab43400fa618dbffd353ee8ad444e66ce99556809dcbb6facbe6ba`.
+
+`m32-current-e01f0e6-07`: native PID 21944, exit 0,
+expected/generated/processed 2525/2525/2525, mismatch 0, complete=true.
+Executable SHA256 `ff397fc5ab87cc2e58cb962fa7004ae8a9b779975d3ab2d4182b7326521ca42e`.
+This keeps its historical property and temporal source pins and is not a
+substitute for the current-Web exchange above. Existing workflow root paths,
+pipefail and probe-only support required no further code change.
+
+App contract raw CRLF `49194028cee9b18bdfe8af331e920ebec9be7df37f2137a998fc0a1791afef29`; original Web Git blob and App
+LF-normalized content `6faaa45917b6322d6cbb94bfa85c6eb10518a17e2400b62adea42b49f91e66cc`. Content is identical, no contract
+or schema/expected update. Project version10/model6 and timelineRecords1 remain
+the approved base. The previously executed 74 storage and 26 focused atomicity/
+native-only refusal rows are unchanged-source checkpoints, separate from common
+corpus cases. The zero-selected launch remains a recorded failure.
+
+Full corpus/environment/limits and measured-source/report-head distinction are
+in `m98-windows-measurement-e01f0e6.md`. Windows performance assessment FAIL and
+actual place dataset BLOCKED do not change this scoped codec result. Conversely,
+this exchange does not certify device performance, populated inline flag/content
+coverage, final visual closure or whole-plan completion.
