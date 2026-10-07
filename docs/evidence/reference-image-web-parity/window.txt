@@ -1,0 +1,15 @@
+********* Start testing of EditDisplayUiTests *********
+Config: Using QtTest library 6.8.3, Qt 6.8.3 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 13.1.0), windows 11
+PASS   : EditDisplayUiTests::initTestCase()
+PASS   : EditDisplayUiTests::geographicCalibrationActualWindowFlow()
+PASS   : EditDisplayUiTests::cornerPinAndAnchorActualWindowFlow()
+PASS   : EditDisplayUiTests::liveWireActualWindowToDraftFlow()
+PASS   : EditDisplayUiTests::lineRefinementActualWindowPreservesDraftUntilApply()
+PASS   : EditDisplayUiTests::placementControlsActualWindowRemainLocal()
+PASS   : EditDisplayUiTests::keyboardVertexMovementUsesScreenPixelsAndFocusGuards()
+PASS   : EditDisplayUiTests::spaceTemporaryPanReturnsToEditingAcrossCancellation()
+PASS   : EditDisplayUiTests::referenceLineHistoryHasVisibleRedoAndResetsWithMethod()
+PASS   : EditDisplayUiTests::referenceMenusKeepActionsOrderAndSafeOwnership(desktop-1100)
+PASS   : EditDisplayUiTests::cleanupTestCase()
+Totals: 11 passed, 0 failed, 0 skipped, 0 blacklisted, 201887ms
+********* Finished testing of EditDisplayUiTests *********

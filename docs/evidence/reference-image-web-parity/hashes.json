@@ -1,0 +1,34 @@
+[
+  {
+    "path": "D:\\dev\\worktrees\\reference-image-web-parity\\Pandoeditor(App)\\tests\\fixtures\\reference-calibration.json",
+    "sha256": "f33f4d86c3a00c48d14d8faafa06d415b3859bd096ea2ead2b1354417503659b"
+  },
+  {
+    "path": "D:\\dev\\worktrees\\reference-image-web-parity\\Pandoeditor(App)\\tests\\fixtures\\reference-trace.json",
+    "sha256": "192b4f27b03bc86d98f6d89b6e49d84f5d5cdbefda7d2ac368852f3b7e1ed83c"
+  },
+  {
+    "path": "D:\\dev\\worktrees\\reference-image-web-parity\\Pandoeditor(App)\\tests\\fixtures\\reference-refine.json",
+    "sha256": "ce239f7f509320c1c6efb3bb1c2409e35708659f4b860fe376069be85588cba5"
+  },
+  {
+    "path": "D:\\dev\\worktrees\\reference-image-web-parity\\Pandoeditor(App)\\app\\reference-web\\manifest.json",
+    "sha256": "06e60a4a7103f01880d0d1143fb04390d9521b302ed7560269cf059e5cd4611d"
+  },
+  {
+    "path": "D:\\dev\\worktrees\\reference-image-web-parity\\Pandoeditor(App)\\app\\reference-web\\runtime.js",
+    "sha256": "2ecea6b8b9eb75c04da03048ffcbaf5d0ba930bb6bfbe5f7d3f126127f4670ac"
+  },
+  {
+    "path": "D:\\build\\Pandoeditor-reference-parity\\pandoeditor.exe",
+    "sha256": "aa07e2e62757e66d01cd97ae3b61a01f416957d8aabfee727cf280a53e9b0128"
+  },
+  {
+    "path": "D:\\build\\Pandoeditor-reference-parity\\reference_image_tests.exe",
+    "sha256": "4e75a39202adfbede0d0f2346b107e8df75f6f1bbdfb5fb9a12dfb12f37af751"
+  },
+  {
+    "path": "D:\\build\\Pandoeditor-reference-parity\\edit_display_ui_tests.exe",
+    "sha256": "ad2028127d371275e345e85087bf2ffc1df4909b972295cf13d3af786f5ded13"
+  }
+]

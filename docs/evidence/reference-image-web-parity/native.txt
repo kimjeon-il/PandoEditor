@@ -1,0 +1,26 @@
+********* Start testing of ReferenceImageTests *********
+Config: Using QtTest library 6.8.3, Qt 6.8.3 (x86_64-little_endian-llp64 shared (dynamic) release build; by GCC 13.1.0), windows 11
+PASS   : ReferenceImageTests::initTestCase()
+PASS   : ReferenceImageTests::liveWireSessionRejectsWeakEdgesAndStaleResults()
+PASS   : ReferenceImageTests::fixedWebLiveWireCorpus()
+PASS   : ReferenceImageTests::lineRefinementUsesProductionSession()
+PASS   : ReferenceImageTests::placementDefaultsAndLockHistoryMatchWeb()
+PASS   : ReferenceImageTests::historyNeverRestoresAnOldLock()
+PASS   : ReferenceImageTests::geographicCalibrationUsesNormalizedUvAndMeters()
+PASS   : ReferenceImageTests::calibrationSessionPersistsPointsWithoutLeakingCanceledInput()
+PASS   : ReferenceImageTests::fixedWebGeographicCorpus()
+PASS   : ReferenceImageTests::inputModesCancelTracingAndPointEditState()
+PASS   : ReferenceImageTests::constraintRemovalKeepsPreviouslyDisplayedCorners()
+PASS   : ReferenceImageTests::calibratedTextureUsesUnflippedSourceCoordinates()
+PASS   : ReferenceImageTests::failedUndoKeepsTheHistoryEntry()
+PASS   : ReferenceImageTests::cornerPinAnchorAndCanceledGesturePreserveGeographicState()
+PASS   : ReferenceImageTests::normalAnchorTranslatesPlacementWithoutEnablingCornerPin()
+PASS   : ReferenceImageTests::solvesSimilarityAffineProjectiveAndTps()
+PASS   : ReferenceImageTests::rejectsInsufficientAndDuplicateControlPoints()
+PASS   : ReferenceImageTests::persistsSeparatelyAndKeepsFiftyStepHistory()
+PASS   : ReferenceImageTests::lockedRecordsRejectTransformsButCanUnlock()
+PASS   : ReferenceImageTests::stableModelPreservesImageIdsThroughDataHistoryAndOrdering()
+PASS   : ReferenceImageTests::liveWireAndGradientRefinerFollowImageEdge()
+PASS   : ReferenceImageTests::cleanupTestCase()
+Totals: 22 passed, 0 failed, 0 skipped, 0 blacklisted, 37216ms
+********* Finished testing of ReferenceImageTests *********

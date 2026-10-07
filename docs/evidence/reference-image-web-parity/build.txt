@@ -1,0 +1,4 @@
+[0/2] Re-checking globbed directories...
+[1/5] Automatic MOC and UIC for target edit_display_ui_tests
+[2/4] Building CXX object app/CMakeFiles/edit_display_ui_tests.dir/__/tests/edit_display_ui_tests.cpp.obj
+[3/4] Linking CXX executable edit_display_ui_tests.exe
