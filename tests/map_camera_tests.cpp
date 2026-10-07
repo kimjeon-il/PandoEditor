@@ -1,5 +1,7 @@
 #include <pandoeditor/map/mapcamera.h>
+#include <pandoeditor/map/projectionengine.h>
 #include <cmath>
+#include <iostream>
 #include <stdexcept>
 
 namespace {
@@ -45,6 +47,19 @@ void flatZoomKeepsCursorAnchor() {
     require(near(after.flatZoom,before.flatZoom*2),"zoom doubled");
 }
 
+void restoredFlatCenterKeepsGeographicZoomAnchor() {
+    for(const auto center:{pandoeditor::Point{15,50.5},pandoeditor::Point{-40,-25},pandoeditor::Point{179,20}}) {
+        auto camera=makeCamera();camera.resize(1920,929,1);camera.setProjectionMode(ProjectionMode::Flat);
+        auto restored=camera.view();restored.centerLongitude=center.x;restored.centerLatitude=center.y;
+        restored.scale=5000;restored.translateX=960;restored.translateY=464.5;
+        require(camera.adoptView(restored),"restore nonzero geographic center");
+        const auto before=unprojectFlat(960,464.5,camera.view());
+        require(camera.zoomAt(1.1,960,464.5),"zoom restored geographic center");
+        const auto after=unprojectFlat(960,464.5,camera.view());
+        require(near(before.x,after.x)&&near(before.y,after.y),"restored geographic zoom anchor retained");
+    }
+}
+
 void panFitAndFocusAreEngineOwned() {
     auto camera=makeCamera();
     camera.setProjectionMode(ProjectionMode::Flat);
@@ -84,6 +99,8 @@ void resizePreservesCameraIntent() {
 int main(){
     firstRunAndIndependentProjectionState();
     flatZoomKeepsCursorAnchor();
+    restoredFlatCenterKeepsGeographicZoomAnchor();
     panFitAndFocusAreEngineOwned();
     resizePreservesCameraIntent();
+    std::cout<<"5 camera groups processed; 3 restored-center cases; 0 failures\n";
 }

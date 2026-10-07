@@ -61,8 +61,8 @@ MapCamera::FlatControls MapCamera::flatControls(
     result.mapScale=source.scale/(metrics.cosLatitude*DegreesPerRadian);
     result.zoom=clampZoom(result.mapScale/result.fitScale);
     result.mapScale=result.fitScale*result.zoom;
-    result.originX=source.translateX+metrics.minX*result.mapScale;
-    result.originY=source.translateY-metrics.maxLatitude*result.mapScale;
+    result.originX=source.translateX-source.scale*source.centerLongitude/DegreesPerRadian+metrics.minX*result.mapScale;
+    result.originY=source.translateY+source.scale*source.centerLatitude/DegreesPerRadian-metrics.maxLatitude*result.mapScale;
     result.panX=result.originX-(source.viewportWidth-metrics.mapWidth*result.mapScale)/2;
     result.panY=result.originY-(source.viewportHeight-metrics.mapHeight*result.mapScale)/2;
     return result;
