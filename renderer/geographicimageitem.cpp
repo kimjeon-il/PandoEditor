@@ -1,3 +1,4 @@
+#include <pandoeditor/map/projectionengine.h>
 #include "geographicimageitem.h"
 #include "geographicimagemesh.h"
 #include "scenegraph/terrainmaterial.h"
@@ -122,6 +123,7 @@ void GeographicImageItem::setTerrainBridge(QObject* value) {
 void GeographicImageItem::setTerrainTile(QVariantMap value) {
     if(terrainTile_==value)return;terrainTile_=std::move(value);image_={};refresh();emit changed();
 }
+void GeographicImageItem::setCalibrationMesh(QVariantMap value){if(calibrationMesh_==value)return;calibrationMesh_=std::move(value);emit changed();}
 void GeographicImageItem::setSource(QUrl value){if(source_==value)return;source_=std::move(value);refresh();emit changed();}
 #define GEO_SETTER(Name,member) void GeographicImageItem::set##Name(double value){if(!std::isfinite(value)||member==value)return;member=value;emit changed();}
 GEO_SETTER(West,west_)
@@ -177,7 +179,30 @@ QSGNode* GeographicImageItem::updatePaintNode(QSGNode* previous,UpdatePaintNodeD
     const QImage& uploadImage=terrainBridge_&&!terrainFrame_.dem?rasterDisplayImage_:image_;
     if(!window()||!bridge_||uploadImage.isNull()||!(east_>west_)||!(north_>south_))return discard();
     GeographicImageMesh mesh;
-    try {mesh=buildGeographicImageMesh({west_,south_,east_,north_},bridge_->viewState());}
+    try {
+        if(calibrationMesh_.isEmpty())mesh=buildGeographicImageMesh({west_,south_,east_,north_},bridge_->viewState());
+        else {
+            const auto points=calibrationMesh_.value("vertices").toList();
+            if(points.size()>65535)return discard();
+            const auto view=bridge_->viewState();std::vector<bool> visible;
+            for(const auto &entry:points) {
+                const auto value=entry.toMap();const auto coordinate=value.value("coordinate").toList(),uv=value.value("uv").toList();
+                if(coordinate.size()!=2||uv.size()!=2)return discard();
+                const auto projected=projectPoint({coordinate[0].toDouble(),coordinate[1].toDouble()},view);
+                visible.push_back(projected.finite&&projected.visibleHemisphere);
+                mesh.vertices.insert(mesh.vertices.end(),{float(projected.x),float(projected.y),float(uv[0].toDouble()),float(uv[1].toDouble())});
+            }
+            for(const auto &entry:calibrationMesh_.value("triangles").toList()) {
+                const auto triangle=entry.toList();if(triangle.size()!=3)return discard();
+                int a=triangle[0].toInt(),b=triangle[1].toInt(),c=triangle[2].toInt();
+                if(a<0||b<0||c<0||a>=points.size()||b>=points.size()||c>=points.size())return discard();
+                if(!visible[a]||!visible[b]||!visible[c])continue;
+                // Do not draw a world-spanning triangle across a wrapped longitude seam.
+                if(view.mode==ProjectionMode::Flat && (std::abs(mesh.vertices[a*4]-mesh.vertices[b*4])>view.scale*3.141592653589793||std::abs(mesh.vertices[a*4]-mesh.vertices[c*4])>view.scale*3.141592653589793))continue;
+                mesh.indices.insert(mesh.indices.end(),{std::uint16_t(a),std::uint16_t(b),std::uint16_t(c)});
+            }
+        }
+    }
     catch(...) {return discard();}
     if(mesh.indices.empty())return discard();
     const bool terrain=bool(terrainBridge_);

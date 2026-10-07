@@ -15,6 +15,7 @@ class ReferenceImageLibrary : public QObject
     Q_PROPERTY(QAbstractItemModel *imageModel READ imageModel CONSTANT)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY historyChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY historyChanged)
+    Q_PROPERTY(QVariantMap calibrationSession READ calibrationSession NOTIFY calibrationSessionChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
 public:
     explicit ReferenceImageLibrary(QObject *parent = nullptr);
@@ -24,6 +25,18 @@ public:
     bool canUndo() const { return !undo_.isEmpty(); }
     bool canRedo() const { return !redo_.isEmpty(); }
     QString lastError() const { return lastError_; }
+
+    QVariantMap calibrationSession() const;
+    Q_INVOKABLE bool beginCalibration(const QString &id);
+    Q_INVOKABLE void cancelCalibration();
+    Q_INVOKABLE bool pickImagePoint(double u,double v);
+    Q_INVOKABLE bool pickMapCoordinate(double longitude,double latitude);
+    Q_INVOKABLE bool editCalibrationPoint(const QString &pointId);
+    Q_INVOKABLE bool deleteCalibrationPoint(const QString &pointId);
+    Q_INVOKABLE bool clearCalibrationPoints();
+    Q_INVOKABLE bool setCalibrationMode(const QString &mode);
+    Q_INVOKABLE QVariantMap calibration(const QVariantMap &record) const;
+    Q_INVOKABLE bool setCalibration(const QString &id, const QVariantList &points, const QString &mode);
 
     Q_INVOKABLE bool importImage(const QUrl &source, const QString &name = {});
     Q_INVOKABLE bool removeImage(const QString &id);
@@ -41,6 +54,7 @@ public:
     Q_INVOKABLE QVariantList traceLine(const QString &id,double startX,double startY,double endX,double endY) const;
 
 signals:
+    void calibrationSessionChanged();
     void imagesChanged();
     void historyChanged();
     void lastErrorChanged();
@@ -51,6 +65,7 @@ private:
         bool visible = true, locked = false, flipX = false, flipY = false;
         double opacity = 1, x = 0, y = 0, width = 0, height = 0, rotation = 0;
         QVariantList controlPoints;
+        QVariantList geographicPoints;
     };
     using State = QVector<Record>;
     QString directory() const;
@@ -68,4 +83,6 @@ private:
     std::optional<State> gestureBefore_;
     QString gestureId_;
     QString lastError_;
+    QString calibrationId_,editingPointId_;
+    std::optional<QPointF> pendingUv_;
 };

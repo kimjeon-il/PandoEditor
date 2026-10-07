@@ -237,6 +237,8 @@ public:
     Q_INVOKABLE bool setLabelPinned(const QVariantMap& ref,bool pinned,double longitude=0,double latitude=0,bool hasPosition=false);
     // Explicit snapshots keep QML bindings reactive and queued label releases
     // independent of later camera movement. These adapters never read camera_.
+    Q_INVOKABLE QVariantList referenceCoordinateAtScreen(double x,double y) const;
+    Q_INVOKABLE QVariantMap referenceScreenAtCoordinate(double longitude,double latitude) const;
     Q_INVOKABLE QPointF editMapPointToScreen(double x,double y,const QVariantMap& cameraState) const;
     Q_INVOKABLE double editPixelLengthToMap(double pixels,const QVariantMap& cameraState) const;
     Q_INVOKABLE QPointF editLabelDragToMap(double x,double y,double deltaX,double deltaY,const QVariantMap& cameraState) const;

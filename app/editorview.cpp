@@ -1,5 +1,6 @@
 #include "editorcontroller.h"
 #include <pandoeditor/map/editcoordinates.h>
+#include <pandoeditor/map/projectionengine.h>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -306,4 +307,15 @@ void EditorController::setMapEditorActive(bool active)
 {
     if(mapEditorActive_==active)return;
     mapEditorActive_=active;refreshTypedScene();
+}
+
+QVariantList EditorController::referenceCoordinateAtScreen(double x,double y) const
+{
+    const auto coordinate=unprojectView(x,y,sceneBridge_.viewState());
+    return coordinate?QVariantList{coordinate->x,coordinate->y}:QVariantList{};
+}
+QVariantMap EditorController::referenceScreenAtCoordinate(double longitude,double latitude) const
+{
+    const auto point=projectPoint({longitude,latitude},sceneBridge_.viewState());
+    return {{"x",point.x},{"y",point.y},{"visible",point.finite&&point.visibleHemisphere}};
 }

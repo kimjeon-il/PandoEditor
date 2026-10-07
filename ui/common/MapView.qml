@@ -75,6 +75,7 @@ Rectangle {
         }
     }
     function dismissPopup() {
+        if (calibrationPanel.visible) { calibrationPanel.close(); return true }
         if (objectChooser.visible) { objectChooser.close(); return true }
         return false
     }
@@ -149,7 +150,91 @@ Rectangle {
         z: -0.5
     }
 
-    ReferenceImageLibrary { id: referenceImages }
+    ReferenceImageLibrary { id: referenceImages; objectName: "referenceImageLibrary" }
+    Connections { target: editor; function onProjectInstanceIdChanged() { referenceImages.cancelCalibration(); calibrationPanel.close() } }
+    Popup {
+        id: calibrationPanel
+        objectName: "referenceCalibrationPanel"
+        x: Math.max(0,view.width-width-12); y: 12
+        width: Math.min(360,view.width-24); height: Math.min(650,view.height-24)
+        modal: false; focus: false; closePolicy: Popup.NoAutoClose
+        readonly property var session: referenceImages.calibrationSession
+        readonly property var record: session.record || ({})
+        onClosed: referenceImages.cancelCalibration()
+        contentItem: ScrollView {
+            clip: true; contentWidth: availableWidth
+            Column {
+                width: parent.width; spacing: 8
+                Label { text: calibrationPanel.record.name || "참조 이미지 보정"; width: parent.width; wrapMode: Text.Wrap }
+                Image {
+                    id: calibrationSource; objectName: "referenceCalibrationSource"
+                    width: parent.width; height: 180; fillMode: Image.PreserveAspectFit
+                    source: calibrationPanel.record.source || ""
+                    MouseArea { anchors.fill: parent; onClicked: function(mouse) {
+                        const u=(mouse.x-(parent.width-parent.paintedWidth)/2)/parent.paintedWidth
+                        const v=(mouse.y-(parent.height-parent.paintedHeight)/2)/parent.paintedHeight
+                        referenceImages.pickImagePoint(u,v)
+                    } }
+                }
+                Label { width: parent.width; wrapMode: Text.Wrap; text: calibrationPanel.session.pendingMap ? "지도에서 대응 위치를 누르세요." : "이미지에서 기준점을 누른 뒤 지도 위치를 누르세요." }
+                UiComboBox {
+                    objectName: "referenceWarpMode"; width: parent.width
+                    model: ["auto","similarity","affine","projective","tps"]
+                    currentIndex: Math.max(0,model.indexOf(calibrationPanel.record.warpMode || "auto"))
+                    onActivated: referenceImages.setCalibrationMode(currentText)
+                }
+                Label {
+                    width: parent.width; wrapMode: Text.Wrap
+                    readonly property var result: calibrationPanel.session.result || ({})
+                    text: result.ok ? "RMS: "+Number(result.diagnostics.rmsMeters).toFixed(2)+" m · 최대: "+Number(result.diagnostics.maxMeters).toFixed(2)+" m" : "보정: "+(result.reason || "기준점 부족")
+                }
+                Repeater {
+                    model: calibrationPanel.record.controlPoints || []
+                    delegate: Row {
+                        required property var modelData; required property int index
+                        spacing: 4
+                        Label { text: "기준점 "+(index+1) }
+                        UiButton { text: "이동"; onClicked: referenceImages.editCalibrationPoint(modelData.id) }
+                        UiButton { text: "삭제"; onClicked: referenceImages.deleteCalibrationPoint(modelData.id) }
+                    }
+                }
+                Row {
+                    spacing: 4
+                    UiButton { text: "전체 삭제"; onClicked: referenceImages.clearCalibrationPoints() }
+                    UiButton { text: "되돌리기"; enabled: referenceImages.canUndo; onClicked: referenceImages.undo() }
+                }
+                Label { width: parent.width; wrapMode: Text.Wrap; text: referenceImages.lastError; visible: text.length>0 }
+                UiButton { text: "닫기"; onClicked: calibrationPanel.close() }
+            }
+        }
+    }
+    Repeater {
+        model: (referenceImages.calibrationSession.record || {}).controlPoints || []
+        delegate: Rectangle {
+            required property var modelData; required property int index
+            readonly property var screen: { view.cameraState; return editor.referenceScreenAtCoordinate(modelData.coordinate[0],modelData.coordinate[1]) }
+            x: screen.x-width/2; y: screen.y-height/2; width: 22; height: 22; radius: 11; z: 21
+            color: "#ffffff"; border.color: "#0066cc"; border.width: 2; visible: screen.visible
+            Label { anchors.centerIn: parent; text: index+1; color: "#003366" }
+            MouseArea { anchors.fill: parent
+                onPressed: referenceImages.editCalibrationPoint(parent.modelData.id)
+                onReleased: function(mouse) {
+                    const point=mapToItem(view,mouse.x,mouse.y)
+                    const coordinate=editor.referenceCoordinateAtScreen(point.x,point.y)
+                    if(coordinate.length===2)referenceImages.pickMapCoordinate(coordinate[0],coordinate[1])
+                }
+            }
+        }
+    }
+    MouseArea {
+        anchors.fill: parent; z: 20
+        enabled: referenceImages.calibrationSession.pendingMap === true
+        onClicked: function(mouse) {
+            const coordinate=editor.referenceCoordinateAtScreen(mouse.x,mouse.y)
+            if(coordinate.length===2)referenceImages.pickMapCoordinate(coordinate[0],coordinate[1])
+        }
+    }
+
 
     Repeater {
         model: referenceImages.imageModel
@@ -175,7 +260,7 @@ Rectangle {
             height: screenRect.height
             source: modelData.source
             opacity: modelData.opacity
-            visible: modelData.visible && !view.globeMode
+            visible: modelData.visible && !view.globeMode && !modelData.calibrationMesh
             blendMode: modelData.blend
             warpMode: modelData.warpMode
             controlPoints: modelData.controlPoints
@@ -261,7 +346,8 @@ Rectangle {
             anchors.fill: parent
             sceneBridge: editor.mapSceneBridge
             source: modelData.source
-            visible: modelData.visible && view.globeMode
+            visible: modelData.visible && (view.globeMode || !!modelData.calibrationMesh)
+            calibrationMesh: modelData.calibrationMesh || ({})
             opacity: modelData.opacity
             objectName: "referenceImageGeographicOverlay"
             readonly property var geographicBounds: editor.editMapRectGeographicBounds(Qt.rect(modelData.x, modelData.y, modelData.width, modelData.height), editor.hydroProjection)
@@ -377,6 +463,10 @@ Rectangle {
                 MenuItem { text:"앞으로"; enabled:!imageMenu.modelData.locked; onTriggered:referenceImages.moveImage(imageMenu.modelData.id,referenceImages.images.length-1) }
                 MenuItem { text:"뒤로"; enabled:!imageMenu.modelData.locked; onTriggered:referenceImages.moveImage(imageMenu.modelData.id,0) }
                 MenuItem { text:"삭제"; enabled:!imageMenu.modelData.locked; onTriggered:referenceImages.removeImage(imageMenu.modelData.id) }
+                MenuItem { text: "기준점 보정…"; enabled: !imageMenu.modelData.locked; onTriggered: {
+                    if(referenceImages.beginCalibration(imageMenu.modelData.id))calibrationPanel.open()
+                } }
+
             }
         }
     }

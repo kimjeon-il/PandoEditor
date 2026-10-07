@@ -99,7 +99,7 @@ struct Ui {
             QFile source(root.isEmpty()?QString(":/common/MapView.qml"):root+"/common/MapView.qml");
             if(!source.open(QIODevice::ReadOnly))return false;
             const auto qml=source.readAll();
-            const int first=qml.indexOf("    ReferenceImageLibrary { id: referenceImages }");
+            const int first=qml.indexOf("    ReferenceImageLibrary {");
             const int last=qml.indexOf("    GpuMapItem {",first);
             if(first<0||last<=first)return false;
             const auto component=QByteArray(R"(
@@ -188,6 +188,43 @@ class EditDisplayUiTests:public QObject {
     Q_OBJECT
 private slots:
     void init(){QTest::failOnWarning();}
+    void geographicCalibrationActualWindowFlow()
+    {
+        Ui ui(1100);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));
+        const auto id=ui.addImage();QVERIFY(!id.isEmpty());
+        auto* menu=ui.window->findChild<QObject*>("referenceImageMenu");QVERIFY(menu);
+        auto* imageMenu=qvariant_cast<QObject*>(ui.evaluate(menu,"menuAt(4)"));QVERIFY(imageMenu);
+        ui.evaluate(imageMenu,"itemAt(8).triggered()");QTest::qWait(50);
+        auto* library=ui.library();QVERIFY2(library->calibrationSession()["active"].toBool(),qPrintable(ui.evaluate(imageMenu,"itemAt(8).text").toString()));
+        auto* panel=ui.window->findChild<QObject*>("referenceCalibrationPanel");QVERIFY(panel);QVERIFY(panel->property("visible").toBool());
+        auto* source=ui.window->findChild<QQuickItem*>("referenceCalibrationSource");QVERIFY(source);
+        const auto sourcePoint=source->mapToScene(QPointF(source->width()/2,source->height()/2));
+        QTest::mouseClick(ui.window,Qt::LeftButton,Qt::NoModifier,sourcePoint.toPoint());
+        QVERIFY(library->calibrationSession()["pendingMap"].toBool());
+        const QPointF click(300,300);const auto expected=ui.editor.referenceCoordinateAtScreen(click.x(),click.y());QCOMPARE(expected.size(),2);
+        QTest::mouseClick(ui.window,Qt::LeftButton,Qt::NoModifier,ui.map->mapToScene(click).toPoint());
+        const auto points=library->images().front().toMap()["geographicPoints"].toList();QCOMPARE(points.size(),1);
+        const auto uv=points[0].toMap()["image"].toList();QVERIFY(std::abs(uv[0].toDouble()-.5)<.01);QVERIFY(std::abs(uv[1].toDouble()-.5)<.01);
+        const auto geographic=points[0].toMap()["coordinate"].toList();QVERIFY(std::abs(geographic[0].toDouble()-expected[0].toDouble())<1e-8);
+        QVERIFY(library->undo());QVERIFY(library->images().front().toMap()["geographicPoints"].toList().empty());
+        QVERIFY(library->redo());QCOMPARE(library->images().front().toMap()["geographicPoints"].toList(),points);
+        QVERIFY(library->clearCalibrationPoints());
+        const auto place=[&](double u,double v,QPointF mapPoint) {
+            const double w=source->property("paintedWidth").toDouble(),h=source->property("paintedHeight").toDouble();
+            const QPointF local((source->width()-w)/2+u*w,(source->height()-h)/2+v*h);
+            QTest::mouseClick(ui.window,Qt::LeftButton,Qt::NoModifier,source->mapToScene(local).toPoint());
+            QTest::mouseClick(ui.window,Qt::LeftButton,Qt::NoModifier,ui.map->mapToScene(mapPoint).toPoint());
+        };
+        place(.1,.1,{280,280});place(.9,.1,{400,280});place(.1,.9,{280,400});
+        QCOMPARE(library->images().front().toMap()["geographicPoints"].toList().size(),3);
+        QVERIFY(library->calibrationSession()["result"].toMap()["ok"].toBool());
+        QTest::qWait(100);const auto capture=ui.window->grabWindow();QVERIFY2(!capture.isNull(),"Actual window must present");
+        const auto center=ui.map->mapToScene(QPointF(340,340));const double dpr=double(capture.width())/ui.window->width();
+        const auto pixel=capture.pixelColor(qRound(center.x()*dpr),qRound(center.y()*dpr));
+        QVERIFY2(pixel.red()>200&&pixel.green()<60&&pixel.blue()<60,qPrintable(pixel.name()));
+        QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
     void displayAdaptersAreInvokable()
     {
         const auto& meta=EditorController::staticMetaObject;
@@ -375,7 +412,8 @@ private slots:
         auto* menu=ui.window->findChild<QObject*>("referenceImageMenu");QVERIFY(menu);
         QCOMPARE(menu->property("count").toInt(),5);
         QPointer<QObject> firstMenu=qvariant_cast<QObject*>(ui.evaluate(menu,"menuAt(4)"));QVERIFY(firstMenu);
-        QCOMPARE(modelData(firstMenu)["id"].toString(),firstId);QCOMPARE(firstMenu->property("count").toInt(),8);
+        QCOMPARE(modelData(firstMenu)["id"].toString(),firstId);QCOMPARE(firstMenu->property("count").toInt(),9);
+        QCOMPARE(ui.evaluate(firstMenu,"itemAt(8).text").toString(),QString::fromUtf8("기준점 보정…"));
         QCOMPARE(ui.evaluate(menu,"itemAt(0).text").toString(),QString::fromUtf8("이미지 추가…"));
         QCOMPARE(ui.evaluate(menu,"itemAt(1).text").toString(),QString::fromUtf8("배치 되돌리기"));
         QCOMPARE(ui.evaluate(menu,"itemAt(2).text").toString(),QString::fromUtf8("배치 다시 실행"));

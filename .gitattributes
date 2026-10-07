@@ -56,3 +56,6 @@ tests/fixtures/web-place-runtime-source/** -text
 tests/fixtures/web-territorial-library-v2/** -text whitespace=-blank-at-eof
 assets/place/** -text
 assets/territorial-library-v2/** -text
+
+# Production reference calibration modules are pinned Git blob bytes.
+app/reference-web/** text eol=lf

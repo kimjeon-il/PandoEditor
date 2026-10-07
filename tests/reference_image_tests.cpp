@@ -10,6 +10,11 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QFileInfo>
+#include <QDir>
+#include <QUuid>
+#include <QJsonDocument>
+#include <QJsonArray>
 
 class ReferenceImageTests : public QObject
 {
@@ -17,6 +22,80 @@ class ReferenceImageTests : public QObject
 private slots:
     void init(){QTest::failOnWarning();}
     void initTestCase() { QStandardPaths::setTestModeEnabled(true); }
+
+    void geographicCalibrationUsesNormalizedUvAndMeters()
+    {
+        ReferenceImageLibrary library;
+        QVariantMap input{{"warpMode","affine"},{"controlPoints",QVariantList{
+            QVariantMap{{"id","a"},{"image",QVariantList{0.,0.}},{"coordinate",QVariantList{10.,40.}}},
+            QVariantMap{{"id","b"},{"image",QVariantList{1.,0.}},{"coordinate",QVariantList{20.,40.}}},
+            QVariantMap{{"id","c"},{"image",QVariantList{0.,1.}},{"coordinate",QVariantList{10.,30.}}}}}};
+        QVariantMap result;
+        if(library.metaObject()->indexOfMethod("calibration(QVariantMap)")<0) QFAIL("Missing production geographic calibration interface");
+        const bool invoked=QMetaObject::invokeMethod(&library,"calibration",Qt::DirectConnection,
+            Q_RETURN_ARG(QVariantMap,result),Q_ARG(QVariantMap,input));
+        QVERIFY2(invoked,"Geographic calibration must be exposed to the actual editor");
+        QVERIFY2(result["ok"].toBool(),qPrintable(result["reason"].toString()));
+        const auto mesh=result["mesh"].toMap();
+        const auto vertices=mesh["vertices"].toList();
+        QVERIFY(!vertices.empty());
+        QCOMPARE(vertices.front().toMap()["coordinate"].toList(),(QVariantList{10.,40.}));
+        QVERIFY(result["diagnostics"].toMap()["rmsMeters"].toDouble()<0.01);
+    }
+
+    void calibrationSessionPersistsPointsWithoutLeakingCanceledInput()
+    {
+        QTemporaryDir dir;const auto path=dir.filePath("session.png");QImage image(16,16,QImage::Format_RGB32);image.fill(Qt::red);QVERIFY(image.save(path));
+        ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(path)));
+        const auto id=library.images().back().toMap()["id"].toString();
+        if(library.metaObject()->indexOfMethod("beginCalibration(QString)")<0)QFAIL("Missing actual calibration edit session");
+        bool result=false;
+        QVERIFY(QMetaObject::invokeMethod(&library,"beginCalibration",Qt::DirectConnection,Q_RETURN_ARG(bool,result),Q_ARG(QString,id)));QVERIFY(result);
+        QVERIFY(QMetaObject::invokeMethod(&library,"pickImagePoint",Qt::DirectConnection,Q_RETURN_ARG(bool,result),Q_ARG(double,0.25),Q_ARG(double,0.75)));QVERIFY(result);
+        QVERIFY(QMetaObject::invokeMethod(&library,"pickMapCoordinate",Qt::DirectConnection,Q_RETURN_ARG(bool,result),Q_ARG(double,126.),Q_ARG(double,37.)));QVERIFY(result);
+        auto points=library.images().back().toMap()["geographicPoints"].toList();QCOMPARE(points.size(),1);
+        QCOMPARE(points[0].toMap()["image"].toList(),(QVariantList{0.25,0.75}));
+        QCOMPARE(points[0].toMap()["coordinate"].toList(),(QVariantList{126.,37.}));
+        QVERIFY(library.undo());QVERIFY(library.images().back().toMap()["geographicPoints"].toList().empty());
+        QVERIFY(library.redo());ReferenceImageLibrary reopened;QCOMPARE(reopened.images().back().toMap()["geographicPoints"].toList(),points);
+        QVERIFY(QMetaObject::invokeMethod(&library,"cancelCalibration"));
+        QVERIFY(QMetaObject::invokeMethod(&library,"pickMapCoordinate",Qt::DirectConnection,Q_RETURN_ARG(bool,result),Q_ARG(double,127.),Q_ARG(double,38.)));QVERIFY(!result);
+    }
+
+    void fixedWebGeographicCorpus()
+    {
+        QFile file(QFileInfo(QString::fromUtf8(__FILE__)).absoluteDir().filePath("fixtures/reference-calibration.json"));
+        QVERIFY(file.open(QIODevice::ReadOnly));const auto fixtures=QJsonDocument::fromJson(file.readAll()).array();QCOMPARE(fixtures.size(),7);
+        ReferenceImageLibrary library;int processed=0;
+        for(const auto &fixture:fixtures) {
+            const auto row=fixture.toObject();const auto expected=row["expected"].toObject().toVariantMap();
+            const auto actual=library.calibration(row["input"].toObject().toVariantMap());
+            QCOMPARE(actual["ok"].toBool(),expected["ok"].toBool());QCOMPARE(actual["reason"].toString(),expected["reason"].toString());
+            if(actual["ok"].toBool()) {
+                const auto vertices=actual["mesh"].toMap()["vertices"].toList(),reference=expected["mesh"].toMap()["vertices"].toList();
+                QCOMPARE(vertices.size(),reference.size());QCOMPARE(actual["mesh"].toMap()["triangles"],expected["mesh"].toMap()["triangles"]);
+                for(int i=0;i<vertices.size();++i){const auto a=vertices[i].toMap()["coordinate"].toList(),b=reference[i].toMap()["coordinate"].toList();QCOMPARE(a.size(),2);for(int j=0;j<2;++j)QVERIFY(std::abs(a[j].toDouble()-b[j].toDouble())<1e-10);}
+            }
+            ++processed;
+        }
+        QCOMPARE(processed,7);
+    }
+
+    void failedUndoKeepsTheHistoryEntry()
+    {
+        // Unique app-data namespace: never touch the user's library or another test's records.
+        const auto previous=QCoreApplication::applicationName();
+        QCoreApplication::setApplicationName("reference-atomic-"+QUuid::createUuid().toString(QUuid::WithoutBraces));
+        const auto root=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+"/reference-images";
+        QTemporaryDir source;const auto imagePath=source.filePath("atomic.png");QImage image(4,4,QImage::Format_RGB32);image.fill(Qt::red);QVERIFY(image.save(imagePath));
+        ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(imagePath)));
+        const auto before=library.images();const auto index=root+"/library.json";const auto backup=root+"/library.backup";
+        QVERIFY(QFile::rename(index,backup));QVERIFY(QDir().mkdir(index));
+        const bool result=library.undo();const bool historyPreserved=library.canUndo();const auto after=library.images();
+        QVERIFY(QDir().rmdir(index));QVERIFY(QFile::rename(backup,index));
+        QCoreApplication::setApplicationName(previous);
+        QVERIFY(!result);QCOMPARE(after,before);QVERIFY2(historyPreserved,"Failed save consumed the Undo history entry");
+    }
 
     void solvesSimilarityAffineProjectiveAndTps()
     {

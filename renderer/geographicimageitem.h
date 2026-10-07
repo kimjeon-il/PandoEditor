@@ -12,6 +12,7 @@ class GeographicImageItem : public QQuickItem {
     Q_PROPERTY(QObject* sceneBridge READ sceneBridge WRITE setSceneBridge NOTIFY changed)
     Q_PROPERTY(QObject* terrainBridge READ terrainBridge WRITE setTerrainBridge NOTIFY changed)
     Q_PROPERTY(QVariantMap terrainTile READ terrainTile WRITE setTerrainTile NOTIFY changed)
+    Q_PROPERTY(QVariantMap calibrationMesh READ calibrationMesh WRITE setCalibrationMesh NOTIFY changed)
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY changed)
     Q_PROPERTY(double west READ west WRITE setWest NOTIFY changed)
     Q_PROPERTY(double south READ south WRITE setSouth NOTIFY changed)
@@ -29,6 +30,8 @@ public:
     void setTerrainBridge(QObject*);
     QVariantMap terrainTile() const {return terrainTile_;}
     void setTerrainTile(QVariantMap);
+    QVariantMap calibrationMesh() const { return calibrationMesh_; }
+    void setCalibrationMesh(QVariantMap value);
     QUrl source() const{return source_;} void setSource(QUrl);
     double west() const{return west_;} void setWest(double);
     double south() const{return south_;} void setSouth(double);
@@ -49,6 +52,7 @@ private:
     QPointer<TerrainImageBridge> terrainBridge_;
     QPointer<QQuickItem> landMaskSource_;
     QVariantMap terrainTile_;
+    QVariantMap calibrationMesh_;
     QUrl source_;
     QImage image_;
     QImage rasterDisplayImage_;
