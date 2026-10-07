@@ -69,8 +69,8 @@ disables checkout newline conversion; local failure evidence is retained.
 - Paired current adapters/fixtures for complete editing sessions, object-specific
   content mutations, autosave recovery/failure, provider cancellation and matched
   UI/render flows. Existing supporting suites do not replace these observations.
-- Candidate commit pair verification and an explicitly reviewed source-pin
-  update. The previous approved pin has deliberately not been auto-rewritten.
+- Clean-checkout paired report execution against the reviewed source pin;
+  existing unsupported and unrun cases still block the gates.
 - Clean-checkout official runs, Windows actual UI runs, and GitHub CI execution.
 
 Windows selection UI attempt: Web Playwright 1/1 passed; the initial Qt run
@@ -111,3 +111,29 @@ upstream date-aware library changes. Original expectations and production
 behavior remain unchanged. Earlier reports describe their original source pair,
 not this publication candidate. App framework tests remain 8/8 passing.
 Publication does not assert complete CI or behavioral parity.
+
+## Post-publication contract reconciliation
+
+Web cb1e2049135be9d12244b2522627a97bfeedbbdc preserves the current
+date-aware search rule. Three exact Web/App differences are registered for
+Korean lineage, Korean name and Germany 1900. The App still includes entities
+with unknown lifetime in dated search. Those rows are KNOWN_DIFFERENCE, never
+PASS; the other eight fixed catalog queries still compare as PASS. The source
+pin now names that Web commit and 45 reviewed file hashes (six prior hashes
+unchanged). `verifyContractPin` checked all 45 committed bytes in an isolated
+Web checkout; seven Windows checkout text files first needed their Git blob
+bytes restored for the read-only hash verification. This is evidence of the
+candidate contract source, not a claim that the remaining matrix is green.
+
+The Web workflow job-name contract includes the Windows historical geometry
+job added by this branch. Focused job-name and library tests passed locally.
+The local Windows full unit command cannot certify the Linux CI suite: other
+legacy tests use POSIX tooling and failed here. The earlier Linux CI run had
+exactly the library and job-name failures now addressed; fresh CI must verify.
+
+The pinned library run at
+`D:/Codex/evidence/web-app-parity-20261008/library-post-merge.json` verified
+source provenance and reported 10 PASS, 3 exact KNOWN_DIFFERENCE, 1 NOT_RUN,
+0 FAIL and 0 ERROR. Its regression and behavioral gates remain BLOCKED because
+the shared input/display observation has not run. This is a local candidate
+report, not an official clean-pair or GitHub CI result.
