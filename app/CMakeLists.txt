@@ -449,10 +449,16 @@ if(BUILD_TESTING)
     add_test(NAME terrain_render_contract_tests COMMAND terrain_render_contract_tests -o -,txt)
     add_executable(terrain_gpu_display_tests ../tests/terrain_gpu_display_tests.cpp)
     target_link_libraries(terrain_gpu_display_tests PRIVATE pandoeditor_editor Qt6::Test Qt6::Quick)
+    add_executable(terrain_official_pixel_tests ../tests/terrain_official_pixel_tests.cpp)
+    target_link_libraries(terrain_official_pixel_tests PRIVATE pandoeditor_editor Qt6::Test Qt6::Quick)
+    qt_add_resources(terrain_official_pixel_tests terrain_official_fixture PREFIX "/tests"
+        BASE "${PROJECT_SOURCE_DIR}/tests" FILES "${PROJECT_SOURCE_DIR}/tests/terrain_gpu_display_fixture.qml")
     qt_add_resources(terrain_gpu_display_tests terrain_gpu_fixture PREFIX "/tests"
         BASE "${PROJECT_SOURCE_DIR}/tests" FILES "${PROJECT_SOURCE_DIR}/tests/terrain_gpu_display_fixture.qml")
     option(PANDOEDITOR_REGISTER_TERRAIN_GPU_DISPLAY "Register actual RHI terrain display execution" OFF)
     if(PANDOEDITOR_REGISTER_TERRAIN_GPU_DISPLAY)
+        add_test(NAME terrain_official_pixel_tests COMMAND terrain_official_pixel_tests -o -,txt)
+        set_tests_properties(terrain_official_pixel_tests PROPERTIES LABELS "hardware;terrain-display;official-data" TIMEOUT 180)
         add_test(NAME terrain_gpu_display_tests COMMAND terrain_gpu_display_tests
             "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.13.3/manifest.json" -o -,txt)
         set_tests_properties(terrain_gpu_display_tests PROPERTIES

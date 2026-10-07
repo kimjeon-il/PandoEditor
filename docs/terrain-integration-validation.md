@@ -1,5 +1,34 @@
 # Terrain integration validation
 
+## Remaining-plan official pixel execution (2026-10-07)
+
+`official-pixels-original-02`: actual native PID 20004, OS exit 0,
+declared/processed 16/16 (DEM 8, original raster 8), 18 Qt pass, 0 fail/skip.
+The original 1,282-file DEM inventory and two raster base tiles were verified
+again against original SHA256/size entries before launch (1,284 verified files).
+Actual Windows Qt 6.8.3 D3D11 / GTX 1650 pixels were read back: four samples
+per phase, 64 comparisons, mismatch 0, exact alpha and existing 1-unit RGB
+quantization bound. Color, gray, dark color/gray, pan, replacement mask,
+absent mask and None transitions use the production provider/material/mask.
+Sixteen original-data captures, logs, verified asset list and binary hash are
+preserved in `D:/Codex/evidence/p1-p8-m98-20261006/official-pixels-original-02/`.
+
+The oracle is independent pinned-Web arithmetic applied to original decoded
+tile/tint channels, not native display helpers or regenerated expected files.
+This is an original-data sampled pixel gate; it does not claim full-screen
+browser image equality, every DEM texel, derived-shade blend coverage, measured
+GPU fences or driver VRAM. Earlier synthetic mechanism tests remain separate.
+The first execution (`official-pixels-original-01`, PID 15188/exit 4) had
+12/16 complete phases and four harness failures: physical raster color never
+requests a land mask. Its raw failure is retained. Only that incorrect wait
+was removed; production terrain code and comparison tolerance are unchanged.
+
+Reproduce with `tools/run-official-terrain-pixels.ps1`, passing the ordinary
+`terrain_official_pixel_tests.exe`, original DEM/raster roots and fresh evidence
+directory. It verifies all source files and requires exact native case counts
+and exit code. Hardware CTest registration follows the existing explicit
+`PANDOEDITOR_REGISTER_TERRAIN_GPU_DISPLAY` option; missing data fails the gate.
+
 ## P1 data and display checkpoint (2026-10-07)
 
 App base: `2e65cf9f4a1d29e01d406029de60c5c9ff0b6eb5`.
