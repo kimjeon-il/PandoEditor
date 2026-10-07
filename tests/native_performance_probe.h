@@ -339,8 +339,15 @@ static void runNativePerformanceProbe()
     QVERIFY(presents.load()>0);QVERIFY(gpu->geometryUploadCount()>0);
     QVERIFY(!gpu->uploadsPending());QVERIFY(!editor.startupBusy());
     const auto initialView=QJsonObject::fromVariantMap(editor.mapViewState());
+    QString fingerprintOwner,documentFingerprint;quint64 fingerprintRevision=std::numeric_limits<quint64>::max();
     const auto currentState=[&] {
         auto state=frameState(sceneBridge->frameSnapshot());
+        const auto owner=editor.projectInstanceId();const auto revision=quint64(state.value("documentRevision").toDouble());
+        if(owner!=fingerprintOwner||revision!=fingerprintRevision) {
+            fingerprintOwner=owner;fingerprintRevision=revision;
+            documentFingerprint=QString::fromLatin1(QCryptographicHash::hash(editor.documentBytes(),QCryptographicHash::Sha256).toHex());
+        }
+        state["projectInstanceId"]=owner;state["documentSha256"]=documentFingerprint;
         if(auto* popup=window->findChild<QObject*>("fileMenu"))state["menuVisible"]=popup->property("visible").toBool();
         else state["menuVisible"]=false;
         state["hasPreparedPreview"]=editor.hasPreparedPreview();
@@ -379,13 +386,13 @@ static void runNativePerformanceProbe()
         auto expected=currentState();
         const auto initialExpected=expected;QJsonArray targetAdvances;
         {std::lock_guard<std::mutex> lock(frameMutex);
-            expectedState=expected;expectedRenderFrame=sceneBridge->frameSnapshot();guiState=QJsonObject{{"menuVisible",expected.value("menuVisible")},{"hasPreparedPreview",expected.value("hasPreparedPreview")},{"geometryEdit",expected.value("geometryEdit")},{"contentEdit",expected.value("contentEdit")}};
+            expectedState=expected;expectedRenderFrame=sceneBridge->frameSnapshot();guiState=QJsonObject{{"menuVisible",expected.value("menuVisible")},{"hasPreparedPreview",expected.value("hasPreparedPreview")},{"geometryEdit",expected.value("geometryEdit")},{"contentEdit",expected.value("contentEdit")},{"projectInstanceId",expected.value("projectInstanceId")},{"documentSha256",expected.value("documentSha256")}};
             sequence=++requested;}
         QTimer refreshTarget;refreshTarget.setInterval(5);
         QObject::connect(&refreshTarget,&QTimer::timeout,&presentedLoop,[&]{
             if(presented.load()>=sequence)return;
             const auto next=currentState();const auto frame=sceneBridge->frameSnapshot();
-            if(next==expected||!nativePerfSameInputState(initialExpected,next))return;
+            if(next==expected||!nativePerfSameInputState(initialExpected,next,kind!=6))return;
             {std::lock_guard<std::mutex> lock(frameMutex);
                 expected=next;expectedState=next;expectedRenderFrame=frame;
                 synchronized.store(sequence-1);
@@ -406,6 +413,7 @@ static void runNativePerformanceProbe()
             {"delivered",delivered&&completionReady},{"stateChanged",before!=expected},{"matched",delivered&&completionReady&&actual==expected},
             {"expectedState",expected},{"renderState",actual}};
         const auto lastObserved=gpu->renderObservation();
+        observation["navigationHoverUpdatesAllowed"]=kind!=6;
         observation["initialExpectedState"]=initialExpected;observation["targetAdvances"]=targetAdvances;
         observation["lastObservedRenderState"]=lastObserved?frameState(lastObserved->frame):QJsonObject{};
         observation["lastObservedUploadsPending"]=lastObserved?QJsonValue(lastObserved->stats.uploadsPending):QJsonValue(QJsonValue::Null);

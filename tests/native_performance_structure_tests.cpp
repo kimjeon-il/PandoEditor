@@ -79,19 +79,29 @@ class NativePerformanceStructureTests final:public QObject {
     Q_OBJECT
 private slots:
     void inputRetargetingPreservesEveryContentOwnerAndActualState() {
-        const QJsonObject expected{{"sceneRevision",9},{"documentRevision",1},{"geometryRevision",2},
+        const QJsonObject expected{{"projectInstanceId","same-project-instance"},{"documentSha256",QString(64,'a')},{"projectGeneration",1},{"sceneRevision",9},{"documentRevision",1},{"geometryRevision",2},
             {"presentationRevision",3},{"datasetRevision",4},{"viewRevision",5},{"selectionRevision",6},
             {"selectedId","A"},{"hoveredId","B"},{"scale",9000},{"projection","flat"},
             {"geometryEdit",QJsonObject{{"active",false}}},{"menuVisible",false}};
         auto next=expected;next["sceneRevision"]=10;
         QVERIFY(nativePerfSameInputState(expected,next));
-        for(const auto* key:{"documentRevision","geometryRevision","presentationRevision","datasetRevision","viewRevision","selectionRevision","scale"}) {
+        for(const auto* key:{"projectGeneration","documentRevision","presentationRevision","viewRevision","selectionRevision","scale"}) {
             auto changed=next;changed[key]=next[key].toDouble()+1;
             QVERIFY2(!nativePerfSameInputState(expected,changed),key);
         }
         for(const auto* key:{"selectedId","hoveredId","projection"}) {
             auto changed=next;changed[key]="other";QVERIFY2(!nativePerfSameInputState(expected,changed),key);
         }
+        auto prepared=next;prepared["geometryRevision"]=15;prepared["datasetRevision"]=9;
+        QVERIFY(nativePerfSameInputState(expected,prepared));
+        auto replaced=prepared;replaced["documentSha256"]=QString(64,'b');
+        QVERIFY(!nativePerfSameInputState(expected,replaced));
+        auto hover=prepared;hover["hoveredId"]="";hover["selectionRevision"]=7;
+        QVERIFY(!nativePerfSameInputState(expected,hover));
+        QVERIFY(nativePerfSameInputState(expected,hover,true));
+        hover["selectedId"]="other";QVERIFY(!nativePerfSameInputState(expected,hover,true));
+        auto owner=prepared;owner["projectInstanceId"]="other-project";
+        QVERIFY(!nativePerfSameInputState(expected,owner,true));
         auto edited=next;edited["geometryEdit"]=QJsonObject{{"active",true}};
         QVERIFY(!nativePerfSameInputState(expected,edited));
         QVERIFY(!nativePerfSameInputState({},{}));
