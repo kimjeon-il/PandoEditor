@@ -1,71 +1,72 @@
-# 아키텍처 원칙
+# Current application boundaries
 
-## 목표
+This document describes the current implementation, superseding the initial
+country-only/Qt Shapes/version-2 sketch. The Web counterpart owns shared behavior
+contracts and fixtures; this repository keeps C++ implementation and Qt adapters.
+The refactor baseline is App 3934077519bb716cbb45b683bbb63d85dcc8d5ee paired with
+Web 008b99b5ca2dd39936e51f7ddd11c0c70fc7bb74.
 
-C++ 공통 코어, Qt Quick/QML UI, 공통 GPU 렌더러를 중심으로 구성합니다.
-Desktop과 Mobile은 같은 편집 기능을 사용하며 입력 방식과 화면 배치를 다르게 제공합니다.
-코어 공유만으로 기능 동등성이 보장되지는 않으므로, 기능 추가 시 양쪽 UI 진입 경로와 검증을 함께 고려합니다.
+## Ownership and direction
 
-## 계층과 의존성
+- Core owns ProjectDocument, immutable DocumentState snapshots, identity/reference
+  validation, temporal records/geometry versions, CommandProcessor and ChangeSet.
+  Project owns document history, revisions and the saved-state checkpoint.
+- MapEngine owns camera/projection/edit calculations, selection calculations,
+  boundary sessions, detached geometry draft history, scene packets and resource
+  policies. It has no dependency on Qt UI or file dialogs.
+- App owns Qt input/value conversion, publication, platform resource lifetimes and
+  asynchronous adapters. EditorController owns one Project and one SelectionState.
+  selectedId is derived from the primary selection and its project instance, not
+  maintained as another mutable selection field.
+- QML consumes the same controller commands for desktop/mobile. The renderer and
+  MapSceneBridge consume immutable model/scene data and revision-based derived
+  caches; they do not own a second editable ProjectDocument.
 
-- 코어: 국가·행정구역·폴리곤·좌표·국경·레이어·역사 데이터와 프로젝트 상태를 소유합니다. 편집 규칙, 선택 판정, Undo/Redo, 저장 형식과 직렬화도 공통 영역입니다. Qt UI 및 OS API에 의존하지 않습니다.
-- 앱: 코어, 화면, 향후 렌더러와 플랫폼 서비스를 연결합니다. QML과 코어 사이의 Qt 어댑터는 이 계층에 둡니다.
-- UI: 공통 컴포넌트, Desktop 화면, 향후 Mobile 화면으로 나눕니다. 화면 상태와 입력 연결을 담당하고 도메인 규칙이나 별도의 프로젝트 상태를 복제하지 않습니다.
-- 렌더러: 지역 중심 위도의 등거리 원통도법으로 좌표를 투영하고 표시용 SVG 경로를 생성합니다. Qt Quick Shapes가 화면 표시를 담당합니다. 코어는 Qt 렌더링 객체에 의존하지 않습니다.
-- 향후 플랫폼 서비스: 파일 선택, 권한, 공유, 클립보드 등 OS 연동을 담당합니다. 파일 접근과 코어의 저장 형식 처리를 분리합니다.
+Direction: QML -> application workflow -> Core/MapEngine. The composition boundary
+supplies platform I/O and execution services. Internal filenames need not match
+Web filenames; domain semantics and observable operations are the shared contract.
 
-현재 의존 방향은 `app → core`, `app → renderer`, `app → Qt Quick`입니다.
-전용 GPU 백엔드와 플랫폼 서비스 추상화는 필요할 때 추가합니다.
+## Commands and detached editing
 
-## 현재 범위
+CommandProcessor retains prepare/confirm/cancel and immutable candidates. Ordinary
+and asynchronous entrypoints preserve their existing commit, validation and error
+boundaries. CommandJobRunner owns Qt task delivery; its workers receive snapshots
+and job tokens, not mutable Project or QObject ownership. Late results retain the
+existing instance/revision/cancellation checks.
 
-공통 코어의 Project는 ProjectDocument와 편집 이력을 소유합니다. ProjectDocument는 국가와 레이어 목록입니다.
-Country는 ID, UTF-8 이름·메모, MultiPolygon 도형, RGB 색, 불투명도, 레이어 ID를 가집니다.
-Layer는 ID, 이름, 표시·잠금 상태, 불투명도를 가집니다. 배열은 아래에서 위의 순서입니다.
-Ring은 닫힌 경위도 double 좌표열입니다.
-첫 링은 외곽, 나머지는 구멍이며 선택 판정도 이를 따릅니다. 지도 선택은 위쪽 레이어부터 검사하고
-같은 레이어의 공유 경계에서는 문서 순서의 첫 국가를 선택합니다. 숨김·잠금·불투명도 0 레이어 및 불투명도 0 국가는 지도 선택에서 제외합니다.
-목록 선택은 투명하거나 잠긴 국가의 상태 확인에도 사용할 수 있으며 잠금 상태의 편집은 코어에서도 거절합니다.
+GeometryDraft in the existing editgeometry engine owns draft geometry, vertex
+indices, draft undo/redo and drag history transitions. GeometryEditSession extends
+it with the existing tool, preview/job, provider and Qt presentation state. No draft
+mutation writes document history; confirmation still uses CommandProcessor.
+Boundary-session history and territory-selection history remain with those owners.
+Qt notifications, request increments, snap indication and scheduling retain their
+existing controller positions. Vertex cancellation and object no-op history keep
+their distinct existing behavior.
 
-EditorController가 프로젝트 하나를 소유하고 선택·저장 경로를 관리합니다.
-QML은 selectAt/setColor/undo/redo/openFile/saveFile 명령을 호출하고 알림으로 화면을 갱신합니다.
-국가 경로는 도형이 바뀔 때만 재생성합니다. 속성 변경 이력에는 ID와 속성의 변경 전후 값만 저장해 지도 도형 복사를 피합니다.
-레이어 명령은 작은 레이어 메타데이터 목록의 전후 상태를 보관합니다. Undo/Redo는 잠금 상태에 관계없이 명령을 원복합니다.
-저장 여부는 모든 편집 가능 속성과 레이어 메타데이터를 저장 시점과 비교합니다. 입력 중 초안도 UI의 미저장 표시와 종료 확인에 반영합니다.
-불투명도 미리보기는 코어 이력 밖에서 표시만 바꾸고, 놓기·선택 변경·저장 전에 코어 명령으로 확정합니다.
-국가의 채움·경계를 먼저 합성해 국가 불투명도를 적용하고, 레이어의 국가들을 합성한 후 레이어 불투명도를 적용합니다.
-합성용 텍스처는 확대된 전체 도형이 아닌 뷰포트 크기로 유지합니다. 선택 강조선은 합성 밖의 별도 오버레이입니다.
-UI의 mapScale과 이동량을 역변환한 좌표가 렌더러의 unproject를 거쳐 코어 선택 판정에 들어갑니다.
-800px 기준으로 동일한 EditorPanel을 오른쪽 또는 하단에 배치하며, 프로젝트 상태를 복제하지 않습니다.
+## Storage, timeline and resources
 
-프로젝트 파일 루트는 format=pandoeditor-project, version=2, countries/layers 배열입니다.
-각 국가는 id/name/memo/color/opacity/layerId와 GeoJSON 모양의 MultiPolygon geometry를 포함합니다.
-레이어는 id/name/visible/locked/opacity를 저장하며 배열 순서를 보존합니다.
-버전 1에는 기본 레이어 countries를 추가하고 메모는 빈 문자열, 불투명도는 1로 채웁니다.
-버전 1 예제 리소스도 동일한 마이그레이션 경로로 로드합니다.
-직렬화는 Qt JSON 어댑터가, 모델 검증은 코어가 맡습니다. 검증은 구조·좌표 범위·닫힘·비퇴화·ID/색상에 한정하며,
-자가 교차나 모든 위상 관계를 보장하는 GIS 검증기는 아닙니다.
-파일 열기는 전체 파싱·검증·표시 경로 생성 후 교체하고, 저장은 QSaveFile로 완료한 뒤에만 저장 시점을 갱신합니다.
-선택·뷰포트·편집 이력은 저장하지 않습니다. 버전 1과 2 이외의 버전은 거절합니다.
+projectcodec handles current native and Web exchange representation. ProjectStorage
+handles bounded reads and atomic platform writes; ProjectAutosave owns delayed
+writes. The controller still controls user confirmation, active-edit restrictions,
+replacement publication and when a successful save marks the Project saved.
+Serialization alone is not activation: temporal activation restrictions remain
+explicit. Native storage and Web exchange are separate formats; version numbers
+come from the current codec, not from this document.
 
-이 버전은 소규모 지역 지도용입니다. 날짜변경선, 지구본, 국경 편집, 타임라인,
-작업 스케줄러와 대규모 GPU 최적화는 구현하지 않았습니다.
+Timeline records/storage, geometry provenance, source identities, GIS adapters,
+historical catalog, place/hydro/terrain providers and renderer handoff mechanisms
+remain in their existing canonical modules. This refactor does not revise their
+formats, algorithms, retries, resource budgets or unsupported capabilities.
 
-## 다음 단계의 기준
+## Validation
 
-실제 기능을 추가할 때 도메인 동작은 코어에서 검증하고, UI에서는 같은 명령을 마우스·키보드·터치에 연결합니다.
-스레딩 도입 시 코어 상태 변경의 소유권과 결과 적용 순서를 먼저 정의합니다.
-저장 형식을 정할 때 버전과 마이그레이션을 함께 설계합니다.
-GPU 구현을 정할 때 대상 플랫폼에서 지원하는 Qt 그래픽 경로와 실제 지도 데이터를 검증합니다.
+Web owns tests/fixtures/portability and tools/check-platform-portability.mjs.
+This repository pins its source commit and file hashes in platform-portability-pin.json.
+Run tools/verify-platform-portability.mjs with the Web root and built selection_probe
+path. The comparison checks complete ordered results; its report includes
+expected/processed counts, source pins and native executable hash. It verifies selection only; existing timeline,
+geometry, command, persistence and Qt UI tests remain independently required.
 
-기존 웹판의 종료나 Viewer 전환은 이 초기 구성에 포함되지 않는 별도 제품 결정입니다.
-
-## 순차 구현 순서
-
-1. 국가 속성·레이어와 공통 편집 이력 (이번 단계).
-2. Android 개발 환경과 현재 편집 흐름 검증.
-3. 행정구역·객체 관리 및 국경 생성·병합·분할.
-4. 역사 데이터·연도별 상태·타임라인.
-5. 텍스처 및 백그라운드 연산·취소.
-6. 렌더러 성능과 플랫폼별 파일·입력 대응.
-7. 전체 세계지도·날짜변경선·대규모 데이터 검증 (마지막).
+Archived Web oracle sources and earlier fixture pins are immutable. New evidence
+must name its actual source pair. Existing platform differences are not repaired
+as part of this behavior-preserving refactor. No deployment or packaging is implied.

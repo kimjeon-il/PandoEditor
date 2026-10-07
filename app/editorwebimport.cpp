@@ -148,7 +148,7 @@ bool EditorController::confirmWebImport(const QString& hash,const QString& dispo
     // All data/indices/views/projection are already validated and allocated.
     cancelWorldBootstrap();
     project_=std::move(ready->project);projection_=std::move(ready->projection);
-    protectedWebSource_.swap(nextProtection);filePath_.clear();selected_.clear();selectedLayer_.swap(nextLayer);
+    protectedWebSource_.swap(nextProtection);filePath_.clear();selectedLayer_.swap(nextLayer);
     importedDirty_=true;webImport_.reset();webImportError_.clear();
     // Reconcile selection before notifying the view of new geometry.
     publish(false);emit geometryChanged();emit webImportChanged();return true;

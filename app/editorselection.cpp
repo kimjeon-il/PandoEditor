@@ -181,7 +181,7 @@ void EditorController::parkDrafts() {
         if(opacityPreview_&&*opacityPreview_!=style.opacity)d.fields.insert("opacity");
         if(validFromDraft_!=q(pandoeditor::staticLifetime(project_.document(),u->id).validity.from.value_or("")))d.fields.insert("validFrom");
         if(validToDraft_!=q(pandoeditor::staticLifetime(project_.document(),u->id).validity.to.value_or("")))d.fields.insert("validTo");
-        if(d.fields.empty())parkedCountryDrafts_.erase(selected_);else parkedCountryDrafts_[selected_]=std::move(d);
+        if(d.fields.empty())parkedCountryDrafts_.erase(selectedId());else parkedCountryDrafts_[selectedId()]=std::move(d);
     }
     if(const auto layer=project_.layer(selectedLayer_.toStdString())) {
         if(layerNameDraft_!=q(layer->name)||(layerOpacityPreview_&&*layerOpacityPreview_!=layer->opacity))
@@ -190,7 +190,7 @@ void EditorController::parkDrafts() {
     }
 }
 void EditorController::restoreParkedDrafts() {
-    if(const auto it=parkedCountryDrafts_.find(selected_);it!=parkedCountryDrafts_.end()) {
+    if(const auto it=parkedCountryDrafts_.find(selectedId());it!=parkedCountryDrafts_.end()) {
         const auto draft=it->second;parkedCountryDrafts_.erase(it);
         if(draft.fields.count("name"))nameDraft_=draft.name;
         if(draft.fields.count("notes"))memoDraft_=draft.memo;
@@ -214,7 +214,6 @@ void EditorController::applySelection(SelectionState next) {
     if(!changed) {selection_=std::move(next);return;} // anchor-only changes are silent in the web reducer
     QScopedValueRollback<bool> guard(selectionTransition_,true);
     cancelColorEdit();fieldSessions_.clear();parkDrafts();selection_=std::move(next);
-    selected_=selection_.primary()?q(selection_.primary()->id):QString();
     requestPlaceResources();refreshBuiltinPlaceLabels();
     reloadDrafts();
     emit selectionChanged();
@@ -339,7 +338,6 @@ void EditorController::reconcileSelection() {
         if(hover_&&!(hover_->domain=="placeBuiltin"?placeRuntime_.recordById(q(hover_->id)).has_value()&&!copiedPlaceSourceIds(project_.document()).count(hover_->id):hover_->domain=="hydroBuiltin"?bool(hydroRuntime_.recordById(q(hover_->id))):
             project_.index().objects.count(*hover_))) {hover_.reset();hoverSource_.clear();++hoverRevision_;}
     }
-    selected_=selection_.primary()?q(selection_.primary()->id):QString();
     closeObjectChooser();cancelColorEdit();fieldSessions_.clear();
     if(replaced) {cancelContentEdit();cancelGeometryEdit();}
 }

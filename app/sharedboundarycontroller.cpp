@@ -33,7 +33,7 @@ bool EditorController::beginSharedBoundaryGeometry(){
     // independently of the current selection primary or the dragged owners.
     if(!staticParentRelation(project_.document(),selected.owners.front().id).parentId.empty())target=selected.owners.front();
     const auto geometry=project_.document().geometries.get(staticGeometryBinding(project_.document(),target.id).geometryRef);if(!geometry)return false;
-    geometryEdit_=GeometryEditSession{project_.snapshot(),target,*geometry,{},{},0,0,-1,QStringLiteral("boundary"),{}};
+    geometryEdit_=GeometryEditSession{project_.snapshot(),target,*geometry,QStringLiteral("boundary"),{}};
     geometryEdit_->boundaryOwners=selected.owners;geometryEdit_->boundaryAutoSeed=selected.autoSeed;geometryEdit_->generation=++nextGeometrySession_;
     if(staticParentRelation(project_.document(),selected.owners.front().id).parentId.empty()) {
         // Explicit root entry preserves item order but makes the last item the

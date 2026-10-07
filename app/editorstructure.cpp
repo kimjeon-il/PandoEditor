@@ -71,13 +71,13 @@ bool EditorController::beginDeleteSelection(){return !selection_.items().empty()
 bool EditorController::beginMergeSelection(){
     const auto primary=selection_.primary();const auto unit=selectedUnit();
     if(!primary||!unit||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
-    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit->id).geometryRef),{},{},0,0,-1,QStringLiteral("merge"),{}};
+    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit->id).geometryRef),QStringLiteral("merge"),{}};
     geometryEdit_->mergeIntent=MergeTerritorialIntent{*primary,{}};
     geometryEdit_->choosingProviders=true;emit geometryEditChanged();emit visualChanged();return true;
 }
 bool EditorController::beginAnnexGeometry(){
     const auto primary=selection_.primary();if(!primary||!selectedUnit()||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
-    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,{"Polygon",{}, {}, {}},{},{},0,0,-1,QStringLiteral("annex"),{}};geometryEdit_->annexIntent=AnnexTerritoryIntent{*primary,{}, {}};
+    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,{"Polygon",{}, {}, {}},QStringLiteral("annex"),{}};geometryEdit_->annexIntent=AnnexTerritoryIntent{*primary,{}, {}};
     if(isRootGeneral(project_.document(),*selectedUnit())) {
         geometryEdit_->territorySelection.emplace(TerritorySelectionKind::Annex);
         geometryEdit_->annexIntent.reset();
@@ -90,7 +90,7 @@ bool EditorController::beginSplitGeometry(){
     const auto primary=selection_.primary();const auto unit=selectedUnit();if(!primary||!unit||unit->kind!=UnitKind::General||!selectedEditable()||geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
     const auto& parent=staticParentRelation(project_.document(),unit->id).parentId;
     if(!parent.empty()&&objectLocked(project_.document(),project_.index(),territorialRef(parent)))return false;
-    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit->id).geometryRef),{},{},0,0,-1,QStringLiteral("split"),{}};
+    geometryEdit_=GeometryEditSession{project_.snapshot(),*primary,*project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit->id).geometryRef),QStringLiteral("split"),{}};
     geometryEdit_->splitIntent=SplitTerritorialIntent{*primary,{},QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString(),"새 객체"};
     geometryEdit_->territorySelection.emplace(TerritorySelectionKind::BoundedCreation);
     const auto binding=staticGeometryBinding(project_.document(),unit->id).geometryRef;

@@ -234,7 +234,7 @@ bool EditorController::beginContentGeometry() {
     else if(ref) draft=*s.base.document().geometries.get(*ref);
     else if(const auto hydro=std::get_if<HydroFeature>(&s.edit.value);hydro&&s.base.document().geometries.get(hydro->geometry))draft=*s.base.document().geometries.get(hydro->geometry);
     const bool empty=draft.points.empty()&&draft.lines.empty()&&draft.polygons.empty();
-    geometryEdit_=GeometryEditSession{s.base,s.edit.target,draft,{},{},0,0,-1,empty?QStringLiteral("draw"):QStringLiteral("edit"),{}};
+    geometryEdit_=GeometryEditSession{s.base,s.edit.target,draft,empty?QStringLiteral("draw"):QStringLiteral("edit"),{}};
     geometryEdit_->content=true;emit geometryEditChanged();emit contentEditChanged();return true;
 }
 bool EditorController::previewContentEdit(bool remove) {

@@ -969,6 +969,8 @@ if(BUILD_TESTING)
     qt_add_resources(edit_screen_ui_tests m976_ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui" FILES ${M974_UI_FILES})
     qt_add_resources(edit_screen_ui_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME edit_screen_ui_tests COMMAND edit_screen_ui_tests -o -,txt)
+    qt_add_resources(edit_screen_ui_tests test_default_flag PREFIX "/defaults/flags"
+        BASE "${PROJECT_SOURCE_DIR}/assets/defaults/flags" FILES ${DEFAULT_FLAG_FILES})
     set_tests_properties(edit_screen_ui_tests PROPERTIES TIMEOUT 180 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
 endif()
 if(BUILD_TESTING)
