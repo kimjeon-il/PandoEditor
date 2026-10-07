@@ -37,7 +37,9 @@ var ReferenceWeb = (() => {
   // app/reference-web/adapter.js
   var adapter_exports = {};
   __export(adapter_exports, {
-    calibration: () => calibration
+    anchor: () => anchor,
+    calibration: () => calibration,
+    cornerQuad: () => cornerQuad
   });
 
   // app/reference-web/reference-image-georef.js
@@ -466,7 +468,7 @@ var ReferenceWeb = (() => {
   }
   function buildReferenceImageCalibrationWarp({
     controlPoints = [],
-    anchor = null,
+    anchor: anchor2 = null,
     cornerPinEnabled = false,
     mapQuad = null,
     mode = REFERENCE_IMAGE_WARP_MODES.AUTO
@@ -477,11 +479,11 @@ var ReferenceWeb = (() => {
       coordinate: Array.isArray(point.coordinate) ? [...point.coordinate] : point.coordinate,
       pinned: false
     })) : [];
-    if (anchor) {
+    if (anchor2) {
       calibrationPoints.unshift({
         id: "anchor",
-        image: Array.isArray(anchor.image) ? [...anchor.image] : anchor.image,
-        coordinate: Array.isArray(anchor.coordinate) ? [...anchor.coordinate] : anchor.coordinate,
+        image: Array.isArray(anchor2.image) ? [...anchor2.image] : anchor2.image,
+        coordinate: Array.isArray(anchor2.coordinate) ? [...anchor2.coordinate] : anchor2.coordinate,
         pinned: true
       });
     }
@@ -508,6 +510,24 @@ var ReferenceWeb = (() => {
       [...cornerPoints, ...calibrationPoints],
       { mode: REFERENCE_IMAGE_WARP_MODES.TPS }
     );
+  }
+  function buildReferenceImageProjectiveWarpFromQuad(mapQuad) {
+    if (!Array.isArray(mapQuad) || mapQuad.length !== 4) {
+      return Object.freeze({
+        ok: false,
+        mode: REFERENCE_IMAGE_WARP_MODES.PROJECTIVE,
+        minimumPoints: 4,
+        pointCount: 0,
+        reason: "invalid-map-quad"
+      });
+    }
+    const imageCorners = [[0, 0], [1, 0], [1, 1], [0, 1]];
+    const values = mapQuad.map((coordinate, index) => ({
+      id: `corner-${index}`,
+      image: imageCorners[index],
+      coordinate
+    }));
+    return buildReferenceImageWarp(values, { mode: REFERENCE_IMAGE_WARP_MODES.PROJECTIVE });
   }
   function buildReferenceImageMesh(warp, { columns = 24, rows = 16 } = {}) {
     if (!(warp == null ? void 0 : warp.ok) || typeof warp.project !== "function") return null;
@@ -541,10 +561,183 @@ var ReferenceWeb = (() => {
     });
   }
 
+  // app/reference-web/reference-image-transform.js
+  var REFERENCE_IMAGE_TRANSFORM = Object.freeze({
+    handleRadius: 8,
+    hitRadius: 12,
+    rotateHandleOffset: 30,
+    minimumWidth: 48,
+    minimumHeight: 36
+  });
+  var HANDLE_ORDER = Object.freeze(["nw", "n", "ne", "e", "se", "s", "sw", "w"]);
+  function finitePair2(value) {
+    if (!Array.isArray(value) || value.length < 2) return null;
+    const x = Number(value[0]);
+    const y = Number(value[1]);
+    return Number.isFinite(x) && Number.isFinite(y) ? [x, y] : null;
+  }
+  function normalizeCoordinate(value) {
+    const pair = finitePair2(value);
+    if (!pair) return null;
+    let lon = pair[0];
+    while (lon > 180) lon -= 360;
+    while (lon < -180) lon += 360;
+    return [lon, Math.max(-90, Math.min(90, pair[1]))];
+  }
+  function angularDistanceDegrees(a, b) {
+    if (!a || !b) return Number.POSITIVE_INFINITY;
+    const factor = Math.PI / 180;
+    const lonA = a[0] * factor;
+    const latA = a[1] * factor;
+    const lonB = b[0] * factor;
+    const latB = b[1] * factor;
+    const dot = Math.sin(latA) * Math.sin(latB) + Math.cos(latA) * Math.cos(latB) * Math.cos(lonA - lonB);
+    return Math.acos(Math.max(-1, Math.min(1, dot))) / factor;
+  }
+  function projectVisible(host, coordinate) {
+    var _a, _b, _c;
+    const projected = finitePair2((_a = host == null ? void 0 : host.project) == null ? void 0 : _a.call(host, coordinate));
+    if (!projected) return null;
+    if (((_b = host.getProjectionKind) == null ? void 0 : _b.call(host)) !== "globe") return projected;
+    const roundTrip = normalizeCoordinate((_c = host.unproject) == null ? void 0 : _c.call(host, projected));
+    return angularDistanceDegrees(coordinate, roundTrip) <= 0.25 ? projected : null;
+  }
+  function projectReferenceImageMapQuad(record, host) {
+    if (!(record == null ? void 0 : record.mapQuad) || record.mapQuad.length !== 4 || !(host == null ? void 0 : host.project)) return null;
+    const corners = record.mapQuad.map((coordinate) => projectVisible(host, coordinate));
+    return corners.every(Boolean) ? corners : null;
+  }
+  function buildReferenceImagePlacementWarp(record) {
+    if (!(record == null ? void 0 : record.mapQuad) || record.mapQuad.length !== 4) {
+      return buildReferenceImageProjectiveWarpFromQuad(null);
+    }
+    return buildReferenceImageProjectiveWarpFromQuad(record.mapQuad);
+  }
+  function referenceImagePlacementCoordinateAtUv(record, imageUv) {
+    const pair = finitePair2(imageUv);
+    if (!pair || pair.some((component) => component < 0 || component > 1)) return null;
+    const warp = buildReferenceImagePlacementWarp(record);
+    if (!warp.ok) return null;
+    const u = record.flipX ? 1 - pair[0] : pair[0];
+    const v = record.flipY ? 1 - pair[1] : pair[1];
+    return warp.project([u, v]);
+  }
+  function alignReferenceImageAnchor(record) {
+    if (!(record == null ? void 0 : record.anchor) || !record.mapQuad) return false;
+    const current = referenceImagePlacementCoordinateAtUv(record, record.anchor.image);
+    const target = normalizeCoordinate(record.anchor.coordinate);
+    if (!current || !target) return false;
+    const targetLon = unwrapLongitude2(target[0], current[0]);
+    const deltaLon = targetLon - current[0];
+    const deltaLat = target[1] - current[1];
+    const original = record.mapQuad.map((coordinate) => [...coordinate]);
+    const translated = [];
+    for (const coordinate of original) {
+      const lon = unwrapLongitude2(coordinate[0], current[0]) + deltaLon;
+      const lat = coordinate[1] + deltaLat;
+      if (!Number.isFinite(lon) || !Number.isFinite(lat) || lat < -90 || lat > 90) return false;
+      translated.push(normalizeCoordinate([lon, lat]));
+    }
+    if (translated.some((coordinate) => !coordinate)) return false;
+    record.mapQuad = translated;
+    const aligned = referenceImagePlacementCoordinateAtUv(record, record.anchor.image);
+    if (!aligned) {
+      record.mapQuad = original;
+      return false;
+    }
+    const lonError = Math.abs(unwrapLongitude2(aligned[0], target[0]) - target[0]);
+    const latError = Math.abs(aligned[1] - target[1]);
+    if (lonError > 1e-8 || latError > 1e-8) {
+      record.mapQuad = original;
+      return false;
+    }
+    return true;
+  }
+  function unwrapLongitude2(value, reference) {
+    let result = value;
+    while (result - reference > 180) result -= 360;
+    while (result - reference < -180) result += 360;
+    return result;
+  }
+  function signedArea(points) {
+    let area = 0;
+    for (let index = 0; index < points.length; index += 1) {
+      const current = points[index];
+      const next = points[(index + 1) % points.length];
+      area += current[0] * next[1] - next[0] * current[1];
+    }
+    return area / 2;
+  }
+  function orientation(a, b, c) {
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  }
+  function properSegmentsIntersect(a, b, c, d) {
+    const abC = orientation(a, b, c);
+    const abD = orientation(a, b, d);
+    const cdA = orientation(c, d, a);
+    const cdB = orientation(c, d, b);
+    return abC * abD < 0 && cdA * cdB < 0;
+  }
+  function strictlyConvexQuad(points) {
+    if (!Array.isArray(points) || points.length !== 4) return false;
+    const turns = [];
+    for (let index = 0; index < 4; index += 1) {
+      const a = points[index];
+      const b = points[(index + 1) % 4];
+      const c = points[(index + 2) % 4];
+      const turn = orientation(a, b, c);
+      if (Math.abs(turn) < 1e-6) return false;
+      turns.push(Math.sign(turn));
+    }
+    return turns.every((sign) => sign === turns[0]);
+  }
+  function usableFreeTransformQuad(record, host) {
+    const points = projectReferenceImageMapQuad(record, host);
+    if (!points || Math.abs(signedArea(points)) < 64 || !strictlyConvexQuad(points)) return false;
+    if (properSegmentsIntersect(points[0], points[1], points[2], points[3])) return false;
+    if (properSegmentsIntersect(points[1], points[2], points[3], points[0])) return false;
+    return buildReferenceImagePlacementWarp(record).ok;
+  }
+  function applyReferenceImageFreeTransformDrag(record, drag, point, host) {
+    var _a;
+    if (!record || !drag || !host) return false;
+    const coordinate = normalizeCoordinate((_a = host.unproject) == null ? void 0 : _a.call(host, point));
+    if (!coordinate) return false;
+    const previous = record.mapQuad;
+    const candidate = drag.startMapQuad.map((value) => [...value]);
+    candidate[drag.index] = coordinate;
+    record.mapQuad = candidate;
+    if (!usableFreeTransformQuad(record, host)) {
+      record.mapQuad = previous;
+      return false;
+    }
+    return true;
+  }
+
   // app/reference-web/adapter.js
   function calibration(record) {
+    const calibrated = buildReferenceImageCalibrationWarp(__spreadProps(__spreadValues({}, record), { mode: record.warpMode }));
+    let warp = calibrated;
+    if (!warp.ok && record.mapQuad) warp = buildReferenceImageProjectiveWarpFromQuad(record.mapQuad);
+    const mesh = warp.ok ? buildReferenceImageMesh(warp) : null;
+    return { ok: warp.ok, calibrationOk: calibrated.ok, calibrationReason: calibrated.reason || "", mode: warp.mode, reason: warp.reason || "", diagnostics: calibrated.diagnostics || {}, mesh: mesh ? __spreadProps(__spreadValues({}, mesh), { vertices: mesh.vertices.map((vertex) => __spreadProps(__spreadValues({}, vertex), { uv: [record.flipX ? 1 - vertex.uv[0] : vertex.uv[0], record.flipY ? 1 - vertex.uv[1] : vertex.uv[1]] })) }) : null };
+  }
+  function cornerQuad(input) {
+    const record = __spreadProps(__spreadValues({}, input.record), { mapQuad: input.quad });
+    const host = { unproject: () => input.quad[0], project: (coordinate) => {
+      const index = record.mapQuad.findIndex((p) => p[0] === coordinate[0] && p[1] === coordinate[1]);
+      return index >= 0 ? input.screenQuad[index] : null;
+    } };
+    let ok = applyReferenceImageFreeTransformDrag(record, { index: 0, startMapQuad: input.quad }, input.screenQuad[0], host);
+    const warp = buildReferenceImageCalibrationWarp(__spreadProps(__spreadValues({}, record), { cornerPinEnabled: true, mode: record.warpMode }));
+    if ((record.controlPoints || []).length || record.anchor) ok = ok && warp.ok && warp.diagnostics.hardMaxMeters <= 0.01;
+    return { ok, mapQuad: record.mapQuad };
+  }
+  function anchor(input) {
+    const record = __spreadProps(__spreadValues({}, input.record), { anchor: input.anchor });
     const warp = buildReferenceImageCalibrationWarp(__spreadProps(__spreadValues({}, record), { mode: record.warpMode }));
-    return { ok: warp.ok, mode: warp.mode, reason: warp.reason || "", diagnostics: warp.diagnostics || {}, mesh: warp.ok ? buildReferenceImageMesh(warp) : null };
+    const ok = warp.ok ? warp.diagnostics.hardMaxMeters <= 0.01 : warp.reason === "singular-control-points" && warp.pointCount >= warp.minimumPoints ? false : alignReferenceImageAnchor(record);
+    return { ok, mapQuad: record.mapQuad, anchor: record.anchor };
   }
   return __toCommonJS(adapter_exports);
 })();

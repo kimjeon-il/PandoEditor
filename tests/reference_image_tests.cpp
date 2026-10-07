@@ -97,6 +97,43 @@ private slots:
         QVERIFY(!result);QCOMPARE(after,before);QVERIFY2(historyPreserved,"Failed save consumed the Undo history entry");
     }
 
+    void cornerPinAnchorAndCanceledGesturePreserveGeographicState()
+    {
+        QTemporaryDir dir;const auto path=dir.filePath("corners.png");QImage image(20,20,QImage::Format_RGB32);image.fill(Qt::red);QVERIFY(image.save(path));
+        ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(path)));const auto id=library.images().back().toMap()["id"].toString();QVERIFY(library.beginCalibration(id));
+        if(library.metaObject()->indexOfMethod("setCornerQuad(QVariantList,QVariantList)")<0)QFAIL("Missing corner-pin production edit interface");
+        const QVariantList quad{QVariantList{10.,40.},QVariantList{20.,40.},QVariantList{20.,30.},QVariantList{10.,30.}};
+        const QVariantList screen{QVariantList{0.,0.},QVariantList{100.,0.},QVariantList{100.,100.},QVariantList{0.,100.}};
+        bool result=false;
+        QVERIFY(QMetaObject::invokeMethod(&library,"setCornerQuad",Qt::DirectConnection,Q_RETURN_ARG(bool,result),Q_ARG(QVariantList,quad),Q_ARG(QVariantList,screen)));QVERIFY(result);
+        QCOMPARE(library.images().back().toMap()["mapQuad"].toList(),quad);QVERIFY(library.images().back().toMap()["cornerPinEnabled"].toBool());
+        QVERIFY(library.calibrationSession()["result"].toMap()["ok"].toBool());
+        QCOMPARE(library.calibrationSession()["result"].toMap()["mode"].toString(),QString("projective"));
+        QVERIFY(QMetaObject::invokeMethod(&library,"beginAnchor",Qt::DirectConnection,Q_RETURN_ARG(bool,result)));QVERIFY(result);
+        QVERIFY(library.pickImagePoint(.5,.5));QVERIFY(library.pickMapCoordinate(15.,35.));
+        const auto record=library.images().back().toMap();QCOMPARE(record["anchor"].toMap()["coordinate"].toList(),(QVariantList{15.,35.}));
+        QVERIFY(library.calibrationSession()["result"].toMap()["diagnostics"].toMap()["hardMaxMeters"].toDouble()<=.01);
+        QVERIFY(library.beginGesture(id));auto changed=quad;changed[0]=QVariantList{11.,39.};
+        QVERIFY(library.updateGesture({{"mapQuad",changed},{"screenQuad",screen}}));library.cancelGesture();QCOMPARE(library.images().back().toMap(),record);
+        const QVariantList invalidScreen{QVariantList{0.,0.},QVariantList{100.,100.},QVariantList{100.,0.},QVariantList{0.,100.}};
+        QVERIFY(QMetaObject::invokeMethod(&library,"setCornerQuad",Qt::DirectConnection,Q_RETURN_ARG(bool,result),Q_ARG(QVariantList,quad),Q_ARG(QVariantList,invalidScreen)));QVERIFY(!result);QCOMPARE(library.images().back().toMap(),record);
+        ReferenceImageLibrary reopened;QCOMPARE(reopened.images().back().toMap()["anchor"],record["anchor"]);QCOMPARE(reopened.images().back().toMap()["mapQuad"],record["mapQuad"]);
+    }
+
+    void normalAnchorTranslatesPlacementWithoutEnablingCornerPin()
+    {
+        QTemporaryDir dir;const auto path=dir.filePath("placement-anchor.png");QImage image(20,20,QImage::Format_RGB32);image.fill(Qt::red);QVERIFY(image.save(path));
+        ReferenceImageLibrary library;QVERIFY(library.importImage(QUrl::fromLocalFile(path)));const auto id=library.images().back().toMap()["id"].toString();QVERIFY(library.beginCalibration(id));
+        if(library.metaObject()->indexOfMethod("setPlacementQuad(QVariantList,QVariantList)")<0)QFAIL("Missing initial placement mapping for a normal anchor");
+        const QVariantList quad{QVariantList{10.,40.},QVariantList{20.,40.},QVariantList{20.,30.},QVariantList{10.,30.}};
+        const QVariantList screen{QVariantList{0.,0.},QVariantList{100.,0.},QVariantList{100.,100.},QVariantList{0.,100.}};
+        bool result=false;QVERIFY(QMetaObject::invokeMethod(&library,"setPlacementQuad",Qt::DirectConnection,Q_RETURN_ARG(bool,result),Q_ARG(QVariantList,quad),Q_ARG(QVariantList,screen)));QVERIFY(result);
+        QVERIFY(!library.images().back().toMap()["cornerPinEnabled"].toBool());QVERIFY(library.beginAnchor());QVERIFY(library.pickImagePoint(.5,.5));QVERIFY(library.pickMapCoordinate(16.,36.));
+        const auto aligned=library.images().back().toMap()["mapQuad"].toList();QCOMPARE(aligned.size(),4);
+        for(int i=0;i<4;++i){const auto pair=aligned[i].toList(),previous=quad[i].toList();for(int j=0;j<2;++j)QVERIFY(std::abs(pair[j].toDouble()-previous[j].toDouble()-1.)<1e-8);}
+        QVERIFY(!library.images().back().toMap()["cornerPinEnabled"].toBool());
+    }
+
     void solvesSimilarityAffineProjectiveAndTps()
     {
         const QVector<ReferenceControlPoint> similarity{{{0,0},{5,7}},{{10,0},{25,7}}};

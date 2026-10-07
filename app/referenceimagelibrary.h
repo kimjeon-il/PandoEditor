@@ -27,6 +27,11 @@ public:
     QString lastError() const { return lastError_; }
 
     QVariantMap calibrationSession() const;
+    Q_INVOKABLE bool setPlacementQuad(const QVariantList &quad,const QVariantList &screenQuad);
+    Q_INVOKABLE bool setCornerQuad(const QVariantList &quad,const QVariantList &screenQuad);
+    Q_INVOKABLE bool beginAnchor();
+    Q_INVOKABLE bool clearAnchor();
+    Q_INVOKABLE bool setFreeTransformEditing(bool enabled);
     Q_INVOKABLE bool beginCalibration(const QString &id);
     Q_INVOKABLE void cancelCalibration();
     Q_INVOKABLE bool pickImagePoint(double u,double v);
@@ -65,12 +70,15 @@ private:
         bool visible = true, locked = false, flipX = false, flipY = false;
         double opacity = 1, x = 0, y = 0, width = 0, height = 0, rotation = 0;
         QVariantList controlPoints;
-        QVariantList geographicPoints;
+        QVariantList geographicPoints,mapQuad;
+        QVariantMap anchor;
+        bool cornerPinEnabled=false;
     };
     using State = QVector<Record>;
     QString directory() const;
     QString indexPath() const;
     bool save(const State &state);
+    bool storeQuad(const QVariantList &quad,const QVariantList &screenQuad,bool cornerPin);
     bool setState(State state, bool recordHistory);
     void fail(const QString &message);
     static QVariantMap variant(const Record &record, const QString &directory);
@@ -84,5 +92,6 @@ private:
     QString gestureId_;
     QString lastError_;
     QString calibrationId_,editingPointId_;
+    bool anchorPicking_=false,freeTransformEditing_=false;
     std::optional<QPointF> pendingUv_;
 };

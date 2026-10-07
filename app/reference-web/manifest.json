@@ -5,6 +5,10 @@
     {
       "path": "assets/js/modules/reference-image-georef.js",
       "sha256": "f0f4dafff71f3c5a4061cfd86d5d0ab54c48c9649ccbf495c40897be37454ebc"
+    },
+    {
+      "path": "assets/js/modules/reference-image-transform.js",
+      "sha256": "a8c7dab3d04d1ff8e0660432335306e771ecfbb1d2a48400a0767b2b65db65d9"
     }
   ]
 }

@@ -74,6 +74,35 @@ Rectangle {
             event.accepted = true
         }
     }
+    function referenceScreenQuad(quad) {
+        let result=[]
+        for(const coordinate of quad) {
+            const point=editor.referenceScreenAtCoordinate(coordinate[0],coordinate[1])
+            if(!point.visible)return []
+            result.push([point.x,point.y])
+        }
+        return result
+    }
+    function ensureReferenceQuad(cornerPin) {
+        const session=referenceImages.calibrationSession
+        const record=session.record || ({})
+        if(record.mapQuad && record.mapQuad.length===4)return !cornerPin || record.cornerPinEnabled || referenceImages.setCornerQuad(record.mapQuad,referenceScreenQuad(record.mapQuad))
+        let quad=[]
+        if(session.result && session.result.ok) {
+            const points=session.result.mesh.vertices
+            quad=[points[0].coordinate,points[24].coordinate,points[points.length-1].coordinate,points[points.length-25].coordinate]
+        } else {
+            const rect=editor.editMapRectToScreen(Qt.rect(record.x,record.y,record.width,record.height),view.cameraState)
+            const angle=(record.rotation||0)*Math.PI/180
+            for(const uv of [[0,0],[1,0],[1,1],[0,1]]) {
+                const dx=(uv[0]-.5)*rect.width,dy=(uv[1]-.5)*rect.height
+                const coordinate=editor.referenceCoordinateAtScreen(rect.x+rect.width/2+dx*Math.cos(angle)-dy*Math.sin(angle),rect.y+rect.height/2+dx*Math.sin(angle)+dy*Math.cos(angle))
+                if(coordinate.length!==2)return false
+                quad.push(coordinate)
+            }
+        }
+        return cornerPin ? referenceImages.setCornerQuad(quad,referenceScreenQuad(quad)) : referenceImages.setPlacementQuad(quad,referenceScreenQuad(quad))
+    }
     function dismissPopup() {
         if (calibrationPanel.visible) { calibrationPanel.close(); return true }
         if (objectChooser.visible) { objectChooser.close(); return true }
@@ -151,7 +180,8 @@ Rectangle {
     }
 
     ReferenceImageLibrary { id: referenceImages; objectName: "referenceImageLibrary" }
-    Connections { target: editor; function onProjectInstanceIdChanged() { referenceImages.cancelCalibration(); calibrationPanel.close() } }
+    property string referenceProjectInstance: editor.projectInstanceId
+    onReferenceProjectInstanceChanged: { if(referenceImages)referenceImages.cancelCalibration(); if(calibrationPanel)calibrationPanel.close() }
     Popup {
         id: calibrationPanel
         objectName: "referenceCalibrationPanel"
@@ -176,17 +206,26 @@ Rectangle {
                         referenceImages.pickImagePoint(u,v)
                     } }
                 }
-                Label { width: parent.width; wrapMode: Text.Wrap; text: calibrationPanel.session.pendingMap ? "지도에서 대응 위치를 누르세요." : "이미지에서 기준점을 누른 뒤 지도 위치를 누르세요." }
+                Row {
+                    spacing: 4
+                    UiButton { objectName: "referenceFreeTransformButton"; text: "자유 변형"; enabled: !calibrationPanel.record.locked; onClicked: {
+                        if(view.ensureReferenceQuad(true))referenceImages.setFreeTransformEditing(!calibrationPanel.session.freeTransformEditing)
+                    } }
+                    UiButton { objectName: "referenceAnchorButton"; text: "고정점 지정"; enabled: !calibrationPanel.record.locked; onClicked: { if(view.ensureReferenceQuad(false))referenceImages.beginAnchor() } }
+                    UiButton { text: "고정 해제"; visible: !!calibrationPanel.record.anchor && Object.keys(calibrationPanel.record.anchor).length>0; onClicked: referenceImages.clearAnchor() }
+                }
+                Label { width: parent.width; wrapMode: Text.Wrap; text: calibrationPanel.session.anchorPicking ? (calibrationPanel.session.pendingMap ? "지도에서 고정점 위치를 누르세요." : "이미지에서 고정점을 누르세요.") : calibrationPanel.session.pendingMap ? "지도에서 대응 위치를 누르세요." : "이미지에서 기준점을 누른 뒤 지도 위치를 누르세요." }
                 UiComboBox {
                     objectName: "referenceWarpMode"; width: parent.width
                     model: ["auto","similarity","affine","projective","tps"]
-                    currentIndex: Math.max(0,model.indexOf(calibrationPanel.record.warpMode || "auto"))
+                    enabled: !calibrationPanel.record.locked && !(calibrationPanel.record.cornerPinEnabled && ((calibrationPanel.record.controlPoints || []).length>0 || Object.keys(calibrationPanel.record.anchor || {}).length>0))
+                    currentIndex: enabled ? Math.max(0,model.indexOf(calibrationPanel.record.warpMode || "auto")) : 4
                     onActivated: referenceImages.setCalibrationMode(currentText)
                 }
                 Label {
                     width: parent.width; wrapMode: Text.Wrap
                     readonly property var result: calibrationPanel.session.result || ({})
-                    text: result.ok ? "RMS: "+Number(result.diagnostics.rmsMeters).toFixed(2)+" m · 최대: "+Number(result.diagnostics.maxMeters).toFixed(2)+" m" : "보정: "+(result.reason || "기준점 부족")
+                    text: result.calibrationOk ? "RMS: "+Number(result.diagnostics.rmsMeters).toFixed(2)+" m · 최대: "+Number(result.diagnostics.maxMeters).toFixed(2)+" m" : "보정: "+(result.calibrationReason || result.reason || "기준점 부족")
                 }
                 Repeater {
                     model: calibrationPanel.record.controlPoints || []
@@ -223,6 +262,32 @@ Rectangle {
                     const coordinate=editor.referenceCoordinateAtScreen(point.x,point.y)
                     if(coordinate.length===2)referenceImages.pickMapCoordinate(coordinate[0],coordinate[1])
                 }
+            }
+        }
+    }
+    Repeater {
+        model: referenceImages.calibrationSession.freeTransformEditing ? 4 : 0
+        delegate: Rectangle {
+            required property int index
+            id: cornerHandle
+            readonly property var coordinate: (referenceImages.calibrationSession.record.mapQuad || [])[index] || [NaN,NaN]
+            readonly property var screen: { view.cameraState; return editor.referenceScreenAtCoordinate(coordinate[0],coordinate[1]) }
+            x: screen.x-8; y: screen.y-8; width: 16; height: 16; z: 22
+            color: "#ffffff"; border.color: "#0066cc"; border.width: 2; visible: screen.visible
+            objectName: "referenceCornerHandle"+index
+            MouseArea { anchors.fill: parent
+                onPressed: referenceImages.beginGesture(referenceImages.calibrationSession.record.id)
+                onPositionChanged: function(mouse) {
+                    if(!pressed)return
+                    const point=mapToItem(view,mouse.x,mouse.y)
+                    const coordinate=editor.referenceCoordinateAtScreen(point.x,point.y)
+                    if(coordinate.length!==2)return
+                    let quad=referenceImages.calibrationSession.record.mapQuad.slice()
+                    quad[cornerHandle.index]=coordinate
+                    referenceImages.updateGesture({mapQuad:quad,screenQuad:view.referenceScreenQuad(quad)})
+                }
+                onReleased: referenceImages.commitGesture()
+                onCanceled: referenceImages.cancelGesture()
             }
         }
     }

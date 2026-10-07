@@ -225,6 +225,30 @@ private slots:
         QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
     }
 
+    void cornerPinAndAnchorActualWindowFlow()
+    {
+        Ui ui(1100);QVERIFY2(ui.start(),qPrintable(ui.warnings.join('\n')));const auto id=ui.addImage();QVERIFY(!id.isEmpty());
+        auto* menu=ui.window->findChild<QObject*>("referenceImageMenu");QVERIFY(menu);auto* imageMenu=qvariant_cast<QObject*>(ui.evaluate(menu,"menuAt(4)"));QVERIFY(imageMenu);
+        ui.evaluate(imageMenu,"itemAt(8).triggered()");QTest::qWait(50);
+        QVERIFY(navigationClick(ui.window,"referenceFreeTransformButton"));
+        auto* library=ui.library();QVERIFY(library->calibrationSession()["freeTransformEditing"].toBool());
+        auto* handle=navigationItem(ui.window->contentItem(),"referenceCornerHandle0");QVERIFY(handle);
+        const auto before=library->images().front().toMap()["mapQuad"];
+        const auto start=handle->mapToScene(handle->boundingRect().center()).toPoint();
+        QTest::mousePress(ui.window,Qt::LeftButton,Qt::NoModifier,start);QTest::mouseMove(ui.window,start+QPoint(10,8),30);QTest::mouseRelease(ui.window,Qt::LeftButton,Qt::NoModifier,start+QPoint(10,8));
+        const auto changed=library->images().front().toMap()["mapQuad"];QVERIFY(changed!=before);
+        QVERIFY(library->undo());QCOMPARE(library->images().front().toMap()["mapQuad"],before);QVERIFY(library->redo());QCOMPARE(library->images().front().toMap()["mapQuad"],changed);
+        QVERIFY(navigationClick(ui.window,"referenceAnchorButton"));
+        auto* source=ui.window->findChild<QQuickItem*>("referenceCalibrationSource");QVERIFY(source);
+        QTest::mouseClick(ui.window,Qt::LeftButton,Qt::NoModifier,source->mapToScene({source->width()/2,source->height()/2}).toPoint());
+        QTest::mouseClick(ui.window,Qt::LeftButton,Qt::NoModifier,ui.map->mapToScene({160,190}).toPoint());
+        QVERIFY(!library->images().front().toMap()["anchor"].toMap().isEmpty());
+        const auto diagnostics=library->calibrationSession()["result"].toMap()["diagnostics"].toMap();QVERIFY(diagnostics["hardMaxMeters"].toDouble()<=.01);
+        QVERIFY(ui.editor.setProjectionMode("globe"));QTest::qWait(80);QVERIFY(!ui.window->grabWindow().isNull());
+        QVERIFY(!ui.reference(true)->property("calibrationMesh").toMap().isEmpty());
+        QVERIFY2(ui.warnings.isEmpty(),qPrintable(ui.warnings.join('\n')));
+    }
+
     void displayAdaptersAreInvokable()
     {
         const auto& meta=EditorController::staticMetaObject;
