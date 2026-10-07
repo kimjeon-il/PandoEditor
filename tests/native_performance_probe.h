@@ -493,8 +493,10 @@ static void runNativePerformanceProbe()
         const auto target=mode=="globe"?QString("projectionGlobeButton"):QString("projectionFlatButton");
         // Existing navigation opens real popup routes and settles their layout;
         // preparation is outside the measured final pointer click.
-        enterExistingControlRoute(window,target);
-        input(kind,[&]{clickItem(target);});
+        if(!navigationEnterProjectionRoute(window,target))return stepFailure("Actual projection route not ready: "+mode);
+        bool clicked=false;
+        input(kind,[&]{clicked=clickItem(target);});
+        if(!clicked)return false;
         if(inputAssociationFailed||editor.projectionMode()!=mode)return stepFailure("Projection pointer input failed: "+mode);
         QTest::keyClick(window,Qt::Key_Escape,Qt::NoModifier,0);QCoreApplication::processEvents();
         QTest::keyClick(window,Qt::Key_Escape,Qt::NoModifier,0);QCoreApplication::processEvents();return true;

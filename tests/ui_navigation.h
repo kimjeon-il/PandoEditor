@@ -2,6 +2,7 @@
 #include <QQuickWindow>
 #include <QQuickItem>
 #include <QTest>
+#include <QElapsedTimer>
 #include <algorithm>
 inline QQuickItem* navigationItem(QQuickItem* root,const QString& name) {
  if(root->objectName()==name)return root;
@@ -22,6 +23,52 @@ inline bool navigationClick(QQuickWindow* window,const QString& name) {
  auto c=navigationItem(window->contentItem(),name);if(!c||!c->isVisible()||!c->isEnabled())return false;
  navigationEnsureVisible(c);QTest::qWait(50);
  QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,c->mapToScene({c->width()/2,c->height()/2}).toPoint());QTest::qWait(100);return true;
+}
+// Measurement preparation uses actual popup and clipping state, never a fixed
+// delay or a direct invocation of the projection setter. One finite deadline
+// covers the whole route; a failed step is not retried or measured as success.
+inline bool navigationEnterProjectionRoute(QQuickWindow* window,const QString& target) {
+ auto* display=window->findChild<QObject*>("mapDisplayPopup");
+ if(!display)return false;
+ QElapsedTimer deadline;deadline.start();
+ const auto clipped=[&](QQuickItem* item){
+  if(!item)return QRectF{};
+  QRectF rect=item->mapRectToScene(item->boundingRect());
+  for(auto* p=item->parentItem();p;p=p->parentItem())if(p->clip())rect=rect.intersected(p->mapRectToScene(p->boundingRect()));
+  return rect.intersected(QRectF(QPointF(),QSizeF(window->size())));
+ };
+ const auto ready=[&](const QString& name){
+  auto* item=navigationItem(window->contentItem(),name);
+  return item&&item->isVisible()&&item->isEnabled()&&item->width()>0&&item->height()>0&&
+      clipped(item).contains(item->mapToScene(item->boundingRect().center()));
+ };
+ const auto wait=[&](const auto& condition){
+  while(!condition()&&deadline.elapsed()<5000)QTest::qWait(5);
+  return deadline.elapsed()<5000&&condition();
+ };
+ const auto fail=[&](const QString& step){
+  auto* item=navigationItem(window->contentItem(),target);
+  qWarning()<<"PROJECTION_ROUTE_NOT_READY"<<step<<"visible"<<display->property("visible")
+      <<"opened"<<display->property("opened")<<"section"<<display->property("section")
+      <<"targetVisible"<<(item&&item->isVisible())<<"targetEnabled"<<(item&&item->isEnabled())
+      <<"targetClippedRect"<<clipped(item)<<"elapsedMs"<<deadline.elapsed();
+  return false;
+ };
+ const auto click=[&](const QString& name){
+  auto* item=navigationItem(window->contentItem(),name);navigationEnsureVisible(item);
+  if(!wait([&]{return ready(name);})||deadline.elapsed()>=5000)return false;
+  QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,item->mapToScene(item->boundingRect().center()).toPoint(),0);
+  QCoreApplication::processEvents();return true;
+ };
+ if(!display->property("visible").toBool()&&!click("mapDisplayButton"))return fail("open trigger");
+ if(!wait([&]{return display->property("opened").toBool();}))return fail("popup opening");
+ if(display->property("section").toString()!="projection") {
+  if(!display->property("section").toString().isEmpty()&&!click("viewMenuBack"))return fail("back trigger");
+  if(!wait([&]{return display->property("section").toString().isEmpty();}))return fail("root section");
+  if(!click("viewProjectionMenu"))return fail("projection trigger");
+ }
+ if(!wait([&]{return display->property("opened").toBool()&&display->property("section").toString()=="projection"&&ready(target);}))return fail("projection target");
+ return deadline.elapsed()<5000;
 }
 inline void enterExistingControlRoute(QQuickWindow* window,const QString& name) {
  if(name=="detailObjectName"||name=="detailObjectNotes"){

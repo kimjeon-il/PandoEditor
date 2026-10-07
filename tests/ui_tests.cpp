@@ -7,6 +7,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQmlProperty>
 #include <QQuickWindow>
 #include <QQuickItem>
 #include <QQuickStyle>
@@ -872,6 +873,40 @@ private slots:
             QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
             window->setProperty("allowClose",true);window->close();
         }
+    }
+    void nativeProjectionRouteRequiresCompletedPopup() {
+        EditorControllerConfig config;config.bootstrapWorld=false;config.autosaveEnabled=false;
+        EditorController editor(config);QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));
+        QVERIFY(!engine.rootObjects().isEmpty());
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+        window->resize(1920,1000);exposeForTest(window);
+        auto* display=window->findChild<QObject*>("mapDisplayPopup");QVERIFY(display);
+        // A real QML enter transition exposes the fixed-delay preparation race.
+        // This controlled transition belongs only to this mechanism test.
+        QQmlComponent routeTransition(&engine);
+        routeTransition.setData("import QtQuick\nTransition { NumberAnimation { property: \"opacity\"; from: 0; to: 1; duration: 400 } }",QUrl());
+        auto* transition=routeTransition.create();QVERIFY(transition);transition->setParent(display);
+        QVERIFY(QQmlProperty::write(display,"enter",QVariant::fromValue(transition)));
+        const auto before=editor.documentBytes();const auto dirty=editor.dirty();
+        int processed=0;
+        for(int i=0;i<40;++i) {
+            const auto mode=i%2?QString("flat"):QString("globe");
+            const auto target=i%2?QString("projectionFlatButton"):QString("projectionGlobeButton");
+            QVERIFY(navigationEnterProjectionRoute(window,target));
+            QVERIFY2(display->property("opened").toBool(),"The actual popup must complete opening before a measured sub-menu click");
+            QCOMPARE(display->property("section").toString(),QString("projection"));
+            auto* button=navigationItem(window->contentItem(),target);QVERIFY(button);
+            QVERIFY(button->isVisible());QVERIFY(button->isEnabled());
+            QVERIFY(navigationClick(window,target));QCOMPARE(editor.projectionMode(),mode);
+            QTest::keyClick(window,Qt::Key_Escape,Qt::NoModifier,0);QCoreApplication::processEvents();
+            QTest::keyClick(window,Qt::Key_Escape,Qt::NoModifier,0);QCoreApplication::processEvents();
+            ++processed;
+        }
+        QCOMPARE(processed,40);QCOMPARE(editor.documentBytes(),before);QCOMPARE(editor.dirty(),dirty);
+        qInfo()<<"PROJECTION_ROUTE expected=40 processed="<<processed<<" mismatch=0 skip=0 controlledEnterTransitionMs=400";
+        window->setProperty("allowClose",true);window->close();
     }
     void viewAndAppearanceControlsMatchDesktopAndCompact() {
         for(bool mobile:{false,true}) {
