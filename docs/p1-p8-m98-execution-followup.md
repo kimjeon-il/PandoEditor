@@ -139,3 +139,24 @@ and mask a same-frame defect. Two isolated regressions disable that suppression
 or evict the adopted reserve before replacement; both fail actual RHI pixel
 assertions. These are synthetic mechanism checks, separate from the preserved
 1,282-file DEM inventory and real controller/corpus results.
+
+## Registered native geometry execution receipt
+
+The Windows CTest registration now writes an explicit Qt text result file,
+because the GUI executable's stdout was empty through the installed CTest
+launcher. This changes logging only, not assertions or production behavior.
+
+| Execution | Actual result | Judgment |
+| --- | --- | --- |
+| `native-geometry-registered-a3942bb-05` | CTest exit 0, but no internal Qt count or native PID in stdout | Missing execution evidence; not a completed gate |
+| `native-geometry-registered-counted-06` | CTest exit 0; Qt 3 pass/0 fail/0 skip; program PID 9352; native OS exit unobserved | INCOMPLETE: direct parent lookup missed the launcher grandchild |
+| `native-geometry-registered-counted-07` | CTest PID 19860/exit 0; actual native PID 21960/exit 0; Qt 3 pass/0 fail/0 skip; declared/processed 1/1; D3D11 | PASS, actual process and complete internal receipt |
+
+The successful observation identifies the unique freshly created native
+process by its exact executable path and named Qt function, retains its process
+handle, and records its OS exit code separately. Source checkpoint was
+`a3942bb184d7046b5edd88059419c20e865aff8b` plus this CMake logging change.
+Executable SHA256 was
+`86f63581b789d18f04a2465a452dd29aaa15892bc1e1d62786e3e17bc7326493`.
+Raw stdout, stderr, Qt log and receipts, including both rejected observations,
+are preserved in `D:/Codex/evidence/p1-p8-m98-20261006/`.
