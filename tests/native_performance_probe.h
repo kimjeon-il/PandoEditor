@@ -340,6 +340,9 @@ static void runNativePerformanceProbe()
     QVERIFY(!gpu->uploadsPending());QVERIFY(!editor.startupBusy());
     const auto initialView=QJsonObject::fromVariantMap(editor.mapViewState());
     QString fingerprintOwner,documentFingerprint;quint64 fingerprintRevision=std::numeric_limits<quint64>::max();
+    quint64 geometryDraftRevision=0;
+    const auto draftConnection=QObject::connect(&editor,&EditorController::geometryEditChanged,window,[&]{++geometryDraftRevision;});
+    const auto stopDraftObservation=qScopeGuard([&]{QObject::disconnect(draftConnection);});
     const auto currentState=[&] {
         auto state=frameState(sceneBridge->frameSnapshot());
         const auto owner=editor.projectInstanceId();const auto revision=quint64(state.value("documentRevision").toDouble());
@@ -352,6 +355,7 @@ static void runNativePerformanceProbe()
         else state["menuVisible"]=false;
         state["hasPreparedPreview"]=editor.hasPreparedPreview();
         state["geometryEdit"]=QJsonObject::fromVariantMap(editor.geometryEditState());
+        state["geometryDraftRevision"]=double(geometryDraftRevision);
         state["contentEdit"]=QJsonObject::fromVariantMap(editor.contentEditState());
         return state;
     };
@@ -391,7 +395,7 @@ static void runNativePerformanceProbe()
         auto expected=currentState();
         const auto initialExpected=expected;QJsonArray targetAdvances;
         {std::lock_guard<std::mutex> lock(frameMutex);
-            expectedState=expected;expectedRenderFrame=sceneBridge->frameSnapshot();guiState=QJsonObject{{"menuVisible",expected.value("menuVisible")},{"hasPreparedPreview",expected.value("hasPreparedPreview")},{"geometryEdit",expected.value("geometryEdit")},{"contentEdit",expected.value("contentEdit")},{"projectInstanceId",expected.value("projectInstanceId")},{"documentSha256",expected.value("documentSha256")}};
+            expectedState=expected;expectedRenderFrame=sceneBridge->frameSnapshot();guiState=QJsonObject{{"menuVisible",expected.value("menuVisible")},{"hasPreparedPreview",expected.value("hasPreparedPreview")},{"geometryEdit",expected.value("geometryEdit")},{"geometryDraftRevision",expected.value("geometryDraftRevision")},{"contentEdit",expected.value("contentEdit")},{"projectInstanceId",expected.value("projectInstanceId")},{"documentSha256",expected.value("documentSha256")}};
             sequence=++requested;}
         QTimer refreshTarget;refreshTarget.setInterval(5);
         QObject::connect(&refreshTarget,&QTimer::timeout,&presentedLoop,[&]{
@@ -489,6 +493,7 @@ static void runNativePerformanceProbe()
         const auto contract=inputContracts.value("editing-heavy").value("editingPreviewCancel").toObject();
         if(contract.isEmpty())return stepFailure("Missing immutable editing preview/cancel contract");
         const auto before=editor.documentBytes();
+        const auto beforeDirty=editor.dirty(),beforeUndo=editor.canUndo(),beforeRedo=editor.canRedo();
         if(!selectAt(12,contract.value("selectionScreen").toArray()))return false;
         const auto expectedEntity=contract.value("selectionEntityId").toString();
         if(!expectedEntity.isEmpty()&&editor.selectedId()!=expectedEntity)return stepFailure("Editing fixture selection identity mismatch");
@@ -501,14 +506,16 @@ static void runNativePerformanceProbe()
         const auto b=map->mapToScene(QPointF(to[0].toDouble(),to[1].toDouble())).toPoint();
         input(12,[&]{QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,a,0);});
         if(inputAssociationFailed||editor.geometryEditState().value("selectedVertex").toInt()<0)return stepFailure("Actual vertex selection failed");
+        const auto originalDraft=editor.geometryDraftPaths();
         QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,a,0);
         for(int step=1;step<=8&&!inputAssociationFailed;++step)input(12,[&]{QTest::mouseMove(window,a+(b-a)*step/8,0);});
         input(12,[&]{QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,b,0);});
         if(inputAssociationFailed)return false;
+        if(editor.geometryDraftPaths()==originalDraft||!editor.geometryEditState().value("canUndo").toBool())return stepFailure("Actual drag did not change the edit draft");
         input(12,[&]{clickItem("geometryPreview");},[&]{return editor.geometryEditState().value("previewReady").toBool();});
         if(inputAssociationFailed||!editor.geometryEditState().value("previewReady").toBool())return stepFailure("Actual geometry preview failed");
         input(12,[&]{clickItem("geometryCancel");});
-        if(inputAssociationFailed||editor.geometryEditState().value("active").toBool()||editor.documentBytes()!=before)return stepFailure("Preview cancellation changed canonical document");
+        if(inputAssociationFailed||editor.geometryEditState().value("active").toBool()||editor.documentBytes()!=before||editor.dirty()!=beforeDirty||editor.canUndo()!=beforeUndo||editor.canRedo()!=beforeRedo)return stepFailure("Preview cancellation changed canonical document or history");
         return true;
     };
     for(int kind=0;kind<ids.size();++kind){

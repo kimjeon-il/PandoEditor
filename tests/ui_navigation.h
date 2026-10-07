@@ -72,7 +72,7 @@ inline void enterExistingControlRoute(QQuickWindow* window,const QString& name) 
    navigationClick(window,wanted=="projection"?"viewProjectionMenu":"viewTerrainMenu");
   }
  }
- if(name=="editorAnnexAction"||name=="focusSelection"||name=="objectLockButton") {
+ if(name=="editorGeometryAction"||name=="editorAnnexAction"||name=="focusSelection"||name=="objectLockButton") {
   auto c=navigationItem(window->contentItem(),name);
   if(!c||!c->isVisible()) {
    auto panel=navigationItem(window->contentItem(),"objectPropertyPanel");

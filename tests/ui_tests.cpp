@@ -99,6 +99,53 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void nativeGeometryPointerRoutePreservesProject() {
+        if(qEnvironmentVariable("QT_QPA_PLATFORM")!="windows")QSKIP("Registered native_geometry_pointer_route requires an actual Windows RHI window");
+        QTemporaryDir settings;QVERIFY(settings.isValid());EditorControllerConfig config;
+        config.appearancePath=settings.filePath("appearance.json");EditorController editor(config);
+        QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("editor",&editor);
+        engine.load(QUrl("qrc:/common/Main.qml"));QVERIFY(!engine.rootObjects().isEmpty());
+        auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+        window->resize(1920,977);exposeForTest(window);
+        auto* map=navigationItem(window->contentItem(),"mapView");QVERIFY(map);
+        window->resize(1920,window->height()+929-int(map->height()));QTest::qWait(100);
+        QCOMPARE(map->width(),1920.);QCOMPARE(map->height(),929.);
+        QCOMPARE(window->rendererInterface()->graphicsApi(),QSGRendererInterface::Direct3D11);
+        QVERIFY(editor.setProjectionMode("flat"));
+        QVERIFY(editor.publishMapView({{"viewportWidth",1920},{"viewportHeight",929},{"centerLongitude",15},{"centerLatitude",50.5},{"scale",5000},{"translateX",960},{"translateY",464.5}}));
+        QTest::qWait(100);const auto before=editor.documentBytes();const auto dirty=editor.dirty(),undo=editor.canUndo(),redo=editor.canRedo();
+        const auto screen=[&](QPoint p){return map->mapToScene(p).toPoint();};
+        QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,screen({650,430}),0);
+        QTRY_COMPARE(editor.selectedId(),QString("DEU"));
+        QVERIFY(clickControl(window,"editorGeometryAction"));
+        QVERIFY(editor.geometryEditState().value("active").toBool());
+        double nearestDistance=std::numeric_limits<double>::infinity();QPointF nearestPoint;QVariantMap nearestVertex;
+        for(const auto& path:editor.geometryDraftPaths())for(const auto& entry:path.toMap().value("vertices").toList()) {
+            const auto vertex=entry.toMap();const auto point=editor.editMapPointToScreen(vertex.value("x").toDouble(),vertex.value("y").toDouble(),map->property("cameraState").toMap());
+            const auto distance=std::hypot(point.x()-918,point.y()-277);
+            if(distance<nearestDistance){nearestDistance=distance;nearestPoint=point;nearestVertex=vertex;}
+        }
+        qInfo()<<"GEOMETRY_POINTER_PIXEL"<<nearestDistance<<nearestPoint;
+        QVERIFY2(nearestDistance<=1,"The fixed geographic vertex must coincide with the actual edit overlay");
+        QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,screen({918,277}),0);
+        QTRY_VERIFY(editor.geometryEditState().value("selectedVertex").toInt()>=0);
+        QCOMPARE(editor.geometryEditState().value("selectedVertex").toInt(),nearestVertex.value("vertex").toInt());
+        const auto originalDraft=editor.geometryDraftPaths();
+        const auto a=screen({918,277}),b=screen({935,267});
+        QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,a,0);
+        for(int i=1;i<=8;++i){QTest::mouseMove(window,a+(b-a)*i/8,0);QTest::qWait(10);}
+        QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,b,0);
+        QVERIFY(editor.geometryDraftPaths()!=originalDraft);
+        QVERIFY(editor.geometryEditState().value("canUndo").toBool());
+        QVERIFY(clickControl(window,"geometryPreview"));
+        QTRY_VERIFY(editor.geometryEditState().value("previewReady").toBool());
+        QVERIFY(clickControl(window,"geometryCancel"));
+        QVERIFY(!editor.geometryEditState().value("active").toBool());
+        QCOMPARE(editor.documentBytes(),before);QCOMPARE(editor.dirty(),dirty);QCOMPARE(editor.canUndo(),undo);QCOMPARE(editor.canRedo(),redo);
+        qInfo().noquote()<<QString("NATIVE_GEOMETRY_POINTER_ROUTE pid=%1 expected=1 processed=1 fail=0 skip=0 backend=D3D11").arg(QCoreApplication::applicationPid());
+        window->setProperty("allowClose",true);window->close();
+    }
+
     void annexSelectionPointerFlow_data() {
         QTest::addColumn<int>("width");
         QTest::newRow("desktop") << 1100;

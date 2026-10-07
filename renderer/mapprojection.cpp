@@ -75,7 +75,9 @@ void MapProjection::rebuild(const std::vector<pandoeditor::CountryView>& countri
         minLon=std::min(minLon,v.x);maxLon=std::max(maxLon,v.x);
         minLat=std::min(minLat,v.y);maxLat=std::max(maxLat,v.y);
     }
-    cosLatitude=std::max(0.01,std::cos((minLat+maxLat)*0.5*3.141592653589793/180));
+    // The fixed web and typed renderer both use equirectangular flat pixels.
+    // Local edit coordinates must use the same longitude/latitude scale.
+    cosLatitude=1;
     minX=minLon*cosLatitude;maxLatitude=maxLat;
     width=std::max(0.001,(maxLon-minLon)*cosLatitude);height=std::max(0.001,maxLat-minLat);
     paths.clear();

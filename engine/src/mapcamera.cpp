@@ -59,8 +59,9 @@ MapCamera::FlatControls MapCamera::flatControls(
         return result;
     }
     result.mapScale=source.scale/(metrics.cosLatitude*DegreesPerRadian);
-    result.zoom=clampZoom(result.mapScale/result.fitScale);
-    result.mapScale=result.fitScale*result.zoom;
+    // Display the adopted view exactly. Interactive zoom mutations apply their
+    // bounds separately; clamping here moves edit pixels away from rendering.
+    result.zoom=result.mapScale/result.fitScale;
     result.originX=source.translateX-source.scale*source.centerLongitude/DegreesPerRadian+metrics.minX*result.mapScale;
     result.originY=source.translateY+source.scale*source.centerLatitude/DegreesPerRadian-metrics.maxLatitude*result.mapScale;
     result.panX=result.originX-(source.viewportWidth-metrics.mapWidth*result.mapScale)/2;
