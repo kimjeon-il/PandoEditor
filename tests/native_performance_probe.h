@@ -362,7 +362,12 @@ static void runNativePerformanceProbe()
         result["contentEditActive"]=editor.contentEditState().value("active").toBool();
         return result;
     };
-    bool inputAssociationFailed=false;
+    bool inputAssociationFailed=false;QString lastStepFailure;
+    const auto stepFailure=[&](const QString& message) {
+        inputAssociationFailed=true;lastStepFailure=message;
+        journal.write(QJsonDocument(QJsonObject{{"event","step-failure"},{"elapsedMs",double(clock.elapsed())},{"message",message}}).toJson(QJsonDocument::Compact)+'\n');journal.flush();
+        return false;
+    };
     const auto input=[&](int kind,const std::function<void()>& action,const std::function<bool()>& ready=std::function<bool()>{}) {
         phase.store(kind);
         const auto before=currentState();
@@ -430,18 +435,16 @@ static void runNativePerformanceProbe()
     const QPoint panStart=map->mapToScene({960,464.5}).toPoint();
     QJsonArray scenarios,cycles;
     QString activeFixture="world-standard";
-    const auto loadFixture=[&](const QString& id) {
-        phase.store(-1);
-        const auto fixture=fixtureContracts.value(id);
-        if(id!=activeFixture){
-            QVERIFY(editor.openFile(QUrl::fromLocalFile(fixtureProjects.value(id))));
-            ++projectGeneration;
-            activeFixture=id;
+    const auto loadFixture=[&](const QString& id)->bool {
+        phase.store(-1);const auto fixture=fixtureContracts.value(id);
+        if(id!=activeFixture) {
+            if(!editor.openFile(QUrl::fromLocalFile(fixtureProjects.value(id))))return stepFailure("Fixture open failed: "+id);
+            ++projectGeneration;activeFixture=id;
         }
         const auto envelope=nativePerfJsonFile(QFileInfo(manifestPath).dir().filePath(fixture.value("viewPath").toString()));
         const auto view=envelope.value("view").toObject().toVariantMap();
-        QVERIFY(!view.isEmpty());QVERIFY(editor.setProjectionMode(view.value("projection").toString()));QVERIFY(editor.publishMapView(view));
-        QTest::qWait(1000);
+        if(view.isEmpty()||!editor.setProjectionMode(view.value("projection").toString())||!editor.publishMapView(view))return stepFailure("Fixture view failed: "+id);
+        QTest::qWait(1000);return true;
     };
     const auto pan=[&](int kind,int count) {
         QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,panStart,0);
@@ -455,44 +458,62 @@ static void runNativePerformanceProbe()
             QCoreApplication::sendEvent(window,&wheel);
         });
     };
-    const auto clickItem=[&](const QString& name) {
-        auto* item=navigationItem(window->contentItem(),name);QVERIFY2(item,qPrintable("Missing actual QML input target: "+name));
-        QVERIFY(item->isVisible());QVERIFY(item->isEnabled());
-        QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,item->mapToScene({item->width()/2,item->height()/2}).toPoint(),0);
+    const auto clickItem=[&](const QString& name)->bool {
+        auto* item=navigationItem(window->contentItem(),name);
+        if(!item||!item->isVisible()||!item->isEnabled())return stepFailure("Missing/hidden/disabled actual QML input target: "+name);
+        navigationEnsureVisible(item);
+        QRectF rect(item->mapToScene(QPointF()),QSizeF(item->width(),item->height()));
+        for(auto* parent=item->parentItem();parent;parent=parent->parentItem())if(parent->clip())
+            rect=rect.intersected(QRectF(parent->mapToScene(QPointF()),QSizeF(parent->width(),parent->height())));
+        rect=rect.intersected(QRectF(QPointF(),QSizeF(window->size())));
+        if(rect.isEmpty())return stepFailure("Actual QML input target clipped: "+name);
+        QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,rect.center().toPoint(),0);return true;
     };
-    const auto projectionInput=[&](int kind,const QString& mode) {
-        clickItem("mapDisplayButton");QCoreApplication::processEvents();clickItem("viewProjectionMenu");QCoreApplication::processEvents();
-        input(kind,[&]{clickItem(mode=="globe"?"projectionGlobeButton":"projectionFlatButton");});
-        QTest::keyClick(window,Qt::Key_Escape,Qt::NoModifier,0);QTest::keyClick(window,Qt::Key_Escape,Qt::NoModifier,0);
+    const auto projectionInput=[&](int kind,const QString& mode)->bool {
+        const auto target=mode=="globe"?QString("projectionGlobeButton"):QString("projectionFlatButton");
+        // Existing navigation opens real popup routes and settles their layout;
+        // preparation is outside the measured final pointer click.
+        enterExistingControlRoute(window,target);
+        input(kind,[&]{clickItem(target);});
+        if(inputAssociationFailed||editor.projectionMode()!=mode)return stepFailure("Projection pointer input failed: "+mode);
+        QTest::keyClick(window,Qt::Key_Escape,Qt::NoModifier,0);QCoreApplication::processEvents();
+        QTest::keyClick(window,Qt::Key_Escape,Qt::NoModifier,0);QCoreApplication::processEvents();return true;
     };
-    const auto selectAt=[&](int kind,const QJsonArray& point) {
-        QCOMPARE(point.size(),2);const auto p=map->mapToScene(QPointF(point[0].toDouble(),point[1].toDouble())).toPoint();
+    const auto selectAt=[&](int kind,const QJsonArray& point)->bool {
+        if(point.size()!=2)return stepFailure("Missing immutable selection point");
+        const auto p=map->mapToScene(QPointF(point[0].toDouble(),point[1].toDouble())).toPoint();
         input(kind,[&]{QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,p,0);});
-        QVERIFY(!editor.selectedId().isEmpty());
+        return !inputAssociationFailed&&!editor.selectedId().isEmpty()||stepFailure("Actual selection pointer failed");
     };
-    const auto previewCancel=[&] {
+    const auto previewCancel=[&]()->bool {
         const auto contract=inputContracts.value("editing-heavy").value("editingPreviewCancel").toObject();
-        QVERIFY2(!contract.isEmpty(),"Missing immutable editing preview/cancel pointer contract");
+        if(contract.isEmpty())return stepFailure("Missing immutable editing preview/cancel contract");
         const auto before=editor.documentBytes();
-        selectAt(12,contract.value("selectionScreen").toArray());
-        clickItem("objectActionsTab");QCoreApplication::processEvents();
+        if(!selectAt(12,contract.value("selectionScreen").toArray()))return false;
+        const auto expectedEntity=contract.value("selectionEntityId").toString();
+        if(!expectedEntity.isEmpty()&&editor.selectedId()!=expectedEntity)return stepFailure("Editing fixture selection identity mismatch");
+        enterExistingControlRoute(window,"editorGeometryAction");
         input(12,[&]{clickItem("editorGeometryAction");});
-        QVERIFY(editor.geometryEditState().value("active").toBool());
+        if(inputAssociationFailed||!editor.geometryEditState().value("active").toBool())return stepFailure("Actual geometry edit pointer failed");
         const auto from=contract.value("dragFrom").toArray(),to=contract.value("dragTo").toArray();
-        QCOMPARE(from.size(),2);QCOMPARE(to.size(),2);
+        if(from.size()!=2||to.size()!=2)return stepFailure("Missing immutable drag points");
         const auto a=map->mapToScene(QPointF(from[0].toDouble(),from[1].toDouble())).toPoint();
         const auto b=map->mapToScene(QPointF(to[0].toDouble(),to[1].toDouble())).toPoint();
+        input(12,[&]{QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,a,0);});
+        if(inputAssociationFailed||editor.geometryEditState().value("selectedVertex").toInt()<0)return stepFailure("Actual vertex selection failed");
         QTest::mousePress(window,Qt::LeftButton,Qt::NoModifier,a,0);
-        for(int step=1;step<=8;++step)input(12,[&]{QTest::mouseMove(window,a+(b-a)*step/8,0);});
-        QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,b,0);
+        for(int step=1;step<=8&&!inputAssociationFailed;++step)input(12,[&]{QTest::mouseMove(window,a+(b-a)*step/8,0);});
+        input(12,[&]{QTest::mouseRelease(window,Qt::LeftButton,Qt::NoModifier,b,0);});
+        if(inputAssociationFailed)return false;
         input(12,[&]{clickItem("geometryPreview");},[&]{return editor.geometryEditState().value("previewReady").toBool();});
-        QVERIFY(editor.geometryEditState().value("previewReady").toBool());
+        if(inputAssociationFailed||!editor.geometryEditState().value("previewReady").toBool())return stepFailure("Actual geometry preview failed");
         input(12,[&]{clickItem("geometryCancel");});
-        QVERIFY(!editor.geometryEditState().value("active").toBool());QCOMPARE(editor.documentBytes(),before);
+        if(inputAssociationFailed||editor.geometryEditState().value("active").toBool()||editor.documentBytes()!=before)return stepFailure("Preview cancellation changed canonical document");
+        return true;
     };
     for(int kind=0;kind<ids.size();++kind){
         const QString fixtureId=kind==14?"large-project":kind==8||kind==9||kind==12?"dense-view":"world-standard";
-        loadFixture(fixtureId);
+        QVERIFY2(loadFixture(fixtureId),qPrintable(lastStepFailure));
         if(kind==3||kind==4)QVERIFY(editor.setProjectionMode("globe"));
         if(kind==10||kind==11)QVERIFY(editor.setTerrainMode("color"));
         phase.store(kind);const auto started=clock.elapsed();
@@ -500,7 +521,7 @@ static void runNativePerformanceProbe()
         else if(kind==1||kind==3||kind==9||kind==12||kind==14)pan(kind,120);
         else if(kind==2||kind==4)zoom(kind,90);
         else if(kind==10||kind==11)zoom(kind,90,kind==11,true);
-        else if(kind==5)for(int i=0;i<20;++i)projectionInput(kind,i%2?"flat":"globe");
+        else if(kind==5)for(int i=0;i<20;++i)QVERIFY2(projectionInput(kind,i%2?"flat":"globe"),qPrintable(lastStepFailure));
         else if(kind==6){
             QVector<QPair<QPoint,QString>> targets;QSet<QString> found;
             for(int y=140;y<800;y+=90)for(int x=500;x<1450;x+=90){const auto hit=editor.pickObjectScreen(x,y,map->property("zoom").toDouble());const auto id=hit.value("id").toString();if(hit.value("domain").toString()=="territorial"&&!found.contains(id)){found.insert(id);targets.append({map->mapToScene(QPointF(x,y)).toPoint(),id});}}
@@ -528,9 +549,9 @@ static void runNativePerformanceProbe()
     const auto repeatStart=clock.elapsed();int cycle=0;
     repeatPhase.store(true);
     while(clock.elapsed()-repeatStart<repeatMs){
-        const auto started=clock.elapsed();loadFixture("dense-view");phase.store(12);pan(12,120);zoom(12,90);
-        projectionInput(12,"globe");pan(12,120);zoom(12,90);projectionInput(12,"flat");
-        loadFixture("editing-heavy");phase.store(12);previewCancel();loadFixture("dense-view");phase.store(12);
+        const auto started=clock.elapsed();QVERIFY2(loadFixture("dense-view"),qPrintable(lastStepFailure));phase.store(12);pan(12,120);zoom(12,90);
+        QVERIFY2(projectionInput(12,"globe"),qPrintable(lastStepFailure));pan(12,120);zoom(12,90);QVERIFY2(projectionInput(12,"flat"),qPrintable(lastStepFailure));
+        QVERIFY2(loadFixture("editing-heavy"),qPrintable(lastStepFailure));phase.store(12);QVERIFY2(previewCancel(),qPrintable(lastStepFailure));QVERIFY2(loadFixture("dense-view"),qPrintable(lastStepFailure));phase.store(12);
         QVERIFY2(!inputAssociationFailed,"Long-run input-to-render association failed; raw states retained in journal");
         while(clock.elapsed()-started<60000)QTest::qWait(100);
         const auto resource=editor.terrainDataStatus(),quality=editor.renderQuality();
