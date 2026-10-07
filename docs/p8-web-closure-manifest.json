@@ -2,7 +2,7 @@
   "schema": "pandoeditor-p8-web-closure",
   "version": 1,
   "generatedAtUtc": "2026-10-06T14:04:23.651066+00:00",
-  "status": "AUTHORED_OR_CHECKPOINTED_CURRENT_AGGREGATE_EXECUTION_PENDING",
+  "status": "SCOPED_EXCHANGE_PASS_FINAL_USER_INTERRUPTED_FULL_ACCEPTANCE_BLOCKED",
   "auditStatus": "ORIGINAL_COMPLETE_GIT_AUDIT_PRESERVED_CURRENT_MAPPING_PENDING_ACCEPTANCE",
   "nativeBaseline": {
     "repository": "D:\\dev\\worktrees\\p1-p8-m98\\Pandoeditor(App)",
@@ -12,8 +12,8 @@
     "upcomingMergeStatus": "MERGED_PREREQUISITE_BASE_ESTABLISHED",
     "noSourceEditsByThisAudit": true,
     "originalAuditCommit": "a751d5f16da6b604d95435c9a29adef7a2f3ab38",
-    "headAtCurrentMapping": "03f7d9e2fd07cbca4942ab1d9870afa1922f3a83",
-    "finalCandidateCommit": null,
+    "headAtCurrentMapping": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+    "finalCandidateCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
     "currentMapping": "currentImplementationMapping"
   },
   "web": {
@@ -432,12 +432,12 @@
     "version": 1,
     "generatedAtUtc": "2026-10-07T07:41:12.061376+00:00",
     "currentBaseCommit": "2e65cf9f4a1d29e01d406029de60c5c9ff0b6eb5",
-    "mappingHeadCommit": "e01f0e6f2383022017ad947eb18d1a4269e2eee3",
+    "mappingHeadCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
     "workingTreeDirty": false,
-    "finalCandidateCommit": "e01f0e6f2383022017ad947eb18d1a4269e2eee3",
-    "status": "SELECTED_EXECUTED_CHECKPOINT_FULL_ACCEPTANCE_FAIL_BLOCKED",
+    "finalCandidateCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+    "status": "SCOPED_EXCHANGE_PASS_FINAL_DEVICE_USER_INTERRUPTED_FULL_ACCEPTANCE_BLOCKED",
     "finalAcceptance": false,
-    "reviewScope": "Earlier independent reviews do not cover subsequent root changes; final independent review NOT_RUN",
+    "reviewScope": "Scoped independent root-authored stroke/terrain/input/parent fixes reviewed; original reviewer-authored catalog only peer inspected; final report review NOT RUN at user stop",
     "historicalProvenance": {
       "originalNativeAuditBaseline": "a751d5f16da6b604d95435c9a29adef7a2f3ab38",
       "immutableSections": [
@@ -474,10 +474,11 @@
         "tests": [
           "tests/physical_data_store_tests.cpp",
           "tests/terrain_land_mask_tests.cpp",
-          "tests/terrain_gpu_display_tests.cpp"
+          "tests/terrain_gpu_display_tests.cpp",
+          "tests/terrain_official_pixel_tests.cpp"
         ],
         "behavior": "Verified physical inventory; lossless raw DEM plus tint and raster channel math; independent semantic physical land mask including hidden General ownership and excluding Regional geometry; actual sampler output.",
-        "state": "SCOPED_NATIVE_AND_DEVICE_CHECKPOINT_PASS",
+        "state": "SCOPED_ORIGINAL_DEM_RASTER_16_PHASES_64_PIXELS_PASS",
         "finalAcceptance": false,
         "review": "SOURCE_MAPPING_ONLY"
       },
@@ -514,7 +515,7 @@
           "tests/terrain_controller_display_tests.cpp"
         ],
         "behavior": "Separate CPU/upload/submission/display states, full scope and exact draw inventory authentication, geographic fallback coverage, immutable content backings, required base/tint reserve, display receipt adoption and release acknowledgement.",
-        "state": "SCOPED_LIFECYCLE_AND_RETAINED_DEVICE_CHECKPOINT_PASS",
+        "state": "SCOPED_STATE_CONTROLLER_OWNER_MUTANTS_PASS_ZERO_DEFERRED_CONTROLLER_EDGE_NOT_RUN",
         "finalAcceptance": false,
         "review": "SOURCE_MAPPING_ONLY"
       },
@@ -530,7 +531,7 @@
           "tests/terrain_grid_mesh_tests.cpp"
         ],
         "behavior": "Actual isolated native semantic mutation rejection, stale/cancel/retirement regressions and retained tile grid geometry.",
-        "state": "SCOPED_REAL_MUTATIONS_AND_DEVICE_CHECKPOINT_PASS",
+        "state": "SCOPED_STATE_CONTROLLER_OWNER_MUTANTS_PASS_ZERO_DEFERRED_CONTROLLER_EDGE_NOT_RUN",
         "finalAcceptance": false,
         "review": "SOURCE_MAPPING_ONLY"
       },
@@ -608,16 +609,28 @@
           "core/src/commands.cpp",
           "app/defaultflagresolver.cpp",
           "ui/common/HistoricalLibraryPanel.qml",
-          "ui/common/HistoricalOwnershipSetup.qml"
+          "ui/common/HistoricalOwnershipSetup.qml",
+          "renderer/stroketopology.h",
+          "renderer/scenegraph/mapscenenode.cpp",
+          "renderer/shaders/stroke.vert",
+          "renderer/shaders/stroke.frag"
         ],
         "tests": [
           "tests/territorial_library_catalog_tests.cpp",
-          "tests/territorial_catalog_controller_tests.cpp"
+          "tests/territorial_catalog_controller_tests.cpp",
+          "tests/stroke_pixel_tests.cpp",
+          "tests/stroke_topology_probe.cpp",
+          "tools/stroke-topology-parity.mjs"
         ],
-        "behavior": "Canonical v2 262 lineages / 284 entities / 287 versions; alive/date-only search and strict version gaps; lazy verified chunks; current project/source guards; fresh instance/archive identity, batch-only source-parent resolution, names/flags/source metadata and one atomic replacement Undo. Authored source is not independently reviewed here by its author.",
-        "state": "PARTIAL_EXECUTED_CATALOG_PERIOD_EXCHANGE_VISUAL_REVIEW_PENDING",
+        "behavior": "Canonical v2 262 lineages / 284 entities / 287 versions; alive/date-only search and strict version gaps; lazy verified chunks; current project/source guards; fresh instance/archive identity, batch-only source-parent resolution, names/flags/source metadata and one atomic replacement Undo. Authored source is not independently reviewed here by its author. Connected stroke/caps/joins/dash/AA and current horizon inventory fixed; deep ownership choices now match fixed Web. Original full Web framebuffer remains unobserved.",
+        "state": "SCOPED_FINAL_CATALOG30_EXCHANGE16_RENDER_CHECKPOINT_PASS_FULL_DATA_BLOCKED",
         "finalAcceptance": false,
-        "review": "SOURCE_MAPPING_ONLY"
+        "review": "SOURCE_MAPPING_ONLY",
+        "followupCommits": [
+          "30803de",
+          "cf4fc8d",
+          "893e361"
+        ]
       },
       {
         "id": "M98",
@@ -633,732 +646,704 @@
         "tests": [
           "tools/native-performance-summary.test.mjs"
         ],
-        "behavior": "Opt-in native production telemetry and raw receipt summarization authored; immutable four-fixture manifests, scenario runs, long runs, repeated distributions and final budget/closure acceptance pending.",
-        "state": "THREE_DIAGNOSTICS_EXECUTED_ASSESSMENT_FAIL_FULL_DATA_BLOCKED",
+        "behavior": "Production restore telemetry/new pinned v3 prepared inputs/readiness deadline implemented. Three predecessor691 diagnostics completed FAIL; final893 run1 partial, runs2/3 and final aggregate NOT RUN at explicit user stop.",
+        "state": "FINAL_USER_INTERRUPTED_PREDECESSOR_THREE_DIAGNOSTICS_FAIL_FULL_DATA_BLOCKED",
         "finalAcceptance": false,
-        "review": "SOURCE_MAPPING_ONLY"
+        "review": "SOURCE_MAPPING_ONLY",
+        "followupCommits": [
+          "5a7bd53",
+          "691ca18"
+        ]
       }
     ],
     "sourceSnapshot": {
       "app/CMakeLists.txt": {
-        "workingBytes": 83988,
-        "workingSha256": "0ea62f95e08a09de94d238c475f78d76c5b98b09eb425f27caa86a427551a483",
-        "headGitBlob": "64dd47ad2aaa5b4ba477a87673709a8a4f664ed4",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 85264,
+        "workingSha256": "fcc21fa6d7464c5f1e67ea70cc43fd6b08683eea08c61e9aba1f7a34ba4904df",
+        "headGitBlob": "891740ae7cdd454255e9673f7d92bca9b3c4c53f",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/commandjobrunner.cpp": {
         "workingBytes": 8382,
         "workingSha256": "94e7570c4539cc203cafe7c7ae04be75cc76e2c2822486e13565355086ccd44a",
         "headGitBlob": "0ed8c85f4a67ada2e2aabd71d83ad1453a7be7dc",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/defaultflagresolver.cpp": {
         "workingBytes": 4733,
         "workingSha256": "bb7c230bac8a56b6c1d3df62363b569db17e85dfd4fbe4cb51eefcc41a3c5538",
         "headGitBlob": "3161d660c4c979a441d2510bbdda99606273d5e1",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/editorcontroller.cpp": {
-        "workingBytes": 74026,
-        "workingSha256": "4d1cb80c4bcd94b720ec8045a110ea075f3729c3734061ef231422f998695975",
-        "headGitBlob": "83382f9fcf8902726cf452b3179d269eeba7446d",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 74514,
+        "workingSha256": "fbc6faa25e4037ecef4940afb211d9047a4b58138123f9568c1859de7fd1c971",
+        "headGitBlob": "8501da26ea66e108a921316754f0fae068e93ae2",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/editorhistorical.cpp": {
-        "workingBytes": 36617,
-        "workingSha256": "54b896517258b2aa9d8e15e6a50c19b164cb383d2f7778a22b6933b4e5ae313e",
-        "headGitBlob": "07e62ef19dac7b85d1cbed7115ff0b37945715bb",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 37793,
+        "workingSha256": "339531df345542bbf24e15bf9de165d6e8c7a54eef4ded80c971a73f66bfce84",
+        "headGitBlob": "75612c6c83db86cd7b48d504e186403e4688526c",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/editorpicking.cpp": {
         "workingBytes": 6220,
         "workingSha256": "6a28501e556dfb24a4e79147ac2adf81ff76f99321813f44fc757e576e153a2f",
         "headGitBlob": "c8cd0a2c224e9954abc9776c7ecd4e880018806f",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/editorplace.cpp": {
         "workingBytes": 8807,
         "workingSha256": "9ea614b3b31552a170a8dccba1db7f43fb3e76401f56581b6e4fa4c15477d942",
         "headGitBlob": "5241e48fbea299e134cea17275aefded09ef8b4d",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/editorpresentation.cpp": {
-        "workingBytes": 50519,
-        "workingSha256": "ea3abc11276a97ba09f82e556ee86473f639023d48e9f764dde5a944f7568f68",
-        "headGitBlob": "3cab125b607425cef05e71cecdad53df74b78bd2",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 50787,
+        "workingSha256": "e08b462e9399da2e9aa9f3538197e8126a1798f488b55bf138433c741a184710",
+        "headGitBlob": "03cf8b335be18955f110fd8aef8a1494aac1c8cf",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/editorproperties.cpp": {
         "workingBytes": 16181,
         "workingSha256": "af27cd237e5f625f6d4d25f463e8e6c0c9aba10553d7439c8427efb90706725d",
         "headGitBlob": "54edbf3eb7049dc2cb38aeb43a8f820d3888143b",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/editorselection.cpp": {
         "workingBytes": 22205,
         "workingSha256": "3f7623a18f060dfbfa3d4a03e68eec5ed6674c492b906045cf031d15399af7e9",
         "headGitBlob": "044972aff95e98b8e55f2fc75c4ed9ac755e6410",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/editorview.cpp": {
         "workingBytes": 12438,
         "workingSha256": "7e8a2fe6377f6127293ec46f2541c6d453c1bdc416aea3137b2c5733495c5d21",
         "headGitBlob": "92e8bebc2e4756799102f4006edc1226aa9793e6",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/gisdocumentexport.cpp": {
         "workingBytes": 9305,
         "workingSha256": "d601059b528cdcfdb3c3082014486e3e245f49a4a5c292a8bdedff4e735588aa",
         "headGitBlob": "95fdb66d88c6e3bcf847204aa12e8ed34bbd1f03",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/gisgeopackagewriter.cpp": {
         "workingBytes": 12022,
         "workingSha256": "81e01d3d0b1991c62f9c34d14247097b998c3f27fcf18876c9a6b8c365a44137",
         "headGitBlob": "39f74ce8f5d1c9a10aaa703960df77e58b02d316",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/historicaltransaction.cpp": {
         "workingBytes": 11088,
         "workingSha256": "9e0eeff55a1daa65f63047e143880096c48de3496975fae4d59310e315714cd1",
         "headGitBlob": "08a09f830eb592263b3b01626fe7bad319917fa3",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/nativeperformancemetrics.h": {
-        "workingBytes": 3022,
-        "workingSha256": "f67e5f6d0062f224072e2b60fee1c205d6d2b3fd91ea6a0014aa1627cf7428d2",
-        "headGitBlob": "8f00730d81aa4c3c67b9c0ab5628922cef1013a2",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 3137,
+        "workingSha256": "5de945055541e868a9ce8eb9936db873912400516adc28916f378cf59af9c860",
+        "headGitBlob": "6e42f22efd101a1f4de8592325c5856b06e30ba1",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/physicaldatastore.cpp": {
         "workingBytes": 11356,
         "workingSha256": "12f3e533ad024fde891bc6856df0cdb9b8e7204d69fac2ef593d94e1abb69e7f",
         "headGitBlob": "27c895d55c7b10e311a2c1c697de67659e0a3500",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/placeruntimeprovider.cpp": {
         "workingBytes": 11913,
         "workingSha256": "e4bbf16736bac50a78d24b4bdbd32d7ddb1628302dc149e0dba362fa14917941",
         "headGitBlob": "c1de167cb21744f81a284d8ecae1036264d3944c",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/placeruntimestore.cpp": {
         "workingBytes": 24827,
         "workingSha256": "4175f1a96f2e28dbf377db60d98e28f3eced092dc34a9b5c246e2fa37bc39f53",
         "headGitBlob": "9d5d555317b5dc95c59c0d2ffbd9d0c3d2b88060",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/projectcodec.cpp": {
         "workingBytes": 77169,
         "workingSha256": "80b3b8d4ef1ba4474455868c6ef7b8903eeed65b4681e76b305698d426c1f818",
         "headGitBlob": "127a19df0097eb77fb1b9106e454a43809eb7deb",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/terraindisplaystate.h": {
-        "workingBytes": 24964,
-        "workingSha256": "922bf4cc83d04b47ed952394bba5b8281c77d8b96a7441e5fd0fa86079752d90",
-        "headGitBlob": "47400635b2b5945af6bd702ac5fe264fd29eb624",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 26129,
+        "workingSha256": "022b3240a9397b035f72c84c0f73f88e60f7891e7f1b489cfb4135d1098424a7",
+        "headGitBlob": "1659c96d10f5573b298e4bd432818c521e570263",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/terrainimageprovider.cpp": {
         "workingBytes": 9368,
         "workingSha256": "78056bf8f308a72beff42460aca148856d33576a3748ab2e52137669a79275e5",
         "headGitBlob": "bdb4706ca43233192ec762e4ad640a6e358fcc46",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/territorialcatalogadapter.cpp": {
         "workingBytes": 8398,
         "workingSha256": "71393bf681661d6cce46dff525856e93d11aef0583f7212f23e72130ecc4a92d",
         "headGitBlob": "a5779f53bbbb0e3fcb0f1703ce07c39f543b57f1",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/territoriallibrarycatalog.cpp": {
         "workingBytes": 22763,
         "workingSha256": "4bc0df5515b253f2b46494af7a58139ec4fde2c7fc45efa084f4d2cd392f9db8",
         "headGitBlob": "a5f517ed6867be33dac5b1a9569afe6a480447fe",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "app/worldbootstrap.cpp": {
         "workingBytes": 16855,
         "workingSha256": "d6269341f0f96de9b360edd957ad22741099bb5184faf5828e3b71654b0167a1",
         "headGitBlob": "3192d5e137bfcc2139f94c1cb3a9693c630025a7",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "assets/place/manifest.json": {
         "workingBytes": 108,
         "workingSha256": "148660b93529a60640f6a340117f976a7e2822ab8f34fa1814023920fc82f4b7",
         "headGitBlob": "03871489b601b2e1bc0900aec0116ab938ab6936",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "core/include/pandoeditor/commands.h": {
         "workingBytes": 7715,
         "workingSha256": "195723cf227bd3bf9b445f5a8a2d198400c0d2da283282c91b2d143a21f51326",
         "headGitBlob": "b3c230c8d1a97cb6832ac5e281fd654706583a98",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "core/include/pandoeditor/document.h": {
         "workingBytes": 8836,
         "workingSha256": "38c877b2fc5d1366483c5a635c95e084ac32bf23d19c012738392d7f9428169f",
         "headGitBlob": "a42bc90b6bbd37f8499ee425792bad91227f19b4",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "core/include/pandoeditor/historicalinstantiation.h": {
         "workingBytes": 3153,
         "workingSha256": "57e88f34f8337fa2b1f25f668e83a21a5c28ef79940f4f0a057cc6954b7b332f",
         "headGitBlob": "16794057b18ccdd71a8680efcf94c6a46a91b0e6",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "core/src/commands.cpp": {
         "workingBytes": 107431,
         "workingSha256": "38d087861740fff2f0ded2522e844c91962a8114df9ff1f6cf35b2a19279f094",
         "headGitBlob": "102ab59c2ca9813f811264bf1c6b5ff19dde4d65",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "core/src/content.cpp": {
         "workingBytes": 9656,
         "workingSha256": "a53ba34dc34708c0651b6e6e34838de75f57d9a8b7af92d167baa953eb0320a2",
         "headGitBlob": "8a8516e09d80b90d7982e7c85815320ca04b19e5",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "core/src/historicalinstantiation.cpp": {
         "workingBytes": 14064,
         "workingSha256": "1e3b4b3f1edc0edeb060c75898477d822c63be5e7a2a99900e98ebc5c8fcc574",
         "headGitBlob": "c57cf27667b167c477cd840988c989716766e179",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "engine/include/pandoeditor/map/renderscene.h": {
         "workingBytes": 3481,
         "workingSha256": "de926581e2271b28b82d2c322165d959ac13a073b863fbacc3970295bda775a0",
         "headGitBlob": "41bb74cc0861a737629eabd092a3c8e193b4e04f",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "engine/src/labelengine.cpp": {
         "workingBytes": 27167,
         "workingSha256": "93e086fb9614d1924baba4768619c3a96a92cf3855c6e62ae4698f0b27cdd58f",
         "headGitBlob": "7716f7452cda0656667267a42f7262bebd48f923",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "engine/src/mapcamera.cpp": {
         "workingBytes": 11015,
         "workingSha256": "5cb8b6ca5c8dc593581e251bacda4af74031fea3c9be8511e85a7cd29189c4a4",
         "headGitBlob": "253b0c00814a73b79e165ab0d2c2d1883873a4bd",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "engine/src/mapscenebuilder.cpp": {
-        "workingBytes": 43687,
-        "workingSha256": "59432c9f97a003ed79bf51aef7dcd940c672cd058185fe0bd82069285293acf0",
-        "headGitBlob": "93eb43d67e66f0a57c7734ba566e8266a59f949d",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 44437,
+        "workingSha256": "cab0c6b1c9ecf7b19ffa211c2ea49083554241751b2dc06e35b0f43bc5e90485",
+        "headGitBlob": "0226a71d2190dc6725c57ab8b81ef7bef7f28649",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "renderer/mapprojection.cpp": {
         "workingBytes": 6013,
         "workingSha256": "a2c728affb5d8d9ab6433f0cf9225232ee828faa27b40b3a7354a15c87522168",
         "headGitBlob": "e2563e916fb60685484d95b0c9ece554305695d1",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "renderer/scenegraph/terrainmaterial.cpp": {
         "workingBytes": 5528,
         "workingSha256": "99adc857d94f9459be6647c9803f02762c9d34f8bf4c0d86920b9193afa24d8b",
         "headGitBlob": "7fb2f867f447530ed23b8e63587f009f88e8c7b8",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "renderer/shaders/terrain.frag": {
         "workingBytes": 5842,
         "workingSha256": "08f1df24b01532df15e8ff2b9b327bc0e6e0df45db6cd7a04e727031f45e95d4",
         "headGitBlob": "6977acef926edc344569968193304c603b03bbcf",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "renderer/terraingridmesh.h": {
         "workingBytes": 1609,
         "workingSha256": "d8a5a4599c9f3dfbf09624ef4394e6a97b5bba32c4f0093164a338ba006800e7",
         "headGitBlob": "514ca6a9861227b53759ac494d903c220f10c4ca",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "renderer/terrainlandmaskitem.cpp": {
         "workingBytes": 17411,
         "workingSha256": "bf66790344215146bb37ff864d09e1b7b8b54cac15339fc092a717002e688c66",
         "headGitBlob": "a5f731a7b4e7e7d32cab1d075e66ba5b963435ed",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "renderer/terrainlayeritem.cpp": {
         "workingBytes": 14398,
         "workingSha256": "86669816c8890520befc7af2e83b2f0de903ea30b8786f927e4642b260b42a43",
         "headGitBlob": "461fb29cb535181cef5c618d03ff573c8b77cfb8",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "renderer/terrainprovider.cpp": {
         "workingBytes": 22757,
         "workingSha256": "1963f1b5d62a56b4949bf69b8f48bb67c3a1ed9741a8be3fb01951db8577b397",
         "headGitBlob": "c15b048ea598dc62bb7c10838c6538534de417ef",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "renderer/terrainrendercontract.h": {
         "workingBytes": 1162,
         "workingSha256": "24acc6bb4431870ee6f3400912c4607bfd7bb746e22866be48bd44cb1346a5b2",
         "headGitBlob": "ba59f0497a8f478e6eb23e8331a4e60044bbbaf5",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "renderer/terrainrenderowner.cpp": {
         "workingBytes": 26979,
         "workingSha256": "6a1ed6e64f762b6e18f8acc4fe73e0b6ee1328c6cef52e0d7e5f772f382ab3d4",
         "headGitBlob": "0f7ec4478b55bc8a2668a188a6be064a8b8a7e9a",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/m72_mapprojection_lifetime_tests.cpp": {
         "workingBytes": 2965,
         "workingSha256": "42132a0c24ee08bebfed70f6a9022b47ec4b870c85d87a73002d7aaa8b949eb7",
         "headGitBlob": "954d7b73103e2b97b9d05831d80d522486f84dcb",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/native_performance_input_state.h": {
         "workingBytes": 917,
         "workingSha256": "5268f2e1a8698a3e8bba90c3d71780f22539f87100356d9d5428be384c79ff52",
         "headGitBlob": "dd391adf7a9d57a45b8da8c414cd6e62cb04fc03",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/native_performance_probe.h": {
-        "workingBytes": 50637,
-        "workingSha256": "d80ed475bebcbd1eb2a00fdf50edd84643e08bcc5a6799865fbb04c99b4bf9f9",
-        "headGitBlob": "c2b2d3c4a7039e7945f3d9008df8aeb90fd4915d",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 53067,
+        "workingSha256": "b939b1f23c16683dc77bb776d5197bcbe3347e7fbb4447886f0da2cfdfc4fa35",
+        "headGitBlob": "80d31ca600febe85b7ec344d6e1d7127f11dc61c",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/physical_data_store_tests.cpp": {
         "workingBytes": 12123,
         "workingSha256": "4891f1b2df6174b7b80d14130daf343702b77326e6c07482ed8bd70ac2e3bd55",
         "headGitBlob": "705f884a3fc4ed891e96f1240a80db305e6c27bb",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/place_controller_tests.cpp": {
         "workingBytes": 9093,
         "workingSha256": "3aef31dad60348b912090317685f9f7e9b0426f77d45f5ad67bb0ea76993e0d6",
         "headGitBlob": "47139018a7effeac0b3cc0215d1632e0500260ce",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/place_parity_probe.cpp": {
         "workingBytes": 12857,
         "workingSha256": "e2ec2343a725ebfee1fc46e71f5ae2c0ca6857f860a23480d1dfe6bffd073c3c",
         "headGitBlob": "17e22387df7bdca7d5ec6b2b879978df2509a707",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/place_provenance_engine_tests.cpp": {
         "workingBytes": 15943,
         "workingSha256": "0c5618a7470fe9c9f2f05ff1cd3ae2de3e4f9bbc75278c2637c0f608208fbe1b",
         "headGitBlob": "d3efacaa4ba8a7e91fb96ab478fc6fb38078a1cd",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/place_runtime_provider_tests.cpp": {
         "workingBytes": 5463,
         "workingSha256": "2698a49c181ab5bb38161deee9cb3a2a1bfd69a7b6196c6d796de3b05ce000ca",
         "headGitBlob": "077edab5ce54a14344025880818cce9ad7cefe58",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/place_runtime_store_tests.cpp": {
         "workingBytes": 13963,
         "workingSha256": "537d02add6b2f7ac3e80feb26a7e39a0842d5999acb56389a4441e3b42e402d2",
         "headGitBlob": "5f4f169ae35b33398ac1276f206b726767b92390",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/terrain_controller_display_tests.cpp": {
-        "workingBytes": 6707,
-        "workingSha256": "dd26369530fd1b8e807687216ffecfc39a3e13a0b34b890ae090dc69abbdd278",
-        "headGitBlob": "b450e31f6d12932eac17445f5220174be504ba3f",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 7428,
+        "workingSha256": "ac4cf95ca2c31733daed5eadc3f46b5dc1292cf5c4b523eab0368aaa347eca26",
+        "headGitBlob": "5fc4dc6762eab1634aaa065dbb57c04af849348b",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/terrain_display_state_tests.cpp": {
-        "workingBytes": 30777,
-        "workingSha256": "8896e781bf968c8e21df4ee23dc1a68a7b183160f9ab3cc54b0f6ee542a1e76e",
-        "headGitBlob": "c45af7cf872f18584a64e1bb16776fa4435ced11",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 34302,
+        "workingSha256": "e4736b46cee67249a2889f3ca480e02691ee8985305e955b4fcbe3fcb060c06d",
+        "headGitBlob": "8428b87d127f1a512e279f0622aea787eb62e952",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/terrain_gpu_display_tests.cpp": {
         "workingBytes": 25853,
         "workingSha256": "6922dd034c85aacd130a530a56850f7d7dddd53b52f2ad706f22558f99f2755e",
         "headGitBlob": "91a1e749aa8776e2adde10871d1eb23b3cf4fb9b",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/terrain_grid_mesh_tests.cpp": {
         "workingBytes": 1917,
         "workingSha256": "d0ee07509c56bb2a741c71191297c2191aaad82c467f9398d2ec3190dcb95358",
         "headGitBlob": "c5dfd096b75f10c21b3dd01e4725c4c1ace3dc3d",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/terrain_land_mask_tests.cpp": {
         "workingBytes": 8159,
         "workingSha256": "e681fca74a5a09b24cc6a30af46e3cf22c3442fd1889b9dde3be7f93afd30c7c",
         "headGitBlob": "0417a16ed29ee05a212b0b4489bb7ed3f8324b4a",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/terrain_lod_demand_tests.cpp": {
         "workingBytes": 10862,
         "workingSha256": "7b9d441a6e026c09ad495353413d078c65ad8261e97f24209bf15162d84f0430",
         "headGitBlob": "3dc438c6788982b20c5156c9a406f6ca29aef384",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/terrain_render_owner_tests.cpp": {
         "workingBytes": 22141,
         "workingSha256": "1f128ad6e9b1d4052714bb575bcdacef05bd3d9a7d96896b688d99d03089231e",
         "headGitBlob": "14b25642c5cf323a7ade01e94534e3e95c757582",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/terrain_render_protection_tests.cpp": {
         "workingBytes": 12900,
         "workingSha256": "e52ab403b29867bea93b7060ee2b575d803de5173abea70dd422934509e03442",
         "headGitBlob": "1084a0dba5153c34d9f25261924ea336ba8cbf56",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/territorial_catalog_controller_tests.cpp": {
-        "workingBytes": 33409,
-        "workingSha256": "29be2c9a855ce692aac0067a1a45251542d5b35d8a678b1146a7ce30cb047d32",
-        "headGitBlob": "30f0320f74dfd8d100dc621623b9c2dcd323f413",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 35952,
+        "workingSha256": "08da7db17bca34c833d2fbb03c429d7fce705d1eba2b4f8f5866c688729447d7",
+        "headGitBlob": "67e3eda00fd1ff79440c824ac82782d7836c26e0",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/territorial_library_catalog_tests.cpp": {
         "workingBytes": 18809,
         "workingSha256": "73a592c907d727e1c9223716ce08ccacd3f047e82b9e0cc2635d1799654bcf38",
         "headGitBlob": "cc85118f2a3ca06456c7ca9485e7c11fb18eb7ec",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/ui_navigation.h": {
-        "workingBytes": 5013,
-        "workingSha256": "14258da83b529c5c9125e70e01cc629ef734d5d43e2954cfe029d168ce39dc9a",
-        "headGitBlob": "d25a5fd163552cc536f66a3a27fe4ee5b1a77102",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 7842,
+        "workingSha256": "9c3b617f925bdb31bc68f69b6e073130f1102c2e6f2ee7842752ef066b6cbceb",
+        "headGitBlob": "f84c7e133e158d569c6914ae63da213c2199833c",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tests/ui_tests.cpp": {
-        "workingBytes": 124904,
-        "workingSha256": "5c2b9363ec0291942dd7e15f753561ecea51b9e92638f7f2a293c20c418dcaad",
-        "headGitBlob": "d2f47482f3135181f40441e4b0f51eb04fb59a93",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 127479,
+        "workingSha256": "faf47ec14a81290d8e7f86e51742c2f5d125f69c3eb5ccff95af2a0010248ccf",
+        "headGitBlob": "9897c49d6808e09cabf775887ebb45d2cd762f98",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tools/native-performance-summary.test.mjs": {
         "workingBytes": 10932,
         "workingSha256": "9b3570077a94eae93b074042db06dca00620d8249cae217de80a548ecad3da22",
         "headGitBlob": "976a5b05342a7f3e74e90d5ba396a66e973a690e",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tools/place-runtime-contract/generate-fixtures.mjs": {
         "workingBytes": 4469,
         "workingSha256": "71b92e450fbe54130cbe434b9f33f6d5791df0c36f0359fd164470fa0a2d87d1",
         "headGitBlob": "141901b587a7eb3bec49cd8ee1cc2c6186dbc2ee",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tools/place-runtime-contract/native-parity.mjs": {
         "workingBytes": 13634,
         "workingSha256": "a35a68aa7b16a91e12f271061c53af7230f958a275351739ce9ad0ef36c48e1d",
         "headGitBlob": "322922dea9414ad266acc6efa44380f7a509a886",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tools/place-runtime-contract/oracle.test.mjs": {
         "workingBytes": 2688,
         "workingSha256": "e3a104df55fc0921133b7ec72f5a945180132b911a02c05c7769749e8cd2b6a6",
         "headGitBlob": "91cd08731f4dacdc686a5eb19004d1841384ab5d",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tools/run-native-performance.ps1": {
         "workingBytes": 11510,
         "workingSha256": "c93cad9325883d3c9920c6921a319886b40de2f0180006229d693e9798cbc3fc",
         "headGitBlob": "b0944be8f55b331151d43172958cb3b9bf298787",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tools/summarize-native-performance.mjs": {
         "workingBytes": 15227,
         "workingSha256": "54b54265ff1b4a924368ac5fc29b744018d4a48c7190a53ed587745daa5df52b",
         "headGitBlob": "4239c8c1cff7ea14044a698b983ac415c0fdbe70",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tools/terrain-display-state-mutations.py": {
-        "workingBytes": 20580,
-        "workingSha256": "b182f48e71c6881739cf60db6cce268405f1a90fe1b3fee767b0e9b66ca0cb31",
-        "headGitBlob": "f9a0c9d440aa364ed49683ffb95c906b46b7a533",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "workingBytes": 21561,
+        "workingSha256": "52b1cbf093da9febd5e393bd832e825f8697d1e543d4d7bbd5766f15092f4a3e",
+        "headGitBlob": "5f55e782d8274d1b414a37c6660ac4261ff898e5",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "tools/terrain-retained-device-mutations.py": {
         "workingBytes": 7022,
         "workingSha256": "8b3a56f6e09e16b5b937fc7619d183cbd93758b662f41848fbc42bd899cc83a8",
         "headGitBlob": "c3e3e84191bc337438e29bff7d5dbe20dc94df5c",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "ui/common/HistoricalLibraryPanel.qml": {
         "workingBytes": 14780,
         "workingSha256": "c2c818c53722648670026b797f5e40af3b616a3120f26b201362ae732a5a9057",
         "headGitBlob": "caf68fc38957112519037cd07545760241e222cc",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       },
       "ui/common/HistoricalOwnershipSetup.qml": {
         "workingBytes": 2841,
         "workingSha256": "f9e2623b28f181a6b181d8c22ec28a793f80bc3869386501d9812c25b587e37b",
         "headGitBlob": "149781a3124f9a61850e3edd419acbf95d9e0a0d",
-        "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
-        "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
+      },
+      "renderer/scenegraph/mapscenenode.cpp": {
+        "workingBytes": 38292,
+        "workingSha256": "2614adaded81bcf37f34d5b591705fdbf1da78d4de49944407e16cb76797e628",
+        "headGitBlob": "7ca975c8fd0ee9321d247a591d199dd2314154ed",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
+      },
+      "renderer/shaders/stroke.frag": {
+        "workingBytes": 1714,
+        "workingSha256": "daa499a6033c685a4d214956a987044ecaf99edb2555605fa620ee4a276fd5eb",
+        "headGitBlob": "a95905bfeaa67f585183c4fa168389ecf83c1c9f",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
+      },
+      "renderer/shaders/stroke.vert": {
+        "workingBytes": 3831,
+        "workingSha256": "21c6ac046a5461874290c62842ab913685f9f0c8de4fd9bd24b4868afe2fd4ba",
+        "headGitBlob": "dddde9d1014011bf898a48d4685aa5c8836dd8ad",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
+      },
+      "renderer/stroketopology.h": {
+        "workingBytes": 1692,
+        "workingSha256": "2ce16d24a6be017d8330539cc73ccf0fd1de191b599042ece56fc8827fe4f953",
+        "headGitBlob": "a28e6e27455f4c3c01a93e5c97adc623362df412",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
+      },
+      "tests/stroke_pixel_tests.cpp": {
+        "workingBytes": 8769,
+        "workingSha256": "0dad6596e8d604a12e034fd787c9b1dbe7d3c43c5f42393414059bd698ee5adc",
+        "headGitBlob": "3245e810ab09e18f8f5614baca4e59d8154ccc22",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
+      },
+      "tests/stroke_topology_probe.cpp": {
+        "workingBytes": 2308,
+        "workingSha256": "c36529bbc2edbdc6347cb5669ad3d4c6da26afbe5a1b6a09f99bdb8ae992d4b3",
+        "headGitBlob": "cef62898eb347518c18ec4e52c5eeb4960cf6ae0",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
+      },
+      "tests/terrain_official_pixel_tests.cpp": {
+        "workingBytes": 9700,
+        "workingSha256": "e84041c14136ee0e9363343d66f633a94cb9a691b3a7f2585118e22fbf6f2a64",
+        "headGitBlob": "ca788b75aa8dd69009468e3f78a5369613a45194",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
+      },
+      "tools/stroke-topology-parity.mjs": {
+        "workingBytes": 3038,
+        "workingSha256": "9bbcf2cae42f4ea895eaaa21e37d34afb65cef550d58a34520e2f12c99b85f13",
+        "headGitBlob": "78356223e82219d402b509d1abea1e2ecebbe662",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "executionStatus": "Snapshot only; actual source/evidence listed separately"
       }
     },
     "missingRequestedMappingPaths": [],
     "executedEvidence": [
       {
-        "id": "P1_checkpoint_document",
-        "path": "D:/dev/worktrees/p1-p8-m98/Pandoeditor(App)/docs/terrain-integration-validation.md",
-        "bytes": 5549,
-        "sha256": "13acd32c32f4461f8e95144c9694ade2cf2359cda2491ee497d4fa40e0edfa4a",
-        "counts": null,
-        "finalAcceptance": false,
-        "kind": "CHECKPOINT_REPORT_NOT_CURRENT_AGGREGATE_RUN",
-        "checkpointCommit": "c27e3a04d77dad4e43a17ea7ea6f6f09448b9053"
-      },
-      {
-        "id": "P2_checkpoint_document",
-        "path": "D:/dev/worktrees/p1-p8-m98/Pandoeditor(App)/docs/terrain-p2-validation.md",
-        "bytes": 5661,
-        "sha256": "02f43a7cebbc91618934a17e271d607fddf87641dd1e35965eb6b2af2e64e94b",
-        "counts": null,
-        "finalAcceptance": false,
-        "kind": "CHECKPOINT_REPORT_NOT_CURRENT_AGGREGATE_RUN",
-        "checkpointCommit": "03f7d9e2fd07cbca4942ab1d9870afa1922f3a83"
-      },
-      {
-        "id": "P3_pure_state",
-        "path": "D:/Codex/evidence/p1-p8-m98-20261006/p3-state-native-first-01.log",
-        "bytes": 63,
-        "sha256": "40d839bbd043210fd583db43250bf547ec1df596814ba9538c07542903aa706a",
-        "counts": {
-          "processed": 20,
-          "passed": 20,
-          "failed": 0,
-          "skipped": 0
-        },
-        "finalAcceptance": false,
-        "kind": "ACTUAL_NATIVE_LOG"
-      },
-      {
-        "id": "P3_owner_synthetic_D3D11",
-        "path": "D:/Codex/evidence/p1-p8-m98-20261006/p3-owner-d3d11-02.receipt.json",
-        "bytes": 642,
-        "sha256": "e559cea2a0d2f68c8dfac574ba0ce5dcacc8565ac10bd4f5c95df20231193f6b",
-        "counts": {
-          "passed": 7,
-          "failed": 0,
-          "skipped": 0
-        },
-        "finalAcceptance": false,
-        "kind": "ACTUAL_NATIVE_DEVICE_RECEIPT",
-        "nativePID": 19280,
+        "id": "catalog-final893-131",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "nativePID": 1200,
         "nativeExit": 0,
-        "binarySHA256": "05F79F102692587A2618DC2A13C732F5BF1D8D317640BB252F7910EA3490F037",
-        "appHead": "03f7d9e2fd07cbca4942ab1d9870afa1922f3a83",
-        "dirty": true,
-        "backend": "d3d11",
-        "limitation": "Later owner/controller changes and new no-GUI-adoption burst regression are not certified by this earlier receipt."
+        "processed": 30,
+        "receipt": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\catalog-final893-131.receipt.json"
       },
       {
-        "id": "P4_isolated_native_mutations",
-        "path": "D:/Codex/evidence/p1-p8-m98-20261006/p4-state-mutations/terrain-display-mutations-20261006T223910Z-3f07b54f/results.json",
-        "bytes": 48586,
-        "sha256": "349ec15530a0424898cea57aaafba877a1f02694ba380da2b25b56fd945ef422",
-        "counts": null,
-        "finalAcceptance": false,
-        "kind": "ACTUAL_NATIVE_ISOLATED_BASELINE_PLUS_FOUR_MUTANTS",
-        "accepted": true,
-        "originalSourcesUnchanged": true,
-        "runnerPID": 6824,
-        "baselineCounts": {
-          "processed": 20,
-          "passed": 20,
-          "failed": 0,
-          "skipped": 0
-        },
-        "mutantExpectedExit": 1,
-        "mutantCaseCounts": null,
-        "limitation": "Each mutant aborts on a specifically named failure; no total executed/passed case count is inferred. Compiler descendant PIDs are not separately attested."
+        "id": "timeline-final893-132",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "nativePID": 21212,
+        "nativeExit": 0,
+        "processed": 108,
+        "receipt": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\timeline-final893-132.receipt.json"
       },
       {
-        "id": "P6_provenance_engine_green",
-        "path": "D:/Codex/evidence/p1-p8-m98-20261006/p6-provenance-engine-green-01.log",
-        "bytes": 1312,
-        "sha256": "8bd6ca0a751f87b1c5cb26f41c26182a72558ce3ca41bf10497e92d96591b0b7",
-        "counts": {
-          "passed": 18,
-          "failed": 0,
-          "skipped": 0
-        },
-        "finalAcceptance": false,
-        "kind": "ACTUAL_NATIVE_LOG"
+        "id": "storage-final893-133",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "nativePID": 9772,
+        "nativeExit": 0,
+        "processed": 74,
+        "receipt": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\storage-final893-133.receipt.json"
       },
       {
-        "id": "P6_controller_red",
-        "path": "D:/Codex/evidence/p1-p8-m98-20261006/p6-controller-red-01.txt",
-        "bytes": 2365,
-        "sha256": "964839e0bc86c802e7c1ebcc762a1eca92e9a900ff2e0ae3ea9b21a2aab6eda7",
-        "counts": {
-          "passed": 2,
-          "failed": 8,
-          "skipped": 0
-        },
-        "finalAcceptance": false,
-        "kind": "ACTUAL_NATIVE_RED_LOG",
-        "currentGreen": "PENDING_ROOT_BUILD_5062"
+        "id": "provenance-final893-134",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "nativePID": 18564,
+        "nativeExit": 0,
+        "processed": 18,
+        "receipt": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\provenance-final893-134.receipt.json"
       },
       {
-        "id": "P6_provider_red",
-        "path": "D:/Codex/evidence/p1-p8-m98-20261006/p6-provider-red-01.txt",
-        "bytes": 2378,
-        "sha256": "08b50693bfc631bcd925bfb97b9e7383cad91aae8ae800c1573e254d60f70409",
-        "counts": {
-          "passed": 2,
-          "failed": 8,
-          "skipped": 0
-        },
-        "finalAcceptance": false,
-        "kind": "ACTUAL_NATIVE_RED_LOG",
-        "currentGreen": "PENDING_ROOT_BUILD_5062"
+        "id": "Final893Exchange",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "webCommit": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+        "result": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\exchange-final893-136\\web10-exchange-lVfxcr\\results.json",
+        "pass": 16,
+        "mismatch": 0,
+        "skip": 0,
+        "webAppWeb": 6,
+        "appWebApp": 6,
+        "expectedRejections": 4,
+        "nativeProcesses": 28
       },
       {
-        "id": "P6_store_focused_red",
-        "path": "D:/Codex/evidence/p1-p8-m98-20261006/p6-store-focused-red-01.txt",
-        "bytes": 1467,
-        "sha256": "1e63e5b2f4f8e3be9cf95c487fddba568d044addfcc683afcc54340711444e23",
-        "counts": {
-          "passed": 2,
-          "failed": 4,
-          "skipped": 0
-        },
-        "finalAcceptance": false,
-        "kind": "ACTUAL_NATIVE_RED_LOG",
-        "currentGreen": "PENDING_ROOT_BUILD_5062"
+        "id": "Final893M32",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "pid": 15148,
+        "expected": 2525,
+        "processed": 2525,
+        "mismatch": 0,
+        "nativeExit": 0
       },
       {
-        "id": "P8_catalog",
-        "path": "D:/Codex/evidence/p1-p8-m98-20261006/p8-catalog-native-green-01.log",
-        "bytes": 2370,
-        "sha256": "afd1ea69c1761834f6e30ea27e1b4d182fe1cc2df3099deb63f19cc4e0782c84",
-        "counts": {
-          "passed": 36,
-          "failed": 0,
-          "skipped": 0
-        },
-        "finalAcceptance": false,
-        "kind": "ACTUAL_NATIVE_STANDALONE_LOG",
-        "limitation": "Pure catalog checks including 284 frozen chunks; no controller/render/UI/final aggregate acceptance inferred."
+        "id": "Final893Editing",
+        "cases": 14,
+        "nativePID": 15364,
+        "nativeExit": 0,
+        "framePresentationObserved": false
       },
       {
-        "id": "P8_original_flag_provenance",
-        "path": "D:/Codex/evidence/p1-p8-m98-20261006/p8-default-flag-original-blobs.json",
-        "bytes": 241,
-        "sha256": "9f1712625c48349dc7fa0cd8719812ff22299d057f4885b6899507876acdaf54",
-        "counts": {
-          "checked": 235,
-          "mismatches": 0
+        "id": "Final893DeviceUserStopped",
+        "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+        "interruption": {
+          "reason": "User explicitly requested stop: 그냥 끝내 여기서",
+          "sourceCommit": "893e361cbeddc22e9b78e0d8c0b92ec132f605a5",
+          "interruptedUtc": "2026-10-07T12:05:13.9846564Z",
+          "nativePid": 9992,
+          "runnerPid": 20196,
+          "nativePath": "D:\\build\\Pandoeditor-m98-measurement\\ui_tests.exe",
+          "nativeCommandLine": "\"D:\\build\\Pandoeditor-m98-measurement\\ui_tests.exe\" nativePerformanceProbe -o \"D:\\Codex\\evidence\\p1-p8-m98-20261006\\m98-device-893-v3-138\\run-1/qt-test.txt,txt\"",
+          "completedThreeRuns": false,
+          "nativeFinalExit": "NOT OBSERVED: explicit user interruption",
+          "status": "INTERRUPTED",
+          "remainingRuns": "NOT RUN"
         },
-        "finalAcceptance": false,
-        "kind": "GIT_BLOB_PROVENANCE_ONLY",
-        "limitation": "Original blob identity does not prove runtime display alias resolution."
+        "partial": {
+          "scenarios": 15,
+          "inputs": 2140,
+          "cycles": 1,
+          "completedReport": false,
+          "lastElapsedMs": 307751,
+          "nativeExit": "NOT OBSERVED: user interruption",
+          "run2": "NOT RUN",
+          "run3": "NOT RUN",
+          "journalSHA256": "f95d63edc5878898c0a792b523aa2ce1ec042374289b9f4a537b3b4f866c5734"
+        },
+        "assessment": "NOT RUN"
       },
       {
-        "sourceCommit": "e01f0e6f2383022017ad947eb18d1a4269e2eee3",
-        "fixedWebCommit": "ebcfae4d27b29cbbea6416a7045a4806930204be",
-        "report": "docs/m98-windows-measurement-e01f0e6.md",
-        "exchange": {
-          "pass": 16,
-          "fail": 0,
-          "mismatch": 0,
-          "skip": 0,
-          "traces": 24,
-          "nativeProcesses": 28
-        },
-        "m32": {
-          "pid": 21944,
-          "exitCode": 0,
-          "expected": 2525,
-          "processed": 2525,
-          "mismatch": 0
-        },
-        "device": {
-          "runs": 3,
-          "nativeExits": [
-            0,
-            0,
-            0
-          ],
-          "scenarios": 45,
-          "cycles": 36,
-          "assessmentStatus": "FAIL",
-          "assessmentExit": 1,
-          "fullAcceptance": "BLOCKED"
-        },
-        "binarySha256": "46b039251888abdf69d226fd02c7c0d4916cb6989b33fd7c8d30d70e605f4343",
-        "fixtureManifestSha256": "9af0e521085c093596c4b1ab051c90fe1ceb2bc82d73ed4bdaedcafcbfb129e4"
+        "id": "Predecessor691DeviceThreeRuns",
+        "sourceCommit": "691ca18a621d63723cf2002e15bb35f234e8087b",
+        "runs": 3,
+        "assessment": "FAIL",
+        "receipt": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\m98-device-691-quiet-v3-124\\final-receipt.json"
+      },
+      {
+        "id": "UnchangedCFRenderTerrainCheckpoint",
+        "sourceCommit": "cf4fc8dc829497129279b3d10da2417456835034",
+        "sourceProof": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\final893-source-proof-139.json",
+        "receipt": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\cf-functional-receipts-92.json",
+        "notRelabeledCurrentExecutions": true
       }
     ],
     "outstandingBehaviors": [
@@ -1413,7 +1398,7 @@
       },
       {
         "id": "RENDER_SHARED_VISUAL_FRAME_AND_STROKE_UNITS",
-        "state": "POLICY_AND_PROJECTION_CHECKPOINT_PASS_CAP_JOIN_AA_VISUAL_PENDING",
+        "state": "SCOPED_DPR1_2_NATIVE_PIXELS_EXACT_WEB_TOPOLOGY_PASS_BROWSER_FRAMEBUFFER_UNOBSERVED",
         "webCommits": [
           "c6c62664",
           "385141b9",
@@ -1424,7 +1409,7 @@
           "renderer/scenegraph/mapscenenode.cpp",
           "ui/common/MapView.qml"
         ],
-        "finding": "Pinned interaction width/color/alpha/dash policy and regional geographic pixel contract executed; native cap/join/AA visual closure remains incomplete, no equivalent-image claim"
+        "finding": "FrozenCF source passes40 topology and actual DPR1/2 pixels; renderer unchanged through893. No relabeled current execution."
       },
       {
         "id": "EDITING_GIS_AND_HYDRO_CONTINUITY",
@@ -1446,59 +1431,1134 @@
       },
       {
         "id": "P8_CURRENT_CONTROLLER_FLAGS_PARENT_COUNTRY_AND_METADATA",
-        "state": "SCOPED_NATIVE_CONTROLLER_EXECUTION_PASS_FINAL_REVIEW_NOT_RUN",
-        "finding": "Catalog/controller29 rows PID13296 exit0, pinned metadata and lazy version guards, batch instantiation/Undo and flag source provenance; no fresh independent review after later root changes"
+        "state": "CURRENT_CATALOG30_EXECUTED_NEW_PARENT_FIX_INDEPENDENTLY_REVIEWED",
+        "finding": "Current893 clean catalog30 passes. Root-authored deep parent listing fix independently reviewed; earlier reviewer-authored catalog code only peer inspected."
       },
       {
         "id": "M98_FINAL_ACCEPTANCE",
-        "state": "FAIL_DIAGNOSTIC_BLOCKED_FULL_DATA",
-        "finding": "Three fixed ordinary Release diagnostics completed15 scenarios/12 cycles each. Assessment FAIL: no-op input semantics, idle frame phase tagging,30 heartbeat stalls per run, stale publication null. Original empty-v1/full fixture absence BLOCKED, acceptedBy=null, Android/review NOT_RUN"
+        "state": "FINAL_USER_INTERRUPTED_PREDECESSOR_DIAGNOSTIC_FAIL_FULL_DATA_BLOCKED",
+        "finding": "Final source only partial138; previous691 completed3 FAIL. No final893 aggregate result or invented pass.",
+        "report": "p1-p8-m98-final-893e361.md",
+        "evidence": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\final893-user-stop-receipt-144.json"
       },
       {
         "id": "M98_ACTUAL_DIAGNOSTIC_MISMATCHES",
-        "state": "FAIL_REPRODUCED",
-        "report": "docs/m98-windows-measurement-e01f0e6.md",
-        "evidence": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\m98-device-sample-e01f0e6-09\\mismatch-diagnosis.json",
-        "finding": "No threshold/expected rewrite; 318 unchanged input receipts,3 idle phase faults,36 null stale cycle faults,90 actual heartbeat stalls retained"
+        "state": "FINAL_USER_INTERRUPTED_PREDECESSOR_DIAGNOSTIC_FAIL_FULL_DATA_BLOCKED",
+        "report": "p1-p8-m98-final-893e361.md",
+        "evidence": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\final893-user-stop-receipt-144.json",
+        "finding": "Final source only partial138; previous691 completed3 FAIL. No final893 aggregate result or invented pass."
       }
     ],
     "m98Gates": [
       {
         "id": "M98.1",
-        "state": "BLOCKED_AUTHENTIC_FOUR_FIXTURES_AND_EMPTY_PLACES"
+        "state": "BLOCKED_FULL_FIXTURES_EMPTY_V1"
       },
       {
         "id": "M98.2",
-        "state": "PRODUCTION_V2_EXECUTED_UNOBSERVED_FIELDS_EXPLICIT"
+        "state": "SCOPED_PRODUCTION_TELEMETRY_EXECUTED_NULLS_EXPLICIT"
       },
       {
         "id": "M98.3",
-        "state": "SELECTED_REGISTERED_STRUCTURE_AND_COMPILED_MUTATIONS_EXECUTED"
+        "state": "SELECTED_STRUCTURE_MUTANTS_PASS"
       },
       {
         "id": "M98.4",
-        "state": "THREE_ACTUAL_WINDOWS_RUNS_EXECUTED_INPUT_PHASE_FAULTS"
+        "state": "FINAL_USER_INTERRUPTED_PREDECESSOR_DIAGNOSTICS_FAIL"
       },
       {
         "id": "M98.5",
-        "state": "FOURTEEN_ACTUAL_EDIT_DIAGNOSTICS_EXECUTED_NO_APPROVED_EDIT_BUDGET"
+        "state": "CURRENT_CPU_EDITING14_PASS_NO_PRESENTATION_ACCEPTANCE"
       },
       {
         "id": "M98.6",
-        "state": "THREE_12_MINUTE_REPEATS_EXECUTED_36_SETTLED_CYCLES_STALE_UNOBSERVED"
+        "state": "FINAL_REQUIRED_12_MINUTE_NOT_RUN_TO_COMPLETION"
       },
       {
         "id": "M98.7",
-        "state": "THREE_DISTRIBUTIONS_EXECUTED_ASSESSMENT_FAIL_ACCEPTED_BY_NULL"
+        "state": "FINAL_THREE_RUN_AGGREGATE_NOT_RUN_ACCEPTED_BY_NULL"
       },
       {
         "id": "M98.8",
-        "state": "DISCOVERY206_SELECTED_EXECUTION_AUDIT_REVIEW_ANDROID_NOT_RUN"
+        "state": "PRIOR_DISCOVERY206_CURRENT_SELECTED_INVENTORY_NO_NEW_TEST_AFTER_STOP"
       }
     ],
     "fontMetricsLimitation": "Fixed Web Unicode width estimate and Qt platform font metrics are different and may be documented/normalized per approved P7 contract. The verified double-padding defect is independent of font metrics.",
     "packaging": "NOT_REQUESTED_NOT_PRODUCED",
-    "sourceIdentityScope": "Fixed implementation at measurement/exchange launch; subsequent report-only commit is not relabeled as tested source"
+    "sourceIdentityScope": "Clean frozen893 launches; later report-only HEAD distinct; predecessor CF/691 not relabeled",
+    "previousCheckpoint": {
+      "schema": "pandoeditor-web-closure-current-implementation-map",
+      "version": 1,
+      "generatedAtUtc": "2026-10-07T07:41:12.061376+00:00",
+      "currentBaseCommit": "2e65cf9f4a1d29e01d406029de60c5c9ff0b6eb5",
+      "mappingHeadCommit": "e01f0e6f2383022017ad947eb18d1a4269e2eee3",
+      "workingTreeDirty": false,
+      "finalCandidateCommit": "e01f0e6f2383022017ad947eb18d1a4269e2eee3",
+      "status": "SELECTED_EXECUTED_CHECKPOINT_FULL_ACCEPTANCE_FAIL_BLOCKED",
+      "finalAcceptance": false,
+      "reviewScope": "Earlier independent reviews do not cover subsequent root changes; final independent review NOT_RUN",
+      "historicalProvenance": {
+        "originalNativeAuditBaseline": "a751d5f16da6b604d95435c9a29adef7a2f3ab38",
+        "immutableSections": [
+          "web",
+          "commits",
+          "nativeFileEvidence",
+          "classificationCounts",
+          "existingFixtureSourcePins"
+        ],
+        "rawSectionSha256": {
+          "web": "d0b72f4be6d657bac2701f2e13136ecd26ddd0df368d37019417b991966f63f3",
+          "commits": "067654cf8c5940c4090e4218b60f7a90015ea5b98d7b12f0116f49baf3ac177d",
+          "nativeFileEvidence": "2f3bfcff3e5e6315adb6a26ff1c7a43c95cac72c9e2907c3b328e003f5c98fa7",
+          "classificationCounts": "2d534cb5b086be4620343a7f1f7497d4b2bfa5a6ea406cc8fb74fb62585560bb",
+          "existingFixtureSourcePins": "a093584306cd06626b6653a81f501e415600fb28ffe18c9d4fe1298f64b51ef0"
+        },
+        "originalWebSpanUnchanged": true,
+        "perFileExecutionFieldsAreHistorical": true
+      },
+      "phases": [
+        {
+          "id": "P1",
+          "files": [
+            "app/physicaldatastore.cpp",
+            "app/worldbootstrap.cpp",
+            "app/terrainimageprovider.cpp",
+            "renderer/terrainprovider.cpp",
+            "renderer/terrainlandmaskitem.cpp",
+            "renderer/scenegraph/terrainmaterial.cpp",
+            "renderer/shaders/terrain.frag",
+            "engine/include/pandoeditor/map/renderscene.h",
+            "engine/src/mapscenebuilder.cpp"
+          ],
+          "tests": [
+            "tests/physical_data_store_tests.cpp",
+            "tests/terrain_land_mask_tests.cpp",
+            "tests/terrain_gpu_display_tests.cpp"
+          ],
+          "behavior": "Verified physical inventory; lossless raw DEM plus tint and raster channel math; independent semantic physical land mask including hidden General ownership and excluding Regional geometry; actual sampler output.",
+          "state": "SCOPED_NATIVE_AND_DEVICE_CHECKPOINT_PASS",
+          "finalAcceptance": false,
+          "review": "SOURCE_MAPPING_ONLY"
+        },
+        {
+          "id": "P2",
+          "files": [
+            "renderer/terrainprovider.cpp",
+            "app/editorpresentation.cpp",
+            "app/editorview.cpp"
+          ],
+          "tests": [
+            "tests/terrain_lod_demand_tests.cpp"
+          ],
+          "behavior": "Pinned scale/DPR LOD, literal wrapped tile demand, projection-dependent domains and independent oracle fixtures.",
+          "state": "SCOPED_NATIVE_AND_WEB_CHECKPOINT_PASS",
+          "finalAcceptance": false,
+          "review": "SOURCE_MAPPING_ONLY"
+        },
+        {
+          "id": "P3",
+          "files": [
+            "app/terraindisplaystate.h",
+            "app/terrainimageprovider.cpp",
+            "app/editorpresentation.cpp",
+            "renderer/terrainrenderowner.cpp",
+            "renderer/terrainlayeritem.cpp",
+            "renderer/terrainrendercontract.h",
+            "renderer/scenegraph/terrainmaterial.cpp"
+          ],
+          "tests": [
+            "tests/terrain_display_state_tests.cpp",
+            "tests/terrain_render_owner_tests.cpp",
+            "tests/terrain_render_protection_tests.cpp",
+            "tests/terrain_controller_display_tests.cpp"
+          ],
+          "behavior": "Separate CPU/upload/submission/display states, full scope and exact draw inventory authentication, geographic fallback coverage, immutable content backings, required base/tint reserve, display receipt adoption and release acknowledgement.",
+          "state": "SCOPED_LIFECYCLE_AND_RETAINED_DEVICE_CHECKPOINT_PASS",
+          "finalAcceptance": false,
+          "review": "SOURCE_MAPPING_ONLY"
+        },
+        {
+          "id": "P4",
+          "files": [
+            "tools/terrain-display-state-mutations.py",
+            "renderer/terraingridmesh.h"
+          ],
+          "tests": [
+            "tests/terrain_display_state_tests.cpp",
+            "tests/terrain_render_protection_tests.cpp",
+            "tests/terrain_grid_mesh_tests.cpp"
+          ],
+          "behavior": "Actual isolated native semantic mutation rejection, stale/cancel/retirement regressions and retained tile grid geometry.",
+          "state": "SCOPED_REAL_MUTATIONS_AND_DEVICE_CHECKPOINT_PASS",
+          "finalAcceptance": false,
+          "review": "SOURCE_MAPPING_ONLY"
+        },
+        {
+          "id": "P5",
+          "files": [
+            "app/placeruntimestore.cpp",
+            "assets/place/manifest.json"
+          ],
+          "tests": [
+            "tests/place_runtime_store_tests.cpp"
+          ],
+          "behavior": "Frozen production source is empty-v1. Approved 64 review decisions remain generator provenance, not a positive runtime dataset. Actual positive dataset acceptance BLOCKED; synthetic mechanism fixtures are separate.",
+          "state": "BLOCKED_ACTUAL_EMPTY_V1_SOURCE",
+          "finalAcceptance": false,
+          "review": "SOURCE_MAPPING_ONLY"
+        },
+        {
+          "id": "P6",
+          "files": [
+            "app/editorplace.cpp",
+            "app/placeruntimestore.cpp",
+            "app/placeruntimeprovider.cpp",
+            "app/editorselection.cpp",
+            "app/editorpicking.cpp",
+            "app/editorproperties.cpp",
+            "app/projectcodec.cpp",
+            "app/gisdocumentexport.cpp",
+            "app/gisgeopackagewriter.cpp",
+            "core/include/pandoeditor/document.h",
+            "core/include/pandoeditor/commands.h",
+            "core/src/commands.cpp",
+            "core/src/content.cpp",
+            "engine/src/labelengine.cpp"
+          ],
+          "tests": [
+            "tests/place_runtime_store_tests.cpp",
+            "tests/place_runtime_provider_tests.cpp",
+            "tests/place_controller_tests.cpp",
+            "tests/place_provenance_engine_tests.cpp"
+          ],
+          "behavior": "Independent immutable built-in viewport/search source, strict PLAC/cache bounds and source/project/view request guards; read-only selection; one editable copy command with sourcePlaceId and initial label settings; document-derived suppression restored by Undo/delete; codec/GIS provenance.",
+          "state": "SCOPED_STORE_PROVIDER_CONTROLLER_CHECKPOINT_PASS",
+          "finalAcceptance": false,
+          "review": "SOURCE_MAPPING_ONLY"
+        },
+        {
+          "id": "P7",
+          "files": [
+            "tools/place-runtime-contract/oracle.test.mjs",
+            "tools/place-runtime-contract/generate-fixtures.mjs",
+            "tools/place-runtime-contract/native-parity.mjs",
+            "app/editorpresentation.cpp",
+            "engine/src/labelengine.cpp"
+          ],
+          "tests": [
+            "tests/place_parity_probe.cpp",
+            "tests/place_provenance_engine_tests.cpp",
+            "tests/place_controller_tests.cpp"
+          ],
+          "behavior": "Pinned Web mechanism and native observation exchange. Dataset/camera/zoom/DPR/visibility identity, candidates, collision, placement, selection, lifecycle and editable-copy persistence gates require actual comparison; no full parity result yet.",
+          "state": "SYNTHETIC_COMPARISON_PASS_ACTUAL_DATA_BLOCKED",
+          "finalAcceptance": false,
+          "review": "SOURCE_MAPPING_ONLY"
+        },
+        {
+          "id": "P8",
+          "files": [
+            "app/territoriallibrarycatalog.cpp",
+            "app/territorialcatalogadapter.cpp",
+            "app/editorhistorical.cpp",
+            "app/historicaltransaction.cpp",
+            "core/include/pandoeditor/historicalinstantiation.h",
+            "core/src/historicalinstantiation.cpp",
+            "core/src/commands.cpp",
+            "app/defaultflagresolver.cpp",
+            "ui/common/HistoricalLibraryPanel.qml",
+            "ui/common/HistoricalOwnershipSetup.qml"
+          ],
+          "tests": [
+            "tests/territorial_library_catalog_tests.cpp",
+            "tests/territorial_catalog_controller_tests.cpp"
+          ],
+          "behavior": "Canonical v2 262 lineages / 284 entities / 287 versions; alive/date-only search and strict version gaps; lazy verified chunks; current project/source guards; fresh instance/archive identity, batch-only source-parent resolution, names/flags/source metadata and one atomic replacement Undo. Authored source is not independently reviewed here by its author.",
+          "state": "PARTIAL_EXECUTED_CATALOG_PERIOD_EXCHANGE_VISUAL_REVIEW_PENDING",
+          "finalAcceptance": false,
+          "review": "SOURCE_MAPPING_ONLY"
+        },
+        {
+          "id": "M98",
+          "files": [
+            "tests/native_performance_probe.h",
+            "tools/run-native-performance.ps1",
+            "tools/summarize-native-performance.mjs",
+            "tools/native-performance-summary.test.mjs",
+            "app/nativeperformancemetrics.h",
+            "app/commandjobrunner.cpp",
+            "app/editorcontroller.cpp"
+          ],
+          "tests": [
+            "tools/native-performance-summary.test.mjs"
+          ],
+          "behavior": "Opt-in native production telemetry and raw receipt summarization authored; immutable four-fixture manifests, scenario runs, long runs, repeated distributions and final budget/closure acceptance pending.",
+          "state": "THREE_DIAGNOSTICS_EXECUTED_ASSESSMENT_FAIL_FULL_DATA_BLOCKED",
+          "finalAcceptance": false,
+          "review": "SOURCE_MAPPING_ONLY"
+        }
+      ],
+      "sourceSnapshot": {
+        "app/CMakeLists.txt": {
+          "workingBytes": 83988,
+          "workingSha256": "0ea62f95e08a09de94d238c475f78d76c5b98b09eb425f27caa86a427551a483",
+          "headGitBlob": "64dd47ad2aaa5b4ba477a87673709a8a4f664ed4",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/commandjobrunner.cpp": {
+          "workingBytes": 8382,
+          "workingSha256": "94e7570c4539cc203cafe7c7ae04be75cc76e2c2822486e13565355086ccd44a",
+          "headGitBlob": "0ed8c85f4a67ada2e2aabd71d83ad1453a7be7dc",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/defaultflagresolver.cpp": {
+          "workingBytes": 4733,
+          "workingSha256": "bb7c230bac8a56b6c1d3df62363b569db17e85dfd4fbe4cb51eefcc41a3c5538",
+          "headGitBlob": "3161d660c4c979a441d2510bbdda99606273d5e1",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/editorcontroller.cpp": {
+          "workingBytes": 74026,
+          "workingSha256": "4d1cb80c4bcd94b720ec8045a110ea075f3729c3734061ef231422f998695975",
+          "headGitBlob": "83382f9fcf8902726cf452b3179d269eeba7446d",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/editorhistorical.cpp": {
+          "workingBytes": 36617,
+          "workingSha256": "54b896517258b2aa9d8e15e6a50c19b164cb383d2f7778a22b6933b4e5ae313e",
+          "headGitBlob": "07e62ef19dac7b85d1cbed7115ff0b37945715bb",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/editorpicking.cpp": {
+          "workingBytes": 6220,
+          "workingSha256": "6a28501e556dfb24a4e79147ac2adf81ff76f99321813f44fc757e576e153a2f",
+          "headGitBlob": "c8cd0a2c224e9954abc9776c7ecd4e880018806f",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/editorplace.cpp": {
+          "workingBytes": 8807,
+          "workingSha256": "9ea614b3b31552a170a8dccba1db7f43fb3e76401f56581b6e4fa4c15477d942",
+          "headGitBlob": "5241e48fbea299e134cea17275aefded09ef8b4d",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/editorpresentation.cpp": {
+          "workingBytes": 50519,
+          "workingSha256": "ea3abc11276a97ba09f82e556ee86473f639023d48e9f764dde5a944f7568f68",
+          "headGitBlob": "3cab125b607425cef05e71cecdad53df74b78bd2",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/editorproperties.cpp": {
+          "workingBytes": 16181,
+          "workingSha256": "af27cd237e5f625f6d4d25f463e8e6c0c9aba10553d7439c8427efb90706725d",
+          "headGitBlob": "54edbf3eb7049dc2cb38aeb43a8f820d3888143b",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/editorselection.cpp": {
+          "workingBytes": 22205,
+          "workingSha256": "3f7623a18f060dfbfa3d4a03e68eec5ed6674c492b906045cf031d15399af7e9",
+          "headGitBlob": "044972aff95e98b8e55f2fc75c4ed9ac755e6410",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/editorview.cpp": {
+          "workingBytes": 12438,
+          "workingSha256": "7e8a2fe6377f6127293ec46f2541c6d453c1bdc416aea3137b2c5733495c5d21",
+          "headGitBlob": "92e8bebc2e4756799102f4006edc1226aa9793e6",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/gisdocumentexport.cpp": {
+          "workingBytes": 9305,
+          "workingSha256": "d601059b528cdcfdb3c3082014486e3e245f49a4a5c292a8bdedff4e735588aa",
+          "headGitBlob": "95fdb66d88c6e3bcf847204aa12e8ed34bbd1f03",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/gisgeopackagewriter.cpp": {
+          "workingBytes": 12022,
+          "workingSha256": "81e01d3d0b1991c62f9c34d14247097b998c3f27fcf18876c9a6b8c365a44137",
+          "headGitBlob": "39f74ce8f5d1c9a10aaa703960df77e58b02d316",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/historicaltransaction.cpp": {
+          "workingBytes": 11088,
+          "workingSha256": "9e0eeff55a1daa65f63047e143880096c48de3496975fae4d59310e315714cd1",
+          "headGitBlob": "08a09f830eb592263b3b01626fe7bad319917fa3",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/nativeperformancemetrics.h": {
+          "workingBytes": 3022,
+          "workingSha256": "f67e5f6d0062f224072e2b60fee1c205d6d2b3fd91ea6a0014aa1627cf7428d2",
+          "headGitBlob": "8f00730d81aa4c3c67b9c0ab5628922cef1013a2",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/physicaldatastore.cpp": {
+          "workingBytes": 11356,
+          "workingSha256": "12f3e533ad024fde891bc6856df0cdb9b8e7204d69fac2ef593d94e1abb69e7f",
+          "headGitBlob": "27c895d55c7b10e311a2c1c697de67659e0a3500",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/placeruntimeprovider.cpp": {
+          "workingBytes": 11913,
+          "workingSha256": "e4bbf16736bac50a78d24b4bdbd32d7ddb1628302dc149e0dba362fa14917941",
+          "headGitBlob": "c1de167cb21744f81a284d8ecae1036264d3944c",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/placeruntimestore.cpp": {
+          "workingBytes": 24827,
+          "workingSha256": "4175f1a96f2e28dbf377db60d98e28f3eced092dc34a9b5c246e2fa37bc39f53",
+          "headGitBlob": "9d5d555317b5dc95c59c0d2ffbd9d0c3d2b88060",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/projectcodec.cpp": {
+          "workingBytes": 77169,
+          "workingSha256": "80b3b8d4ef1ba4474455868c6ef7b8903eeed65b4681e76b305698d426c1f818",
+          "headGitBlob": "127a19df0097eb77fb1b9106e454a43809eb7deb",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/terraindisplaystate.h": {
+          "workingBytes": 24964,
+          "workingSha256": "922bf4cc83d04b47ed952394bba5b8281c77d8b96a7441e5fd0fa86079752d90",
+          "headGitBlob": "47400635b2b5945af6bd702ac5fe264fd29eb624",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/terrainimageprovider.cpp": {
+          "workingBytes": 9368,
+          "workingSha256": "78056bf8f308a72beff42460aca148856d33576a3748ab2e52137669a79275e5",
+          "headGitBlob": "bdb4706ca43233192ec762e4ad640a6e358fcc46",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/territorialcatalogadapter.cpp": {
+          "workingBytes": 8398,
+          "workingSha256": "71393bf681661d6cce46dff525856e93d11aef0583f7212f23e72130ecc4a92d",
+          "headGitBlob": "a5779f53bbbb0e3fcb0f1703ce07c39f543b57f1",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/territoriallibrarycatalog.cpp": {
+          "workingBytes": 22763,
+          "workingSha256": "4bc0df5515b253f2b46494af7a58139ec4fde2c7fc45efa084f4d2cd392f9db8",
+          "headGitBlob": "a5f517ed6867be33dac5b1a9569afe6a480447fe",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "app/worldbootstrap.cpp": {
+          "workingBytes": 16855,
+          "workingSha256": "d6269341f0f96de9b360edd957ad22741099bb5184faf5828e3b71654b0167a1",
+          "headGitBlob": "3192d5e137bfcc2139f94c1cb3a9693c630025a7",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "assets/place/manifest.json": {
+          "workingBytes": 108,
+          "workingSha256": "148660b93529a60640f6a340117f976a7e2822ab8f34fa1814023920fc82f4b7",
+          "headGitBlob": "03871489b601b2e1bc0900aec0116ab938ab6936",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "core/include/pandoeditor/commands.h": {
+          "workingBytes": 7715,
+          "workingSha256": "195723cf227bd3bf9b445f5a8a2d198400c0d2da283282c91b2d143a21f51326",
+          "headGitBlob": "b3c230c8d1a97cb6832ac5e281fd654706583a98",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "core/include/pandoeditor/document.h": {
+          "workingBytes": 8836,
+          "workingSha256": "38c877b2fc5d1366483c5a635c95e084ac32bf23d19c012738392d7f9428169f",
+          "headGitBlob": "a42bc90b6bbd37f8499ee425792bad91227f19b4",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "core/include/pandoeditor/historicalinstantiation.h": {
+          "workingBytes": 3153,
+          "workingSha256": "57e88f34f8337fa2b1f25f668e83a21a5c28ef79940f4f0a057cc6954b7b332f",
+          "headGitBlob": "16794057b18ccdd71a8680efcf94c6a46a91b0e6",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "core/src/commands.cpp": {
+          "workingBytes": 107431,
+          "workingSha256": "38d087861740fff2f0ded2522e844c91962a8114df9ff1f6cf35b2a19279f094",
+          "headGitBlob": "102ab59c2ca9813f811264bf1c6b5ff19dde4d65",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "core/src/content.cpp": {
+          "workingBytes": 9656,
+          "workingSha256": "a53ba34dc34708c0651b6e6e34838de75f57d9a8b7af92d167baa953eb0320a2",
+          "headGitBlob": "8a8516e09d80b90d7982e7c85815320ca04b19e5",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "core/src/historicalinstantiation.cpp": {
+          "workingBytes": 14064,
+          "workingSha256": "1e3b4b3f1edc0edeb060c75898477d822c63be5e7a2a99900e98ebc5c8fcc574",
+          "headGitBlob": "c57cf27667b167c477cd840988c989716766e179",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "engine/include/pandoeditor/map/renderscene.h": {
+          "workingBytes": 3481,
+          "workingSha256": "de926581e2271b28b82d2c322165d959ac13a073b863fbacc3970295bda775a0",
+          "headGitBlob": "41bb74cc0861a737629eabd092a3c8e193b4e04f",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "engine/src/labelengine.cpp": {
+          "workingBytes": 27167,
+          "workingSha256": "93e086fb9614d1924baba4768619c3a96a92cf3855c6e62ae4698f0b27cdd58f",
+          "headGitBlob": "7716f7452cda0656667267a42f7262bebd48f923",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "engine/src/mapcamera.cpp": {
+          "workingBytes": 11015,
+          "workingSha256": "5cb8b6ca5c8dc593581e251bacda4af74031fea3c9be8511e85a7cd29189c4a4",
+          "headGitBlob": "253b0c00814a73b79e165ab0d2c2d1883873a4bd",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "engine/src/mapscenebuilder.cpp": {
+          "workingBytes": 43687,
+          "workingSha256": "59432c9f97a003ed79bf51aef7dcd940c672cd058185fe0bd82069285293acf0",
+          "headGitBlob": "93eb43d67e66f0a57c7734ba566e8266a59f949d",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "renderer/mapprojection.cpp": {
+          "workingBytes": 6013,
+          "workingSha256": "a2c728affb5d8d9ab6433f0cf9225232ee828faa27b40b3a7354a15c87522168",
+          "headGitBlob": "e2563e916fb60685484d95b0c9ece554305695d1",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "renderer/scenegraph/terrainmaterial.cpp": {
+          "workingBytes": 5528,
+          "workingSha256": "99adc857d94f9459be6647c9803f02762c9d34f8bf4c0d86920b9193afa24d8b",
+          "headGitBlob": "7fb2f867f447530ed23b8e63587f009f88e8c7b8",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "renderer/shaders/terrain.frag": {
+          "workingBytes": 5842,
+          "workingSha256": "08f1df24b01532df15e8ff2b9b327bc0e6e0df45db6cd7a04e727031f45e95d4",
+          "headGitBlob": "6977acef926edc344569968193304c603b03bbcf",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "renderer/terraingridmesh.h": {
+          "workingBytes": 1609,
+          "workingSha256": "d8a5a4599c9f3dfbf09624ef4394e6a97b5bba32c4f0093164a338ba006800e7",
+          "headGitBlob": "514ca6a9861227b53759ac494d903c220f10c4ca",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "renderer/terrainlandmaskitem.cpp": {
+          "workingBytes": 17411,
+          "workingSha256": "bf66790344215146bb37ff864d09e1b7b8b54cac15339fc092a717002e688c66",
+          "headGitBlob": "a5f731a7b4e7e7d32cab1d075e66ba5b963435ed",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "renderer/terrainlayeritem.cpp": {
+          "workingBytes": 14398,
+          "workingSha256": "86669816c8890520befc7af2e83b2f0de903ea30b8786f927e4642b260b42a43",
+          "headGitBlob": "461fb29cb535181cef5c618d03ff573c8b77cfb8",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "renderer/terrainprovider.cpp": {
+          "workingBytes": 22757,
+          "workingSha256": "1963f1b5d62a56b4949bf69b8f48bb67c3a1ed9741a8be3fb01951db8577b397",
+          "headGitBlob": "c15b048ea598dc62bb7c10838c6538534de417ef",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "renderer/terrainrendercontract.h": {
+          "workingBytes": 1162,
+          "workingSha256": "24acc6bb4431870ee6f3400912c4607bfd7bb746e22866be48bd44cb1346a5b2",
+          "headGitBlob": "ba59f0497a8f478e6eb23e8331a4e60044bbbaf5",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "renderer/terrainrenderowner.cpp": {
+          "workingBytes": 26979,
+          "workingSha256": "6a1ed6e64f762b6e18f8acc4fe73e0b6ee1328c6cef52e0d7e5f772f382ab3d4",
+          "headGitBlob": "0f7ec4478b55bc8a2668a188a6be064a8b8a7e9a",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/m72_mapprojection_lifetime_tests.cpp": {
+          "workingBytes": 2965,
+          "workingSha256": "42132a0c24ee08bebfed70f6a9022b47ec4b870c85d87a73002d7aaa8b949eb7",
+          "headGitBlob": "954d7b73103e2b97b9d05831d80d522486f84dcb",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/native_performance_input_state.h": {
+          "workingBytes": 917,
+          "workingSha256": "5268f2e1a8698a3e8bba90c3d71780f22539f87100356d9d5428be384c79ff52",
+          "headGitBlob": "dd391adf7a9d57a45b8da8c414cd6e62cb04fc03",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/native_performance_probe.h": {
+          "workingBytes": 50637,
+          "workingSha256": "d80ed475bebcbd1eb2a00fdf50edd84643e08bcc5a6799865fbb04c99b4bf9f9",
+          "headGitBlob": "c2b2d3c4a7039e7945f3d9008df8aeb90fd4915d",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/physical_data_store_tests.cpp": {
+          "workingBytes": 12123,
+          "workingSha256": "4891f1b2df6174b7b80d14130daf343702b77326e6c07482ed8bd70ac2e3bd55",
+          "headGitBlob": "705f884a3fc4ed891e96f1240a80db305e6c27bb",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/place_controller_tests.cpp": {
+          "workingBytes": 9093,
+          "workingSha256": "3aef31dad60348b912090317685f9f7e9b0426f77d45f5ad67bb0ea76993e0d6",
+          "headGitBlob": "47139018a7effeac0b3cc0215d1632e0500260ce",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/place_parity_probe.cpp": {
+          "workingBytes": 12857,
+          "workingSha256": "e2ec2343a725ebfee1fc46e71f5ae2c0ca6857f860a23480d1dfe6bffd073c3c",
+          "headGitBlob": "17e22387df7bdca7d5ec6b2b879978df2509a707",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/place_provenance_engine_tests.cpp": {
+          "workingBytes": 15943,
+          "workingSha256": "0c5618a7470fe9c9f2f05ff1cd3ae2de3e4f9bbc75278c2637c0f608208fbe1b",
+          "headGitBlob": "d3efacaa4ba8a7e91fb96ab478fc6fb38078a1cd",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/place_runtime_provider_tests.cpp": {
+          "workingBytes": 5463,
+          "workingSha256": "2698a49c181ab5bb38161deee9cb3a2a1bfd69a7b6196c6d796de3b05ce000ca",
+          "headGitBlob": "077edab5ce54a14344025880818cce9ad7cefe58",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/place_runtime_store_tests.cpp": {
+          "workingBytes": 13963,
+          "workingSha256": "537d02add6b2f7ac3e80feb26a7e39a0842d5999acb56389a4441e3b42e402d2",
+          "headGitBlob": "5f4f169ae35b33398ac1276f206b726767b92390",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/terrain_controller_display_tests.cpp": {
+          "workingBytes": 6707,
+          "workingSha256": "dd26369530fd1b8e807687216ffecfc39a3e13a0b34b890ae090dc69abbdd278",
+          "headGitBlob": "b450e31f6d12932eac17445f5220174be504ba3f",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/terrain_display_state_tests.cpp": {
+          "workingBytes": 30777,
+          "workingSha256": "8896e781bf968c8e21df4ee23dc1a68a7b183160f9ab3cc54b0f6ee542a1e76e",
+          "headGitBlob": "c45af7cf872f18584a64e1bb16776fa4435ced11",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/terrain_gpu_display_tests.cpp": {
+          "workingBytes": 25853,
+          "workingSha256": "6922dd034c85aacd130a530a56850f7d7dddd53b52f2ad706f22558f99f2755e",
+          "headGitBlob": "91a1e749aa8776e2adde10871d1eb23b3cf4fb9b",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/terrain_grid_mesh_tests.cpp": {
+          "workingBytes": 1917,
+          "workingSha256": "d0ee07509c56bb2a741c71191297c2191aaad82c467f9398d2ec3190dcb95358",
+          "headGitBlob": "c5dfd096b75f10c21b3dd01e4725c4c1ace3dc3d",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/terrain_land_mask_tests.cpp": {
+          "workingBytes": 8159,
+          "workingSha256": "e681fca74a5a09b24cc6a30af46e3cf22c3442fd1889b9dde3be7f93afd30c7c",
+          "headGitBlob": "0417a16ed29ee05a212b0b4489bb7ed3f8324b4a",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/terrain_lod_demand_tests.cpp": {
+          "workingBytes": 10862,
+          "workingSha256": "7b9d441a6e026c09ad495353413d078c65ad8261e97f24209bf15162d84f0430",
+          "headGitBlob": "3dc438c6788982b20c5156c9a406f6ca29aef384",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/terrain_render_owner_tests.cpp": {
+          "workingBytes": 22141,
+          "workingSha256": "1f128ad6e9b1d4052714bb575bcdacef05bd3d9a7d96896b688d99d03089231e",
+          "headGitBlob": "14b25642c5cf323a7ade01e94534e3e95c757582",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/terrain_render_protection_tests.cpp": {
+          "workingBytes": 12900,
+          "workingSha256": "e52ab403b29867bea93b7060ee2b575d803de5173abea70dd422934509e03442",
+          "headGitBlob": "1084a0dba5153c34d9f25261924ea336ba8cbf56",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/territorial_catalog_controller_tests.cpp": {
+          "workingBytes": 33409,
+          "workingSha256": "29be2c9a855ce692aac0067a1a45251542d5b35d8a678b1146a7ce30cb047d32",
+          "headGitBlob": "30f0320f74dfd8d100dc621623b9c2dcd323f413",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/territorial_library_catalog_tests.cpp": {
+          "workingBytes": 18809,
+          "workingSha256": "73a592c907d727e1c9223716ce08ccacd3f047e82b9e0cc2635d1799654bcf38",
+          "headGitBlob": "cc85118f2a3ca06456c7ca9485e7c11fb18eb7ec",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/ui_navigation.h": {
+          "workingBytes": 5013,
+          "workingSha256": "14258da83b529c5c9125e70e01cc629ef734d5d43e2954cfe029d168ce39dc9a",
+          "headGitBlob": "d25a5fd163552cc536f66a3a27fe4ee5b1a77102",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tests/ui_tests.cpp": {
+          "workingBytes": 124904,
+          "workingSha256": "5c2b9363ec0291942dd7e15f753561ecea51b9e92638f7f2a293c20c418dcaad",
+          "headGitBlob": "d2f47482f3135181f40441e4b0f51eb04fb59a93",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tools/native-performance-summary.test.mjs": {
+          "workingBytes": 10932,
+          "workingSha256": "9b3570077a94eae93b074042db06dca00620d8249cae217de80a548ecad3da22",
+          "headGitBlob": "976a5b05342a7f3e74e90d5ba396a66e973a690e",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tools/place-runtime-contract/generate-fixtures.mjs": {
+          "workingBytes": 4469,
+          "workingSha256": "71b92e450fbe54130cbe434b9f33f6d5791df0c36f0359fd164470fa0a2d87d1",
+          "headGitBlob": "141901b587a7eb3bec49cd8ee1cc2c6186dbc2ee",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tools/place-runtime-contract/native-parity.mjs": {
+          "workingBytes": 13634,
+          "workingSha256": "a35a68aa7b16a91e12f271061c53af7230f958a275351739ce9ad0ef36c48e1d",
+          "headGitBlob": "322922dea9414ad266acc6efa44380f7a509a886",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tools/place-runtime-contract/oracle.test.mjs": {
+          "workingBytes": 2688,
+          "workingSha256": "e3a104df55fc0921133b7ec72f5a945180132b911a02c05c7769749e8cd2b6a6",
+          "headGitBlob": "91cd08731f4dacdc686a5eb19004d1841384ab5d",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tools/run-native-performance.ps1": {
+          "workingBytes": 11510,
+          "workingSha256": "c93cad9325883d3c9920c6921a319886b40de2f0180006229d693e9798cbc3fc",
+          "headGitBlob": "b0944be8f55b331151d43172958cb3b9bf298787",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tools/summarize-native-performance.mjs": {
+          "workingBytes": 15227,
+          "workingSha256": "54b54265ff1b4a924368ac5fc29b744018d4a48c7190a53ed587745daa5df52b",
+          "headGitBlob": "4239c8c1cff7ea14044a698b983ac415c0fdbe70",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tools/terrain-display-state-mutations.py": {
+          "workingBytes": 20580,
+          "workingSha256": "b182f48e71c6881739cf60db6cce268405f1a90fe1b3fee767b0e9b66ca0cb31",
+          "headGitBlob": "f9a0c9d440aa364ed49683ffb95c906b46b7a533",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "tools/terrain-retained-device-mutations.py": {
+          "workingBytes": 7022,
+          "workingSha256": "8b3a56f6e09e16b5b937fc7619d183cbd93758b662f41848fbc42bd899cc83a8",
+          "headGitBlob": "c3e3e84191bc337438e29bff7d5dbe20dc94df5c",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "ui/common/HistoricalLibraryPanel.qml": {
+          "workingBytes": 14780,
+          "workingSha256": "c2c818c53722648670026b797f5e40af3b616a3120f26b201362ae732a5a9057",
+          "headGitBlob": "caf68fc38957112519037cd07545760241e222cc",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        },
+        "ui/common/HistoricalOwnershipSetup.qml": {
+          "workingBytes": 2841,
+          "workingSha256": "f9e2623b28f181a6b181d8c22ec28a793f80bc3869386501d9812c25b587e37b",
+          "headGitBlob": "149781a3124f9a61850e3edd419acbf95d9e0a0d",
+          "hashBasis": "RAW_WORKING_BYTES; Git blob identity kept separately for CRLF/LF",
+          "executionStatus": "CURRENT_SOURCE_SNAPSHOT; selected execution scope is documented separately"
+        }
+      },
+      "missingRequestedMappingPaths": [],
+      "executedEvidence": [
+        {
+          "id": "P1_checkpoint_document",
+          "path": "D:/dev/worktrees/p1-p8-m98/Pandoeditor(App)/docs/terrain-integration-validation.md",
+          "bytes": 5549,
+          "sha256": "13acd32c32f4461f8e95144c9694ade2cf2359cda2491ee497d4fa40e0edfa4a",
+          "counts": null,
+          "finalAcceptance": false,
+          "kind": "CHECKPOINT_REPORT_NOT_CURRENT_AGGREGATE_RUN",
+          "checkpointCommit": "c27e3a04d77dad4e43a17ea7ea6f6f09448b9053"
+        },
+        {
+          "id": "P2_checkpoint_document",
+          "path": "D:/dev/worktrees/p1-p8-m98/Pandoeditor(App)/docs/terrain-p2-validation.md",
+          "bytes": 5661,
+          "sha256": "02f43a7cebbc91618934a17e271d607fddf87641dd1e35965eb6b2af2e64e94b",
+          "counts": null,
+          "finalAcceptance": false,
+          "kind": "CHECKPOINT_REPORT_NOT_CURRENT_AGGREGATE_RUN",
+          "checkpointCommit": "03f7d9e2fd07cbca4942ab1d9870afa1922f3a83"
+        },
+        {
+          "id": "P3_pure_state",
+          "path": "D:/Codex/evidence/p1-p8-m98-20261006/p3-state-native-first-01.log",
+          "bytes": 63,
+          "sha256": "40d839bbd043210fd583db43250bf547ec1df596814ba9538c07542903aa706a",
+          "counts": {
+            "processed": 20,
+            "passed": 20,
+            "failed": 0,
+            "skipped": 0
+          },
+          "finalAcceptance": false,
+          "kind": "ACTUAL_NATIVE_LOG"
+        },
+        {
+          "id": "P3_owner_synthetic_D3D11",
+          "path": "D:/Codex/evidence/p1-p8-m98-20261006/p3-owner-d3d11-02.receipt.json",
+          "bytes": 642,
+          "sha256": "e559cea2a0d2f68c8dfac574ba0ce5dcacc8565ac10bd4f5c95df20231193f6b",
+          "counts": {
+            "passed": 7,
+            "failed": 0,
+            "skipped": 0
+          },
+          "finalAcceptance": false,
+          "kind": "ACTUAL_NATIVE_DEVICE_RECEIPT",
+          "nativePID": 19280,
+          "nativeExit": 0,
+          "binarySHA256": "05F79F102692587A2618DC2A13C732F5BF1D8D317640BB252F7910EA3490F037",
+          "appHead": "03f7d9e2fd07cbca4942ab1d9870afa1922f3a83",
+          "dirty": true,
+          "backend": "d3d11",
+          "limitation": "Later owner/controller changes and new no-GUI-adoption burst regression are not certified by this earlier receipt."
+        },
+        {
+          "id": "P4_isolated_native_mutations",
+          "path": "D:/Codex/evidence/p1-p8-m98-20261006/p4-state-mutations/terrain-display-mutations-20261006T223910Z-3f07b54f/results.json",
+          "bytes": 48586,
+          "sha256": "349ec15530a0424898cea57aaafba877a1f02694ba380da2b25b56fd945ef422",
+          "counts": null,
+          "finalAcceptance": false,
+          "kind": "ACTUAL_NATIVE_ISOLATED_BASELINE_PLUS_FOUR_MUTANTS",
+          "accepted": true,
+          "originalSourcesUnchanged": true,
+          "runnerPID": 6824,
+          "baselineCounts": {
+            "processed": 20,
+            "passed": 20,
+            "failed": 0,
+            "skipped": 0
+          },
+          "mutantExpectedExit": 1,
+          "mutantCaseCounts": null,
+          "limitation": "Each mutant aborts on a specifically named failure; no total executed/passed case count is inferred. Compiler descendant PIDs are not separately attested."
+        },
+        {
+          "id": "P6_provenance_engine_green",
+          "path": "D:/Codex/evidence/p1-p8-m98-20261006/p6-provenance-engine-green-01.log",
+          "bytes": 1312,
+          "sha256": "8bd6ca0a751f87b1c5cb26f41c26182a72558ce3ca41bf10497e92d96591b0b7",
+          "counts": {
+            "passed": 18,
+            "failed": 0,
+            "skipped": 0
+          },
+          "finalAcceptance": false,
+          "kind": "ACTUAL_NATIVE_LOG"
+        },
+        {
+          "id": "P6_controller_red",
+          "path": "D:/Codex/evidence/p1-p8-m98-20261006/p6-controller-red-01.txt",
+          "bytes": 2365,
+          "sha256": "964839e0bc86c802e7c1ebcc762a1eca92e9a900ff2e0ae3ea9b21a2aab6eda7",
+          "counts": {
+            "passed": 2,
+            "failed": 8,
+            "skipped": 0
+          },
+          "finalAcceptance": false,
+          "kind": "ACTUAL_NATIVE_RED_LOG",
+          "currentGreen": "PENDING_ROOT_BUILD_5062"
+        },
+        {
+          "id": "P6_provider_red",
+          "path": "D:/Codex/evidence/p1-p8-m98-20261006/p6-provider-red-01.txt",
+          "bytes": 2378,
+          "sha256": "08b50693bfc631bcd925bfb97b9e7383cad91aae8ae800c1573e254d60f70409",
+          "counts": {
+            "passed": 2,
+            "failed": 8,
+            "skipped": 0
+          },
+          "finalAcceptance": false,
+          "kind": "ACTUAL_NATIVE_RED_LOG",
+          "currentGreen": "PENDING_ROOT_BUILD_5062"
+        },
+        {
+          "id": "P6_store_focused_red",
+          "path": "D:/Codex/evidence/p1-p8-m98-20261006/p6-store-focused-red-01.txt",
+          "bytes": 1467,
+          "sha256": "1e63e5b2f4f8e3be9cf95c487fddba568d044addfcc683afcc54340711444e23",
+          "counts": {
+            "passed": 2,
+            "failed": 4,
+            "skipped": 0
+          },
+          "finalAcceptance": false,
+          "kind": "ACTUAL_NATIVE_RED_LOG",
+          "currentGreen": "PENDING_ROOT_BUILD_5062"
+        },
+        {
+          "id": "P8_catalog",
+          "path": "D:/Codex/evidence/p1-p8-m98-20261006/p8-catalog-native-green-01.log",
+          "bytes": 2370,
+          "sha256": "afd1ea69c1761834f6e30ea27e1b4d182fe1cc2df3099deb63f19cc4e0782c84",
+          "counts": {
+            "passed": 36,
+            "failed": 0,
+            "skipped": 0
+          },
+          "finalAcceptance": false,
+          "kind": "ACTUAL_NATIVE_STANDALONE_LOG",
+          "limitation": "Pure catalog checks including 284 frozen chunks; no controller/render/UI/final aggregate acceptance inferred."
+        },
+        {
+          "id": "P8_original_flag_provenance",
+          "path": "D:/Codex/evidence/p1-p8-m98-20261006/p8-default-flag-original-blobs.json",
+          "bytes": 241,
+          "sha256": "9f1712625c48349dc7fa0cd8719812ff22299d057f4885b6899507876acdaf54",
+          "counts": {
+            "checked": 235,
+            "mismatches": 0
+          },
+          "finalAcceptance": false,
+          "kind": "GIT_BLOB_PROVENANCE_ONLY",
+          "limitation": "Original blob identity does not prove runtime display alias resolution."
+        },
+        {
+          "sourceCommit": "e01f0e6f2383022017ad947eb18d1a4269e2eee3",
+          "fixedWebCommit": "ebcfae4d27b29cbbea6416a7045a4806930204be",
+          "report": "docs/m98-windows-measurement-e01f0e6.md",
+          "exchange": {
+            "pass": 16,
+            "fail": 0,
+            "mismatch": 0,
+            "skip": 0,
+            "traces": 24,
+            "nativeProcesses": 28
+          },
+          "m32": {
+            "pid": 21944,
+            "exitCode": 0,
+            "expected": 2525,
+            "processed": 2525,
+            "mismatch": 0
+          },
+          "device": {
+            "runs": 3,
+            "nativeExits": [
+              0,
+              0,
+              0
+            ],
+            "scenarios": 45,
+            "cycles": 36,
+            "assessmentStatus": "FAIL",
+            "assessmentExit": 1,
+            "fullAcceptance": "BLOCKED"
+          },
+          "binarySha256": "46b039251888abdf69d226fd02c7c0d4916cb6989b33fd7c8d30d70e605f4343",
+          "fixtureManifestSha256": "9af0e521085c093596c4b1ab051c90fe1ceb2bc82d73ed4bdaedcafcbfb129e4"
+        }
+      ],
+      "outstandingBehaviors": [
+        {
+          "id": "UNMAPPED_ATOMIC_PERIOD_AND_HIERARCHY_UI",
+          "state": "SCOPED_IMPLEMENTED_AND_14_QT_ROWS_EXECUTED",
+          "webCommits": [
+            "a1555722"
+          ],
+          "nativeEvidence": [
+            "ui/common/ObjectPropertyPanel.qml",
+            "app/editorproperties.cpp"
+          ],
+          "finding": "Current period UI checkpoint p8-ui-current-counted-11 PID16728 exit0,14 pass/0 fail/skip; original precision/atomicity retained; full final independent review remains NOT_RUN"
+        },
+        {
+          "id": "P7_COLLISION_SINGLE_PADDING",
+          "state": "SCOPED_NATIVE_FIXED_WEB_MECHANISM_COMPARISON_PASS",
+          "webPath": "assets/js/modules/label-layout.js",
+          "nativePath": "engine/src/labelengine.cpp",
+          "nativeLines": [
+            289,
+            293
+          ],
+          "finding": "Native quality/padding/source-order mechanism corrected; current synthetic fixed-Web comparison42/42 mismatch0, actual populated runtime remains empty-v1/BLOCKED; four font geometry differences reported"
+        },
+        {
+          "id": "P7_TOTAL_LAYOUT_LIMIT",
+          "state": "SCOPED_NATIVE_FIXED_WEB_MECHANISM_COMPARISON_PASS",
+          "nativePath": "app/editorpresentation.cpp",
+          "finding": "Native quality/padding/source-order mechanism corrected; current synthetic fixed-Web comparison42/42 mismatch0, actual populated runtime remains empty-v1/BLOCKED; four font geometry differences reported"
+        },
+        {
+          "id": "P5_ACTUAL_POSITIVE_DATASET",
+          "state": "BLOCKED_ACTUAL_EMPTY_V1_SOURCE",
+          "finding": "Production tiles/shards/search are empty. The 64 decisions (17 retain / 47 exclude) and separate Romanian35 remain source review provenance. Synthetic PLAC fixtures cannot prove original positive-data acceptance."
+        },
+        {
+          "id": "RENDER_DIRECT_PREVIEW_SUCCESSOR_AND_PER_DOMAIN_STAGING",
+          "state": "SCOPED_ACTUAL_GPU_AND_PAINTED_HANDOFF_PASS",
+          "webCommits": [
+            "231ea1e6",
+            "5b11879f",
+            "127e9db5"
+          ],
+          "nativeEvidence": [
+            "renderer/gpumapitem.cpp",
+            "renderer/scenegraph/mapscenenode.cpp",
+            "app/editorpresentation.cpp"
+          ],
+          "finding": "p8-actual-presentation-device-01 PID17548 exit0/4 pass, actual typed GPU/painted receipts and retained unreferenced archive. Later regional pointer check PID21960 exit0/3 pass; per-domain whole-stack final visual review pending"
+        },
+        {
+          "id": "RENDER_SHARED_VISUAL_FRAME_AND_STROKE_UNITS",
+          "state": "POLICY_AND_PROJECTION_CHECKPOINT_PASS_CAP_JOIN_AA_VISUAL_PENDING",
+          "webCommits": [
+            "c6c62664",
+            "385141b9",
+            "315de72e"
+          ],
+          "nativeEvidence": [
+            "renderer/gpumapitem.cpp",
+            "renderer/scenegraph/mapscenenode.cpp",
+            "ui/common/MapView.qml"
+          ],
+          "finding": "Pinned interaction width/color/alpha/dash policy and regional geographic pixel contract executed; native cap/join/AA visual closure remains incomplete, no equivalent-image claim"
+        },
+        {
+          "id": "EDITING_GIS_AND_HYDRO_CONTINUITY",
+          "state": "SCOPED_EXCHANGE_ATOMICITY_EDITING_EXECUTED_FULL_CLOSURE_REVIEW_PENDING",
+          "webCommits": [
+            "5d2cd820"
+          ],
+          "nativeEvidence": [
+            "app/editorgeometry.cpp",
+            "app/editorgis.cpp",
+            "app/editorpresentation.cpp"
+          ],
+          "finding": "Production exchange16, storage74, atomicity26, actual editing diagnostic14/1200 pointer queries, boundary2/4/8/16 owner paths; full original closure independent review remains pending"
+        },
+        {
+          "id": "P6_CURRENT_CONTROLLER_PROVIDER_STORE_GREEN",
+          "state": "SCOPED_NATIVE_EXECUTION_PASS",
+          "finding": "Store19, provider10 PID19260, current controller10 PID15428 and provenance18 checkpoint rows; actual-data gate remains BLOCKED"
+        },
+        {
+          "id": "P8_CURRENT_CONTROLLER_FLAGS_PARENT_COUNTRY_AND_METADATA",
+          "state": "SCOPED_NATIVE_CONTROLLER_EXECUTION_PASS_FINAL_REVIEW_NOT_RUN",
+          "finding": "Catalog/controller29 rows PID13296 exit0, pinned metadata and lazy version guards, batch instantiation/Undo and flag source provenance; no fresh independent review after later root changes"
+        },
+        {
+          "id": "M98_FINAL_ACCEPTANCE",
+          "state": "FAIL_DIAGNOSTIC_BLOCKED_FULL_DATA",
+          "finding": "Three fixed ordinary Release diagnostics completed15 scenarios/12 cycles each. Assessment FAIL: no-op input semantics, idle frame phase tagging,30 heartbeat stalls per run, stale publication null. Original empty-v1/full fixture absence BLOCKED, acceptedBy=null, Android/review NOT_RUN"
+        },
+        {
+          "id": "M98_ACTUAL_DIAGNOSTIC_MISMATCHES",
+          "state": "FAIL_REPRODUCED",
+          "report": "docs/m98-windows-measurement-e01f0e6.md",
+          "evidence": "D:\\Codex\\evidence\\p1-p8-m98-20261006\\m98-device-sample-e01f0e6-09\\mismatch-diagnosis.json",
+          "finding": "No threshold/expected rewrite; 318 unchanged input receipts,3 idle phase faults,36 null stale cycle faults,90 actual heartbeat stalls retained"
+        }
+      ],
+      "m98Gates": [
+        {
+          "id": "M98.1",
+          "state": "BLOCKED_AUTHENTIC_FOUR_FIXTURES_AND_EMPTY_PLACES"
+        },
+        {
+          "id": "M98.2",
+          "state": "PRODUCTION_V2_EXECUTED_UNOBSERVED_FIELDS_EXPLICIT"
+        },
+        {
+          "id": "M98.3",
+          "state": "SELECTED_REGISTERED_STRUCTURE_AND_COMPILED_MUTATIONS_EXECUTED"
+        },
+        {
+          "id": "M98.4",
+          "state": "THREE_ACTUAL_WINDOWS_RUNS_EXECUTED_INPUT_PHASE_FAULTS"
+        },
+        {
+          "id": "M98.5",
+          "state": "FOURTEEN_ACTUAL_EDIT_DIAGNOSTICS_EXECUTED_NO_APPROVED_EDIT_BUDGET"
+        },
+        {
+          "id": "M98.6",
+          "state": "THREE_12_MINUTE_REPEATS_EXECUTED_36_SETTLED_CYCLES_STALE_UNOBSERVED"
+        },
+        {
+          "id": "M98.7",
+          "state": "THREE_DISTRIBUTIONS_EXECUTED_ASSESSMENT_FAIL_ACCEPTED_BY_NULL"
+        },
+        {
+          "id": "M98.8",
+          "state": "DISCOVERY206_SELECTED_EXECUTION_AUDIT_REVIEW_ANDROID_NOT_RUN"
+        }
+      ],
+      "fontMetricsLimitation": "Fixed Web Unicode width estimate and Qt platform font metrics are different and may be documented/normalized per approved P7 contract. The verified double-padding defect is independent of font metrics.",
+      "packaging": "NOT_REQUESTED_NOT_PRODUCED",
+      "sourceIdentityScope": "Fixed implementation at measurement/exchange launch; subsequent report-only commit is not relabeled as tested source"
+    }
   },
   "nativeFileEvidence": {
     "app/CMakeLists.txt": {

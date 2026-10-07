@@ -165,3 +165,8 @@ receipt pulse and older retirement race; baseline exits0. Original production
 header and tests stay hash-identical throughout; no shared build is modified.
 Runner exits0 and originalSourcesUnchanged=true. This is a pure-state negative
 gate, separate from actual controller62 and original-data pixel evidence.
+
+
+## Closing source893e361 — user requested stop
+
+Original pixels82/controller68/owner69/state83 executed at clean CF, with actual counts/log/binary hashes in [closing report](p1-p8-m98-final-893e361.md). Terrain/render source is unchanged through893; historical parent listing alone changed production App behavior. CF executions are not relabeled893. Zero-deferred controller re-request has source review but no dedicated execution. Final893 device measurement was stopped at user request and cannot establish populated-data plateau.

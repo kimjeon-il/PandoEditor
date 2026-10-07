@@ -5,8 +5,7 @@ App base: `2e65cf9f4a1d29e01d406029de60c5c9ff0b6eb5`.
 Evidence root: `D:/Codex/evidence/p1-p8-m98-20261006`.
 
 This file distinguishes actual dirty-tree executions from final-commit gates.
-The latest fixed-source exchange and repeated device checkpoint are recorded
-at the end and in `m98-windows-measurement-e01f0e6.md`. They establish scoped
+Historical checkpoints remain below and in `m98-windows-measurement-e01f0e6.md`. The current closing state is [source893e361](p1-p8-m98-final-893e361.md). They establish scoped
 execution evidence; full P1–P8/M9.8 acceptance remains FAIL/BLOCKED. Failed raw logs remain preserved.
 
 | Execution | Actual result | Scope and limit |
@@ -204,3 +203,8 @@ cycle faults and three per-run heartbeat violations (30 actual stalls each).
 All raw failures remain. Authentic full-data places/fixtures remain BLOCKED.
 The complete hash/environment/distribution/reproduction/gate receipt is
 `m98-windows-measurement-e01f0e6.md`. No final whole-plan success is claimed.
+
+
+## Closing source893e361 — user requested stop
+
+Current893 source: catalog30/timeline108/storage74/provenance18,M322525,production exchange16 and real CPU editing14 all actually execute with native exit0. Prior691 three device diagnostics completed with strict FAIL; final893 first run is partial, rest/aggregate NOT RUN after explicit user stop. [Closing report](p1-p8-m98-final-893e361.md) preserves every distinction. Full-data acceptance BLOCKED; no further tests or automation scheduled.

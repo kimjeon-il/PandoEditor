@@ -357,3 +357,8 @@ in `m98-windows-measurement-e01f0e6.md`. Windows performance assessment FAIL and
 actual place dataset BLOCKED do not change this scoped codec result. Conversely,
 this exchange does not certify device performance, populated inline flag/content
 coverage, final visual closure or whole-plan completion.
+
+
+## Closing source893e361 — user requested stop
+
+Exact executed pair App `893e361cbeddc22e9b78e0d8c0b92ec132f605a5` / Web `ebcfae4d27b29cbbea6416a7045a4806930204be`: production exchange136 Node exit0,16/16 (Web→App→Web6,App→Web→App6,rejection4),failure/mismatch/skip0,traces24/native processes28. Every intermediate actual serializer/GIS Worker/native codec output compared to unchanged expected. Native codec SHA256 `61fc4a6debc1cd75b17f082d365061e6dc2b66c50c22bcbd76be3b083844ed28`. M32135 actual PID15148/exit0,2525expected/generated/processed,mismatch0,complete=true. Current storage74/provenance18/timeline108 native exits0; native-only fields/refusal and activation/atomicity are separate focused tests. Original contract/fixture/source hashes above unchanged; schema10/model6/timelineRecords1 preserved. [Closing report](p1-p8-m98-final-893e361.md) supplies exact binary/log hashes and limits. Mandatory exchange for this pair/corpus is complete; final device INTERRUPTED/full acceptance BLOCKED remain separate. No pass inferred from Actions or predecessor measurement.

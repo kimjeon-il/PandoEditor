@@ -74,3 +74,8 @@ inventory assertion. Related63 (PID22232/exit0) runs8 Qt rows with no failure/sk
 The same independent reviewer confirmed all three fixes by source/log inspection;
 no reviewer build or device execution ran concurrently. These checkpoint results
 are separate from the forthcoming frozen-source executions.
+
+
+## Closing source893e361 — user requested stop
+
+CleanCF actual stroke66/67 DPR1/2,topology90,map71,presentation70 counts and current-frame inventory are in [closing report](p1-p8-m98-final-893e361.md). Render source unchanged through893; scoped checkpoint remains CF, not a new893 run. Supplemental source/original expected unchanged; full browser framebuffer and driver fences remain unobserved. Final device measurement stopped at user request.
