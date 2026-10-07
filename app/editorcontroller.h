@@ -433,6 +433,8 @@ public:
     // QML pointer input is in logical screen pixels; legacy APIs above retain map coordinates.
     Q_INVOKABLE bool geometryAddPointScreen(double x,double y,double radiusPixels=0,const QString& pointerType=QString());
     Q_INVOKABLE bool geometrySelectNearestScreen(double x,double y,double radiusPixels);
+    Q_INVOKABLE bool geometryNudgeSelectedVertex(double deltaX,double deltaY);
+    Q_INVOKABLE bool mapKeyboardInputBlocked(QObject *window) const;
     Q_INVOKABLE bool geometryMoveSelectedVertexScreen(double x,double y,double radiusPixels=0,const QString& pointerType=QString());
     Q_INVOKABLE bool geometryBeginVertexDrag();
     Q_INVOKABLE void geometryEndVertexDrag(bool cancel=false);

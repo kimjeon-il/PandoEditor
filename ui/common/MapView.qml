@@ -56,7 +56,7 @@ Rectangle {
     onGeometryEditingChanged: if(mapHover) mapHover.resetEditingPointer()
     readonly property bool territorySelectionEditing: geometryEditing && editor.geometryEditState.territorySelection === true
     readonly property bool territoryDrawing: territorySelectionEditing && editor.geometryEditState.stage === "selection" && editor.geometryEditState.selectionPhase === "drawing" && !editor.geometryEditState.confirmationKind && !editor.geometryEditState.applying
-    readonly property string referenceDraftRevision: { editor.geometryEditState; return JSON.stringify(editor.referenceDraftContext()) }
+    readonly property string referenceDraftRevision: { editor.geometryEditState; editor.projectInstanceId; return JSON.stringify(editor.referenceDraftContext()) }
     onReferenceDraftRevisionChanged: if(referenceImages)referenceImages.cancelTrace()
     function referenceUvAtScreen(x,y) {
         const mesh=calibrationPanel.session.result && calibrationPanel.session.result.mesh
@@ -83,7 +83,12 @@ Rectangle {
     }
     focus: true
     Keys.onPressed: function(event) {
-        if (!geometryEditing) return
+        if (!geometryEditing || editor.mapKeyboardInputBlocked(mapWindow) || objectChooser.visible || referenceImages.traceSession.active) return
+        if ([Qt.Key_Left,Qt.Key_Right,Qt.Key_Up,Qt.Key_Down].indexOf(event.key)>=0) {
+            const pixels=event.modifiers & Qt.ShiftModifier ? 10 : 1
+            event.accepted=editor.geometryNudgeSelectedVertex(event.key===Qt.Key_Left ? -pixels : event.key===Qt.Key_Right ? pixels : 0,event.key===Qt.Key_Up ? -pixels : event.key===Qt.Key_Down ? pixels : 0)
+            return
+        }
         if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace) {
             if (territoryDrawing && editor.geometryUndoDraft()) event.accepted = true
             else if (taskPanel.vertices && editor.geometryDeleteSelectedVertex()) event.accepted = true

@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <QQuickWindow>
 
 using namespace pandoeditor;
 namespace {
@@ -597,27 +598,43 @@ bool EditorController::geometryBack() {
 
 QVariantMap EditorController::referenceDraftContext() const {
  if(!geometryEdit_)return {};
- const auto &edit=*geometryEdit_;
+ const auto &edit=*geometryEdit_;if(!edit.base.matches(project_))return {};
  if(edit.preview||edit.job||edit.applying||edit.selectionPending||edit.previewPending||edit.dragBefore||edit.sourceChange||edit.stage=="setup"||edit.choosingProviders||edit.tool=="boundary"||edit.tool=="move"||edit.tool=="coast")return {};
  if(edit.territorySelection&&(edit.stage!="selection"||edit.territorySelection->state().activePhase!=TerritorySelectionPhase::Drawing||edit.territorySelection->state().methodChangeConfirmation))return {};
  if(edit.polygon<0||edit.ring<0)return {};
  if(!isArea(edit.draft)&&edit.draft.type!="LineString"&&edit.draft.type!="MultiLineString"&&edit.tool!="split")return {};
- return {{"project",projectInstanceId()},{"session",edit.referenceSessionId},{"request",qulonglong(edit.request)}};
+ return {{"project",projectInstanceId()},{"revision",qulonglong(project_.revision())},{"session",edit.referenceSessionId},{"request",qulonglong(edit.request)}};
 }
 QVariantList EditorController::referenceDraftCoordinates() const {
  if(referenceDraftContext().isEmpty())return {};const auto &edit=*geometryEdit_;Ring path;
  if(edit.tool=="split"||(edit.territorySelection&&edit.territorySelection->state().activeMethod==TerritorySelectionMethod::Line))path=edit.lineDraft;
  else if(isArea(edit.draft)){if(edit.polygon<0||edit.ring<0||size_t(edit.polygon)>=edit.draft.polygons.size()||size_t(edit.ring)>=edit.draft.polygons[edit.polygon].size())return {};path=edit.draft.polygons[edit.polygon][edit.ring];}
  else if(edit.polygon>=0&&size_t(edit.polygon)<edit.draft.lines.size())path=edit.draft.lines[edit.polygon];
- QVariantList result;for(const auto p:path){const auto geo=projection_.unproject(p.x,p.y);result.append(QVariant(QVariantList{geo.x,geo.y}));}return result;
+ QVariantList result;for(const auto p:path){result.append(QVariant(QVariantList{p.x,p.y}));}return result;
 }
 bool EditorController::replaceReferenceDraft(const QVariantList &coordinates,const QVariantMap &context) {
  if(context.isEmpty()||context!=referenceDraftContext()||coordinates.size()<2)return false;
- Ring path;for(const auto &value:coordinates){const auto pair=value.toList();if(pair.size()!=2)return false;bool a=false,b=false;const double lon=pair[0].toDouble(&a),lat=pair[1].toDouble(&b);if(!a||!b||!std::isfinite(lon)||!std::isfinite(lat)||lon< -180||lon>180||lat< -90||lat>90)return false;path.push_back(projection_.project({lon,lat}));}
+ Ring path;for(const auto &value:coordinates){const auto pair=value.toList();if(pair.size()!=2)return false;bool a=false,b=false;const double lon=pair[0].toDouble(&a),lat=pair[1].toDouble(&b);if(!a||!b||!std::isfinite(lon)||!std::isfinite(lat)||lon< -180||lon>180||lat< -90||lat>90)return false;path.push_back({lon,lat});}
  auto &edit=*geometryEdit_;
  if(isArea(edit.draft)&&!edit.draft.polygons.empty()&&(size_t(edit.polygon)>=edit.draft.polygons.size()||size_t(edit.ring)>=edit.draft.polygons[edit.polygon].size()))return false;
  if(!isArea(edit.draft)&&!edit.draft.lines.empty()&&size_t(edit.polygon)>=edit.draft.lines.size())return false;
  if(edit.tool=="split"||(edit.territorySelection&&edit.territorySelection->state().activeMethod==TerritorySelectionMethod::Line)){edit.lineUndo.push_back(edit.lineDraft);edit.lineRedo.clear();edit.lineDraft=std::move(path);}
  else {edit.undo.push_back(edit.draft);edit.redo.clear();if(isArea(edit.draft)){if(path.size()>=3)closeRing(path);if(edit.draft.polygons.empty())edit.draft.polygons={{Ring{}}};edit.draft.polygons[edit.polygon][edit.ring]=std::move(path);}else {if(edit.draft.lines.empty())edit.draft.lines.emplace_back();edit.draft.lines[edit.polygon]=std::move(path);}}
  edit.vertex=-1;edit.error.clear();++edit.request;emit geometryEditChanged();return true;
+}
+
+bool EditorController::mapKeyboardInputBlocked(QObject *window) const {
+ const auto quick=qobject_cast<QQuickWindow*>(window);if(!quick)return true;
+ for(auto *focus=quick->activeFocusItem();focus;focus=focus->parentItem())if(focus->property("cursorPosition").isValid()||focus->property("editable").isValid())return true;
+ for(const auto *object:window->findChildren<QObject*>())if(object->property("visible").toBool()&&(object->property("modal").toBool()||object->property("modality").toInt()!=int(Qt::NonModal)))return true;
+ return false;
+}
+bool EditorController::geometryNudgeSelectedVertex(double dx,double dy){
+ if(!geometryEdit_||!std::isfinite(dx)||!std::isfinite(dy))return false;auto &edit=*geometryEdit_;
+ if(!edit.base.matches(project_)||edit.vertex<0||edit.preview||edit.job||edit.applying||edit.selectionPending||edit.previewPending||edit.dragBefore||edit.territorySelection||edit.stage=="setup"||edit.choosingProviders||edit.tool=="move")return false;
+ Point point;
+ if(edit.tool=="boundary"){if(!boundaryGeometryReady()||size_t(edit.vertex)>=edit.boundarySession->nodes().size())return false;point=edit.boundarySession->nodes()[edit.vertex].coordinate;}
+ else if(isArea(edit.draft)){if(edit.polygon<0||edit.ring<0||size_t(edit.polygon)>=edit.draft.polygons.size()||size_t(edit.ring)>=edit.draft.polygons[edit.polygon].size())return false;const auto &ring=edit.draft.polygons[edit.polygon][edit.ring];if(size_t(edit.vertex)>=ring.size())return false;point=ring[edit.vertex];}
+ else {const auto path=openPath(edit.draft,edit.polygon);if(!path||size_t(edit.vertex)>=path->size())return false;point=(*path)[edit.vertex];}
+ const auto screen=map::editMapToScreen(projection_.project(point),camera_.display());return geometryMoveSelectedVertexScreen(screen.x+dx,screen.y+dy,0);
 }
