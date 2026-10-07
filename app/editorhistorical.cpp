@@ -13,7 +13,10 @@
 #include <QFile>
 #include <QDate>
 #include <QCryptographicHash>
+#include <QCollator>
+#include <QLocale>
 #include <algorithm>
+#include <functional>
 #include <limits>
 
 static void initializeCatalogResources(){Q_INIT_RESOURCE(territorial_catalog);}
@@ -146,12 +149,30 @@ QVariantList EditorController::historicalCountries() const {
 QVariantList EditorController::historicalParents(const QString& countryId) const {
     QVariantList result;
     if(countryId.isEmpty())return result;
-    for(const auto& unit:project_.document().units) {
-        if(unit.id==countryId.toStdString()&&unit.kind==pandoeditor::UnitKind::General)
-            result.push_back(QVariantMap{{"id",qs(unit.id)},{"name",qs(unit.name)}});
-        else if(unit.kind==pandoeditor::UnitKind::General&&pandoeditor::staticParentRelation(project_.document(),unit.id).parentId==countryId.toStdString())
-            result.push_back(QVariantMap{{"id",qs(unit.id)},{"name",qs(unit.name)}});
+    const auto& document=project_.document();const auto rootId=countryId.toStdString();
+    const auto root=std::find_if(document.units.begin(),document.units.end(),[&](const auto& unit){return unit.id==rootId;});
+    if(root==document.units.end()||!pandoeditor::isRootGeneral(document,*root))return result;
+    const auto name=[](const pandoeditor::TerritorialUnit& unit){return qs(unit.name.empty()?unit.id:unit.name);};
+    std::map<std::string,std::vector<const pandoeditor::TerritorialUnit*>> children;
+    for(const auto& unit:document.units)if(unit.kind==pandoeditor::UnitKind::General) {
+        const auto& parent=pandoeditor::staticParentRelation(document,unit.id).parentId;
+        if(!parent.empty())children[parent].push_back(&unit);
     }
+    QCollator compare{QLocale{QLocale::Korean}};
+    for(auto& [parent,rows]:children)std::sort(rows.begin(),rows.end(),[&](const auto* a,const auto* b){
+        const int order=compare.compare(name(*a),name(*b));
+        return order!=0?order<0:compare.compare(qs(a->id),qs(b->id))<0;
+    });
+    result.push_back(QVariantMap{{"id",countryId},{"name",name(*root)}});
+    std::set<std::string> seen{rootId};
+    const std::function<void(const std::string&,int)> visit=[&](const auto& parent,int depth){
+        const auto found=children.find(parent);if(found==children.end())return;
+        for(const auto* unit:found->second)if(seen.insert(unit->id).second) {
+            result.push_back(QVariantMap{{"id",qs(unit->id)},{"name",QString(depth,QChar(0x3000))+name(*unit)}});
+            visit(unit->id,depth+1);
+        }
+    };
+    visit(rootId,1);
     return result;
 }
 QVariantMap EditorController::historicalPreview() const {

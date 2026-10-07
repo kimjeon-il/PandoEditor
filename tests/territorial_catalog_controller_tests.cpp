@@ -79,6 +79,41 @@ void apply(pandoeditor::Project& project,const pandoeditor::HistoricalInstantiat
 class TerritorialCatalogControllerTests:public QObject {
     Q_OBJECT
 private slots:
+    void ownershipParentsIncludeDeepGeneralDescendantsInWebOrder() {
+        // Fixed Web library-ownership.js traverses the hierarchy in Korean
+        // name/ID order, not storage order, and indents each descendant depth.
+        const auto box=[](double x,double y,double size) {
+            return pandoeditor::MultiPolygon{{{{x,y},{x+size,y},{x+size,y+size},{x,y+size},{x,y}}}};
+        };
+        pandoeditor::ProjectDocument document({
+            {"X","Nested",box(1,1,1),0x888888,""},
+            {"B",u8"나",box(5,5,1),0x888888,""},
+            {"C","Other country",box(20,20,10),0x888888,""},
+            {"Z",u8"가",box(.5,.5,3),0x888888,""},
+            {"A","Root",box(0,0,10),0x888888,""},
+            {"D",u8"가",box(7,7,1),0x888888,""},
+            {"R","Regional",box(40,40,1),0x888888,""}},{{"countries","Countries"}});
+        for(const auto& pair:std::vector<std::pair<std::string,std::string>>{{"X","Z"},{"Z","A"},{"B","A"},{"D","A"}})
+            pandoeditor::staticParentRelation(document,pair.first).parentId=pair.second;
+        document.units.back().kind=pandoeditor::UnitKind::Regional;
+        pandoeditor::Project project;project.replace(std::move(document));
+        QTemporaryDir temporary;QVERIFY(temporary.isValid());QFile input(temporary.filePath("nested-parents.json"));
+        QVERIFY(input.open(QIODevice::WriteOnly));const auto bytes=projectcodec::encode(project);
+        QCOMPARE(input.write(bytes),qint64(bytes.size()));input.close();
+        EditorController editor;QVERIFY(editor.openFile(QUrl::fromLocalFile(input.fileName())));
+        const auto before=editor.documentBytes();const bool dirty=editor.dirty(),undo=editor.canUndo(),redo=editor.canRedo();
+        QStringList ids,names;
+        for(const auto& value:editor.historicalParents("A")) {
+            const auto row=value.toMap();ids.append(row.value("id").toString());names.append(row.value("name").toString());
+        }
+        QCOMPARE(ids,QStringList({"A","D","Z","X","B"}));
+        QCOMPARE(names,QStringList({"Root",QString::fromUtf8("　가"),QString::fromUtf8("　가"),QString::fromUtf8("　　Nested"),QString::fromUtf8("　나")}));
+        QVERIFY(editor.historicalParents("Z").isEmpty());
+        QVERIFY(editor.historicalParents("R").isEmpty());
+        QVERIFY(editor.historicalParents("missing").isEmpty());
+        QVERIFY(editor.historicalParents("").isEmpty());
+        QCOMPARE(editor.documentBytes(),before);QCOMPARE(editor.dirty(),dirty);QCOMPARE(editor.canUndo(),undo);QCOMPARE(editor.canRedo(),redo);
+    }
     void frozenFixturePin() {
         const auto bytes=read(indexFile());QCOMPARE(bytes.size(),qsizetype(555560));
         QCOMPARE(QCryptographicHash::hash(bytes,QCryptographicHash::Sha256).toHex(),indexPin);
