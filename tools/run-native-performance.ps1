@@ -9,7 +9,7 @@ param(
  [ValidateRange(1,20)][int]$Runs=3,
  [ValidateRange(60000,3600000)][int]$WarmupMs=60000,
  [ValidateRange(720000,7200000)][int]$RepeatMs=720000,
- [int]$TimeoutSeconds=2400
+ [ValidateRange(1,2147483)][int]$TimeoutSeconds=2400
 )
 # Run the existing Release test executable against installed Qt. No runtime/package copy.
 # Fixture manifest schema: pandoeditor-native-performance-fixtures/version2; four
@@ -80,10 +80,10 @@ if($Mode -eq 'acceptance' -and $missing.Count){throw "Acceptance preflight BLOCK
 if($Mode -eq 'diagnostic' -and !$DiagnosticReason){throw 'Diagnostic mode requires an explicit reduction/synthetic reason'}
 if($TimeoutSeconds*1000 -lt $WarmupMs+$RepeatMs+180000){throw 'Timeout cannot cover warm-up, long run and scenario sequence'}
 if(!(Test-Path -LiteralPath "$qtPath/Qt6Test.dll")){throw 'Installed Qt6Test.dll missing'}
-$metadata=[ordered]@{sourceCommit=(git rev-parse HEAD);sourceDirty=[bool](git status --porcelain --untracked-files=no);binarySha256=(Get-FileHash -LiteralPath $probePath).Hash;fixtureManifestSha256=$preflight.fixtureManifestSha256;buildType='Release';qtBin=$qtPath;os=[Environment]::OSVersion.VersionString;adapters=@(Get-CimInstance Win32_VideoController | Select-Object Name,DriverVersion);cpu=@(Get-CimInstance Win32_Processor | Select-Object Name,NumberOfLogicalProcessors);inputHashes=$hashes;measurementMode=$Mode;diagnosticReason=$DiagnosticReason;runs=$Runs;warmupMs=$WarmupMs;repeatMs=$RepeatMs;acceptedBy=$null}
+$metadata=[ordered]@{sourceCommit=(git rev-parse HEAD);sourceDirty=[bool](git status --porcelain --untracked-files=no);binarySha256=(Get-FileHash -LiteralPath $probePath).Hash;fixtureManifestSha256=$preflight.fixtureManifestSha256;buildType='Release';qtBin=$qtPath;os=[Environment]::OSVersion.VersionString;adapters=@(Get-CimInstance Win32_VideoController | Select-Object Name,DriverVersion);cpu=@(Get-CimInstance Win32_Processor | Select-Object Name,NumberOfLogicalProcessors);inputHashes=$hashes;measurementMode=$Mode;diagnosticReason=$DiagnosticReason;runs=$Runs;warmupMs=$WarmupMs;repeatMs=$RepeatMs;qtFunctionTimeoutMs=$TimeoutSeconds*1000;acceptedBy=$null}
 $metadata | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath "$reportRoot/environment.json" -Encoding utf8
 if($Mode -eq 'acceptance' -and $metadata.sourceDirty){throw 'Acceptance requires the final fixed source commit; working tree is dirty'}
-$envNames=@('PATH','QT_QPA_PLATFORM','QT_PLUGIN_PATH','QML_IMPORT_PATH','QML2_IMPORT_PATH','QT_QUICK_BACKEND','QSG_RHI_BACKEND','PANDOEDITOR_MAP_RENDERER','QSG_RENDER_TIMING','QSG_RENDERER_DEBUG','PANDOEDITOR_NATIVE_PERF_REPORT','PANDOEDITOR_NATIVE_PERF_FIXTURES','PANDOEDITOR_NATIVE_PERF_MODE','PANDOEDITOR_NATIVE_PERF_REASON','PANDOEDITOR_NATIVE_PERF_PROVENANCE','PANDOEDITOR_NATIVE_PERF_PREFLIGHT','PANDOEDITOR_NATIVE_PERF_WARMUP_MS','PANDOEDITOR_NATIVE_PERF_REPEAT_MS','PANDOEDITOR_NATIVE_PERF_RUN_ID','PANDOEDITOR_NATIVE_PERF_BRIEF','PANDOEDITOR_NATIVE_PERF_ABLATION','PANDOEDITOR_NATIVE_PERF_RECOVERY','PANDOEDITOR_NATIVE_PERF_VIEW')
+$envNames=@('PATH','QTEST_FUNCTION_TIMEOUT','QT_QPA_PLATFORM','QT_PLUGIN_PATH','QML_IMPORT_PATH','QML2_IMPORT_PATH','QT_QUICK_BACKEND','QSG_RHI_BACKEND','PANDOEDITOR_MAP_RENDERER','QSG_RENDER_TIMING','QSG_RENDERER_DEBUG','PANDOEDITOR_NATIVE_PERF_REPORT','PANDOEDITOR_NATIVE_PERF_FIXTURES','PANDOEDITOR_NATIVE_PERF_MODE','PANDOEDITOR_NATIVE_PERF_REASON','PANDOEDITOR_NATIVE_PERF_PROVENANCE','PANDOEDITOR_NATIVE_PERF_PREFLIGHT','PANDOEDITOR_NATIVE_PERF_WARMUP_MS','PANDOEDITOR_NATIVE_PERF_REPEAT_MS','PANDOEDITOR_NATIVE_PERF_RUN_ID','PANDOEDITOR_NATIVE_PERF_BRIEF','PANDOEDITOR_NATIVE_PERF_ABLATION','PANDOEDITOR_NATIVE_PERF_RECOVERY','PANDOEDITOR_NATIVE_PERF_VIEW')
 $saved=@{};foreach($name in $envNames){$saved[$name]=[Environment]::GetEnvironmentVariable($name,'Process')}
 try{
  $env:PATH="$qtPath;$env:PATH";$env:QT_QPA_PLATFORM='windows'
@@ -96,6 +96,9 @@ try{
  $env:PANDOEDITOR_NATIVE_PERF_FIXTURES=$manifestPath;$env:PANDOEDITOR_NATIVE_PERF_MODE=$Mode;$env:PANDOEDITOR_NATIVE_PERF_REASON=$DiagnosticReason
  $env:PANDOEDITOR_NATIVE_PERF_PROVENANCE="$reportRoot/environment.json";$env:PANDOEDITOR_NATIVE_PERF_PREFLIGHT="$reportRoot/preflight.json"
  $env:PANDOEDITOR_NATIVE_PERF_WARMUP_MS="$WarmupMs";$env:PANDOEDITOR_NATIVE_PERF_REPEAT_MS="$RepeatMs"
+ # Qt's five-minute per-function default cannot contain the required twelve-minute
+ # repetition. Keep its watchdog finite and equal to the recorded process deadline.
+ $env:QTEST_FUNCTION_TIMEOUT="$($metadata.qtFunctionTimeoutMs)"
  $failures=[Collections.Generic.List[object]]::new()
  for($run=1;$run -le $Runs;$run++){
   $runRoot=Join-Path $reportRoot "run-$run";New-Item -ItemType Directory -Path $runRoot | Out-Null

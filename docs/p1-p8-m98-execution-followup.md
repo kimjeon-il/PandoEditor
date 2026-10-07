@@ -160,3 +160,27 @@ Executable SHA256 was
 `86f63581b789d18f04a2465a452dd29aaa15892bc1e1d62786e3e17bc7326493`.
 Raw stdout, stderr, Qt log and receipts, including both rejected observations,
 are preserved in `D:/Codex/evidence/p1-p8-m98-20261006/`.
+
+## Long-run watchdog failure and bounded runner correction
+
+`m98-device-sample-c3ecae6-08` used clean App
+`c3ecae6994263485196204aa8feb2e6dd8a2b91d`, ordinary Release binary
+`46b039251888abdf69d226fd02c7c0d4916cb6989b33fd7c8d30d70e605f4343`,
+and unchanged pointer fixture manifest
+`9af0e521085c093596c4b1ab051c90fe1ceb2bc82d73ed4bdaedcafcfbfb129e4`.
+Actual PID 13020 reached all 15 scenarios and the repeat phase, then Qt's
+five-minute per-function watchdog aborted at 300012 ms. OS exit was
+-1073740286; Qt recorded 1 pass/1 fail/0 skip, with no final measurement JSON.
+This is a failed/incomplete long run. Verified runner PID 19792 and its own
+run-2 native PID 9860 were stopped; the partial journal and interruption
+receipt are retained. Earlier failures remain untouched.
+
+The runner now explicitly sets finite `QTEST_FUNCTION_TIMEOUT` to the same
+`TimeoutSeconds * 1000` as the existing native-process deadline, records that
+value, and restores the caller environment. Qt documents its default and this
+setting at https://doc.qt.io/qt-6/qtest-overview.html . At the requested default
+it is 2400000 ms, allowing the already required 60-second warmup, scenarios
+and 720000-ms repeat. No scenario timing, performance budget, assertion,
+required case count or production code changes. TimeoutSeconds also rejects
+values that would overflow Qt's signed millisecond value. PowerShell parsing
+and whitespace checks passed. A complete rerun is still required.
