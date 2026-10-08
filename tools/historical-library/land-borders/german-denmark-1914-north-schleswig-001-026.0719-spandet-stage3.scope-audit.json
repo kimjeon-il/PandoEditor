@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "referenceDate": "1914-07-31",
+  "title": "North Schleswig 1-26 scope audit: Gelsbro marker 26 versus continued Gels Å boundary",
+  "sourceCandidate": "tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.geojson",
+  "sourceGeo": "tools/historical-library/sources/german-empire-1914/north-schleswig-001-026/osm-endpoint-context.json",
+  "historicalProtocolUrl": "https://da.wikisource.org/wiki/Freden_i_Wien_(1864)_Gr%C3%A6nsereguleringskommissionen",
+  "historicalSourceRule": {
+    "pre26": "From stone 1, along south Vester Vedsted/Ribe/Seem parish boundaries to stone 22, then east Seem parish boundary to stone 26 at Gjelsbro.",
+    "after26": "From stone 26 the boundary follows Gels Å to its confluence with Flads Å; following paragraph then leads toward stone 27.",
+    "boundarySegmentMustEndAtStone26": true
+  },
+  "mapObservations": {
+    "originalMap": "SLUB Messtischblatt 35 Spandet 1880 (1878 survey)",
+    "stone26ShownNear": "Gjelsbro Zollamt / bridge area, before river meanders northward",
+    "originalMapId": "10006007",
+    "originalWmsLayer": "df_dk_0010001_0719",
+    "observationStatus": "confirmed-visually-from-historical-map",
+    "exactStone26CoordinatesDetermined": false
+  },
+  "currentMaster": {
+    "workingLengthKm": 26.683,
+    "lastCoordinate": [
+      8.884683809525658,
+      55.32087242400453
+    ],
+    "matchesEndOfCurrentOsmGelsARiverWayWithinMeters": 0.031,
+    "osmGelsAWayId": 1315321621,
+    "osmGelsAWayEndpoint": [
+      8.8846839,
+      55.3208727
+    ],
+    "hasExtendedBeyondStone26": true,
+    "overrunExactLengthEstablished": false
+  },
+  "provisionalContemporaryBridgeControl": {
+    "osmBridgeWayId": 1491649312,
+    "bridgeCoordinateApproxLonLat": [
+      8.92865506,
+      55.29610255
+    ],
+    "nearestCandidateCoordinate": [
+      8.9271652,
+      55.29653945
+    ],
+    "bridgeToCandidateDistanceM": 106.2,
+    "approximatedWorkingLineKmToBridge": 20.052,
+    "approximatedWorkingLineKmBeyondBridge": 6.587,
+    "projectedKmMethod": "Local planar approximation: longitude × 111320 cos(55.29°) m, latitude ×111195m; bridge represented by average of mapped bridge-way ring. Not a historical stone-26 survey.",
+    "currentCandidatePlanarLengthKm": 26.639,
+    "cannotDefineExactStone26Cut": true
+  },
+  "requiredRemediation": [
+    "Mark present 1–26 working master as containing an additional post-26 Gels Å river stretch; do not certify the dataset as stones 1–26 only.",
+    "Locate the original 1865 stone-26 near Gjelsbro from contemporaneous cartography/protocol, not from a modern bridge-center guess.",
+    "Split at independently verified stone-26 contact with Gels Å; retain entire 26→Flads Å segment as an independent adjoining river-border source.",
+    "Review whether the end of the current OSM Gels Å way is the historically specified Flads Å confluence, using an independent river/period map.",
+    "Until corrected, preserve current 26.683km master geometry and provisional status without promoting or deleting any point."
+  ],
+  "status": "scope-error-confirmed / exact-historic-split-point-unverified",
+  "sourceImmutability": true
+}
