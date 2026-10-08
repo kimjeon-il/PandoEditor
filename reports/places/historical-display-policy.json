@@ -9,7 +9,8 @@
     "displayTimeline": "Chronologically ordered name change points; empty for places with no verified historic change. Label references an existing Korean variant in names[].",
     "shortDescriptionKo": "Screen-facing concise Korean city description, maximum 28 Unicode code points",
     "contextualDisplayNames": "Regime/polity-specific historical names; never auto-apply based solely on date.",
-    "temporalEligibility": "Optional verified date/year before which the currently named city had not yet been founded as a city; the editor suppresses the city label at earlier map dates."
+    "temporalEligibility": "Optional verified date/year before which the currently named city had not yet been founded as a city; the editor suppresses the city label at earlier map dates.",
+    "names": "Curated selected preferred names by period and language, plus individually justified exceptions only. Existing names[] batches have not yet been migrated to this policy."
   },
   "timelineEntry": {
     "nameKo": "Reference to names[] (ko)",
@@ -26,7 +27,7 @@
     "If no temporalEligibility blocks the city, but displayTimeline is empty or the requested date precedes the first documented label, use defaultDisplayNameKo only as historicalAccuracy=unverified, never as a verified contemporary name.",
     "Only apply contextualDisplayNames if a grounded regime/polity relation valid at the point and date supports it; otherwise retain the normal timeline name.",
     "Chinese style changes at 1912-01-01 are Korean editorial conventions, not Chinese city renamings. Japan uses Korean transcriptions of Japanese local readings; do not generate Sino-Korean kanji readings.",
-    "Aliases, mixed official naming, city boundary changes, and year-granularity uncertainties remain traceable in names[] and source notes.",
+    "Do not treat every attested alias or multilingual form as a canonical names[] entry: keep only period-specific preferred ko/en/native selections or explicitly justified search/multilingual exceptions. Existing staged records remain pending separate audit.",
     "Map-label displayTimeline values follow documented PandoEditor editorial conventions, even when they differ from contemporary Korean regulatory or national language guidance; keep standardization events as optional historical metadata, not forced display transitions."
   ],
   "displayText": {
@@ -39,7 +40,8 @@
   "caveats": [
     "Historical timelining is about label selection only; it does not create old boundary polygons or infer state affiliation from GeoNames sourceCountryCode.",
     "This policy is staged only; no production manifest or map runtime was changed.",
-    "City establishment date/year is not interchangeable with land being inhabited; it gates the named city object only, not earlier settlements."
+    "City establishment date/year is not interchangeable with land being inhabited; it gates the named city object only, not earlier settlements.",
+    "The one-preferred-name-per-ko/en/native-per-date rule is new staging policy only. It does not certify existing batches or change runtime behavior."
   ],
   "temporalEligibility": {
     "cityEstablishedFromYear": "Year of clearly documented city formation, not a Jan 1 effective day",
@@ -65,5 +67,40 @@
       }
     ],
     "distinction": "Do not treat editorial map labels, naming standards, sovereignty shifts and historical city renamings as equivalent."
+  },
+  "policyRevision": "2026-10-08-preferred-place-names",
+  "preferredNameSelection": {
+    "scope": "A single place identity at a specific historical map date, independently for Korean (ko), English (en), and one selected local/native language (native).",
+    "maxPreferredNamesPerSlotAtAnyInstant": {
+      "ko": 1,
+      "en": 1,
+      "native": 1
+    },
+    "availability": "Zero names is allowed for an unverified language/era; never fill missing slots by guessing or copy/pasting another language.",
+    "temporalRule": "Store transitions only when a slot's preferred value actually changes. A ko-only change does not require duplicating or altering en/native. Do not create annual copies of unchanged values.",
+    "selectionOrder": [
+      "Use the documented local official/standard settlement name valid for that period when selecting a preferred local/native name.",
+      "Choose exactly one date-appropriate representative English name and Korean map name where supported; distinguish source-language renamings from editor-chosen Korean transcription changes.",
+      "A historical name remains eligible when it was actually the period's official/preferred map name; mere historical occurrence does not guarantee retention.",
+      "Select one preferred native language/script for the default map label, and record which was selected; never conflate all local official languages into an unlabeled native field."
+    ],
+    "classification": {
+      "actualOfficialRename": "Historical change in the local name or legally adopted city name. Record the real date/period and evidence; do not confuse with a change of Korean transcription.",
+      "historicalKoreanSinoReading": "Historical Korean map-label reading for Chinese-language place names in mainland China before the 1912-01-01 founding of the Republic of China. It is editorial transcription history, not a local-city rename.",
+      "historicalEditorialName": "A deliberately selected period-specific Korean map name with explicit evidence; nonselected historical exonyms and informal bynames do not qualify by default.",
+      "alternate": "Not a catch-all category for every attested pronunciation, transliteration, exonym, nickname or alternative spelling."
+    },
+    "exclusionByDefault": [
+      "Spoken/colloquial bynames, nicknames, historical aliases not selected as the preferred name for any relevant period.",
+      "Redundant romanizations, old transliteration schemes, alternate Han characters or script variants with no independent preferred-map-label period.",
+      "Other-language exonyms that are not chosen as the English or native preferred value or approved as a narrow exception."
+    ],
+    "exceptions": {
+      "searchOnly": "Retain a nonpreferred alias solely for demonstrable search demand, with explicit rationale and provenance; it must never appear as an additional ko/en/native preferred map label. Do not bulk-import GeoNames alternateNames.",
+      "multilingual": "When a locality has genuinely co-official local languages, select one default native display name while preserving only necessary, evidence-backed additional language forms as documented exceptions. Additional forms do not silently override the one-name-per-slot display rule.",
+      "historicallySignificant": "An unofficial historic form can be retained only when specifically approved as the representative map label for a documented period; absence of a period means nonpreferred.",
+      "approval": "Every exception requires an explicit reason, language and evidence. No automatic retention merely because an alias appears in a source."
+    },
+    "implementationBoundary": "Policy decision only. The existing 15 reviewed city batches and live PLAC map tiles are not rewritten, audited or asserted compliant in this change; perform name-by-name review and any schema/runtime enforcement separately."
   }
 }
