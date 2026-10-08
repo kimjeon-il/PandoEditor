@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "workUnit": "1914-German-Danish-border/0718-west/step-1",
+  "referenceDate": "1914-07-31",
+  "sourceSheet": {
+    "id": "0718",
+    "title": "Hvidding",
+    "issueYear": 1880,
+    "scale": 25000,
+    "mapId": "10006008",
+    "permalink": "https://www.deutschefotothek.de/documents/obj/71051522",
+    "wms": "https://wms.kartenforum.slub-dresden.de/map/10006008",
+    "layer": "df_dk_0010001_0718"
+  },
+  "workingBorderStatus": "provisional-no-original-tracing",
+  "originalRasterAccessible": true,
+  "originalRasterVisuallyOverlayRendered": true,
+  "independentHistoricBoundaryDigitizationCompleted": false,
+  "candidateGeometryModified": false,
+  "historicBorderDisplacementMeasured": false,
+  "measurementBlockedBy": "Historic boundary line on the 1880 map must be manually identified, then digitized and checked against 1914 revisions.",
+  "candidate": {
+    "entireSheetLengthKm": 11.88108,
+    "westernHalfLengthKm": 5.94054,
+    "easternHalfLengthKm": 5.94054,
+    "startLonLat": [
+      8.666666666666666,
+      55.27688120496713
+    ],
+    "splitLonLat": [
+      8.750261798203894,
+      55.27444861174032
+    ],
+    "whole0718EndLonLat": [
+      8.833333333333332,
+      55.27205685739951
+    ],
+    "candidateSimple": true,
+    "samplePointsLonLat": [
+      [
+        8.66666667,
+        55.2768812
+      ],
+      [
+        8.67429438,
+        55.27779149
+      ],
+      [
+        8.681927,
+        55.27868743
+      ],
+      [
+        8.68963608,
+        55.27863709
+      ],
+      [
+        8.69728355,
+        55.27779376
+      ],
+      [
+        8.70493036,
+        55.27805038
+      ],
+      [
+        8.7125361,
+        55.27901756
+      ],
+      [
+        8.72020909,
+        55.27851873
+      ],
+      [
+        8.72770866,
+        55.27733573
+      ],
+      [
+        8.72981041,
+        55.27483169
+      ],
+      [
+        8.73505037,
+        55.27637095
+      ],
+      [
+        8.74266656,
+        55.27544232
+      ],
+      [
+        8.7502618,
+        55.27444861
+      ]
+    ],
+    "candidateVsModernNamedDitch": {
+      "source": "OSM mapped fragments named Grænsegrøften",
+      "independentHistoricalValidation": false,
+      "sampleCount": 121,
+      "medianNearestDitchDistanceM": 2.1,
+      "shareWithin10m": 0.562,
+      "shareWithin25m": 0.562,
+      "shareWithin100m": 0.579,
+      "warning": "Incomplete contemporary OSM ditch segments. No inference of 1914 position."
+    }
+  },
+  "rasterPanels": [
+    {
+      "panel": "overview",
+      "map": {
+        "mime": "image/png",
+        "bytes": 2936952,
+        "sha256": "eda13b73282ebbda845cf503d59a233f78878ce84b3cecc9ddd4f19dbe56cea3",
+        "imageDimensions": [
+          1750,
+          1150
+        ],
+        "channelExtrema": [
+          [
+            45,
+            255
+          ],
+          [
+            32,
+            255
+          ],
+          [
+            28,
+            255
+          ],
+          [
+            255,
+            255
+          ]
+        ],
+        "bboxLonLat": [
+          8.66666667,
+          55.26594861,
+          8.7622618,
+          55.28753028
+        ],
+        "wmsUrl": "https://wms.kartenforum.slub-dresden.de/map/10006008",
+        "layer": "df_dk_0010001_0718",
+        "sourceArtifactFile": "0718-west-overview-source-1880.jpg",
+        "overlayArtifactFile": "0718-west-overview-overlay.jpg",
+        "overlaySha256": "180a2d4b19959452dbb9f734d6bf5176b959baad04ba495c7f0504f350e9c12a"
+      }
+    },
+    {
+      "panel": "subpanel-1",
+      "map": {
+        "mime": "image/png",
+        "bytes": 3046807,
+        "sha256": "0ff8efe9cc0a3411b440e330143716455cea390752e41e79f917e5aa3db8c7a3",
+        "imageDimensions": [
+          1700,
+          1300
+        ],
+        "channelExtrema": [
+          [
+            51,
+            255
+          ],
+          [
+            35,
+            255
+          ],
+          [
+            31,
+            255
+          ],
+          [
+            255,
+            255
+          ]
+        ],
+        "bboxLonLat": [
+          8.66666667,
+          55.2683812,
+          8.7245361,
+          55.28751756
+        ],
+        "wmsUrl": "https://wms.kartenforum.slub-dresden.de/map/10006008",
+        "layer": "df_dk_0010001_0718",
+        "sourceArtifactFile": "0718-west-01-source-1880.jpg",
+        "overlayArtifactFile": "0718-west-01-overlay.jpg",
+        "overlaySha256": "001dcc083cfb56087dec2c3e15976c5a87d6ffcf20b519063a9d53f240130947"
+      }
+    },
+    {
+      "panel": "subpanel-2",
+      "map": {
+        "mime": "image/png",
+        "bytes": 3504178,
+        "sha256": "e7d411b51ed295203641ed074891659e491a6c5090739e1d54162aa1ed490706",
+        "imageDimensions": [
+          1700,
+          1300
+        ],
+        "channelExtrema": [
+          [
+            45,
+            255
+          ],
+          [
+            35,
+            255
+          ],
+          [
+            24,
+            255
+          ],
+          [
+            255,
+            255
+          ]
+        ],
+        "bboxLonLat": [
+          8.7005361,
+          55.26594861,
+          8.7622618,
+          55.28753028
+        ],
+        "wmsUrl": "https://wms.kartenforum.slub-dresden.de/map/10006008",
+        "layer": "df_dk_0010001_0718",
+        "sourceArtifactFile": "0718-west-02-source-1880.jpg",
+        "overlayArtifactFile": "0718-west-02-overlay.jpg",
+        "overlaySha256": "46368087665fdd936349e54ac1f68d79e87803af72c8ae66ee6b67d846218a1f"
+      }
+    }
+  ],
+  "historicalRule": {
+    "protocol": "Berlin border commission 1865, Article I §2",
+    "textUrl": "https://da.wikisource.org/wiki/Freden_i_Wien_(1864)_Gr%C3%A6nsereguleringskommissionen",
+    "applicable": "1864 frontier on southern boundaries of Vester Vedsted/Ribe/Seem parishes and major drainage ditch until boundary stone 22"
+  },
+  "sourceCautions": [
+    "1880 survey precedes later railroad/station changes (1887) and granite boundary-stone replacement (1891–1915).",
+    "Map sheet index and modern-parish clipping are not proof of the historic line.",
+    "No red candidate coordinates are promoted to verified historical coordinates.",
+    "Do not assume moved stone 2 location is the original boundary marker.",
+    "Verify WMS georeferencing accuracy and map-date alterations before meter-scale claims."
+  ],
+  "githubActionsRunId": "37791021798",
+  "githubRepository": "kimjeon-il/Pando",
+  "reviewArtifactPath": "tools/historical-library/review-output/north-schleswig-1914-001-026/0718-west",
+  "next": "Manual visual classification of historic 1880 boundary symbol for both west-half subpanels; trace only unambiguous portions, compare deviation and post-1880 changes."
+}
