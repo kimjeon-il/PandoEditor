@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "referenceDate": "1914-07-31",
+  "workUnit": "German-Danish border, Hügum Hårup and Flads Å confluence exceptions only",
+  "referenceSheet": "0619 Hügum 1878 1:25,000",
+  "dataProvenance": "https://www.deutschefotothek.de/documents/obj/71051510",
+  "periodMapOriginalReviewEnabled": true,
+  "knownHistoricMapPublicationYears": [
+    1878
+  ],
+  "otherPublishedRevision": {
+    "publication": "Reichsamt für Landesaufnahme, Das Reichsamt für Landesaufnahme und seine Kartenwerke (Berlin, 1931), List A",
+    "sheet": "Hügum No. 21",
+    "reportedFirstEditionYear": 1880,
+    "reportedLastSubstantialRevision": "B 1916",
+    "sourceUrl": "https://doczz.net/doc/5885424/das-reichsamt-f%C3%BCr-landesaufnahme-und-seine-kartenwerke",
+    "lastRevisionAfterReferenceDate": true,
+    "sourceYearConflict": "SLUB catalog records a Hügum 1878 publication, while the 1931 Reichsamt list gives the original publication 1880. Differences of publication/edition metadata are not reconciled.",
+    "note": "A 1916 revised edition may help retrospective analysis but cannot establish the mid-1914 river route by itself. A pre-1914 intermediate edition has not been obtained."
+  },
+  "nearContemporarySeries": {
+    "publisher": "Danish Datafordeler",
+    "catalog": "Preussiske målebordsblade 1877–1912, 1:25,000",
+    "access": "https://datafordeler.dk/dataoversigt/historiske-kort-og-data/preussiske-maalebordsblade-wms/",
+    "apiKeyRequired": true,
+    "later0619SheetAcquired": false
+  },
+  "rendering": {
+    "mapContentWidthCssPx": 2560,
+    "flatZoom": 64,
+    "viewToleranceCssPx": 0.5,
+    "toleranceDegrees": 0.0010986328125,
+    "physicalNote": "Displacement is in equal-angle 2D screen-space; it is not a metre-scale legal accuracy threshold.",
+    "historicalReferenceDigitized": false,
+    "measuredDifferenceToHistorical1914CssPx": null,
+    "targetPassed": null
+  },
+  "panels": {
+    "harup-meander": {
+      "bboxLonLat": [
+        8.8995,
+        55.3076,
+        8.912,
+        55.3152
+      ],
+      "historicalMap": "0619 Hügum, mapped/published 1878, WMS 10006020",
+      "panelSizePx": [
+        1780,
+        1160
+      ],
+      "originalPngSha256": "2fa53b1b02360835ffd93241d23a211181411c110ca9fa29392c1255cb5336fc",
+      "overlayJpgSha256": "6892d3acbd484ea4af55adf163e4de57bbf496d8c70c2afb3b01b9ae63c599d9",
+      "originalImageName": "harup-meander-1878-source.jpg",
+      "overlayImageName": "harup-meander-tolerance-overlay.jpg",
+      "candidateCorridorHalfWidthCssPx": 0.5,
+      "candidateCorridorRadiusDegrees": 0.0010986328125,
+      "historicalLineDigitized": false,
+      "georeferencingResidualAvailable": false,
+      "manualReviewStatus": "needs-visual-inspection",
+      "todo": "Look for large meanders actually outside ±0.5 CSS px corridor. Later-period evidence needed before correction."
+    },
+    "gels-flads-confluence": {
+      "bboxLonLat": [
+        8.8775,
+        55.3143,
+        8.8995,
+        55.3265
+      ],
+      "historicalMap": "0619 Hügum, mapped/published 1878, WMS 10006020",
+      "panelSizePx": [
+        1800,
+        1180
+      ],
+      "originalPngSha256": "f1b59ee6d9b648f6885f747dc23be8f40228d06d562540d8c387a8b61647be53",
+      "overlayJpgSha256": "274ac540597ca4e3e8a1b7a2ef0f0d18ca3576e9b34ffdfd7554265dbce9fca1",
+      "originalImageName": "gels-flads-confluence-1878-source.jpg",
+      "overlayImageName": "gels-flads-confluence-tolerance-overlay.jpg",
+      "candidateCorridorHalfWidthCssPx": 0.5,
+      "candidateCorridorRadiusDegrees": 0.0010986328125,
+      "historicalLineDigitized": false,
+      "georeferencingResidualAvailable": false,
+      "manualReviewStatus": "needs-visual-inspection",
+      "todo": "Locate 1878 confluence branch geometry; do not infer 1914 junction or Flads Å bank by snapping to modern centerline."
+    }
+  },
+  "primaryConcerns": {
+    "harup": "Difference between 1878 mapped channel and modern working geometry may be visually significant. Later reference date still missing.",
+    "confluence": "Position and side/bank rule of Flads Å after confluence must not be inferred from present river centerline."
+  },
+  "masterUnmodified": true,
+  "historicBorderCertified": false,
+  "runId": "37822505181",
+  "rasterFilesCommittedToGit": false,
+  "next": "After manual inspection, classify only visible >0.5 CSSpx bends as targeted follow-ups. Defer geometry correction until a pre-1914 reference is validated."
+}
