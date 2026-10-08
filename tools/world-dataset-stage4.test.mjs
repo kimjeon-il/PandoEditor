@@ -5,13 +5,13 @@ import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { gunzipSync } from 'node:zlib';
+import { gunzipSync, gzipSync } from 'node:zlib';
 import {
   WORLD_ROLES, validateWorldDataset, validateWorldAssetBytes, verifyWorldFiles,
   safeRelativePath, sha256,
 } from './lib/world-dataset-contract.mjs';
 import {
-  WEB_ASSET_ROLES, buildWorldSyncPlan, validateWebWorldBundle, applyWorldSyncPlan, sourceReader,
+  WEB_ASSET_ROLES, buildWorldSyncPlan, validateWebWorldBundle, applyWorldSyncPlan, sourceReader, planWorldSync,
 } from './sync-world-data.mjs';
 
 const root = fileURLToPath(new URL('../assets/world/', import.meta.url));
@@ -105,6 +105,42 @@ test('source changes and altered compressed assets are not accepted without vali
   assert.throws(() => sourceReader({ webRef: 'not-a-commit' }), /full 40-character/);
 });
 
+test('sync downloads only changed upstream bytes and reuses verified local objects', async () => {
+  const { bundle, buffers } = previewBundle();
+  const rawPreview = gunzipSync(buffers.get('countryPreview'));
+  const differentCompression = gzipSync(rawPreview, { level: 1 });
+  assert.notEqual(sha256(differentCompression), sha256(buffers.get('countryPreview')));
+  const previewSpec = bundle.assets.previewCountries;
+  previewSpec.sha256 = sha256(differentCompression);
+  previewSpec.compressedBytes = differentCompression.length;
+  previewSpec.url = `world/objects/countries-preview-sha256-${previewSpec.sha256}.geojson.gz`;
+  const raw = Buffer.from(JSON.stringify(bundle));
+  const upstreamPath = `assets/data/${previewSpec.url}`;
+  const requests = [];
+  const reader = async path => {
+    requests.push(path);
+    if (path === 'assets/data/world/current.json') return raw;
+    if (path === upstreamPath) return differentCompression;
+    for (const role of ['terrain', 'hydro']) {
+      if (path === initial[role].source.path) {
+        return readFileSync(join(root, initial[role].path));
+      }
+    }
+    throw new Error(`Unexpected extra upstream fetch: ${path}`);
+  };
+  const appRoot = fileURLToPath(new URL('../', import.meta.url));
+  const plan = await planWorldSync({ appRoot, webRef: commit, reader });
+  assert.deepEqual(plan.downloadedRoles, ['countryPreview']);
+  assert.deepEqual(new Set(plan.reusedRoles),
+    new Set(['previewMesh', 'countryCanonical', 'canonicalMesh', 'labelAnchors']));
+  assert.equal(plan.physicalDrift.length, 0);
+  assert.equal(plan.changed.length, 5);
+  assert.deepEqual(requests, [
+    'assets/data/world/current.json', upstreamPath,
+    initial.terrain.source.path, initial.hydro.source.path,
+  ]);
+});
+
 test('approval is required; physical dataset drift is blocked; approved bundle is atomic and reusable', () => {
   const { bundle, raw, buffers } = previewBundle();
   const plan = buildWorldSyncPlan({
@@ -140,6 +176,12 @@ test('approval is required; physical dataset drift is blocked; approved bundle i
       appRoot, plan, approveBundle: plan.webBundleSha256,
     });
     assert.equal(repeat.assetsAdded, 0);
+    const otherApproved = structuredClone(plan.candidate);
+    otherApproved.origin.worldBundleSha256 = 'b'.repeat(64);
+    writeFileSync(join(worldRoot, 'manifest.json'), JSON.stringify(otherApproved, null, 2));
+    assert.throws(() => applyWorldSyncPlan({
+      appRoot, plan, approveBundle: plan.webBundleSha256,
+    }), /Native world manifest changed/);
   } finally {
     rmSync(appRoot, { recursive: true, force: true });
   }
