@@ -94,8 +94,8 @@
     "featureCount": 16548,
     "core": {
       "url": "metadata-core.json.gz",
-      "bytes": 730000,
-      "sha256": "5d1b1ad8d04ee405d313fc394033560fca8ee086de46f47998feb07f963f065b"
+      "bytes": 729625,
+      "sha256": "700b886134bbc44fa7686f8f2c131be53a73a5c2ebaabb468b50ea3e4000cee5"
     },
     "detail": {
       "url": "../v0.13.0/metadata-detail.json.gz",
@@ -128,7 +128,7 @@
     }
   ],
   "cache": {
-    "name": "pandolab-water-v0.13.1-5d1b1ad8d04e",
+    "name": "pandolab-water-v0.13.1-700b886134bb",
     "backgroundDownload": true,
     "rangeRequests": true
   },
@@ -169,7 +169,7 @@
     "shardCount": 3,
     "indexTileCount": 953,
     "logicalFeatureCount": 5173,
-    "compressedBytes": 11974495,
+    "compressedBytes": 11974120,
     "largestPackBytes": 236563,
     "seedReachCount": 326261,
     "continuityRootCount": 2285,
@@ -203,15 +203,15 @@
     "naturalEarthNameReference": [
       {
         "file": "rivers_base.geojson",
-        "sha256": "53d1f6fa1ae749619497b95f3d7da974ace3ed15db24c439ba329bc4c8d8697e"
+        "sha256": "3391aa917d3707be8da0a133b5a3bde26594e8b87648cb7f533d0df4fd8bcc99"
       },
       {
         "file": "lakes_base.geojson",
-        "sha256": "a0511c91d7c11e7460640d522e9cc0ea39104497784f73af09e39b9bfa6d790c"
+        "sha256": "c848770c5c2177c1e1fe170e1d85faa6c804aad53fb8e8bcfc9b75f14a6a7a5c"
       },
       {
         "file": "countries-ne-5.1.1.geojson",
-        "sha256": "ce95d2f5e0cfb93e313290d626cfb6a8f8ce2df0cf89fa0645e9961dab7915c1"
+        "sha256": "6d29c349478cb2a7899573544ba580da70bd902c12ee86a4a93662ca6e94ad72"
       }
     ],
     "drainageFreeWaterMask": {
@@ -1788,7 +1788,7 @@
     ],
     "naturalEarthLakes": {
       "file": "lakes_base.geojson",
-      "sha256": "a0511c91d7c11e7460640d522e9cc0ea39104497784f73af09e39b9bfa6d790c",
+      "sha256": "c848770c5c2177c1e1fe170e1d85faa6c804aad53fb8e8bcfc9b75f14a6a7a5c",
       "selected": 1355
     },
     "osmWaterways": {

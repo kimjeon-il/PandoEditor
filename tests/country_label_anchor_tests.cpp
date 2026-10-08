@@ -47,6 +47,10 @@ private slots:
         QCOMPARE(anchors.fixedCount(),258);
         const auto indonesia=anchors.fixed("IDN");QVERIFY(indonesia.has_value());
         QCOMPARE(indonesia->x,114.134873);QCOMPARE(indonesia->y,-0.949556);
+        const auto bajoNuevo=anchors.fixed("BJN"),serranilla=anchors.fixed("SER");
+        QVERIFY(bajoNuevo.has_value());QVERIFY(serranilla.has_value());
+        QCOMPARE(bajoNuevo->x,-78.638119);QCOMPARE(bajoNuevo->y,15.864461);
+        QCOMPARE(serranilla->x,-79.987866);QCOMPARE(serranilla->y,15.79501);
     }
     void derivedAnchorHandlesAntimeridian() {
         pandoeditor::Geometry geometry;geometry.type="MultiPolygon";

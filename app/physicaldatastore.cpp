@@ -45,10 +45,17 @@ PhysicalInventory parsePhysicalInventory(const QByteArray& bytes) {
         const auto row=value.toObject();PhysicalAssetSpec asset;
         asset.dataset=result.dataset;asset.version=result.version;asset.path=row.value("path").toString();
         const auto count=row.value("bytes").toDouble(-1);asset.bytes=qint64(count);
-        asset.sha256=row.value("sha256").toString();asset.url=result.baseUrl.resolved(QUrl(asset.path));
+        asset.sha256=row.value("sha256").toString();
+        const sourceUrl=row.value("sourceUrl");
+        const explicitSource=!sourceUrl.isUndefined();
+        asset.url=explicitSource?(sourceUrl.isString()?QUrl(sourceUrl.toString()):QUrl())
+                                :result.baseUrl.resolved(QUrl(asset.path));
         if(!safePath(asset.path)||!std::isfinite(count)||count<=0||std::floor(count)!=count||
            !digestPattern.match(asset.sha256).hasMatch()||seen.contains(asset.path)||
-           !asset.url.isValid()||asset.url.scheme()!=result.baseUrl.scheme()||asset.url.host()!=result.baseUrl.host()) {
+           !asset.url.isValid()||asset.url.scheme()!=result.baseUrl.scheme()||asset.url.host()!=result.baseUrl.host()||
+           (explicitSource&&(!asset.url.path().endsWith(QStringLiteral("/")+asset.path)||
+                             !asset.url.query().isEmpty()||!asset.url.fragment().isEmpty()||
+                             !asset.url.userInfo().isEmpty()))) {
             result.error="invalid inventory asset";result.assets.clear();return result;
         }
         seen.insert(asset.path);result.assets.push_back(std::move(asset));
