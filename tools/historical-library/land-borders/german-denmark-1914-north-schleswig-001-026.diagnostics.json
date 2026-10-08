@@ -1,0 +1,34 @@
+{
+  "northParishes": [
+    "Ribe Domsogn",
+    "Sankt Katharine",
+    "Seem",
+    "Vester Vedsted"
+  ],
+  "stone1": [
+    8.6622877,
+    55.2763431
+  ],
+  "startSnapDistanceM": 28.209,
+  "endGapToGelsAM": 0.0,
+  "endpointGelsA": [
+    8.884683809525658,
+    55.32087242400453
+  ],
+  "chosenLengthKm": 26.683,
+  "alternativeLengthKm": 58.961,
+  "arcScores": [
+    31615.303,
+    30510.764
+  ],
+  "meanDistanceToGraensegroeftenM": 7369.386,
+  "meanDistanceToGraensestienM": 467.819,
+  "lengthWithin3mOfGraensegroeftenKm": 3.476,
+  "coordinateCount": 1343,
+  "simple": true,
+  "notes": [
+    "Stone 1 is mapped at its original Råhede Sluse position.",
+    "Moved memorial stones 2, 7b, 11, 22, 28, 30 and 31 were not used as positional anchors.",
+    "Current parish geometry is a high-resolution control; historical map-sheet comparison is still required before finalizing this sector."
+  ]
+}
