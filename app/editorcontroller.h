@@ -182,6 +182,7 @@ public:
     QVariantMap historicalCatalogStatus() const;
     QVariantMap editingPerformanceStats() const {return editingPerformance_.snapshot();}
     QVariantList historicalLineages() const;
+    Q_INVOKABLE QVariantList historicalEvents(const QString& query) const;
     Q_INVOKABLE QVariantList historicalRegionOptions() const;
     QVariantList historicalSnapshots() const;
     QVariantMap historicalPreview() const;
@@ -390,9 +391,11 @@ public:
     QVariantMap structureState() const;
     QVariantList relationCountryOptions() const;
     QVariantList relationParentOptions() const;
+    Q_INVOKABLE QVariantList relationChildOptions() const;
     bool structureDialogOpen() const { return structureSession_.has_value() || conversionDraft_.has_value() || createDraft_.has_value(); }
     Q_INVOKABLE bool changeSelectedParent(const QString& parentId);
     Q_INVOKABLE bool commitSelectedParent(const QString& parentId);
+    Q_INVOKABLE bool commitSelectedChild(const QString& childId);
     Q_INVOKABLE bool transferSelectedSubunit(const QString& countryId);
     Q_INVOKABLE bool beginDeleteSelection();
     Q_INVOKABLE bool beginMergeSelection();

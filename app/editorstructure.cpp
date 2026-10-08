@@ -2,6 +2,7 @@
 #include "retainedreferencerewriter.h"
 #include "territorialgeometry.h"
 #include <QUuid>
+#include <set>
 using namespace pandoeditor;
 namespace { QString text(const std::string& v){return QString::fromStdString(v);} }
 QVariantMap EditorController::structureState() const {
@@ -35,6 +36,18 @@ QVariantMap EditorController::structureState() const {
 }
 QVariantList EditorController::relationCountryOptions() const {QVariantList result;for(const auto& u:project_.document().units)if(isRootGeneral(project_.document(),u))result.append(QVariantMap{{"id",text(u.id)},{"name",text(objectDisplayName(u))},{"locked",u.locked}});return result;}
 QVariantList EditorController::relationParentOptions() const {QVariantList result;const auto current=selectedUnit();for(const auto& u:project_.document().units)if(u.kind==UnitKind::General)if(createDraft_||!current||u.id!=current->id)result.append(QVariantMap{{"id",text(u.id)},{"name",text(objectDisplayName(u))},{"type","general"},{"locked",u.locked}});return result;}
+QVariantList EditorController::relationChildOptions() const {
+    QVariantList result;const auto parent=selectedUnit();if(!parent||parent->kind!=UnitKind::General)return result;
+    std::set<std::string> excluded{parent->id};
+    auto ancestor=staticParentRelation(project_.document(),parent->id).parentId;
+    while(!ancestor.empty()&&excluded.insert(ancestor).second)
+        ancestor=staticParentRelation(project_.document(),ancestor).parentId;
+    for(const auto& unit:project_.document().units)
+        if(unit.kind==UnitKind::General&&!unit.locked&&!excluded.count(unit.id)
+            &&staticParentRelation(project_.document(),unit.id).parentId!=parent->id)
+            result.append(QVariantMap{{"id",text(unit.id)},{"name",text(objectDisplayName(unit))}});
+    return result;
+}
 bool EditorController::setStructurePlan(const TerritorialMutationIntent& intent) {
     auto result=CommandProcessor::planTerritorial(project_,intent);
     if(!result.ok()||!result.plan){commandError(result.error,text(result.detail));return false;}
@@ -71,6 +84,14 @@ bool EditorController::commitSelectedParent(const QString& parentId){
     const auto u=selectedUnit();
     if(!u||parentId.isEmpty()||staticParentRelation(project_.document(),u->id).parentId==parentId.toStdString())return false;
     if(!changeSelectedParent(parentId))return false;
+    if(confirmStructureMutation())return true;
+    cancelStructureMutation();return false;
+}
+bool EditorController::commitSelectedChild(const QString& childId){
+    const auto parent=selectedUnit();if(!parent||!selectedEditable()||childId.isEmpty())return false;
+    bool eligible=false;for(const auto& raw:relationChildOptions())if(raw.toMap().value("id")==childId){eligible=true;break;}
+    if(!eligible)return false;
+    if(!setStructurePlan(ChangeParentIntent{territorialRef(childId.toStdString()),territorialRef(parent->id)}))return false;
     if(confirmStructureMutation())return true;
     cancelStructureMutation();return false;
 }

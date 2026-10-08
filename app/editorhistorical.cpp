@@ -11,7 +11,6 @@
 #include <QJsonDocument>
 #include <QFileInfo>
 #include <QFile>
-#include <QDate>
 #include <QCryptographicHash>
 #include <QCollator>
 #include <QLocale>
@@ -30,7 +29,6 @@ QString kindName(const std::string& catalogKind) {
     return catalogKind=="country"?QStringLiteral("국가"):catalogKind=="subunit"?QStringLiteral("하위단위"):QStringLiteral("지방");
 }
 QString opt(const std::optional<std::string>& value){return value?qs(*value):QString();}
-QString catalogDate(const QString& value){return value.isEmpty()?QDate::currentDate().toString(Qt::ISODate):value;}
 QString catalogName(const QJsonObject& entity) {
     const auto names=entity.value("names").toObject();
     for(const auto& key:{"ko","en"})if(!names.value(key).toString().isEmpty())return names.value(key).toString();
@@ -81,8 +79,8 @@ bool EditorController::installTerritorialCatalog(const QByteArray& bytes,const Q
         cancelHistoricalAdd();++historicalCatalogGeneration_;historicalCatalog_=std::move(candidate);
         historicalCatalogSha256_=pin;historicalCatalogRoot_=root;historicalSource_.reset();historicalLibrary_.reset();
         historicalCatalogName_=name;historicalCatalogBundled_=bundled;historicalPreviewCache_.clear();
-        historicalSelectedId_.clear();historicalVersionId_.clear();historicalReferenceDate_=catalogDate({});
-        historicalFilter_.referenceDate=historicalReferenceDate_.toStdString();historicalStage_=QStringLiteral("ready");historicalError_.clear();
+        historicalSelectedId_.clear();historicalVersionId_.clear();historicalReferenceDate_.clear();
+        historicalFilter_.referenceDate.clear();historicalStage_=QStringLiteral("ready");historicalError_.clear();
         emit historicalChanged();return true;
     }catch(const std::exception& error){historicalError_=QString::fromUtf8(error.what());emit historicalChanged();return false;}
 }
@@ -95,8 +93,17 @@ QVariantMap EditorController::historicalCatalogStatus() const {
 }
 QVariantList EditorController::historicalLineages() const {
     if(!historicalCatalog_)return {};
-    try {return historicalCatalog_->search(qs(historicalFilter_.query),catalogDate(qs(historicalFilter_.referenceDate))).toVariantList();}
+    try {return historicalCatalog_->search(qs(historicalFilter_.query),qs(historicalFilter_.referenceDate)).toVariantList();}
     catch(const std::exception&){return {};}
+}
+QString normalizedCatalogDate(const QString& source) {
+    if(source.isEmpty())return {};
+    const auto date=pandoeditor::parseTemporal(source.toStdString());
+    return QString::fromStdString(date.canonical)
+        +(date.precision=="year"?QStringLiteral("-01-01"):date.precision=="month"?QStringLiteral("-01"):QString());
+}
+QVariantList EditorController::historicalEvents(const QString& query) const {
+    return historicalCatalog_?historicalCatalog_->events(query).toVariantList():QVariantList{};
 }
 
 QVariantList EditorController::historicalResults() const {
@@ -286,12 +293,16 @@ bool EditorController::loadHistoricalLibrary(const QUrl& url) {
 void EditorController::searchHistorical(const QString& query,const QString& type,
     const QString& status,const QString& referenceDate,const QString& region) {
     if(historicalCatalog_) {
-        try {const auto date=catalogDate(referenceDate);pandoeditor::parseTemporal(date.toStdString());
+        try {const auto date=normalizedCatalogDate(referenceDate);
             if(date!=historicalReferenceDate_) {
                 cancelHistoricalAdd();historicalPreviewCache_.clear();historicalVersionId_.clear();historicalReferenceDate_=date;
             }
             historicalFilter_={query.toStdString(),{},pandoeditor::HistoricalStatus::All,date.toStdString(),{}};historicalError_.clear();
-        }catch(const std::exception& error){historicalError_=QString::fromUtf8(error.what());}
+        }catch(const std::exception& error){
+            cancelHistoricalAdd();historicalPreviewCache_.clear();historicalSelectedId_.clear();historicalVersionId_.clear();
+            historicalFilter_.query=query.toStdString();historicalFilter_.referenceDate=referenceDate.toStdString();
+            historicalError_=QString::fromUtf8(error.what());
+        }
         emit historicalChanged();return;
     }
     historicalFilter_={query.toStdString(),type.toStdString(),
@@ -305,9 +316,12 @@ void EditorController::searchHistorical(const QString& query,const QString& type
 void EditorController::selectHistorical(const QString& id,const QString& versionId,const QString& referenceDate) {
     cancelHistoricalAdd();
     if(historicalCatalog_) {
-        historicalSelectedId_=id;historicalReferenceDate_=catalogDate(referenceDate);historicalPreviewCache_.clear();
+        historicalSelectedId_=id;historicalReferenceDate_.clear();historicalPreviewCache_.clear();
         try {
-            const auto entity=historicalCatalog_->entry(id);const auto selected=historicalCatalog_->selectedVersionId(id,historicalReferenceDate_);
+            const auto entity=historicalCatalog_->entry(id);
+            const auto resolution=historicalCatalog_->resolveSelection(id,normalizedCatalogDate(referenceDate));
+            historicalReferenceDate_=resolution.value("referenceDate").toString();
+            const auto selected=resolution.value("geometryVersionId").toString();
             historicalVersionId_=selected;historicalPreviewCache_={{"id",id},{"name",catalogName(entity)},{"selectedVersionId",selected},{"loading",false}};
             if(selected.isEmpty())throw std::invalid_argument("PL-LIB-GEOMETRY-GAP: no boundary at selected date");
             if(!versionId.isEmpty()&&versionId!=selected)throw std::invalid_argument("PL-LIB-GEOMETRY-GAP: requested version is not selected at date");
@@ -347,19 +361,24 @@ bool EditorController::prepareHistoricalAdd(const QVariantMap& options) {
     cancelHistoricalAdd();
     if(historicalCatalog_) {
         try {
-            auto date=catalogDate(options.value("referenceDate",historicalReferenceDate_).toString());
+            auto date=normalizedCatalogDate(options.value("referenceDate").toString());
             const auto selected=options.value("libraryId",historicalSelectedId_).toString();
             QStringList roots;const auto snapshotId=options.value("snapshotId").toString();
             if(snapshotId.isEmpty())roots.push_back(selected);
             else {
                 for(const auto& raw:historicalCatalog_->snapshots()) {
                     const auto snapshot=raw.toObject();if(snapshot.value("id")==snapshotId) {
-                        if(!options.contains("referenceDate")||options.value("referenceDate").toString().isEmpty())date=snapshot.value("referenceDate").toString();
+                        if(!options.contains("referenceDate")||options.value("referenceDate").toString().isEmpty())date=normalizedCatalogDate(snapshot.value("referenceDate").toString());
                         for(const auto& id:snapshot.value("entityRefs").toArray())roots.push_back(id.toString());
                     }
                 }
                 if(roots.isEmpty())throw std::invalid_argument("PL-LIB-SNAPSHOT: missing snapshot");
             }
+            if(date.isEmpty()&&snapshotId.isEmpty()) {
+                const auto resolution=historicalCatalog_->resolveSelection(selected,{});
+                date=resolution.value("referenceDate").toString();
+            }
+            if(date.isEmpty())throw std::invalid_argument("PL-LIB-DATE: select a reference date");
             const auto depth=options.value("childDepth",QStringLiteral("none")).toString();
             const auto ids=historicalCatalog_->entityRefsWithChildren(roots,date,depth);const auto ownership=options.value("ownership").toMap();
             for(const auto& id:ids) {

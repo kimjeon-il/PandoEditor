@@ -254,7 +254,9 @@ QJsonObject TerritorialLibraryCatalog::entry(const QString& id) const {
     const auto found=entries_.find(id);require(found!=entries_.end(),"PL-LIB-ENTITY: unknown entity");return found->second;
 }
 QJsonArray TerritorialLibraryCatalog::search(const QString& query,const QString& date) const {
-    const auto point=parseTemporal(date.toStdString());const auto needle=webjson::jsTrim(query).toLower();QJsonArray groups;
+    const auto dated=!date.isEmpty();
+    const auto point=dated?std::optional<TemporalValue>{parseTemporal(date.toStdString())}:std::nullopt;
+    const auto needle=webjson::jsTrim(query).toLower();QJsonArray groups;
     const auto namesMatch=[&](const QJsonObject& names) {
         for(auto it=names.begin();it!=names.end();++it)if(it.value().toString().toLower().contains(needle))return true;return false;
     };
@@ -262,16 +264,103 @@ QJsonArray TerritorialLibraryCatalog::search(const QString& query,const QString&
         const auto lineage=raw.toObject();const bool groupMatch=needle.isEmpty()||namesMatch(lineage.value("names").toObject());QJsonArray entities;
         for(const auto& ref:lineage.value("entityRefs").toArray()) {
             auto entity=entry(ref.toString());const auto lifetime=entity.value("lifetime").toObject();
-            if(lifetime.value("validFrom").isNull()&&lifetime.value("validTo").isNull())continue;
-            if(!existsAt(lifetime,point))continue;
+            if(dated&&lifetime.value("validFrom").isNull()&&lifetime.value("validTo").isNull())continue;
+            if(dated&&!existsAt(lifetime,*point))continue;
             bool entityMatch=groupMatch||namesMatch(entity.value("names").toObject());
             for(const auto& alias:entity.value("alternateNames").toArray())entityMatch=entityMatch||alias.toString().toLower().contains(needle);
-            if(!entityMatch)continue;const auto selected=selectVersion(entity,point);
+            if(!entityMatch)continue;
+            const auto selected=dated?selectVersion(entity,*point):QJsonObject{};
             entity["selectedVersionId"]=selected.isEmpty()?QJsonValue::Null:selected.value("versionId");entities.push_back(entity);
         }
         if(!entities.isEmpty())groups.push_back(QJsonObject{{"lineageId",lineage.value("lineageId")},{"names",lineage.value("names")},{"entities",entities}});
     }
     return groups;
+}
+QJsonObject TerritorialLibraryCatalog::resolveSelection(const QString& id,const QString& referenceDate) const {
+    const auto entity=entry(id);
+    const auto candidate=[&](const QString& sourceDate,const QString& expectedVersion={}) {
+        if(sourceDate.isEmpty())return QJsonObject{};
+        const auto parsed=parseTemporal(sourceDate.toStdString());
+        const auto date=QString::fromStdString(parsed.canonical)
+            +(parsed.precision=="year"?QStringLiteral("-01-01"):parsed.precision=="month"?QStringLiteral("-01"):QString());
+        const auto version=selectVersion(entity,parseTemporal(date.toStdString()));
+        if(version.isEmpty()||(!expectedVersion.isEmpty()&&version.value("versionId")!=expectedVersion))return QJsonObject{};
+        return QJsonObject{{"referenceDate",date},{"geometryVersionId",version.value("versionId")}};
+    };
+    if(!referenceDate.isEmpty())return candidate(referenceDate);
+    const auto metadataDate=entity.value("metadata").toObject().value("referenceDate");
+    if(metadataDate.isString()) {
+        try {const auto resolved=candidate(metadataDate.toString());if(!resolved.isEmpty())return resolved;}
+        catch(const std::invalid_argument&) {} // Optional catalog metadata may be malformed.
+    }
+    std::vector<QJsonObject> matchingSnapshots;
+    for(const auto& raw:snapshots()) {
+        const auto snapshot=raw.toObject();if(snapshot.value("entityRefs").toArray().contains(id))matchingSnapshots.push_back(snapshot);
+    }
+    std::sort(matchingSnapshots.begin(),matchingSnapshots.end(),[](const auto& a,const auto& b) {
+        const auto order=compareTemporal(parseTemporal(a.value("referenceDate").toString().toStdString()),
+                                         parseTemporal(b.value("referenceDate").toString().toStdString()));
+        return order>0||(order==0&&a.value("id").toString()<b.value("id").toString());
+    });
+    for(const auto& snapshot:matchingSnapshots) {
+        const auto resolved=candidate(snapshot.value("referenceDate").toString());if(!resolved.isEmpty())return resolved;
+    }
+    std::vector<QJsonObject> versions;
+    for(const auto& raw:entity.value("geometryVersions").toArray()) {
+        const auto version=raw.toObject();if(version.value("validFrom").isString())versions.push_back(version);
+    }
+    std::sort(versions.begin(),versions.end(),[](const auto& a,const auto& b) {
+        const auto order=compareTemporal(parseTemporal(a.value("validFrom").toString().toStdString()),
+                                         parseTemporal(b.value("validFrom").toString().toStdString()));
+        return order>0||(order==0&&a.value("versionId").toString()<b.value("versionId").toString());
+    });
+    for(const auto& version:versions) {
+        const auto resolved=candidate(version.value("validFrom").toString(),version.value("versionId").toString());
+        if(!resolved.isEmpty())return resolved;
+    }
+    return {};
+}
+QJsonArray TerritorialLibraryCatalog::events(const QString& query) const {
+    const auto needle=webjson::jsTrim(query).toLower();
+    const auto namesMatch=[&](const QJsonObject& names) {
+        for(auto it=names.begin();it!=names.end();++it)
+            if(it.value().toString().toLower().contains(needle))return true;
+        return false;
+    };
+    std::vector<QJsonObject> found;
+    for(const auto& raw:lineages()) {
+        const auto lineage=raw.toObject();const bool groupMatch=needle.isEmpty()||namesMatch(lineage.value("names").toObject());
+        for(const auto& ref:lineage.value("entityRefs").toArray()) {
+            const auto entity=entry(ref.toString());const auto names=entity.value("names").toObject();
+            bool entityMatch=groupMatch||namesMatch(names);
+            for(const auto& alias:entity.value("alternateNames").toArray())
+                entityMatch=entityMatch||alias.toString().toLower().contains(needle);
+            if(!entityMatch)continue;
+            QString name=names.value("ko").toString();if(name.isEmpty())name=names.value("en").toString();
+            if(name.isEmpty()&&!names.isEmpty())name=names.begin().value().toString();
+            const auto add=[&](const QString& field,const QJsonValue& rawDate,const QString& label) {
+                if(rawDate.isNull()||rawDate.isUndefined())return;
+                if(field==QStringLiteral("metadata.dissolutionDate")) {
+                    if(!rawDate.isString())return;
+                    try {parseTemporal(rawDate.toString().toStdString());}
+                    catch(const std::invalid_argument&) {return;}
+                }
+                const auto date=rawDate.toString();
+                found.push_back({{"id",entity.value("entityId").toString()+":"+field+":"+date},
+                                 {"entityId",entity.value("entityId")},{"date",date},{"name",name+QStringLiteral(" · ")+label}});
+            };
+            const auto lifetime=entity.value("lifetime").toObject();
+            add(QStringLiteral("lifetime.validFrom"),lifetime.value("validFrom"),QStringLiteral("기록 시작"));
+            add(QStringLiteral("lifetime.validTo"),lifetime.value("validTo"),QStringLiteral("기록 마지막 시점"));
+            add(QStringLiteral("metadata.dissolutionDate"),entity.value("metadata").toObject().value("dissolutionDate"),QStringLiteral("해체"));
+        }
+    }
+    std::sort(found.begin(),found.end(),[](const auto& a,const auto& b) {
+        const auto order=compareTemporal(parseTemporal(a.value("date").toString().toStdString()),
+                                         parseTemporal(b.value("date").toString().toStdString()));
+        return order<0||(order==0&&a.value("id").toString()<b.value("id").toString());
+    });
+    QJsonArray result;for(const auto& event:found)result.push_back(event);return result;
 }
 QString TerritorialLibraryCatalog::selectedVersionId(const QString& id,const QString& date) const {
     return selectVersion(entry(id),parseTemporal(date.toStdString())).value("versionId").toString();

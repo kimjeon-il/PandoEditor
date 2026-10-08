@@ -129,8 +129,11 @@ struct Harness {
             for(auto value:editor.paths()){
                 const auto p=value.toMap();if(p["countryId"]!=id)continue;
                 auto map=control("mapView");
-                const QPointF projected(p["left"].toDouble()+p["width"].toDouble()*(id=="S"?.15:.85),
-                                        p["top"].toDouble()+p["height"].toDouble()*.15);
+                // After selection, touch-sized corner handles cover the former
+                // .15/.15 target. Tap clear polygon interior away from handles
+                // and the centered label so the map receives the gesture.
+                const QPointF projected(p["left"].toDouble()+p["width"].toDouble()*(id=="S"?.4:.85),
+                                        p["top"].toDouble()+p["height"].toDouble()*(id=="S"?.75:.15));
                 pos=map->mapToScene({map->property("originX").toDouble()+projected.x()*map->property("mapScale").toDouble(),
                                      map->property("originY").toDouble()+projected.y()*map->property("mapScale").toDouble()}).toPoint();
             }

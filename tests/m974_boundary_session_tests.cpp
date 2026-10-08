@@ -198,6 +198,19 @@ private slots:
         const auto changed=c.documentBytes();QVERIFY(changed!=before);c.undo();QCOMPARE(c.documentBytes(),before);c.redo();QCOMPARE(c.documentBytes(),changed);
         QVERIFY(!c.commitSelectedParent("U"));QCOMPARE(c.documentBytes(),changed);QVERIFY(!c.structureDialogOpen());
     }
+    void childChoiceCommitsFromSelectedParent() {
+        auto d=triple();addParent(d);
+        QTemporaryDir dir;EditorController c({false,dir.filePath("private.json")});QVERIFY(open(c,d,dir));c.selectCountry("P");
+        const auto options=c.relationChildOptions();
+        QVERIFY(std::any_of(options.begin(),options.end(),[](const QVariant& raw){return raw.toMap().value("id")==QStringLiteral("C");}));
+        const auto before=c.documentBytes();const auto revision=c.revision();
+        QVERIFY(c.commitSelectedChild(QStringLiteral("C")));
+        QCOMPARE(staticParentRelation(projectcodec::decode(c.documentBytes()),"C").parentId,std::string("P"));
+        QCOMPARE(c.revision(),revision+1);QVERIFY(!c.structureDialogOpen());
+        const auto changed=c.documentBytes();QVERIFY(changed!=before);
+        c.undo();QCOMPARE(c.documentBytes(),before);c.redo();QCOMPARE(c.documentBytes(),changed);
+        QVERIFY(!c.commitSelectedChild(QStringLiteral("C")));
+    }
     void realDocumentChangesStillInvalidateBoundary_data() {
         QTest::addColumn<QString>("phase");QTest::addColumn<QString>("change");
         for(const auto* phase:{"prepare-queued","ready","preview-queued","apply"})for(const auto* change:{"property","lock","parent"})

@@ -21,6 +21,8 @@ public:
     QJsonArray snapshots() const {return index_.value("snapshots").toArray();}
     QJsonObject entry(const QString& entityId) const;
     QJsonArray search(const QString& query,const QString& referenceDate) const;
+    QJsonArray events(const QString& query) const;
+    QJsonObject resolveSelection(const QString& entityId,const QString& referenceDate) const;
     QString selectedVersionId(const QString& entityId,const QString& referenceDate) const;
     QJsonObject loadEntity(const QString& entityId) const;
     // A version gap is an explicit error; preview never chooses nearby dates.

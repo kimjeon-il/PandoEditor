@@ -7,16 +7,57 @@
 class HistoricalEditorTests:public QObject {
     Q_OBJECT
 private slots:
-    void bundledPilotIsDefaultCatalog() {
+    void bundledV2IsDefaultCatalog() {
         EditorController editor;
         QCOMPARE(editor.historicalStage(),QStringLiteral("ready"));
-        QCOMPARE(editor.historicalCatalogName(),QStringLiteral("내장 pilot"));
+        QCOMPARE(editor.historicalCatalogName(),QStringLiteral("Territorial Library v2"));
         QVERIFY(editor.historicalSnapshots().size()>=1);
         bool pilot=false;for(const auto& row:editor.historicalSnapshots())
             if(row.toMap().value("id")==QStringLiteral("pilot-1991"))pilot=true;
         QVERIFY(pilot);
         editor.searchHistorical(QString(),QString(),QStringLiteral("all"),QString(),QString());
         QVERIFY(!editor.historicalResults().isEmpty());
+    }
+    void invalidCatalogDateRetiresVisibleRows() {
+        EditorController editor;
+        editor.searchHistorical(QString(),QString(),QStringLiteral("all"),QStringLiteral("1989"),QString());
+        QVERIFY(!editor.historicalResults().isEmpty());
+        editor.searchHistorical(QString(),QString(),QStringLiteral("all"),QStringLiteral("1989-13-01"),QString());
+        QVERIFY(!editor.historicalError().isEmpty());
+        QVERIFY(editor.historicalResults().isEmpty());
+        editor.searchHistorical(QString(),QString(),QStringLiteral("all"),QStringLiteral("1989"),QString());
+        QVERIFY(editor.historicalError().isEmpty());
+        QVERIFY(!editor.historicalResults().isEmpty());
+    }
+    void bundledCatalogSuggestsMatchingEvents() {
+        EditorController editor;
+        const auto events=editor.historicalEvents(QStringLiteral("동독"));
+        QVERIFY(!events.isEmpty());
+        bool dissolved=false;
+        for(const auto& raw:events) {
+            const auto event=raw.toMap();
+            if(event.value("date")==QStringLiteral("1990-10-03")
+                &&event.value("name").toString().contains(QStringLiteral("해체")))dissolved=true;
+        }
+        QVERIFY(dissolved);
+        QVERIFY(editor.historicalEvents(QStringLiteral("없는 역사 국가 검색 결과")).isEmpty());
+    }
+    void blankCatalogBrowseUsesSourceRepresentative() {
+        EditorController editor;
+        editor.searchHistorical(QStringLiteral("동독"),QString(),QStringLiteral("all"),QString(),QString());
+        QCOMPARE(editor.historicalResults().size(),qsizetype(1));
+        editor.selectHistorical(QStringLiteral("state:deutsche-demokratische-republik"),QString(),QString());
+        QTRY_VERIFY_WITH_TIMEOUT(!editor.historicalPreview().value("geometryVersionId").toString().isEmpty(),15000);
+        QVERIFY(editor.historicalError().isEmpty());
+    }
+    void coarseDateSearchUsesFirstDay() {
+        EditorController editor;
+        editor.searchHistorical(QStringLiteral("동독"),QString(),QStringLiteral("all"),QStringLiteral("1949"),QString());
+        QVERIFY(editor.historicalResults().isEmpty()); // GDR starts on 1949-10-07.
+        editor.searchHistorical(QStringLiteral("동독"),QString(),QStringLiteral("all"),QStringLiteral("1949-10"),QString());
+        QVERIFY(editor.historicalResults().isEmpty());
+        editor.searchHistorical(QStringLiteral("동독"),QString(),QStringLiteral("all"),QStringLiteral("1949-10-07"),QString());
+        QCOMPARE(editor.historicalResults().size(),qsizetype(1));
     }
     void catalogSearchPreviewAndConfirm() {
         QTemporaryDir dir;QVERIFY(dir.isValid());

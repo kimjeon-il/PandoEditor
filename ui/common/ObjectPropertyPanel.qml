@@ -115,6 +115,16 @@ Rectangle {
                         displayText:editor.objectProperties.parentName||"상위 단위 선택"
                         onActivated:if(currentValue&&currentValue!==editor.objectProperties.parentId)editor.commitSelectedParent(currentValue)
                     }
+                    UiComboBox {
+                        objectName:"relationChildPicker"
+                        visible:editor.primaryObject.domain==="territorial"&&editor.primaryObject.type==="general"
+                        enabled:editor.selectedEditable
+                        Layout.fillWidth:true
+                        model:{editor.objectProperties;return editor.relationChildOptions()}
+                        textRole:"name";valueRole:"id";currentIndex:-1
+                        displayText:"기존 산하 객체 선택"
+                        onActivated:if(currentValue)editor.commitSelectedChild(currentValue)
+                    }
                     UiButton {text:"종류 전환";symbol:"type";description:"영토의 종류와 소속을 변경합니다.";visible:editor.primaryObject.domain==="territorial";outlined:true;enabled:editor.selectedEditable;onClicked:editor.beginTypeConversion()}
                 }
             }

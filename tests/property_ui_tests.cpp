@@ -461,6 +461,42 @@ private slots:
         QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
     }
     void libraryPresentationWorkflow_data(){modes();}
+    void bundledHistoryDateSuggestions_data(){modes();}
+    void bundledHistoryDateSuggestions(){
+        QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
+        QVERIFY(h.click("historicalLibraryButton"));
+        auto panel=h.window->findChild<QObject*>("historicalLibraryPanel");QVERIFY(panel);
+        QTRY_VERIFY(panel->property("visible").toBool());
+        QVERIFY(!h.control("historicalType")->isVisible());
+        QVERIFY(h.enter("historicalSearch",QStringLiteral("동독"),false));
+        QVERIFY(h.click("historicalTimeSuggest"));
+        auto popover=h.window->findChild<QObject*>("historicalTimePopover");QVERIFY(popover);
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(h.click("historicalTimeEvent_state:deutsche-demokratische-republik:metadata.dissolutionDate:1990-10-03"));
+        QCOMPARE(h.control("historicalYear")->property("text").toString(),QStringLiteral("1990-10-03"));
+        QVERIFY(h.enter("historicalYear",QStringLiteral("1989-13-01"),false));
+        QVERIFY(!h.editor.historicalError().isEmpty());QVERIFY(h.editor.historicalResults().isEmpty());
+        QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
+    }
+    void parentSideChildPicker_data(){modes();}
+    void parentSideChildPicker(){
+        QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
+        auto document=fixture();Geometry outer;outer.type="Polygon";
+        outer.polygons={{{{-1,-1},{31,-1},{31,11},{-1,11},{-1,-1}}}};
+        document.geometries.insert({"G",1},outer);
+        appendTerritory(document,{"G","Grandparent","",UnitKind::General,false},{"G",1});
+        document.presentation.objectStyles[territorialRef("G")]={};validateDocument(document);
+        Project project;project.replace(document);QFile file(h.dir.filePath("child-picker.json"));
+        QVERIFY(file.open(QIODevice::WriteOnly));file.write(projectcodec::encode(project));file.close();
+        QVERIFY(h.editor.openFile(QUrl::fromLocalFile(file.fileName())));
+        h.editor.selectCountry("G");QVERIFY(h.click("openObjectEditor"));QVERIFY(h.click("objectRelationsTab"));
+        const auto before=h.editor.documentBytes();const auto revision=h.editor.revision();
+        // S is locked, so B is the last eligible child in the picker.
+        QVERIFY(h.click("relationChildPicker"));QTest::keyClick(h.window,Qt::Key_End);QTest::keyClick(h.window,Qt::Key_Return);
+        QTRY_COMPARE(staticParentRelation(projectcodec::decode(h.editor.documentBytes()),"B").parentId,std::string("G"));
+        QCOMPARE(h.editor.revision(),revision+1);h.editor.undo();QCOMPARE(h.editor.documentBytes(),before);
+        QVERIFY2(h.warnings.isEmpty(),qPrintable(h.warnings.join("\n")));
+    }
     void libraryPresentationWorkflow(){
         QFETCH(bool,mobile);Harness h(mobile);QVERIFY(h.window);
         QFile file(h.dir.filePath("library.json"));QVERIFY(file.open(QIODevice::WriteOnly));file.write(R"({"schemaVersion":2,"entities":[{"libraryId":"historical-country:fixture","type":"country","canonicalName":"Historical Fixture","geometryVersions":[{"id":"v1","geometry":{"type":"Polygon","coordinates":[[[70,0],[72,0],[72,2],[70,2],[70,0]]]}}]}],"snapshots":[]})");file.close();

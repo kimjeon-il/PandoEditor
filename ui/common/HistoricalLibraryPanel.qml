@@ -19,6 +19,8 @@ Dialog {
     readonly property var colors:Tokens.colors(editor.appearancePreferences)
     readonly property bool reviewing:!flagMode&&(editor.historicalStage==="ownership"||editor.historicalStage==="impact")
     readonly property bool busy:editor.historicalStage==="preparing"
+    readonly property bool canonicalCatalog:editor.historicalCatalogStatus.entities>0
+    readonly property var suggestedEvents:{editor.historicalCatalogStatus;return timePopover.visible?editor.historicalEvents(search.text):[]}
     readonly property var rows:{
         const historical=editor.historicalResults
         if(!flagMode)return historical
@@ -35,6 +37,7 @@ Dialog {
     onClosed:{editor.cancelHistoricalAdd();optionsOpen=false}
     onRowsChanged:Qt.callLater(function(){if(selectedId&&!rows.some(function(row){return row.id===selectedId})){selectedId="";selectedFlag="";editor.cancelHistoricalAdd()}})
     function updateSearch(){editor.cancelHistoricalAdd();editor.searchHistorical(search.text,type.currentValue,status.currentValue,date.text,region.currentValue||"")}
+    function chooseEventDate(value){timePopover.close();date.text=value;date.forceActiveFocus()}
     function selectAt(index){
         if(index<0||index>=rows.length||busy)return
         const row=rows[index]
@@ -67,11 +70,24 @@ Dialog {
             }
             ColumnLayout {Layout.fillWidth:true
                 Label {text:"기준 연도";color:root.colors.muted;font.pixelSize:12}
-                UiTextField {id:date;objectName:"historicalYear";Layout.fillWidth:true;placeholderText:"예: 1910";onTextChanged:{root.updateSearch();if(root.selectedId&&!root.flagMode)editor.selectHistorical(root.selectedId,"",text);else editor.cancelHistoricalAdd()}}
+                RowLayout {Layout.fillWidth:true;spacing:4
+                    UiTextField {id:date;objectName:"historicalYear";Layout.fillWidth:true;placeholderText:"예: 1910";onTextChanged:{root.updateSearch();if(root.selectedId&&!root.flagMode)editor.selectHistorical(root.selectedId,"",text);else editor.cancelHistoricalAdd()}}
+                    UiButton {id:timeSuggest;objectName:"historicalTimeSuggest";visible:root.canonicalCatalog;text:"시점";ToolTip.text:"주요 역사 시점 보기";onClicked:timePopover.visible?timePopover.close():timePopover.open()
+                        Popup {id:timePopover;objectName:"historicalTimePopover";y:timeSuggest.height;x:timeSuggest.width-width
+                            width:Math.min(360,root.width-32);height:Math.min(320,Math.max(80,eventList.contentHeight+16))
+                            focus:true;closePolicy:Popup.CloseOnEscape|Popup.CloseOnPressOutside
+                            contentItem:ListView {id:eventList;clip:true;model:root.suggestedEvents
+                                delegate:UiButton {required property var modelData;objectName:"historicalTimeEvent_"+modelData.id;width:eventList.width;outlined:true;text:modelData.date+" · "+modelData.name
+                                    onClicked:root.chooseEventDate(modelData.date)}
+                                footer:Label {visible:eventList.count===0;text:"등록된 주요 사건이 없습니다."}
+                            }
+                        }
+                    }
+                }
             }
         }
         GridLayout {
-            enabled:!root.busy;visible:!root.optionsOpen&&!root.reviewing;columns:3;Layout.fillWidth:true
+            enabled:!root.busy;visible:!root.canonicalCatalog&&!root.optionsOpen&&!root.reviewing;columns:3;Layout.fillWidth:true
             ColumnLayout {Layout.fillWidth:true
                 Label {text:"종류";font.pixelSize:12;color:root.colors.muted}
                 UiComboBox {id:type;objectName:"historicalType";Layout.fillWidth:true;Layout.minimumWidth:0;model:[{text:"전체",value:""},{text:"국가",value:"country"},{text:"하위단위",value:"subunit"},{text:"지방",value:"region"}];textRole:"text";valueRole:"value";onActivated:root.updateSearch()}

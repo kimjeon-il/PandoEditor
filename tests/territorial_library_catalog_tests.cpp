@@ -121,10 +121,13 @@ int main(int argc,char** argv) {
             require(value->entityRefsWithChildren({"state:ABW"},"2026","none")==QStringList{"state:ABW"},"parent isn't synthesized");
         });
         test("invalid dates fail visibly in search and instantiation",[&] {
-            const auto value=catalog();for(const QString& date:{QString("0000"),QString("1900-02-29"),QString("10000"),QString("")}) {
+            const auto value=catalog();for(const QString& date:{QString("0000"),QString("1900-02-29"),QString("10000")}) {
                 rejects([&]{value->search("",date);},"invalid date search rejected");
                 rejects([&]{value->instantiateDescriptors({"state:KOR"},date);},"invalid reference date rejected");
             }
+            require(searchedIds(value->search("대한민국",QString()))==QStringList{"state:KOR"},
+                    "blank browsing keeps unknown-lifetime catalog entities");
+            rejects([&]{value->instantiateDescriptors({"state:KOR"},QString());},"blank reference date rejected");
         });
         test("index stored hash and duplicate JSON keys are rejected",[&] {
             rejects([&]{Catalog wrong(index,QByteArray(64,'0'),root);},"mandatory index pin");
