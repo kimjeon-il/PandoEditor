@@ -105,7 +105,10 @@ export function buildWorldSyncPlan({
         path: next.path, bytes: bytes.length });
   }
   validateWorldDataset(candidate);
-  return { candidate, changed, physicalDrift, webBundleSha256: digest, webRef, downloaded };
+  return {
+    candidate, changed, physicalDrift, webBundleSha256: digest, webRef, downloaded,
+    baseManifestSha256: sha256(Buffer.from(JSON.stringify(current))),
+  };
 }
 
 async function verifiedFetch(url, maxBytes = 100_000_000) {
@@ -149,8 +152,21 @@ export async function planWorldSync({ appRoot, webRef, webRoot = null, reader = 
   requireValue(raw.length < 1_000_000, 'World bundle manifest too large');
   const bundle = validateWebWorldBundle(JSON.parse(raw.toString('utf8')));
   const downloaded = new Map();
+  const downloadedRoles = [];
+  const reusedRoles = [];
   for (const [role, [webKey]] of Object.entries(WEB_ASSET_ROLES)) {
-    downloaded.set(role, await get(`assets/data/${bundle.assets[webKey].url}`));
+    const spec = bundle.assets[webKey];
+    const localAsset = current[role];
+    if (localAsset.sha256 === spec.sha256 && localAsset.bytes === spec.compressedBytes) {
+      // The verified pinned local bytes are the same immutable object; avoid a network request.
+      const bytes = readFileSync(join(local, localAsset.path));
+      unpack(spec, bytes, role);
+      downloaded.set(role, bytes);
+      reusedRoles.push(role);
+    } else {
+      downloaded.set(role, await get(`assets/data/${spec.url}`));
+      downloadedRoles.push(role);
+    }
   }
   const physicalDrift = [];
   for (const role of ['terrain', 'hydro']) {
@@ -161,7 +177,7 @@ export async function planWorldSync({ appRoot, webRef, webRoot = null, reader = 
   const plan = buildWorldSyncPlan({
     current, webRef, webBundleBytes: raw, webBundle: bundle, downloaded, physicalDrift,
   });
-  return { ...plan, downloaded };
+  return { ...plan, downloaded, downloadedRoles, reusedRoles };
 }
 
 function atomicWrite(target, bytes) {
@@ -182,6 +198,10 @@ export function applyWorldSyncPlan({ appRoot, plan, approveBundle }) {
   const oldRaw = readFileSync(join(root, 'manifest.json'), 'utf8');
   const existing = validateWorldDataset(JSON.parse(oldRaw));
   verifyWorldFiles(root, existing);
+  const existingDigest = sha256(Buffer.from(JSON.stringify(existing)));
+  const approvedDigest = sha256(Buffer.from(JSON.stringify(plan.candidate)));
+  requireValue(existingDigest === plan.baseManifestSha256 || existingDigest === approvedDigest,
+    'Native world manifest changed after this sync plan was prepared; regenerate the plan');
   const newFiles = [];
   try {
     for (const role of Object.keys(WEB_ASSET_ROLES)) {
@@ -229,6 +249,7 @@ if (invoked) {
     const report = {
       sourceCommit: plan.webRef, bundleSha256: plan.webBundleSha256,
       changed: plan.changed, physicalDrift: plan.physicalDrift,
+      downloadedRoles: plan.downloadedRoles, reusedRoles: plan.reusedRoles,
       mode: argv.apply ? 'approved-apply' : 'read-only',
     };
     if (argv.apply) report.result = applyWorldSyncPlan({
