@@ -1,0 +1,530 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "11-western-balkans-capitals",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0), municipal histories, ICJ and public official-language references",
+  "checkedOn": "2026-10-08",
+  "selection": "Five GeoNames P/PPLC capital populated places: Sarajevo, Podgorica, Skopje, Tirana, Pristina. City points only; administrative areas are separately identified.",
+  "coordinateConvention": "WGS84 EPSG:4326 GeoNames settlement representative points in latitude/longitude; not historical city boundaries.",
+  "countryCodeSemantics": "sourceCountryCode is present-day GeoNames metadata. XK is used by GeoNames for Kosovo; do not derive state recognition, territorial sovereignty or historical polity from it.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime",
+  "historicNameScope": "Evidence and editorial Korean map-label choices since 1801; distinguish earlier settlement/ruin names, later city renaming, regime status and coexisting official languages.",
+  "qualityNotes": [
+    "All five are P/PPLC populated-place city points with independent GeoNames IDs. Do not merge with same-named ADM1, ADM2 or ADM3 records.",
+    "Sarajevo: Bosnian, Croatian and Serbian spellings coexist; Turkish Saraybosna is a language variant, not proof of a later renamed city.",
+    "Podgorica alone has a grounded time-based Korean label switch to 티토그라드 from 1946-07-13 and back to 포드고리차 from 1992-04-02. The first is an editorial date backed by city chronology; law enactment timing and Titovgrad/Titograd orthography have distinct source concerns.",
+    "Skopje: Macedonian Скопје, Albanian Shkupi, Turkish Üsküp coexist contextually. The Roman archaeological Scupi is not a current-city object or a nineteenth-century renaming.",
+    "Tirana: Albanian indefinite Tiranë and definite Tirana are grammatical forms, not separate villages. Provisional 1920 and definitive 1925 capital status events are not name changes.",
+    "Pristina: Albanian Prishtina/Prishtinë and Serbian Приштина/Priština are coexisting official-language names. Kosovo's contested status, 2008 declaration and ICJ limited advisory opinion are historical geography context, not a renaming or an inferred owner-country change.",
+    "Korean first timeline fromYear 1801 is an editorial review start, not an attestation of Korean spellings in 1801. The GeoNames present-day country code never determines historical name switches.",
+    "All shortDescriptionKo and UI-facing note/detail values are <=28 Unicode code points; original research text is preserved in researchDetail/researchNote, not discarded.",
+    "Source staging only. Neither runtime shard/search manifest nor Web/App main is changed."
+  ],
+  "records": [
+    {
+      "geonameId": 3191281,
+      "names": [
+        {
+          "text": "Sarajevo",
+          "language": "bs",
+          "usage": "standard",
+          "note": "보스니아어 현행 표기"
+        },
+        {
+          "text": "Sarajevo",
+          "language": "hr",
+          "usage": "standard",
+          "note": "크로아티아어 표기"
+        },
+        {
+          "text": "Сарајево",
+          "language": "sr",
+          "script": "Cyrl",
+          "usage": "standard",
+          "note": "세르비아어 키릴 표기"
+        },
+        {
+          "text": "Sarajevo",
+          "language": "sr",
+          "script": "Latn",
+          "usage": "standard",
+          "note": "세르비아어 로마자 표기"
+        },
+        {
+          "text": "Sarajevo",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "사라예보",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Saraybosna",
+          "language": "tr",
+          "usage": "alternate",
+          "variantType": "turkishHistoricalExonym",
+          "note": "튀르키예어 역사·현행 명칭",
+          "sourceUrl": "https://www.geonames.org/3191281/"
+        }
+      ],
+      "latitude": 43.84864,
+      "longitude": 18.35644,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3191281/",
+      "sourceCountryCode": "BA",
+      "defaultDisplayNameKo": "사라예보",
+      "shortDescriptionKo": "보스니아 헤르체고비나의 수도",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "사라예보",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.sarajevo.ba/en/article/1212/sarajevo-u-osmanskom-periodu"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801-with-language-variants",
+      "historicalGeography": {
+        "events": [
+          {
+            "fromYear": 1450,
+            "toYear": 1462,
+            "type": "ottomanUrbanFoundation",
+            "detail": "15세기 오스만 도시 형성",
+            "researchDetail": "오스만 지배 초기에 이사베그 이샤코비치의 기부 재산과 상업 지구를 중심으로 형성된 근세 도시. 연도 1801은 이 도시가 건립된 해가 아님.",
+            "sourceUrl": "https://www.sarajevo.ba/en/article/1212/sarajevo-u-osmanskom-periodu"
+          },
+          {
+            "year": 1878,
+            "type": "austroHungarianOccupation",
+            "detail": "오스트리아-헝가리 제국 점령",
+            "researchDetail": "1878년 보스니아·헤르체고비나 점령은 정치적 지위 변화. 사라예보의 도시 지명이 1878년에 공식 변경됐다는 뜻은 아님.",
+            "sourceUrl": "https://www.sarajevo.ba/en/category/134/1"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "Saraybosna는 튀르키예어명",
+            "researchDetail": "현지 보스니아어·크로아티아어 Sarajevo와 세르비아어 Сарајево, 튀르키예어 Saraybosna는 언어별 명칭이며 도시 개칭 연표로 단순 환산하지 않음.",
+            "sourceUrl": "https://www.geonames.org/3191281/"
+          },
+          {
+            "detail": "도시 취락과 사라예보주 구분",
+            "researchDetail": "GeoNames ID 3191281은 P/PPLC 취락이고, Sarajevo Canton은 행정구역이므로 동일 ID에 합치지 않는다.",
+            "sourceUrl": "https://www.geonames.org/3191281/"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3193044,
+      "names": [
+        {
+          "text": "Podgorica",
+          "language": "cnr",
+          "script": "Latn",
+          "usage": "standard",
+          "note": "몬테네그로어 현행 이름"
+        },
+        {
+          "text": "Подгорица",
+          "language": "cnr",
+          "script": "Cyrl",
+          "usage": "standard",
+          "note": "현행 키릴 문자 표기"
+        },
+        {
+          "text": "Podgorica",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "포드고리차",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Titograd",
+          "language": "cnr",
+          "script": "Latn",
+          "usage": "historical",
+          "variantType": "postwarOfficialCityName",
+          "note": "1946~1992년 사용된 도시명",
+          "sourceUrl": "https://podgorica.me/istorija-podgorice/"
+        },
+        {
+          "text": "Титоград",
+          "language": "sr",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "postwarCyrillicName",
+          "note": "티토그라드 키릴 문자 표기",
+          "sourceUrl": "https://podgorica.me/istorija-podgorice/"
+        },
+        {
+          "text": "티토그라드",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanRenderingOfTitograd",
+          "sourceUrl": "https://starisajt.podgorica.me/en/stranice/history"
+        }
+      ],
+      "latitude": 42.44124,
+      "longitude": 19.26309,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3193044/",
+      "sourceCountryCode": "ME",
+      "defaultDisplayNameKo": "포드고리차",
+      "shortDescriptionKo": "1946~1992년 티토그라드",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "포드고리차",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://starisajt.podgorica.me/en/stranice/history"
+        },
+        {
+          "fromDate": "1946-07-13",
+          "nameKo": "티토그라드",
+          "kind": "officialRenaming",
+          "sourceUrl": "https://starisajt.podgorica.me/en/stranice/history",
+          "note": "시청 연혁의 표기 전환 기준일",
+          "researchNote": "1946-07-13은 포드고리차 시청이 티토그라드로의 전환 및 당시 몬테네그로 공화국 수도 지위와 연결하는 날짜이다. 도시명 관련 법률의 제정·시행일과 Titovgrad·Titograd의 철자 논란을 별도 연구 항목으로 남긴다."
+        },
+        {
+          "fromDate": "1992-04-02",
+          "nameKo": "포드고리차",
+          "kind": "officialRenaming",
+          "sourceUrl": "https://starisajt.podgorica.me/en/stranice/history",
+          "note": "시청 기록상 원래 명칭 회복"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801-with-verified-city-rename",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 1878,
+            "type": "joinedMontenegroAfterBerlinCongress",
+            "detail": "베를린 회의 뒤 몬테네그로 편입",
+            "sourceUrl": "https://podgorica.me/istorija-podgorice/"
+          },
+          {
+            "date": "1946-07-13",
+            "type": "montenegrinRepublicCapital",
+            "detail": "티토그라드 명칭·공화국 수도",
+            "researchDetail": "시청 연혁의 1946-07-13은 제2차 세계대전 이후 유고슬라비아 안의 몬테네그로 공화국 수도 시점. 현대 독립국 수도의 시작이 아님.",
+            "sourceUrl": "https://starisajt.podgorica.me/en/stranice/history"
+          },
+          {
+            "date": "1992-04-02",
+            "type": "restoredPodgoricaName",
+            "detail": "포드고리차 명칭 회복",
+            "sourceUrl": "https://podgorica.me/istorija-podgorice/"
+          },
+          {
+            "date": "2006-05-21",
+            "type": "montenegroIndependenceReferendum",
+            "detail": "몬테네그로 독립 국민투표",
+            "researchDetail": "1946년 몬테네그로 공화국 수도 역할과 2006년 독립 이후 국가 수도 역할을 구별한다. 독립은 도시명 변경 시점이 아님.",
+            "sourceUrl": "https://podgorica.me/istorija-podgorice/"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "이름 전환일과 법 제정일 구별",
+            "researchDetail": "일부 사료에서 티토브그라드(Titovgrad)라는 법문 철자와 티토그라드(Titograd) 실제 통용명이 구별된다. 법 제정일과 실질 표기 시작일이 반드시 동일하다고 가정하지 않는다.",
+            "sourceUrl": "https://en.vijesti.me/vijesti/3560/glavni-grad-je-47-godina-nosio-pogresno-ime-kako-je-titovgrad-postao-titograd"
+          },
+          {
+            "detail": "동명 ADM1 행정구역과 구분",
+            "sourceUrl": "https://www.geonames.org/3193044/"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 785842,
+      "names": [
+        {
+          "text": "Скопје",
+          "language": "mk",
+          "script": "Cyrl",
+          "usage": "standard",
+          "note": "마케도니아어 키릴 표기"
+        },
+        {
+          "text": "Skopje",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "스코페",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Shkupi",
+          "language": "sq",
+          "usage": "standard",
+          "note": "알바니아어 지명",
+          "sourceUrl": "https://skopje.gov.mk/sq/footer/fakti-simboli/"
+        },
+        {
+          "text": "Shkup",
+          "language": "sq",
+          "usage": "alternate",
+          "variantType": "albanianIndefiniteForm",
+          "sourceUrl": "https://www.geonames.org/785842/"
+        },
+        {
+          "text": "Üsküp",
+          "language": "tr",
+          "usage": "alternate",
+          "variantType": "ottomanTurkishExonym",
+          "note": "튀르키예어·오스만기 지명",
+          "sourceUrl": "https://www.geonames.org/785842/"
+        },
+        {
+          "text": "Scupi",
+          "language": "la",
+          "usage": "historical",
+          "variantType": "ancientNearbyRomanSite",
+          "note": "고대 로마 유적지 관련 이름",
+          "researchNote": "Scupi는 현재 스코페 부근의 고대 도시·유적 지명으로, 이를 현대 스코페 취락의 19세기 표기명으로 직결하거나 별도 유적 시설을 PPLC 도시로 합치지 않는다.",
+          "sourceUrl": "https://www.geonames.org/785842/"
+        }
+      ],
+      "latitude": 41.99646,
+      "longitude": 21.43141,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/785842/",
+      "sourceCountryCode": "MK",
+      "defaultDisplayNameKo": "스코페",
+      "shortDescriptionKo": "마케도니아어·알바니아어 명칭 병용",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "스코페",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/785842/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801-with-language-variants",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 1945,
+            "type": "macedonianRepublicCapital",
+            "detail": "전후 마케도니아 구성공화국 수도",
+            "researchDetail": "유고슬라비아 안의 마케도니아 구성공화국 수도 역할은 당시의 국가 지위 변화와 관계된다. Скопје·Shkupi·Üsküp를 1945년 일괄 개칭의 전후 명칭으로 처리하지 않는다.",
+            "sourceUrl": "https://skopje.gov.mk/en_us/footer/fakti-simboli/"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "Shkupi는 알바니아어 병용명",
+            "sourceUrl": "https://skopje.gov.mk/sq/footer/fakti-simboli/"
+          },
+          {
+            "detail": "Üsküp은 튀르키예어 역사명",
+            "sourceUrl": "https://www.geonames.org/785842/"
+          },
+          {
+            "detail": "고대 Scupi 유적과 도시 구분",
+            "sourceUrl": "https://www.geonames.org/785842/"
+          },
+          {
+            "detail": "도시 PPLC와 Grad Skopje 분리",
+            "researchDetail": "현대 스코페 취락 PPLC와 행정구역 Grad Skopje ADM1은 별개 레코드다.",
+            "sourceUrl": "https://www.geonames.org/785842/"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3183875,
+      "names": [
+        {
+          "text": "Tiranë",
+          "language": "sq",
+          "usage": "standard",
+          "note": "알바니아어 기본형·공식명",
+          "sourceUrl": "https://www.geonames.org/3183875/"
+        },
+        {
+          "text": "Tirana",
+          "language": "sq",
+          "usage": "alternate",
+          "variantType": "albanianDefiniteForm",
+          "note": "알바니아어 정관형 표기",
+          "sourceUrl": "https://www.geonames.org/3183875/"
+        },
+        {
+          "text": "Tirana",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "티라나",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 41.32744,
+      "longitude": 19.81866,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3183875/",
+      "sourceCountryCode": "AL",
+      "defaultDisplayNameKo": "티라나",
+      "shortDescriptionKo": "1920년 임시 수도, 1925년 정식",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "티라나",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://tirana.al/faqe/historia"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801-with-capital-status-events",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 1614,
+            "type": "modernUrbanFoundation",
+            "detail": "근대 티라나 도시 형성",
+            "sourceUrl": "https://tirana.al/faqe/historia"
+          },
+          {
+            "date": "1920-02-11",
+            "type": "provisionalAlbanianCapital",
+            "detail": "알바니아 임시 수도 지정",
+            "sourceUrl": "https://tirana.al/faqe/historia"
+          },
+          {
+            "date": "1925-01-31",
+            "type": "definitiveAlbanianCapital",
+            "detail": "알바니아 정식 수도 지위",
+            "sourceUrl": "https://tirana.al/faqe/historia"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "수도 지정은 개칭이 아님",
+            "sourceUrl": "https://tirana.al/faqe/historia"
+          },
+          {
+            "detail": "Tiranë와 Tirana는 문법형",
+            "sourceUrl": "https://www.geonames.org/3183875/"
+          },
+          {
+            "detail": "도시 PPLC와 주·시청 구분",
+            "researchDetail": "GeoNames 3183875는 도시 취락이며 Tirana ADM1, Bashkia Tiranë ADM2, Bashkia e Tiranës ADM3와 다르다.",
+            "sourceUrl": "https://www.geonames.org/3183875/"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 786714,
+      "names": [
+        {
+          "text": "Prishtina",
+          "language": "sq",
+          "usage": "standard",
+          "note": "알바니아어 정관형 지명",
+          "sourceUrl": "https://www.geonames.org/786714/"
+        },
+        {
+          "text": "Prishtinë",
+          "language": "sq",
+          "usage": "alternate",
+          "variantType": "albanianIndefiniteForm",
+          "note": "알바니아어 기본형 지명",
+          "sourceUrl": "https://www.geonames.org/786714/"
+        },
+        {
+          "text": "Приштина",
+          "language": "sr",
+          "script": "Cyrl",
+          "usage": "standard",
+          "note": "세르비아어 키릴 표기",
+          "sourceUrl": "https://www.geonames.org/786714/"
+        },
+        {
+          "text": "Priština",
+          "language": "sr",
+          "script": "Latn",
+          "usage": "standard",
+          "note": "세르비아어 로마자 표기",
+          "sourceUrl": "https://www.geonames.org/786714/"
+        },
+        {
+          "text": "Pristina",
+          "language": "en",
+          "usage": "standard",
+          "sourceUrl": "https://www.geonames.org/786714/"
+        },
+        {
+          "text": "프리슈티나",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 42.67272,
+      "longitude": 21.16688,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/786714/",
+      "sourceCountryCode": "XK",
+      "defaultDisplayNameKo": "프리슈티나",
+      "shortDescriptionKo": "코소보의 수도로 기능하는 도시",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "프리슈티나",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/786714/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801-with-contested-status-separation",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "2008-02-17",
+            "type": "kosovoIndependenceDeclaration",
+            "detail": "코소보 독립 선언",
+            "researchDetail": "2008년 코소보 독립 선언은 프리슈티나의 이름이 바뀐 사건이 아니다. 국제사법재판소 2010년 권고적 의견은 선언의 국제법 위반 여부에 관한 판단으로서 국가 성립·영토 귀속을 확정하지 않는다.",
+            "sourceUrl": "https://www.icj-cij.org/node/103776"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "알바니아어·세르비아어 병존",
+            "sourceUrl": "https://www.geonames.org/786714/"
+          },
+          {
+            "detail": "코소보 법적 지위는 별도",
+            "researchDetail": "코소보의 국제적 국가 지위와 세르비아의 영토주장은 상이하며, 지명 sourceCountryCode XK와 GeoNames PPLC 분류가 과거 주권·현재 국가 승인 여부를 확정하지 않는다.",
+            "sourceUrl": "https://www.icj-cij.org/node/103776"
+          },
+          {
+            "detail": "XK는 GeoNames 분류 코드",
+            "researchDetail": "XK는 GeoNames가 코소보 식별에 사용하는 코드이며 지명 레코드의 언어 선택·역사명·실효 통치 변화를 자동 결정하지 않는다.",
+            "sourceUrl": "https://www.geonames.org/786714/"
+          },
+          {
+            "detail": "도시 PPLC와 ADM1·ADM2 구분",
+            "sourceUrl": "https://www.geonames.org/786714/"
+          }
+        ]
+      }
+    }
+  ]
+}

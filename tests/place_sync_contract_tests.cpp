@@ -145,6 +145,63 @@ private slots:
             QCOMPARE(reviewed.value("latitude"),record.value("coordinates").toArray().at(1));
         }
     }
+    void batch11CityIdsAndPodgoricaHistoricalKoreanTimeline() {
+        const QString root=QString::fromUtf8(PLACE_SYNC_REPOSITORY_ROOT);
+        QFile file(root+"/reports/places/tier1-major-cities-batch11-western-balkans-capitals.json");
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const auto document=QJsonDocument::fromJson(file.readAll()).object();
+        QCOMPARE(document.value("status").toString(),
+                 QStringLiteral("verified-source-staging-not-runtime"));
+        const auto records=document.value("records").toArray();
+        QCOMPARE(records.size(),5);
+        const QList<int> ids{3191281,3193044,785842,3183875,786714};
+        const QStringList koreans{QStringLiteral("사라예보"),
+            QStringLiteral("포드고리차"),QStringLiteral("스코페"),
+            QStringLiteral("티라나"),QStringLiteral("프리슈티나")};
+        for(qsizetype i=0;i<records.size();++i) {
+            const auto record=records.at(i).toObject();
+            QCOMPARE(record.value("geonameId").toInt(),ids.at(i));
+            QCOMPARE(record.value("defaultDisplayNameKo").toString(),koreans.at(i));
+            QCOMPARE(record.value("featureClass").toString(),QStringLiteral("P"));
+            QCOMPARE(record.value("featureCode").toString(),QStringLiteral("PPLC"));
+            const auto names=record.value("names").toArray();
+            bool korean=false,english=false,native=false;
+            for(const auto& value:names) {
+                const auto name=value.toObject();
+                const auto language=name.value("language").toString();
+                if(language=="ko"&&name.value("text").toString()==koreans.at(i))
+                    korean=true;
+                if(language=="en"&&name.value("usage")=="standard")english=true;
+                if(language!="ko"&&language!="en"&&name.value("usage")=="standard")
+                    native=true;
+            }
+            QVERIFY(korean&&english&&native);
+        }
+        const auto city=records.at(1).toObject();
+        PlaceRecord testRecord;testRecord.name=city.value("defaultDisplayNameKo").toString();
+        const auto timeline=city.value("displayTimeline").toArray();
+        QCOMPARE(timeline.size(),3);
+        for(const auto& value:timeline) {
+            const auto item=value.toObject();PlaceNameTransition transition;
+            if(item.contains("fromDate"))transition.fromDate=item.value("fromDate").toString();
+            else transition.fromYear=item.value("fromYear").toInt();
+            transition.ko=item.value("nameKo").toString();
+            testRecord.nameTimeline.push_back(std::move(transition));
+        }
+        const QStringList dates{"1946-07-12","1946-07-13","1992-04-01","1992-04-02"};
+        const QStringList expected{QStringLiteral("포드고리차"),
+            QStringLiteral("티토그라드"),QStringLiteral("티토그라드"),
+            QStringLiteral("포드고리차")};
+        for(qsizetype i=0;i<dates.size();++i) {
+            const auto actual=resolvePlaceDisplayRows(testRecord,PlaceLanguageSelection{},dates.at(i));
+            QCOMPARE(actual.size(),std::size_t(1));
+            QCOMPARE(actual.front().text,expected.at(i));
+        }
+        QCOMPARE(records.at(4).toObject().value("displayTimeline").toArray().size(),1);
+        QCOMPARE(records.at(4).toObject().value("sourceCountryCode").toString(),
+                 QStringLiteral("XK"));
+    }
+
     void nativeDecoderMatchesAllFrozenWebHexVectors() {
         const auto fixtures=contract().value("fixtures").toArray();
         for(const auto& value:fixtures) {

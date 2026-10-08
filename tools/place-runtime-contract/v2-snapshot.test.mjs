@@ -81,6 +81,55 @@ test('batch 10 contains the four independently checked Balkan capitals', () => {
   }
 });
 
+test('batch 11 records all five verified western Balkan cities and exact dated historical display rules', () => {
+  const records=json('reports/places/tier1-major-cities-batch11-western-balkans-capitals.json').records;
+  assert.deepEqual(records.map(row=>row.geonameId),
+    [3191281,3193044,785842,3183875,786714]);
+  assert.deepEqual(records.map(row=>row.defaultDisplayNameKo),
+    ['사라예보','포드고리차','스코페','티라나','프리슈티나']);
+  assert.deepEqual(records.map(row=>row.sourceCountryCode),
+    ['BA','ME','MK','AL','XK']);
+  for (const record of records) {
+    assert.equal(record.featureClass,'P',record.geonameId);
+    assert.equal(record.featureCode,'PPLC',record.geonameId);
+    assert.ok(record.names.some(n=>n.language==='ko'&&n.usage==='standard'&&n.text===record.defaultDisplayNameKo));
+    assert.ok(record.names.some(n=>n.language==='en'&&n.usage==='standard'));
+    assert.ok(record.names.some(n=>!['ko','en'].includes(n.language)&&n.usage==='standard'));
+    assert.equal(record.displayTimeline[0].fromYear,1801);
+    for(const row of record.displayTimeline) {
+      assert.ok(record.names.some(n=>n.language==='ko'&&n.text===row.nameKo));
+      assert.ok(['historicalLocalName','officialRenaming','koreanEditorialTranscription'].includes(row.kind));
+    }
+    for(const text of [
+      record.shortDescriptionKo,
+      ...record.names.map(n=>n.note),
+      ...record.displayTimeline.map(n=>n.note),
+      ...(record.historicalGeography?.events||[]).map(n=>n.detail),
+      ...(record.historicalGeography?.notes||[]).map(n=>n.detail)
+    ].filter(Boolean))assert.ok([...text].length<=28,record.geonameId+' screen copy too long: '+text);
+  }
+  const podgorica=records[1];
+  assert.deepEqual(podgorica.displayTimeline.map(t=>[t.fromDate||t.fromYear,t.nameKo]),
+    [[1801,'포드고리차'],['1946-07-13','티토그라드'],['1992-04-02','포드고리차']]);
+  const labelAt=date=>{
+    let chosen=podgorica.defaultDisplayNameKo;
+    for(const change of podgorica.displayTimeline){
+      const eligible=change.fromDate
+        ?change.fromDate<=date
+        :change.fromYear<=Number(date.slice(0,4));
+      if(!eligible)break;
+      chosen=change.nameKo;
+    }
+    return chosen;
+  };
+  for (const [date,label] of [
+    ['1946-07-12','포드고리차'],['1946-07-13','티토그라드'],
+    ['1992-04-01','티토그라드'],['1992-04-02','포드고리차']
+  ])assert.equal(labelAt(date),label);
+  assert.equal(records[4].historicalGeography.events[0].type,'kosovoIndependenceDeclaration');
+  assert.equal(records[4].displayTimeline.length,1,'Political status change is not a city rename');
+});
+
 test('portable multilingual rows and provenance match reviewed city records', () => {
   let scenarios = 0;
   const sourceCache = new Map();
