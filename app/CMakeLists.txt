@@ -166,9 +166,38 @@ qt_add_resources(pandoeditor ui
         "${PROJECT_SOURCE_DIR}/ui/common/ObjectSearch.qml"
         "${PROJECT_SOURCE_DIR}/ui/common/ObjectChooser.qml"
 )
+# Dataset paths come from the single approved, resource-embedded manifest.
+# Configure again when the manifest changes; no country file names are pinned in CMake.
+set(PANDO_WORLD_MANIFEST_FILE "${PROJECT_SOURCE_DIR}/assets/world/manifest.json")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PANDO_WORLD_MANIFEST_FILE}")
+file(READ "${PANDO_WORLD_MANIFEST_FILE}" PANDO_WORLD_MANIFEST_JSON)
+set(PANDO_WORLD_RESOURCE_FILES "${PANDO_WORLD_MANIFEST_FILE}")
+set(PANDOEDITOR_WORLD_ASSET_ROLES
+    countryPreview previewMesh countryCanonical canonicalMesh terrain hydro labelAnchors)
+foreach(PANDO_WORLD_ROLE IN LISTS PANDOEDITOR_WORLD_ASSET_ROLES)
+    string(JSON PANDO_ASSET_REL ERROR_VARIABLE PANDO_ASSET_ERROR
+        GET "${PANDO_WORLD_MANIFEST_JSON}" "${PANDO_WORLD_ROLE}" path)
+    if(NOT PANDO_ASSET_ERROR STREQUAL "NOTFOUND")
+        message(FATAL_ERROR "Invalid pinned world asset '${PANDO_WORLD_ROLE}': ${PANDO_ASSET_ERROR}")
+    endif()
+    if(IS_ABSOLUTE "${PANDO_ASSET_REL}" OR PANDO_ASSET_REL MATCHES "(^/|\\.\\.|:|%|\\?)")
+        message(FATAL_ERROR "Unsafe world asset resource path: ${PANDO_ASSET_REL}")
+    endif()
+    set(PANDO_WORLD_ASSET_FILE "${PROJECT_SOURCE_DIR}/assets/world/${PANDO_ASSET_REL}")
+    if(NOT EXISTS "${PANDO_WORLD_ASSET_FILE}")
+        message(FATAL_ERROR "Missing pinned world asset: ${PANDO_WORLD_ASSET_FILE}")
+    endif()
+    if(PANDO_WORLD_ROLE STREQUAL "labelAnchors")
+        set(PANDO_WORLD_ANCHOR_FILE "${PANDO_WORLD_ASSET_FILE}")
+        set(PANDO_WORLD_ANCHOR_REL "${PANDO_ASSET_REL}")
+    else()
+        list(APPEND PANDO_WORLD_RESOURCE_FILES "${PANDO_WORLD_ASSET_FILE}")
+    endif()
+endforeach()
+
 qt_add_resources(pandoeditor world_metadata
     PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
-    FILES "${PROJECT_SOURCE_DIR}/assets/world/country-label-anchors-v0.10.1.json")
+    FILES "${PANDO_WORLD_ANCHOR_FILE}")
 qt_add_resources(pandoeditor historical_pilot
     PREFIX "/historical" BASE "${PROJECT_SOURCE_DIR}/assets/historical"
     FILES "${PROJECT_SOURCE_DIR}/assets/historical/historical-library-pilot.json")
@@ -182,14 +211,7 @@ qt_add_resources(pandoeditor sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}
 # Embed large map bytes directly into a resource object instead of compiling
 # a 100+ MB C++ byte array, which exhausts MinGW's compiler heap in Debug.
 qt_add_resources(pandoeditor world_data BIG_RESOURCES PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
-    FILES
-        "${PROJECT_SOURCE_DIR}/assets/world/manifest.json"
-        "${PROJECT_SOURCE_DIR}/assets/world/countries-preview-v0.33.0.geojson.gz"
-        "${PROJECT_SOURCE_DIR}/assets/world/world-mesh-preview-v0.33.0.bin.gz"
-        "${PROJECT_SOURCE_DIR}/assets/world/countries-canonical-v0.33.0.pcg.gz"
-        "${PROJECT_SOURCE_DIR}/assets/world/world-mesh-v0.12.6.bin.gz"
-        "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.12.6/manifest.json"
-        "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.1/manifest.json"
+    FILES ${PANDO_WORLD_RESOURCE_FILES}
         "${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-c0bd31d1.json")
 
 file(GLOB_RECURSE DEFAULT_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/assets/defaults/flags/*")
@@ -512,9 +534,11 @@ if(BUILD_TESTING)
     add_test(NAME project_preview_cache_tests COMMAND project_preview_cache_tests -o -,txt)
     add_executable(country_label_anchor_tests ../tests/country_label_anchor_tests.cpp)
     target_link_libraries(country_label_anchor_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(country_label_anchor_tests PRIVATE
+        PANDOEDITOR_LABEL_ANCHOR_RESOURCE=":/world/${PANDO_WORLD_ANCHOR_REL}")
     qt_add_resources(country_label_anchor_tests world_metadata
         PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
-        FILES "${PROJECT_SOURCE_DIR}/assets/world/country-label-anchors-v0.10.1.json")
+        FILES "${PANDO_WORLD_ANCHOR_FILE}")
     add_test(NAME country_label_anchor_tests COMMAND country_label_anchor_tests -o -,txt)
     add_executable(physical_data_store_tests ../tests/physical_data_store_tests.cpp)
     target_link_libraries(physical_data_store_tests PRIVATE pandoeditor_editor Qt6::Test Qt6::Network)
@@ -525,7 +549,7 @@ if(BUILD_TESTING)
     target_link_libraries(view_navigation_tests PRIVATE pandoeditor_editor Qt6::Test)
     qt_add_resources(view_navigation_tests world_metadata
         PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
-        FILES "${PROJECT_SOURCE_DIR}/assets/world/country-label-anchors-v0.10.1.json")
+        FILES "${PANDO_WORLD_ANCHOR_FILE}")
     qt_add_resources(view_navigation_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
         FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     add_test(NAME view_navigation_tests COMMAND view_navigation_tests -o -,txt)

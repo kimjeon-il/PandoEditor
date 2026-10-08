@@ -25,3 +25,29 @@ The exact per-file Git blob IDs, sizes and SHA-256 hashes are recorded in
 `physical-inventory-terrain-dem-c3c18d1.json`. These optional data remain
 separate from the pinned world/hydro inventory. A 1 m encoded height spacing
 is the storage interval, not the accuracy of the original elevation source.
+
+## Source-aware bundle synchronization (stage 4)
+
+The authoritative native asset contract is `assets/world/manifest.json` schema 2.
+It contains per-asset local path, exact stored-byte SHA-256, Git blob SHA-1,
+byte size, required policy and original upstream commit/path. No runtime file
+may be chosen from GitHub's moving main branch.
+
+The current installed world is still the **legacy mixed snapshot**:
+country preview/meshes/canonical packet and terrain from Web commit
+`c0bd31d13dc8495593d78cf51f7cc195de7c9469`;
+corrected BJN/SER anchors and hydro manifest from
+`a87f4d27fb1bc16528aa57242ecb52e28e4550b2`.
+No map geometry or optional physical dataset was changed during this migration.
+
+`node tools/sync-world-data.mjs --web-ref <40-character-commit>` performs a
+read-only comparison against Web `world/current.json` and content-addressed
+files. It validates every prospective file and reports the exact bundle SHA-256.
+To apply an explicitly reviewed change, pass both
+`--apply --approve-bundle <the-reported-64-character-SHA-256>`.
+Changes to the pinned hydro/terrain manifests abort the apply until their
+separate physical inventory and optional data layout are reviewed.
+Updating the source manifest alone is not permitted. The old assets are not
+deleted; the Qt resource list is derived from the approved manifest at build
+configuration time. A new application build is required after an approved
+change. The offline bundled world works without a network connection.

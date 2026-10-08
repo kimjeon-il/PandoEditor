@@ -1,0 +1,92 @@
+name: App World Dataset Stage 4 Gate
+
+on:
+  push:
+    branches: [work/gis]
+    paths:
+      - '.github/workflows/world-dataset-stage4-gate.yml'
+      - 'assets/world/manifest.json'
+      - 'assets/world/NOTICE.md'
+      - 'assets/world/world/**'
+      - 'tools/lib/world-dataset-contract.mjs'
+      - 'tools/sync-world-data.mjs'
+      - 'tools/world-dataset-stage4.test.mjs'
+      - 'tools/verify-world-assets.mjs'
+      - 'tools/verify-release-assets.mjs'
+      - 'app/worlddataset.cpp'
+      - 'app/worlddataset.h'
+      - 'app/editorcontroller.cpp'
+      - 'app/CMakeLists.txt'
+      - 'tests/country_label_anchor_tests.cpp'
+      - 'docs/validation/data-versioning-phase4.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-contract:
+    name: Pinned native asset and approved-sync contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify current bundled world offline
+        run: |
+          node tools/verify-world-assets.mjs assets/world
+          node --test tools/world-dataset-stage4.test.mjs
+          node tools/verify-release-assets.mjs --root .
+      - name: Checkout one exact approved upstream Web revision
+        uses: actions/checkout@v4
+        with:
+          repository: kimjeon-il/Pando
+          ref: 65d34d172ee72867d9e19dbde2667607a2ea7d59
+          path: upstream-web
+          persist-credentials: false
+          sparse-checkout: |
+            assets/data/world
+            assets/data/hydro/v0.13.1/manifest.json
+            assets/data/terrain/v0.12.6/manifest.json
+      - name: Compare current app with upstream without modifying its assets
+        run: |
+          node tools/sync-world-data.mjs --web-ref 65d34d172ee72867d9e19dbde2667607a2ea7d59 --web-root upstream-web
+
+  qt-offline:
+    name: Native Qt offline world load and label regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - name: Configure and build focused Qt targets
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+          cmake --build build --parallel 2 --target pandoeditor builtin_world_policy_tests country_label_anchor_tests physical_data_store_tests
+      - name: Verify builtin world, BJN/SER anchor and physical data offline
+        run: |
+          ctest --test-dir build --output-on-failure -R '^(builtin_world_policy_tests|country_label_anchor_tests|physical_data_store_tests)$'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: app-world-stage4-failure-${{ github.run_id }}
+          if-no-files-found: ignore
+          path: |
+            build/Testing/Temporary/LastTest.log
+            build/CMakeFiles/CMakeConfigureLog.yaml

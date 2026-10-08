@@ -19,10 +19,12 @@ try {
   run('M7.1 corpus','verify-m71-world-corpus.mjs','tests/fixtures/world-rendering');
   const cmake=readFileSync(join(root,'app/CMakeLists.txt'),'utf8');
   const world=JSON.parse(readFileSync(join(root,'assets/world/manifest.json'),'utf8'));
+  const dynamicWorldResources=cmake.includes('PANDOEDITOR_WORLD_ASSET_ROLES')&&
+    cmake.includes('PANDO_WORLD_RESOURCE_FILES')&&cmake.includes('PANDO_WORLD_ANCHOR_FILE');
   for(const [key,asset] of Object.entries(world)) {
     if(!asset||typeof asset!=='object'||typeof asset.path!=='string')continue;
     const absolute=join(root,'assets/world',asset.path);
-    check(`resource ${key}`,existsSync(absolute)&&cmake.includes(`assets/world/${asset.path}`),asset.path);
+    check(`resource ${key}`,existsSync(absolute)&&dynamicWorldResources,asset.path);
   }
   for(const stage of ['fill','stroke','point'])for(const extension of ['vert','frag']) {
     const path=`renderer/shaders/${stage}.${extension}`;

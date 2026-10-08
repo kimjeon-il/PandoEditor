@@ -4,8 +4,10 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonParseError>
+#include <QStringList>
 #include <algorithm>
 #include <array>
+#include <set>
 #include <limits>
 #include <stdexcept>
 #include <zlib.h>
@@ -20,45 +22,95 @@ QByteArray fileBytes(const QString& name) {
 QString hash(QCryptographicHash::Algorithm algorithm,const QByteArray& bytes) {
     return QString::fromLatin1(QCryptographicHash::hash(bytes,algorithm).toHex());
 }
+constexpr std::array<const char*,7> worldRoles{{
+    "countryPreview","previewMesh","countryCanonical","canonicalMesh",
+    "terrain","hydro","labelAnchors"
+}};
+bool validHex(const QString& value,int size) {
+    if(value.size()!=size)return false;
+    return std::all_of(value.begin(),value.end(),[](QChar c){
+        const auto ch=c.unicode();
+        return (ch>='0'&&ch<='9')||(ch>='a'&&ch<='f');
+    });
+}
+bool safeRelativePath(const QString& value) {
+    if(value.isEmpty()||value.size()>512||value.startsWith('/')||
+       value.contains('\\')||value.contains('?')||value.contains('#')||
+       value.contains('%')||value.contains(':')||value.contains(QChar(0)))return false;
+    const auto parts=value.split(QLatin1Char('/'),Qt::KeepEmptyParts);
+    return std::all_of(parts.begin(),parts.end(),[](const QString& segment){
+        return !segment.isEmpty()&&segment!=QStringLiteral(".")&&segment!=QStringLiteral("..");
+    });
+}
+bool requiredRole(const QString& key) {
+    return key!=QStringLiteral("countryPreview")&&
+           key!=QStringLiteral("terrain")&&key!=QStringLiteral("hydro");
+}
+
 }
 
 WorldDataset::WorldDataset(QString root):root_(std::move(root)) {
     QJsonParseError error;
-    auto parsed=QJsonDocument::fromJson(fileBytes(root_+"/manifest.json"),&error);
-    require(error.error==QJsonParseError::NoError&&parsed.isObject(),"Invalid world dataset manifest");
+    const auto parsed=QJsonDocument::fromJson(fileBytes(root_+"/manifest.json"),&error);
+    require(error.error==QJsonParseError::NoError&&parsed.isObject(),
+            "Invalid world dataset manifest");
     manifest_=parsed.object();
     require(manifest_.value("schema").toString()==QStringLiteral("pandoeditor-world-dataset")&&
-        manifest_.value("version").toInt()==1&&
-        manifest_.value("worldMapCommit").toString()==QStringLiteral("c0bd31d13dc8495593d78cf51f7cc195de7c9469")&&
-        manifest_.value("countryCount").toInt()==258&&
-        manifest_.value("canonicalPositionCount").toInt()==548454,
-        "Unexpected world dataset identity");
+            manifest_.value("version").toInt()==2&&
+            manifest_.value("countryCount").toInt()==258&&
+            manifest_.value("canonicalPositionCount").toInt()==548454,
+            "Unexpected world dataset schema or country envelope");
+    const auto origin=manifest_.value("origin").toObject();
+    const auto mode=origin.value("mode").toString();
+    require(origin.value("repository").toString()==QStringLiteral("kimjeon-il/Pando")&&
+            (mode==QStringLiteral("mixed-pinned")||mode==QStringLiteral("web-bundle")),
+            "Unexpected world dataset source");
+    if(mode==QStringLiteral("web-bundle")) {
+        require(validHex(origin.value("webCommit").toString(),40)&&
+                validHex(origin.value("worldBundleSha256").toString(),64),
+                "Unapproved world bundle identity");
+    } else {
+        require(origin.value("webCommit").isNull()&&
+                origin.value("worldBundleSha256").isNull(),
+                "Legacy mixed bundle must not declare approval");
+    }
+    std::set<QString> paths;
+    for(const auto* name:worldRoles) {
+        const auto key=QString::fromLatin1(name);
+        const auto item=asset(key);
+        require(paths.insert(item.path).second,"Duplicate world asset path");
+    }
 }
 WorldAsset WorldDataset::asset(const QString& key) const {
-    struct Identity {const char* key;const char* path;const char* version;const char* blob;};
-    static const std::array<Identity,6> identities{{
-        {"countryPreview","countries-preview-v0.33.0.geojson.gz","0.33.0","ce5eecd8f4e1a611131f2117780c34ca3cf555b2"},
-        {"previewMesh","world-mesh-preview-v0.33.0.bin.gz","0.33.0","caff1ab319706f6bf90635ed5a992ffbf4f2a84a"},
-        {"countryCanonical","countries-canonical-v0.33.0.pcg.gz","0.33.0","54146d9eeb28e4af08e094f5061bf64689e6bdf3"},
-        {"canonicalMesh","world-mesh-v0.12.6.bin.gz","0.12.6","8c73420b92e89ab64cbe75dcc5016efe2c0a22b6"},
-        {"terrain","terrain/v0.12.6/manifest.json","0.12.6","6821c49315ffd381758f81dfe4d83b6b574f0ad4"},
-        {"hydro","hydro/v0.13.1/manifest.json","0.13.1","9a9cdb719351e51d2ff509c410cae8741ac36a0a"}}};
-    auto found=std::find_if(identities.begin(),identities.end(),[&](const auto& item){return key==item.key;});
-    require(found!=identities.end(),"Unknown world dataset asset");
-    const auto object=manifest_.value(key).toObject();
-    WorldAsset result{object.value("path").toString(),object.value("version").toString(),
-        object.value("gitBlobSha").toString(),object.value("sha256").toString(),
-        object.value("required").toBool()};
-    require(result.path==found->path&&result.version==found->version&&
-        result.gitBlobSha==found->blob&&
-        result.sha256.size()==64&&result.required==
-            (key=="previewMesh"||key=="countryCanonical"||key=="canonicalMesh"),
-        "Wrong world dataset asset identity");
-    return result;
+    require(std::any_of(worldRoles.begin(),worldRoles.end(),
+                        [&key](const char* name){return key==QLatin1String(name);}),
+            "Unknown world dataset asset");
+    const auto entry=manifest_.value(key).toObject();
+    const auto provenance=entry.value("source").toObject();
+    const auto origin=manifest_.value("origin").toObject();
+    WorldAsset asset{
+        entry.value("path").toString(),entry.value("version").toString(),
+        entry.value("gitBlobSha").toString(),entry.value("sha256").toString(),
+        entry.value("required").toBool(),entry.value("bytes").toInteger()
+    };
+    require(safeRelativePath(asset.path)&&
+            validHex(asset.gitBlobSha,40)&&validHex(asset.sha256,64)&&
+            !asset.version.isEmpty()&&asset.bytes>0&&asset.bytes<100000000&&
+            entry.value("required").isBool()&&asset.required==requiredRole(key)&&
+            validHex(provenance.value("ref").toString(),40)&&
+            safeRelativePath(provenance.value("path").toString())&&
+            provenance.value("path").toString().startsWith(QStringLiteral("assets/data/")),
+            "Invalid world asset identity or provenance");
+    if(origin.value("mode").toString()==QStringLiteral("web-bundle")&&
+       key!=QStringLiteral("terrain")&&key!=QStringLiteral("hydro"))
+        require(provenance.value("ref").toString()==origin.value("webCommit").toString(),
+                "World bundle contains an unapproved commit");
+    return asset;
 }
 QByteArray WorldDataset::read(const QString& key) const {
     const auto entry=asset(key);
     const auto bytes=fileBytes(root_+"/"+entry.path);
+    require(qint64(bytes.size())==entry.bytes,"World asset size mismatch");
     QByteArray header("blob ");
     header+=QByteArray::number(bytes.size());
     header.append('\0');

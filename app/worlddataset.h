@@ -6,6 +6,7 @@
 struct WorldAsset {
     QString path,version,gitBlobSha,sha256;
     bool required=false;
+    qint64 bytes=0;
 };
 
 class WorldDataset final {

@@ -1,49 +1,96 @@
 {
   "schema": "pandoeditor-world-dataset",
-  "version": 1,
-  "worldMapCommit": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+  "version": 2,
   "countryCount": 258,
   "canonicalPositionCount": 548454,
+  "origin": {
+    "repository": "kimjeon-il/Pando",
+    "mode": "mixed-pinned",
+    "webCommit": null,
+    "worldBundleSha256": null
+  },
   "countryPreview": {
     "path": "countries-preview-v0.33.0.geojson.gz",
     "version": "0.33.0",
     "gitBlobSha": "ce5eecd8f4e1a611131f2117780c34ca3cf555b2",
     "sha256": "1a5ecb6f6d952a89ae28c57483abd03c03ba1f15865d886377575997a1187e8e",
-    "required": false
+    "required": false,
+    "bytes": 917604,
+    "source": {
+      "ref": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/countries-preview-v0.33.0.geojson.gz"
+    }
   },
   "previewMesh": {
     "path": "world-mesh-preview-v0.33.0.bin.gz",
     "version": "0.33.0",
     "gitBlobSha": "caff1ab319706f6bf90635ed5a992ffbf4f2a84a",
     "sha256": "a90951c3171706bab9af4ff9e94fbc50d1ebc66f0cd53f67a4481ccd6d9e9f48",
-    "required": true
+    "required": true,
+    "bytes": 1733548,
+    "source": {
+      "ref": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/world-mesh-preview-v0.33.0.bin.gz"
+    }
   },
   "countryCanonical": {
     "path": "countries-canonical-v0.33.0.pcg.gz",
     "version": "0.33.0",
     "gitBlobSha": "54146d9eeb28e4af08e094f5061bf64689e6bdf3",
     "sha256": "916e5e505e94ede8a245103cad0c88d5cdca232232f28a0618ad91067be3294d",
-    "required": true
+    "required": true,
+    "bytes": 5122043,
+    "source": {
+      "ref": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/countries-canonical-v0.33.0.pcg.gz"
+    }
   },
   "canonicalMesh": {
     "path": "world-mesh-v0.12.6.bin.gz",
     "version": "0.12.6",
     "gitBlobSha": "8c73420b92e89ab64cbe75dcc5016efe2c0a22b6",
     "sha256": "9fe1f686728e83d4615998a7b023db680b3b561b0a26e7f2f4357b7fe8bcfb86",
-    "required": true
+    "required": true,
+    "bytes": 14619043,
+    "source": {
+      "ref": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/world-mesh-v0.12.6.bin.gz"
+    }
   },
   "terrain": {
     "path": "terrain/v0.12.6/manifest.json",
     "version": "0.12.6",
     "gitBlobSha": "6821c49315ffd381758f81dfe4d83b6b574f0ad4",
     "sha256": "093ae0f088622e2867cad5f318749c47e28776a870e6467d00c31ef810d8690f",
-    "required": false
+    "required": false,
+    "bytes": 2024,
+    "source": {
+      "ref": "c0bd31d13dc8495593d78cf51f7cc195de7c9469",
+      "path": "assets/data/terrain/v0.12.6/manifest.json"
+    }
   },
   "hydro": {
     "path": "hydro/v0.13.1/manifest.json",
     "version": "0.13.1",
     "gitBlobSha": "9a9cdb719351e51d2ff509c410cae8741ac36a0a",
     "sha256": "c10eaffd375d5f0d90955fa253b02ec73d9daeff261fa5cfde1f73ca89d2bd80",
-    "required": false
+    "required": false,
+    "bytes": 52975,
+    "source": {
+      "ref": "a87f4d27fb1bc16528aa57242ecb52e28e4550b2",
+      "path": "assets/data/hydro/v0.13.1/manifest.json"
+    }
+  },
+  "labelAnchors": {
+    "path": "country-label-anchors-v0.10.1.json",
+    "version": "0.10.1",
+    "gitBlobSha": "c29a00e0b991e922a9d09ee1ea5bfcda476c0ba8",
+    "sha256": "caeee3f0d05265cc564f68ef092b25ea8c5c4d6f1c36e2beb35a239551751512",
+    "bytes": 13826,
+    "required": true,
+    "source": {
+      "ref": "a87f4d27fb1bc16528aa57242ecb52e28e4550b2",
+      "path": "assets/data/country-label-anchors-v0.10.1.json"
+    }
   }
 }

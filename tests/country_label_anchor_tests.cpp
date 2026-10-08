@@ -40,7 +40,7 @@ private slots:
     }
 
     void pinnedCorpusHasAllSourceCountries() {
-        QFile file(":/world/country-label-anchors-v0.10.1.json");QVERIFY(file.open(QIODevice::ReadOnly));
+        QFile file(QString::fromLatin1(PANDOEDITOR_LABEL_ANCHOR_RESOURCE));QVERIFY(file.open(QIODevice::ReadOnly));
         CountryLabelAnchors anchors(file.readAll());
         QCOMPARE(anchors.version(),QString("0.10.1"));
         QCOMPARE(anchors.method(),QString("largest-polygon-polylabel"));

@@ -7,6 +7,7 @@
 #include "../renderer/gpumapitem.h"
 #include "defaultflagresolver.h"
 #include "worlddatasetloader.h"
+#include "worlddataset.h"
 #include <pandoeditor/maprenderorder.h>
 #include <QFile>
 #include <QFileInfo>
@@ -88,9 +89,16 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         terrainResourceBridge_->setRenderStyle(appearancePreferences().value("effectiveTheme")=="dark",0);
     });
     terrainResourceBridge_->setRenderStyle(appearancePreferences().value("effectiveTheme")=="dark",0);
-    QFile anchorFile(QStringLiteral(":/world/country-label-anchors-v0.10.1.json"));
-    labelAnchors_=std::make_unique<CountryLabelAnchors>(
-        anchorFile.open(QIODevice::ReadOnly)?anchorFile.readAll():QByteArray{},this);
+    QByteArray pinnedAnchorBytes;
+    if(QFile::exists(QDir(worldDataRoot_).filePath("manifest.json"))) {
+        // A bundled world with a declared anchor cannot silently use a different corpus.
+        pinnedAnchorBytes=WorldDataset(worldDataRoot_).read("labelAnchors");
+    } else {
+        // Non-world Qt component tests can construct this controller without world resources.
+        QFile legacyAnchor(QStringLiteral(":/world/country-label-anchors-v0.10.1.json"));
+        if(legacyAnchor.open(QIODevice::ReadOnly))pinnedAnchorBytes=legacyAnchor.readAll();
+    }
+    labelAnchors_=std::make_unique<CountryLabelAnchors>(pinnedAnchorBytes,this);
     connect(labelAnchors_.get(),&CountryLabelAnchors::changed,this,[this] {
         emit presentationChanged();emit visualChanged();
     });
