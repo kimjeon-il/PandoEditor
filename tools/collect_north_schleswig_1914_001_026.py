@@ -88,6 +88,24 @@ context={"nodes":context_nodes,"ways":context_ways}
 (OUT/"osm-historic-border-candidates.json").write_text(json.dumps(candidates,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
 (OUT/"osm-endpoint-context.json").write_text(json.dumps(context,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
 
+
+# Current Danish parish geometries are a useful control because the 1865 protocol
+# explicitly follows parish boundaries through this sector. They are controls,
+# not assumed historical truth without comparison.
+parish_queries=[
+    "Vester Vedsted","Seem","Hviding","Roager",
+    "Ribe Domsogn","Ribe Sankt Katharine","Sankt Katharine"
+]
+parish_results={}
+for name in parish_queries:
+    url="https://api.dataforsyningen.dk/sogne"
+    rr=requests.get(url,params={"navn":name,"format":"geojson"},headers=UA,timeout=120)
+    rr.raise_for_status()
+    parish_results[name]=rr.json()
+(OUT/"dawa-parish-controls.geojson.json").write_text(
+    json.dumps(parish_results,ensure_ascii=False,separators=(",",":")),encoding="utf-8"
+)
+
 summary={
   "routeElements":len(route.get("elements",[])),
   "scannedNodes":len(nodes),
@@ -100,6 +118,8 @@ summary={
   "candidateWays":[{"id":w["id"],"tags":w["tags"],"pointCount":len(w.get("geometry",[]))} for w in candidate_ways],
   "contextNodes":context_nodes,
   "contextWays":[{"id":w["id"],"tags":w["tags"],"pointCount":len(w.get("geometry",[]))} for w in context_ways],
+  "parishQueries":{name:len((data or {}).get("features",[])) if isinstance(data,dict) else None for name,data in parish_results.items()},
+  "parishFeatureNames":{name:[f.get("properties",{}).get("navn") for f in (data or {}).get("features",[])] if isinstance(data,dict) else [] for name,data in parish_results.items()},
 }
 (OUT/"collection-summary.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
 print(json.dumps(summary,ensure_ascii=False,indent=2))
