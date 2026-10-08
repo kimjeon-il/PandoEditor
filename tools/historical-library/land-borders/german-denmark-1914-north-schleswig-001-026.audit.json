@@ -7,7 +7,7 @@
   "commissionProtocolUrl": "https://da.wikisource.org/wiki/Freden_i_Wien_(1864)_Gr%C3%A6nsereguleringskommissionen",
   "textRule": {
     "stone1to22": "South boundary of Vester Vedsted, Ribe and Seem parishes, following a large water ditch",
-    "stone22to26": "East boundary of Seem BY (not automatically interchangeable with Seem Sogn)",
+    "stone22to26": "Eastern PARISH boundary of Seem By (historical wording: 'den østlige Sognegrænse af Seem By'); verify modern parish and cadastral boundaries, do not equate them a priori",
     "terminal": "Gels Å at Gelsbro, stone 26 sector"
   },
   "geometry": {
