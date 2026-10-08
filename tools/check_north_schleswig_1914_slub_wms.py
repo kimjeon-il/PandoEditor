@@ -6,7 +6,6 @@ and source provenance are saved. This does NOT trace or certify the 1914 border.
 """
 from __future__ import annotations
 
-import datetime as dt
 import hashlib
 import io
 import json
@@ -76,7 +75,6 @@ def main():
     report = {
         "schemaVersion": 1,
         "referenceDate": "1914-07-31",
-        "collectedUtc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "candidateHistoricBorderVerified": False,
         "fullResolutionOriginalReviewed": False,
         "imageScanFilesCommitted": False,
