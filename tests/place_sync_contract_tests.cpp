@@ -225,7 +225,8 @@ private slots:
             QCOMPARE(city.value("featureCode").toString(),QStringLiteral("PPLC"));
             bool korean=false,english=false,native=false;
             for(const auto& item:city.value("names").toArray()) {
-                const auto name=item.toObject(),language=name.value("language").toString();
+                const auto name=item.toObject();
+                const auto language=name.value("language").toString();
                 if(language=="ko"&&name.value("text")==expectedKo.at(i))korean=true;
                 if(language=="en"&&name.value("usage")=="standard")english=true;
                 if(language!="ko"&&language!="en"&&name.value("usage")=="standard")native=true;
