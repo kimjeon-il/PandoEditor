@@ -1,0 +1,62 @@
+name: Web/App Territorial Dataset Stage 5 Gate
+
+on:
+  push:
+    branches: [work/gis]
+    paths:
+      - '.github/workflows/world-dataset-stage5-gate.yml'
+      - 'assets/territorial-library-v2/**'
+      - 'tools/compare-territorial-library.mjs'
+      - 'tools/territorial-library-crosscheck.test.mjs'
+      - 'docs/validation/data-versioning-phase5.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  territorial-catalog-crosscheck:
+    name: Pinned Web identity and historical catalog semantic drift
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Checkout the exact Web source pinned by the native catalog
+        uses: actions/checkout@v4
+        with:
+          repository: kimjeon-il/Pando
+          ref: ebcfae4d27b29cbbea6416a7045a4806930204be
+          path: pinned-web
+          persist-credentials: false
+          sparse-checkout: |
+            assets/data/territorial-entities/generated/v2
+      - name: Checkout the exact current Web revision under audit
+        uses: actions/checkout@v4
+        with:
+          repository: kimjeon-il/Pando
+          ref: a47c4c54655a802a64679a679fc7fa8a576bee56
+          path: audited-web
+          persist-credentials: false
+          sparse-checkout: |
+            assets/data/territorial-entities/generated/v2
+      - name: Unit test the read-only crosscheck
+        run: |
+          node --check tools/compare-territorial-library.mjs
+          node --test tools/territorial-library-crosscheck.test.mjs
+      - name: Verify the App catalog exactly matches its approved Web source
+        run: |
+          node tools/compare-territorial-library.mjs --app-root assets/territorial-library-v2 --web-root pinned-web/assets/data/territorial-entities/generated/v2 --web-ref ebcfae4d27b29cbbea6416a7045a4806930204be --app-ref "$GITHUB_SHA" --gate exact --output reports/stage5-pinned-source.json
+      - name: Audit newer Web snapshot without copying or modifying App assets
+        run: |
+          node tools/compare-territorial-library.mjs --app-root assets/territorial-library-v2 --web-root audited-web/assets/data/territorial-entities/generated/v2 --web-ref a47c4c54655a802a64679a679fc7fa8a576bee56 --app-ref "$GITHUB_SHA" --gate lifetime-only --output reports/stage5-current-web.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-web-territorial-stage5
+          if-no-files-found: warn
+          path: reports/stage5-*.json
