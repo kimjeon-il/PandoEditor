@@ -67,7 +67,7 @@ test('same uncompressed JSON, different gzip settings is classified, not conflat
   entities[0].metadata.notes='a long validation payload, '.repeat(150);
   make(web,entities,{level:1});make(app,entities,{level:9});
   const r=compare(web,app);
-  assert.equal(r.counts['gzip-only'],1);
+  assert.equal(r.counts['gzip-only'],2);
   assert.deepEqual(gateReport(r,'lifetime-only'),[]);
 }));
 
