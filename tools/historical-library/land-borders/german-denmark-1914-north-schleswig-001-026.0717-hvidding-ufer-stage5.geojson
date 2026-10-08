@@ -1,0 +1,85 @@
+{
+  "type": "FeatureCollection",
+  "name": "german-denmark-1914-north-schleswig-001-026-0717-hvidding-ufer-nonfinal",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "candidate:deu-dnk:1914:0717-stone1-coast",
+      "properties": {
+        "referenceDate": "1914-07-31",
+        "sheet": "0717 Hvidding-Ufer",
+        "lengthKm": 0.2938,
+        "status": "provisional-requires-1914-coastline-review",
+        "doNotTreatAsFinal": true,
+        "independentCoastlineValidation": false,
+        "source": "german-denmark-1914-north-schleswig-001-026.sheet-segments.geojson",
+        "historicalMarineBoundaryIsSeparate": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.6622877,
+            55.276343100000005
+          ],
+          [
+            8.662727508594076,
+            55.27637797153427
+          ],
+          [
+            8.662787981301664,
+            55.276319100090575
+          ],
+          [
+            8.66290547370613,
+            55.27631160660999
+          ],
+          [
+            8.663047778480351,
+            55.27634821320763
+          ],
+          [
+            8.663144496803959,
+            55.276377415181166
+          ],
+          [
+            8.663281609045606,
+            55.2763766251481
+          ],
+          [
+            8.66341250096612,
+            55.276366831750174
+          ],
+          [
+            8.663557774979289,
+            55.27638745073977
+          ],
+          [
+            8.66370779688545,
+            55.27644231954125
+          ],
+          [
+            8.663852725965722,
+            55.27650382382644
+          ],
+          [
+            8.664073163903161,
+            55.276571196903774
+          ],
+          [
+            8.665880342555388,
+            55.27678615931178
+          ],
+          [
+            8.665933967195153,
+            55.2767925064089
+          ],
+          [
+            8.666666666666666,
+            55.27688120496713
+          ]
+        ]
+      }
+    }
+  ]
+}
