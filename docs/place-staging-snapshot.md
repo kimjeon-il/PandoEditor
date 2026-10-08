@@ -18,7 +18,7 @@
 1936-08-16과 1936-08-17 문서 표기의 불일치 때문에 **정확한 시행일을 임의로 확정하지 않는다**.
 이것은 조지아어·아르메니아어 자체가 그때 처음 생겼다는 뜻이 아니다.
 
-데이터 출처: 웹 `kimjeon-il/Pando`의 원본 검수 SHA `432a3f375f60b2659676871e6ae9dceb03482ef6`.
+데이터 출처: 웹 `kimjeon-il/Pando`의 원본 검수 SHA `dce2645644ab3ba08294ea534bcce0d37fa02186`.
 앱 `reports/places/source-manifest.json`은 미러링한 각 JSON의 Git blob SHA를 기록한다.
 앱 테스트 `v2-snapshot.test.mjs`와 `place_sync_contract_tests.cpp`에서 중복 ID,
 웹 원본 해시, 1936년 양쪽 대표 표기를 검사한다.

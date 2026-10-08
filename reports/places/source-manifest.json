@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "432a3f375f60b2659676871e6ae9dceb03482ef6",
+  "webCommit": "dce2645644ab3ba08294ea534bcce0d37fa02186",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
