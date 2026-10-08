@@ -114,6 +114,27 @@ for rel in parish_relations:
     except Exception as exc:
         parish_full[str(rid)]={"error":repr(exc)}
 
+
+# Public DAGI ArcGIS mirror: current parish polygons in the historical sector.
+dagi_url="https://demo.geoinfo.dk/server/rest/services/DAGI_Hele_DK/MapServer/1/query"
+dagi_params={
+    "where":"1=1",
+    "geometry":f"{MIN_LON},{MIN_LAT},{MAX_LON},{MAX_LAT}",
+    "geometryType":"esriGeometryEnvelope",
+    "inSR":"4326",
+    "spatialRel":"esriSpatialRelIntersects",
+    "outFields":"*",
+    "returnGeometry":"true",
+    "outSR":"4326",
+    "f":"geojson",
+}
+dagi_response=requests.get(dagi_url,params=dagi_params,headers=UA,timeout=180)
+dagi_response.raise_for_status()
+dagi_parishes=dagi_response.json()
+(OUT/"dagi-current-parishes-sector.geojson").write_text(
+    json.dumps(dagi_parishes,ensure_ascii=False,separators=(",",":")),encoding="utf-8"
+)
+
 summary={
   "routeElements":len(route.get("elements",[])),
   "scannedNodes":len(nodes),
@@ -128,6 +149,8 @@ summary={
   "contextWays":[{"id":w["id"],"tags":w["tags"],"pointCount":len(w.get("geometry",[]))} for w in context_ways],
   "parishRelationCount":len(parish_relations),
   "parishRelations":[{"id":r["id"],"tags":r.get("tags",{}),"memberCount":len(r.get("members",[]))} for r in parish_relations],
+  "dagiParishFeatureCount":len(dagi_parishes.get("features",[])),
+  "dagiParishProperties":[f.get("properties",{}) for f in dagi_parishes.get("features",[])],
 }
 (OUT/"collection-summary.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
 print(json.dumps(summary,ensure_ascii=False,indent=2))
