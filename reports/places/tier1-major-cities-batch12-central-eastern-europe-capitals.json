@@ -1,0 +1,435 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "12-central-eastern-europe-capitals",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0), Bratislava government/municipal historical records, Chisinau city chronology, Luxembourg City and Vaduz official municipal sites",
+  "checkedOn": "2026-10-08",
+  "selection": "Four selected not-yet-reviewed capitals in central and eastern Europe: Bratislava (SK), Chișinău (MD), Luxembourg city (LU), Vaduz (LI). Only GeoNames P/PPLC settled place objects.",
+  "coordinateConvention": "GeoNames WGS84 EPSG:4326 point coordinates. Latitude/longitude values identify settlements, never historical municipality polygons.",
+  "countryCodeSemantics": "sourceCountryCode represents present-day GeoNames source metadata and must not be used to infer historical sovereignty or name choice.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime",
+  "historicNameScope": "Attested names since 1801, with earlier documented etymology retained only as historical context; dates distinguish evidence precision and editorial naming conventions.",
+  "qualityNotes": [
+    "All four records are GeoNames feature class P / code PPLC capital settlements; administrative polygons and similarly named country entities are excluded.",
+    "Bratislava's official-name gazette notice effective 1919-03-27 is distinguished from reported February 1919 early administrative use. 1801 Pressburg-based Korean display is an editorial historical convention, not the only official nineteenth-century language name.",
+    "German Pressburg, Hungarian Pozsony and Slovak Prešporok are contemporaneous language/historical forms. Their coexistence is not converted to successive false administrative city renamings.",
+    "Chișinău has Romanian Chișinău and Russian Кишинёв. Russian rule, 1918 union, Soviet rule and modern independence remain historical events, not automatic changes in a Korean map label.",
+    "Luxembourg the city (GeoNames 2960316) is not Luxembourg the country (2960313) nor city municipal territory (2960317). French, German and Luxembourgish names are stored independently.",
+    "Vaduz is a small capital below normal urban population thresholds but is included under the explicit capital exception. The identical native and English name is kept in source, deduplicated only on rendering.",
+    "Ancient/medieval fortress references (Lucilinburhuc) and the medieval origin of Vaduz are historical context, not additional modern city objects.",
+    "Historical survey from 1801 means editorial coverage only, not proof that the modern Korean spelling existed at that date.",
+    "All shortDescriptionKo and UI-facing note/detail values are limited to 28 Unicode code points; longer source material is saved in researchNote/researchDetail.",
+    "Cities are review-stage only: no PLAC tile/search shard, runtime manifest, or application main branch changed."
+  ],
+  "records": [
+    {
+      "geonameId": 3060972,
+      "names": [
+        {
+          "text": "Bratislava",
+          "language": "sk",
+          "usage": "standard",
+          "note": "1919년 이후 슬로바키아어 공식명",
+          "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
+        },
+        {
+          "text": "Bratislava",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "브라티슬라바",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "프레스부르크",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanRenderingOfGermanPressburg",
+          "note": "19세기 독일어명 기반 편집 표기",
+          "sourceUrl": "https://www.visitbratislava.com/about/three-countries-one-destination/"
+        },
+        {
+          "text": "포조니",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanRenderingOfHungarianPozsony",
+          "note": "헝가리어 Pozsony의 한국어형",
+          "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
+        },
+        {
+          "text": "Pressburg",
+          "language": "de",
+          "usage": "historical",
+          "variantType": "pre1919GermanAdministrativeName",
+          "note": "1919년 이전 독일어 도시명",
+          "sourceUrl": "https://www.visitbratislava.com/about/three-countries-one-destination/"
+        },
+        {
+          "text": "Pozsony",
+          "language": "hu",
+          "usage": "alternate",
+          "variantType": "historicalHungarianOfficialAndContemporaryExonym",
+          "note": "19세기 관용·공식 헝가리어명",
+          "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
+        },
+        {
+          "text": "Prešporok",
+          "language": "sk",
+          "usage": "historical",
+          "variantType": "pre1919SlovakForm",
+          "note": "현행명 이전 슬로바키아어명",
+          "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
+        },
+        {
+          "text": "Posonium",
+          "language": "la",
+          "usage": "historical",
+          "variantType": "historicalLatinName",
+          "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
+        }
+      ],
+      "latitude": 48.14816,
+      "longitude": 17.10674,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3060972/bratislava.html",
+      "sourceCountryCode": "SK",
+      "defaultDisplayNameKo": "브라티슬라바",
+      "shortDescriptionKo": "1919년 도시 공식명 변경",
+      "displayTimeline": [
+        {
+          "nameKo": "프레스부르크",
+          "fromYear": 1801,
+          "kind": "koreanEditorialTranscription",
+          "sourceUrl": "https://www.visitbratislava.com/about/three-countries-one-destination/",
+          "note": "독일어명 기준 옛 지도 표기",
+          "researchNote": "1801년~1919년 지도는 독일어 Pressburg를 바탕으로 프레스부르크로 표기하는 편집 관례를 채택한다. 19세기 헝가리 행정에서는 Pozsony도 공식적으로 쓰였으므로 하나의 유일한 법정 명칭으로 간주하지 않는다."
+        },
+        {
+          "nameKo": "브라티슬라바",
+          "fromDate": "1919-03-27",
+          "kind": "officialRenaming",
+          "sourceUrl": "https://volksgruppen.orf.at/v2/slovaci/meldungen/stories/2972520/",
+          "note": "1919-03-27 명칭 고시",
+          "researchNote": "슬로바키아 국가 포털에서는 1919년 2월 행정상의 명칭 사용을 기술하고, ORF 2019년 기사는 1919-03-27 관보 고시의 효력을 명시한다. Pando에서는 정확한 공시일을 표시 전환 기준으로 채택하며 두 기록의 차이를 보존한다."
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801-with-exact-1919-rename",
+      "historicalGeography": {
+        "events": [
+          {
+            "fromYear": 1536,
+            "toYear": 1783,
+            "type": "hungarianKingdomCapitalSeat",
+            "detail": "헝가리 왕국의 수도 기능",
+            "researchDetail": "합스부르크 지배 아래 일부 기간 헝가리 왕국 정부·대관식 중심지였음. 국가·행정 중심지 역할과 도시명 언어별 사용을 구별한다.",
+            "sourceUrl": "https://www.visitbratislava.com/about/three-countries-one-destination/"
+          },
+          {
+            "date": "1919-03-27",
+            "type": "publishedBratislavaOfficialName",
+            "detail": "Bratislava 명칭 고시",
+            "researchDetail": "명칭의 1919년 2월 초기 사용 기록과 3월 27일 관보 고시 효력의 정밀도 차이를 기록한다.",
+            "sourceUrl": "https://volksgruppen.orf.at/v2/slovaci/meldungen/stories/2972520/"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "Pressburg·Pozsony는 언어별 명칭",
+            "researchDetail": "독일어 Pressburg, 헝가리어 Pozsony, 슬로바키아어 Prešporok 등은 중첩된 역사적 언어 형태로 단순히 도시가 언어 순서대로 공식 개칭한 것은 아니다.",
+            "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
+          },
+          {
+            "detail": "취락 PPLC와 Bratislava주 구별",
+            "researchDetail": "GeoNames ID 3060972는 수도 도시 취락이며 동일 이름을 가진 Bratislava Region ADM1과는 별도 객체이다.",
+            "sourceUrl": "https://www.geonames.org/3060972/"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 618426,
+      "names": [
+        {
+          "text": "Chișinău",
+          "language": "ro",
+          "usage": "standard",
+          "note": "몰도바 공용어 루마니아어명",
+          "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+        },
+        {
+          "text": "Chisinau",
+          "language": "en",
+          "usage": "standard",
+          "sourceUrl": "https://www.geonames.org/618426/"
+        },
+        {
+          "text": "키시너우",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Кишинёв",
+          "language": "ru",
+          "usage": "alternate",
+          "variantType": "russianExonymHistoricallyAdministrative",
+          "note": "제정·소련기의 러시아어명",
+          "sourceUrl": "https://visit.chisinau.md/ru/istoric/"
+        },
+        {
+          "text": "Kishinev",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "russianBasedEnglishRomanization",
+          "note": "러시아어 기반 과거 영문명",
+          "sourceUrl": "https://www.geonames.org/618426/"
+        },
+        {
+          "text": "키시네프",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanRenderingOfRussianName",
+          "note": "러시아어 기반 옛 표기",
+          "sourceUrl": "https://visit.chisinau.md/ru/istoric/"
+        }
+      ],
+      "latitude": 47.00902,
+      "longitude": 28.85938,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/618426/chisinau.html",
+      "sourceCountryCode": "MD",
+      "defaultDisplayNameKo": "키시너우",
+      "shortDescriptionKo": "루마니아어·러시아어 명칭 병존",
+      "displayTimeline": [
+        {
+          "nameKo": "키시너우",
+          "fromYear": 1801,
+          "kind": "koreanEditorialTranscription",
+          "sourceUrl": "https://visit.chisinau.md/en/istoric/",
+          "note": "루마니아어명 기준 지도 표기",
+          "researchNote": "1812년 이후 러시아어 Кишинёв가 제정 러시아·소련 기록에 쓰인 것은 확인되지만, 언어 사용과 영토 귀속 전환만으로 한국어 기본 지명의 특정 일자 전환을 임의 생성하지 않는다."
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801-with-contextual-russian-name",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 1436,
+            "type": "firstRecordedSettlementToponym",
+            "detail": "1436년 지명 문헌에 처음 등장",
+            "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+          },
+          {
+            "year": 1812,
+            "type": "bessarabiaRussianEmpireAdministration",
+            "detail": "1812년 러시아제국 관할",
+            "researchDetail": "오스만·러시아 전쟁과 1812년 부쿠레슈티 조약 후 베사라비아가 러시아에 편입되었다. 제국 내 행정 중심지는 도시 개칭일과 구분한다.",
+            "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+          },
+          {
+            "year": 1918,
+            "type": "bessarabiaUnionWithRomania",
+            "detail": "1918년 루마니아와 결합",
+            "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+          },
+          {
+            "year": 1940,
+            "type": "moldavianSovietPeriod",
+            "detail": "1940년 소련 통치 개시",
+            "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+          },
+          {
+            "year": 1991,
+            "type": "moldovaIndependence",
+            "detail": "1991년 몰도바 독립",
+            "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "Chișinău와 Кишинёв는 언어 차이",
+            "researchDetail": "키시너우를 러시아어 키시네프와 같은 도시의 언어별 명칭으로 관리한다. 1812·1918·1940·1991년 정치적 전환을 지도 기본명 변경으로 자동 번역하지 않는다.",
+            "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+          },
+          {
+            "detail": "도시와 Chișinău ADM1 구별",
+            "researchDetail": "GeoNames 618426은 도시 취락 PPLC이며 Chișinău Municipality는 별도 ADM1 레코드이다.",
+            "sourceUrl": "https://www.geonames.org/618426/"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 2960316,
+      "names": [
+        {
+          "text": "Lëtzebuerg",
+          "language": "lb",
+          "usage": "standard",
+          "note": "룩셈부르크어 도시명",
+          "sourceUrl": "https://www.vdl.lu/en/news/ons-stad-dindustriestad-letzebuerg-freier-haut"
+        },
+        {
+          "text": "Luxembourg City",
+          "language": "en",
+          "usage": "standard",
+          "note": "국가명과 구별하는 영어 형태",
+          "sourceUrl": "https://www.geonames.org/2960316/luxembourg.html"
+        },
+        {
+          "text": "Luxembourg",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "shortEnglishCityName",
+          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/facts-figures"
+        },
+        {
+          "text": "Luxembourg",
+          "language": "fr",
+          "usage": "standard",
+          "note": "프랑스어 도시·국가명",
+          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/facts-figures"
+        },
+        {
+          "text": "Luxemburg",
+          "language": "de",
+          "usage": "standard",
+          "note": "독일어 도시명",
+          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/facts-figures"
+        },
+        {
+          "text": "룩셈부르크",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 49.60982,
+      "longitude": 6.13268,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2960316/luxembourg.html",
+      "sourceCountryCode": "LU",
+      "defaultDisplayNameKo": "룩셈부르크",
+      "shortDescriptionKo": "동명 국가·행정구역과 별도 도시",
+      "displayTimeline": [
+        {
+          "nameKo": "룩셈부르크",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/history"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 963,
+            "type": "nameOriginAtEarlyFort",
+            "detail": "963년 옛 요새명 기록",
+            "researchDetail": "963년 기록의 Lucilinburhuc는 룩셈부르크라는 지명의 기원으로 소개되는 초기 요새명이며 1801년 이후 도시의 공식 개칭을 뜻하지 않는다.",
+            "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/history"
+          },
+          {
+            "year": 1867,
+            "type": "fortressDismantling",
+            "detail": "1867년 요새 철거 시작",
+            "researchDetail": "런던 조약과 룩셈부르크 요새 철거는 군사·정치적 역사 사건이지 룩셈부르크 도시는 새 이름으로 바뀌지 않았다.",
+            "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/history"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "도시·국가·칸톤·ADM2 별개",
+            "researchDetail": "P/PPLC 2960316은 도시이다. 룩셈부르크 대공국 PCLI 2960313, Ville de Luxembourg ADM2 2960317과 동일하게 합치지 않는다.",
+            "sourceUrl": "https://www.geonames.org/2960317/ville-de-luxembourg.html"
+          },
+          {
+            "detail": "Lëtzebuerg·Luxembourg 병존",
+            "researchDetail": "룩셈부르크어 Lëtzebuerg, 프랑스어 Luxembourg, 독일어 Luxemburg는 공동 언어의 형태다. 영어 표시명 Luxembourg City는 동명 국가와의 구별을 돕는다.",
+            "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/facts-figures"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3042030,
+      "names": [
+        {
+          "text": "Vaduz",
+          "language": "de",
+          "usage": "standard",
+          "note": "리히텐슈타인의 독일어 지명",
+          "sourceUrl": "https://www.vaduz.li/en/vaduz/portrait/vaduz"
+        },
+        {
+          "text": "Vaduz",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "파두츠",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 47.14151,
+      "longitude": 9.52154,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3042030/vaduz.html",
+      "sourceCountryCode": "LI",
+      "defaultDisplayNameKo": "파두츠",
+      "shortDescriptionKo": "리히텐슈타인의 수도",
+      "displayTimeline": [
+        {
+          "nameKo": "파두츠",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.vaduz.li/en/vaduz/portrait/vaduz"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 1150,
+            "type": "firstDocumentaryMention",
+            "detail": "1150년 문서 최초 언급",
+            "sourceUrl": "https://www.vaduz.li/en/vaduz/portrait/vaduz"
+          },
+          {
+            "year": 1719,
+            "type": "principalityFormation",
+            "detail": "1719년 공국 형성 및 수도",
+            "researchDetail": "파두츠 백작령과 셸렌베르크 영지가 합쳐 리히텐슈타인 공국을 형성한 역사. 1719년을 도시 개칭의 시점으로 해석하지 않는다.",
+            "sourceUrl": "https://www.vaduz.li/en/vaduz/portrait/vaduz"
+          },
+          {
+            "year": 1939,
+            "type": "princelyPermanentResidence",
+            "detail": "1939년 군주 상주지",
+            "researchDetail": "군주가 파두츠성을 상주 거처로 삼은 시기로, 도시명이나 수도 지위가 변경된 시점과 구분한다.",
+            "sourceUrl": "https://www.vaduz.li/en/vaduz/portrait/vaduz"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "독일어·영어 Vaduz 동일",
+            "researchDetail": "영어명과 원어명이 동일하므로 UI에서 두 언어를 선택해도 한 줄만 표시한다. 저장된 언어별 이름은 삭제하거나 합치지 않는다.",
+            "sourceUrl": "https://www.geonames.org/3042030/"
+          },
+          {
+            "detail": "도시 PPLC와 Vaduz ADM1 분리",
+            "researchDetail": "GeoNames 3042030은 수도 취락 P/PPLC이고 Vaduz 행정구역은 별도 계층의 레코드이다.",
+            "sourceUrl": "https://www.geonames.org/3042030/"
+          }
+        ]
+      }
+    }
+  ]
+}

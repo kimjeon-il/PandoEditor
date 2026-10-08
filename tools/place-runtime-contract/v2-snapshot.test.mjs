@@ -130,6 +130,52 @@ test('batch 11 records all five verified western Balkan cities and exact dated h
   assert.equal(records[4].displayTimeline.length,1,'Political status change is not a city rename');
 });
 
+test('batch 12 has four independently verified central-European capital city IDs and source-linked names', () => {
+  const records=json('reports/places/tier1-major-cities-batch12-central-eastern-europe-capitals.json').records;
+  assert.deepEqual(records.map(r=>r.geonameId),[3060972,618426,2960316,3042030]);
+  assert.deepEqual(records.map(r=>r.defaultDisplayNameKo),
+    ['브라티슬라바','키시너우','룩셈부르크','파두츠']);
+  assert.deepEqual(records.map(r=>r.sourceCountryCode),['SK','MD','LU','LI']);
+  for(const record of records) {
+    assert.equal(record.featureClass,'P',record.geonameId);
+    assert.equal(record.featureCode,'PPLC',record.geonameId);
+    assert.equal(record.displayTimeline[0].fromYear,1801);
+    assert.ok(record.names.some(n=>n.language==='ko'&&n.text===record.defaultDisplayNameKo));
+    assert.ok(record.names.some(n=>n.language==='en'&&n.usage==='standard'));
+    assert.ok(record.names.some(n=>!['ko','en'].includes(n.language)&&n.usage==='standard'));
+    for(const transition of record.displayTimeline)
+      assert.ok(record.names.some(n=>n.language==='ko'&&n.text===transition.nameKo));
+    for(const value of [record.shortDescriptionKo,
+      ...record.names.map(n=>n.note),
+      ...record.displayTimeline.map(n=>n.note),
+      ...(record.historicalGeography?.events||[]).map(n=>n.detail),
+      ...(record.historicalGeography?.notes||[]).map(n=>n.detail)].filter(Boolean))
+      assert.ok([...value].length<=28,record.geonameId+' oversized UI text: '+value);
+  }
+  const bratislava=records[0];
+  assert.deepEqual(bratislava.displayTimeline.map(x=>[x.fromYear||x.fromDate,x.nameKo]),
+    [[1801,'프레스부르크'],['1919-03-27','브라티슬라바']]);
+  const at=date=>{
+    let name=bratislava.defaultDisplayNameKo;
+    for(const transition of bratislava.displayTimeline) {
+      const applies=transition.fromDate
+        ?transition.fromDate<=date
+        :transition.fromYear<=Number(date.slice(0,4));
+      if(!applies)break;
+      name=transition.nameKo;
+    }
+    return name;
+  };
+  assert.deepEqual([at('1919-03-26'),at('1919-03-27'),at('1920-01-01')],
+    ['프레스부르크','브라티슬라바','브라티슬라바']);
+  assert.equal(records[1].displayTimeline.length,1,'No political-sovereignty-derived Chisinau rename');
+  assert.ok(records[1].names.some(n=>n.language==='ru'&&n.text==='Кишинёв'));
+  assert.equal(records[2].names.find(n=>n.language==='lb'&&n.usage==='standard')?.text,'Lëtzebuerg');
+  assert.equal(records[2].names.find(n=>n.language==='en'&&n.usage==='standard')?.text,'Luxembourg City');
+  assert.equal(records[3].names.find(n=>n.language==='de'&&n.usage==='standard')?.text,'Vaduz');
+  assert.equal(records[3].names.find(n=>n.language==='en'&&n.usage==='standard')?.text,'Vaduz');
+});
+
 test('portable multilingual rows and provenance match reviewed city records', () => {
   let scenarios = 0;
   const sourceCache = new Map();

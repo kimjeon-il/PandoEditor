@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "164b9ae6a98a516c8504c565337976d3c71a56d4",
+  "webCommit": "b2dfbe523be315331073c8781ee2c141edab74c6",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -56,12 +56,16 @@
     {
       "path": "reports/places/tier1-major-cities-batch11-western-balkans-capitals.json",
       "gitBlobSha": "fa2c52614c8b7c676abf5ef3c4648f0d28319be8"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch12-central-eastern-europe-capitals.json",
+      "gitBlobSha": "365d1343b6e9bff6dcd1380818253223978aa88a"
     }
   ],
   "reviewInventory": {
-    "batchCount": 11,
-    "recordCount": 68,
-    "distinctGeoNames": 68,
+    "batchCount": 12,
+    "recordCount": 72,
+    "distinctGeoNames": 72,
     "byBatch": [
       {
         "path": "reports/places/tier1-major-cities-batch01.json",
@@ -106,6 +110,10 @@
       {
         "path": "reports/places/tier1-major-cities-batch11-western-balkans-capitals.json",
         "recordCount": 5
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch12-central-eastern-europe-capitals.json",
+        "recordCount": 4
       }
     ]
   }

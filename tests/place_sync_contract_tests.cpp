@@ -202,6 +202,60 @@ private slots:
                  QStringLiteral("XK"));
     }
 
+    void batch12BratislavaNameChangeAndLanguageVariants() {
+        const QString root=QString::fromUtf8(PLACE_SYNC_REPOSITORY_ROOT);
+        QFile file(root+"/reports/places/tier1-major-cities-batch12-central-eastern-europe-capitals.json");
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const auto dataset=QJsonDocument::fromJson(file.readAll()).object();
+        QCOMPARE(dataset.value("status").toString(),
+                 QStringLiteral("verified-source-staging-not-runtime"));
+        const auto records=dataset.value("records").toArray();
+        QCOMPARE(records.size(),4);
+        const QList<int> ids{3060972,618426,2960316,3042030};
+        const QStringList expectedKo{QStringLiteral("브라티슬라바"),
+            QStringLiteral("키시너우"),QStringLiteral("룩셈부르크"),
+            QStringLiteral("파두츠")};
+        const QStringList countries{"SK","MD","LU","LI"};
+        for(qsizetype i=0;i<records.size();++i) {
+            const auto city=records.at(i).toObject();
+            QCOMPARE(city.value("geonameId").toInt(),ids.at(i));
+            QCOMPARE(city.value("defaultDisplayNameKo").toString(),expectedKo.at(i));
+            QCOMPARE(city.value("sourceCountryCode").toString(),countries.at(i));
+            QCOMPARE(city.value("featureClass").toString(),QStringLiteral("P"));
+            QCOMPARE(city.value("featureCode").toString(),QStringLiteral("PPLC"));
+            bool korean=false,english=false,native=false;
+            for(const auto& item:city.value("names").toArray()) {
+                const auto name=item.toObject(),language=name.value("language").toString();
+                if(language=="ko"&&name.value("text")==expectedKo.at(i))korean=true;
+                if(language=="en"&&name.value("usage")=="standard")english=true;
+                if(language!="ko"&&language!="en"&&name.value("usage")=="standard")native=true;
+            }
+            QVERIFY(korean&&english&&native);
+        }
+        const auto bratislava=records.at(0).toObject();
+        const auto timeline=bratislava.value("displayTimeline").toArray();
+        QCOMPARE(timeline.size(),2);
+        PlaceRecord place;place.name=bratislava.value("defaultDisplayNameKo").toString();
+        for(const auto& entry:timeline) {
+            const auto raw=entry.toObject();PlaceNameTransition transition;
+            if(raw.contains("fromDate"))transition.fromDate=raw.value("fromDate").toString();
+            else transition.fromYear=raw.value("fromYear").toInt();
+            transition.ko=raw.value("nameKo").toString();
+            place.nameTimeline.push_back(std::move(transition));
+        }
+        const QStringList dates{"1919-03-26","1919-03-27","1920-01-01"};
+        const QStringList expected{QStringLiteral("프레스부르크"),
+            QStringLiteral("브라티슬라바"),QStringLiteral("브라티슬라바")};
+        for(qsizetype i=0;i<dates.size();++i) {
+            const auto rows=resolvePlaceDisplayRows(place,PlaceLanguageSelection{},dates.at(i));
+            QCOMPARE(rows.size(),std::size_t(1));
+            QCOMPARE(rows.front().text,expected.at(i));
+        }
+        QCOMPARE(records.at(1).toObject().value("displayTimeline").toArray().size(),1);
+        QCOMPARE(records.at(3).toObject().value("sourceCountryCode").toString(),
+                 QStringLiteral("LI"));
+    }
+
     void nativeDecoderMatchesAllFrozenWebHexVectors() {
         const auto fixtures=contract().value("fixtures").toArray();
         for(const auto& value:fixtures) {
