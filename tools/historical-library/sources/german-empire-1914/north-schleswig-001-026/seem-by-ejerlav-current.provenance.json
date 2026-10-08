@@ -1,0 +1,16 @@
+{
+  "dataset": "Matriklen - ejerlav (modern cadastral boundaries)",
+  "historicalBoundary": false,
+  "sourceUrl": "https://demo.geoinfo.dk/server/rest/services/Matriklen_Hele_DK/MapServer/6/query",
+  "request": {
+    "where": "ejerlavskode = '1300755'",
+    "outFields": "OBJECTID,ejerlavskode,ejerlavsnavn,lokalid,virkningfra",
+    "returnGeometry": "true",
+    "outSR": "4326",
+    "f": "geojson"
+  },
+  "fetchedAtUtc": "2026-10-08T13:08:52.584802+00:00",
+  "ejerlavCode": "1300755",
+  "ejerlavName": "Seem By, Seem",
+  "warning": "Modern cadastral geometry; must not establish the 1914 border without a period map."
+}

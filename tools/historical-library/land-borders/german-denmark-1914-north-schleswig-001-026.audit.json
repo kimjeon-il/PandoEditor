@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "scope": "German Empire–Denmark 1914, boundary stones 1–26",
+  "referenceDate": "1914-07-31",
+  "candidateStatus": "working-master-needs-historical-map-review",
+  "historicalMapOverlayReviewed": false,
+  "commissionProtocolUrl": "https://da.wikisource.org/wiki/Freden_i_Wien_(1864)_Gr%C3%A6nsereguleringskommissionen",
+  "textRule": {
+    "stone1to22": "South boundary of Vester Vedsted, Ribe and Seem parishes, following a large water ditch",
+    "stone22to26": "East boundary of Seem BY (not automatically interchangeable with Seem Sogn)",
+    "terminal": "Gels Å at Gelsbro, stone 26 sector"
+  },
+  "geometry": {
+    "lengthKm": 26.683,
+    "vertexCount": 1343,
+    "simple": true,
+    "startMatchesStone1M": 0.0,
+    "endMatchesRecordedGelsAReferenceM": 0.0
+  },
+  "modernMarkerChecks": [
+    {
+      "stone": "1",
+      "osmNodeId": 13124642635,
+      "currentPositionLonLat": [
+        8.6622877,
+        55.2763431
+      ],
+      "distanceFromCandidateM": 0.0,
+      "positionalControlAllowed": true,
+      "reason": "Restored original location claimed by Grænseforeningen"
+    },
+    {
+      "stone": "2",
+      "osmNodeId": 13538925660,
+      "currentPositionLonLat": [
+        8.6810612,
+        55.2894015
+      ],
+      "distanceFromCandidateM": 1190.92,
+      "positionalControlAllowed": false,
+      "reason": "Relocated/display stone; do not snap the historic line"
+    },
+    {
+      "stone": "7b",
+      "osmNodeId": 13538885789,
+      "currentPositionLonLat": [
+        8.7675623,
+        55.3290317
+      ],
+      "distanceFromCandidateM": 5514.4,
+      "positionalControlAllowed": false,
+      "reason": "Relocated/display stone; do not snap the historic line"
+    },
+    {
+      "stone": "11",
+      "osmNodeId": 13538885790,
+      "currentPositionLonLat": [
+        8.7675241,
+        55.3290404
+      ],
+      "distanceFromCandidateM": 5515.67,
+      "positionalControlAllowed": false,
+      "reason": "Relocated/display stone; do not snap the historic line"
+    },
+    {
+      "stone": "31",
+      "osmNodeId": 13564963451,
+      "currentPositionLonLat": [
+        8.9350461,
+        55.3310418
+      ],
+      "distanceFromCandidateM": 2686.8,
+      "positionalControlAllowed": false,
+      "reason": "Relocated/display stone; do not snap the historic line"
+    },
+    {
+      "stone": "22",
+      "osmNodeId": 13564963452,
+      "currentPositionLonLat": [
+        8.9351008,
+        55.3310371
+      ],
+      "distanceFromCandidateM": 2688.84,
+      "positionalControlAllowed": false,
+      "reason": "Relocated/display stone; do not snap the historic line"
+    },
+    {
+      "stone": "30",
+      "osmNodeId": 13564963453,
+      "currentPositionLonLat": [
+        8.9350382,
+        55.3310135
+      ],
+      "distanceFromCandidateM": 2684.19,
+      "positionalControlAllowed": false,
+      "reason": "Relocated/display stone; do not snap the historic line"
+    },
+    {
+      "stone": "28",
+      "osmNodeId": 13564963454,
+      "currentPositionLonLat": [
+        8.9350922,
+        55.3310078
+      ],
+      "distanceFromCandidateM": 2686.12,
+      "positionalControlAllowed": false,
+      "reason": "Relocated/display stone; do not snap the historic line"
+    }
+  ],
+  "modernCadastralCheck": {
+    "source": "https://demo.geoinfo.dk/server/rest/services/Matriklen_Hele_DK/MapServer/6/query",
+    "ejerlavCode": "1300755",
+    "historicalEvidence": false,
+    "status": "measured_not_historically_verified",
+    "ejerlavName": "Seem By, Seem",
+    "lastSections": [
+      {
+        "lastKm": 1,
+        "sampleSpacingApproxM": 90.91,
+        "samples": 12,
+        "medianDistanceM": 3042.9,
+        "p90DistanceM": 3230.33,
+        "maximumDistanceM": 3335.77,
+        "within25mFraction": 0.0,
+        "within100mFraction": 0.0
+      },
+      {
+        "lastKm": 2,
+        "sampleSpacingApproxM": 100.0,
+        "samples": 21,
+        "medianDistanceM": 3335.77,
+        "p90DistanceM": 3632.25,
+        "maximumDistanceM": 3636.94,
+        "within25mFraction": 0.0,
+        "within100mFraction": 0.0
+      },
+      {
+        "lastKm": 3,
+        "sampleSpacingApproxM": 96.77,
+        "samples": 32,
+        "medianDistanceM": 3586.92,
+        "p90DistanceM": 3941.85,
+        "maximumDistanceM": 4034.48,
+        "within25mFraction": 0.0,
+        "within100mFraction": 0.0
+      },
+      {
+        "lastKm": 5,
+        "sampleSpacingApproxM": 98.04,
+        "samples": 52,
+        "medianDistanceM": 3892.42,
+        "p90DistanceM": 4724.96,
+        "maximumDistanceM": 4923.24,
+        "within25mFraction": 0.0,
+        "within100mFraction": 0.0
+      },
+      {
+        "lastKm": 8,
+        "sampleSpacingApproxM": 98.77,
+        "samples": 82,
+        "medianDistanceM": 4285.78,
+        "p90DistanceM": 5064.48,
+        "maximumDistanceM": 5159.24,
+        "within25mFraction": 0.0,
+        "within100mFraction": 0.0
+      }
+    ]
+  },
+  "outstanding": [
+    "Georeference and inspect pre-1914 Prussian 1:25,000 sheets (1877–1912).",
+    "Georeference and inspect Danish high/low målebordsblade in Danish-side coverage.",
+    "Locate original stone 22 and assess Seem By vs modern Seem Sogn, especially the terminal arc.",
+    "Check the western coastline/stone 1 against contemporary (1914) Ribe dike construction.",
+    "Do not propagate into final German Empire polygon until the disputed stretches are reviewed."
+  ]
+}
