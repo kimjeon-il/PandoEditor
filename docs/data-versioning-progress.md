@@ -1,11 +1,11 @@
 # 데이터 버전 관리 구조 개선 — 진행 기록
 
-- 기준일: 2026-10-08
+- 최신 검증일: 2026-10-09 (원본 조사일 2026-10-08)
 - 범위: 웹 `kimjeon-il/Pando` · 앱 `kimjeon-il/PandoEditor`.
 - 주 구현 브랜치: 웹 `work/gis` (별도 실험 브랜치 생성 없음).
 - **1단계:** 웹·앱 데이터 인벤토리 및 참조 관계 조사 완료. 원본은 미변경.
 - **2단계:** 웹에서 독립 데이터 매니페스트·내용 해시 기반 객체·추가 생성/검증 CLI 구현 및 커밋. 새 데이터 번들에 대한 정적 경로/Blob/크기 검사 완료. 기존 앱 버전 기반 생성기·웹 로더는 전환 전까지 유지하며 원격 CI·실제 렌더링 검증은 별도 필요.
-- **3단계:** 웹 `work/gis`에서 신규 `world/current.json` 런타임 전환, 콘텐츠 주소 기반 자산 캐시, 국경선 캐시 URL 매니페스트 전달, 빌드·검증 경로 개편 코드를 구현·커밋함. 정적/분리 검증은 보고서에 기록했으며 전체 CI·실제 브라우저/Qt 테스트는 미완료.
+- **3단계:** 웹 `work/gis` 구현·커밋 및 GitHub Actions **대상 통합검증 완료**. 국가 데이터·생성기·자산/버전·구문·ESLint 확인, Node 단위검사 **33/33**, UI 번들 빌드, Chromium 실제 시작·캐시·복구 **3/3** 통과. 전체 Playwright 스위트·앱 Qt·배포는 범위 밖.
 - **4~6단계:** 미착수. 앱 내부 데이터 교체, 기존 자산 삭제, 실제 서비스 배포는 진행하지 않음.
 
 ## 기준선과 구현 링크
@@ -32,7 +32,18 @@
 - [3단계 상세 보고서](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/data-versioning-phase3.md).
 - Worker는 `world/current.json`을 로딩하고 데이터 자산의 SHA-256 경로를 사용함. 세계지도 콘텐츠 캐시와 역사 라이브러리 revision 캐시를 구분함.
 - **주의:** 공유 국경선 캐시는 여전히 이전 버전 파일을 호환 참조하며, 신규 불변 이름으로의 완전한 이관은 완료되지 않음.
-- 다음 단계 전 전체 빌드/실브라우저 검사와 이전 캐시 호환성을 추가 검증할 필요가 있음.
+- GitHub Actions에서 실제 UI 빌드 및 핵심 Chromium 시작·캐시 검사 통과. 다만 전체 브라우저 회귀·이전 모든 캐시 조합·장기 GPU 검사까지 통과한 것은 아님.
+
+## 3단계 실제 CI 검증 근거
+
+- 완료된 GitHub Actions 최종 실행: [World Dataset Stage 3 Gate #37804486287](https://github.com/kimjeon-il/Pando/actions/runs/37804486287), 웹 `work/gis` 커밋 [`dcc296ae80eb`](https://github.com/kimjeon-il/Pando/commit/dcc296ae80eb5d3f1db013962629358804e98846).
+- 국경선·미리보기·불변 번들 재생성/검사, 빌드 메타데이터 및 818개 JS 구문 검사, 영향 범위 ESLint: 모두 통과.
+- 대상 Node 단위검사: **33개 통과 / 0개 실패**.
+- 실제 Chromium: 모바일 DPR, reload 후 불변 국가 데이터 캐시 재사용, 캐시 손상 후 복구 **3개 통과 / 0개 실패**; `pnpm build:ui-bundle`도 통과.
+- 초기 [실행 #37802544830](https://github.com/kimjeon-il/Pando/actions/runs/37802544830)의 테스트 파일 `TextDecoder no-undef`는 [`56256c515a04`](https://github.com/kimjeon-il/Pando/commit/56256c515a04e7a4908fef8313d1788b77341a2a)에서 수정 후 통과.
+- 이전 지형·수계·연구 자료를 제외하는 CI sparse checkout에서도 두 작업이 모두 통과했다. 원본 Git 데이터나 웹·앱 공용 자산을 삭제한 것은 아님.
+- **검증 경계:** 전체 프로젝트 단위·브라우저 회귀검사, Qt 앱 빌드/오프라인 실행, GPU 성능 벤치마크 및 배포 미수행. 4~6단계 미착수.
+- 상세 근거: [웹 3단계 검증 보고서](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/data-versioning-phase3.md).
 
 ## 위험 및 남은 의존성
 
