@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 1,
+  "referenceDate": "1914-07-31",
+  "workUnit": "1914-German-Danish-border/post-26-Gels-Aa/0619-Hugum/stage-4",
+  "sourceSheet": {
+    "id": "0619",
+    "title": "Hügum",
+    "surveyYear": 1878,
+    "catalogPublicationYear": 1878,
+    "mapScale": 25000,
+    "sourcePermalink": "https://www.deutschefotothek.de/documents/obj/71051510",
+    "sourceWmsUrl": "https://wms.kartenforum.slub-dresden.de/map/10006020",
+    "sourceWmsLayer": "df_dk_0010001_0619",
+    "lastMapRevisionYearVerified": false
+  },
+  "sourceHierarchy": {
+    "legalBorder": "1865 international border regulation Art I §§2–3: Gels Å from marker26 to Flads Å confluence, then along the RIGHT BANK of Flads Å to stone27.",
+    "protocol": "https://da.wikisource.org/wiki/Freden_i_Wien_(1864)_Gr%C3%A6nsereguleringskommissionen",
+    "municipalModernRiverRegulation": "https://www.esbjerg.dk/Files/Filer/Energi%20og%20milj%C3%B8/Vandl%C3%B8b%20og%20s%C3%B8er/vandl%C3%B8bsregulativer/Gels%C3%A5%20nedre%20del%20ved%20%C3%85rup.pdf",
+    "modernRegulationReachMeters": 6400,
+    "modernRegulationReferencePoints": "west edge of Gelsbro bridge to confluence, not the historical stone26 hinge",
+    "modernRegulationNaturalStatePhrase": true,
+    "modernRegulationAdoptionEpoch": "post-1923; not 1914 evidence",
+    "laterWaterworksPotentiallyRelevant": true,
+    "independentSourceOnMeanders": "https://graenseforeningen.dk/leksikon/gels-aa"
+  },
+  "geometry": {
+    "sheetLengthKm": 5.99299,
+    "post26EntireCandidateLengthKm": 6.5941,
+    "post26RemainderBefore0619Km": 0.60111,
+    "sourceVertexCount": 790,
+    "startLonLat": [
+      8.926995045276211,
+      55.29999999999999
+    ],
+    "endLonLat": [
+      8.884683809525658,
+      55.32087242400452
+    ],
+    "west0719ToNorth0619JoiningGapM": 0.0,
+    "0619EndToPost26EndpointGapM": 0.0,
+    "sourceGeometrySimple": true,
+    "combinedSheetSeamSimple": true,
+    "preservedCanonicalMaster": true,
+    "renderDisplayEstimate": {
+      "widthCssPx": 2560,
+      "flatZoom": 64,
+      "simplificationTargetCssPx": 0.5,
+      "candidateDisplayedLengthCssPx": 34.552,
+      "candidateVertexCount": 790,
+      "illustrativeSimplifiedVertexCount": 15,
+      "candidateVersusOwnSimplificationHausdorffCssPx": 0.44777,
+      "independentHistoricReferenceScreenDifferenceCssPx": null,
+      "note": "Simplification is a display-efficiency experiment; it does NOT compare the 1880 historical border with the modern-parish candidate."
+    }
+  },
+  "historicVisualReviewPerformed": false,
+  "historicSourceLineDigitized": false,
+  "historicDeviationMeasuredCssPx": null,
+  "historicStopCriterionPassed": null,
+  "fladsAaConfluenceHistoricallyValidated": false,
+  "point27OrFladsAaRightBankAudited": false,
+  "riverChannelModifiedInMaster": false,
+  "status": "provisional:pre1914-raster-panels-generated-needs-human-review",
+  "images": [
+    {
+      "panel": "0619-overview",
+      "title": "Hügum 1878 | entire post-26 sheet",
+      "sourceSheetIds": [
+        "0619"
+      ],
+      "extentLonLat": [
+        8.87714214,
+        55.295,
+        8.934495045,
+        55.325872461
+      ],
+      "sourceImage": "0619-overview-1878-source.jpg",
+      "overlayImage": "0619-overview-overlay.jpg",
+      "originalWms": [
+        {
+          "sheetId": "0619",
+          "catalogPublicationYear": 1878,
+          "wmsMapId": "10006020",
+          "wmsLayer": "df_dk_0010001_0619",
+          "wmsPngSha256": "b687a0bc8d69137ad7732960b06be65a3966124e81008a329e28e56095a55639",
+          "wmsImageBytes": 4176743,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "4889460905e9479ef99d08e1cd70ef3cab4888c67127d51ae2bc8f432547b393",
+      "candidateLengthKm": 5.99299,
+      "independentHistoricalCartographyComparisonPerformed": false
+    },
+    {
+      "panel": "0619-east",
+      "title": "Hügum downstream candidate, eastern third",
+      "sourceSheetIds": [
+        "0619"
+      ],
+      "extentLonLat": [
+        8.906231819,
+        55.295,
+        8.934495045,
+        55.312483262
+      ],
+      "sourceImage": "0619-east-1878-source.jpg",
+      "overlayImage": "0619-east-overlay.jpg",
+      "originalWms": [
+        {
+          "sheetId": "0619",
+          "catalogPublicationYear": 1878,
+          "wmsMapId": "10006020",
+          "wmsLayer": "df_dk_0010001_0619",
+          "wmsPngSha256": "e44456b6d7250264e74ede08eb4114c66d58ef7b8234c72f3ca9fc5222da9c86",
+          "wmsImageBytes": 1877492,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "de4e63eb884677a43558c270272159e10095ba960f55ccf6f16e7741558315ae",
+      "candidateLengthKm": 1.99766,
+      "independentHistoricalCartographyComparisonPerformed": false
+    },
+    {
+      "panel": "0619-middle",
+      "title": "Hügum downstream candidate, central third",
+      "sourceSheetIds": [
+        "0619"
+      ],
+      "extentLonLat": [
+        8.892379908,
+        55.302483262,
+        8.921513744,
+        55.32045094
+      ],
+      "sourceImage": "0619-middle-1878-source.jpg",
+      "overlayImage": "0619-middle-overlay.jpg",
+      "originalWms": [
+        {
+          "sheetId": "0619",
+          "catalogPublicationYear": 1878,
+          "wmsMapId": "10006020",
+          "wmsLayer": "df_dk_0010001_0619",
+          "wmsPngSha256": "3ecb4ebf360e49b90aa73dce63a6530e435b9b60fa7e5a2782ce63e0bd3d0233",
+          "wmsImageBytes": 2372356,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "aba79d87175fb8f8c616cd8ba4672a63ee4b73d7638aec4d2b743f2d946258a2",
+      "candidateLengthKm": 1.99766,
+      "independentHistoricalCartographyComparisonPerformed": false
+    },
+    {
+      "panel": "0619-west",
+      "title": "Hügum downstream candidate, western third",
+      "sourceSheetIds": [
+        "0619"
+      ],
+      "extentLonLat": [
+        8.87714214,
+        55.309809544,
+        8.907395106,
+        55.325872461
+      ],
+      "sourceImage": "0619-west-1878-source.jpg",
+      "overlayImage": "0619-west-overlay.jpg",
+      "originalWms": [
+        {
+          "sheetId": "0619",
+          "catalogPublicationYear": 1878,
+          "wmsMapId": "10006020",
+          "wmsLayer": "df_dk_0010001_0619",
+          "wmsPngSha256": "ee8bb51ca8181e133917ec292bf5ba6fe057faa50cbadd8371e4d7caa4fa2c0f",
+          "wmsImageBytes": 2050498,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "288ec61fe02e1e5566ae596957068705bbaafc9263549be67f96e5207726653c",
+      "candidateLengthKm": 1.99766,
+      "independentHistoricalCartographyComparisonPerformed": false
+    },
+    {
+      "panel": "0719-0619-join",
+      "title": "Spandet 1880/Hügum 1878 sheet join",
+      "sourceSheetIds": [
+        "0719",
+        "0619"
+      ],
+      "extentLonLat": [
+        8.915637278,
+        55.291901453,
+        8.935067279,
+        55.307509733
+      ],
+      "sourceImage": "0719-0619-join-1878-source.jpg",
+      "overlayImage": "0719-0619-join-overlay.jpg",
+      "originalWms": [
+        {
+          "sheetId": "0719",
+          "catalogPublicationYear": 1880,
+          "wmsMapId": "10006007",
+          "wmsLayer": "df_dk_0010001_0719",
+          "wmsPngSha256": "7775387a98b982c46e5d003619f24dbd2ef8a1b9ddd58dbdc59bf2a96b3acb81",
+          "wmsImageBytes": 675732,
+          "httpStatus": 200
+        },
+        {
+          "sheetId": "0619",
+          "catalogPublicationYear": 1878,
+          "wmsMapId": "10006020",
+          "wmsLayer": "df_dk_0010001_0619",
+          "wmsPngSha256": "129bfc5c6dc82106611379de70bca664763b94076c4e464a127e8ba22ff14296",
+          "wmsImageBytes": 916743,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "2729371e4eb1d80415066f5642786aabc6fbc31601913dc419a36108a0e2bd90",
+      "candidateLengthKm": 1.1,
+      "independentHistoricalCartographyComparisonPerformed": false
+    },
+    {
+      "panel": "0619-confluence",
+      "title": "Gels Å / Flads Å confluence",
+      "sourceSheetIds": [
+        "0619"
+      ],
+      "extentLonLat": [
+        8.878,
+        55.313,
+        8.899,
+        55.327
+      ],
+      "sourceImage": "0619-confluence-1878-source.jpg",
+      "overlayImage": "0619-confluence-overlay.jpg",
+      "originalWms": [
+        {
+          "sheetId": "0619",
+          "catalogPublicationYear": 1878,
+          "wmsMapId": "10006020",
+          "wmsLayer": "df_dk_0010001_0619",
+          "wmsPngSha256": "4fa3bd1e7ad7a0a6b1505a02b1eeb4150ed9602eca4fcf5962cf3023c7f53dd5",
+          "wmsImageBytes": 1394877,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "1d1577cca4c85a34e0c6358ba33d040cd8825d8fe29061cdcc561784d4f39cc0",
+      "candidateLengthKm": 1.25,
+      "independentHistoricalCartographyComparisonPerformed": false
+    }
+  ],
+  "actionRunId": "37819271691",
+  "nextActions": [
+    "Inspect high-level Gels Å meanders in 1878 Hügum raster, no unnecessary per-bend microtracing.",
+    "Verify candidate ends at the Flads Å confluence shown in period map.",
+    "Record only visible discrepancies >0.5 CSSpx at 2560xflatZoom64 and all historical/topological exceptions.",
+    "If no independently digitized historic line, DO NOT claim 0.5 CSSpx historical validation.",
+    "Do not extend border west of confluence until the 1865 treaty's RIGHT BANK of Flads Å is checked."
+  ],
+  "artifactPath": "tools/historical-library/review-output/north-schleswig-1914-001-026/0619-hugum"
+}
