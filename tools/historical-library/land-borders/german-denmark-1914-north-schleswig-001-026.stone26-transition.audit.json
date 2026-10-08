@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "referenceDate": "1914-07-31",
+  "status": "provisional-geometry-split-ready-stone26-historical-fix-unverified",
+  "primaryHistoricalProtocol": "https://da.wikisource.org/wiki/Freden_i_Wien_(1864)_Gr%C3%A6nsereguleringskommissionen",
+  "historicalLaw": {
+    "1to26": "Article I §2: southern parish boundaries to stone22, eastern Seem parish boundary to stone26 at Gjels Å near Gjelsbro.",
+    "riverAfter26": "Article I §2: from stone26 Gels Å is border until it joins Flads Å.",
+    "afterConfluence": "Article I §3: follows right bank of Flads Å and southern Obbekær boundary to stone27."
+  },
+  "otherSources": [
+    "https://graenseforeningen.dk/leksikon/gels-aa",
+    "https://graenseforeningen.dk/om-graenselandet/genforeningssten/harreby",
+    "https://www.deutschefotothek.de/documents/obj/71051523"
+  ],
+  "currentMasterUnmodified": true,
+  "sourceMasterVertexCount": 1343,
+  "sourceMasterLengthKm": 26.68283,
+  "splitCandidate": {
+    "vertexIndex": 481,
+    "alongWorkingMasterKm": 20.08873,
+    "turnAngleDegrees": 89.142,
+    "sourceCurrentRiverDistanceM": 1.568,
+    "contemporaryBridgeCenterDistanceM": 106.364,
+    "riverDistance300mBeforeM": 291.078,
+    "riverDistance300mAfterM": 0.17,
+    "pointLonLat": [
+      8.927165199515366,
+      55.2965394532281
+    ],
+    "method": "Modern parish-line hinge and OSM Gels Å proximity; NOT a historical stone fix.",
+    "otherCloseByTurnCandidates": [
+      {
+        "vertexIndex": 493,
+        "alongWorkingMasterKm": 20.20126
+      }
+    ]
+  },
+  "classification": "Modern parish/river topology change only; 1880 stone26 label requires independent raster inspection.",
+  "twoDerivedParts": {
+    "stone1through26Candidate": {
+      "lengthKm": 20.08873,
+      "vertexCount": 482,
+      "endLonLat": [
+        8.927165199515366,
+        55.2965394532281
+      ]
+    },
+    "gelsARiverCandidate": {
+      "lengthKm": 6.5941,
+      "vertexCount": 862,
+      "startLonLat": [
+        8.927165199515366,
+        55.2965394532281
+      ],
+      "endLonLat": [
+        8.884683809525658,
+        55.32087242400453
+      ]
+    }
+  },
+  "sourceTopologyChecks": {
+    "splitEndpointMismatchMeters": 0.0,
+    "lengthDifferenceMeters": -0.0,
+    "modernBridgeToCandidateHingeMeters": 106.364,
+    "modernRiverDistanceAtCandidateHingeMeters": 1.568,
+    "modernGelsAEndToCandidateEndMeters": 0.031,
+    "bothPartsSimple": true
+  },
+  "historicalGeometryChangeApproved": false,
+  "historicalMarkerLocationConfirmed": false,
+  "historicalRiverMeanderAccuracyMeasured": false,
+  "cartographicSourceScale": 25000,
+  "webScreenReferenceCssPx": 2560,
+  "webFlatMaxZoom": 64,
+  "sourceScreenDeviationVersusHistoricBorderPx": null,
+  "historicalThresholdPassed": null,
+  "continuationClassification": [
+    "Stone 26 position vs 1880 map is the next cartographic review, not established by modern geometry.",
+    "Do not use present road/bridge coordinate as original stone.",
+    "Confluence with Flads Å is an independent source-based river-network assertion, not proven solely by an OSM way endpoint.",
+    "Check early twentieth century channel modifications before final river-border cut."
+  ],
+  "rasterPanels": [
+    {
+      "name": "Gjelsbro-overview",
+      "bboxLonLat": [
+        8.9185,
+        55.2888,
+        8.936,
+        55.2997
+      ],
+      "wmsLayer": "df_dk_0010001_0719",
+      "wmsImageSha256": "74ec043704444637a67a2413eda35e57b3098e679cf0c03f0a6deaccb1912651",
+      "wmsBytes": 999481,
+      "sourcePreview": "Gjelsbro-overview-source-1880.jpg",
+      "overlayPreview": "Gjelsbro-overview-review.jpg",
+      "overlaySha256": "2b14b2dd3b306799032f2669274b96a24113eb03ac056debec07a4f16720ac23"
+    },
+    {
+      "name": "stone26-closeup",
+      "bboxLonLat": [
+        8.923,
+        55.2934,
+        8.932,
+        55.2994
+      ],
+      "wmsLayer": "df_dk_0010001_0719",
+      "wmsImageSha256": "b330de8d484f19085b291547cb2830c08a87f1d14a84b2bd8bf65554b88a9572",
+      "wmsBytes": 309547,
+      "sourcePreview": "stone26-closeup-source-1880.jpg",
+      "overlayPreview": "stone26-closeup-review.jpg",
+      "overlaySha256": "440c984786b0e6e54b0cfc477241a4c2c17a0bec64dad3596087205fbd2e14a0"
+    }
+  ]
+}
