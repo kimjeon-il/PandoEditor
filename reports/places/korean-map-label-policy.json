@@ -34,6 +34,8 @@
     }
   ],
   "resolutionOrder": [
+    "Determine the governing polity and competent administrative authority for the map date; choose the Chinese-language city toponym officially used in that context before applying Korean naming conventions. Where multiple local official languages exist, document the selected one.",
+    "Match the Korean label to that selected period-appropriate native toponym; do not apply a reading of a different city's name or a different historical official name.",
     "First resolve actual local-city-name changes for the map date. Never turn a Korean map-transcription convention change into an asserted Chinese official rename.",
     "Choose a date-appropriate local toponym from names[] using documented official naming periods when available; year-only dates remain approximate.",
     "Apply a map-label language convention to THAT toponym, not to its present-day English name.",
@@ -42,8 +44,8 @@
     "Only one preferred Korean display name may be selected at a given date. Do not keep historical Sino-Korean readings as concurrent alternate Korean map labels after the 1912-01-01 boundary."
   ],
   "exceptions": "For non-Mandarin Chinese-language varieties, minority-language and multilingual mainland localities, explicitly select the period's applicable local toponym and pronunciation; never infer Mandarin or sovereignty solely from a modern GeoNames CN country code. Hong Kong, Macau and Taiwan are outside the automatic mainland rule and require separate consideration.",
-  "note": "This policy is for future reviewed name selection, not a completed audit or runtime change. Existing 1–15 batch records, historical display transitions and deployment manifests remain unchanged until a separately approved review.",
-  "policyRevision": "2026-10-08-preferred-place-names",
+  "note": "Korean map labels must correspond to the period's governing-authority official city toponym. The 1912-01-01 mainland-China style switch is an independent editorial change in Korean reading, not a change of the locally official name. This is a staged policy for future review; existing 1–15 city batches, runtime tiles and historical timelines are not modified.",
+  "policyRevision": "2026-10-08-authority-aligned-preferred-names",
   "examples": [
     {
       "localToponym": "北京",
