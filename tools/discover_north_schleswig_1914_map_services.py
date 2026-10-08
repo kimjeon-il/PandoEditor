@@ -8,7 +8,6 @@ certify candidate-border positions.
 from __future__ import annotations
 
 import argparse
-import datetime as dt
 import json
 import re
 from pathlib import Path
@@ -109,7 +108,6 @@ def main():
         "schemaVersion": 1,
         "scope": "1–26 stones, 1914 German–Danish border",
         "referenceDate": "1914-07-31",
-        "queriedAtUtc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "historicRasterObtained": False,
         "historicRasterComparedWithLine": False,
         "searchMethod": "Public SLUB Kartenforum ElasticSearch geo_shape and pre-1915 date filters (per official client)",
