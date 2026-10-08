@@ -1,0 +1,6611 @@
+{
+  "routeElements": 768,
+  "scannedNodes": 140748,
+  "scannedWays": 17879,
+  "candidateNodeCount": 8,
+  "candidateWayCount": 7,
+  "contextNodeCount": 344,
+  "contextWayCount": 54,
+  "candidateNodes": [
+    {
+      "type": "node",
+      "id": 13124642635,
+      "lat": 55.2763431,
+      "lon": 8.6622877,
+      "tags": {
+        "alt_name": "Grænsesten nr. 1 (Råhede Sluse)",
+        "historic": "boundary_stone",
+        "inscription": "Kr. Pr. No 1\n\nKr. Dm. No 1",
+        "material": "stone",
+        "name": "Grænsesten",
+        "subject:wikidata": "Q692146",
+        "subject:wikipedia": "da:Genforeningen i 1920",
+        "website": "https://graenseforeningen.dk/om-graenselandet/genforeningssten/raahede-sluse-graensesten-nr-1"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13538925660,
+      "lat": 55.2894015,
+      "lon": 8.6810612,
+      "tags": {
+        "alt_name": "Grænsesten nr. 2 (Vester Vedsted)",
+        "historic": "memorial",
+        "inscription": "Kr. Dm. No 2\n\nKr. Pr. No 2",
+        "material": "stone",
+        "memorial": "stone",
+        "name": "Grænsesten",
+        "subject:wikidata": "Q692146",
+        "subject:wikipedia": "da:Genforeningen i 1920",
+        "website": "https://graenseforeningen.dk/om-graenselandet/genforeningssten/graensesten-nr-2-vester-vedsted"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13538885789,
+      "lat": 55.3290317,
+      "lon": 8.7675623,
+      "tags": {
+        "alt_name": "Grænsesten nr. 7b (Ribe)",
+        "historic": "boundary_stone",
+        "inscription": "Kr. Dm. No 7b.\n\nKr. Pr. No 7b",
+        "material": "stone",
+        "memorial": "stone",
+        "name": "Grænsesten",
+        "subject:wikidata": "Q692146",
+        "subject:wikipedia": "da:Genforeningen i 1920",
+        "website": "https://graenseforeningen.dk/om-graenselandet/genforeningssten/graensesten-nr-7b-ribe"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13538885790,
+      "lat": 55.3290404,
+      "lon": 8.7675241,
+      "tags": {
+        "alt_name": "Grænsesten nr. 11 (Ribe)",
+        "historic": "boundary_stone",
+        "inscription": "Kr. Dm. No 11.\n\nKr. Pr. No 11",
+        "material": "stone",
+        "memorial": "stone",
+        "name": "Grænsesten",
+        "subject:wikidata": "Q692146",
+        "subject:wikipedia": "da:Genforeningen i 1920",
+        "website": "https://graenseforeningen.dk/om-graenselandet/genforeningssten/graensesten-nr-11-ribe"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13564963451,
+      "lat": 55.3310418,
+      "lon": 8.9350461,
+      "tags": {
+        "historic": "boundary_stone",
+        "inscription": "Kr. Dm. No. 31.",
+        "material": "stone"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13564963452,
+      "lat": 55.3310371,
+      "lon": 8.9351008,
+      "tags": {
+        "historic": "boundary_stone",
+        "inscription": "Kr. Dm. No. 22",
+        "material": "stone"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13564963453,
+      "lat": 55.3310135,
+      "lon": 8.9350382,
+      "tags": {
+        "historic": "boundary_stone",
+        "inscription": "Kr. Dm. No. 30",
+        "material": "stone"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13564963454,
+      "lat": 55.3310078,
+      "lon": 8.9350922,
+      "tags": {
+        "historic": "boundary_stone",
+        "inscription": "Kr. Dm. No. 28",
+        "material": "stone"
+      }
+    }
+  ],
+  "candidateWays": [
+    {
+      "id": 553554138,
+      "tags": {
+        "name": "Grænsegrøften",
+        "waterway": "stream"
+      },
+      "pointCount": 14
+    },
+    {
+      "id": 266871118,
+      "tags": {
+        "name": "Grænsegrøften",
+        "waterway": "stream"
+      },
+      "pointCount": 13
+    },
+    {
+      "id": 266871127,
+      "tags": {
+        "name": "Grænsegrøften",
+        "waterway": "stream"
+      },
+      "pointCount": 3
+    },
+    {
+      "id": 660064618,
+      "tags": {
+        "layer": "-1",
+        "name": "Grænsegrøften",
+        "tunnel": "culvert",
+        "waterway": "stream"
+      },
+      "pointCount": 2
+    },
+    {
+      "id": 69146237,
+      "tags": {
+        "highway": "unclassified",
+        "maxspeed": "80",
+        "name": "Gammel Grænse Vej",
+        "source:maxspeed": "DK:rural",
+        "surface": "asphalt"
+      },
+      "pointCount": 24
+    },
+    {
+      "id": 161810801,
+      "tags": {
+        "highway": "service",
+        "name": "Gammel Grænse Vej",
+        "service": "driveway",
+        "surface": "gravel"
+      },
+      "pointCount": 10
+    },
+    {
+      "id": 338682756,
+      "tags": {
+        "highway": "unclassified",
+        "maxspeed": "50",
+        "name": "Gammel Grænse Vej",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 6
+    }
+  ],
+  "contextNodes": [
+    {
+      "type": "node",
+      "id": 972377872,
+      "lat": 55.291371,
+      "lon": 8.658179,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Bjergvej",
+        "osak:identifier": "0a3f508e-4bc2-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972377940,
+      "lat": 55.284085,
+      "lon": 8.657376,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "10",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Bjergvej",
+        "osak:identifier": "0a3f508e-4bc5-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6044931285,
+      "lat": 55.295681,
+      "lon": 8.663482,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "34",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "c41bb7b1-5bc4-4505-b691-9f01101b3bb9",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7576168193,
+      "lat": 55.2908469,
+      "lon": 8.6551132,
+      "tags": {
+        "man_made": "monitoring_station",
+        "monitoring:weather": "yes",
+        "name": "Vester Vedsted",
+        "operator": "Danmarks Meteorologiske Institut",
+        "operator:wikidata": "Q1164325",
+        "recording:automated": "yes",
+        "ref:DMI": "06093",
+        "source": "DMI",
+        "start_date": "2003-12-11"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7638876878,
+      "lat": 55.294802,
+      "lon": 8.6686555,
+      "tags": {
+        "name": "Vester Vedsted",
+        "traffic_sign": "city_limit"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10702700805,
+      "lat": 55.291886,
+      "lon": 8.657086,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Bjergvej",
+        "osak:identifier": "1a3f9369-7f0c-44d2-a2ba-fad991af13cc",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13124642635,
+      "lat": 55.2763431,
+      "lon": 8.6622877,
+      "tags": {
+        "alt_name": "Grænsesten nr. 1 (Råhede Sluse)",
+        "historic": "boundary_stone",
+        "inscription": "Kr. Pr. No 1\n\nKr. Dm. No 1",
+        "material": "stone",
+        "name": "Grænsesten",
+        "subject:wikidata": "Q692146",
+        "subject:wikipedia": "da:Genforeningen i 1920",
+        "website": "https://graenseforeningen.dk/om-graenselandet/genforeningssten/raahede-sluse-graensesten-nr-1"
+      }
+    },
+    {
+      "type": "node",
+      "id": 402845794,
+      "lat": 55.2681877,
+      "lon": 8.694074,
+      "tags": {
+        "name": "Råhede",
+        "traffic_sign": "city_limit"
+      }
+    },
+    {
+      "type": "node",
+      "id": 602094779,
+      "lat": 55.2635528,
+      "lon": 8.6950219,
+      "tags": {
+        "name": "Råhede",
+        "traffic_sign": "city_limit"
+      }
+    },
+    {
+      "type": "node",
+      "id": 829360511,
+      "lat": 55.2658027,
+      "lon": 8.6990425,
+      "tags": {
+        "name": "Råhede",
+        "traffic_sign": "city_limit"
+      }
+    },
+    {
+      "type": "node",
+      "id": 829360705,
+      "lat": 55.2655215,
+      "lon": 8.6920188,
+      "tags": {
+        "name": "Råhede",
+        "traffic_sign": "city_limit"
+      }
+    },
+    {
+      "type": "node",
+      "id": 835031508,
+      "lat": 55.2662365,
+      "lon": 8.6945598,
+      "tags": {
+        "name": "Råhede",
+        "name:da": "Råhede",
+        "name:de": "Raahede",
+        "place": "hamlet",
+        "wikidata": "Q115209052"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968291559,
+      "lat": 55.262061,
+      "lon": 8.695802,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "72",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Høgsbrovej",
+        "osak:identifier": "0a3f508e-3669-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212202,
+      "lat": 55.266419,
+      "lon": 8.706876,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-4273-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212205,
+      "lat": 55.266328,
+      "lon": 8.70653,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "8",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-4275-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212251,
+      "lat": 55.266102,
+      "lon": 8.704077,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "10",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-427a-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212260,
+      "lat": 55.266048,
+      "lon": 8.703269,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "12",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-427b-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212268,
+      "lat": 55.266764,
+      "lon": 8.702014,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "16",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-427c-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212273,
+      "lat": 55.265868,
+      "lon": 8.699773,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "18",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-427d-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212282,
+      "lat": 55.265981,
+      "lon": 8.698796,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "20",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-427e-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212295,
+      "lat": 55.265237,
+      "lon": 8.695244,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "21",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-427f-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212298,
+      "lat": 55.266084,
+      "lon": 8.698083,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "22",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-4280-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212310,
+      "lat": 55.264677,
+      "lon": 8.69497,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "23",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-4281-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212321,
+      "lat": 55.266277,
+      "lon": 8.697266,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "26",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-4282-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212325,
+      "lat": 55.264841,
+      "lon": 8.694411,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "30",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-4283-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972297845,
+      "lat": 55.267031,
+      "lon": 8.69602,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Enderup Møllevej",
+        "osak:identifier": "0a3f508e-2f37-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972297849,
+      "lat": 55.267726,
+      "lon": 8.699177,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "2",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Enderup Møllevej",
+        "osak:identifier": "0a3f508e-2f38-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972297857,
+      "lat": 55.267661,
+      "lon": 8.698249,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Enderup Møllevej",
+        "osak:identifier": "0a3f508e-2f39-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972297869,
+      "lat": 55.267176,
+      "lon": 8.694635,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "5",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Enderup Møllevej",
+        "osak:identifier": "0a3f508e-2f3a-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972297875,
+      "lat": 55.267215,
+      "lon": 8.69717,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Enderup Møllevej",
+        "osak:identifier": "0a3f508e-2f3b-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972297879,
+      "lat": 55.267359,
+      "lon": 8.696699,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "8",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Enderup Møllevej",
+        "osak:identifier": "0a3f508e-2f3c-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972297893,
+      "lat": 55.267397,
+      "lon": 8.695634,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "10",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Enderup Møllevej",
+        "osak:identifier": "0a3f508e-2f3d-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972297900,
+      "lat": 55.267713,
+      "lon": 8.692959,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "14",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Enderup Møllevej",
+        "osak:identifier": "0a3f508e-2f3e-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972297904,
+      "lat": 55.267963,
+      "lon": 8.691334,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "16",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Enderup Møllevej",
+        "osak:identifier": "0a3f508e-2f3f-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972297910,
+      "lat": 55.268524,
+      "lon": 8.690857,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "18",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Enderup Møllevej",
+        "osak:identifier": "0a3f508e-2f40-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972321912,
+      "lat": 55.266039,
+      "lon": 8.695191,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Midtby",
+        "osak:identifier": "0a3f508e-3ce9-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972321913,
+      "lat": 55.266279,
+      "lon": 8.695918,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "2",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Midtby",
+        "osak:identifier": "0a3f508e-3cea-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972321914,
+      "lat": 55.266132,
+      "lon": 8.696426,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "2A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Midtby",
+        "osak:identifier": "0a3f508e-3ceb-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972321915,
+      "lat": 55.26639,
+      "lon": 8.695282,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Midtby",
+        "osak:identifier": "0a3f508e-3cec-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972321916,
+      "lat": 55.266591,
+      "lon": 8.694984,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Midtby",
+        "osak:identifier": "0a3f508e-3ced-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972321918,
+      "lat": 55.266562,
+      "lon": 8.696229,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Midtby",
+        "osak:identifier": "0a3f508e-3cee-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972321919,
+      "lat": 55.266644,
+      "lon": 8.694589,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "5",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Midtby",
+        "osak:identifier": "0a3f508e-3cef-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972321921,
+      "lat": 55.266793,
+      "lon": 8.695222,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "9",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Midtby",
+        "osak:identifier": "0a3f508e-3cf0-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972321923,
+      "lat": 55.266625,
+      "lon": 8.695633,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "11",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Midtby",
+        "osak:identifier": "0a3f508e-3cf1-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972358401,
+      "lat": 55.265199,
+      "lon": 8.69327,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "5",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Hviding Kirkevej",
+        "osak:identifier": "0a3f508e-363b-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972358428,
+      "lat": 55.266523,
+      "lon": 8.692962,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Hviding Kirkevej",
+        "osak:identifier": "0a3f508e-363c-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972358440,
+      "lat": 55.265035,
+      "lon": 8.692226,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "9",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Hviding Kirkevej",
+        "osak:identifier": "0a3f508e-363d-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972358453,
+      "lat": 55.262055,
+      "lon": 8.684731,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "12",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Hviding Kirkevej",
+        "osak:identifier": "0a3f508e-363e-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972360674,
+      "lat": 55.267639,
+      "lon": 8.694268,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "9",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Gadefennevej",
+        "osak:identifier": "0a3f508e-313f-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972360690,
+      "lat": 55.267627,
+      "lon": 8.693741,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "10",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Gadefennevej",
+        "osak:identifier": "0a3f508e-3140-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972360701,
+      "lat": 55.267378,
+      "lon": 8.693587,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "12",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Gadefennevej",
+        "osak:identifier": "0a3f508e-3141-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972360714,
+      "lat": 55.267124,
+      "lon": 8.693798,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "14",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Gadefennevej",
+        "osak:identifier": "0a3f508e-3142-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972360752,
+      "lat": 55.266852,
+      "lon": 8.69385,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "16",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Gadefennevej",
+        "osak:identifier": "0a3f508e-3143-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972360761,
+      "lat": 55.26639,
+      "lon": 8.693565,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "18",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Gadefennevej",
+        "osak:identifier": "0a3f508e-3144-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972360777,
+      "lat": 55.265771,
+      "lon": 8.693437,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "20",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Gadefennevej",
+        "osak:identifier": "0a3f508e-3145-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6044914887,
+      "lat": 55.26576,
+      "lon": 8.710687,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "7",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "f44d001b-ed45-4420-aba0-57c05ad0039e",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 290625644,
+      "lat": 55.2977691,
+      "lon": 8.6860975,
+      "tags": {
+        "name": "Vester Vedsted",
+        "traffic_sign": "city_limit"
+      }
+    },
+    {
+      "type": "node",
+      "id": 402845862,
+      "lat": 55.2878925,
+      "lon": 8.6834483,
+      "tags": {
+        "name": "Vester Vedsted",
+        "traffic_sign": "city_limit"
+      }
+    },
+    {
+      "type": "node",
+      "id": 597640416,
+      "lat": 55.2902047,
+      "lon": 8.6810872,
+      "tags": {
+        "name": "Vester Vedsted",
+        "name:da": "Vester Vedsted",
+        "name:de": "Wester-Wedstedt",
+        "place": "village",
+        "population": "334",
+        "website": "https://vestervedsted.dk/",
+        "wikidata": "Q2240811",
+        "wikipedia": "da:Vester Vedsted"
+      }
+    },
+    {
+      "type": "node",
+      "id": 829360565,
+      "lat": 55.2894753,
+      "lon": 8.6922525,
+      "tags": {
+        "name": "Vester Vedsted",
+        "traffic_sign": "city_limit"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800585,
+      "lat": 55.286523,
+      "lon": 8.712307,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "40",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b06-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800587,
+      "lat": 55.287169,
+      "lon": 8.712251,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "42",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b08-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800613,
+      "lat": 55.289723,
+      "lon": 8.709125,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housename": "Lokkelykke",
+        "addr:housenumber": "46",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b0b-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800634,
+      "lat": 55.289247,
+      "lon": 8.704453,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "48",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b0d-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800672,
+      "lat": 55.289851,
+      "lon": 8.701419,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "52",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b11-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800690,
+      "lat": 55.2895,
+      "lon": 8.694102,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "54",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b13-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800718,
+      "lat": 55.289877,
+      "lon": 8.691476,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "58",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b16-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800736,
+      "lat": 55.28115,
+      "lon": 8.711228,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "61",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b18-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800749,
+      "lat": 55.282923,
+      "lon": 8.71155,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "63",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b19-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800769,
+      "lat": 55.2911,
+      "lon": 8.690158,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "64",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b1a-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800776,
+      "lat": 55.281671,
+      "lon": 8.707847,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "65",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b1b-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800797,
+      "lat": 55.282467,
+      "lon": 8.702805,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "73",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b1d-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800817,
+      "lat": 55.290551,
+      "lon": 8.686522,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "74",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b1e-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800822,
+      "lat": 55.283216,
+      "lon": 8.701552,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "77",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b1f-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800844,
+      "lat": 55.284812,
+      "lon": 8.698488,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "81",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b20-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800854,
+      "lat": 55.289861,
+      "lon": 8.685606,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "82",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b21-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800857,
+      "lat": 55.289514,
+      "lon": 8.684889,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "84",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b22-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800869,
+      "lat": 55.289841,
+      "lon": 8.685048,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "86",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b23-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800878,
+      "lat": 55.287221,
+      "lon": 8.694655,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "87",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b24-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800887,
+      "lat": 55.289267,
+      "lon": 8.690692,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "91",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b25-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800896,
+      "lat": 55.289437,
+      "lon": 8.684376,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "92",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b26-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800897,
+      "lat": 55.289466,
+      "lon": 8.683816,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "94",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b27-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800909,
+      "lat": 55.289604,
+      "lon": 8.690344,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "95",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b28-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800915,
+      "lat": 55.289438,
+      "lon": 8.683487,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "96",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b29-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800926,
+      "lat": 55.289699,
+      "lon": 8.683419,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "98",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b2a-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800933,
+      "lat": 55.289387,
+      "lon": 8.689784,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "99",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b2b-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800946,
+      "lat": 55.289984,
+      "lon": 8.68413,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "100",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b2c-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800957,
+      "lat": 55.288794,
+      "lon": 8.688532,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "105",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b2d-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800965,
+      "lat": 55.289734,
+      "lon": 8.687869,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "109",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b2e-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800980,
+      "lat": 55.28919,
+      "lon": 8.686911,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "113",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b2f-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800986,
+      "lat": 55.289219,
+      "lon": 8.685914,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "119",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b30-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800997,
+      "lat": 55.289163,
+      "lon": 8.684913,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "123",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b31-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966801009,
+      "lat": 55.289128,
+      "lon": 8.683088,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "127",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b32-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966801017,
+      "lat": 55.28907,
+      "lon": 8.682807,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "129",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b33-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966801031,
+      "lat": 55.289036,
+      "lon": 8.682289,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "131",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b34-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966801042,
+      "lat": 55.28904,
+      "lon": 8.681927,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "133",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b35-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966801051,
+      "lat": 55.289071,
+      "lon": 8.681579,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "135",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b36-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966801070,
+      "lat": 55.289011,
+      "lon": 8.680464,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "141",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b39-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966801082,
+      "lat": 55.289227,
+      "lon": 8.680549,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "143",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b3a-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966801089,
+      "lat": 55.289341,
+      "lon": 8.680308,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "145",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b3b-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966801107,
+      "lat": 55.289288,
+      "lon": 8.679743,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "147",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b3c-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968590427,
+      "lat": 55.299872,
+      "lon": 8.683066,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "60",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Farup Vej",
+        "osak:identifier": "0a3f508e-442d-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594382,
+      "lat": 55.289651,
+      "lon": 8.679979,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "2",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ab0-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594395,
+      "lat": 55.289945,
+      "lon": 8.679822,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ab1-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594397,
+      "lat": 55.2906,
+      "lon": 8.680427,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ab2-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594414,
+      "lat": 55.290116,
+      "lon": 8.679818,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "5",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ab3-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594423,
+      "lat": 55.290849,
+      "lon": 8.680617,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ab4-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594430,
+      "lat": 55.290525,
+      "lon": 8.680036,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "7",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ab5-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594434,
+      "lat": 55.291353,
+      "lon": 8.680883,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "8",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ab6-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594447,
+      "lat": 55.290999,
+      "lon": 8.680032,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "9",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ab7-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594451,
+      "lat": 55.291594,
+      "lon": 8.681002,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "10",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ab8-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594463,
+      "lat": 55.29187,
+      "lon": 8.681238,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "14",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ab9-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594470,
+      "lat": 55.292337,
+      "lon": 8.681732,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "16",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4aba-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594481,
+      "lat": 55.292915,
+      "lon": 8.682576,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "18A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4abb-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594490,
+      "lat": 55.293166,
+      "lon": 8.682976,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "20A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4abd-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594496,
+      "lat": 55.292985,
+      "lon": 8.683435,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "20B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4abe-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594510,
+      "lat": 55.293526,
+      "lon": 8.683285,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "22",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4abf-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594514,
+      "lat": 55.291451,
+      "lon": 8.680186,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "23",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ac0-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594528,
+      "lat": 55.293758,
+      "lon": 8.683444,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "24",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ac1-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594538,
+      "lat": 55.291952,
+      "lon": 8.680668,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "25",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ac2-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594543,
+      "lat": 55.293912,
+      "lon": 8.68404,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "26",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ac3-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594558,
+      "lat": 55.294218,
+      "lon": 8.684147,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "28",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ac4-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594565,
+      "lat": 55.292863,
+      "lon": 8.681304,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "29",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ac5-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594584,
+      "lat": 55.293215,
+      "lon": 8.681438,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "31",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ac6-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594603,
+      "lat": 55.294974,
+      "lon": 8.684807,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "32",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ac7-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594608,
+      "lat": 55.293379,
+      "lon": 8.682307,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "33",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ac8-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594625,
+      "lat": 55.296052,
+      "lon": 8.685891,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "36",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ac9-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594635,
+      "lat": 55.293984,
+      "lon": 8.683014,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "37",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4aca-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594646,
+      "lat": 55.294249,
+      "lon": 8.683301,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "39",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4acc-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594657,
+      "lat": 55.294567,
+      "lon": 8.683705,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "43",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4acd-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594659,
+      "lat": 55.295586,
+      "lon": 8.684642,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "49",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4ace-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968594672,
+      "lat": 55.296817,
+      "lon": 8.68565,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "55",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4acf-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603334,
+      "lat": 55.28955,
+      "lon": 8.679383,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-442e-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603338,
+      "lat": 55.289884,
+      "lon": 8.679233,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "2",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-442f-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603342,
+      "lat": 55.289306,
+      "lon": 8.678993,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4430-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603345,
+      "lat": 55.289938,
+      "lon": 8.678899,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4431-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603348,
+      "lat": 55.290118,
+      "lon": 8.679015,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4432-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603354,
+      "lat": 55.289666,
+      "lon": 8.678402,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "7",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4433-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603362,
+      "lat": 55.290172,
+      "lon": 8.67879,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "8",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4434-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603363,
+      "lat": 55.289819,
+      "lon": 8.677862,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "9",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4435-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603367,
+      "lat": 55.28998,
+      "lon": 8.678635,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "10",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4436-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603370,
+      "lat": 55.290013,
+      "lon": 8.678456,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "12",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4437-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603375,
+      "lat": 55.288439,
+      "lon": 8.677528,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "13",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4438-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603380,
+      "lat": 55.290198,
+      "lon": 8.678602,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "14",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4439-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603382,
+      "lat": 55.290253,
+      "lon": 8.678351,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "16",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-443a-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603388,
+      "lat": 55.289954,
+      "lon": 8.677191,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-443b-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603389,
+      "lat": 55.29011,
+      "lon": 8.676811,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-443c-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603394,
+      "lat": 55.289959,
+      "lon": 8.676916,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-443d-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603404,
+      "lat": 55.289967,
+      "lon": 8.676722,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17C",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-443e-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603407,
+      "lat": 55.289957,
+      "lon": 8.677084,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17D",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "604ad59e-370c-7474-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603409,
+      "lat": 55.29008,
+      "lon": 8.678214,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "18",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-443f-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603415,
+      "lat": 55.290097,
+      "lon": 8.676428,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "19",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4440-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603419,
+      "lat": 55.290757,
+      "lon": 8.674941,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housename": "Præstegården",
+        "addr:housenumber": "20",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4441-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603427,
+      "lat": 55.291169,
+      "lon": 8.674312,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "22",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4442-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603428,
+      "lat": 55.291046,
+      "lon": 8.673086,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "24",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4443-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603431,
+      "lat": 55.289705,
+      "lon": 8.674876,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "27",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4444-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603439,
+      "lat": 55.28938,
+      "lon": 8.674134,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "33",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4445-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968603446,
+      "lat": 55.288592,
+      "lon": 8.67367,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "37",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "0a3f508e-4446-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629297,
+      "lat": 55.290379,
+      "lon": 8.679667,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3ca9-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629298,
+      "lat": 55.290748,
+      "lon": 8.679353,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "2",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3caa-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629301,
+      "lat": 55.290502,
+      "lon": 8.679156,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cab-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629305,
+      "lat": 55.290958,
+      "lon": 8.678982,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cac-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629307,
+      "lat": 55.290405,
+      "lon": 8.678703,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "5",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cad-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629310,
+      "lat": 55.291528,
+      "lon": 8.678686,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cae-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629311,
+      "lat": 55.290598,
+      "lon": 8.678301,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "7",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3caf-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629312,
+      "lat": 55.291194,
+      "lon": 8.678347,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "8",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cb0-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629314,
+      "lat": 55.29069,
+      "lon": 8.677872,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "9",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cb1-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629315,
+      "lat": 55.291556,
+      "lon": 8.677626,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "10",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cb2-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629320,
+      "lat": 55.291064,
+      "lon": 8.677919,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "11",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cb3-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629322,
+      "lat": 55.291723,
+      "lon": 8.676689,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "12",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cb4-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629325,
+      "lat": 55.291827,
+      "lon": 8.676285,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "12A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cb5-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629326,
+      "lat": 55.292096,
+      "lon": 8.67493,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "14",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cb6-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629327,
+      "lat": 55.292341,
+      "lon": 8.674302,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "16",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cb7-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629331,
+      "lat": 55.292339,
+      "lon": 8.674137,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "16A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cb8-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629333,
+      "lat": 55.292113,
+      "lon": 8.673623,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "20",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cb9-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629338,
+      "lat": 55.292153,
+      "lon": 8.672237,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "22",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cba-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629340,
+      "lat": 55.292103,
+      "lon": 8.669297,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "25",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cbb-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629341,
+      "lat": 55.292832,
+      "lon": 8.668926,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "27",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cbc-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629347,
+      "lat": 55.293921,
+      "lon": 8.670476,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "28",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cbd-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968629349,
+      "lat": 55.2942,
+      "lon": 8.668871,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "31",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "0a3f508e-3cbe-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972213902,
+      "lat": 55.290259,
+      "lon": 8.684952,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e8e-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972213920,
+      "lat": 55.291595,
+      "lon": 8.684746,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e90-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972213924,
+      "lat": 55.291435,
+      "lon": 8.685477,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e91-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972213935,
+      "lat": 55.292184,
+      "lon": 8.686374,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e92-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972213966,
+      "lat": 55.293475,
+      "lon": 8.685108,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e95-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972213978,
+      "lat": 55.29367,
+      "lon": 8.685241,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "19",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e96-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972213983,
+      "lat": 55.293932,
+      "lon": 8.685051,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "21",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e97-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972213994,
+      "lat": 55.294116,
+      "lon": 8.685207,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "23",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e98-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972214008,
+      "lat": 55.294298,
+      "lon": 8.684946,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "25",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e99-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972214015,
+      "lat": 55.294875,
+      "lon": 8.686064,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "32",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e9a-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972214027,
+      "lat": 55.295153,
+      "lon": 8.685965,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "34",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e9b-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972214032,
+      "lat": 55.295356,
+      "lon": 8.685995,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "36",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e9c-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972214049,
+      "lat": 55.295611,
+      "lon": 8.685894,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "38",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "0a3f508e-2e9d-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972289136,
+      "lat": 55.289795,
+      "lon": 8.68128,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Skole Alle",
+        "osak:identifier": "0a3f508e-447f-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972289146,
+      "lat": 55.289563,
+      "lon": 8.681598,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Skole Alle",
+        "osak:identifier": "0a3f508e-4480-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972289157,
+      "lat": 55.289767,
+      "lon": 8.682809,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "102",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4481-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972289177,
+      "lat": 55.28967,
+      "lon": 8.682319,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Skole Alle",
+        "osak:identifier": "0a3f508e-4482-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972289188,
+      "lat": 55.290152,
+      "lon": 8.6818,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Skole Alle",
+        "osak:identifier": "0a3f508e-4483-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972289213,
+      "lat": 55.2901,
+      "lon": 8.681298,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "12",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Skole Alle",
+        "osak:identifier": "0a3f508e-4486-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972289218,
+      "lat": 55.290585,
+      "lon": 8.680998,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4487-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972289225,
+      "lat": 55.290449,
+      "lon": 8.680996,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4488-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972289238,
+      "lat": 55.290433,
+      "lon": 8.681113,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4C",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "0a3f508e-4489-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336362,
+      "lat": 55.292088,
+      "lon": 8.67693,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "0a3f508e-4aa4-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336380,
+      "lat": 55.292287,
+      "lon": 8.677,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "0a3f508e-4aa5-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336386,
+      "lat": 55.292788,
+      "lon": 8.678168,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "0a3f508e-4aa6-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336419,
+      "lat": 55.293182,
+      "lon": 8.676895,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "7",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "0a3f508e-4aa7-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336425,
+      "lat": 55.295327,
+      "lon": 8.675108,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "10",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "0a3f508e-4aa8-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336451,
+      "lat": 55.293865,
+      "lon": 8.677042,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "11A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "19910d90-06f0-41c9-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336465,
+      "lat": 55.293862,
+      "lon": 8.676741,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "11B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "19910d90-06f1-41c9-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336475,
+      "lat": 55.29414,
+      "lon": 8.677193,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "11C",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "19910d90-06f2-41c9-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336491,
+      "lat": 55.294052,
+      "lon": 8.6766,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "11D",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "29d58755-c1d1-4983-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336500,
+      "lat": 55.294127,
+      "lon": 8.676972,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "11E",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "6bd46a49-e3be-71a9-e044-00144f3ead67",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336522,
+      "lat": 55.29411,
+      "lon": 8.673875,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "15",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "0a3f508e-4aaa-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972336544,
+      "lat": 55.294525,
+      "lon": 8.670433,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "16",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Ulvehøjvej",
+        "osak:identifier": "0a3f508e-4aab-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972377822,
+      "lat": 55.291565,
+      "lon": 8.670309,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "2",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Bjergvej",
+        "osak:identifier": "0a3f508e-4bc0-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972377856,
+      "lat": 55.29148,
+      "lon": 8.670955,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Bjergvej",
+        "osak:identifier": "0a3f508e-4bc1-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972377904,
+      "lat": 55.291047,
+      "lon": 8.670645,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "7",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Bjergvej",
+        "osak:identifier": "0a3f508e-4bc3-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972377926,
+      "lat": 55.290045,
+      "lon": 8.670453,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "8",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Bjergvej",
+        "osak:identifier": "0a3f508e-4bc4-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972377975,
+      "lat": 55.289532,
+      "lon": 8.671514,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "11",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Bjergvej",
+        "osak:identifier": "0a3f508e-4bc6-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972413878,
+      "lat": 55.289012,
+      "lon": 8.684178,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sprækvej",
+        "osak:identifier": "0a3f508e-4648-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972413904,
+      "lat": 55.288648,
+      "lon": 8.684116,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sprækvej",
+        "osak:identifier": "0a3f508e-4649-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972413917,
+      "lat": 55.288213,
+      "lon": 8.683198,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sprækvej",
+        "osak:identifier": "0a3f508e-464a-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972413942,
+      "lat": 55.287844,
+      "lon": 8.683127,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sprækvej",
+        "osak:identifier": "0a3f508e-464b-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972413965,
+      "lat": 55.286517,
+      "lon": 8.682775,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "8",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sprækvej",
+        "osak:identifier": "0a3f508e-464c-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972420822,
+      "lat": 55.294239,
+      "lon": 8.682474,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Kløjsvej",
+        "osak:identifier": "0a3f508e-39aa-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972420829,
+      "lat": 55.294268,
+      "lon": 8.681879,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Kløjsvej",
+        "osak:identifier": "0a3f508e-39ab-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972420833,
+      "lat": 55.294731,
+      "lon": 8.68215,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Kløjsvej",
+        "osak:identifier": "22729a66-8ea3-44d0-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972420839,
+      "lat": 55.294257,
+      "lon": 8.681026,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "7",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Kløjsvej",
+        "osak:identifier": "0a3f508e-39ac-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972420840,
+      "lat": 55.294743,
+      "lon": 8.681224,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "8",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Kløjsvej",
+        "osak:identifier": "0a3f508e-39ad-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972420850,
+      "lat": 55.294753,
+      "lon": 8.680459,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "18",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Kløjsvej",
+        "osak:identifier": "0a3f508e-39ae-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972420858,
+      "lat": 55.295163,
+      "lon": 8.679617,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "20",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Kløjsvej",
+        "osak:identifier": "0a3f508e-39af-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972441492,
+      "lat": 55.291943,
+      "lon": 8.675946,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Smalhale",
+        "osak:identifier": "0a3f508e-4595-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972441526,
+      "lat": 55.292022,
+      "lon": 8.675542,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Smalhale",
+        "osak:identifier": "0a3f508e-4596-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972441553,
+      "lat": 55.292224,
+      "lon": 8.676358,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Smalhale",
+        "osak:identifier": "0a3f508e-4597-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972441560,
+      "lat": 55.292344,
+      "lon": 8.676001,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "5",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Smalhale",
+        "osak:identifier": "0a3f508e-4598-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972441591,
+      "lat": 55.292645,
+      "lon": 8.675972,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "7",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Smalhale",
+        "osak:identifier": "0a3f508e-4599-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972482016,
+      "lat": 55.29495,
+      "lon": 8.669644,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Okholmvej",
+        "osak:identifier": "0a3f508e-3f08-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972482018,
+      "lat": 55.295602,
+      "lon": 8.669415,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "5",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Okholmvej",
+        "osak:identifier": "0a3f508e-3f09-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972482023,
+      "lat": 55.29608,
+      "lon": 8.669699,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "7",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Okholmvej",
+        "osak:identifier": "0a3f508e-3f0a-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972483298,
+      "lat": 55.292525,
+      "lon": 8.682486,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Haldsvej",
+        "osak:identifier": "0a3f508e-33eb-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972483300,
+      "lat": 55.292301,
+      "lon": 8.682291,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "2",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Haldsvej",
+        "osak:identifier": "0a3f508e-33ec-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972483302,
+      "lat": 55.292256,
+      "lon": 8.682713,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Haldsvej",
+        "osak:identifier": "0a3f508e-33ed-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2025391789,
+      "lat": 55.290627,
+      "lon": 8.686004,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "2",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "4cb3c13c-5273-481d-8700-5abb250d8703",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2025391797,
+      "lat": 55.294266,
+      "lon": 8.687341,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "8",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "3a946eeb-6ee6-4ae2-98c3-352156644965",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2025391810,
+      "lat": 55.294421,
+      "lon": 8.68959,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "10",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "95f0cd79-726b-4e30-b471-cfdd2b257148",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3037436075,
+      "lat": 55.280317,
+      "lon": 8.6877,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "15",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sprækvej",
+        "osak:identifier": "f3f81916-fb47-4284-adbc-6830645b5a21",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3037436076,
+      "lat": 55.29386,
+      "lon": 8.700687,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "16",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "431d31b4-5960-4e7e-aa80-ce7a9beee136",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3037436100,
+      "lat": 55.294177,
+      "lon": 8.668734,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "31A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "066d7309-82d8-40e9-8a03-b1ed707aa537",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3037436101,
+      "lat": 55.294079,
+      "lon": 8.668713,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "31B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "c5dc0c7d-7bfc-4c27-b54a-89ec6a32c38e",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3037436102,
+      "lat": 55.294013,
+      "lon": 8.668771,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "31C",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "f7e219ae-7baf-453f-bac1-2a4e3d29ceef",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3037436103,
+      "lat": 55.294009,
+      "lon": 8.66893,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "31D",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Mandøvej",
+        "osak:identifier": "d34bf20f-b72d-416e-ad29-5713b93a05f1",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3037436118,
+      "lat": 55.297165,
+      "lon": 8.685605,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "57",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "9708033c-823a-4ea8-abea-70973af497fb",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3312772834,
+      "lat": 55.289097,
+      "lon": 8.680838,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "137",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b37-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3787777918,
+      "lat": 55.292574,
+      "lon": 8.685189,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "11",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Degnetoftevej",
+        "osak:identifier": "1b6d8b1b-5dfb-4238-b4fe-700a1f341975",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4549578369,
+      "lat": 55.2911279,
+      "lon": 8.6902043,
+      "tags": {
+        "alt_name": "Vester Vedsted Vingård Cafe",
+        "amenity": "restaurant",
+        "cuisine": "organic",
+        "description": "Stort set selvforsynende i lokale råvarer i en radius af 70 km fra Vingården",
+        "drink:wine": "retail",
+        "fvst:navnelbnr": "951907",
+        "internet_access": "wlan",
+        "internet_access:fee": "no",
+        "microbrewery": "yes",
+        "name": "Vingårdens Bord",
+        "opening_hours": "Fr 12:00-04:30",
+        "operator": "Vester Vedsted Vingård",
+        "outdoor_seating": "yes",
+        "phone": "+45 52340903",
+        "ref:DK:cvr": "40332502",
+        "shop": "alcohol",
+        "website": "https://www.vvvingaard.dk/27428795"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5660174633,
+      "lat": 55.282021,
+      "lon": 8.706186,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "67",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b1c-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5997402396,
+      "lat": 55.279111,
+      "lon": 8.687181,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sprækvej",
+        "osak:identifier": "843364ac-d00f-462d-a51f-4138f802115e",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5997406989,
+      "lat": 55.297941,
+      "lon": 8.685534,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "59",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Byvej",
+        "osak:identifier": "f2021309-fd06-4e4d-b292-cd7632e79c82",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7638876879,
+      "lat": 55.2968035,
+      "lon": 8.6703881,
+      "tags": {
+        "name": "Vester Vedsted",
+        "traffic_sign": "city_limit"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11574044869,
+      "lat": 55.289987,
+      "lon": 8.677221,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17F",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "76f52703-2d7d-44c7-9690-35c1c9746e45",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11574044969,
+      "lat": 55.290056,
+      "lon": 8.677232,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17G",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "9aa543dc-1f1d-4d8a-9f6b-a6b04db71a8e",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11574045069,
+      "lat": 55.289911,
+      "lon": 8.677209,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17E",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Vester Vedsted",
+        "addr:postcode": "6760",
+        "addr:street": "Sønder Kirkevej",
+        "osak:identifier": "e2ccf407-d264-4bf6-b1cc-1fa5b5d450af",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11795643020,
+      "lat": 55.2911687,
+      "lon": 8.674076,
+      "tags": {
+        "seamark:landmark:function": "church",
+        "seamark:name": "Vester Vedsted Kirke",
+        "seamark:type": "landmark"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13070930078,
+      "lat": 55.2917278,
+      "lon": 8.689971,
+      "tags": {
+        "craft": "winery",
+        "name": "Vester Vedsted Vingård - Bryghus",
+        "website": "https://www.vvvingaard.dk/"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13538925660,
+      "lat": 55.2894015,
+      "lon": 8.6810612,
+      "tags": {
+        "alt_name": "Grænsesten nr. 2 (Vester Vedsted)",
+        "historic": "memorial",
+        "inscription": "Kr. Dm. No 2\n\nKr. Pr. No 2",
+        "material": "stone",
+        "memorial": "stone",
+        "name": "Grænsesten",
+        "subject:wikidata": "Q692146",
+        "subject:wikipedia": "da:Genforeningen i 1920",
+        "website": "https://graenseforeningen.dk/om-graenselandet/genforeningssten/graensesten-nr-2-vester-vedsted"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966770759,
+      "lat": 55.260355,
+      "lon": 8.721995,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "122",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Ribevej",
+        "osak:identifier": "0a3f508e-40bf-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972212192,
+      "lat": 55.262493,
+      "lon": 8.721657,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Råhede",
+        "addr:postcode": "6760",
+        "addr:street": "Råhedevej",
+        "osak:identifier": "0a3f508e-4272-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800082,
+      "lat": 55.283154,
+      "lon": 8.731468,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ad1-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800099,
+      "lat": 55.283042,
+      "lon": 8.732501,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "1A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ad2-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800113,
+      "lat": 55.283485,
+      "lon": 8.732558,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "2",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ad3-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800127,
+      "lat": 55.283204,
+      "lon": 8.731198,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ad4-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800136,
+      "lat": 55.283666,
+      "lon": 8.732126,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ad5-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800149,
+      "lat": 55.283447,
+      "lon": 8.731604,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "4A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ad6-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800156,
+      "lat": 55.283229,
+      "lon": 8.73095,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "5",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ad7-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800164,
+      "lat": 55.283476,
+      "lon": 8.731261,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "6",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ad8-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800168,
+      "lat": 55.283294,
+      "lon": 8.730347,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "7",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ad9-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800183,
+      "lat": 55.283525,
+      "lon": 8.730355,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "8B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ada-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800204,
+      "lat": 55.283357,
+      "lon": 8.72966,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "9",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4adb-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800211,
+      "lat": 55.283598,
+      "lon": 8.729988,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "10",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4adc-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800228,
+      "lat": 55.282887,
+      "lon": 8.729126,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "11",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4add-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800238,
+      "lat": 55.283672,
+      "lon": 8.729424,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "12",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ade-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800250,
+      "lat": 55.282862,
+      "lon": 8.728521,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "13",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4adf-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800263,
+      "lat": 55.283729,
+      "lon": 8.729073,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "14",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ae0-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800268,
+      "lat": 55.283022,
+      "lon": 8.727727,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "15",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ae1-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800289,
+      "lat": 55.283767,
+      "lon": 8.728634,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "16",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ae2-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800305,
+      "lat": 55.283374,
+      "lon": 8.729111,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "17",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ae3-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800320,
+      "lat": 55.283788,
+      "lon": 8.728137,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "18",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ae4-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800322,
+      "lat": 55.283329,
+      "lon": 8.72853,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "19",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ae5-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800331,
+      "lat": 55.284121,
+      "lon": 8.727547,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "20A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ae6-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800340,
+      "lat": 55.283914,
+      "lon": 8.727496,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "20B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ae7-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800341,
+      "lat": 55.283452,
+      "lon": 8.728016,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "21",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ae8-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800352,
+      "lat": 55.283972,
+      "lon": 8.727016,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "22",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4ae9-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800355,
+      "lat": 55.283462,
+      "lon": 8.727661,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "23",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4aea-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800366,
+      "lat": 55.28396,
+      "lon": 8.726333,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "24",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4aeb-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800374,
+      "lat": 55.283494,
+      "lon": 8.727386,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "25",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4aec-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800377,
+      "lat": 55.284841,
+      "lon": 8.726,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "26A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4aed-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800389,
+      "lat": 55.284498,
+      "lon": 8.725728,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "26B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4aee-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800392,
+      "lat": 55.283985,
+      "lon": 8.725709,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "26C",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4aef-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800399,
+      "lat": 55.283492,
+      "lon": 8.727008,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "27",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4af0-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800421,
+      "lat": 55.284041,
+      "lon": 8.725354,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "28",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4af1-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800431,
+      "lat": 55.283664,
+      "lon": 8.726515,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "29",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4af2-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800449,
+      "lat": 55.284733,
+      "lon": 8.724995,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "30A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4af3-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800456,
+      "lat": 55.284847,
+      "lon": 8.724435,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "30B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4af4-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800463,
+      "lat": 55.284484,
+      "lon": 8.72406,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "30C",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4af5-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800471,
+      "lat": 55.284402,
+      "lon": 8.724639,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "30D",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4af6-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800487,
+      "lat": 55.284119,
+      "lon": 8.724472,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "30E",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4af7-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800501,
+      "lat": 55.284086,
+      "lon": 8.724118,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "30F",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4af8-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800506,
+      "lat": 55.284155,
+      "lon": 8.723604,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "32",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4af9-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800520,
+      "lat": 55.283794,
+      "lon": 8.724342,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "33A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4afb-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800533,
+      "lat": 55.284189,
+      "lon": 8.723236,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "34",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4afc-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800543,
+      "lat": 55.283815,
+      "lon": 8.723931,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "35",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4afd-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800548,
+      "lat": 55.284978,
+      "lon": 8.721912,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "36",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4afe-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800552,
+      "lat": 55.285241,
+      "lon": 8.721476,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "36A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4aff-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800557,
+      "lat": 55.284425,
+      "lon": 8.721454,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "36B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b00-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800564,
+      "lat": 55.283795,
+      "lon": 8.723566,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "37",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b01-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800568,
+      "lat": 55.285706,
+      "lon": 8.717344,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "38",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b02-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800571,
+      "lat": 55.286016,
+      "lon": 8.715901,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "38A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b03-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800578,
+      "lat": 55.283833,
+      "lon": 8.723229,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "39",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b04-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800579,
+      "lat": 55.283842,
+      "lon": 8.722818,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "39A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b05-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800586,
+      "lat": 55.283795,
+      "lon": 8.722459,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "41",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b07-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800592,
+      "lat": 55.283823,
+      "lon": 8.722141,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "43",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b09-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800601,
+      "lat": 55.283852,
+      "lon": 8.7218,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "45",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b0a-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800621,
+      "lat": 55.283924,
+      "lon": 8.721207,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "47",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b0c-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800636,
+      "lat": 55.284151,
+      "lon": 8.720181,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "49",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b0e-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800651,
+      "lat": 55.284205,
+      "lon": 8.718893,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "51",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b0f-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800668,
+      "lat": 55.284412,
+      "lon": 8.717945,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "51A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b10-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800685,
+      "lat": 55.284617,
+      "lon": 8.717237,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "53",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b12-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800704,
+      "lat": 55.284784,
+      "lon": 8.716935,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "55",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b14-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800716,
+      "lat": 55.284827,
+      "lon": 8.716132,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "57",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b15-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 966800732,
+      "lat": 55.285479,
+      "lon": 8.714313,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "59",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Egebæk",
+        "addr:postcode": "6760",
+        "addr:street": "Vester Vedsted Vej",
+        "osak:identifier": "0a3f508e-4b17-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 967078152,
+      "lat": 55.29578,
+      "lon": 8.923235,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "176",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Gelsbro",
+        "addr:postcode": "6760",
+        "addr:street": "Haderslevvej",
+        "osak:identifier": "0a3f508e-33e5-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 967078158,
+      "lat": 55.29559,
+      "lon": 8.92471,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "180",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Gelsbro",
+        "addr:postcode": "6760",
+        "addr:street": "Haderslevvej",
+        "osak:identifier": "0a3f508e-33e6-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 967078182,
+      "lat": 55.299609,
+      "lon": 8.922233,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "191",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Gelsbro",
+        "addr:postcode": "6760",
+        "addr:street": "Haderslevvej",
+        "osak:identifier": "0a3f508e-33e8-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 967078190,
+      "lat": 55.296152,
+      "lon": 8.922719,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "195",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Gelsbro",
+        "addr:postcode": "6760",
+        "addr:street": "Haderslevvej",
+        "osak:identifier": "0a3f508e-33e9-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 967078201,
+      "lat": 55.296045,
+      "lon": 8.923364,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "197",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Gelsbro",
+        "addr:postcode": "6760",
+        "addr:street": "Haderslevvej",
+        "osak:identifier": "0a3f508e-33ea-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 968292205,
+      "lat": 55.295756,
+      "lon": 8.926061,
+      "tags": {
+        "addr:city": "Gram",
+        "addr:country": "DK",
+        "addr:housenumber": "34",
+        "addr:municipality": "Haderslev",
+        "addr:place": "Gelsbro",
+        "addr:postcode": "6510",
+        "addr:street": "Ribe Landevej",
+        "osak:identifier": "0a3f508b-6f90-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972456633,
+      "lat": 55.296591,
+      "lon": 8.928862,
+      "tags": {
+        "addr:city": "Gram",
+        "addr:country": "DK",
+        "addr:housenumber": "1",
+        "addr:municipality": "Haderslev",
+        "addr:place": "Gelsbro",
+        "addr:postcode": "6510",
+        "addr:street": "Årupvej",
+        "osak:identifier": "0a3f508b-73e2-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 972456637,
+      "lat": 55.297526,
+      "lon": 8.929775,
+      "tags": {
+        "addr:city": "Gram",
+        "addr:country": "DK",
+        "addr:housenumber": "3",
+        "addr:municipality": "Haderslev",
+        "addr:place": "Gelsbro",
+        "addr:postcode": "6510",
+        "addr:street": "Årupvej",
+        "osak:identifier": "0a3f508b-73e3-32b8-e044-0003ba298018",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1109305898,
+      "lat": 55.2940796,
+      "lon": 8.9357583,
+      "tags": {
+        "highway": "rest_area",
+        "name": "Gelså Rasteplads",
+        "toilets": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1314893449,
+      "lat": 55.2948284,
+      "lon": 8.9270292,
+      "tags": {
+        "amenity": "parking",
+        "name": "Gelsbro",
+        "note": "Vandrerute parkering / Walkingroute parking"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2820071378,
+      "lat": 55.2956598,
+      "lon": 8.9275517,
+      "tags": {
+        "highway": "rest_area",
+        "name": "Gelsbro Rasteplads",
+        "toilets": "no"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3168545075,
+      "lat": 55.2957626,
+      "lon": 8.9264834,
+      "tags": {
+        "name": "Gelsbro",
+        "name:da": "Gelsbro",
+        "name:de": "Gjelsbro",
+        "place": "hamlet",
+        "population": "26"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11542249769,
+      "lat": 55.297508,
+      "lon": 8.9248,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "191A",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Gelsbro",
+        "addr:postcode": "6760",
+        "addr:street": "Haderslevvej",
+        "osak:identifier": "7d176a7a-4cfe-4a02-b9a4-d71b495c61b0",
+        "source": "Danmarks Adresseregister"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11542249770,
+      "lat": 55.297508,
+      "lon": 8.924994,
+      "tags": {
+        "addr:city": "Ribe",
+        "addr:country": "DK",
+        "addr:housenumber": "191B",
+        "addr:municipality": "Esbjerg",
+        "addr:place": "Gelsbro",
+        "addr:postcode": "6760",
+        "addr:street": "Haderslevvej",
+        "osak:identifier": "37474be1-381e-4bed-85d0-70d464770608",
+        "source": "Danmarks Adresseregister"
+      }
+    }
+  ],
+  "contextWays": [
+    {
+      "id": 59476163,
+      "tags": {
+        "highway": "unclassified",
+        "lanes": "1",
+        "lit": "no",
+        "maxspeed": "80",
+        "name": "Råhede Engvej",
+        "source:maxspeed": "DK:rural",
+        "surface": "asphalt"
+      },
+      "pointCount": 10
+    },
+    {
+      "id": 209416484,
+      "tags": {
+        "name": "Vester Vedsted Bæk",
+        "waterway": "stream"
+      },
+      "pointCount": 277
+    },
+    {
+      "id": 34637332,
+      "tags": {
+        "highway": "tertiary",
+        "maxspeed": "80",
+        "name": "Råhedevej",
+        "name:etymology:wikidata": "Q115209052",
+        "source:maxspeed": "DK:rural",
+        "surface": "asphalt"
+      },
+      "pointCount": 15
+    },
+    {
+      "id": 69142266,
+      "tags": {
+        "highway": "tertiary",
+        "maxspeed": "50",
+        "name": "Råhedevej",
+        "name:etymology:wikidata": "Q115209052",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 10
+    },
+    {
+      "id": 786566765,
+      "tags": {
+        "highway": "tertiary",
+        "maxspeed": "80",
+        "name": "Råhedevej",
+        "name:etymology:wikidata": "Q115209052",
+        "source:maxspeed": "DK:rural",
+        "surface": "asphalt"
+      },
+      "pointCount": 3
+    },
+    {
+      "id": 786566767,
+      "tags": {
+        "highway": "tertiary",
+        "maxspeed": "50",
+        "name": "Råhedevej",
+        "name:etymology:wikidata": "Q115209052",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 4
+    },
+    {
+      "id": 786566768,
+      "tags": {
+        "highway": "tertiary",
+        "maxspeed": "50",
+        "name": "Råhedevej",
+        "name:etymology:wikidata": "Q115209052",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 8
+    },
+    {
+      "id": 34637321,
+      "tags": {
+        "cycleway:both": "no",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Byvej",
+        "name:etymology:wikidata": "Q2240811",
+        "sidewalk": "no",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 6
+    },
+    {
+      "id": 62101621,
+      "tags": {
+        "cycleway:both": "no",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "sidewalk": "no",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 10
+    },
+    {
+      "id": 68524009,
+      "tags": {
+        "highway": "tertiary",
+        "lanes": "2",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 6
+    },
+    {
+      "id": 68573808,
+      "tags": {
+        "cycleway:both": "no",
+        "highway": "tertiary",
+        "lanes": "2",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "sidewalk": "no",
+        "surface": "asphalt"
+      },
+      "pointCount": 5
+    },
+    {
+      "id": 68573809,
+      "tags": {
+        "bicycle": "use_sidepath",
+        "hazard": "animal_crossing",
+        "highway": "tertiary",
+        "lanes": "2",
+        "maxspeed": "80",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:rural",
+        "surface": "asphalt"
+      },
+      "pointCount": 26
+    },
+    {
+      "id": 69142278,
+      "tags": {
+        "highway": "residential",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:urban",
+        "surface": "gravel",
+        "tracktype": "grade2"
+      },
+      "pointCount": 34
+    },
+    {
+      "id": 96101510,
+      "tags": {
+        "amenity": "place_of_worship",
+        "building": "church",
+        "check_date": "2025-04-21",
+        "denomination": "lutheran",
+        "name": "Vester Vedsted Kirke",
+        "religion": "christian",
+        "wikidata": "Q12340773",
+        "wikipedia": "da:Vester Vedsted Kirke"
+      },
+      "pointCount": 17
+    },
+    {
+      "id": 104311883,
+      "tags": {
+        "highway": "service",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "service": "driveway",
+        "surface": "gravel"
+      },
+      "pointCount": 9
+    },
+    {
+      "id": 161735324,
+      "tags": {
+        "highway": "service",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "service": "driveway"
+      },
+      "pointCount": 3
+    },
+    {
+      "id": 161735325,
+      "tags": {
+        "highway": "service",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "surface": "gravel"
+      },
+      "pointCount": 7
+    },
+    {
+      "id": 161735326,
+      "tags": {
+        "highway": "service",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "service": "driveway"
+      },
+      "pointCount": 3
+    },
+    {
+      "id": 161735331,
+      "tags": {
+        "highway": "service",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "service": "driveway"
+      },
+      "pointCount": 2
+    },
+    {
+      "id": 185748245,
+      "tags": {
+        "alt_name": "V Vedsted Byvej",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Byvej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 16
+    },
+    {
+      "id": 266927046,
+      "tags": {
+        "alt_name": "V Vedsted Byvej",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Byvej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 8
+    },
+    {
+      "id": 266927052,
+      "tags": {
+        "alt_name": "V Vedsted Byvej",
+        "bridge": "yes",
+        "highway": "tertiary",
+        "lanes": "2",
+        "layer": "1",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Byvej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 2
+    },
+    {
+      "id": 308597594,
+      "tags": {
+        "amenity": "community_centre",
+        "building": "yes",
+        "community_centre": "community_hall",
+        "name": "Vester Vedsted Forsamlingshus",
+        "website": "https://vestervedsted.dk/forsamlingshus/"
+      },
+      "pointCount": 37
+    },
+    {
+      "id": 308697269,
+      "tags": {
+        "highway": "service",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811"
+      },
+      "pointCount": 3
+    },
+    {
+      "id": 661226187,
+      "tags": {
+        "bicycle": "use_sidepath",
+        "highway": "tertiary",
+        "lanes": "2",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:rural",
+        "surface": "asphalt"
+      },
+      "pointCount": 19
+    },
+    {
+      "id": 1288337021,
+      "tags": {
+        "alt_name": "V Vedsted Byvej",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Byvej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 12
+    },
+    {
+      "id": 1288337022,
+      "tags": {
+        "alt_name": "V Vedsted Byvej",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Byvej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt",
+        "traffic_calming": "table"
+      },
+      "pointCount": 2
+    },
+    {
+      "id": 1549605170,
+      "tags": {
+        "bicycle": "use_sidepath",
+        "hazard": "animal_crossing",
+        "highway": "tertiary",
+        "lanes": "2",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:rural",
+        "surface": "asphalt"
+      },
+      "pointCount": 9
+    },
+    {
+      "id": 161799271,
+      "tags": {
+        "highway": "service",
+        "name": "Råhedevej",
+        "service": "driveway",
+        "surface": "gravel"
+      },
+      "pointCount": 10
+    },
+    {
+      "id": 104311866,
+      "tags": {
+        "highway": "service",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "service": "driveway",
+        "source": "Fugro"
+      },
+      "pointCount": 3
+    },
+    {
+      "id": 148826226,
+      "tags": {
+        "cycleway": "track",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "sidewalk": "both",
+        "sidewalk:both:surface": "asphalt",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 4
+    },
+    {
+      "id": 148826227,
+      "tags": {
+        "cycleway": "track",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "sidewalk": "both",
+        "sidewalk:both:surface": "asphalt",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 10
+    },
+    {
+      "id": 161735329,
+      "tags": {
+        "highway": "residential",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:urban",
+        "surface": "gravel"
+      },
+      "pointCount": 7
+    },
+    {
+      "id": 335858549,
+      "tags": {
+        "bridge": "yes",
+        "highway": "service",
+        "layer": "1",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "service": "driveway",
+        "source": "Fugro"
+      },
+      "pointCount": 2
+    },
+    {
+      "id": 335858551,
+      "tags": {
+        "highway": "service",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "service": "driveway",
+        "source": "Fugro"
+      },
+      "pointCount": 8
+    },
+    {
+      "id": 526996665,
+      "tags": {
+        "hazard": "animal_crossing",
+        "highway": "tertiary",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 5
+    },
+    {
+      "id": 551351151,
+      "tags": {
+        "layer": "-1",
+        "name": "Vester Vedsted Bæk",
+        "tunnel": "culvert",
+        "waterway": "stream"
+      },
+      "pointCount": 2
+    },
+    {
+      "id": 551351154,
+      "tags": {
+        "name": "Vester Vedsted Bæk",
+        "waterway": "stream"
+      },
+      "pointCount": 8
+    },
+    {
+      "id": 551351157,
+      "tags": {
+        "layer": "-1",
+        "name": "Vester Vedsted Bæk",
+        "tunnel": "culvert",
+        "waterway": "stream"
+      },
+      "pointCount": 2
+    },
+    {
+      "id": 551351160,
+      "tags": {
+        "name": "Vester Vedsted Bæk",
+        "waterway": "stream"
+      },
+      "pointCount": 2
+    },
+    {
+      "id": 551351161,
+      "tags": {
+        "layer": "-1",
+        "name": "Vester Vedsted Bæk",
+        "tunnel": "culvert",
+        "waterway": "stream"
+      },
+      "pointCount": 2
+    },
+    {
+      "id": 551351164,
+      "tags": {
+        "name": "Vester Vedsted Bæk",
+        "waterway": "stream"
+      },
+      "pointCount": 12
+    },
+    {
+      "id": 661226183,
+      "tags": {
+        "cycleway": "track",
+        "hazard": "animal_crossing",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "sidewalk": "no",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 15
+    },
+    {
+      "id": 1390238135,
+      "tags": {
+        "cycleway": "track",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "sidewalk": "both",
+        "sidewalk:both:surface": "asphalt",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt",
+        "traffic_calming": "table"
+      },
+      "pointCount": 5
+    },
+    {
+      "id": 1390238136,
+      "tags": {
+        "cycleway": "track",
+        "highway": "tertiary",
+        "lanes": "2",
+        "lit": "yes",
+        "maxspeed": "50",
+        "name": "Vester Vedsted Vej",
+        "name:etymology:wikidata": "Q2240811",
+        "sidewalk": "both",
+        "sidewalk:both:surface": "asphalt",
+        "source:maxspeed": "DK:urban",
+        "surface": "asphalt"
+      },
+      "pointCount": 10
+    },
+    {
+      "id": 1315321621,
+      "tags": {
+        "canoe": "yes",
+        "name": "Gels Å",
+        "oneway": "yes",
+        "waterway": "river",
+        "width": "10",
+        "wikidata": "Q23747629"
+      },
+      "pointCount": 685
+    },
+    {
+      "id": 95683755,
+      "tags": {
+        "highway": "service",
+        "name": "Gelså Rasteplads",
+        "surface": "asphalt"
+      },
+      "pointCount": 6
+    },
+    {
+      "id": 109710641,
+      "tags": {
+        "highway": "track",
+        "motor_vehicle": "yes",
+        "name": "Gelsbrovej",
+        "surface": "gravel",
+        "tracktype": "grade2"
+      },
+      "pointCount": 2
+    },
+    {
+      "id": 152193976,
+      "tags": {
+        "highway": "track",
+        "motor_vehicle": "forestry",
+        "name": "Gelsbrovej",
+        "surface": "gravel",
+        "tracktype": "grade2"
+      },
+      "pointCount": 11
+    },
+    {
+      "id": 152218786,
+      "tags": {
+        "highway": "track",
+        "name": "Gelsbrovej",
+        "surface": "gravel",
+        "tracktype": "grade2"
+      },
+      "pointCount": 12
+    },
+    {
+      "id": 440167729,
+      "tags": {
+        "highway": "track",
+        "motor_vehicle": "yes",
+        "name": "Gelsbrovej",
+        "surface": "gravel",
+        "tracktype": "grade2"
+      },
+      "pointCount": 10
+    },
+    {
+      "id": 823776995,
+      "tags": {
+        "highway": "track",
+        "motor_vehicle": "yes",
+        "name": "Gelsbrovej",
+        "surface": "gravel",
+        "tracktype": "grade2"
+      },
+      "pointCount": 5
+    },
+    {
+      "id": 1242146685,
+      "tags": {
+        "landuse": "aquaculture",
+        "name": "Gelsbro Dambrug"
+      },
+      "pointCount": 28
+    },
+    {
+      "id": 1491649312,
+      "tags": {
+        "layer": "1",
+        "man_made": "bridge",
+        "name": "Gelsbro"
+      },
+      "pointCount": 15
+    }
+  ]
+}
