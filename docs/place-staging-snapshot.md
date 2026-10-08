@@ -24,7 +24,8 @@
 한국어 라벨을 표시하지 않도록 `temporalEligibility` 데이터를 보존했다.
 이것은 동명 또는 근처에 있던 이전 요새·정착촌·유적을 삭제한다는 뜻이 아니다.
 
-동기화 정본 웹 커밋: `eaebf774633555eca50a6d939c23198c075f6994`.
+동기화 정본 웹 커밋(지명 명칭 규칙 개정): `bb37f55130eb896aeb7113f90d4542509dbbb3ff`.
+1~15차 도시 기록은 이번 정책 개정에서 수정·재검수하지 않았다.
 앱 원본 해시: `reports/places/source-manifest.json`에 Git blob SHA로 보존.
 JS `v2-snapshot.test.mjs`는 현대 도시 시작/역사명 전환 및 전체 ID 고유성,
 C++ `place_sync_contract_tests.cpp`는 연도·일자별 한국어 표기 선택 함수를 검증한다.
