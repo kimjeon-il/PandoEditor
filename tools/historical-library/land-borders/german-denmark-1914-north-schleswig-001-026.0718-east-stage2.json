@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "workUnit": "1914-German-Danish-border/0718-east/stage-2",
+  "referenceDate": "1914-07-31",
+  "historicalMap": {
+    "sheet": "0718 Hvidding",
+    "originalSurveyYear": 1878,
+    "catalogPublicationYear": 1880,
+    "possibleLaterCartographicRevisions": "not-dated",
+    "resolution": "1:25,000",
+    "originalMapId": "10006008",
+    "originalPermalink": "https://www.deutschefotothek.de/documents/obj/71051522",
+    "adjacentSheet": "0719 Spandet",
+    "adjacentOriginalMapId": "10006007"
+  },
+  "verificationState": "raster-overlay-prepared / pending-visual-review",
+  "originalRasterAccessible": true,
+  "historicalBoundaryIndependentlyDigitized": false,
+  "historicalScreenDeviationMeasured": false,
+  "masterGeometryModified": false,
+  "candidate": {
+    "sheet0718Km": 11.88108,
+    "westHalfKm": 5.94054,
+    "eastHalfKm": 5.94054,
+    "startLonLat": [
+      8.750261798203894,
+      55.27444861174032
+    ],
+    "endLonLat": [
+      8.833333333333332,
+      55.27205685739951
+    ],
+    "topology": {
+      "westHalfJoiningGapM": 0.0,
+      "eastJoiningGapTo0719M": 0.0,
+      "previousWestStageHausdorffM": 0.0,
+      "lengthPartitionErrorM": -0.0,
+      "eastHalfSimple": true,
+      "combinedSeamSimple": true,
+      "sourceTopologyOnly": true
+    },
+    "modernMappedBoundaryDitchCrossCheck": {
+      "source": "OSM mapped fragments named Grænsegrøften",
+      "independentHistoricalValidation": false,
+      "sampleCount": 121,
+      "medianNearestDitchDistanceM": 4554.0,
+      "shareWithin10m": 0.0,
+      "shareWithin25m": 0.0,
+      "shareWithin100m": 0.0,
+      "warning": "Incomplete contemporary OSM ditch segments. No inference of 1914 position."
+    },
+    "renderDisplayEstimate": {
+      "widthCssPx": 2560,
+      "flatZoom": 64,
+      "simplificationTargetCssPx": 0.5,
+      "candidateDisplayedLengthCssPx": 39.649,
+      "candidateVertexCount": 99,
+      "illustrativeSimplifiedVertexCount": 5,
+      "candidateVersusOwnSimplificationHausdorffCssPx": 0.09693,
+      "independentHistoricReferenceScreenDifferenceCssPx": null,
+      "note": "Simplification is a display-efficiency experiment; it does NOT compare the 1880 historical border with the modern-parish candidate."
+    }
+  },
+  "images": [
+    {
+      "name": "0718-east-overview",
+      "sheets": [
+        "0718"
+      ],
+      "extentLonLat": [
+        8.7422618,
+        55.26405686,
+        8.83333333,
+        55.28926588
+      ],
+      "sourceImage": "0718-east-overview-original.jpg",
+      "candidateOverlayImage": "0718-east-overview-candidate-overlay.jpg",
+      "sourceWmsResponses": [
+        {
+          "sheet": "0718",
+          "mapId": "10006008",
+          "layer": "df_dk_0010001_0718",
+          "contentType": "image/png",
+          "byteLength": 3495156,
+          "sha256": "6a582b587b7a6371af6b641ef8cd2fa153a2f2a575911c20302f4d1850fe74f4"
+        }
+      ],
+      "overlaySha256": "80175541aaa2d0a116451acfbdc4e905caed5bb935f09653a432c5be64c8e7d4",
+      "geometryLengthKm": 5.94054,
+      "humanVisualReviewCompleted": false
+    },
+    {
+      "name": "0718-east-western-detail",
+      "sheets": [
+        "0718"
+      ],
+      "extentLonLat": [
+        8.7422618,
+        55.26474169,
+        8.79784355,
+        55.28889508
+      ],
+      "sourceImage": "0718-east-western-detail-original.jpg",
+      "candidateOverlayImage": "0718-east-western-detail-candidate-overlay.jpg",
+      "sourceWmsResponses": [
+        {
+          "sheet": "0718",
+          "mapId": "10006008",
+          "layer": "df_dk_0010001_0718",
+          "contentType": "image/png",
+          "byteLength": 3759574,
+          "sha256": "c9ec848b37734277e0d574cd7a0ee1a79878d4cb5ecfc09b0b17d4ff6ccc8f0d"
+        }
+      ],
+      "overlaySha256": "a574fc90ebb74325f78373a378cf3bfc6274ebb392b5f7559437fcd7b722424a",
+      "geometryLengthKm": 2.97027,
+      "humanVisualReviewCompleted": false
+    },
+    {
+      "name": "0718-east-eastern-detail",
+      "sheets": [
+        "0718"
+      ],
+      "extentLonLat": [
+        8.78184355,
+        55.26405686,
+        8.83333333,
+        55.28926588
+      ],
+      "sourceImage": "0718-east-eastern-detail-original.jpg",
+      "candidateOverlayImage": "0718-east-eastern-detail-candidate-overlay.jpg",
+      "sourceWmsResponses": [
+        {
+          "sheet": "0718",
+          "mapId": "10006008",
+          "layer": "df_dk_0010001_0718",
+          "contentType": "image/png",
+          "byteLength": 3619356,
+          "sha256": "e68ed28f521ad5ea5e9373562f562a7095fb89a15ab242bcfdd73e8921eb66e0"
+        }
+      ],
+      "overlaySha256": "c67e377757e5943081dfa5dd156f84c0bbd6c097d5bff80b25d9cd45eecccda6",
+      "geometryLengthKm": 2.97027,
+      "humanVisualReviewCompleted": false
+    },
+    {
+      "name": "0718-0719-join",
+      "sheets": [
+        "0718",
+        "0719"
+      ],
+      "extentLonLat": [
+        8.81228702,
+        55.26090123,
+        8.85437432,
+        55.28317382
+      ],
+      "sourceImage": "0718-0719-join-original.jpg",
+      "candidateOverlayImage": "0718-0719-join-candidate-overlay.jpg",
+      "sourceWmsResponses": [
+        {
+          "sheet": "0718",
+          "mapId": "10006008",
+          "layer": "df_dk_0010001_0718",
+          "contentType": "image/png",
+          "byteLength": 1634685,
+          "sha256": "45f77589f79ced58807fe8d9fd59d1f4b0e7a370b927799a40528b3d4305b265"
+        },
+        {
+          "sheet": "0719",
+          "mapId": "10006007",
+          "layer": "df_dk_0010001_0719",
+          "contentType": "image/png",
+          "byteLength": 1554157,
+          "sha256": "f5e3fb7572edd9357cc189d43e2e6c27480e97884ee07ce87d0b82e5e1789b24"
+        }
+      ],
+      "overlaySha256": "957c25a5fe5599ac38337abd3d99fa3e0bb8a16eb3a6317cc95bb04fc92497fe",
+      "geometryLengthKm": 1.8,
+      "humanVisualReviewCompleted": false
+    }
+  ],
+  "historicalVisualInspection": {
+    "performed": false,
+    "largeVisiblePathMismatch": "not-evaluated",
+    "historicalOwnershipOrCourseMismatch": "not-evaluated",
+    "revisionDate1887BorderStationIssue": "unresolved-following-stage1",
+    "screenStopRule": "Do not claim historical 0.5 CSS px deviation without an independently interpreted period boundary."
+  },
+  "reviewArtifactPath": "tools/historical-library/review-output/north-schleswig-1914-001-026/0718-east",
+  "githubActionsRunId": "37804067432",
+  "reviewRequired": [
+    "Visually compare historical boundary marks and current red candidate in both details.",
+    "Check whether historical border follows the same village/stream course.",
+    "Inspect handover near 0719 Spandet; do not confuse polygon continuity with period-map proof.",
+    "Review exceptions even when below 0.5 CSS px; stop meaningless subpixel refinements.",
+    "Preserve date/revision uncertainty, notably rail facilities in maps catalogued as 1880."
+  ]
+}
