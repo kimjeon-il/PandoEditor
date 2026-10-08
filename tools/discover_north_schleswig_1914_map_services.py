@@ -62,7 +62,7 @@ def post_search(session, base, keyword):
         "_source": FIELDS,
         "query": {"multi_match": {
             "query": keyword,
-            "fields": ["title^4", "title_long^3", "keywords^2", "description"],
+            "fields": ["title^4", "title_long^3"],
             "type": "best_fields",
             "operator": "or"
         }},
