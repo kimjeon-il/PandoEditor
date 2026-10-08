@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "workUnit": "1914-German-Danish-border/0719-Spandet/stage-3",
+  "referenceDate": "1914-07-31",
+  "mapSource": {
+    "sheetId": "0719",
+    "title": "Spandet",
+    "scaleDenominator": 25000,
+    "surveyYear": 1878,
+    "catalogPublicationYear": 1880,
+    "lastCartographicRevisionDate": "unverified",
+    "deutscheFotothekUrl": "https://www.deutschefotothek.de/documents/obj/71051523",
+    "slubWmsId": "10006007",
+    "slubWmsLayer": "df_dk_0010001_0719"
+  },
+  "screenReviewPolicy": {
+    "mapCssWidth": 2560,
+    "webFlatZoomMax": 64,
+    "independentHistoryVisualTolerancePx": 0.5,
+    "independentHistoricalLineDigitized": false,
+    "historicLineDisplacementPx": null,
+    "thresholdPassed": null
+  },
+  "candidateStatus": "provisional-only-do-not-promote",
+  "historicalCartographicReviewPerformed": false,
+  "historicalMapSourceRasterAccessible": true,
+  "geometrySourceModified": false,
+  "geometry": {
+    "candidateLengthKm": 8.51496,
+    "startLonLat": [
+      8.833333333333332,
+      55.27205685739951
+    ],
+    "endLonLat": [
+      8.926995045276211,
+      55.29999999999999
+    ],
+    "startMatches0718DistanceM": 0.0,
+    "matchesStage2EndpointDistanceM": 0.0,
+    "endMatches0619DistanceM": 0.0,
+    "startToWorkingMasterDistanceM": 7.9e-05,
+    "endToWorkingMasterDistanceM": 1e-06,
+    "isSimple": true,
+    "westSheetSeamIsSimple": true,
+    "eastSheetSeamIsSimple": true,
+    "candidateVsOwnSimplification": {
+      "widthCssPx": 2560,
+      "flatZoom": 64,
+      "simplificationTargetCssPx": 0.5,
+      "candidateDisplayedLengthCssPx": 52.071,
+      "candidateVertexCount": 305,
+      "illustrativeSimplifiedVertexCount": 10,
+      "candidateVersusOwnSimplificationHausdorffCssPx": 0.37094,
+      "independentHistoricReferenceScreenDifferenceCssPx": null,
+      "note": "Simplification is a display-efficiency experiment; it does NOT compare the 1880 historical border with the modern-parish candidate."
+    },
+    "sourceTopologyOnly": true
+  },
+  "images": [
+    {
+      "panel": "0719-overview",
+      "title": "Spandet 0719 complete",
+      "sourceSheets": [
+        "0719"
+      ],
+      "candidateLengthKm": 8.51496,
+      "bboxLonLat": [
+        8.83333333,
+        55.26113587,
+        8.93656728,
+        55.3
+      ],
+      "sourceJpeg": "0719-overview-source.jpg",
+      "overlayJpeg": "0719-overview-overlay.jpg",
+      "sourceWms": [
+        {
+          "sheetId": "0719",
+          "catalogPublicationYear": 1880,
+          "wmsMapId": "10006007",
+          "wmsLayer": "df_dk_0010001_0719",
+          "wmsPngSha256": "83015fadd912f68d34feb1bdcec5087a32606b9458f35640ef2f9b416480a21e",
+          "wmsImageBytes": 4566603,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "cd771fb8b8f2f09190fa8b70f4f8c63630b924d3665e045f248696030eef39cf",
+      "historicBoundaryVisuallyReviewed": false
+    },
+    {
+      "panel": "0719-west",
+      "title": "Spandet 0719 western third",
+      "sourceSheets": [
+        "0719"
+      ],
+      "candidateLengthKm": 2.83832,
+      "bboxLonLat": [
+        8.83333333,
+        55.26113587,
+        8.8790238,
+        55.28379694
+      ],
+      "sourceJpeg": "0719-west-source.jpg",
+      "overlayJpeg": "0719-west-overlay.jpg",
+      "sourceWms": [
+        {
+          "sheetId": "0719",
+          "catalogPublicationYear": 1880,
+          "wmsMapId": "10006007",
+          "wmsLayer": "df_dk_0010001_0719",
+          "wmsPngSha256": "2bf69db4db7b07ad2e073c36733c28bfb33abc5b0ab62a322b953b7b4a7cd383",
+          "wmsImageBytes": 3253771,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "46b747a03435e709c2e32e2c2b5ad09324b6eb5a05cef37c38ebf2a933d63b3c",
+      "historicBoundaryVisuallyReviewed": false
+    },
+    {
+      "panel": "0719-middle",
+      "title": "Spandet 0719 central third",
+      "sourceSheets": [
+        "0719"
+      ],
+      "candidateLengthKm": 2.83832,
+      "bboxLonLat": [
+        8.8610238,
+        55.26979694,
+        8.9175423,
+        55.28776056
+      ],
+      "sourceJpeg": "0719-middle-source.jpg",
+      "overlayJpeg": "0719-middle-overlay.jpg",
+      "sourceWms": [
+        {
+          "sheetId": "0719",
+          "catalogPublicationYear": 1880,
+          "wmsMapId": "10006007",
+          "wmsLayer": "df_dk_0010001_0719",
+          "wmsPngSha256": "189bebd1b09598e89d2146c89b4124cf24114ffeee9493899064fbbad6561472",
+          "wmsImageBytes": 2917468,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "29337ab6234ce5fceab932e41846c24d1ce2f656aea7b4f0eb93440c127fedbd",
+      "historicBoundaryVisuallyReviewed": false
+    },
+    {
+      "panel": "0719-east",
+      "title": "Spandet 0719 eastern third",
+      "sourceSheets": [
+        "0719"
+      ],
+      "candidateLengthKm": 2.83832,
+      "bboxLonLat": [
+        8.8995423,
+        55.27376056,
+        8.93656728,
+        55.3
+      ],
+      "sourceJpeg": "0719-east-source.jpg",
+      "overlayJpeg": "0719-east-overlay.jpg",
+      "sourceWms": [
+        {
+          "sheetId": "0719",
+          "catalogPublicationYear": 1880,
+          "wmsMapId": "10006007",
+          "wmsLayer": "df_dk_0010001_0719",
+          "wmsPngSha256": "eaa6ce702226ef559fa7f890c84f1aed57661815f79fe770839e7a492b9ea606",
+          "wmsImageBytes": 3588852,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "f7e645acb1638c8c033a6af2705082b8267a4497aedc188ecba168ce345b9459",
+      "historicBoundaryVisuallyReviewed": false
+    },
+    {
+      "panel": "0718-0719-west-seam",
+      "title": "0718 Hvidding -> 0719 Spandet",
+      "sourceSheets": [
+        "0718",
+        "0719"
+      ],
+      "candidateLengthKm": 1.3,
+      "bboxLonLat": [
+        8.81490804,
+        55.26278389,
+        8.85175618,
+        55.28132785
+      ],
+      "sourceJpeg": "0718-0719-west-seam-source.jpg",
+      "overlayJpeg": "0718-0719-west-seam-overlay.jpg",
+      "sourceWms": [
+        {
+          "sheetId": "0718",
+          "catalogPublicationYear": 1880,
+          "wmsMapId": "10006008",
+          "wmsLayer": "df_dk_0010001_0718",
+          "wmsPngSha256": "f9c442d851d790b78daf302743aca177c72ba0fc81a86063cd20f1c008c7d3d2",
+          "wmsImageBytes": 1219240,
+          "httpStatus": 200
+        },
+        {
+          "sheetId": "0719",
+          "catalogPublicationYear": 1880,
+          "wmsMapId": "10006007",
+          "wmsLayer": "df_dk_0010001_0719",
+          "wmsPngSha256": "b52c2dc21617ca775d5afd5cc8369947ff55781eb2e8a3401bd443e52aac9409",
+          "wmsImageBytes": 1168703,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "4a5ff53e7e18840ffa885323a24d1bbf6c783fb8c3d7f9f980eaffb05f2b0904",
+      "historicBoundaryVisuallyReviewed": false
+    },
+    {
+      "panel": "0719-0619-north-seam",
+      "title": "0719 Spandet -> 0619 Hugum",
+      "sourceSheets": [
+        "0719",
+        "0619"
+      ],
+      "candidateLengthKm": 1.3,
+      "bboxLonLat": [
+        8.91395431,
+        55.28922473,
+        8.93656728,
+        55.30995496
+      ],
+      "sourceJpeg": "0719-0619-north-seam-source.jpg",
+      "overlayJpeg": "0719-0619-north-seam-overlay.jpg",
+      "sourceWms": [
+        {
+          "sheetId": "0719",
+          "catalogPublicationYear": 1880,
+          "wmsMapId": "10006007",
+          "wmsLayer": "df_dk_0010001_0719",
+          "wmsPngSha256": "7f2f4df3750c4548d4805d7c59603f94c8e8ceac9040631620c3349bf385f387",
+          "wmsImageBytes": 1046213,
+          "httpStatus": 200
+        },
+        {
+          "sheetId": "0619",
+          "catalogPublicationYear": 1878,
+          "wmsMapId": "10006020",
+          "wmsLayer": "df_dk_0010001_0619",
+          "wmsPngSha256": "2339b6d3aac1e9832e9d18b179a62f2d6811672c55673604eba25a650211c52c",
+          "wmsImageBytes": 1249912,
+          "httpStatus": 200
+        }
+      ],
+      "overlaySha256": "23542893988d7736b870313d1db588b397a722b39b8b091081d9e21da8b20214",
+      "historicBoundaryVisuallyReviewed": false
+    }
+  ],
+  "githubActionsRunId": "37807681078",
+  "artifactDir": "tools/historical-library/review-output/north-schleswig-1914-001-026/0719-spandet",
+  "historicalMapObservations": {
+    "largeRouteMismatch": "not-yet-visually-reviewed",
+    "riverAndParishFollowing": "not-yet-visually-reviewed",
+    "boundaryStoneLabels": "not-yet-visually-reviewed",
+    "historicalDateAndTerritoryReview": "not-yet-verified"
+  },
+  "unresolved": [
+    "Visual comparison of original mapped international frontier and current candidate across three panels.",
+    "Historical publication/survey dates alone do not establish final map revision as of July 1914.",
+    "The independent 1914 historic boundary has not been digitized; the 0.5px historical threshold is untested.",
+    "No candidate coordinates may be promoted solely because internal joins and LOD checks pass.",
+    "Confirm eastern sheet-transition map content around 55.300N before 0619 verification."
+  ]
+}
