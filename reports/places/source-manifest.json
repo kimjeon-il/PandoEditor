@@ -1,13 +1,13 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "7438ea76d51a9cf2d79c91380a9f9bdfb398cb6c",
+  "webCommit": "eacb6101f35fcc98261d3a3624b4f77fa27b577f",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
     {
       "path": "reports/places/tier1-major-cities-batch01.json",
-      "gitBlobSha": "03f8df3788305d16c7e323e68d803bf0aee637ee"
+      "gitBlobSha": "a41fa7d25787dd6b12f3228361fd0de4e3046ece"
     },
     {
       "path": "reports/places/tier1-major-cities-batch02-east-asia.json",
@@ -39,7 +39,7 @@
     },
     {
       "path": "reports/places/historical-display-policy.json",
-      "gitBlobSha": "2d0fbbef2baf5bc746332331279750cfd2212cf5"
+      "gitBlobSha": "695879f1a077c1cef12753be13504306f842d9f4"
     },
     {
       "path": "reports/places/korean-map-label-policy.json",
