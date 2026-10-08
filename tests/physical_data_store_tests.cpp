@@ -86,6 +86,11 @@ void PhysicalDataStoreTests::pinnedTerrainMetadataSeedsAndRejectsAlteredBytes() 
 void PhysicalDataStoreTests::inventoryRejectsEscapesAndParsesIdentity() {
         const auto good=parsePhysicalInventory(R"({"schema":"pandoeditor-physical-inventory","version":1,"dataset":"terrain","datasetVersion":"v1","baseUrl":"https://example.invalid/data/","assets":[{"path":"0/0-0.webp","bytes":3,"sha256":"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"}]})");
         QVERIFY2(good.valid(),qPrintable(good.error));QCOMPARE(good.assets.size(),1);QCOMPARE(good.assets.front().path,QString("0/0-0.webp"));
+        const auto overridden=parsePhysicalInventory(R"({"schema":"pandoeditor-physical-inventory","version":1,"dataset":"world","datasetVersion":"v1","baseUrl":"https://raw.githubusercontent.com/example/old/assets/data/","assets":[{"path":"hydro/v0.13.1/manifest.json","bytes":3,"sha256":"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad","sourceUrl":"https://raw.githubusercontent.com/example/new/assets/data/hydro/v0.13.1/manifest.json"}]})");
+        QVERIFY(overridden.valid());
+        QCOMPARE(overridden.assets.front().url.path(),QString("/example/new/assets/data/hydro/v0.13.1/manifest.json"));
+        const auto unsafeSource=parsePhysicalInventory(R"({"schema":"pandoeditor-physical-inventory","version":1,"dataset":"world","datasetVersion":"v1","baseUrl":"https://raw.githubusercontent.com/example/old/assets/data/","assets":[{"path":"hydro/v0.13.1/manifest.json","bytes":3,"sha256":"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad","sourceUrl":"https://example.invalid/new/assets/data/hydro/v0.13.1/manifest.json"}]})");
+        QVERIFY(!unsafeSource.valid());
         for(const auto& path:{QString("../escape"),QString("/absolute"),QString("a\\b")}) {
             auto json=QByteArray(R"({"schema":"pandoeditor-physical-inventory","version":1,"dataset":"terrain","datasetVersion":"v1","baseUrl":"https://example.invalid/","assets":[{"path":"PATH","bytes":3,"sha256":"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"}]})");
             json.replace("PATH",path.toUtf8());QVERIFY(!parsePhysicalInventory(json).valid());
@@ -155,6 +160,19 @@ void PhysicalDataStoreTests::pinnedInventoryAndViewportSelectionAreLazy() {
     QCOMPARE(inventory.assets.size(),342);
     QVERIFY(std::any_of(inventory.assets.cbegin(),inventory.assets.cend(),[](const auto& asset){return asset.path=="terrain/v0.12.6/4/21-10.webp";}));
     QVERIFY(std::any_of(inventory.assets.cbegin(),inventory.assets.cend(),[](const auto& asset){return asset.path=="hydro/v0.13.0/shards/s2.bin";}));
+    const auto hydroManifest=std::find_if(inventory.assets.cbegin(),inventory.assets.cend(),[](const auto& asset){
+        return asset.path=="hydro/v0.13.1/manifest.json";
+    });
+    const auto hydroCore=std::find_if(inventory.assets.cbegin(),inventory.assets.cend(),[](const auto& asset){
+        return asset.path=="hydro/v0.13.1/metadata-core.json.gz";
+    });
+    QVERIFY(hydroManifest!=inventory.assets.cend());QVERIFY(hydroCore!=inventory.assets.cend());
+    QCOMPARE(hydroManifest->sha256,QString("c10eaffd375d5f0d90955fa253b02ec73d9daeff261fa5cfde1f73ca89d2bd80"));
+    QCOMPARE(hydroCore->sha256,QString("700b886134bbc44fa7686f8f2c131be53a73a5c2ebaabb468b50ea3e4000cee5"));
+    QCOMPARE(hydroCore->bytes,qint64(729625));
+    const auto upstream=QStringLiteral("https://raw.githubusercontent.com/kimjeon-il/Pando/a87f4d27fb1bc16528aa57242ecb52e28e4550b2/assets/data/");
+    QCOMPARE(hydroManifest->url.toString(),upstream+hydroManifest->path);
+    QCOMPARE(hydroCore->url.toString(),upstream+hydroCore->path);
 
     const QByteArray manifest=R"({"version":"0.12.6","crs":"EPSG:4326","tileFormat":"lossless WebP RGBA","gutter":1,"levels":[{"id":0,"width":1350,"height":675,"columns":2,"rows":1,"tileSize":1024},{"id":1,"width":2700,"height":1350,"columns":3,"rows":2,"tileSize":1024},{"id":2,"width":5400,"height":2700,"columns":6,"rows":3,"tileSize":1024},{"id":3,"width":10800,"height":5400,"columns":11,"rows":6,"tileSize":1024},{"id":4,"width":21600,"height":10800,"columns":22,"rows":11,"tileSize":1024}]})";
     QStringList resolved;TerrainTileProvider provider(manifest,QString(),[&](const QString& path){resolved.push_back(path);return path;});
