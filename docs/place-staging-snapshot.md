@@ -1,28 +1,34 @@
-# 웹·앱 대도시 목록 동기화
+# 웹·앱 검수 도시 동기화
 
-검수된 도시 **59개**, 배치 **9개**. 9개는 도시의 수가 아니라 검수 배치 파일의 수다.
-배치별 도시 수: 9, 9, 7, 5, 5, 4, 8, 8, 4개.
+웹 정본 10개 배치의 검수 도시 **63개**를 앱에 보존한다.
+각 배치 도시 수: 9, 9, 7, 5, 5, 4, 8, 8, 4, 4개.
+여기서 '10개'는 도시 수가 아니라 검수 배치 파일 수다.
 
-## 9차: 발트 3국 및 벨라루스 수도
+## 10차: 발칸·동남유럽 수도
 
-- 탈린 (588409): 에스토니아어 Tallinn, 역사적 독일어 Reval 및 러시아어 Ревель
-- 리가 (456172): 라트비아어 Rīga, 영어 Riga
-- 빌뉴스 (593116): 리투아니아어 Vilnius, 폴란드어 Wilno(역사적·언어적 변이)
-- 민스크 (625144): 벨라루스어 Мінск, 러시아어 Минск
+| 한국어 | GeoNames ID | 영어 | 대표 원어 | 검수 내용 |
+|---|---:|---|---|---|
+| 베오그라드 | 792680 | Belgrade | Београд / Beograd | 튀르키예어 Belgrad 및 세르비아어 로마자·키릴 문자 구분 |
+| 소피아 | 727011 | Sofia | София | 중세 Sredets와 1879-04-03 공국 수도 지정 구분 |
+| 자그레브 | 3186886 | Zagreb | Zagreb | 독일어 Agram, 헝가리어 Zágráb; 1850-09-07 행정 통합 |
+| 류블랴나 | 3196359 | Ljubljana | Ljubljana | 독일어 Laibach, 1809~1813년 일리리아주 수도 지위 |
 
-4개 모두 GeoNames P/PPLC 취락이며 동일 이름을 가진 ADM 행정구역과 구별한다.
-구체적인 역사적 지명 변이의 일별 자동 전환은 독립된 사료가 없는 한 설정하지 않았다.
+- 신규 도시 4개는 모두 GeoNames P/PPLC 취락 객체다. 동명 ADM 행정구역과 구별한다.
+- 통치권·수도 지위·시 행정구역 변경은 이름이 바뀌었다는 증거가 아니다.
+- 역사명·외국어명은 `names[]`에 보존하며 일별 전환을 근거 없이 생성하지 않는다.
+- 1801년은 역사 지명 검증의 시작연도이지 현행 한국어 표기가 1801년에 사용됐다는 증거가 아니다.
 
-## 출처 및 검증
+## 출처와 일치 검사
 
-- 웹 원본 검수 자료: `kimjeon-il/Pando` 커밋 `6a69ad1a25d7ed3f7b7b3ed6ade116a83df44b4c`
-- 앱 `reports/places/tier1-major-cities-batch*.json`: 웹 원본 복사본
-- `reports/places/source-manifest.json`: 원본 Git blob SHA 및 9배치/59도시 ID 수
-- `tools/place-runtime-contract/v2-snapshot.test.mjs` 및 `tests/place_sync_contract_tests.cpp`: 소스 해시·배치별 건수·ID 중복 검증
+- 웹 원본: `kimjeon-il/Pando` `2e6ab377366611c39184809f80f4837305d95778`.
+- 앱 원본 복사본: `reports/places/tier1-major-cities-batch*.json`.
+- `reports/places/source-manifest.json`: 배치별 ID 수와 원본 Git blob SHA.
+- `tools/place-runtime-contract/v2-snapshot.test.mjs` 및
+  `tests/place_sync_contract_tests.cpp`: 배치 누락·중복·원본 해시 검증.
+- 검사 코드의 배치 개수/누적 도시 개수는 이제 목록에서 파생한다.
+  매번 9→10, 59→63 같은 수동 하드코딩 수정을 하지 않아도 된다.
+- 10차 GeoNames ID는 독립적인 고정 회귀 사례로 유지한다.
 
-기존 `contracts/places/v2.json`의 4개 대표 검증 사례는 별도로 고정되어 있으며,
-9차 신규 검수 자료에 대한 자동 런타임 변환은 아직 없다.
-
-주의: **웹·앱 둘 다 지도용 PLAC v2 manifest는 비어 있음.**
-검수 목록 59개를 모두 지도에 표시하려면 지명 타일 빌드와 게시가 별도로 필요하다.
-GeoNames 후보 32,277건을 전체 검증 완료로 취급하지 않는다.
+별도의 GeoNames 지명 후보 32,277건은 전체 검수 완료가 아니다.
+웹과 앱의 지도용 PLAC v2 manifest는 아직 비어 있으며, 검수 도시 63개를
+실제 지도에 표시하려면 검수 staging → 바이너리 타일/검색 인덱스 게시가 필요하다.

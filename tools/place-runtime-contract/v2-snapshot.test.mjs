@@ -21,9 +21,13 @@ test('native branch retains the exact Web-pinned v2 exchange artifact', () => {
   assert.deepEqual(names.domain.defaultLanguages, { ko: true, en: false, native: false });
 });
 
-test('all verified review snapshots remain byte-identical to Web commit', () => {
-  assert.equal(sourceManifest.webCommit, '5904ada19c68919116f277723be7e3e9523b096c');
-  assert.equal(sourceManifest.files.length, 11);
+test('all verified review snapshots remain byte-identical to pinned Web blobs', () => {
+  assert.match(sourceManifest.webCommit, /^[0-9a-f]{40}$/u);
+  assert.ok(sourceManifest.files.length > 2);
+  const paths = sourceManifest.files.map(entry => entry.path);
+  assert.equal(new Set(paths).size, paths.length, 'Duplicate mirrored file');
+  for (const policy of ['historical-display-policy.json', 'korean-map-label-policy.json'])
+    assert.ok(paths.includes('reports/places/' + policy), 'Missing review policy ' + policy);
   for (const entry of sourceManifest.files) {
     assert.match(entry.path, /^reports\/places\/[a-z0-9.-]+\.json$/u);
     assert.equal(blobId(file(entry.path)), entry.gitBlobSha, entry.path);
@@ -32,12 +36,15 @@ test('all verified review snapshots remain byte-identical to Web commit', () => 
 
 test('reviewed city inventory matches every copied Web batch without ID duplication', () => {
   const inventory=sourceManifest.reviewInventory;
-  assert.equal(inventory.batchCount, 9);
-  assert.equal(inventory.recordCount, 59);
-  assert.equal(inventory.distinctGeoNames, 59);
+  assert.ok(Number.isSafeInteger(inventory.batchCount) && inventory.batchCount > 0);
+  assert.ok(Number.isSafeInteger(inventory.recordCount) && inventory.recordCount > 0);
+  assert.equal(inventory.distinctGeoNames, inventory.recordCount);
+  assert.equal(inventory.byBatch.length, inventory.batchCount);
   const copies=sourceManifest.files.filter(entry=>
     entry.path.startsWith('reports/places/tier1-major-cities-batch') && entry.path.endsWith('.json'));
   assert.equal(copies.length,inventory.batchCount);
+  assert.deepEqual(copies.map(x=>x.path).sort(),inventory.byBatch.map(x=>x.path).sort(),
+    'Copied batch source list differs from recorded review inventory');
   const seen=new Set();
   let total=0;
   for (const batch of inventory.byBatch) {
@@ -54,6 +61,24 @@ test('reviewed city inventory matches every copied Web batch without ID duplicat
   }
   assert.equal(total,inventory.recordCount);
   assert.equal(seen.size,inventory.distinctGeoNames);
+});
+
+
+test('batch 10 contains the four independently checked Balkan capitals', () => {
+  const records=json('reports/places/tier1-major-cities-batch10-balkan-southeast-europe.json').records;
+  assert.deepEqual(records.map(record=>record.geonameId),
+    [792680,727011,3186886,3196359]);
+  assert.deepEqual(records.map(record=>record.defaultDisplayNameKo),
+    ['베오그라드','소피아','자그레브','류블랴나']);
+  for (const record of records) {
+    assert.equal(record.featureClass,'P');
+    assert.equal(record.featureCode,'PPLC');
+    assert.ok(record.names.some(row=>row.language==='ko'&&row.text===record.defaultDisplayNameKo));
+    assert.ok(record.names.some(row=>row.language==='en'&&row.usage==='standard'));
+    assert.ok(record.names.some(row=>!['ko','en'].includes(row.language)&&row.usage==='standard'));
+    assert.ok(record.displayTimeline[0].fromYear===1801);
+    assert.ok([...record.shortDescriptionKo].length<=28);
+  }
 });
 
 test('portable multilingual rows and provenance match reviewed city records', () => {

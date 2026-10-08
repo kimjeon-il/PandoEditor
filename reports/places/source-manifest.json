@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "5904ada19c68919116f277723be7e3e9523b096c",
+  "webCommit": "2e6ab377366611c39184809f80f4837305d95778",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -48,12 +48,16 @@
     {
       "path": "reports/places/tier1-major-cities-batch09-baltic-belarus-capitals.json",
       "gitBlobSha": "c9c1ec87b1e8a1d04f5c11b1978cecabdc47ec84"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch10-balkan-southeast-europe.json",
+      "gitBlobSha": "e1e5d24c2be5002a6d72498387c5f848de35373b"
     }
   ],
   "reviewInventory": {
-    "batchCount": 9,
-    "recordCount": 59,
-    "distinctGeoNames": 59,
+    "batchCount": 10,
+    "recordCount": 63,
+    "distinctGeoNames": 63,
     "byBatch": [
       {
         "path": "reports/places/tier1-major-cities-batch01.json",
@@ -89,6 +93,10 @@
       },
       {
         "path": "reports/places/tier1-major-cities-batch09-baltic-belarus-capitals.json",
+        "recordCount": 4
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch10-balkan-southeast-europe.json",
         "recordCount": 4
       }
     ]

@@ -9,6 +9,7 @@
 #include <QJsonObject>
 #include <QSignalSpy>
 #include <QSet>
+#include <QRegularExpression>
 #include <QTemporaryDir>
 #include <QUrl>
 #include <QtTest>
@@ -78,19 +79,31 @@ private slots:
         QFile manifest(root+"/reports/places/source-manifest.json");
         QVERIFY(manifest.open(QIODevice::ReadOnly));
         const auto report=QJsonDocument::fromJson(manifest.readAll()).object();
-        QCOMPARE(report.value("webCommit").toString(),
-            QStringLiteral("5904ada19c68919116f277723be7e3e9523b096c"));
+        const auto sourceCommit=report.value("webCommit").toString();
+        QVERIFY(QRegularExpression("^[a-f0-9]{40}$").match(sourceCommit).hasMatch());
         const auto files=report.value("files").toArray();
-        QCOMPARE(files.size(),11);
+        QVERIFY(files.size()>2);
         const auto inventory=report.value("reviewInventory").toObject();
-        QCOMPARE(inventory.value("batchCount").toInt(),9);
-        QCOMPARE(inventory.value("recordCount").toInt(),59);
-        QCOMPARE(inventory.value("distinctGeoNames").toInt(),59);
+        QVERIFY(inventory.value("batchCount").toInt()>0);
+        QVERIFY(inventory.value("recordCount").toInt()>0);
+        QCOMPARE(inventory.value("distinctGeoNames").toInt(),
+                 inventory.value("recordCount").toInt());
+        const auto batches=inventory.value("byBatch").toArray();
+        QCOMPARE(batches.size(),inventory.value("batchCount").toInt());
+        QSet<QString> mirroredFiles;
+        for(const auto& item:files) {
+            const auto path=item.toObject().value("path").toString();
+            QVERIFY(!mirroredFiles.contains(path));
+            mirroredFiles.insert(path);
+        }
+        QVERIFY(mirroredFiles.contains("reports/places/historical-display-policy.json"));
+        QVERIFY(mirroredFiles.contains("reports/places/korean-map-label-policy.json"));
         int examined=0;QSet<int> ids;
         for(const auto& item:inventory.value("byBatch").toArray()) {
             const auto meta=item.toObject();
             const auto relative=meta.value("path").toString();
             QVERIFY(relative.startsWith("reports/places/tier1-major-cities-batch")&&!relative.contains(".."));
+            QVERIFY(mirroredFiles.contains(relative));
             QFile reviewed(root+"/"+relative);QVERIFY(reviewed.open(QIODevice::ReadOnly));
             const auto rows=QJsonDocument::fromJson(reviewed.readAll()).object().value("records").toArray();
             QCOMPARE(rows.size(),meta.value("recordCount").toInt());
@@ -100,7 +113,9 @@ private slots:
                 QVERIFY(id>0);QVERIFY(!ids.contains(id));ids.insert(id);
             }
         }
-        QCOMPARE(examined,59);QCOMPARE(ids.size(),59);
+        QCOMPARE(examined,inventory.value("recordCount").toInt());
+        QCOMPARE(ids.size(),inventory.value("distinctGeoNames").toInt());
+        QCOMPARE(files.size(),batches.size()+2);
         for(const auto& value:files) {
             const auto row=value.toObject();
             const auto path=row.value("path").toString();
