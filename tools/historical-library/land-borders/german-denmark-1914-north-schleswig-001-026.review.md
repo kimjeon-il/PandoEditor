@@ -22,7 +22,7 @@
 * \`german-denmark-1914-north-schleswig-001-026.geojson\` — 작업 후보선.
 * \`german-denmark-1914-north-schleswig-001-026.diagnostics.json\` — 생성 당시의 수치.
 * \`german-denmark-1914-north-schleswig-001-026.audit.json\` — 최신 재검증 결과.
-* \`../../../../audit_north_schleswig_1914_001_026.py\` — 검사 실행 파일.
+* \`../../audit_north_schleswig_1914_001_026.py\` — 검사 실행 파일.
 
 - LineString 1개, 좌표 1,343점, 전체 약 26.683km, 자체 교차 없음.
 - 표석 1 및 Gels Å 기록상 끝점과 정합. **현대자료 내부 정합성이지 사료 독립검증이 아님.**
