@@ -1,0 +1,198 @@
+{
+  "type": "FeatureCollection",
+  "name": "german-denmark-1914-north-schleswig-001-026-messtischblatt-footprints",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "sheetId": "0719",
+        "title": "Spandet",
+        "publicationYear": 1880,
+        "surveyYear": 1878,
+        "publicationBeforeReferenceDate": true,
+        "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
+        "candidateLengthKm": 5.99299,
+        "extentLonLat": [
+          8.833333333,
+          55.3,
+          9.0,
+          55.4
+        ],
+        "geometryType": "MultiLineString",
+        "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051523"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.999999999999998,
+              55.3
+            ],
+            [
+              8.999999999999998,
+              55.4
+            ],
+            [
+              8.833333333333332,
+              55.4
+            ],
+            [
+              8.833333333333332,
+              55.3
+            ],
+            [
+              8.999999999999998,
+              55.3
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "sheetId": "0817",
+        "title": "Kirkeby",
+        "publicationYear": 1880,
+        "surveyYear": 1878,
+        "publicationBeforeReferenceDate": true,
+        "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
+        "candidateLengthKm": 0.2938,
+        "extentLonLat": [
+          8.5,
+          55.2,
+          8.666666667,
+          55.3
+        ],
+        "geometryType": "MultiLineString",
+        "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051540"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.666666666666666,
+              55.199999999999996
+            ],
+            [
+              8.666666666666666,
+              55.3
+            ],
+            [
+              8.5,
+              55.3
+            ],
+            [
+              8.5,
+              55.199999999999996
+            ],
+            [
+              8.666666666666666,
+              55.199999999999996
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "sheetId": "0818",
+        "title": "Bröns",
+        "publicationYear": 1919,
+        "surveyYear": 1878,
+        "publicationBeforeReferenceDate": false,
+        "sourceReviewStatus": "post-1914-edition-not-eligible",
+        "candidateLengthKm": 11.88108,
+        "extentLonLat": [
+          8.666666667,
+          55.2,
+          8.833333333,
+          55.3
+        ],
+        "geometryType": "MultiLineString",
+        "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051541"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.833333333333332,
+              55.199999999999996
+            ],
+            [
+              8.833333333333332,
+              55.3
+            ],
+            [
+              8.666666666666666,
+              55.3
+            ],
+            [
+              8.666666666666666,
+              55.199999999999996
+            ],
+            [
+              8.833333333333332,
+              55.199999999999996
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "sheetId": "0819",
+        "title": "Arrild",
+        "publicationYear": 1880,
+        "surveyYear": 1878,
+        "publicationBeforeReferenceDate": true,
+        "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
+        "candidateLengthKm": 8.51496,
+        "extentLonLat": [
+          8.833333333,
+          55.2,
+          9.0,
+          55.3
+        ],
+        "geometryType": "MultiLineString",
+        "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051542"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.999999999999998,
+              55.199999999999996
+            ],
+            [
+              8.999999999999998,
+              55.3
+            ],
+            [
+              8.833333333333332,
+              55.3
+            ],
+            [
+              8.833333333333332,
+              55.199999999999996
+            ],
+            [
+              8.999999999999998,
+              55.199999999999996
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

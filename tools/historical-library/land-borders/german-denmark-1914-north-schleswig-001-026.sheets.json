@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "referenceDate": "1914-07-31",
+  "candidateId": "land-border:deu-dnk:1914:north-schleswig:001-026",
+  "candidateStatus": "working-master-needs-historical-map-review",
+  "comparisonMethod": "WGS84 6arcmin x 10arcmin grid; projected line lengths EPSG:25832",
+  "referenceGrid": {
+    "northLatitude": 56.0,
+    "westLongitude": 5.833333333333333,
+    "heightDegrees": 0.1,
+    "widthDegrees": 0.16666666666666666
+  },
+  "historicalRasterComparisonPerformed": false,
+  "catalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+  "sheetCount": 4,
+  "candidateLengthKm": 26.68283,
+  "sheetLengthSumKm": 26.68283,
+  "sheetCoverageDifferenceM": 0.0,
+  "anyUnavailablePre1914Edition": true,
+  "sheets": [
+    {
+      "sheetId": "0719",
+      "title": "Spandet",
+      "publicationYear": 1880,
+      "surveyYear": 1878,
+      "publicationBeforeReferenceDate": true,
+      "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
+      "candidateLengthKm": 5.99299,
+      "extentLonLat": [
+        8.833333333,
+        55.3,
+        9.0,
+        55.4
+      ],
+      "geometryType": "MultiLineString",
+      "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051523"
+    },
+    {
+      "sheetId": "0817",
+      "title": "Kirkeby",
+      "publicationYear": 1880,
+      "surveyYear": 1878,
+      "publicationBeforeReferenceDate": true,
+      "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
+      "candidateLengthKm": 0.2938,
+      "extentLonLat": [
+        8.5,
+        55.2,
+        8.666666667,
+        55.3
+      ],
+      "geometryType": "MultiLineString",
+      "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051540"
+    },
+    {
+      "sheetId": "0818",
+      "title": "Bröns",
+      "publicationYear": 1919,
+      "surveyYear": 1878,
+      "publicationBeforeReferenceDate": false,
+      "sourceReviewStatus": "post-1914-edition-not-eligible",
+      "candidateLengthKm": 11.88108,
+      "extentLonLat": [
+        8.666666667,
+        55.2,
+        8.833333333,
+        55.3
+      ],
+      "geometryType": "MultiLineString",
+      "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051541"
+    },
+    {
+      "sheetId": "0819",
+      "title": "Arrild",
+      "publicationYear": 1880,
+      "surveyYear": 1878,
+      "publicationBeforeReferenceDate": true,
+      "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
+      "candidateLengthKm": 8.51496,
+      "extentLonLat": [
+        8.833333333,
+        55.2,
+        9.0,
+        55.3
+      ],
+      "geometryType": "MultiLineString",
+      "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051542"
+    }
+  ],
+  "warning": "Geometric sheet coverage is not historic boundary evidence; 1919 Bröns edition must not verify a 1914 border."
+}
