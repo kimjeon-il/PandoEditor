@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "workUnit": "1914-German-Danish-0717-Hvidding-Ufer/stone1-coast/stage5",
+  "referenceDate": "1914-07-31",
+  "sourceMaps": {
+    "0717": {
+      "name": "Hvidding-Ufer",
+      "surveyYear": 1878,
+      "publicationYear": 1880,
+      "mapScale": 25000,
+      "wmsMapId": "10006009",
+      "source": "https://www.deutschefotothek.de/documents/obj/71051521"
+    },
+    "0718": {
+      "name": "Hvidding",
+      "surveyYear": 1878,
+      "publicationYear": 1880,
+      "wmsMapId": "10006008",
+      "source": "https://www.deutschefotothek.de/documents/obj/71051522"
+    }
+  },
+  "primaryTreaty": {
+    "source": "https://da.wikisource.org/wiki/Freden_i_Wien_(1864)_Gr%C3%A6nsereguleringskommissionen",
+    "articleI1": "North Sea maritime frontier is a separate line from midpoint Mandø/Rømø toward Ribe cathedral, turning to boundary stone1 near shore.",
+    "articleI2": "Land frontier starts at stone1 where Vester Vedsted southern parish boundary meets the North Sea shore.",
+    "historicalMarineBoundaryDigitized": false,
+    "landShoreIntersection1914Confirmed": false
+  },
+  "chronology": {
+    "fløjdiget": {
+      "type": "storm-surge flank/wing dike near Vester Vedsted border",
+      "circaCompletion": 1912,
+      "presentBefore1914Likely": true,
+      "sources": [
+        "https://slks.dk/omraader/kulturarv/bevaringsvaerdige-bygninger-og-miljoeer/bevaringsvaerdige-bygninger-metode/atlas/vadehavet-kulturarvsatlas/bebyggede-strukturer/niveau-2-de-store-landskaber/marsken-ved-ribe-aa",
+        "https://vestervedsted.dk/floejdiget-i-vester-vedsted/"
+      ]
+    },
+    "ribediget": {
+      "type": "larger coastal protection system",
+      "constructionYears": "1911-1915",
+      "initialBuiltOut": "1912-1913 depending on sector",
+      "officialHandover": "1915-05-10",
+      "entireSystemCompleteByReferenceDate": false,
+      "source": "https://danhostel-ribe.dk/wp-content/uploads/2022/03/Kammerslusen_A2skilte_WEB.pdf"
+    },
+    "rejsbydiget": {
+      "type": "dike continuing south of Vester Vedsted",
+      "constructionYears": "1923-1925",
+      "existsByReferenceDate": false,
+      "source": "https://graenseforeningen.dk/leksikon/rejsby-diget"
+    },
+    "graniteStone1": {
+      "originalClaim": "Restored to historical/original position 2014-08-20",
+      "osmMarkerId": 13124642635,
+      "source": "https://graenseforeningen.dk/om-graenselandet/genforeningssten/raahede-sluse-graensesten-nr-1",
+      "2014RestoreIs1914ShoreEvidence": false
+    }
+  },
+  "workingGeometry": {
+    "candidateLengthKm": 0.2938,
+    "candidateVertices": 15,
+    "startLonLat": [
+      8.6622877,
+      55.276343100000005
+    ],
+    "endLonLat": [
+      8.666666666666666,
+      55.27688120496713
+    ],
+    "restoredModernStone1": [
+      8.6622877,
+      55.2763431
+    ],
+    "restoredStone1CoordDifferenceDegrees": 0.0,
+    "join0718GapDegrees": 0,
+    "sourceSimple": true,
+    "renderDisplayEstimate": {
+      "mapCssWidthPx": 2560,
+      "webFlatZoom": 64,
+      "displayToleranceCssPx": 0.5,
+      "originalVertices": 15,
+      "screenLengthCssPx": 2.03254,
+      "illustrativeVerticesAt0p5CssPx": 2,
+      "candidateToOwnSimplificationHausdorffCssPx": 0.051716,
+      "independent1880BorderDigitized": false,
+      "actual1914CoastlineDigitized": false,
+      "historic1914ScreenDeviationCssPx": null,
+      "stopRuleHistoricallyPassed": null,
+      "meaning": "Same modern candidate compared to its own simplified version; historical deviation UNMEASURED"
+    }
+  },
+  "warnings": [
+    "A sea-wall/dike crest is not automatically the mean-high-tide shoreline, cadastral land edge, or 1914 maritime border.",
+    "Ribediget completed/handed over May 1915 does not prove local Fløjdiget absent July 1914.",
+    "The 1923-25 Rejsby dike and its later sea drainage/sluice geometry must not be used in a 1914 coastline.",
+    "1880 pre-dike map is a baseline only; cannot certify 1914 coast or flanking land of the German/Danish state.",
+    "The 2014 restoration claim for stone1 does not establish contemporary 1914 tide edge geometry.",
+    "Current 0.2938km candidate has not passed an independent historical deviation test.",
+    "No legal maritime boundary or 1914 coastline may be inferred by extending the restored marker point seaward."
+  ],
+  "sourceRasterImages": [
+    {
+      "name": "western-landing",
+      "bboxLonLat": [
+        8.649,
+        55.267,
+        8.673,
+        55.289
+      ],
+      "historicSourceMaps": [
+        {
+          "sheet": "0717",
+          "sourceWmsMapId": "10006009",
+          "sourceWmsLayer": "df_dk_0010001_0717",
+          "mapCatalogPublicationYear": 1880,
+          "responseBytes": 1537627,
+          "pngSha256": "f3762b674cd4a41401ecbc96d1ecc88cd2d81fb448d9a86485357ec9ce59de74"
+        },
+        {
+          "sheet": "0718",
+          "sourceWmsMapId": "10006008",
+          "sourceWmsLayer": "df_dk_0010001_0718",
+          "mapCatalogPublicationYear": 1880,
+          "responseBytes": 786766,
+          "pngSha256": "7125a4bd05a95eecafec27367be64c2c0171a78d76e63f116e8410568e05069a"
+        }
+      ],
+      "originalArtifact": "western-landing-source-1880.jpg",
+      "overlayArtifact": "western-landing-working-border-overlay.jpg",
+      "overlaySha256": "32fd87003179a6b7338dacc7558c01e5082e333f575d5e0c7f378290d465b451",
+      "historic1880BorderIndependentlyTraced": false,
+      "historic1914CoastVerified": false
+    },
+    {
+      "name": "historical-start-closeup",
+      "bboxLonLat": [
+        8.657,
+        55.2715,
+        8.6725,
+        55.281
+      ],
+      "historicSourceMaps": [
+        {
+          "sheet": "0717",
+          "sourceWmsMapId": "10006009",
+          "sourceWmsLayer": "df_dk_0010001_0717",
+          "mapCatalogPublicationYear": 1880,
+          "responseBytes": 467198,
+          "pngSha256": "16181535707b0640ed1670d22e204aafd19228695ace3f00c27feecacead7eb0"
+        },
+        {
+          "sheet": "0718",
+          "sourceWmsMapId": "10006008",
+          "sourceWmsLayer": "df_dk_0010001_0718",
+          "mapCatalogPublicationYear": 1880,
+          "responseBytes": 390374,
+          "pngSha256": "76668c9038c74f1189e5ce8bd825f5c3716c7a621c5fd5bed1927e5029e18994"
+        }
+      ],
+      "originalArtifact": "historical-start-closeup-source-1880.jpg",
+      "overlayArtifact": "historical-start-closeup-working-border-overlay.jpg",
+      "overlaySha256": "d9793552072faaa21f5a4f6b9cf7c534a7c312bef2fda4cada4f8bb507f54a27",
+      "historic1880BorderIndependentlyTraced": false,
+      "historic1914CoastVerified": false
+    },
+    {
+      "name": "wing-dike-context",
+      "bboxLonLat": [
+        8.634,
+        55.262,
+        8.687,
+        55.296
+      ],
+      "historicSourceMaps": [
+        {
+          "sheet": "0717",
+          "sourceWmsMapId": "10006009",
+          "sourceWmsLayer": "df_dk_0010001_0717",
+          "mapCatalogPublicationYear": 1880,
+          "responseBytes": 1863608,
+          "pngSha256": "7ebeca281696924cb4080588087b29806c89c082773d5590003c49a551563b45"
+        },
+        {
+          "sheet": "0718",
+          "sourceWmsMapId": "10006008",
+          "sourceWmsLayer": "df_dk_0010001_0718",
+          "mapCatalogPublicationYear": 1880,
+          "responseBytes": 1536444,
+          "pngSha256": "08b799ccb21f2b81415c7d0d7796d31e911e0802e45498622de21c4c8c9a0eb8"
+        }
+      ],
+      "originalArtifact": "wing-dike-context-source-1880.jpg",
+      "overlayArtifact": "wing-dike-context-working-border-overlay.jpg",
+      "overlaySha256": "7838fb3c78fb242e4e5deb0f831a89ea1f7f52132dbba4334e8d6a71c954726c",
+      "historic1880BorderIndependentlyTraced": false,
+      "historic1914CoastVerified": false
+    }
+  ],
+  "historicalCoastlineIndependentlyDigitized": false,
+  "historicalScreenDeviationCssPx": null,
+  "historicalStopThresholdPassed": null,
+  "physicalCoastEdited": false,
+  "masterBorderEdited": false,
+  "status": "provisional:original-map-panels-generated-needs-human-review",
+  "ciRunId": "37828150782",
+  "artifactPath": "tools/historical-library/review-output/north-schleswig-1914-001-026/0717-hvidding-ufer",
+  "next": "Examine 1880 historical coast and the 1912/1913 wing dike chronology; determine whether any >0.5px difference matters to 1914 state coast/land ownership. Preserve original geometry and legal marine/land divide."
+}
