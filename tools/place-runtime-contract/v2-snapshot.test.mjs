@@ -244,6 +244,69 @@ test('batch 14 validates five cities, excludes Vatican, and respects approximate
   assert.ok(r.filter((x,i)=>![2,3].includes(i)).every(x=>x.displayTimeline.length===1));
 });
 
+test('batch 15 central Asian capitals preserve real renamings, language forms, and modern-city start gates', () => {
+  const records=json('reports/places/tier1-major-cities-batch15-central-asia-capitals.json').records;
+  assert.deepEqual(records.map(r=>r.geonameId),
+    [1526273,1512569,1528675,1221874,162183]);
+  assert.deepEqual(records.map(r=>r.defaultDisplayNameKo),
+    ['아스타나','타슈켄트','비슈케크','두샨베','아시가바트']);
+  assert.deepEqual(records.map(r=>r.sourceCountryCode),['KZ','UZ','KG','TJ','TM']);
+  for (const r of records) {
+    assert.equal(r.featureClass,'P',r.geonameId);
+    assert.equal(r.featureCode,'PPLC',r.geonameId);
+    assert.equal(r.displayTimeline[0].fromYear,1801);
+    assert.ok(r.names.some(n=>n.language==='ko'&&n.usage==='standard'&&n.text===r.defaultDisplayNameKo));
+    assert.ok(r.names.some(n=>n.language==='en'&&n.usage==='standard'));
+    assert.ok(r.names.some(n=>n.language!=='ko'&&n.language!=='en'&&n.usage==='standard'));
+    for (const entry of r.displayTimeline) {
+      assert.ok(r.names.some(n=>n.language==='ko'&&n.text===entry.nameKo),r.geonameId);
+      assert.ok(['officialRenaming','historicalLocalName','koreanEditorialTranscription'].includes(entry.kind));
+    }
+    for (const t of [r.shortDescriptionKo,r.temporalEligibility?.note,
+      ...r.names.map(n=>n.note),
+      ...r.displayTimeline.map(n=>n.note),
+      ...(r.historicalGeography?.events||[]).map(n=>n.detail),
+      ...(r.historicalGeography?.notes||[]).map(n=>n.detail)].filter(Boolean))
+      assert.ok([...t].length<=28,r.geonameId+' long UI text: '+t);
+  }
+  const at=(record,date)=>{
+    if(record.temporalEligibility?.cityEstablishedFromYear &&
+       Number(date.slice(0,4))<record.temporalEligibility.cityEstablishedFromYear)return null;
+    let selected=record.defaultDisplayNameKo;
+    for(const row of record.displayTimeline) {
+      const eligible=row.fromDate?row.fromDate<=date:row.fromYear<=Number(date.slice(0,4));
+      if(!eligible)break;
+      selected=row.nameKo;
+    }
+    return selected;
+  };
+  const a=records[0];
+  assert.deepEqual([
+    at(a,'1829-12-31'),at(a,'1830-01-01'),at(a,'1862-01-01'),
+    at(a,'1961-03-19'),at(a,'1961-03-20'),
+    at(a,'1992-07-06'),at(a,'1998-05-06'),at(a,'2019-03-23'),
+    at(a,'2022-09-18'),at(a,'2022-09-19')],
+    [null,'아크몰라','아크몰린스크','아크몰린스크','첼리노그라드',
+      '아크몰라','아스타나','누르술탄','누르술탄','아스타나']);
+  assert.ok(a.displayTimeline.find(x=>x.fromDate==='2022-09-19')?.researchNote.includes('2022-09-17'));
+  assert.deepEqual(records[2].displayTimeline.map(x=>[x.fromYear||x.fromDate,x.nameKo]),
+    [[1801,'피슈페크'],['1926-05-12','프룬제'],['1991-02-05','비슈케크']]);
+  assert.equal(at(records[2],'1867-12-31'),null);
+  assert.equal(at(records[2],'1991-02-04'),'프룬제');
+  assert.equal(at(records[2],'1991-02-05'),'비슈케크');
+  assert.deepEqual(records[3].displayTimeline.map(x=>[x.fromYear||x.fromDate,x.nameKo]),
+    [[1801,'두샨베'],[1929,'스탈리나바드'],[1961,'두샨베']]);
+  assert.equal(at(records[3],'1950-06-15'),'스탈리나바드');
+  assert.equal(at(records[3],'1961-07-01'),'두샨베');
+  assert.deepEqual(records[4].displayTimeline.map(x=>[x.fromYear||x.fromDate,x.nameKo]),
+    [[1801,'아슈하바트'],[1919,'폴토라츠크'],
+      ['1927-04-07','아슈하바트'],['1991-10-27','아시가바트']]);
+  assert.equal(at(records[4],'1927-04-06'),'폴토라츠크');
+  assert.equal(at(records[4],'1927-04-07'),'아슈하바트');
+  assert.equal(records[4].displayTimeline.at(-1).kind,'koreanEditorialTranscription');
+  assert.equal(records[1].displayTimeline.length,1,'1930 capital transfer was not a rename');
+});
+
 test('portable multilingual rows and provenance match reviewed city records', () => {
   let scenarios = 0;
   const sourceCache = new Map();

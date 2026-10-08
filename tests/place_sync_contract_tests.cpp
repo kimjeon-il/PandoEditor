@@ -360,6 +360,69 @@ private slots:
         QCOMPARE(cities.at(4).toObject().value("sourceCountryCode").toString(),QStringLiteral("AZ"));
     }
 
+    void batch15CentralAsiaKoreanHistoricalNameSelections() {
+        const QString root=QString::fromUtf8(PLACE_SYNC_REPOSITORY_ROOT);
+        QFile file(root+"/reports/places/tier1-major-cities-batch15-central-asia-capitals.json");
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const auto data=QJsonDocument::fromJson(file.readAll()).object();
+        QCOMPARE(data.value("status").toString(),QStringLiteral("verified-source-staging-not-runtime"));
+        const auto records=data.value("records").toArray();
+        QCOMPARE(records.size(),5);
+        const QList<int> ids{1526273,1512569,1528675,1221874,162183};
+        const QStringList names{QStringLiteral("아스타나"),QStringLiteral("타슈켄트"),
+            QStringLiteral("비슈케크"),QStringLiteral("두샨베"),QStringLiteral("아시가바트")};
+        for(qsizetype i=0;i<records.size();++i) {
+            const QJsonObject value=records.at(i).toObject();
+            QCOMPARE(value.value("geonameId").toInt(),ids.at(i));
+            QCOMPARE(value.value("featureClass").toString(),QStringLiteral("P"));
+            QCOMPARE(value.value("featureCode").toString(),QStringLiteral("PPLC"));
+            QCOMPARE(value.value("defaultDisplayNameKo").toString(),names.at(i));
+        }
+        const auto createFrom=[&](int index) {
+            const QJsonObject place=records.at(index).toObject();
+            PlaceRecord item;
+            item.name=place.value("defaultDisplayNameKo").toString();
+            for(const auto& value:place.value("displayTimeline").toArray()) {
+                const QJsonObject row=value.toObject();
+                PlaceNameTransition name;
+                if(row.contains("fromDate"))name.fromDate=row.value("fromDate").toString();
+                else name.fromYear=row.value("fromYear").toInt();
+                name.ko=row.value("nameKo").toString();
+                item.nameTimeline.push_back(std::move(name));
+            }
+            return item;
+        };
+        const auto expectedName=[&](int index,const QString& date,const QString& expected) {
+            const auto item=createFrom(index);
+            const auto result=resolvePlaceDisplayRows(item,PlaceLanguageSelection{},date);
+            QCOMPARE(result.size(),std::size_t(1));
+            QCOMPARE(result.front().text,expected);
+        };
+        expectedName(0,"1961-03-19",QStringLiteral("아크몰린스크"));
+        expectedName(0,"1961-03-20",QStringLiteral("첼리노그라드"));
+        expectedName(0,"1992-07-06",QStringLiteral("아크몰라"));
+        expectedName(0,"1998-05-06",QStringLiteral("아스타나"));
+        expectedName(0,"2019-03-23",QStringLiteral("누르술탄"));
+        expectedName(0,"2022-09-18",QStringLiteral("누르술탄"));
+        expectedName(0,"2022-09-19",QStringLiteral("아스타나"));
+        expectedName(2,"1926-05-11",QStringLiteral("피슈페크"));
+        expectedName(2,"1926-05-12",QStringLiteral("프룬제"));
+        expectedName(2,"1991-02-04",QStringLiteral("프룬제"));
+        expectedName(2,"1991-02-05",QStringLiteral("비슈케크"));
+        expectedName(3,"1950-06-15",QStringLiteral("스탈리나바드"));
+        expectedName(3,"1961-06-15",QStringLiteral("두샨베"));
+        expectedName(4,"1927-04-06",QStringLiteral("폴토라츠크"));
+        expectedName(4,"1927-04-07",QStringLiteral("아슈하바트"));
+        expectedName(4,"1991-10-27",QStringLiteral("아시가바트"));
+        QCOMPARE(records.at(1).toObject().value("displayTimeline").toArray().size(),1);
+        QCOMPARE(records.at(0).toObject().value("temporalEligibility").toObject()
+            .value("cityEstablishedFromYear").toInt(),1830);
+        QCOMPARE(records.at(2).toObject().value("temporalEligibility").toObject()
+            .value("cityEstablishedFromYear").toInt(),1868);
+        QCOMPARE(records.at(4).toObject().value("temporalEligibility").toObject()
+            .value("cityEstablishedFromYear").toInt(),1881);
+    }
+
     void nativeDecoderMatchesAllFrozenWebHexVectors() {
         const auto fixtures=contract().value("fixtures").toArray();
         for(const auto& value:fixtures) {
