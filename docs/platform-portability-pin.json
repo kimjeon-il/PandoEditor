@@ -1,5 +1,5 @@
 {
-  "webContractCommit": "a2512be9e50f619f9962eca2e5594290e77b4c23",
+  "webContractCommit": "f5040d34a1f596f9385a54c4e1e60c43360acfa4",
   "sha256": {
     "assets/data/territorial-entities/generated/v2/index.json": "63c072095fd6c95034365f6d7f9d4e4ff99f71684890bffc8e678fe741b4334c",
     "assets/data/territorial-entities/generated/v2/state-VAT.json.gz": "ae64d5f4f50112ac01dcc82495c29361e7b3ef799f42a6f6cbbc351faecffe19",
@@ -13,7 +13,7 @@
     "tests/fixtures/portability/file-exchange.json": "05ff81920b8d1dff8d1b8e278849a8f144ce9e17ddbd9c750433aef244205f3d",
     "tests/fixtures/portability/geometry-clipping.json": "24ed959c1cd0b5e1619aef718bef2e939fc6ff9d8a124528b7ce5f3df1594c7b",
     "tests/fixtures/portability/geometry-containment.json": "883ad4f3a2701754857b430699739434e311eebea294452f8a1ed778a82c95fb",
-    "tests/fixtures/portability/index.json": "8b183beef1ace5cc88d69a6980c838af34e6bc86409bbbc236d85cc3bcdda2af",
+    "tests/fixtures/portability/index.json": "f3bdbca6958caeb5c40cbf441d327065d6422d0728b2dbe5b3015f975189c358",
     "tests/fixtures/portability/known-differences.json": "29b84215114a81adc5357607f8c64722e7cbe04caea601bf2f95e3c34cdbdddd",
     "tests/fixtures/portability/library-loading.json": "81f2c8cbe617919f2c8c2bd1b1f9c4f7f155d727dadbf85ad8f2771f3dd1f243",
     "tests/fixtures/portability/library-queries.json": "20ce95a5f5f73e96c5715cf5aff907f1ed5d09feeea449439009767cf047f96d",
@@ -21,6 +21,7 @@
     "tests/fixtures/portability/property-commands.json": "8a64f6bd35637b81294cffef41ecff1854b863dc17a81bdea79fb2107682d619",
     "tests/fixtures/portability/selection.json": "22b960c42f494449953853cd1e0d06083905660794f683b4648240074d16a02d",
     "tests/fixtures/portability/structure-commands.json": "9bee703db69b17779cf2628f0ba86a80228a331925a603af974d8a2d26ff588c",
+    "tests/fixtures/portability/timeline-resolution.json": "418117e541d40c4e165c5034804885d2d8af4e0a8921cbb9318cbb549929ef63",
     "tests/fixtures/timeline-exchange/calendar-boundaries.expected.json": "445a877e23372bded7ead7121f5fc641330d4a43c4bc5c001d3c91ab38a19f3a",
     "tests/fixtures/timeline-exchange/calendar-boundaries.gpkg": "9bb46ae86a16a1b817cc9ad607f921cf76c02de40beda2097cdfdada98db1ea3",
     "tests/fixtures/timeline-exchange/calendar-boundaries.json": "db5a5cf9dd8d5be13ea4b8168cba719e937c77922948dcbbf0c3aec7f5f100b2",
@@ -44,7 +45,7 @@
     "tools/parity/geometry.mjs": "73eb84c228a9ea8cced7e126a2fd1711d41c77969153cad89cfb17c985a4db22",
     "tools/parity/library.mjs": "7db24a9f79c205991852db2e53363197d5f7a7d9d6d2f4ea530f6fcd59075508",
     "tools/parity/properties.mjs": "1018a8224252a665859d22dc14d1c99c5d37a24bfe4316a8ffa01b4ca1d9ba77",
-    "tools/parity/registry.mjs": "5aa8cdab7240cc061b5283671e36d26ba31339ef8b2cfb8a68987b7730b57d25",
+    "tools/parity/registry.mjs": "a76adbac7f019890de6e8a7e44bb00f30382ce89997297497546002b8518dc08",
     "tools/parity/structure.mjs": "6f00424f8754df7499d61484036c198fa82bebc06b44a55f08f798c7a84c4adc"
   }
 }

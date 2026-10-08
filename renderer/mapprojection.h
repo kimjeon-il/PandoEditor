@@ -7,7 +7,8 @@
 class MapProjection {
 public:
     void rebuild(const std::vector<pandoeditor::CountryView>& countries);
-    void rebuild(const pandoeditor::ProjectDocument& document);
+    void rebuild(const pandoeditor::ProjectDocument& document,
+                 const std::set<std::string>& inactive={});
     void setWorldExtent();
     pandoeditor::Point project(pandoeditor::Point point) const;
     pandoeditor::Point unproject(double x,double y) const;

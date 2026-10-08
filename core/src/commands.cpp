@@ -2,6 +2,10 @@
 #include <pandoeditor/project.h>
 #include <pandoeditor/objectproperties.h>
 #include <pandoeditor/geometrypredicates.h>
+#include <pandoeditor/timeline-edit.h>
+#include <pandoeditor/timeline-resolver.h>
+#include <pandoeditor/timeline-view.h>
+#include <pandoeditor/temporal.h>
 #include "documentstate.h"
 #include <algorithm>
 #include <cmath>
@@ -69,6 +73,14 @@ std::vector<ObjectRef> targetsFor(const CommandArguments& args)
             }
         }
         else if constexpr(std::is_same_v<T,ContentEdit>) refs.insert(action.target);
+        else if constexpr(std::is_same_v<T,TimelineGeometryEdit> || std::is_same_v<T,TimelineParentEdit>)
+            refs.insert(territorialRef(action.id));
+        else if constexpr(std::is_same_v<T,TimelineCreate>)
+            refs.insert(territorialRef(action.intent.id));
+        else if constexpr(std::is_same_v<T,TimelineDelete>)
+            refs.insert(action.targets.begin(),action.targets.end());
+        else if constexpr(std::is_same_v<T,TimelineTerritorialMutation>)
+            refs.insert(action.mutation.plan.affectedObjects.begin(),action.mutation.plan.affectedObjects.end());
         else if constexpr(std::is_same_v<T,SetPhysicalData>) {}
         else if constexpr(!std::is_same_v<T,std::monostate>) refs.insert({"userLayer",action.id});
     },args.action);
@@ -88,7 +100,8 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
         {"territorial.delete",11},{"territorial.geometry.commit",11},{"territorial.geometry.replace",11},
         {"content.edit",12},{"physical-data.configure",13},{"historical.instantiate",14},
         {"gis.import.generic",15},{"gis.import.territorial",16},
-        {"gis.import.distribution",17}};
+        {"gis.import.distribution",17},{"timeline.geometry",18},{"timeline.parent",19},
+        {"timeline.create",20},{"timeline.delete",21},{"timeline.territorial",22}};
     auto found=std::find_if(std::begin(commands),std::end(commands),[&](const auto& c){return request.commandId==c.first;});
     require(found!=std::end(commands),CommandError::InvalidCommand,"unknown commandId");
     require(request.args.action.index()==found->second,CommandError::InvalidArguments,"commandId/action mismatch");
@@ -107,9 +120,13 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
                     require(!action.color || *action.color<=0xffffff,CommandError::InvalidArguments,"invalid RGB");
                 }
             }
-            else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>) {
-                require(action.plan.projectInstanceId==project.instanceId()&&action.plan.documentId==project.document().documentId&&action.plan.baseRevision==project.revision(),CommandError::StaleRevision,"territorial plan stale");
-                require(!action.plan.affectedObjects.empty(),CommandError::InvalidTargets,"empty territorial plan");
+            else if constexpr(std::is_same_v<T,ApplyTerritorialMutation>||std::is_same_v<T,TimelineTerritorialMutation>) {
+                const auto& mutation=[&]() -> const ApplyTerritorialMutation& {
+                    if constexpr(std::is_same_v<T,TimelineTerritorialMutation>)return action.mutation;
+                    else return action;
+                }();
+                require(mutation.plan.projectInstanceId==project.instanceId()&&mutation.plan.documentId==project.document().documentId&&mutation.plan.baseRevision==project.revision(),CommandError::StaleRevision,"territorial plan stale");
+                require(!mutation.plan.affectedObjects.empty(),CommandError::InvalidTargets,"empty territorial plan");
             } else if constexpr(std::is_same_v<T,HistoricalInstantiationPlan>) {
                 require(action.projectInstanceId==project.instanceId(),CommandError::ProjectMismatch,"historical plan project changed");
                 require(action.documentId==project.document().documentId,CommandError::DocumentMismatch,"historical plan document changed");
@@ -268,7 +285,10 @@ void validateRequest(const ProjectSnapshot& project,const CommandRequest& reques
         }
         if(ref.domain=="territorial") {
             const auto create=std::get_if<ApplyTerritorialMutation>(&request.args.action);
-            const bool newCreate=create && (create->plan.kind==TerritorialMutationKind::CreateCountry||create->plan.kind==TerritorialMutationKind::CreateSubunit||create->plan.kind==TerritorialMutationKind::CreateRegion) && ref==create->plan.targets.front();
+            const auto datedCreate=std::get_if<TimelineTerritorialMutation>(&request.args.action);
+            const auto* createPlan=create?&create->plan:datedCreate?&datedCreate->mutation.plan:nullptr;
+            const bool newCreate=(createPlan && (createPlan->kind==TerritorialMutationKind::CreateCountry||createPlan->kind==TerritorialMutationKind::CreateSubunit||createPlan->kind==TerritorialMutationKind::CreateRegion) && ref==createPlan->targets.front())||
+                (std::holds_alternative<TimelineCreate>(request.args.action)&&ref==territorialRef(std::get<TimelineCreate>(request.args.action).intent.id));
             require(newCreate || ((request.args.action.index()>=8 || std::any_of(request.args.properties.fields.begin(),request.args.properties.fields.end(),[&](const auto& f){return f.target==ref;}))?project.index().objects.count(ref)!=0:project.country(ref.id)!=nullptr),CommandError::InvalidTargets,"territorial target not found");
         }
         else
@@ -930,7 +950,8 @@ void checkEffects(const ProjectSnapshot& project,const ProjectDocument& after,co
         const auto& source=nativeLayerId(before,ref);
         const auto& destination=nativeLayerId(after,ref);
         const bool colorChanged=oldStyle.explicitColor!=nextStyle.explicitColor || (oldStyle.explicitColor&&oldStyle.color!=nextStyle.color);
-        const bool dateChanged=!sameValidity(staticLifetime(before,old.id).validity,staticLifetime(after,next.id).validity);
+        const bool dateChanged=isStaticTimeline(before) &&
+            !sameValidity(staticLifetime(before,old.id).validity,staticLifetime(after,next.id).validity);
         bool changed=old.name!=next.name || old.nameExplicit!=next.nameExplicit || old.notes!=next.notes || colorChanged || dateChanged ||
                      oldStyle.opacity!=nextStyle.opacity || source!=destination;
         // Check pre-transaction locks; a compound unlock cannot bypass protection.
@@ -972,8 +993,32 @@ bool sameGeometry(const Geometry& a,const Geometry& b)
 } // namespace
 
 ChangeImpact calculateChangeImpact(const ProjectDocument& before,const ProjectDocument& after,
-                                   const std::vector<ObjectRef>& targets) {
+                                   const std::vector<ObjectRef>& targets,const std::string& month) {
     ChangeImpact impact;
+    if(!isStaticTimeline(before)||!isStaticTimeline(after)) {
+        if(month.empty())throw TimelineError("TIMELINE_CURSOR_REQUIRED","change impact needs a month");
+        const auto beforeIndex=validateDocument(before),afterIndex=validateDocument(after);
+        std::set<ObjectRef> affected(targets.begin(),targets.end());
+        for(const auto& [ref,unused]:beforeIndex.objects)affected.insert(ref);
+        for(const auto& [ref,unused]:afterIndex.objects)affected.insert(ref);
+        impact.changedObjects.assign(affected.begin(),affected.end());
+        impact.sceneDirty.affectedObjects=impact.changedObjects;
+        impact.sceneDirty.geometry=true;
+        impact.sceneDirty.presentation=true;
+        impact.sceneDirty.fullRebuild=true;
+        impact.requiresFullSceneRebuild=true;
+        for(const auto& target:targets)if(target.domain=="territorial") {
+            impact.sceneDirty.geometryObjects.push_back(target);
+            for(const auto& row:before.timelineRecords.geometryBindings)
+                if(row.entityId==target.id)impact.changedGeometries.push_back(row.geometryRef);
+            for(const auto& row:after.timelineRecords.geometryBindings)
+                if(row.entityId==target.id)impact.changedGeometries.push_back(row.geometryRef);
+        }
+        std::sort(impact.changedGeometries.begin(),impact.changedGeometries.end());
+        impact.changedGeometries.erase(std::unique(impact.changedGeometries.begin(),impact.changedGeometries.end()),
+            impact.changedGeometries.end());
+        return impact;
+    }
     const auto beforeIndex=validateDocument(before),afterIndex=validateDocument(after);
     std::set<ObjectRef> objects,affected(targets.begin(),targets.end()),geometryObjects;
     std::set<GeometryRef> geometries;
@@ -1120,12 +1165,329 @@ CommandRequest CommandProcessor::makeRequest(const Project& project,std::string 
     auto refs=targetsFor(args);
     return {std::move(commandId),project.instanceId(),project.document().documentId,project.revision(),std::move(refs),std::move(args)};
 }
+ProjectSnapshot CommandProcessor::timelineViewSnapshot(const ProjectSnapshot& source) {
+    if(isStaticTimeline(source.document()))return source;
+    auto view=timelineDocumentView(source.document(),source.timelineMonth());
+    return {std::make_shared<const detail::DocumentState>(std::move(view.document),std::move(view.inactiveIds)),
+        source.instanceId(),source.revision(),source.timelineMonth()};
+}
 PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const CommandRequest& request)
 { return prepare(project,request,{}); }
 PrepareResult CommandProcessor::prepare(const ProjectSnapshot& project,const CommandRequest& request,const ExtensionRewriter& rewriter)
 {
     PrepareResult result;
     try {
+        if(const auto dated=std::get_if<TimelineTerritorialMutation>(&request.args.action)) {
+            validateRequest(project,request);
+            require(!isStaticTimeline(project.document())&&dated->month==project.timelineMonth(),
+                CommandError::StaleRevision,"timeline mutation month changed");
+            auto view=timelineViewSnapshot(project);
+            for(const auto& ref:request.targets)
+                if(ref.domain=="territorial"&&view.inactiveEntityIds().count(ref.id))
+                    require(false,CommandError::InvalidTargets,"timeline mutation target inactive");
+            CommandArguments staticArgs;staticArgs.action=dated->mutation;
+            const auto kind=dated->mutation.plan.kind;
+            const auto command=dated->mutation.geometry?"territorial.geometry.commit":
+                kind==TerritorialMutationKind::CreateCountry||kind==TerritorialMutationKind::CreateSubunit||
+                kind==TerritorialMutationKind::CreateRegion?"territorial.create":
+                kind==TerritorialMutationKind::DeleteCountry||kind==TerritorialMutationKind::DeleteUnits?
+                "territorial.delete":"territorial.relation.parent";
+            CommandRequest staticRequest{command,project.instanceId(),project.document().documentId,
+                project.revision(),targetsFor(staticArgs),std::move(staticArgs)};
+            auto staticResult=prepare(view,staticRequest,rewriter);
+            if(!staticResult.ok()||!staticResult.preview) {
+                result.status=staticResult.status;result.error=staticResult.error;
+                result.detail=std::move(staticResult.detail);return result;
+            }
+            const auto& beforeView=view.document();
+            const auto& afterView=staticResult.preview->change().after();
+            auto candidate=afterView;
+            candidate.units=project.document().units;
+            candidate.timelineRecords=project.document().timelineRecords;
+            candidate.geometries=project.document().geometries;
+            candidate.geometryProvenance=project.document().geometryProvenance;
+            candidate.presentation=project.document().presentation;
+            for(const auto& [ref,shape]:afterView.geometries.versions())
+                if(!candidate.geometries.get(ref))candidate.geometries.insert(ref,*shape);
+            const auto findUnit=[](const ProjectDocument& d,const std::string& id) {
+                return std::find_if(d.units.begin(),d.units.end(),[&](const auto& unit){return unit.id==id;});
+            };
+            const auto nextRecordId=[&](const std::string& base) {
+                const auto used=[&](const std::string& id) {
+                    for(const auto& row:candidate.timelineRecords.lifetimes)if(row.id==id)return true;
+                    for(const auto& row:candidate.timelineRecords.geometryBindings)if(row.id==id)return true;
+                    for(const auto& row:candidate.timelineRecords.parentRelations)if(row.id==id)return true;
+                    return false;
+                };
+                auto id=base;
+                for(unsigned suffix=1;used(id);++suffix)id=base+":"+std::to_string(suffix);
+                return id;
+            };
+            for(const auto& old:beforeView.units) {
+                if(view.inactiveEntityIds().count(old.id))continue;
+                if(findUnit(afterView,old.id)!=afterView.units.end())continue;
+                candidate.timelineRecords=truncateTimelineEntityAtMonth(candidate.timelineRecords,old.id,dated->month);
+                const bool retained=std::any_of(candidate.timelineRecords.lifetimes.begin(),
+                    candidate.timelineRecords.lifetimes.end(),[&](const auto& row){return row.entityId==old.id;});
+                if(!retained) {
+                    candidate.units.erase(std::remove_if(candidate.units.begin(),candidate.units.end(),
+                        [&](const auto& unit){return unit.id==old.id;}),candidate.units.end());
+                    const auto ref=territorialRef(old.id);
+                    candidate.presentation.membership.erase(ref);
+                    candidate.presentation.objectStyles.erase(ref);
+                }
+            }
+            for(const auto& unit:afterView.units) {
+                if(view.inactiveEntityIds().count(unit.id))continue;
+                const auto previous=findUnit(beforeView,unit.id);
+                const auto ref=territorialRef(unit.id);
+                const auto geometry=staticGeometryBinding(afterView,unit.id).geometryRef;
+                const auto& relation=staticParentRelation(afterView,unit.id);
+                if(previous==beforeView.units.end()) {
+                    require(!project.index().objects.count(ref),CommandError::InvalidTargets,
+                        "timeline mutation reuses historical identity");
+                    candidate.units.push_back(unit);
+                    const Validity validity{dated->month,{}};
+                    candidate.timelineRecords.lifetimes.push_back({nextRecordId("lifetime:"+unit.id),unit.id,validity});
+                    candidate.timelineRecords.geometryBindings.push_back({nextRecordId("geometry:"+unit.id),unit.id,validity,geometry});
+                    candidate.timelineRecords.parentRelations.push_back({nextRecordId("parent:"+unit.id),unit.id,validity,
+                        relation.parentId,relation.coverageMode});
+                } else {
+                    const auto current=std::find_if(candidate.units.begin(),candidate.units.end(),
+                        [&](const auto& row){return row.id==unit.id;});
+                    require(current!=candidate.units.end(),CommandError::InvalidTargets,"timeline unit missing");
+                    *current=unit;
+                    if(!(staticGeometryBinding(beforeView,unit.id).geometryRef==geometry))
+                        candidate.timelineRecords=replaceGeometryBindingAtMonth(candidate.timelineRecords,
+                            unit.id,dated->month,geometry);
+                    const auto& prior=staticParentRelation(beforeView,unit.id);
+                    if(prior.parentId!=relation.parentId||prior.coverageMode!=relation.coverageMode)
+                        candidate.timelineRecords=replaceParentRelationAtMonth(candidate.timelineRecords,
+                            unit.id,dated->month,relation.parentId,relation.coverageMode);
+                }
+                const auto membership=afterView.presentation.membership.find(ref);
+                if(membership!=afterView.presentation.membership.end())candidate.presentation.membership[ref]=membership->second;
+                else candidate.presentation.membership.erase(ref);
+                const auto style=afterView.presentation.objectStyles.find(ref);
+                if(style!=afterView.presentation.objectStyles.end())candidate.presentation.objectStyles[ref]=style->second;
+                else candidate.presentation.objectStyles.erase(ref);
+            }
+            reconcileGeometryProvenance(project.document(),candidate);
+            try {
+                auto after=std::make_shared<const detail::DocumentState>(std::move(candidate));
+                auto change=std::unique_ptr<ChangeSet>(new ChangeSet(project.state_,std::move(after),request));
+                change->impact_=calculateChangeImpact(change->before(),change->after(),request.targets,dated->month);
+                result.preview=CommandPreview(std::move(change));result.status=CommandStatus::Prepared;return result;
+            } catch(const std::invalid_argument& error) {
+                result.error=CommandError::ValidationFailed;result.detail=error.what();return result;
+            }
+        }
+        const auto creation=std::get_if<TimelineCreate>(&request.args.action);
+        const auto deletion=std::get_if<TimelineDelete>(&request.args.action);
+        if(creation||deletion) {
+            validateRequest(project,request);
+            require(!isStaticTimeline(project.document()),CommandError::InvalidArguments,"dated project required");
+            const auto& month=creation?creation->month:deletion->month;
+            TemporalValue point;
+            try { point=parseTemporal(month); }
+            catch(const std::invalid_argument& error) {
+                result.error=CommandError::ValidationFailed;result.detail=error.what();return result;
+            }
+            require(point.precision=="month"&&point.canonical==project.timelineMonth(),
+                CommandError::StaleRevision,"timeline month changed");
+            auto candidate=project.document();
+            try {
+                const auto world=resolveWorld(candidate.timelineRecords,
+                    {timelineEntityCatalog(candidate),[&](const GeometryRef& ref){return candidate.geometries.get(ref)!=nullptr;}},month);
+                if(creation) {
+                    const auto& in=creation->intent;
+                    require(!in.id.empty()&&!Project::normalizeName(in.name).empty()&&
+                        !project.index().objects.count(territorialRef(in.id)),
+                        CommandError::InvalidArguments,"invalid or duplicate timeline identity");
+                    require(!in.sovereign&&!in.validity.from&&!in.validity.to,
+                        CommandError::InvalidArguments,"unsupported dated creation fields");
+                    require(effectAllowed(candidate,territorialRef(in.id),"add"),
+                        CommandError::UnsupportedDependency,"timeline creation protected");
+                    if(in.parent) {
+                        const auto* parent=world.find(in.parent->id);
+                        const auto found=project.index().objects.find(*in.parent);
+                        require(in.parent->domain=="territorial"&&parent&&found!=project.index().objects.end()&&
+                            in.kind==UnitKind::General&&candidate.units.at(found->second).kind==UnitKind::General,
+                            CommandError::InvalidTargets,"invalid active timeline parent");
+                        require(!objectLocked(candidate,project.index(),*in.parent),CommandError::Locked,"timeline parent locked");
+                        require(geometryContains(*candidate.geometries.get(parent->geometryRef),in.geometry),
+                            CommandError::ValidationFailed,"GEOMETRY_OUTSIDE_PARENT");
+                    }
+                    GeometryRef ref{"territorial-geometry:"+in.id,1};
+                    for(unsigned suffix=1;candidate.geometries.get(ref);++suffix)
+                        ref={"territorial-geometry:"+in.id+":"+std::to_string(suffix),1};
+                    candidate.geometries.insert(ref,in.geometry);
+                    TerritorialUnit unit;unit.id=in.id;unit.name=in.name;
+                    unit.baseName=in.kind==UnitKind::General?in.name:"";
+                    unit.nameExplicit=true;unit.notes=in.notes;unit.kind=in.kind;
+                    candidate.units.push_back(std::move(unit));
+                    const auto recordId=[&](const std::string& base) {
+                        const auto used=[&](const std::string& id) {
+                            for(const auto& row:candidate.timelineRecords.lifetimes)if(row.id==id)return true;
+                            for(const auto& row:candidate.timelineRecords.geometryBindings)if(row.id==id)return true;
+                            for(const auto& row:candidate.timelineRecords.parentRelations)if(row.id==id)return true;
+                            return false;
+                        };
+                        auto id=base;
+                        for(unsigned suffix=1;used(id);++suffix)id=base+":"+std::to_string(suffix);
+                        return id;
+                    };
+                    const Validity validity{month,{}};
+                    candidate.timelineRecords.lifetimes.push_back({recordId("lifetime:"+in.id),in.id,validity});
+                    candidate.timelineRecords.geometryBindings.push_back({recordId("geometry:"+in.id),in.id,validity,ref});
+                    candidate.timelineRecords.parentRelations.push_back({recordId("parent:"+in.id),in.id,validity,
+                        in.parent?in.parent->id:"",in.coverageMode.empty()?"explicit":in.coverageMode});
+                    const auto object=territorialRef(in.id);
+                    if(!candidate.presentation.userLayers.empty())
+                        candidate.presentation.membership.emplace(object,candidate.presentation.userLayers.front().id);
+                    candidate.presentation.objectStyles.emplace(object,
+                        ObjectStyle{in.explicitColor.value_or(0),1,in.explicitColor.has_value()});
+                } else {
+                    require(!deletion->targets.empty(),CommandError::InvalidTargets,"empty timeline deletion");
+                    const std::set<ObjectRef> unique(deletion->targets.begin(),deletion->targets.end());
+                    require(unique.size()==deletion->targets.size(),CommandError::InvalidTargets,
+                        "duplicate timeline deletion target");
+                    for(const auto& ref:deletion->targets) {
+                        require(ref.domain=="territorial"&&world.find(ref.id),
+                            CommandError::InvalidTargets,"inactive timeline deletion target");
+                        require(!objectLocked(project.document(),project.index(),ref),
+                            CommandError::Locked,"timeline deletion target locked");
+                        require(effectAllowed(project.document(),ref,"delete"),
+                            CommandError::UnsupportedDependency,"timeline deletion protected");
+                        candidate.timelineRecords=truncateTimelineEntityAtMonth(candidate.timelineRecords,ref.id,month);
+                        const bool retained=std::any_of(candidate.timelineRecords.lifetimes.begin(),
+                            candidate.timelineRecords.lifetimes.end(),[&](const auto& row){return row.entityId==ref.id;});
+                        if(!retained) {
+                            candidate.units.erase(std::remove_if(candidate.units.begin(),candidate.units.end(),
+                                [&](const auto& unit){return unit.id==ref.id;}),candidate.units.end());
+                            candidate.presentation.membership.erase(ref);
+                            candidate.presentation.objectStyles.erase(ref);
+                        }
+                    }
+                }
+                reconcileGeometryProvenance(project.document(),candidate);
+                auto after=std::make_shared<const detail::DocumentState>(std::move(candidate));
+                auto change=std::unique_ptr<ChangeSet>(new ChangeSet(project.state_,std::move(after),request));
+                change->impact_=calculateChangeImpact(change->before(),change->after(),request.targets,month);
+                result.preview=CommandPreview(std::move(change));result.status=CommandStatus::Prepared;return result;
+            } catch(const std::invalid_argument& error) {
+                result.error=CommandError::ValidationFailed;result.detail=error.what();return result;
+            }
+        }
+        const auto geometryEdit=std::get_if<TimelineGeometryEdit>(&request.args.action);
+        const auto parentEdit=std::get_if<TimelineParentEdit>(&request.args.action);
+        if(geometryEdit||parentEdit) {
+            validateRequest(project,request);
+            const auto& month=geometryEdit?geometryEdit->month:parentEdit->month;
+            const auto& id=geometryEdit?geometryEdit->id:parentEdit->id;
+            TemporalValue point;
+            try { point=parseTemporal(month); }
+            catch(const std::invalid_argument& error) {
+                result.error=CommandError::ValidationFailed;result.detail=error.what();return result;
+            }
+            require(point.precision=="month"&&point.canonical==project.timelineMonth(),
+                CommandError::StaleRevision,"timeline month changed");
+            const auto target=territorialRef(id);
+            require(project.index().objects.count(target)!=0,CommandError::InvalidTargets,"timeline target missing");
+            require(!objectLocked(project.document(),project.index(),target),CommandError::Locked,"timeline target locked");
+            require(effectAllowed(project.document(),target,geometryEdit?"geometry":"relation"),
+                CommandError::UnsupportedDependency,"timeline target protected");
+            auto candidate=project.document();
+            try {
+                const auto world=resolveWorld(candidate.timelineRecords,
+                    {timelineEntityCatalog(candidate),[&](const GeometryRef& ref){return candidate.geometries.get(ref)!=nullptr;}},month);
+                const auto* active=world.find(id);
+                if(!active)throw TimelineError("TIMELINE_INACTIVE","target is inactive at month end");
+                if(geometryEdit) {
+                    const auto previous=candidate.geometries.get(active->geometryRef);
+                    if(!previous)throw TimelineError("TIMELINE_GEOMETRY","missing active geometry");
+                    if(sameGeometry(*previous,geometryEdit->geometry)) {
+                        result.status=CommandStatus::NoOp;return result;
+                    }
+                    auto version=active->geometryRef.version;
+                    for(const auto& [ref,unused]:candidate.geometries.versions())
+                        if(ref.id==active->geometryRef.id)version=std::max(version,ref.version);
+                    if(version==std::numeric_limits<std::uint32_t>::max())
+                        throw std::overflow_error("TIMELINE_GEOMETRY_VERSION_OVERFLOW");
+                    GeometryRef next{active->geometryRef.id,version+1};
+                    candidate.geometries.insert(next,geometryEdit->geometry);
+                    candidate.timelineRecords=replaceGeometryBindingAtMonth(candidate.timelineRecords,id,month,next);
+                } else {
+                    const auto& targetUnit=candidate.units.at(project.index().objects.at(target));
+                    if(targetUnit.kind!=UnitKind::General)
+                        throw std::invalid_argument("INVALID_PARENT_KIND");
+                    if(!parentEdit->parentId.empty()) {
+                        const auto parentRef=territorialRef(parentEdit->parentId);
+                        const auto found=project.index().objects.find(parentRef);
+                        const auto* parentWorld=world.find(parentEdit->parentId);
+                        if(found==project.index().objects.end()||!parentWorld||
+                           candidate.units.at(found->second).kind!=UnitKind::General)
+                            throw std::invalid_argument("INVALID_PARENT_KIND");
+                        require(!objectLocked(project.document(),project.index(),parentRef),
+                            CommandError::Locked,"timeline parent locked");
+                        if(!geometryContains(*candidate.geometries.get(parentWorld->geometryRef),
+                                             *candidate.geometries.get(active->geometryRef)))
+                            throw std::invalid_argument("GEOMETRY_OUTSIDE_PARENT");
+                    }
+                    if(active->parentId==parentEdit->parentId&&active->coverageMode==parentEdit->coverageMode) {
+                        result.status=CommandStatus::NoOp;return result;
+                    }
+                    candidate.timelineRecords=replaceParentRelationAtMonth(candidate.timelineRecords,id,month,
+                        parentEdit->parentId,parentEdit->coverageMode);
+                }
+                reconcileGeometryProvenance(project.document(),candidate);
+                auto after=std::make_shared<const detail::DocumentState>(std::move(candidate));
+                auto change=std::unique_ptr<ChangeSet>(new ChangeSet(project.state_,std::move(after),request));
+                change->impact_=calculateChangeImpact(change->before(),change->after(),request.targets,month);
+                result.preview=CommandPreview(std::move(change));result.status=CommandStatus::Prepared;
+                return result;
+            } catch(const std::invalid_argument& error) {
+                result.error=CommandError::ValidationFailed;result.detail=error.what();return result;
+            }
+        }
+        if(!isStaticTimeline(project.document())&&
+           (request.commandId=="edit.properties"||request.commandId=="country.color"||
+            request.commandId=="territorial.field"||request.commandId=="territorial.color"||
+            request.commandId=="territorial.color.reset"||request.commandId=="territorial.batch-color"||
+            request.commandId=="territorial.lock")) {
+            validateRequest(project,request);
+            const auto invalidValidity=[](const TerritorialFieldEdit& edit){
+                return edit.field==TerritorialField::ValidFrom||edit.field==TerritorialField::ValidTo;
+            };
+            require(std::none_of(request.args.properties.fields.begin(),request.args.properties.fields.end(),invalidValidity)&&
+                !(std::get_if<TerritorialFieldEdit>(&request.args.action)&&
+                  invalidValidity(*std::get_if<TerritorialFieldEdit>(&request.args.action))),
+                CommandError::InvalidArguments,"TIMELINE_ACTIVATION: dated validity editing is unavailable");
+            const auto world=resolveWorld(project.document().timelineRecords,
+                {timelineEntityCatalog(project.document()),[&](const GeometryRef& ref){return project.document().geometries.get(ref)!=nullptr;}},
+                project.timelineMonth());
+            for(const auto& target:request.targets)
+                if(target.domain=="territorial")
+                    require(world.find(target.id)!=nullptr,CommandError::InvalidTargets,"timeline target inactive");
+            auto candidate=project.document();
+            try { applyArguments(candidate,project.index(),request.args); }
+            catch(const std::invalid_argument& error) {
+                result.error=CommandError::ValidationFailed;result.detail=error.what();return result;
+            }
+            checkEffects(project,candidate,request);
+            if(semanticallyEqual(project.document(),candidate)) {
+                result.status=CommandStatus::NoOp;return result;
+            }
+            reconcileGeometryProvenance(project.document(),candidate);
+            try {
+                auto after=std::make_shared<const detail::DocumentState>(std::move(candidate));
+                auto change=std::unique_ptr<ChangeSet>(new ChangeSet(project.state_,std::move(after),request));
+                change->impact_=calculateChangeImpact(change->before(),change->after(),request.targets,project.timelineMonth());
+                result.preview=CommandPreview(std::move(change));result.status=CommandStatus::Prepared;return result;
+            } catch(const std::invalid_argument& error) {
+                result.error=CommandError::ValidationFailed;result.detail=error.what();return result;
+            }
+        }
         requireStaticTimeline(project.document());
         validateRequest(project,request);
         const auto structural=std::get_if<ApplyTerritorialMutation>(&request.args.action);
@@ -1269,6 +1631,12 @@ CommandResult CommandProcessor::confirm(Project& project,CommandPreview& preview
     if(request.documentId!=project.document().documentId) return {CommandStatus::Rejected,CommandError::DocumentMismatch,{}};
     if(request.revision!=project.revision())
         return {CommandStatus::Rejected,CommandError::StaleRevision,{}};
+    if(const auto edit=std::get_if<TimelineGeometryEdit>(&request.args.action))
+        if(edit->month!=project.timelineCursor())
+            return {CommandStatus::Rejected,CommandError::StaleRevision,{}};
+    if(const auto edit=std::get_if<TimelineParentEdit>(&request.args.action))
+        if(edit->month!=project.timelineCursor())
+            return {CommandStatus::Rejected,CommandError::StaleRevision,{}};
     if(project.revision()==std::numeric_limits<std::uint64_t>::max())
         return {CommandStatus::Rejected,CommandError::RevisionOverflow,{}};
     const bool presentationRebased=!(project.document().presentation.webPresentation==

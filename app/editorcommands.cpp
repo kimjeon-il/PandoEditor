@@ -46,11 +46,11 @@ bool EditorController::collectPendingEdits(pandoeditor::CommandArguments& args)
         auto active=[&](const char* field){return draft.fields.empty()||draft.fields.count(field);};
         if(active("name") && draft.name.toStdString()!=(u.kind==UnitKind::General?objectDisplayName(u):u.name))args.properties.fields.push_back({ref,TerritorialField::Name,draft.name.toStdString()});
         if(active("notes") && draft.memo.toStdString()!=u.notes)args.properties.fields.push_back({ref,TerritorialField::Notes,draft.memo.toStdString()});
-        if(active("validFrom") && draft.from.toStdString()!=pandoeditor::staticLifetime(project_.document(),u.id).validity.from.value_or(""))args.properties.fields.push_back({ref,TerritorialField::ValidFrom,draft.from.toStdString()});
-        if(active("validTo") && draft.to.toStdString()!=pandoeditor::staticLifetime(project_.document(),u.id).validity.to.value_or(""))args.properties.fields.push_back({ref,TerritorialField::ValidTo,draft.to.toStdString()});
+        if(active("validFrom") && draft.from.toStdString()!=pandoeditor::staticLifetime(project_.viewDocument(),u.id).validity.from.value_or(""))args.properties.fields.push_back({ref,TerritorialField::ValidFrom,draft.from.toStdString()});
+        if(active("validTo") && draft.to.toStdString()!=pandoeditor::staticLifetime(project_.viewDocument(),u.id).validity.to.value_or(""))args.properties.fields.push_back({ref,TerritorialField::ValidTo,draft.to.toStdString()});
         if(!validColor(draft.color)){commandError(CommandError::InvalidArguments);return false;}
         const auto& style=project_.document().presentation.objectStyles.at(ref);
-        if((active("color") && draft.color.mid(1).toUInt(nullptr,16)!=effectiveObjectColor(project_.document(),ref)) || (active("opacity") && draft.opacity&&*draft.opacity!=style.opacity)) {
+        if((active("color") && draft.color.mid(1).toUInt(nullptr,16)!=effectiveObjectColor(project_.viewDocument(),ref)) || (active("opacity") && draft.opacity&&*draft.opacity!=style.opacity)) {
             const auto c=project_.country(ref.id);if(!c){commandError(CommandError::InvalidArguments);return false;}
             args.properties.countries.push_back({c->id,{c->name,c->memo,draft.color.mid(1).toUInt(nullptr,16),draft.opacity.value_or(c->opacity),c->layerId}});
         }
@@ -75,6 +75,9 @@ pandoeditor::CommandStatus EditorController::prepareCommand(const std::string& c
     cancelPreview();
     try {
         if(!collectPendingEdits(args)) return CommandStatus::Rejected;
+        if(commandId=="edit.properties"&&!isStaticTimeline(project_.document())&&
+            args.properties.countries.empty()&&args.properties.layers.empty()&&args.properties.fields.empty())
+            return CommandStatus::NoOp;
         auto request=CommandProcessor::makeRequest(project_,commandId,std::move(args));
         auto result=CommandProcessor::prepare(project_,request);
         if(!result.ok()) {commandError(result.error,QString::fromStdString(result.detail));return result.status;}

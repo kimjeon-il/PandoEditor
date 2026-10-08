@@ -166,6 +166,7 @@ class EditorController : public QObject {
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY stateChanged)
     Q_PROPERTY(QString fileName READ fileName NOTIFY stateChanged)
     Q_PROPERTY(QString documentNotice READ documentNotice NOTIFY stateChanged)
+    Q_PROPERTY(QString timelineMonth READ timelineMonth NOTIFY stateChanged)
     Q_PROPERTY(bool hasPreservedData READ hasPreservedData NOTIFY stateChanged)
     Q_PROPERTY(bool mobileMode READ mobileMode CONSTANT)
     Q_PROPERTY(bool privateRecoveryRequired READ privateRecoveryRequired NOTIFY privateRecoveryRequiredChanged)
@@ -377,6 +378,9 @@ public:
     double layerOpacity() const;
     QString fileName() const;
     QString documentNotice() const;
+    QString timelineMonth() const { return QString::fromStdString(project_.timelineCursor()); }
+    Q_INVOKABLE bool setTimelineMonth(const QString& month);
+    Q_INVOKABLE bool shiftTimelineMonth(int offset);
     bool hasPreservedData() const { return !project_.document().extensions.empty(); }
     bool dirty() const;
     bool jobBusy() const { return background_ && !background_->token().cancelled(); }

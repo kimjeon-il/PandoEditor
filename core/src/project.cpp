@@ -1,5 +1,6 @@
 #include <pandoeditor/project.h>
 #include "documentstate.h"
+#include <pandoeditor/timeline-view.h>
 #include <algorithm>
 #include <atomic>
 #include <cmath>
@@ -80,6 +81,14 @@ std::shared_ptr<const detail::DocumentState> restoredBoundaryLabelSettings(
     return std::make_shared<const detail::DocumentState>(std::move(document));
 }
 CountryProperties properties(const CountryView& c) { return {c.name,c.memo,c.color,c.opacity,c.layerId}; }
+std::shared_ptr<const detail::DocumentState> projectedState(const ProjectDocument& document,
+                                                             const std::string& month) {
+    if(isStaticTimeline(document))return {};
+    if(month.empty())throw TimelineError("TIMELINE_CURSOR_REQUIRED","dated view needs a month");
+    auto projection=timelineDocumentView(document,month);
+    return std::make_shared<const detail::DocumentState>(std::move(projection.document),
+        std::move(projection.inactiveIds));
+}
 }
 Project::Project() : state_(std::make_shared<const detail::DocumentState>()),
                      saved_(state_), instanceId_(nextInstanceId()) {}
@@ -97,7 +106,7 @@ void Project::replace(ProjectDocument document)
     auto next=std::make_shared<const detail::DocumentState>(std::move(document));
     auto identity=nextInstanceId();
     // No allocation or validation after this point: replace is all-or-nothing.
-    state_=std::move(next); saved_=state_; instanceId_.swap(identity);
+    state_=std::move(next); saved_=state_; viewState_.reset(); instanceId_.swap(identity);
     commands_.clear(); cursor_=0; revision_=0; presentationRevision_=0; checkpoint_=savedCheckpoint_=checkpointSequence_=0;
     timelineCursor_.clear();
 }
@@ -109,16 +118,42 @@ bool Project::setTimelineCursor(const std::string& month) {
         next=parsed.canonical;
     }
     if(next==timelineCursor_)return false;
+    auto view=next.empty()?std::shared_ptr<const detail::DocumentState>{}:projectedState(document(),next);
+    viewState_=std::move(view);
     timelineCursor_.swap(next);return true;
 }
+ProjectSnapshot Project::snapshotForView() const {
+    if(!isStaticTimeline(document())) {
+        if(!viewState_)throw TimelineError("TIMELINE_CURSOR_REQUIRED","month required for dated view");
+        return {viewState_,instanceId_,revision_,timelineCursor_};
+    }
+    return snapshot();
+}
+ResolvedWorld Project::resolveWorld(const std::string& month) const {
+    const auto& d=document();
+    return pandoeditor::resolveWorld(d.timelineRecords,{timelineEntityCatalog(d),
+        [&](const GeometryRef& ref){return d.geometries.get(ref)!=nullptr;}},month);
+}
 const ProjectDocument& Project::document() const noexcept { return state_->document; }
-const std::vector<CountryView>& Project::countries() const noexcept { return state_->countries; }
+const ProjectDocument& Project::viewDocument() const noexcept {
+    return viewState_?viewState_->document:state_->document;
+}
+const std::set<std::string>& Project::inactiveEntityIds() const noexcept {
+    return viewState_?viewState_->inactiveIds:state_->inactiveIds;
+}
+const std::vector<CountryView>& Project::countries() const noexcept {
+    return viewState_?viewState_->countries:state_->countries;
+}
 const std::vector<Layer>& Project::layers() const noexcept { return state_->document.presentation.userLayers; }
 const DocumentIndex& Project::index() const noexcept { return state_->index; }
+const DocumentIndex& Project::viewIndex() const noexcept {
+    return viewState_?viewState_->index:state_->index;
+}
 const CountryView* Project::country(const std::string& id) const
 {
-    auto it=state_->countryIndex.find(id);
-    return it==state_->countryIndex.end()?nullptr:&countries()[it->second];
+    const auto& state=viewState_?viewState_:state_;
+    auto it=state->countryIndex.find(id);
+    return it==state->countryIndex.end()?nullptr:&countries()[it->second];
 }
 const Layer* Project::layer(const std::string& id) const
 {
@@ -126,7 +161,8 @@ const Layer* Project::layer(const std::string& id) const
     return it==index().layers.end()?nullptr:&layers()[it->second];
 }
 const ObjectPropertyView* Project::propertyView(const ObjectRef& ref) const {
-    auto it=state_->properties.find(ref);return it==state_->properties.end()?nullptr:&it->second;
+    const auto& state=viewState_?viewState_:state_;
+    auto it=state->properties.find(ref);return it==state->properties.end()?nullptr:&it->second;
 }
 bool Project::editable(const std::string& id) const
 {
@@ -140,7 +176,8 @@ std::string Project::pick(Point point) const
     for(auto it=renderLayers.rbegin();it!=renderLayers.rend();++it) {
         if(!it->visible || it->locked || it->opacity==0) continue;
         for(const auto& c:countries())
-            if(!c.locked && c.layerId==it->id && c.opacity>0 && effectiveMapVisibility(document(),territorialRef(c.id)) && contains(point,c)) return c.id;
+            if(!c.locked && c.layerId==it->id && c.opacity>0 &&
+               effectiveMapVisibility(viewState_?viewState_->document:document(),territorialRef(c.id)) && contains(point,c)) return c.id;
     }
     return {};
 }
@@ -165,6 +202,7 @@ void Project::apply(const ChangeSet& change)
             }
         rebased=std::make_shared<const detail::DocumentState>(std::move(candidate));
     }
+    auto nextView=projectedState(rebased->document,timelineCursor_);
     // Stage the entire prospective history, including metadata allocations.
     // Erasing the redo branch before this succeeds would break failure atomicity.
     std::vector<ChangeSet> next;
@@ -181,7 +219,7 @@ void Project::apply(const ChangeSet& change)
     }
     checkpoint_=staged.checkpointAfter_;if(checkpoint)++checkpointSequence_;
     commands_.swap(next);
-    state_=std::move(rebased);
+    state_=std::move(rebased);viewState_=std::move(nextView);
     ++presentationRevision_;
     ++cursor_; ++revision_;
 }
@@ -274,10 +312,12 @@ bool Project::undo()
         next=std::make_shared<const detail::DocumentState>(std::move(candidate));
     }
     if(boundaryHistoryAction(commands_[cursor_-1].request_.args.action))next=restoredBoundaryLabelSettings(document(),next);
+    auto nextView=projectedState(next->document,timelineCursor_);
     const bool savedTarget=target==saved_ || semanticallyEqual(target->document,saved_->document);
     // The saved bytes were already pruned by the codec; preserve that baseline.
     if(savedTarget)saved_=restoredHistoryState(target);
-    state_=std::move(next);checkpoint_=commands_[cursor_-1].checkpointBefore_;--cursor_;++revision_;++presentationRevision_;return true;
+    state_=std::move(next);viewState_=std::move(nextView);
+    checkpoint_=commands_[cursor_-1].checkpointBefore_;--cursor_;++revision_;++presentationRevision_;return true;
 }
 bool Project::redo()
 {
@@ -290,9 +330,11 @@ bool Project::redo()
         next=std::make_shared<const detail::DocumentState>(std::move(candidate));
     }
     if(boundaryHistoryAction(commands_[cursor_].request_.args.action))next=restoredBoundaryLabelSettings(document(),next);
+    auto nextView=projectedState(next->document,timelineCursor_);
     const bool savedTarget=target==saved_ || semanticallyEqual(target->document,saved_->document);
     if(savedTarget)saved_=restoredHistoryState(target);
-    state_=std::move(next);checkpoint_=commands_[cursor_].checkpointAfter_;++cursor_;++revision_;++presentationRevision_;return true;
+    state_=std::move(next);viewState_=std::move(nextView);
+    checkpoint_=commands_[cursor_].checkpointAfter_;++cursor_;++revision_;++presentationRevision_;return true;
 }
 void Project::markSaved() noexcept { saved_=state_; savedCheckpoint_=checkpoint_; }
 bool Project::dirty() const { return checkpoint_!=savedCheckpoint_ || (state_!=saved_ && !semanticallyEqual(document(),saved_->document)); }

@@ -8,6 +8,7 @@
 #include <pandoeditor/map/projectionengine.h>
 #include <pandoeditor/map/interactionstylepolicy.h>
 #include <pandoeditor/commands.h>
+#include <pandoeditor/timeline-view.h>
 #include <pandoeditor/map/editcoordinates.h>
 #include <pandoeditor/map/editgeometry.h>
 #include <algorithm>
@@ -26,6 +27,11 @@ Ring* openPath(Geometry& g,int path) {
 bool samePoint(Point a,Point b) { return a.x==b.x&&a.y==b.y; }
 void closeRing(Ring& ring) { if(ring.size()>1&&!samePoint(ring.front(),ring.back())) ring.push_back(ring.front()); }
 void openRing(Ring& ring) { if(ring.size()>1&&samePoint(ring.front(),ring.back())) ring.pop_back(); }
+const ApplyTerritorialMutation* territorialMutation(const CommandAction& action) {
+    if(const auto* mutation=std::get_if<ApplyTerritorialMutation>(&action))return mutation;
+    if(const auto* dated=std::get_if<TimelineTerritorialMutation>(&action))return &dated->mutation;
+    return nullptr;
+}
 }
 
 QVariantMap EditorController::geometryEditState() const
@@ -40,7 +46,7 @@ QVariantMap EditorController::geometryEditState() const
         row["name"]=name.isEmpty()?QStringLiteral("새 객체"):name;return row;
     };
     QVariantList providers,targets,boundaryImpacts;
-    if(edit.tool=="boundary"&&edit.preview)if(const auto mutation=std::get_if<ApplyTerritorialMutation>(&edit.preview->change().request().args.action))for(const auto& impact:mutation->plan.impacts) {
+    if(edit.tool=="boundary"&&edit.preview)if(const auto mutation=territorialMutation(edit.preview->change().request().args.action))for(const auto& impact:mutation->plan.impacts) {
         if(impact.kind!="clip-child"&&impact.kind!="remove-child"&&impact.kind!="ownership-change")continue;
         QString description=impact.kind=="clip-child"?QStringLiteral("일부 영역 절단"):impact.kind=="remove-child"?QStringLiteral("객체와 참조 삭제"):QStringLiteral("상위 단위 변경");
         if(impact.kind=="ownership-change"){const auto separator=impact.messageKey.rfind(':');if(separator!=std::string::npos)description=QStringLiteral("상위 단위: ")+describe(territorialRef(impact.messageKey.substr(separator+1))).value("name").toString();}
@@ -131,16 +137,23 @@ QVariantList EditorController::geometryDraftPaths() const
     QVariantList paths;if(!geometryEdit_)return paths;
     if(geometryEdit_->territorySelection)return territorySelectionPaths();
     if(geometryEdit_->preview) {
-        const auto& document=geometryEdit_->preview->change().after();
+        const auto& afterSource=geometryEdit_->preview->change().after();
+        const auto& beforeSource=geometryEdit_->preview->change().before();
+        const auto month=geometryEdit_->base.timelineMonth();
+        const auto dated=!month.empty()&&!isStaticTimeline(afterSource);
+        auto afterView=dated?std::optional<TimelineDocumentView>{timelineDocumentView(afterSource,month)}:std::nullopt;
+        auto beforeView=dated?std::optional<TimelineDocumentView>{timelineDocumentView(beforeSource,month)}:std::nullopt;
+        const auto& document=afterView?afterView->document:afterSource;
         std::vector<ObjectRef> refs{geometryEdit_->target};
-        const auto& before=geometryEdit_->preview->change().before();
+        const auto& before=beforeView?beforeView->document:beforeSource;
         if(geometryEdit_->tool=="boundary") {
             refs.clear();const auto beforeIndex=validateDocument(before),afterIndex=validateDocument(document);
             for(const auto& ref:geometryEdit_->preview->change().impact().changedObjects)if(ref.domain=="territorial") {
-                const auto previous=objectGeometry(before,beforeIndex,ref),next=objectGeometry(document,afterIndex,ref);
-                if(!(previous==next))refs.push_back(ref);
+                const auto previous=objectGeometry(before,beforeIndex,ref);
+                const auto successor=objectGeometry(document,afterIndex,ref);
+                if(!(previous==successor))refs.push_back(ref);
             }
-            if(const auto mutation=std::get_if<ApplyTerritorialMutation>(&geometryEdit_->preview->change().request().args.action))for(const auto& impact:mutation->plan.impacts)
+            if(const auto mutation=territorialMutation(geometryEdit_->preview->change().request().args.action))for(const auto& impact:mutation->plan.impacts)
                 if((impact.kind=="clip-child"||impact.kind=="remove-child"||impact.kind=="ownership-change")&&std::find(refs.begin(),refs.end(),impact.target)==refs.end())refs.push_back(impact.target);
         }
         if(geometryEdit_->splitIntent)refs.push_back(territorialRef(geometryEdit_->splitIntent->createdId));
@@ -199,7 +212,8 @@ bool EditorController::beginGeometryEdit(const QString& tool)
     if(geometryEdit_||structureDialogOpen()||hasPendingEdits())return false;
     const auto target=selection_.primary();if(!target||!selectedEditable())return false;
     const auto unit=selectedUnit();if(!unit)return false;
-    const auto geometry=project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit->id).geometryRef);if(!geometry)return false;
+    const auto& view=project_.viewDocument();
+    const auto geometry=view.geometries.get(pandoeditor::staticGeometryBinding(view,unit->id).geometryRef);if(!geometry)return false;
     geometryEdit_=GeometryEditSession{project_.snapshot(),*target,*geometry,tool,{}};
     emit geometryEditChanged();return true;
 }
@@ -406,6 +420,17 @@ bool EditorController::requestGeometryPreview()
     if(geometryEdit_->annexIntent&&geometryEdit_->choosingProviders)return false;
     if(geometryEdit_->tool!="split"&&geometryEdit_->tool!="merge"&&geometryEdit_->tool!="boundary"&&!map::validateEditGeometry(geometryEdit_->draft,&validationDetail)){geometryEdit_->error=validationDetail.empty()?QStringLiteral("닫힌 유효 폴리곤이 필요합니다."):QStringLiteral("닫힌 유효 폴리곤이 필요합니다: %1").arg(QString::fromStdString(validationDetail));emit geometryEditChanged();return false;}
     auto& edit=*geometryEdit_;
+    if(edit.createIntent&&!isStaticTimeline(project_.document())) {
+        auto create=*edit.createIntent;create.geometry=edit.draft;
+        CommandArguments args;args.action=TimelineCreate{std::move(create),project_.timelineCursor()};
+        auto prepared=CommandProcessor::prepare(edit.base,
+            CommandProcessor::makeRequest(project_,"timeline.create",std::move(args)));
+        if(!prepared.ok()||!prepared.preview) {
+            edit.error=QString::fromStdString(prepared.detail);
+            commandError(prepared.error,edit.error);emit geometryEditChanged();return false;
+        }
+        edit.preview=std::move(prepared.preview);edit.error.clear();emit geometryEditChanged();return true;
+    }
     if(edit.content) {
         if(!contentSession_||!contentSession_->base.matches(project_))return false;
         auto command=contentSession_->edit;
@@ -419,6 +444,20 @@ bool EditorController::requestGeometryPreview()
         auto request=CommandProcessor::makeRequest(project_,"content.edit",args);
         auto prepared=CommandProcessor::prepare(project_,request);
         if(!prepared.ok()||!prepared.preview){edit.error=QString::fromStdString(prepared.detail);emit geometryEditChanged();return false;}
+        edit.preview=std::move(prepared.preview);edit.error.clear();emit geometryEditChanged();return true;
+    }
+    if(!project_.timelineCursor().empty()&&!isStaticTimeline(project_.document())&&
+       !edit.createIntent&&!edit.mergeIntent&&!edit.annexIntent&&!edit.splitIntent&&
+       !edit.coastIntent&&edit.boundaryOwners.empty()) {
+        CommandArguments args;
+        args.action=TimelineGeometryEdit{edit.target.id,project_.timelineCursor(),edit.draft};
+        auto prepared=CommandProcessor::prepare(edit.base,
+            CommandProcessor::makeRequest(project_,"timeline.geometry",std::move(args)));
+        if(!prepared.ok()||!prepared.preview) {
+            edit.error=QString::fromStdString(prepared.detail);
+            if(prepared.status!=CommandStatus::NoOp)commandError(prepared.error,edit.error);
+            emit geometryEditChanged();return false;
+        }
         edit.preview=std::move(prepared.preview);edit.error.clear();emit geometryEditChanged();return true;
     }
     TerritorialMutationIntent intent=ReplaceGeometryIntent{edit.target};
@@ -445,7 +484,30 @@ bool EditorController::requestGeometryPreview()
                     current.error=QStringLiteral("초안 또는 문서가 변경되어 계산 결과를 폐기했습니다.");
                 } else if(!result.ok()||!result.preview) {
                     current.error=QString::fromStdString(result.detail.empty()?"GEOMETRY_PREPARATION_FAILED":result.detail);
-                } else {current.preview=std::move(result.preview);current.stage="review";current.error.clear();}
+                } else {
+                    if(!isStaticTimeline(project_.document())) {
+                        const auto* calculated=std::get_if<ApplyTerritorialMutation>(
+                            &result.preview->change().request().args.action);
+                        if(!calculated) {
+                            current.error=QStringLiteral("INVALID_TIMELINE_GEOMETRY_RECEIPT");
+                            emit geometryEditChanged();return;
+                        }
+                        CommandArguments args;
+                        args.action=TimelineTerritorialMutation{*calculated,project_.timelineCursor()};
+                        result=CommandProcessor::prepare(project_,CommandProcessor::makeRequest(
+                            project_,"timeline.territorial",std::move(args)),
+                            [](const ProjectDocument& before,const TerritorialMutationPlan& plan,
+                               std::vector<PreservedExtension>& extensions){
+                                const auto rewritten=retainedrefs::rewrite(before,plan,extensions);
+                                return ExtensionRewriteResult{rewritten.ok,rewritten.detail,rewritten.handledExtensionIds};
+                            });
+                        if(!result.ok()||!result.preview) {
+                            current.error=QString::fromStdString(result.detail.empty()?"TIMELINE_MUTATION_FAILED":result.detail);
+                            emit geometryEditChanged();return;
+                        }
+                    }
+                    current.preview=std::move(result.preview);current.stage="review";current.error.clear();
+                }
                 emit geometryEditChanged();
             });
         emit geometryEditChanged();return true;
@@ -458,18 +520,20 @@ bool EditorController::requestGeometryPreview()
         for(const auto& draft:drafts)if(!map::validateEditGeometry(draft.geometry,&validationDetail)){edit.error=QString::fromStdString(validationDetail);emit geometryEditChanged();return false;}
         return schedule([drafts](const ProjectSnapshot& snapshot,const JobToken& token){
             PrepareResult failed;failed.error=CommandError::PrepareFailed;if(token.cancelled())return failed;
-            auto planned=CommandProcessor::planTerritorial(snapshot,SharedBoundaryIntent{drafts});
+            auto view=CommandProcessor::timelineViewSnapshot(snapshot);
+            auto planned=CommandProcessor::planTerritorial(view,SharedBoundaryIntent{drafts});
             if(!planned.ok()||!planned.plan){failed.error=planned.error;failed.detail=planned.detail;return failed;}
-            return prepareTerritorialGeometry(snapshot,*planned.plan,token);
+            return prepareTerritorialGeometry(view,*planned.plan,token);
         });
     }
     if(edit.mergeIntent||edit.annexIntent||edit.splitIntent||edit.coastIntent) {
         return schedule([intent](const ProjectSnapshot& snapshot,const JobToken& token){
+            auto view=CommandProcessor::timelineViewSnapshot(snapshot);
             if(const auto annex=std::get_if<AnnexTerritoryIntent>(&intent))
-                return prepareDrawnTerritoryAnnex(snapshot,*annex,token);
-            auto planned=CommandProcessor::planTerritorial(snapshot,intent);
+                return prepareDrawnTerritoryAnnex(view,*annex,token);
+            auto planned=CommandProcessor::planTerritorial(view,intent);
             if(!planned.ok()||!planned.plan){PrepareResult failed;failed.error=planned.error;failed.detail=planned.detail;return failed;}
-            return prepareTerritorialGeometry(snapshot,*planned.plan,token);
+            return prepareTerritorialGeometry(view,*planned.plan,token);
         });
     }
     auto planned=CommandProcessor::planTerritorial(edit.base,intent);if(!planned.ok()||!planned.plan){commandError(planned.error,QString::fromStdString(planned.detail));return false;}
@@ -494,7 +558,7 @@ bool EditorController::confirmGeometryEdit()
             geometryEdit_->error=QStringLiteral("선택이 변경되어 미리보기를 폐기했습니다.");emit geometryEditChanged();return false;
         }
         if(!geometryEdit_->boundaryImpactsApproved) {
-            const auto mutation=std::get_if<ApplyTerritorialMutation>(&geometryEdit_->preview->change().request().args.action);
+            const auto mutation=territorialMutation(geometryEdit_->preview->change().request().args.action);
             if(mutation&&std::any_of(mutation->plan.impacts.begin(),mutation->plan.impacts.end(),[](const auto& impact){return impact.kind=="clip-child"||impact.kind=="remove-child"||impact.kind=="ownership-change";})) {
                 geometryEdit_->boundaryImpactConfirmation=true;emit geometryEditChanged();return false;
             }
@@ -503,14 +567,23 @@ bool EditorController::confirmGeometryEdit()
     if(!geometryEdit_||!geometryEdit_->preview)return false;
     QElapsedTimer commitMeasurement;commitMeasurement.start();const auto measuredFlow=geometryEdit_->tool;
     const QVariant measuredOwners=measuredFlow=="boundary"?QVariant::fromValue(qulonglong(geometryEdit_->boundaryOwners.size())):QVariant{};
-    MapProjection next;try{next.rebuild(geometryEdit_->preview->change().after());}catch(...){return false;}
+    MapProjection next;try{
+        const auto& after=geometryEdit_->preview->change().after();
+        if(!isStaticTimeline(after)) {
+            auto view=timelineDocumentView(after,project_.timelineCursor());
+            next.rebuild(view.document,view.inactiveIds);
+        } else next.rebuild(after);
+    }catch(...){return false;}
     std::optional<ObjectRef> boundarySelectedAfter;
     if(geometryEdit_->tool=="boundary") {
         if(!staticParentRelation(geometryEdit_->base.document(),geometryEdit_->target.id).parentId.empty())boundarySelectedAfter=geometryEdit_->target;
-        else if(const auto mutation=std::get_if<ApplyTerritorialMutation>(&geometryEdit_->preview->change().request().args.action))if(const auto boundary=std::get_if<SharedBoundaryIntent>(&mutation->plan.intent))if(!boundary->drafts.empty())boundarySelectedAfter=boundary->drafts.front().owner;
+        else if(const auto mutation=territorialMutation(geometryEdit_->preview->change().request().args.action))if(const auto boundary=std::get_if<SharedBoundaryIntent>(&mutation->plan.intent))if(!boundary->drafts.empty())boundarySelectedAfter=boundary->drafts.front().owner;
     }
     auto applied=CommandProcessor::confirm(project_,*geometryEdit_->preview);if(!applied.ok()){commandError(applied.error,QString::fromStdString(applied.detail));geometryEdit_->preview.reset();geometryEdit_->boundaryImpactConfirmation=false;geometryEdit_->boundaryImpactsApproved=false;geometryEdit_->stage="selection";geometryEdit_->error=QString::fromStdString(applied.detail);emit geometryEditChanged();return false;}
-    holdConfirmedGeometry(geometryEdit_->base.document(),applied.impact,geometryEdit_->target);
+    if(!isStaticTimeline(project_.document())) {
+        auto before=timelineDocumentView(geometryEdit_->base.document(),project_.timelineCursor());
+        holdConfirmedGeometry(before.document,applied.impact,geometryEdit_->target);
+    } else holdConfirmedGeometry(geometryEdit_->base.document(),applied.impact,geometryEdit_->target);
     noteAppliedImpact(applied.impact);
     projection_=std::move(next);const bool created=bool(geometryEdit_->createIntent);const bool content=geometryEdit_->content;geometryEdit_.reset();if(content){contentSession_.reset();emit contentEditChanged();}if(created)createDraft_.reset();hover_.reset();++hoverRevision_;closeObjectChooser();
     if(boundarySelectedAfter){auto selected=selection_;selected.replace(*boundarySelectedAfter,"map");applySelection(std::move(selected));}
@@ -522,11 +595,11 @@ bool EditorController::confirmGeometryEdit()
 void EditorController::holdConfirmedGeometry(const ProjectDocument& before,const ChangeImpact& impact,const ObjectRef& target)
 {
     geometryPresentationStrokes_.clear();geometryPresentationInstance_=project_.instanceId();geometryPresentationRevision_=project_.revision();
-    const auto& after=project_.document();
+    const auto& after=project_.viewDocument();
     const auto beforeIndex=validateDocument(before);auto affected=impact.changedObjects;
     if(std::find(affected.begin(),affected.end(),target)==affected.end())affected.push_back(target);
     for(const auto& ref:affected) {
-        const auto successor=objectGeometry(after,project_.index(),ref),previous=objectGeometry(before,beforeIndex,ref);
+        const auto successor=objectGeometry(after,project_.viewIndex(),ref),previous=objectGeometry(before,beforeIndex,ref);
         if(successor==previous)continue;
         const auto geometry=successor?after.geometries.get(*successor):previous?before.geometries.get(*previous):nullptr;
         if(geometry&&(!geometry->polygons.empty()||!geometry->lines.empty()))geometryPresentationStrokes_.push_back({ref,successor,geometry});
@@ -546,8 +619,8 @@ void EditorController::cancelGeometryEdit()
     // Child entry has no root selection snapshot. cancelActiveMode reapplies
     // its current selected child as one selection; preview discard does not.
     if(geometryEdit_->tool=="boundary"&&!boundaryInitialSelection)if(const auto primary=selection_.primary();primary&&primary->domain=="territorial") {
-        const auto found=project_.index().objects.find(*primary);
-        if(found!=project_.index().objects.end()&&project_.document().units.at(found->second).kind==UnitKind::General&&!staticParentRelation(project_.document(),primary->id).parentId.empty())boundaryChildPrimary=*primary;
+        const auto found=project_.viewIndex().objects.find(*primary);
+        if(found!=project_.viewIndex().objects.end()&&!project_.inactiveEntityIds().count(primary->id)&&project_.viewDocument().units.at(found->second).kind==UnitKind::General&&!staticParentRelation(project_.viewDocument(),primary->id).parentId.empty())boundaryChildPrimary=*primary;
     }
     if(geometryEdit_->boundaryCancelled)geometryEdit_->boundaryCancelled->store(true);if(geometryEdit_->territorySelection)cancelTerritoryCalculation();if(geometryEdit_->job)jobs_->cancel(geometryEdit_->job->id());if(geometryEdit_->preview)CommandProcessor::cancel(*geometryEdit_->preview);geometryEdit_.reset();
     // Pinned web snapshots omit each item's key, so restore cannot resolve

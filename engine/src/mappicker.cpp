@@ -74,6 +74,7 @@ std::optional<ObjectRef> normalizedDistributionRef(const ProjectDocument& docume
 void MapPicker::reset() {
     spatialIndex_=GeoSpatialIndex{};
     instanceId_.clear();
+    indexedMonth_.clear();
     indexedRevision_=0;
 }
 
@@ -83,15 +84,18 @@ void MapPicker::ensureIndex(const ProjectSnapshot& snapshot) {
         instanceId_=snapshot.instanceId();
         indexedRevision_=0;
     }
-    if(spatialIndex_.geometryRevision()==0||indexedRevision_!=snapshot.revision()) {
+    if(spatialIndex_.geometryRevision()==0||indexedRevision_!=snapshot.revision()||
+       indexedMonth_!=snapshot.timelineMonth()) {
         spatialIndex_.rebuild(snapshot.document(),snapshot.index());
         indexedRevision_=snapshot.revision();
+        indexedMonth_=snapshot.timelineMonth();
     }
 }
 
 void MapPicker::applyImpact(const ProjectSnapshot& snapshot,
                             const std::vector<ObjectRef>& changed) {
     if(instanceId_==snapshot.instanceId()&&spatialIndex_.geometryRevision()!=0&&
+       indexedMonth_==snapshot.timelineMonth()&&
        indexedRevision_!=std::numeric_limits<std::uint64_t>::max()&&
        indexedRevision_+1==snapshot.revision()) {
         try {
@@ -180,6 +184,7 @@ std::vector<ObjectRef> MapPicker::pickGeographic(
     for(auto layer=renderLayers.rbegin();layer!=renderLayers.rend();++layer) {
         if(!layer->visible)continue;
         for(auto unit=document.units.rbegin();unit!=document.units.rend();++unit) {
+            if(snapshot.inactiveEntityIds().count(unit->id))continue;
             const auto ref=territorialRef(unit->id);
             if(!spatialCandidates.count(ref))continue;
             if(nativeLayerId(document,ref)!=layer->id||!effectiveMapVisibility(document,ref))continue;

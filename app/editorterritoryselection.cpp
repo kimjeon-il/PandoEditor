@@ -4,7 +4,9 @@
 #include "geometrysnapprovider.h"
 #include "geometrycalculator.h"
 #include "territorycutadapter.h"
+#include "retainedreferencerewriter.h"
 #include <pandoeditor/geometrypredicates.h>
+#include <pandoeditor/timeline-view.h>
 #include <pandoeditor/map/editgeometry.h>
 #include <pandoeditor/map/editcoordinates.h>
 #include <algorithm>
@@ -170,7 +172,7 @@ bool EditorController::toggleTerritorySource(const ObjectRef& ref,bool confirmed
     const bool hasWork=!state.parts.empty()||!state.selectedCandidateIds.empty()||!state.selectedComponentKeys.empty()||!edit.lineDraft.empty()||!edit.draft.polygons.empty();
     if(hasWork&&!confirmed){edit.sourceChange=ref;emit geometryEditChanged();return true;}
     auto sources=state.sources;const auto existing=std::find_if(sources.begin(),sources.end(),[&](const auto& source){return source.ref==ref;});
-    if(existing!=sources.end())sources.erase(existing);else {const auto geometryRef=staticGeometryBinding(project_.document(),unit.id).geometryRef;const auto geometry=project_.document().geometries.get(geometryRef);if(!geometry)return false;sources.push_back({ref,*geometry,geometryRef,objectDisplayName(unit)});}
+    if(existing!=sources.end())sources.erase(existing);else {const auto geometryRef=staticGeometryBinding(project_.viewDocument(),unit.id).geometryRef;const auto geometry=project_.viewDocument().geometries.get(geometryRef);if(!geometry)return false;sources.push_back({ref,*geometry,geometryRef,objectDisplayName(unit)});}
     cancelTerritoryCalculation();edit.sourceChange.reset();edit.draft={"Polygon",{},{},{}};edit.lineDraft.clear();edit.lineUndo.clear();edit.lineRedo.clear();edit.undo.clear();edit.redo.clear();edit.territorySelection->resetSources(std::move(sources));edit.territoryComponentSourcePrepared=false;edit.stage="setup";edit.choosingProviders=true;scheduleTerritorySelection();emit visualChanged();return true;
 }
 bool EditorController::geometrySelectTerritoryMethod(const QString& name){
@@ -255,7 +257,27 @@ bool EditorController::applyTerritorySelection(){
         auto& edit=*geometryEdit_;edit.job.reset();edit.applying=false;
         if(disposition!=JobDisposition::Accepted||!edit.base.matches(project_)||(childSplit&&(selection_.primary()?QString::fromStdString(selection_.primary()->id):QString())!=entrySelection)){emit geometryEditChanged();return;}
         if(!result.ok()||!result.preview){edit.error=QString::fromStdString(result.detail);commandError(result.error,edit.error);emit geometryEditChanged();return;}
-        MapProjection next;try{next.rebuild(result.preview->change().after());}catch(const std::exception& error){edit.error=QString::fromUtf8(error.what());emit geometryEditChanged();return;}
+        if(!isStaticTimeline(project_.document())) {
+            const auto* calculated=std::get_if<ApplyTerritorialMutation>(
+                &result.preview->change().request().args.action);
+            if(!calculated){edit.error="INVALID_TIMELINE_GEOMETRY_RECEIPT";emit geometryEditChanged();return;}
+            CommandArguments args;args.action=TimelineTerritorialMutation{*calculated,project_.timelineCursor()};
+            result=CommandProcessor::prepare(project_,CommandProcessor::makeRequest(
+                project_,"timeline.territorial",std::move(args)),
+                [](const ProjectDocument& before,const TerritorialMutationPlan& plan,
+                   std::vector<PreservedExtension>& extensions){
+                    const auto rewritten=retainedrefs::rewrite(before,plan,extensions);
+                    return ExtensionRewriteResult{rewritten.ok,rewritten.detail,rewritten.handledExtensionIds};
+                });
+            if(!result.ok()||!result.preview){edit.error=QString::fromStdString(result.detail);commandError(result.error,edit.error);emit geometryEditChanged();return;}
+        }
+        MapProjection next;try{
+            const auto& after=result.preview->change().after();
+            if(!isStaticTimeline(after)) {
+                auto view=timelineDocumentView(after,project_.timelineCursor());
+                next.rebuild(view.document,view.inactiveIds);
+            } else next.rebuild(after);
+        }catch(const std::exception& error){edit.error=QString::fromUtf8(error.what());emit geometryEditChanged();return;}
         QElapsedTimer commitMeasurement;commitMeasurement.start();const auto measuredFlow=edit.tool;
         const auto applied=CommandProcessor::confirm(project_,*result.preview);if(!applied.ok()){edit.error=QString::fromStdString(applied.detail);commandError(applied.error,edit.error);emit geometryEditChanged();return;}
         holdConfirmedGeometry(edit.base.document(),applied.impact,edit.target);

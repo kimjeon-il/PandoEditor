@@ -32,6 +32,7 @@ std::optional<ObjectRef> EditorController::existingObjectRef(const QVariantMap& 
     }
     const auto found=project_.index().objects.find(ref);
     if(found==project_.index().objects.end()) return {};
+    if(ref.domain=="territorial"&&project_.inactiveEntityIds().count(ref.id))return {};
     const auto expected=ref.domain=="territorial"?typeName(project_.document().units.at(found->second).kind):q(ref.domain);
     const auto requested=value.value("type").toString().trimmed();
     if(!requested.isEmpty() && requested!=expected) return {};
@@ -75,15 +76,16 @@ bool EditorController::objectVisible(const ObjectRef& ref) const {
     // Presentation migration promotes the supported web fields into the common
     // model.  Keeping a second extension-based check here made rendering and
     // picking disagree whenever a retained payload was only partially known.
-    return effectiveMapVisibility(project_.document(),ref);
+    return effectiveMapVisibility(project_.viewDocument(),ref);
 }
 QVariantList EditorController::objectRows() const {
     if(objectRowsCache_)return *objectRowsCache_;
     QVariantList rows;
     for(const auto& unit:project_.document().units) {
+        if(project_.inactiveEntityIds().count(unit.id))continue;
         const auto ref=territorialRef(unit.id);
         auto row=objectRefValue(ref);
-        row["flagSource"]=labelFlagSource(ref);row["color"]=rgb(effectiveObjectColor(project_.document(),ref));
+        row["flagSource"]=labelFlagSource(ref);row["color"]=rgb(effectiveObjectColor(project_.viewDocument(),ref));
         row["name"]=q(project_.propertyView(ref)->displayName);row["typeLabel"]=typeLabel(unit.kind);
         row["visible"]=objectVisible(ref);row["locked"]=unit.locked;row["lockEnabled"]=true;
         const auto member=project_.document().presentation.membership.find(ref);
@@ -177,10 +179,10 @@ void EditorController::parkDrafts() {
         CountryDraft d{nameDraft_,memoDraft_,colorDraft_,opacityPreview_,validFromDraft_,validToDraft_};
         if(nameDraft_!=q(u->kind==UnitKind::General?objectDisplayName(*u):u->name))d.fields.insert("name");
         if(memoDraft_!=q(u->notes))d.fields.insert("notes");
-        if(colorDraft_!=rgb(effectiveObjectColor(project_.document(),ref)))d.fields.insert("color");
+        if(colorDraft_!=rgb(effectiveObjectColor(project_.viewDocument(),ref)))d.fields.insert("color");
         if(opacityPreview_&&*opacityPreview_!=style.opacity)d.fields.insert("opacity");
-        if(validFromDraft_!=q(pandoeditor::staticLifetime(project_.document(),u->id).validity.from.value_or("")))d.fields.insert("validFrom");
-        if(validToDraft_!=q(pandoeditor::staticLifetime(project_.document(),u->id).validity.to.value_or("")))d.fields.insert("validTo");
+        if(validFromDraft_!=q(pandoeditor::staticLifetime(project_.viewDocument(),u->id).validity.from.value_or("")))d.fields.insert("validFrom");
+        if(validToDraft_!=q(pandoeditor::staticLifetime(project_.viewDocument(),u->id).validity.to.value_or("")))d.fields.insert("validTo");
         if(d.fields.empty())parkedCountryDrafts_.erase(selectedId());else parkedCountryDrafts_[selectedId()]=std::move(d);
     }
     if(const auto layer=project_.layer(selectedLayer_.toStdString())) {
@@ -334,9 +336,12 @@ void EditorController::reconcileSelection() {
         if(!placedLabels_.isEmpty()){placedLabels_.clear();emit labelLayoutChanged();}
     } else {
         selection_.prune([this](const ObjectRef& ref){if(ref.domain=="placeBuiltin")return placeRuntime_.recordById(q(ref.id)).has_value()&&!copiedPlaceSourceIds(project_.document()).count(ref.id);return ref.domain=="hydroBuiltin"?
-            bool(hydroRuntime_.recordById(q(ref.id))):project_.index().objects.count(ref)!=0;});
+            bool(hydroRuntime_.recordById(q(ref.id))):project_.index().objects.count(ref)!=0&&
+                (ref.domain!="territorial"||!project_.inactiveEntityIds().count(ref.id));});
         if(hover_&&!(hover_->domain=="placeBuiltin"?placeRuntime_.recordById(q(hover_->id)).has_value()&&!copiedPlaceSourceIds(project_.document()).count(hover_->id):hover_->domain=="hydroBuiltin"?bool(hydroRuntime_.recordById(q(hover_->id))):
-            project_.index().objects.count(*hover_))) {hover_.reset();hoverSource_.clear();++hoverRevision_;}
+            (project_.index().objects.count(*hover_)&&
+             (hover_->domain!="territorial"||!project_.inactiveEntityIds().count(hover_->id))))) {
+            hover_.reset();hoverSource_.clear();++hoverRevision_;}
     }
     closeObjectChooser();cancelColorEdit();fieldSessions_.clear();
     if(replaced) {cancelContentEdit();cancelGeometryEdit();}

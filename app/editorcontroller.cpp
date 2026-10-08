@@ -1,4 +1,7 @@
 #include "editorcontroller.h"
+#include <QDate>
+#include <iomanip>
+#include <sstream>
 #include "geometrysnapprovider.h"
 #include "terrainimageprovider.h"
 #include "../renderer/gpumapitem.h"
@@ -188,7 +191,7 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         emit renderQualityChanged();
     });
     snapProvider_=new geometrysnap::Provider(*jobs_,this);
-    snapProvider_->synchronizeSources(project_.snapshot());
+    snapProvider_->synchronizeSources(project_.snapshotForView());
     connect(jobs_.get(),&CommandJobRunner::changed,this,&EditorController::jobChanged,Qt::QueuedConnection);
     presentationSaveTimer_.setSingleShot(true);presentationSaveTimer_.setInterval(500);
     connect(&presentationSaveTimer_,&QTimer::timeout,this,&EditorController::startPresentationRecovery);
@@ -231,7 +234,7 @@ EditorController::EditorController(EditorControllerConfig config,QObject* parent
         updateWorldDetail();
         sceneBuilder_.setWorldBase(worldBase_);
         sceneBuilder_.setQuality(quality_.profile());
-        if(!sceneBuilder_.canReusePreparation(project_.snapshot(),sceneBridge_.viewState(),
+        if(!sceneBuilder_.canReusePreparation(project_.snapshotForView(),sceneBridge_.viewState(),
                                               sceneBridge_.sceneSnapshot()))refreshTypedScene();
     });
     connect(&sceneBridge_,&MapSceneBridge::viewChanged,this,[this] {
@@ -296,7 +299,7 @@ void EditorController::refreshTypedScene() {
             &pendingSceneImpact_->sceneDirty:nullptr;
         const auto preparationsBefore=sceneBuilder_.preparationCount();
         const auto deltasBefore=sceneBuilder_.deltaUpdateCount();
-        auto scene=sceneBuilder_.refresh(project_.snapshot(),sceneBridge_.viewState(),interaction,previous,dirty);
+        auto scene=sceneBuilder_.refresh(project_.snapshotForView(),sceneBridge_.viewState(),interaction,previous,dirty);
         if(scene!=sceneBridge_.sceneSnapshot()) {
             sceneBridge_.publishScene(std::move(scene));
             if(sceneBuilder_.deltaUpdateCount()!=deltasBefore)++scenePatchCount_;
@@ -310,13 +313,13 @@ void EditorController::refreshTypedScene() {
     }
 }
 void EditorController::noteAppliedImpact(const pandoeditor::ChangeImpact& impact) {
-    if(snapProvider_&&snapProvider_->requiresImmediateSynchronization(project_.snapshot(),impact))
-        snapProvider_->synchronizeSources(project_.snapshot());
+    if(snapProvider_&&snapProvider_->requiresImmediateSynchronization(project_.snapshotForView(),impact))
+        snapProvider_->synchronizeSources(project_.snapshotForView());
     lastEditAffectedObjects_=impact.changedObjects.size();
     lastEditRetainedGeometries_=impact.retainedGeometryCount;
     lastEditNewGeometryBytes_=impact.estimatedNewGeometryBytes;
     if(impact.sceneDirty.datasetResource)mapPicker_.reset();
-    else mapPicker_.applyImpact(project_.snapshot(),impact.sceneDirty.geometryObjects);
+    else mapPicker_.applyImpact(project_.snapshotForView(),impact.sceneDirty.geometryObjects);
     try {
         pendingSceneImpact_=impact;
         pendingSceneImpactRevision_=project_.revision();
@@ -432,7 +435,7 @@ QString EditorController::labelSourceId(const std::string& ownerId) const {
 void EditorController::scheduleDerivedLabelAnchor(const pandoeditor::ObjectRef& owner) {
     if(!labelAnchors_||owner.domain!="territorial")return;
     const auto object=project_.index().objects.find(owner);if(object==project_.index().objects.end()){labelAnchors_->invalidateOwner(text(owner.id));return;}
-    const auto& unit=project_.document().units.at(object->second);const auto binding=pandoeditor::staticGeometryBinding(project_.document(),unit.id).geometryRef;const auto geometry=project_.document().geometries.get(binding);
+    const auto& unit=project_.viewDocument().units.at(object->second);const auto binding=pandoeditor::staticGeometryBinding(project_.viewDocument(),unit.id).geometryRef;const auto geometry=project_.viewDocument().geometries.get(binding);
     labelAnchors_->setProjectScope(text(project_.instanceId()));
     if(geometry)labelAnchors_->recompute(text(owner.id),*geometry,binding);
     else labelAnchors_->invalidateOwner(text(owner.id));
@@ -689,15 +692,16 @@ void EditorController::flushViewportResources() {
     }
 }
 QString EditorController::labelFlagSource(const pandoeditor::ObjectRef& ref) const {
-    return resolveDefaultFlag(project_.document(),ref).source;
+    return resolveDefaultFlag(project_.viewDocument(),ref).source;
 }
 
 QVariantMap EditorController::colors() const
 {
     QVariantMap result;
     for(const auto& unit:project_.document().units) {
+        if(project_.inactiveEntityIds().count(unit.id))continue;
         const auto style=project_.document().presentation.objectStyles.find(pandoeditor::territorialRef(unit.id));
-        if(style!=project_.document().presentation.objectStyles.end()) result[text(unit.id)]=rgb(pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(unit.id)));
+        if(style!=project_.document().presentation.objectStyles.end()) result[text(unit.id)]=rgb(pandoeditor::effectiveObjectColor(project_.viewDocument(),pandoeditor::territorialRef(unit.id)));
     }
     return result;
 }
@@ -708,57 +712,58 @@ QString EditorController::selectedFlagSource() const {
 QVariantMap EditorController::countryVisuals() const
 {
     QVariantMap result;
-    const auto distributionRows=pandoeditor::visibleDistributionEntries(project_.document());
+    const auto distributionRows=pandoeditor::visibleDistributionEntries(project_.viewDocument());
     const std::set<pandoeditor::ObjectRef> visibleDistribution(distributionRows.begin(),distributionRows.end());
     std::map<std::string,std::optional<pandoeditor::DistributionValueRange>> distributionRanges;
-    for(const auto& layer:project_.document().distributionLayers)
-        distributionRanges.emplace(layer.id,pandoeditor::distributionValueRange(project_.document(),layer.id));
-    for(const auto& unit:project_.document().units) {
+    for(const auto& layer:project_.viewDocument().distributionLayers)
+        distributionRanges.emplace(layer.id,pandoeditor::distributionValueRange(project_.viewDocument(),layer.id));
+    for(const auto& unit:project_.viewDocument().units) {
+        if(project_.inactiveEntityIds().count(unit.id))continue;
         const auto ref=pandoeditor::territorialRef(unit.id);
-        const auto style=project_.document().presentation.objectStyles.find(ref);
-        if(style==project_.document().presentation.objectStyles.end()) continue;
-        const auto resolved=pandoeditor::resolvedTerritorialPresentation(project_.document(),ref);
-        const auto nativeLayer=pandoeditor::nativeLayerId(project_.document(),ref);double nativeOpacity=1;int nativeOrder=-1;
-        for(std::size_t i=0;i<project_.document().presentation.userLayers.size();++i)if(project_.document().presentation.userLayers[i].id==nativeLayer){nativeOpacity=project_.document().presentation.userLayers[i].opacity;nativeOrder=int(i);break;}
-        const auto resolvedFlag=resolveDefaultFlag(project_.document(),ref);
+        const auto style=project_.viewDocument().presentation.objectStyles.find(ref);
+        if(style==project_.viewDocument().presentation.objectStyles.end()) continue;
+        const auto resolved=pandoeditor::resolvedTerritorialPresentation(project_.viewDocument(),ref);
+        const auto nativeLayer=pandoeditor::nativeLayerId(project_.viewDocument(),ref);double nativeOpacity=1;int nativeOrder=-1;
+        for(std::size_t i=0;i<project_.viewDocument().presentation.userLayers.size();++i)if(project_.viewDocument().presentation.userLayers[i].id==nativeLayer){nativeOpacity=project_.viewDocument().presentation.userLayers[i].opacity;nativeOrder=int(i);break;}
+        const auto resolvedFlag=resolveDefaultFlag(project_.viewDocument(),ref);
         const auto& flag=resolvedFlag.source;const auto flagAvailable=resolvedFlag.available;
         const auto& flagReason=resolvedFlag.reason;
-        result[text(unit.id)]=QVariantMap{{"color",rgb(resolved.colorVisible?pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(unit.id)):0xa8c7db)},
+        result[text(unit.id)]=QVariantMap{{"color",rgb(resolved.colorVisible?pandoeditor::effectiveObjectColor(project_.viewDocument(),pandoeditor::territorialRef(unit.id)):0xa8c7db)},
             {"name",text(project_.propertyView(ref)->displayName)},{"nameVisible",resolved.nameVisible},{"flagVisible",resolved.flagVisible},{"flagSource",flag},{"flagAvailable",flagAvailable},{"flagReason",flagReason},
-            {"boundary",pandoeditor::resolvedTerritorialPresentation(project_.document(),ref).boundaryVisible},
+            {"boundary",pandoeditor::resolvedTerritorialPresentation(project_.viewDocument(),ref).boundaryVisible},
             {"blendMode",text(resolved.blendMode)},
-            {"kind",pandoeditor::isRootGeneral(project_.document(),unit)?QStringLiteral("country"):unit.kind==pandoeditor::UnitKind::General?QStringLiteral("subunit"):QStringLiteral("region")},
+            {"kind",pandoeditor::isRootGeneral(project_.viewDocument(),unit)?QStringLiteral("country"):unit.kind==pandoeditor::UnitKind::General?QStringLiteral("subunit"):QStringLiteral("region")},
             {"layerId",text(nativeLayer)},{"layerOpacity",nativeOpacity},{"layerOrder",nativeOrder},
-            {"drawFillPass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).pass},
-            {"drawLinePass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Line).pass},
-            {"drawBoundaryPass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Boundary).pass},
-            {"drawGroup",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).group},
-            {"drawObject",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).object},
+            {"drawFillPass",pandoeditor::mapRenderOrder(project_.viewDocument(),ref,pandoeditor::RenderPrimitiveRole::Fill).pass},
+            {"drawLinePass",pandoeditor::mapRenderOrder(project_.viewDocument(),ref,pandoeditor::RenderPrimitiveRole::Line).pass},
+            {"drawBoundaryPass",pandoeditor::mapRenderOrder(project_.viewDocument(),ref,pandoeditor::RenderPrimitiveRole::Boundary).pass},
+            {"drawGroup",pandoeditor::mapRenderOrder(project_.viewDocument(),ref,pandoeditor::RenderPrimitiveRole::Fill).group},
+            {"drawObject",pandoeditor::mapRenderOrder(project_.viewDocument(),ref,pandoeditor::RenderPrimitiveRole::Fill).object},
             {"visible",objectVisible(ref)},
             {"opacity",(text(unit.id)==selectedId()&&opacityPreview_?*opacityPreview_:style->second.opacity)*resolved.opacity}};
     }
     for(const auto& [ref,index]:project_.index().objects) if(ref.domain!="territorial") {
         const auto properties=project_.propertyView(ref); if(!properties) continue;
-        const auto group=pandoeditor::contentGroup(project_.document(),ref);
-        double opacity=1; const auto style=project_.document().presentation.webPresentation.styles.find(group);
-        if(style!=project_.document().presentation.webPresentation.styles.end()) opacity=style->second.opacity.value_or(1);
-        const auto layerId=pandoeditor::nativeLayerId(project_.document(),ref); double layerOpacity=1; int layerOrder=-1;
+        const auto group=pandoeditor::contentGroup(project_.viewDocument(),ref);
+        double opacity=1; const auto style=project_.viewDocument().presentation.webPresentation.styles.find(group);
+        if(style!=project_.viewDocument().presentation.webPresentation.styles.end()) opacity=style->second.opacity.value_or(1);
+        const auto layerId=pandoeditor::nativeLayerId(project_.viewDocument(),ref); double layerOpacity=1; int layerOrder=-1;
         for(std::size_t i=0;i<project_.layers().size();++i) if(project_.layers()[i].id==layerId) {layerOrder=int(i);layerOpacity=project_.layers()[i].opacity;}
         if(ref.domain=="distributionEntry") {
             if(!visibleDistribution.count(ref))continue;
-            const auto& entry=project_.document().distributionEntries.at(index);
+            const auto& entry=project_.viewDocument().distributionEntries.at(index);
             opacity=pandoeditor::distributionValueAlpha(entry.value,distributionRanges.at(entry.layerId),opacity);
         }
         result[QStringLiteral("content/")+text(ref.domain)+"/"+text(ref.id)]=QVariantMap{
             {"color",rgb(properties->effectiveColor)},{"name",text(properties->displayName)},
             {"nameVisible",ref.domain=="label"},{"visible",objectVisible(ref)},{"opacity",opacity},
             {"kind",text(ref.domain)},
-            {"drawFillPass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).pass},
-            {"drawLinePass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Line).pass},
-            {"drawBoundaryPass",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Boundary).pass},
-            {"drawGroup",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).group},
-            {"drawObject",pandoeditor::mapRenderOrder(project_.document(),ref,pandoeditor::RenderPrimitiveRole::Fill).object},
-            {"layerId",text(layerId)},{"layerOrder",layerOrder},{"layerOpacity",layerOpacity},{"boundary",ref.domain=="distributionEntry"&&project_.document().presentation.webPresentation.distributionSettings.boundaryVisible},{"blendMode","normal"}};
+            {"drawFillPass",pandoeditor::mapRenderOrder(project_.viewDocument(),ref,pandoeditor::RenderPrimitiveRole::Fill).pass},
+            {"drawLinePass",pandoeditor::mapRenderOrder(project_.viewDocument(),ref,pandoeditor::RenderPrimitiveRole::Line).pass},
+            {"drawBoundaryPass",pandoeditor::mapRenderOrder(project_.viewDocument(),ref,pandoeditor::RenderPrimitiveRole::Boundary).pass},
+            {"drawGroup",pandoeditor::mapRenderOrder(project_.viewDocument(),ref,pandoeditor::RenderPrimitiveRole::Fill).group},
+            {"drawObject",pandoeditor::mapRenderOrder(project_.viewDocument(),ref,pandoeditor::RenderPrimitiveRole::Fill).object},
+            {"layerId",text(layerId)},{"layerOrder",layerOrder},{"layerOpacity",layerOpacity},{"boundary",ref.domain=="distributionEntry"&&project_.viewDocument().presentation.webPresentation.distributionSettings.boundaryVisible},{"blendMode","normal"}};
     }
     return result;
 }
@@ -775,15 +780,15 @@ QVariantList EditorController::layers() const
     QVariantList result;
     const auto& layers=project_.layers();
     QVariantList unassigned;
-    for(const auto& path:projection_.paths)if(pandoeditor::nativeLayerId(project_.document(),pandoeditor::territorialRef(path.toMap()["countryId"].toString().toStdString())).empty())unassigned.append(path);
+    for(const auto& path:projection_.paths)if(pandoeditor::nativeLayerId(project_.viewDocument(),pandoeditor::territorialRef(path.toMap()["countryId"].toString().toStdString())).empty())unassigned.append(path);
     if(!unassigned.empty())result.append(QVariantMap{{"id",""},{"name",QStringLiteral("웹 기본 표시")},{"visible",true},{"locked",false},{"opacity",1.},{"order",-1},{"paths",unassigned},{"count",unassigned.size()}});
     for(int i=static_cast<int>(layers.size())-1;i>=0;--i) {
         const auto& l=layers[static_cast<std::size_t>(i)];
         QVariantList paths;
         for(const auto& path:projection_.paths) {
             const auto id=path.toMap()["countryId"].toString();
-            const auto member=project_.document().presentation.membership.find(pandoeditor::territorialRef(id.toStdString()));
-            if(member!=project_.document().presentation.membership.end()&&member->second==l.id) paths.push_back(path);
+            const auto member=project_.viewDocument().presentation.membership.find(pandoeditor::territorialRef(id.toStdString()));
+            if(member!=project_.viewDocument().presentation.membership.end()&&member->second==l.id) paths.push_back(path);
         }
         result.append(QVariantMap{{"id",text(l.id)},{"name",text(l.name)},{"visible",l.visible},
             {"locked",l.locked},{"opacity",l.opacity},{"order",i},{"paths",paths},{"count",paths.size()}});
@@ -801,7 +806,7 @@ QVariantList EditorController::countryRows() const
             {"visible",objectVisible(pandoeditor::territorialRef(c.id))},{"locked",(l&&l->locked)||c.locked},
             {"limited",!pandoeditor::effectAllowed(project_.document(),pandoeditor::territorialRef(c.id),"color")}});
     }
-    countryRowsSnapshot_=project_.snapshot();countryRowsCache_=result;
+    countryRowsSnapshot_=project_.snapshotForView();countryRowsCache_=result;
     return result;
 }
 QString EditorController::selectedName() const
@@ -838,11 +843,52 @@ QString EditorController::documentNotice() const
 {
     QString notice=QStringLiteral("저장 형식: Qt v10 · 이전 앱에서는 열 수 없습니다. 열기만으로 원본 파일은 변경되지 않습니다.");
     const auto& d=project_.document();
-    if(d.units.size()>project_.countries().size())
-        notice+=QStringLiteral(" 하위단위·지방 %1개: 정보·편집·관계 메뉴에서 편집할 수 있습니다.").arg(d.units.size()-project_.countries().size());
+    const auto activeUnits=d.units.size()-project_.inactiveEntityIds().size();
+    if(activeUnits>project_.countries().size())
+        notice+=QStringLiteral(" 하위단위·지방 %1개: 정보·편집·관계 메뉴에서 편집할 수 있습니다.").arg(activeUnits-project_.countries().size());
     if(!d.extensions.empty())
         notice+=QStringLiteral(" 미해석 데이터 %1개 보존 중: 관련 편집이 제한될 수 있습니다.").arg(d.extensions.size());
     return notice;
+}
+bool EditorController::setTimelineMonth(const QString& month) {
+    if(startupBusy_||jobBusy()||geometryEdit_||contentSession_||structureDialogOpen()||
+       hasPreparedPreview()||hasPendingEdits()) {
+        emit errorOccurred(QStringLiteral("TIMELINE_EDIT_ACTIVE: 편집을 확인하거나 취소한 뒤 시간대를 바꾸세요."));
+        return false;
+    }
+    try {
+        if(!project_.setTimelineCursor(month.toStdString()))return true;
+        projection_.rebuild(project_.viewDocument(),project_.inactiveEntityIds());
+        mapPicker_.reset();
+        if(labelAnchors_)for(const auto& unit:project_.document().units) {
+            if(project_.inactiveEntityIds().count(unit.id))
+                labelAnchors_->invalidateOwner(text(unit.id));
+            else scheduleDerivedLabelAnchor(pandoeditor::territorialRef(unit.id));
+        }
+        publish(false);
+        emit geometryChanged();
+        refreshTypedScene();
+        return true;
+    } catch(const std::exception& error) {
+        emit errorOccurred(QString::fromUtf8(error.what()));
+        return false;
+    }
+}
+bool EditorController::shiftTimelineMonth(int offset) {
+    if(offset!=1&&offset!=-1)return false;
+    try {
+        const auto point=pandoeditor::parseTemporal(project_.timelineCursor());
+        if(point.precision!="month")return false;
+        int year=point.year,month=*point.month+offset;
+        if(month==0){month=12;year=year==1?-1:year-1;}
+        if(month==13){month=1;year=year==-1?1:year+1;}
+        std::ostringstream value;
+        if(year<0)value<<'-';else if(year>9999)value<<'+';
+        value<<std::setw(4)<<std::setfill('0')<<std::abs(year)<<'-'<<std::setw(2)<<month;
+        return setTimelineMonth(QString::fromStdString(value.str()));
+    } catch(const std::exception& error) {
+        emit errorOccurred(QString::fromUtf8(error.what()));return false;
+    }
 }
 bool EditorController::dirty() const {return importedDirty_||project_.dirty()||hasPendingEdits();}
 bool EditorController::hasPendingEdits() const
@@ -854,8 +900,8 @@ bool EditorController::hasPendingEdits() const
     if(!parkedCountryDrafts_.empty()||!parkedLayerDrafts_.empty()) return true;
     const auto u=selectedUnit();
     if(u && (nameDraft_!=QString::fromStdString(u->kind==pandoeditor::UnitKind::General?pandoeditor::objectDisplayName(*u):u->name)
-       || memoDraft_!=text(u->notes) || colorDraft_!=rgb(pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(u->id)))
-       || validFromDraft_!=text(pandoeditor::staticLifetime(project_.document(),u->id).validity.from.value_or("")) || validToDraft_!=text(pandoeditor::staticLifetime(project_.document(),u->id).validity.to.value_or(""))
+       || memoDraft_!=text(u->notes) || colorDraft_!=rgb(pandoeditor::effectiveObjectColor(project_.viewDocument(),pandoeditor::territorialRef(u->id)))
+       || validFromDraft_!=text(pandoeditor::staticLifetime(project_.viewDocument(),u->id).validity.from.value_or("")) || validToDraft_!=text(pandoeditor::staticLifetime(project_.viewDocument(),u->id).validity.to.value_or(""))
        || (opacityPreview_&&*opacityPreview_!=project_.document().presentation.objectStyles.at(pandoeditor::territorialRef(u->id)).opacity)))return true;
     const auto l=project_.layer(selectedLayer_.toStdString());
     return l&&(layerNameDraft_!=text(l->name)||(layerOpacityPreview_&&*layerOpacityPreview_!=l->opacity));
@@ -869,9 +915,9 @@ void EditorController::reloadDrafts()
     const auto u=selectedUnit();
     nameDraft_=u?text(u->kind==pandoeditor::UnitKind::General?pandoeditor::objectDisplayName(*u):u->name):QString();
     memoDraft_=u?text(u->notes):QString();
-    colorDraft_=u?rgb(pandoeditor::effectiveObjectColor(project_.document(),pandoeditor::territorialRef(u->id))):QString();
-    validFromDraft_=u?text(pandoeditor::staticLifetime(project_.document(),u->id).validity.from.value_or("")):QString();
-    validToDraft_=u?text(pandoeditor::staticLifetime(project_.document(),u->id).validity.to.value_or("")):QString();
+    colorDraft_=u?rgb(pandoeditor::effectiveObjectColor(project_.viewDocument(),pandoeditor::territorialRef(u->id))):QString();
+    validFromDraft_=u?text(pandoeditor::staticLifetime(project_.viewDocument(),u->id).validity.from.value_or("")):QString();
+    validToDraft_=u?text(pandoeditor::staticLifetime(project_.viewDocument(),u->id).validity.to.value_or("")):QString();
     const auto l=project_.layer(selectedLayer_.toStdString());layerNameDraft_=l?text(l->name):QString();
     opacityPreview_.reset();layerOpacityPreview_.reset();
     restoreParkedDrafts();
@@ -881,7 +927,7 @@ void EditorController::publish(bool pruneSelection)
     if(!geometryPresentationStrokes_.empty()&&(geometryPresentationInstance_!=project_.instanceId()||geometryPresentationRevision_!=project_.revision())) {
         geometryPresentationStrokes_.clear();emit geometryEditChanged();
     }
-    if(snapProvider_)snapProvider_->synchronizeInstallation(project_.snapshot());
+    if(snapProvider_)snapProvider_->synchronizeInstallation(project_.snapshotForView());
     Q_UNUSED(pruneSelection);
     if(labelAnchors_)labelAnchors_->setProjectScope(text(project_.instanceId()));
     QScopedValueRollback<bool> guard(selectionTransition_,true);
@@ -939,11 +985,11 @@ void EditorController::undo()
     if(project_.undo()) {
         bool changed=true,hydroChanged=true;
         try {
-            const auto impact=pandoeditor::calculateChangeImpact(before,project_.document());
+            const auto impact=pandoeditor::calculateChangeImpact(before,project_.document(),{},project_.timelineCursor());
             changed=impact.sceneDirty.geometry;hydroChanged=impact.sceneDirty.datasetResource;
             noteAppliedImpact(impact);
         } catch(...) {pendingSceneImpact_.reset();}
-        if(changed)projection_.rebuild(project_.document());
+        if(changed)projection_.rebuild(project_.viewDocument(),project_.inactiveEntityIds());
         if(clearBoundarySelection)clearSelection();
         publish();if(hydroChanged)syncHydroData();if(changed)emit geometryChanged();
         editingPerformance_.record("undo",clearBoundarySelection?"shared-boundary":"document",double(measurement.nsecsElapsed())/1e6);
@@ -960,11 +1006,11 @@ void EditorController::redo()
     if(project_.redo()) {
         bool changed=true,hydroChanged=true;
         try {
-            const auto impact=pandoeditor::calculateChangeImpact(before,project_.document());
+            const auto impact=pandoeditor::calculateChangeImpact(before,project_.document(),{},project_.timelineCursor());
             changed=impact.sceneDirty.geometry;hydroChanged=impact.sceneDirty.datasetResource;
             noteAppliedImpact(impact);
         } catch(...) {pendingSceneImpact_.reset();}
-        if(changed)projection_.rebuild(project_.document());
+        if(changed)projection_.rebuild(project_.viewDocument(),project_.inactiveEntityIds());
         if(clearBoundarySelection)clearSelection();
         publish();if(hydroChanged)syncHydroData();if(changed)emit geometryChanged();
         editingPerformance_.record("redo",clearBoundarySelection?"shared-boundary":"document",double(measurement.nsecsElapsed())/1e6);
@@ -1026,11 +1072,14 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
         editingPerformance_.record(QString::fromLatin1(stage),QStringLiteral("project-restore"),restoreStage.nsecsElapsed()/1.e6);
         restoreStage.restart();
     };
-    auto document=projectcodec::decode(bytes);pandoeditor::requireStaticTimeline(document);
+    auto document=projectcodec::decode(bytes);
     recordRestore("restoreDecode");
     pandoeditor::Project candidate;candidate.replace(std::move(document));
+    if(!pandoeditor::isStaticTimeline(candidate.document()))
+        candidate.setTimelineCursor(pandoeditor::initialTimelineMonth(candidate.document().timelineRecords,
+            QDate::currentDate().toString(QStringLiteral("yyyy-MM")).toStdString()));
     recordRestore("restoreValidate");
-    MapProjection nextProjection;nextProjection.rebuild(candidate.document());
+    MapProjection nextProjection;nextProjection.rebuild(candidate.viewDocument(),candidate.inactiveEntityIds());
     recordRestore("restoreProjection");
     cancelWorldBootstrap();
     cancelPreview();cancelStructureMutation();project_=std::move(candidate);projection_=std::move(nextProjection);
@@ -1041,8 +1090,8 @@ bool EditorController::replaceFromBytes(const QByteArray& bytes,bool imported,co
     syncHydroData();recordRestore("restoreHydro");
     // A saved built-in world keeps canonical document geometry. Attach its
     // optional render meshes on a worker after validating actual coordinates.
-    if(bootstrapWorldEnabled_&&std::any_of(project_.document().units.begin(),project_.document().units.end(),
-            [this](const auto& unit){return pandoeditor::staticGeometryBinding(project_.document(),unit.id).geometryRef.id.rfind("world-country-",0)==0;})) {
+    if(bootstrapWorldEnabled_&&std::any_of(project_.viewDocument().units.begin(),project_.viewDocument().units.end(),
+            [this](const auto& unit){return pandoeditor::staticGeometryBinding(project_.viewDocument(),unit.id).geometryRef.id.rfind("world-country-",0)==0;})) {
         using DetailFrames=std::pair<std::shared_ptr<const WorldBaseFrame>,std::shared_ptr<const WorldBaseFrame>>;
         const auto initial=project_.snapshot();const auto generation=worldGeneration_;
         auto* watcher=new QFutureWatcher<DetailFrames>(this);

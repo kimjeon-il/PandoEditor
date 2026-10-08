@@ -52,11 +52,19 @@ struct ContentEdit {
     std::optional<LabelSettings> initialLabelSettings;
 };
 struct SetPhysicalData { PhysicalDataSettings settings; };
+// One existing territorial geometry or parent edit at the active month. The
+// computed geometry is supplied by the existing engine, never recalculated here.
+struct TimelineGeometryEdit { std::string id, month; Geometry geometry; };
+struct TimelineParentEdit { std::string id, month, parentId, coverageMode; };
+struct TimelineCreate { CreateTerritorialIntent intent; std::string month; };
+struct TimelineDelete { std::vector<ObjectRef> targets; std::string month; };
+struct TimelineTerritorialMutation { ApplyTerritorialMutation mutation; std::string month; };
 using CommandAction = std::variant<std::monostate, SetCountryColor, AddLayer,
     RemoveLayer, MoveLayer, SetLayerVisible, SetLayerLocked, MoveCountry,
     TerritorialFieldEdit, TerritorialColorEdit, TerritorialLockEdit, ApplyTerritorialMutation, ContentEdit, SetPhysicalData,
     HistoricalInstantiationPlan, GisGenericImportPlan, GisTerritorialImportPlan,
-    GisDistributionImportPlan>;
+    GisDistributionImportPlan, TimelineGeometryEdit, TimelineParentEdit, TimelineCreate, TimelineDelete,
+    TimelineTerritorialMutation>;
 struct CommandArguments { PropertyEdits properties; CommandAction action; };
 struct CommandRequest {
     std::string commandId, projectInstanceId, documentId;
@@ -90,7 +98,7 @@ struct ChangeImpact {
 };
 // Compare actual immutable states, including reverse history transitions.
 ChangeImpact calculateChangeImpact(const ProjectDocument& before,const ProjectDocument& after,
-                                   const std::vector<ObjectRef>& targets={});
+                                   const std::vector<ObjectRef>& targets={},const std::string& month={});
 struct CommandResult {
     CommandStatus status=CommandStatus::Rejected;
     CommandError error=CommandError::None;
@@ -138,6 +146,7 @@ using ExtensionRewriter=std::function<ExtensionRewriteResult(const ProjectDocume
 bool semanticallyEqual(const ProjectDocument& a, const ProjectDocument& b);
 class CommandProcessor {
 public:
+    static ProjectSnapshot timelineViewSnapshot(const ProjectSnapshot&);
     static CommandRequest makeRequest(const Project&, std::string commandId, CommandArguments);
     static PrepareResult prepare(const Project&, const CommandRequest&);
     static PrepareResult prepare(const ProjectSnapshot&, const CommandRequest&);

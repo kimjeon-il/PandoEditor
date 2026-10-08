@@ -658,6 +658,14 @@ if(BUILD_TESTING)
     target_compile_definitions(timeline_project_tests PRIVATE
         PANDOEDITOR_TIMELINE_PROJECT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-project-v10.json")
     add_test(NAME timeline_project_tests COMMAND timeline_project_tests)
+    add_executable(timeline_controller_tests ../tests/timeline_controller_tests.cpp)
+    target_link_libraries(timeline_controller_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(timeline_controller_tests PRIVATE
+        PANDOEDITOR_TIMELINE_COMPLEX_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-resolution/complex-v10.json")
+    qt_add_resources(timeline_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+        FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
+    add_test(NAME timeline_controller_tests COMMAND timeline_controller_tests -o -,txt)
+    set_tests_properties(timeline_controller_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     if(PANDOEDITOR_M72_NODE_EXECUTABLE)
         add_test(NAME web_v10_exchange_source_contract
             COMMAND "${PANDOEDITOR_M72_NODE_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/web-v10-exchange-oracle.mjs" --verify-only)
@@ -690,7 +698,8 @@ if(BUILD_TESTING)
     target_link_libraries(terrain_controller_display_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
     target_compile_definitions(terrain_controller_display_tests PRIVATE PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world")
     target_link_libraries(ui_tests PRIVATE pandoeditor_editor Qt6::QuickControls2 Qt6::Test)
-    target_compile_definitions(ui_tests PRIVATE PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world")
+    target_compile_definitions(ui_tests PRIVATE PANDOEDITOR_WORLD_ASSET_DIR="${PROJECT_SOURCE_DIR}/assets/world"
+        PANDOEDITOR_TIMELINE_COMPLEX_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/timeline-resolution/complex-v10.json")
     foreach(native_ui_target ui_tests terrain_controller_display_tests)
     qt_add_resources(${native_ui_target} ui PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/ui"
         FILES "${PROJECT_SOURCE_DIR}/ui/common/Main.qml"
@@ -718,6 +727,9 @@ if(BUILD_TESTING)
             FILES ${DEFAULT_FLAG_FILES})
     endforeach()
     add_test(NAME ui_tests COMMAND ui_tests -o -,txt)
+    add_test(NAME timeline_ui_tests COMMAND ui_tests timelineControlsNavigateDesktopAndMobile -o -,txt)
+    set_tests_properties(timeline_ui_tests PROPERTIES TIMEOUT 90
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     if(WIN32)
         file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/test-results")
         add_test(NAME native_geometry_pointer_route COMMAND ui_tests nativeGeometryPointerRoutePreservesProject

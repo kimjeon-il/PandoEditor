@@ -62,7 +62,7 @@ std::vector<ObjectRef> EditorController::sortMapCandidates(std::vector<ObjectRef
 
 std::vector<ObjectRef> EditorController::mapCandidates(
     double x,double y,double pixelsPerUnit,double zoom) const {
-    auto found=mapPicker_.pickMap(project_.snapshot(),mapCameraMetrics(),{x,y,pixelsPerUnit},mapPickContext(zoom));
+    auto found=mapPicker_.pickMap(project_.snapshotForView(),mapCameraMetrics(),{x,y,pixelsPerUnit},mapPickContext(zoom));
     if(pixelsPerUnit>0)for(const auto& label:labelEngine_.placements())if(label.ref.domain=="placeBuiltin"&&objectVisible(label.ref)){
         const auto point=projection_.project(label.geographic);
         if(std::abs(x-point.x)*pixelsPerUnit<=label.width/2&&std::abs(y-point.y)*pixelsPerUnit<=label.height/2)found.push_back(label.ref);
@@ -74,7 +74,7 @@ std::vector<ObjectRef> EditorController::mapCandidatesScreen(
     double x,double y,double zoom) const {
     const auto view=sceneBridge_.viewState();
     const auto metrics=mapCameraMetrics();
-    auto found=mapPicker_.pickScreen(project_.snapshot(),view,metrics,{x,y},mapPickContext(zoom));
+    auto found=mapPicker_.pickScreen(project_.snapshotForView(),view,metrics,{x,y},mapPickContext(zoom));
     for(const auto& label:labelEngine_.placements())if(label.ref.domain=="placeBuiltin"&&objectVisible(label.ref)&&
         std::abs(x-label.x)<=label.width/2&&std::abs(y-label.y)<=label.height/2)found.push_back(label.ref);
     return sortMapCandidates(std::move(found));

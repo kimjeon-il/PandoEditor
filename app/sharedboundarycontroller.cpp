@@ -6,14 +6,15 @@
 using namespace pandoeditor;
 namespace {
 struct BoundaryEntry {std::vector<ObjectRef> owners;std::string autoSeed;};
-BoundaryEntry entry(const ProjectDocument& document,const DocumentIndex& index,const std::vector<ObjectRef>& selected) {
+BoundaryEntry entry(const ProjectDocument& document,const DocumentIndex& index,
+                    const std::vector<ObjectRef>& selected,const std::set<std::string>& inactive) {
     if(selected.size()!=1)return sharedboundary::Session::eligibility(document,index,selected,false).empty()?BoundaryEntry{selected,{}}:BoundaryEntry{};
     const auto& source=selected.front();const auto found=index.objects.find(source);
     if(source.domain!="territorial"||found==index.objects.end()||document.units.at(found->second).kind!=UnitKind::General||objectLocked(document,index,source))return {};
     const auto parent=staticParentRelation(document,source.id).parentId;if(parent.empty())return {};
     const auto geometry=document.geometries.get(staticGeometryBinding(document,source.id).geometryRef);if(!geometry||geometry->polygons.empty())return {};
     BoundaryEntry result{{source},source.id};bool sibling=false;
-    for(const auto& unit:document.units)if(unit.id!=source.id&&unit.kind==UnitKind::General&&staticParentRelation(document,unit.id).parentId==parent){sibling=true;const auto ref=territorialRef(unit.id);if(!objectLocked(document,index,ref))result.owners.push_back(ref);}
+    for(const auto& unit:document.units)if(!inactive.count(unit.id)&&unit.id!=source.id&&unit.kind==UnitKind::General&&staticParentRelation(document,unit.id).parentId==parent){sibling=true;const auto ref=territorialRef(unit.id);if(!objectLocked(document,index,ref))result.owners.push_back(ref);}
     // The web enters if a sibling exists, even when all siblings are locked;
     // preparation then rejects the one-owner/isolated seed without side effects.
     if(!sibling)return {};
@@ -23,19 +24,19 @@ BoundaryEntry entry(const ProjectDocument& document,const DocumentIndex& index,c
 }
 bool EditorController::canBeginSharedBoundaryGeometry() const {
     return !geometryEdit_&&!structureDialogOpen()&&!hasPendingEdits()
-        &&!entry(project_.document(),project_.index(),selection_.items()).owners.empty();
+        &&!entry(project_.viewDocument(),project_.viewIndex(),selection_.items(),project_.inactiveEntityIds()).owners.empty();
 }
 bool EditorController::beginSharedBoundaryGeometry(){
     if(!canBeginSharedBoundaryGeometry())return false;
     const auto primary=selection_.primary();if(!primary)return false;
-    const auto selected=entry(project_.document(),project_.index(),selection_.items());auto target=*primary;
+    const auto selected=entry(project_.viewDocument(),project_.viewIndex(),selection_.items(),project_.inactiveEntityIds());auto target=*primary;
     // Child entry uses the original first selected sibling as its return seed,
     // independently of the current selection primary or the dragged owners.
-    if(!staticParentRelation(project_.document(),selected.owners.front().id).parentId.empty())target=selected.owners.front();
-    const auto geometry=project_.document().geometries.get(staticGeometryBinding(project_.document(),target.id).geometryRef);if(!geometry)return false;
-    geometryEdit_=GeometryEditSession{project_.snapshot(),target,*geometry,QStringLiteral("boundary"),{}};
+    if(!staticParentRelation(project_.viewDocument(),selected.owners.front().id).parentId.empty())target=selected.owners.front();
+    const auto geometry=project_.viewDocument().geometries.get(staticGeometryBinding(project_.viewDocument(),target.id).geometryRef);if(!geometry)return false;
+    geometryEdit_=GeometryEditSession{project_.snapshotForView(),target,*geometry,QStringLiteral("boundary"),{}};
     geometryEdit_->boundaryOwners=selected.owners;geometryEdit_->boundaryAutoSeed=selected.autoSeed;geometryEdit_->generation=++nextGeometrySession_;
-    if(staticParentRelation(project_.document(),selected.owners.front().id).parentId.empty()) {
+    if(staticParentRelation(project_.viewDocument(),selected.owners.front().id).parentId.empty()) {
         // Explicit root entry preserves item order but makes the last item the
         // visible primary. Whole-tool cancel restores the original snapshot.
         geometryEdit_->boundaryInitialSelection=selection_;

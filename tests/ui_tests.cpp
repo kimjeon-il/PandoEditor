@@ -1,5 +1,6 @@
 #include "ui_navigation.h"
 #include "editorcontroller.h"
+#include "projectcodec.h"
 #include "windowsframe.h"
 #include <pandoeditor/geometrypredicates.h>
 #include "gpumapitem.h"
@@ -100,6 +101,49 @@ static bool clickControl(QQuickWindow* window,const QString& name)
 class UiTests:public QObject {
     Q_OBJECT
 private slots:
+    void timelineControlsNavigateDesktopAndMobile() {
+        const char* stage="fixture";
+        try {
+        QFile source(QStringLiteral(PANDOEDITOR_TIMELINE_COMPLEX_FIXTURE));
+        QVERIFY(source.open(QIODevice::ReadOnly));
+        pandoeditor::Project project;
+        project.replace(projectcodec::decodeWeb(source.readAll()));
+        QTemporaryDir directory;QVERIFY(directory.isValid());
+        QFile file(directory.filePath(QStringLiteral("timeline.pando.json")));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(projectcodec::encode(project));file.close();
+        for(bool mobile:{false,true}) {
+            stage=mobile?"mobile controller":"desktop controller";
+            EditorController editor(EditorControllerConfig{mobile,{}});
+            QVERIFY(editor.openFile(QUrl::fromLocalFile(file.fileName())));
+            QVERIFY(editor.setTimelineMonth(QStringLiteral("1914-07")));
+            stage=mobile?"mobile qml load":"desktop qml load";
+            QQmlApplicationEngine engine;QStringList warnings;
+            connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError>& values){
+                for(const auto& value:values)warnings<<value.toString();
+            });
+            engine.rootContext()->setContextProperty("editor",&editor);
+            engine.load(QUrl("qrc:/common/Main.qml"));
+            stage=mobile?"mobile qml loaded":"desktop qml loaded";
+            QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+            auto* window=qobject_cast<QQuickWindow*>(engine.rootObjects().front());QVERIFY(window);
+            window->resize(mobile?360:1100,760);exposeForTest(window);
+            auto* controls=visualItem(window->contentItem(),"timelineControls");
+            QVERIFY(controls&&controls->isVisible());
+            const auto revision=editor.revision();const auto dirty=editor.dirty();
+            QVERIFY(clickControl(window,"timelineNextMonth"));
+            QTRY_COMPARE(editor.timelineMonth(),QStringLiteral("1914-08"));
+            QCOMPARE(editor.revision(),revision);QCOMPARE(editor.dirty(),dirty);
+            QVERIFY(clickControl(window,"timelinePreviousMonth"));
+            QTRY_COMPARE(editor.timelineMonth(),QStringLiteral("1914-07"));
+            QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+            window->setProperty("allowClose",true);window->close();
+        }
+        } catch(const std::exception& error) {
+            const auto detail=QString::fromLatin1(stage)+": "+QString::fromUtf8(error.what());
+            QFAIL(qPrintable(detail));
+        }
+    }
     void nativeGeometryPointerRoutePreservesProject() {
         if(qEnvironmentVariable("QT_QPA_PLATFORM")!="windows")QSKIP("Registered native_geometry_pointer_route requires an actual Windows RHI window");
         QTemporaryDir settings;QVERIFY(settings.isValid());EditorControllerConfig config;

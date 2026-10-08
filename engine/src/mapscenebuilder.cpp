@@ -156,7 +156,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::build(
     if(preparedSnapshot_&&preparedSnapshot_->instanceId()!=snapshot.instanceId()) {
         // Geometry ids/versions and revision zero may repeat in a new project.
         cache_.clear();
-        auto scene=std::make_shared<RenderScene>(*buildDocument(snapshot.document(),snapshot.revision(),view,interaction,{}));
+        auto scene=std::make_shared<RenderScene>(*buildDocument(snapshot.document(),snapshot.revision(),view,interaction,{},&snapshot.inactiveEntityIds()));
         scene->revision=nextSceneRevision(previous);
         remember(snapshot,view,scene);return scene;
     }
@@ -197,15 +197,15 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::build(
         scene->revisions.view=view.revision;
         ++transientUpdates_;remember(snapshot,view,scene);return scene;
     }
-    auto scene=buildDocument(snapshot.document(),snapshot.revision(),view,interaction,previous);
+    auto scene=buildDocument(snapshot.document(),snapshot.revision(),view,interaction,previous,&snapshot.inactiveEntityIds());
     remember(snapshot,view,scene);return scene;
 }
 
 std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocument(
     const ProjectDocument& doc,std::uint64_t documentRevision,const MapViewState& view,
     const InteractionRenderPacket& interaction,
-    const std::shared_ptr<const RenderScene>& previous) {
-    return buildDocumentImpl(doc,documentRevision,view,interaction,previous,nullptr);
+    const std::shared_ptr<const RenderScene>& previous,const std::set<std::string>* inactive) {
+    return buildDocumentImpl(doc,documentRevision,view,interaction,previous,nullptr,nullptr,inactive);
 }
 
 std::shared_ptr<const RenderScene> MapSceneBuilder::refresh(
@@ -247,7 +247,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDelta(
     for(const auto* ref:{&interaction.primary,&interaction.hover})if(*ref)changed.insert(**ref);
     changed.insert(interaction.candidates.begin(),interaction.candidates.end());
     auto scene=buildDocumentImpl(snapshot.document(),snapshot.revision(),view,interaction,
-                                 previous,&changed,&geometryChanged);
+                                 previous,&changed,&geometryChanged,&snapshot.inactiveEntityIds());
     ++deltaUpdates_;remember(snapshot,view,scene);return scene;
 }
 std::shared_ptr<const RenderScene> MapSceneBuilder::buildPatch(
@@ -276,7 +276,7 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildPatch(
                 snapshot.document().geometries.get(*current)))geometryChanged.insert(object);
         }else geometryChanged.insert(object);
     }
-    auto scene=buildDocumentImpl(snapshot.document(),snapshot.revision(),view,interaction,previous,&expanded,&geometryChanged);
+    auto scene=buildDocumentImpl(snapshot.document(),snapshot.revision(),view,interaction,previous,&expanded,&geometryChanged,&snapshot.inactiveEntityIds());
     ++deltaUpdates_;remember(snapshot,view,scene);return scene;
 }
 
@@ -284,7 +284,8 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
     const ProjectDocument& doc,std::uint64_t documentRevision,const MapViewState& view,
     const InteractionRenderPacket& interaction,
     const std::shared_ptr<const RenderScene>& previous,
-    const std::set<ObjectRef>* changed,const std::set<ObjectRef>* geometryChanged) {
+    const std::set<ObjectRef>* changed,const std::set<ObjectRef>* geometryChanged,
+    const std::set<std::string>* inactive) {
     if(!validMapViewState(view))throw std::invalid_argument("invalid scene view");
     bool geometryWork=!changed||!geometryChanged||!geometryChanged->empty();
     if(geometryWork)++preparations_;else ++presentationUpdates_;
@@ -318,7 +319,8 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             if(!worldBase_->startupPreview()) {
                 const auto unit=std::find_if(doc.units.begin(),doc.units.end(),
                     [&](const auto& value){return value.id==range.ownerId;});
-                if(unit==doc.units.end()||!(staticGeometryBinding(doc,unit->id).geometryRef==GeometryRef{range.geometryId,1})) {
+                if(unit==doc.units.end()||(inactive&&inactive->count(unit->id))||
+                   !(staticGeometryBinding(doc,unit->id).geometryRef==GeometryRef{range.geometryId,1})) {
                     base.visible=false;
                 } else {
                     const auto ref=territorialRef(range.ownerId);
@@ -356,14 +358,15 @@ std::shared_ptr<const RenderScene> MapSceneBuilder::buildDocumentImpl(
             if(worldBase_->startupPreview()) {land->baseSlots.push_back(slot);continue;}
             const auto unit=std::find_if(doc.units.begin(),doc.units.end(),
                 [&](const auto& value){return value.id==range.ownerId;});
-            if(unit!=doc.units.end()&&unit->kind==UnitKind::General&&
+            if(unit!=doc.units.end()&&!(inactive&&inactive->count(unit->id))&&unit->kind==UnitKind::General&&
                staticGeometryBinding(doc,unit->id).geometryRef==GeometryRef{range.geometryId,1}) {
                 land->baseSlots.push_back(slot);immutableLandOwners.insert(unit->id);
             }
         }
     }
     for(const auto& unit:doc.units) {
-        if(unit.kind!=UnitKind::General||immutableLandOwners.count(unit.id))continue;
+        if(unit.kind!=UnitKind::General||immutableLandOwners.count(unit.id)||
+           (inactive&&inactive->count(unit.id)))continue;
         const auto object=territorialRef(unit.id);
         const auto ref=staticGeometryBinding(doc,unit.id).geometryRef;
         const auto shape=doc.geometries.get(ref);

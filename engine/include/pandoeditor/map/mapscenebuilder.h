@@ -41,7 +41,8 @@ public:
     std::shared_ptr<const RenderScene> buildDocument(
         const pandoeditor::ProjectDocument& document,std::uint64_t documentRevision,
         const MapViewState& view,const InteractionRenderPacket& interaction,
-        const std::shared_ptr<const RenderScene>& previous);
+        const std::shared_ptr<const RenderScene>& previous,
+        const std::set<std::string>* inactive=nullptr);
 private:
     void remember(const pandoeditor::ProjectSnapshot&,const MapViewState&,
                   const std::shared_ptr<const RenderScene>&);
@@ -49,7 +50,8 @@ private:
         const pandoeditor::ProjectDocument&,std::uint64_t,const MapViewState&,
         const InteractionRenderPacket&,const std::shared_ptr<const RenderScene>&,
         const std::set<pandoeditor::ObjectRef>* changed,
-        const std::set<pandoeditor::ObjectRef>* geometryChanged=nullptr);
+        const std::set<pandoeditor::ObjectRef>* geometryChanged=nullptr,
+        const std::set<std::string>* inactive=nullptr);
     GeometryPacketCache& cache_;
     std::shared_ptr<const WorldBaseFrame> worldBase_;
     std::shared_ptr<const BuiltinHydroRenderFrame> builtinHydro_;

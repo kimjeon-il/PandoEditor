@@ -2,6 +2,8 @@
 #include <pandoeditor/document.h>
 #include <pandoeditor/objectproperties.h>
 #include <utility>
+#include <set>
+#include <algorithm>
 
 namespace pandoeditor::detail {
 // Construct at its final heap address. Views borrow this document, never a
@@ -12,15 +14,18 @@ struct DocumentState {
     std::map<ObjectRef,ObjectPropertyView> properties;
     std::vector<CountryView> countries;
     std::map<std::string, std::size_t> countryIndex;
+    std::set<std::string> inactiveIds;
     bool needsHistoryPruning=false;
 
     DocumentState() = default; // unloaded Project only
-    explicit DocumentState(ProjectDocument candidate)
-        : document(std::move(candidate)), index(validateDocument(document))
+    explicit DocumentState(ProjectDocument candidate,std::set<std::string> inactive={})
+        : document(std::move(candidate)), index(validateDocument(document)), inactiveIds(std::move(inactive))
     {
         if(!isStaticTimeline(document))return;
         properties=objectPropertyViews(document);
-        countries=countryViews(document);
+        auto allCountries=countryViews(document);
+        countries.reserve(allCountries.size());
+        for(const auto& view:allCountries)if(!inactiveIds.count(view.id))countries.push_back(view);
         for(const auto& u:document.units)if(u.kind==UnitKind::General &&
             (trimWebText(u.notes)!=u.notes || (u.name.empty() && u.nameExplicit)))needsHistoryPruning=true;
         for (std::size_t i = 0; i < countries.size(); ++i)

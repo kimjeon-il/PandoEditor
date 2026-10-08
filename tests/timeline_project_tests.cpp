@@ -4,6 +4,8 @@
 #include "projectgeopackage.h"
 #include <pandoeditor/project.h>
 #include <pandoeditor/timeline-records.h>
+#include <pandoeditor/timeline-resolver.h>
+#include <pandoeditor/timeline-view.h>
 #include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
@@ -113,6 +115,43 @@ static int contentIntervalErrors() {
 
 int main(int argc,char** argv) {
     QCoreApplication application(argc,argv);
+    if(argc==4&&std::string(argv[1])=="--resolve-file") {
+        QFile input(QString::fromLocal8Bit(argv[2]));
+        if(!input.open(QIODevice::ReadOnly))return 2;
+        try {
+            pandoeditor::Project project;
+            project.replace(projectcodec::decodeWeb(input.readAll()));
+            project.setTimelineCursor(argv[3]);
+            const auto world=project.resolveWorld(project.timelineCursor());
+            const auto view=pandoeditor::timelineDocumentView(project.document(),project.timelineCursor());
+            (void)pandoeditor::validateDocument(view.document);
+            const auto liveView=project.snapshotForView();
+            if(!liveView.matches(project)||!pandoeditor::isStaticTimeline(liveView.document()))
+                throw std::runtime_error("dated view snapshot unavailable");
+            for(const auto& row:world.entities) {
+                if(!(pandoeditor::staticGeometryBinding(view.document,row.id).geometryRef==row.geometryRef)
+                    ||pandoeditor::staticParentRelation(view.document,row.id).parentId!=row.parentId
+                    ||!(pandoeditor::staticGeometryBinding(liveView.document(),row.id).geometryRef==row.geometryRef))
+                    throw std::runtime_error("timeline view differs from resolved world");
+            }
+            if(project.revision()!=0||project.dirty()||project.canUndo())
+                throw std::runtime_error("timeline cursor changed document state");
+            QJsonArray entities;
+            for(const auto& row:world.entities) {
+                QJsonArray ancestors;
+                for(const auto& ancestor:row.ancestors)ancestors.append(QString::fromStdString(ancestor));
+                entities.append(QJsonObject{{"id",QString::fromStdString(row.id)},
+                    {"geometryRef",QJsonObject{{"id",QString::fromStdString(row.geometryRef.id)},
+                        {"version",static_cast<int>(row.geometryRef.version)}}},
+                    {"parentId",QString::fromStdString(row.parentId)},
+                    {"rootId",QString::fromStdString(row.rootId)},
+                    {"ancestors",ancestors}});
+            }
+            std::cout<<QJsonDocument(QJsonObject{{"month",QString::fromStdString(world.month)},
+                {"entities",entities}}).toJson(QJsonDocument::Compact).toStdString()<<'\n';
+            return 0;
+        } catch(const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}
+    }
     if(argc==2&&std::string(argv[1])=="--interval-errors")return intervalErrors()?1:0;
     if(argc==2&&std::string(argv[1])=="--content-interval-errors")return contentIntervalErrors()?1:0;
     if(argc==5&&std::string(argv[1])=="--trace-file")return traceFile(argv[2],argv[3],argv[4]);

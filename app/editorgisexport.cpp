@@ -8,9 +8,10 @@
 #include <stdexcept>
 
 QVariantList EditorController::gisExportLayers() const {
-    const auto& document=project_.document();
+    const auto& document=project_.viewDocument();
     qsizetype countries=0,subunits=0,regions=0;
     for(const auto& unit:document.units) {
+        if(project_.inactiveEntityIds().count(unit.id))continue;
         if(pandoeditor::isRootGeneral(document,unit))++countries;
         else if(unit.kind==pandoeditor::UnitKind::General)++subunits;
         else ++regions;
@@ -49,7 +50,7 @@ bool EditorController::exportGisData(const QUrl& destination,const QString& form
             throw std::invalid_argument("GIS_EXPORT_PROJECT_OVERWRITE_BLOCKED");
         if(hasPendingEdits()||geometryEdit_||contentEditState().value("active").toBool())
             throw std::invalid_argument("PENDING_EDITS: 확정되지 않은 편집이 있습니다");
-        const auto base=project_.snapshot();
+        const auto base=project_.snapshotForView();
         std::vector<std::string> categories;
         for(const auto& item:selected)categories.push_back(item.toStdString());
         const auto token=++gisExportToken_;

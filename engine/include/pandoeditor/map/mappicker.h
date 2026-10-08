@@ -71,6 +71,7 @@ private:
 
     pandoeditor::GeoSpatialIndex spatialIndex_;
     std::string instanceId_;
+    std::string indexedMonth_;
     std::uint64_t indexedRevision_=0;
     std::size_t incrementalUpdates_=0;
 };

@@ -16,8 +16,29 @@ nativeTargets['structure-commands'] = 'portability_command_probe';
 nativeTargets['geometry-clipping'] = 'portability_geometry_probe';
 nativeTargets['library-loading'] = 'portability_library_probe';
 nativeTargets['distribution-scale'] = 'content_probe';
+nativeTargets['timeline-resolution'] = 'timeline_project_tests';
 
 export async function observeCurrent(adapter, { webRoot, appRoot, binary, evidenceRoot }) {
+  if (adapter === 'timeline-resolution') {
+    const fixture = json(resolve(webRoot, 'tests/fixtures/portability/timeline-resolution.json'));
+    const source = containedFile(webRoot, fixture.source);
+    const project = json(source);
+    const { restoreTimelineStorage } = await load(webRoot, 'assets/js/modules/timeline-storage.js');
+    const { resolveWorld } = await load(webRoot, 'assets/js/modules/timeline-resolver.js');
+    const identities = project.territorialEntities;
+    const storage = restoreTimelineStorage({ schemaVersion: 1, records: project.timelineRecords,
+      geometries: project.geometries }, identities.map(row => ({ id: row.id, entityKind: row.properties.entityKind })));
+    const observe = rows => rows.map(row => [row.id, row.geometryRef.id, row.geometryRef.version,
+      row.parentId, row.rootId, row.ancestors]);
+    return fixture.cases.map(row => {
+      const native = execFileSync(binary, ['--resolve-file', source, row.month], { encoding: 'utf8', timeout: 120000 });
+      const app = JSON.parse(native);
+      if (app.month !== row.month) throw new Error('Native timeline month differs from request');
+      return { id: row.month, input: { source: fixture.source, month: row.month },
+        web: { entities: observe(resolveWorld(identities, storage.records, storage.geometries, row.month).entities) },
+        app: { entities: observe(app.entities) }, expected: { entities: row.expected } };
+    });
+  }
   if(adapter==='distribution-scale') {
     const corpus=json(resolve(webRoot,'tests/fixtures/portability/distribution-scale.json'));
     const {distributionTrace}=await load(webRoot,'tools/parity/distribution.mjs');

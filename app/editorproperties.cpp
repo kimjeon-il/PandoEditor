@@ -53,7 +53,7 @@ QVariantMap EditorController::computeObjectProperties() const {
  bool allLocked=!selection_.items().empty(),anyLocked=false,layerLocked=false;
  for(const auto& ref:selection_.items()){
   const auto& u=project_.document().units.at(project_.index().objects.at(ref));allLocked=allLocked&&u.locked;anyLocked=anyLocked||u.locked;
-  auto layer=project_.layer(nativeLayerId(project_.document(),ref));layerLocked=layerLocked||(layer&&layer->locked);
+  auto layer=project_.layer(nativeLayerId(project_.viewDocument(),ref));layerLocked=layerLocked||(layer&&layer->locked);
  }
  result["allLocked"]=allLocked;result["someLocked"]=anyLocked&&!allLocked;result["layerLocked"]=layerLocked;
  result["lockEnabled"]=!selection_.items().empty()&&!propertyBusy()&&!layerLocked;
@@ -63,14 +63,14 @@ QVariantMap EditorController::computeObjectProperties() const {
  const auto ref=territorialRef(u->id);const auto& style=project_.document().presentation.objectStyles.at(ref);
  result["id"]=q(u->id);result["type"]=u->kind==UnitKind::General?"general":"regional";
  result["displayName"]=q(objectDisplayName(*u));result["namePending"]=nameDraft_!=q(u->kind==UnitKind::General?objectDisplayName(*u):u->name);result["nameDraft"]=nameDraft_;result["notesDraft"]=memoDraft_;
- result["color"]=hex(effectiveObjectColor(project_.document(),ref));result["colorExplicit"]=style.explicitColor;
- result["defaultColor"]=hex(effectiveObjectColor(project_.document(),ref,0xcccccc,0x8c68d8,true));
- result["colorLabel"]=style.explicitColor?result["color"].toString().toUpper():!staticParentRelation(project_.document(),u->id).parentId.empty()?QStringLiteral("상위 색상 상속"):QStringLiteral("기본 색상");
+ result["color"]=hex(effectiveObjectColor(project_.viewDocument(),ref));result["colorExplicit"]=style.explicitColor;
+ result["defaultColor"]=hex(effectiveObjectColor(project_.viewDocument(),ref,0xcccccc,0x8c68d8,true));
+ result["colorLabel"]=style.explicitColor?result["color"].toString().toUpper():!staticParentRelation(project_.viewDocument(),u->id).parentId.empty()?QStringLiteral("상위 색상 상속"):QStringLiteral("기본 색상");
  result["locked"]=u->locked;result["editable"]=selectedEditable()&&!propertyBusy();result["dateFields"]=false;
  result["validFrom"]=validFromDraft_;result["validTo"]=validToDraft_;
- const auto& lifetime=staticLifetime(project_.document(),u->id).validity;
+ const auto& lifetime=staticLifetime(project_.viewDocument(),u->id).validity;
  result["periodInput"]=periodText(lifetime.from,lifetime.to);
- const auto& relation=staticParentRelation(project_.document(),u->id);
+ const auto& relation=staticParentRelation(project_.viewDocument(),u->id);
  result["parentId"]=q(relation.parentId);result["parentName"]=QString();
  if(!relation.parentId.empty()){const auto view=project_.propertyView(territorialRef(relation.parentId));if(view)result["parentName"]=q(view->displayName);}
  // Fixed Web a1555722 derives information rows from the live canonical parent
@@ -78,17 +78,18 @@ QVariantMap EditorController::computeObjectProperties() const {
  const auto relationRow=[&](const TerritorialUnit& related) {
   const auto relatedRef=territorialRef(related.id);auto row=objectRefValue(relatedRef);
   const auto view=project_.propertyView(relatedRef);row["name"]=view?q(view->displayName):q(related.id);
-  row["ref"]=objectRefValue(relatedRef);row["flagSource"]=resolveDefaultFlag(project_.document(),relatedRef).source;
+  row["ref"]=objectRefValue(relatedRef);row["flagSource"]=resolveDefaultFlag(project_.viewDocument(),relatedRef).source;
   return row;
  };
  QVariantList parentRows,childRows;
  for(const auto& related:project_.document().units) {
+  if(project_.inactiveEntityIds().count(related.id))continue;
   if(!relation.parentId.empty()&&related.id==relation.parentId)parentRows.push_back(relationRow(related));
-  if(staticParentRelation(project_.document(),related.id).parentId==u->id)childRows.push_back(relationRow(related));
+  if(staticParentRelation(project_.viewDocument(),related.id).parentId==u->id)childRows.push_back(relationRow(related));
  }
  result["parentRows"]=parentRows;result["childRows"]=childRows;
  bool conflict=false;const auto normalized=q(trimWebText(u->name)).toLower();
- for(const auto& other:project_.document().units)if(other.id!=u->id&&other.kind==u->kind&&staticParentRelation(project_.document(),other.id).parentId==relation.parentId&&q(trimWebText(other.name)).toLower()==normalized){conflict=true;break;}
+ for(const auto& other:project_.document().units)if(!project_.inactiveEntityIds().count(other.id)&&other.id!=u->id&&other.kind==u->kind&&staticParentRelation(project_.viewDocument(),other.id).parentId==relation.parentId&&q(trimWebText(other.name)).toLower()==normalized){conflict=true;break;}
  result["nameConflict"]=conflict;return result;
 }
 void EditorController::setValidFromDraft(const QString& value){if(!selectionTransition_&&selectedUnit()&&selectedUnit()->kind==UnitKind::Regional){cancelPreview();validFromDraft_=value;emit draftsChanged();emit dirtyChanged();}}

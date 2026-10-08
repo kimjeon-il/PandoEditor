@@ -467,7 +467,7 @@ void EditorController::rebuildLabelSources() {
     std::vector<MapLabelSource> sources;
     sources.reserve(project_.document().units.size()+project_.document().labels.size());
     labelFlagSources_.clear();
-    const auto& document=project_.document();
+    const auto& document=project_.viewDocument();
     for(const auto& unit:document.units) {
         const auto ref=territorialRef(unit.id);
         if(!effectiveMapVisibility(document,ref))continue;

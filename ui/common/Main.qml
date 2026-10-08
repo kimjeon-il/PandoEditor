@@ -37,7 +37,27 @@ ApplicationWindow {
     palette.button:uiColors.subtle
     palette.buttonText:uiColors.text
     palette.mid:uiColors.border
-    footer: Label {
+    footer: Column {
+        width: window.width
+        Row {
+            objectName: "timelineControls"
+            visible: editor.timelineMonth !== ""
+            height: visible ? 40 : 0
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: editor.mobileMode ? 4 : 8
+            Label {text: editor.mobileMode ? "시점" : "현재 시점"; anchors.verticalCenter: parent.verticalCenter; color: window.uiColors.text}
+            Button {objectName:"timelinePreviousMonth";text:"‹";onClicked:editor.shiftTimelineMonth(-1)}
+            TextField {
+                id: timelineMonthInput
+                objectName: "timelineMonthInput"
+                width: editor.mobileMode ? 94 : 110
+                text: editor.timelineMonth
+                inputMethodHints: Qt.ImhNoPredictiveText
+                onEditingFinished: if(text !== editor.timelineMonth) editor.setTimelineMonth(text)
+            }
+            Button {objectName:"timelineNextMonth";text:"›";onClicked:editor.shiftTimelineMonth(1)}
+        }
+        Label {
         objectName: "documentFormatNotice"
         visible: editor.appearancePreferences.statusBarVisible !== false
         property bool expanded: false
@@ -54,6 +74,7 @@ ApplicationWindow {
         font.pixelSize: 11
         background:Rectangle {color:window.uiColors.panel;Rectangle {width:parent.width;height:1;color:window.uiColors.border}}
         TapHandler { onTapped: parent.expanded = !parent.expanded }
+        }
     }
     readonly property bool desktopFrameEnabled: nativeFrame.active
     property bool maximized: visibility === Window.Maximized

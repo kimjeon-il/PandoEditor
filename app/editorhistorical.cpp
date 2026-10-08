@@ -149,19 +149,21 @@ QVariantList EditorController::historicalSnapshots() const {
 }
 QVariantList EditorController::historicalCountries() const {
     QVariantList result;
-    for(const auto& unit:project_.document().units)if(pandoeditor::isRootGeneral(project_.document(),unit))
+    for(const auto& unit:project_.viewDocument().units)
+        if(!project_.inactiveEntityIds().count(unit.id)&&pandoeditor::isRootGeneral(project_.viewDocument(),unit))
         result.push_back(QVariantMap{{"id",qs(unit.id)},{"name",qs(unit.name)}});
     return result;
 }
 QVariantList EditorController::historicalParents(const QString& countryId) const {
     QVariantList result;
     if(countryId.isEmpty())return result;
-    const auto& document=project_.document();const auto rootId=countryId.toStdString();
+    const auto& document=project_.viewDocument();const auto rootId=countryId.toStdString();
     const auto root=std::find_if(document.units.begin(),document.units.end(),[&](const auto& unit){return unit.id==rootId;});
-    if(root==document.units.end()||!pandoeditor::isRootGeneral(document,*root))return result;
+    if(root==document.units.end()||project_.inactiveEntityIds().count(rootId)||!pandoeditor::isRootGeneral(document,*root))return result;
     const auto name=[](const pandoeditor::TerritorialUnit& unit){return qs(unit.name.empty()?unit.id:unit.name);};
     std::map<std::string,std::vector<const pandoeditor::TerritorialUnit*>> children;
-    for(const auto& unit:document.units)if(unit.kind==pandoeditor::UnitKind::General) {
+    for(const auto& unit:document.units)if(unit.kind==pandoeditor::UnitKind::General&&
+        !project_.inactiveEntityIds().count(unit.id)) {
         const auto& parent=pandoeditor::staticParentRelation(document,unit.id).parentId;
         if(!parent.empty())children[parent].push_back(&unit);
     }
@@ -257,11 +259,11 @@ bool EditorController::refreshHistoricalCatalog() {
     try {
         auto materialized=pandoeditor::materializeHistoricalSource(*historicalSource_,
             [this](const std::string& id)->std::optional<pandoeditor::Geometry> {
-                const auto it=project_.index().objects.find(pandoeditor::territorialRef(id));
-                if(it==project_.index().objects.end())return std::nullopt;
-                const auto& unit=project_.document().units.at(it->second);
+                const auto it=project_.viewIndex().objects.find(pandoeditor::territorialRef(id));
+                if(it==project_.viewIndex().objects.end()||project_.inactiveEntityIds().count(id))return std::nullopt;
+                const auto& unit=project_.viewDocument().units.at(it->second);
                 if(unit.kind!=pandoeditor::UnitKind::General)return std::nullopt;
-                return *project_.document().geometries.get(pandoeditor::staticGeometryBinding(project_.document(),unit.id).geometryRef);
+                return *project_.viewDocument().geometries.get(pandoeditor::staticGeometryBinding(project_.viewDocument(),unit.id).geometryRef);
             },pandoeditor::makeTransactionGeometryCalculator());
         historicalLibrary_=std::make_shared<pandoeditor::HistoricalLibrary>(std::move(materialized.library));
         historicalSelectedId_.clear();historicalVersionId_.clear();

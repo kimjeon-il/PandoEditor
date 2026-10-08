@@ -14,6 +14,9 @@ add_library(pandoeditor_core STATIC
     src/geometryprovenance.cpp
     src/temporal.cpp
     src/timeline-records.cpp
+    src/timeline-resolver.cpp
+    src/timeline-view.cpp
+    src/timeline-edit.cpp
     src/timeline-storage.cpp
     src/historicallibrary.cpp
     src/historicalinstantiation.cpp
@@ -53,6 +56,12 @@ if(BUILD_TESTING)
     add_executable(temporal_tests ../tests/temporal_tests.cpp)
     target_link_libraries(temporal_tests PRIVATE Pandoeditor::Core)
     add_test(NAME temporal_tests COMMAND temporal_tests)
+    add_executable(timeline_resolver_tests ../tests/timeline_resolver_tests.cpp)
+    target_link_libraries(timeline_resolver_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME timeline_resolver_tests COMMAND timeline_resolver_tests)
+    add_executable(timeline_command_tests ../tests/timeline_command_tests.cpp)
+    target_link_libraries(timeline_command_tests PRIVATE Pandoeditor::Core)
+    add_test(NAME timeline_command_tests COMMAND timeline_command_tests)
     add_executable(historical_library_tests ../tests/historical_library_tests.cpp)
     target_link_libraries(historical_library_tests PRIVATE Pandoeditor::Core)
     add_test(NAME historical_library_tests COMMAND historical_library_tests)
