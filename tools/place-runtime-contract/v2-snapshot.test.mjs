@@ -34,6 +34,38 @@ test('all verified review snapshots remain byte-identical to pinned Web blobs', 
   }
 });
 
+test('Seoul name transitions use exact Gregorian legal dates, not approximate calendar years', () => {
+  const rows = json('reports/places/tier1-major-cities-batch01.json').records;
+  const seoul = rows.find(row => row.geonameId === 1835848);
+  assert.ok(seoul, 'Missing Seoul first-batch record');
+  assert.deepEqual(seoul.displayTimeline.map(row => [row.fromDate ?? row.fromYear, row.nameKo]), [
+    [1308, '한양'],
+    ['1395-07-01', '한성'],
+    ['1910-10-01', '경성'],
+    ['1946-08-10', '서울']
+  ]);
+  for (const row of seoul.displayTimeline.slice(1)) {
+    assert.ok(row.fromDate && !Object.hasOwn(row, 'fromYear'), 'Do not degrade verified exact dates to year granularity');
+    assert.ok(row.sourceUrl && row.researchNote, 'Date must carry contemporary source context');
+  }
+  const at = date => {
+    let selected = null;
+    for (const row of seoul.displayTimeline) {
+      const starts = row.fromDate ?? String(row.fromYear).padStart(4, '0') + '-01-01';
+      if (starts > date) break;
+      selected = [row.nameNative, row.nameKo, row.nameEn];
+    }
+    return selected;
+  };
+  assert.deepEqual(at('1395-06-30'), ['漢陽','한양','Hanyang']);
+  assert.deepEqual(at('1395-07-01'), ['漢城','한성','Hanseong']);
+  assert.deepEqual(at('1910-09-30'), ['漢城','한성','Hanseong']);
+  assert.deepEqual(at('1910-10-01'), ['京城','경성','Keijō']);
+  assert.deepEqual(at('1946-08-09'), ['京城','경성','Keijō']);
+  assert.deepEqual(at('1946-08-10'), ['서울','서울','Seoul']);
+  assert.match(seoul.displayTimeline[3].researchNote, /1946-09-28/);
+});
+
 test('reviewed city inventory matches every copied Web batch without ID duplication', () => {
   const inventory=sourceManifest.reviewInventory;
   assert.ok(Number.isSafeInteger(inventory.batchCount) && inventory.batchCount > 0);
