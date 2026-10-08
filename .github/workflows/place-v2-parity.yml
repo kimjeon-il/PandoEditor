@@ -8,12 +8,38 @@ on:
       - 'reports/places/**'
       - 'tools/place-runtime-contract/v2-snapshot.test.mjs'
       - '.github/workflows/place-v2-parity.yml'
+      - 'app/placenamedisplay.*'
+      - 'app/placeruntimestore.*'
+      - 'app/placeruntimeprovider.*'
+      - 'app/editorplace.cpp'
+      - 'app/editorpresentation.cpp'
+      - 'app/editorcontroller.h'
+      - 'app/editorview.cpp'
+      - 'app/CMakeLists.txt'
+      - 'engine/include/pandoeditor/map/labelengine.h'
+      - 'engine/src/labelengine.cpp'
+      - 'ui/common/MapDisplayControls.qml'
+      - 'ui/common/MapView.qml'
+      - 'tests/place_sync_contract_tests.cpp'
   pull_request:
     paths:
       - 'contracts/places/**'
       - 'reports/places/**'
       - 'tools/place-runtime-contract/v2-snapshot.test.mjs'
       - '.github/workflows/place-v2-parity.yml'
+      - 'app/placenamedisplay.*'
+      - 'app/placeruntimestore.*'
+      - 'app/placeruntimeprovider.*'
+      - 'app/editorplace.cpp'
+      - 'app/editorpresentation.cpp'
+      - 'app/editorcontroller.h'
+      - 'app/editorview.cpp'
+      - 'app/CMakeLists.txt'
+      - 'engine/include/pandoeditor/map/labelengine.h'
+      - 'engine/src/labelengine.cpp'
+      - 'ui/common/MapDisplayControls.qml'
+      - 'ui/common/MapView.qml'
+      - 'tests/place_sync_contract_tests.cpp'
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,3 +54,28 @@ jobs:
           node-version: 22
       - name: Compare native mirror with pinned Web
         run: node --test tools/place-runtime-contract/v2-snapshot.test.mjs
+
+  native-place-v2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install native build prerequisites
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - name: Configure Qt Debug
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+      - name: Build focused app/native place targets
+        run: cmake --build build --parallel 2 --target place_sync_contract_tests place_runtime_store_tests place_runtime_provider_tests place_controller_tests place_label_collision_tests
+      - name: Run focused native place regressions
+        run: ctest --test-dir build --output-on-failure -R '^(place_sync_contract_tests|place_runtime_store_tests|place_runtime_provider_tests|place_controller_tests|place_label_collision_tests)$'
