@@ -251,6 +251,7 @@ def main():
     audit={
         "schemaVersion":1,
         "referenceDate":"1914-07-31",
+        "githubActionsRunId":os.environ.get("GITHUB_RUN_ID"),
         "status":"provisional-geometry-split-ready-stone26-historical-fix-unverified",
         "primaryHistoricalProtocol":PROTOCOL,
         "historicalLaw":{
