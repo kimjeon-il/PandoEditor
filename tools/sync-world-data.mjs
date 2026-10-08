@@ -105,7 +105,7 @@ export function buildWorldSyncPlan({
         path: next.path, bytes: bytes.length });
   }
   validateWorldDataset(candidate);
-  return { candidate, changed, physicalDrift, webBundleSha256: digest, webRef };
+  return { candidate, changed, physicalDrift, webBundleSha256: digest, webRef, downloaded };
 }
 
 async function verifiedFetch(url, maxBytes = 100_000_000) {
