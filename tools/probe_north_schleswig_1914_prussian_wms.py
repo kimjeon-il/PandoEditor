@@ -5,7 +5,6 @@ Only service metadata is saved. A WMS service which does not spatially cover
 historic Danish Schleswig cannot validate our border even if it displays
 maps from 1878–1880. No raster scanning or publication occurs here.
 """
-import datetime as dt
 import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -54,7 +53,6 @@ def overlap(a, b):
 def main():
     report = {
         "schemaVersion": 1,
-        "queriedAtUtc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "referenceDate": "1914-07-31",
         "service": URL,
         "officialInformation": CITE,
