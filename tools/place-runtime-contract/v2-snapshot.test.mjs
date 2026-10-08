@@ -456,3 +456,63 @@ test('batch 01: Busan, Osaka and Beijing select one historically aligned native,
     }
   }
 });
+
+
+test('Delhi multilingual first-batch names change at approved historical thresholds', () => {
+  const batch = json('reports/places/tier1-major-cities-batch01.json');
+  const matches = batch.records.filter(x => x.geonameId === 1273294);
+  assert.equal(matches.length, 1);
+  const city = matches[0];
+  assert.equal(city.defaultDisplayNameKo, '델리');
+  assert.equal(city.defaultDisplayNameEn, 'Delhi');
+  assert.deepEqual(city.defaultNativeNames.map(x => [x.language, x.text]),
+    [['hi','दिल्ली'], ['ur','دہلی'], ['pa','ਦਿੱਲੀ']]);
+  assert.deepEqual(city.displayTimeline.map(x => x.fromDate ?? x.fromYear),
+    [1801, '1858-11-01', '1947-08-15', '2004-01-26']);
+  const at = date => {
+    const state = { ko:city.defaultDisplayNameKo, en:city.defaultDisplayNameEn,
+      names:city.defaultNativeNames, primary:city.defaultDisplayNameNative };
+    let previous = '';
+    for (const change of city.displayTimeline) {
+      const from = change.fromDate ?? String(change.fromYear).padStart(4,'0')+'-01-01';
+      assert.ok(from>previous, 'Unsorted Delhi history');
+      previous = from;
+      if(from>date) break;
+      if(change.nameKo!==undefined)state.ko=change.nameKo;
+      if(change.nameEn!==undefined)state.en=change.nameEn;
+      if(change.nameNative!==undefined)state.primary=change.nameNative;
+      if(change.nativeNames!==undefined)state.names=change.nativeNames;
+    }
+    assert.equal(state.names[0].text,state.primary,'Primary must equal first native form');
+    assert.ok(state.names.length>=1 && state.names.length<=3);
+    assert.equal(new Set(state.names.map(x=>x.language)).size,state.names.length);
+    return [state.ko,state.en,state.names.map(x=>[x.language,x.text])];
+  };
+  for (const [date,names] of [
+    ['1858-10-31', [['fa','دهلی']]],
+    ['1858-11-01', [['ur','دہلی']]],
+    ['1947-08-14', [['ur','دہلی']]],
+    ['1947-08-15', [['hi','दिल्ली'],['ur','دہلی']]],
+    ['2004-01-25', [['hi','दिल्ली'],['ur','دہلی']]],
+    ['2004-01-26', [['hi','दिल्ली'],['ur','دہلی'],['pa','ਦਿੱਲੀ']]],
+    ['2026-10-09', [['hi','दिल्ली'],['ur','دہلی'],['pa','ਦਿੱਲੀ']]]
+  ])assert.deepEqual(at(date),['델리','Delhi',names],date);
+  for(const event of city.displayTimeline) {
+    assert.ok(Object.hasOwn(event,'fromDate')!==Object.hasOwn(event,'fromYear'));
+    assert.ok(event.sourceUrl&&event.researchNote);
+    for(const native of event.nativeNames) {
+      assert.ok(native.language&&native.script);
+      assert.ok(city.names.some(row=>row.language===native.language && row.text===native.text));
+    }
+  }
+  assert.ok(city.displayTimeline[1].researchNote.includes('편집상'));
+  assert.ok(city.displayTimeline[2].researchNote.includes('편집상'));
+  assert.ok(city.displayTimeline[3].researchNote.includes('2004-01-26'));
+  assert.ok(city.nameSelectionNotes.some(x=>x.includes('1837년')));
+  assert.ok(!city.names.some(x=>['Dilli','Dehli','New Delhi','Shahjahanabad'].includes(x.text)));
+  const policy = json('reports/places/historical-display-policy.json').preferredNameSelection;
+  assert.equal(policy.maxPreferredNamesPerSlotAtAnyInstant.ko,1);
+  assert.equal(policy.maxPreferredNamesPerSlotAtAnyInstant.en,1);
+  assert.equal(policy.maxPreferredNamesPerSlotAtAnyInstant.native,3);
+  assert.equal(policy.nativeNameCardinality.normalNativeNames,1);
+});
