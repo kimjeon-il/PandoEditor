@@ -69,7 +69,9 @@ def post_search(session, base, keyword):
     }
     response = session.post(
         f"{base}/_search", json=query, headers=HEADERS, timeout=25)
-    response.raise_for_status()
+    if not response.ok:
+        raise requests.HTTPError(
+            f"HTTP {response.status_code}: {response.text[:650]} for {base}", response=response)
     raw = response.json()
     matches = raw.get("hits", {}).get("hits", [])
     return [
