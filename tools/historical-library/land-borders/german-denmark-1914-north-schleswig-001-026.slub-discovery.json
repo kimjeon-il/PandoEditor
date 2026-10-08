@@ -2,7 +2,6 @@
   "schemaVersion": 1,
   "scope": "1–26 stones, 1914 German–Danish border",
   "referenceDate": "1914-07-31",
-  "queriedAtUtc": "2026-10-08T13:38:50.288932+00:00",
   "historicRasterObtained": false,
   "historicRasterComparedWithLine": false,
   "searchMethod": "Public SLUB Kartenforum ElasticSearch geo_shape and pre-1915 date filters (per official client)",
