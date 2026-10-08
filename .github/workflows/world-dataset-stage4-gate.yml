@@ -15,6 +15,7 @@ on:
       - 'tools/verify-release-assets.mjs'
       - 'app/worlddataset.cpp'
       - 'app/worlddataset.h'
+      - 'app/physicaldatastore.cpp'
       - 'app/editorcontroller.cpp'
       - 'app/CMakeLists.txt'
       - 'tests/country_label_anchor_tests.cpp'
