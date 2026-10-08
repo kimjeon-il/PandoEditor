@@ -267,6 +267,13 @@ if(BUILD_TESTING)
     target_link_libraries(place_runtime_store_tests PRIVATE pandoeditor_editor Qt6::Test)
     target_compile_definitions(place_runtime_store_tests PRIVATE PLACE_RUNTIME_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-place-runtime-source")
     add_test(NAME place_runtime_store_tests COMMAND place_runtime_store_tests)
+    add_executable(place_sync_contract_tests ../tests/place_sync_contract_tests.cpp)
+    target_link_libraries(place_sync_contract_tests PRIVATE pandoeditor_editor Qt6::Test)
+    target_compile_definitions(place_sync_contract_tests PRIVATE
+        PLACE_SYNC_CONTRACT_PATH="${PROJECT_SOURCE_DIR}/contracts/places/v2.json")
+    add_test(NAME place_sync_contract_tests COMMAND place_sync_contract_tests)
+    set_tests_properties(place_sync_contract_tests PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
     add_executable(place_runtime_provider_tests ../tests/place_runtime_provider_tests.cpp)
     target_link_libraries(place_runtime_provider_tests PRIVATE pandoeditor_editor Qt6::Test)
     target_compile_definitions(place_runtime_provider_tests PRIVATE PLACE_RUNTIME_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/web-place-runtime-source")

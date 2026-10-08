@@ -1,0 +1,562 @@
+{
+  "schema": "pando-place-sync-v2",
+  "dataContractVersion": 2,
+  "wire": {
+    "magicAscii": "PLAC",
+    "littleEndian": true,
+    "magic": 1128352848,
+    "version": 2,
+    "headerBytes": 32,
+    "recordBytes": 68,
+    "stringOffsetBase": 36,
+    "stringOffsetStride": 4,
+    "stringFields": [
+      "sourceId",
+      "name",
+      "countryCode",
+      "source",
+      "featureCode",
+      "nameEn",
+      "nameNative",
+      "nameTimelineText"
+    ],
+    "maxStringBytes": 16384,
+    "stringFieldOffsets": [
+      {
+        "field": "sourceId",
+        "byteOffset": 36
+      },
+      {
+        "field": "name",
+        "byteOffset": 40
+      },
+      {
+        "field": "countryCode",
+        "byteOffset": 44
+      },
+      {
+        "field": "source",
+        "byteOffset": 48
+      },
+      {
+        "field": "featureCode",
+        "byteOffset": 52
+      },
+      {
+        "field": "nameEn",
+        "byteOffset": 56
+      },
+      {
+        "field": "nameNative",
+        "byteOffset": 60
+      },
+      {
+        "field": "nameTimelineText",
+        "byteOffset": 64
+      }
+    ],
+    "longitudeOffset": 0,
+    "latitudeOffset": 8,
+    "populationOffset": 16,
+    "priorityOffset": 24,
+    "minZoomOffset": 28,
+    "kindOffset": 32,
+    "timelineSerialization": "UTF-8 JSON string in the shared pool"
+  },
+  "domain": {
+    "builtinIdFormat": "builtin:place:{source}:{sourceId}",
+    "placeKinds": [
+      "capital",
+      "city",
+      "region",
+      "town",
+      "mountain",
+      "water",
+      "custom"
+    ],
+    "languageOrder": [
+      "ko",
+      "en",
+      "native"
+    ],
+    "defaultLanguages": {
+      "ko": true,
+      "en": false,
+      "native": false
+    },
+    "maxNameTransitions": 16,
+    "timelineDateFormats": [
+      "fromYear integer",
+      "fromDate YYYY-MM-DD"
+    ],
+    "duplicateNameComparison": "trim -> NFKC -> lower-case; first enabled language wins",
+    "missingLanguagePolicy": "omit missing translation; never fabricate names from source country code",
+    "languageTogglePolicy": "at least one enabled; reject an unchanged or all-disabled request",
+    "nameFields": {
+      "ko": "name",
+      "en": "nameEn",
+      "native": "nameNative"
+    }
+  },
+  "display": {
+    "webEstimatedBox": {
+      "minimumWidth": 22,
+      "textPadding": 16,
+      "latinCharWidth": 8,
+      "otherCharWidth": 11,
+      "firstLineHeight": 19,
+      "extraLineHeight": 14
+    },
+    "geometryNotice": "CSS-pixel heuristic, not native Qt font measurements",
+    "collisionPolicy": "one atomic collision box per place, regardless of language count"
+  },
+  "limits": {
+    "candidates": 1500,
+    "layoutCandidates": 2048,
+    "tileRecords": 512,
+    "queryTiles": 96,
+    "shardBytes": 524288,
+    "cacheBytes": 25165824,
+    "searchResults": 50,
+    "retainedRecords": 256
+  },
+  "fixtures": [
+    {
+      "id": "kyiv-date-precision",
+      "sourceReview": {
+        "reviewFile": "reports/places/tier1-major-cities-batch08-northern-eastern-europe.json",
+        "geonameId": 703448
+      },
+      "input": {
+        "source": "geonames",
+        "sourceId": "703448",
+        "name": "키이우",
+        "nameEn": "Kyiv",
+        "nameNative": "Київ",
+        "kind": "capital",
+        "coordinates": [
+          30.5238,
+          50.45466
+        ],
+        "countryCode": "UA",
+        "featureCode": "PPLC",
+        "nameTimeline": [
+          {
+            "fromYear": 1801,
+            "ko": "키예프"
+          },
+          {
+            "fromDate": "1991-08-24",
+            "ko": "키이우"
+          }
+        ]
+      },
+      "normalized": {
+        "id": "builtin:place:geonames:703448",
+        "source": "geonames",
+        "sourceId": "703448",
+        "name": "키이우",
+        "nameEn": "Kyiv",
+        "nameNative": "Київ",
+        "nameTimeline": [
+          {
+            "fromYear": 1801,
+            "ko": "키예프"
+          },
+          {
+            "fromDate": "1991-08-24",
+            "ko": "키이우"
+          }
+        ],
+        "kind": "capital",
+        "coordinates": [
+          30.5238,
+          50.45466
+        ],
+        "countryCode": "UA",
+        "population": 0,
+        "priority": 40,
+        "minZoom": 0,
+        "featureCode": "PPLC",
+        "notes": ""
+      },
+      "scenarios": [
+        {
+          "date": null,
+          "languages": {
+            "ko": true,
+            "en": false,
+            "native": false
+          },
+          "rows": [
+            [
+              "ko",
+              "키이우"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 49,
+            "height": 19
+          }
+        },
+        {
+          "date": "1990-12-31",
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "ko",
+              "키예프"
+            ],
+            [
+              "en",
+              "Kyiv"
+            ],
+            [
+              "native",
+              "Київ"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 60,
+            "height": 47
+          }
+        },
+        {
+          "date": "1991-08-23",
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": false
+          },
+          "rows": [
+            [
+              "ko",
+              "키예프"
+            ],
+            [
+              "en",
+              "Kyiv"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 49,
+            "height": 33
+          }
+        },
+        {
+          "date": "1991-08-24",
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "ko",
+              "키이우"
+            ],
+            [
+              "en",
+              "Kyiv"
+            ],
+            [
+              "native",
+              "Київ"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 60,
+            "height": 47
+          }
+        },
+        {
+          "date": null,
+          "languages": {
+            "ko": false,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "en",
+              "Kyiv"
+            ],
+            [
+              "native",
+              "Київ"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 60,
+            "height": 33
+          }
+        }
+      ],
+      "tileHex": "504c4143020044000100000098000000fc00000000000000000000000000000012a5bdc117863e405166834c323a49400000000000000000000020420000000000000000000000000a000000170000001d000000290000003100000039000000450000000600000037303334343809000000ed82a4ec9db4ec9ab00200000055410800000067656f6e616d65730400000050504c43040000004b79697608000000d09ad0b8d197d0b24f0000005b7b2266726f6d59656172223a313830312c226b6f223a22ed82a4ec9888ed9484227d2c7b2266726f6d44617465223a22313939312d30382d3234222c226b6f223a22ed82a4ec9db4ec9ab0227d5d"
+    },
+    {
+      "id": "mexico-city-native-short",
+      "sourceReview": {
+        "reviewFile": "reports/places/tier1-major-cities-batch05-americas.json",
+        "geonameId": 3530597
+      },
+      "input": {
+        "source": "geonames",
+        "sourceId": "3530597",
+        "name": "멕시코시티",
+        "nameEn": "Mexico City",
+        "nameNative": "México",
+        "kind": "capital",
+        "coordinates": [
+          -99.12766,
+          19.42847
+        ],
+        "countryCode": "MX",
+        "featureCode": "PPLC"
+      },
+      "normalized": {
+        "id": "builtin:place:geonames:3530597",
+        "source": "geonames",
+        "sourceId": "3530597",
+        "name": "멕시코시티",
+        "nameEn": "Mexico City",
+        "nameNative": "México",
+        "nameTimeline": [],
+        "kind": "capital",
+        "coordinates": [
+          -99.12766,
+          19.42847
+        ],
+        "countryCode": "MX",
+        "population": 0,
+        "priority": 40,
+        "minZoom": 0,
+        "featureCode": "PPLC",
+        "notes": ""
+      },
+      "scenarios": [
+        {
+          "date": null,
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "ko",
+              "멕시코시티"
+            ],
+            [
+              "en",
+              "Mexico City"
+            ],
+            [
+              "native",
+              "México"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 104,
+            "height": 47
+          }
+        },
+        {
+          "date": null,
+          "languages": {
+            "ko": false,
+            "en": false,
+            "native": true
+          },
+          "rows": [
+            [
+              "native",
+              "México"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 64,
+            "height": 19
+          }
+        }
+      ],
+      "tileHex": "504c4143020044000100000058000000bc0000000000000000000000000000007940d9942bc858c02f51bd35b06d33400000000000000000000020420000000000000000000000000b0000001e000000240000003000000038000000470000005200000007000000333533303539370f000000eba995ec8b9cecbd94ec8b9ced8bb0020000004d580800000067656f6e616d65730400000050504c430b0000004d657869636f2043697479070000004dc3a97869636f020000005b5d"
+    },
+    {
+      "id": "budapest-duplicate-en-native",
+      "sourceReview": {
+        "reviewFile": "reports/places/tier1-major-cities-batch07-europe-capitals.json",
+        "geonameId": 3054643
+      },
+      "input": {
+        "source": "geonames",
+        "sourceId": "3054643",
+        "name": "부다페스트",
+        "nameEn": "Budapest",
+        "nameNative": "Budapest",
+        "kind": "capital",
+        "coordinates": [
+          19.04045,
+          47.49835
+        ],
+        "countryCode": "HU",
+        "featureCode": "PPLC"
+      },
+      "normalized": {
+        "id": "builtin:place:geonames:3054643",
+        "source": "geonames",
+        "sourceId": "3054643",
+        "name": "부다페스트",
+        "nameEn": "Budapest",
+        "nameNative": "Budapest",
+        "nameTimeline": [],
+        "kind": "capital",
+        "coordinates": [
+          19.04045,
+          47.49835
+        ],
+        "countryCode": "HU",
+        "population": 0,
+        "priority": 40,
+        "minZoom": 0,
+        "featureCode": "PPLC",
+        "notes": ""
+      },
+      "scenarios": [
+        {
+          "date": null,
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "ko",
+              "부다페스트"
+            ],
+            [
+              "en",
+              "Budapest"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 80,
+            "height": 33
+          }
+        },
+        {
+          "date": null,
+          "languages": {
+            "ko": false,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "en",
+              "Budapest"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 80,
+            "height": 19
+          }
+        },
+        {
+          "date": null,
+          "languages": {
+            "ko": false,
+            "en": false,
+            "native": true
+          },
+          "rows": [
+            [
+              "native",
+              "Budapest"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 80,
+            "height": 19
+          }
+        }
+      ],
+      "tileHex": "504c414302004400010000004a000000ae0000000000000000000000000000008a1f63ee5a0a334016fbcbeec9bf47400000000000000000000020420000000000000000000000000b0000001e000000240000003000000038000000380000004400000007000000333035343634330f000000ebb680eb8ba4ed8e98ec8aa4ed8ab80200000048550800000067656f6e616d65730400000050504c43080000004275646170657374020000005b5d"
+    },
+    {
+      "id": "brussels-primary-native",
+      "sourceReview": {
+        "reviewFile": "reports/places/tier1-major-cities-batch07-europe-capitals.json",
+        "geonameId": 2800866
+      },
+      "input": {
+        "source": "geonames",
+        "sourceId": "2800866",
+        "name": "브뤼셀",
+        "nameEn": "Brussels",
+        "nameNative": "Bruxelles",
+        "kind": "capital",
+        "coordinates": [
+          4.34878,
+          50.85045
+        ],
+        "countryCode": "BE",
+        "featureCode": "PPLC"
+      },
+      "normalized": {
+        "id": "builtin:place:geonames:2800866",
+        "source": "geonames",
+        "sourceId": "2800866",
+        "name": "브뤼셀",
+        "nameEn": "Brussels",
+        "nameNative": "Bruxelles",
+        "nameTimeline": [],
+        "kind": "capital",
+        "coordinates": [
+          4.34878,
+          50.85045
+        ],
+        "countryCode": "BE",
+        "population": 0,
+        "priority": 40,
+        "minZoom": 0,
+        "featureCode": "PPLC",
+        "notes": ""
+      },
+      "scenarios": [
+        {
+          "date": null,
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "ko",
+              "브뤼셀"
+            ],
+            [
+              "en",
+              "Brussels"
+            ],
+            [
+              "native",
+              "Bruxelles"
+            ]
+          ],
+          "webEstimatedBox": {
+            "width": 88,
+            "height": 47
+          }
+        }
+      ],
+      "tileHex": "504c4143020044000100000051000000b5000000000000000000000000000000dafe9595266511400d71ac8bdb6c49400000000000000000000020420000000000000000000000000b000000180000001e0000002a000000320000003e0000004b000000070000003238303038363609000000ebb88ceba4bcec85800200000042450800000067656f6e616d65730400000050504c43080000004272757373656c730900000042727578656c6c6573020000005b5d"
+    }
+  ]
+}
