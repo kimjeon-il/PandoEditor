@@ -161,7 +161,7 @@ def main():
             draw.text((12, 42+height),
                       "Red: candidate boundary from CURRENT parish geometry — NOT validated against map",
                       font=font(17), fill="white")
-            output_name = f"{key}-{sheet['title'].replace(' ', '-')}-1880-review.png"
+            output_name = f"{key}-{sheet['title'].replace(' ', '-')}-{sheet['publicationYear']}-review.png"
             dest = PREVIEW_DIR / output_name
             canvas.convert("RGB").save(dest, "PNG", optimize=True)
             info.update({
