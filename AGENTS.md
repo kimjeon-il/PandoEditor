@@ -34,6 +34,31 @@ managed Web/App counterpart:
   approval. Do not delete them automatically after integration.
 
 
+## Historical GIS reconstruction policy (mandatory)
+
+For **all historical borders, coastlines, reclamations, river boundaries,
+territorial polygons and administrative boundaries**, read and follow
+[docs/historical-border-reconstruction-policy.md](docs/historical-border-reconstruction-policy.md)
+**before researching, digitizing, simplifying or validating geometry**.
+
+- Prioritize reference-date correctness, source revision history, ownership and
+  boundary topology over subpixel or cadastral-precision tracing.
+- Use about 1:100,000 for broad screening and about **1:25,000 as the normal
+  detailed historical source**. Consult 1:10,000 or finer maps only for a
+  specific discrepancy or historically meaningful exception.
+- The current **flat-map visual review baseline** is maximum `flatZoom=64`,
+  **2560 CSS px map-content width**, with a **0.5 CSS px maximum screen-space
+  discrepancy** where independent historical geometry is available. App zoom
+  limits must be translated to equivalent actual display resolution.
+- A screen tolerance **never overrides** country/settlement attribution,
+  border topology, river-bank/thalweg rules, date changes or land reclamation.
+- If no independent period boundary has been digitized, do not report the
+  0.5px requirement as tested or passed; label visual-only checks explicitly.
+- Keep original evidence and master geometry; simplify presentation geometry
+  only as a separate derivative, preserving shared-boundary connectivity.
+- Record sources, dates, checked scale/resolution, evidence status and
+  outstanding exceptions; never claim that an unrun validation passed.
+
 ## App-specific implementation rules
 
 - PandoEditor is an independent C++ / Qt application repository; never assume
