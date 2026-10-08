@@ -273,6 +273,7 @@ def main():
             "sourceTopologyOnly":True
         },
         "images":visuals,
+        "githubActionsRunId":os.environ.get("GITHUB_RUN_ID"),
         "artifactDir":str(PREVIEW.relative_to(ROOT)),
         "historicalMapObservations":{
             "largeRouteMismatch":"not-yet-visually-reviewed",
