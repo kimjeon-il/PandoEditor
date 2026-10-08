@@ -3,7 +3,7 @@
   "batch": "02-east-asia",
   "status": "verified-source-staging-not-runtime",
   "source": "GeoNames (CC BY 4.0)",
-  "checkedOn": "2026-10-08",
+  "checkedOn": "2026-10-09",
   "selection": "Nine selected East Asian major cities, GeoNames feature P/PPLA only.",
   "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), decimal degrees; settlement points, not administrative region centroids.",
   "countryCodeSemantics": "sourceCountryCode is modern GeoNames source metadata only, not historical sovereignty.",
@@ -31,14 +31,40 @@
         {
           "text": "仁川",
           "language": "ko-Hani",
-          "usage": "alternate",
-          "variantType": "hanja"
+          "usage": "historical",
+          "variantType": "historicalKoreanHanja"
         },
         {
           "text": "Inchon",
           "language": "en",
-          "usage": "alternate",
-          "variantType": "formerRomanization"
+          "usage": "historical",
+          "variantType": "selectedHistoricalEnglish"
+        },
+        {
+          "text": "仁川",
+          "language": "ja",
+          "usage": "historical",
+          "variantType": "japaneseAdministrationToponym"
+        },
+        {
+          "text": "Jinsen",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedJapaneseEraEnglishSpelling"
+        },
+        {
+          "text": "제물포",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "temporaryOfficialCityName",
+          "sourceUrl": "https://www.incheon.go.kr/IC040303"
+        },
+        {
+          "text": "Chemulpo",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedHistoricalEnglishExonym",
+          "sourceUrl": "https://www.incheon.go.kr/IC040303"
         }
       ],
       "latitude": 37.45646,
@@ -60,9 +86,73 @@
         ]
       },
       "defaultDisplayNameKo": "인천",
-      "shortDescriptionKo": "제물포항을 중심으로 성장",
-      "displayTimeline": [],
-      "historicalDisplayCoverage": "modern-label-only"
+      "shortDescriptionKo": "1945년 잠시 제물포시로 개칭",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "인천",
+          "nameEn": "Inchon",
+          "nameNative": "仁川",
+          "nativeLanguage": "ko-Hani",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.incheon.go.kr/IC040303",
+          "researchNote": "1801년은 검수 시작 연도. 영어명은 후대 20세기 통용 표기를 소급 선정한 편집상 대표형이며 당시 영어 사용을 주장하지 않음."
+        },
+        {
+          "fromDate": "1910-08-29",
+          "nameEn": "Jinsen",
+          "nameNative": "仁川",
+          "nativeLanguage": "ja",
+          "kind": "governingAuthorityEditorialLabelTransition",
+          "sourceUrl": "https://encykorea.aks.ac.kr/Article/E0015742",
+          "researchNote": "한일병합 기준의 일본어 원어 및 일본어식 영어 대표형 선정. 법적 지명 개칭일 또는 이 철자의 최초 사용일은 아님."
+        },
+        {
+          "fromDate": "1945-08-15",
+          "nameEn": "Inchon",
+          "nameNative": "인천",
+          "nativeLanguage": "ko",
+          "kind": "governingAuthorityEditorialLabelTransition",
+          "sourceUrl": "https://www.incheon.go.kr/IC040303",
+          "researchNote": "광복 기준의 한국어 원어 복귀 및 20세기 영어 통용표기 선정."
+        },
+        {
+          "fromDate": "1945-10-10",
+          "nameKo": "제물포",
+          "nameEn": "Chemulpo",
+          "nameNative": "제물포",
+          "nativeLanguage": "ko",
+          "kind": "temporaryOfficialCityRename",
+          "sourceUrl": "https://www.incheon.go.kr/IC040303",
+          "researchNote": "인천광역시 지명 변천표의 제물포시 개칭. Chemulpo는 기존 영어 지명 관례를 사용한 편집상 선택이며 이때의 공식 영어 행정명이었다는 증거는 아님."
+        },
+        {
+          "fromDate": "1945-10-28",
+          "nameKo": "인천",
+          "nameEn": "Inchon",
+          "nameNative": "인천",
+          "nativeLanguage": "ko",
+          "kind": "temporaryOfficialCityNameRestoration",
+          "sourceUrl": "https://www.incheon.go.kr/IC040303",
+          "researchNote": "인천광역시 지명 변천표의 인천부 환원. 제물포시 명칭은 1945-10-27까지 유효."
+        },
+        {
+          "fromDate": "2000-07-07",
+          "nameEn": "Incheon",
+          "kind": "englishRomanizationPolicyChange",
+          "sourceUrl": "https://law.go.kr/detcInfoP.do?detcSeq=148192",
+          "researchNote": "문화관광부고시 제2000-8호 시행에 따라 영어명만 현행 로마자 표기로 전환."
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Incheon",
+      "defaultDisplayNameNative": "인천",
+      "defaultNativeLanguage": "ko",
+      "nameSelectionNotes": [
+        "1945-10-10부터 1945-10-27까지 인천의 공식 행정명은 제물포시. 1945-10-28 인천부로 복구.",
+        "개항기 제물포항은 별개 구역 지명이지만 1945년 제물포시의 일시적 공식 개칭은 시계열에 수록.",
+        "1910년·1945년 일본어식 대표 표기 전환은 편집상 경계, 2000-07-07은 로마자표기법 시행일."
+      ]
     },
     {
       "geonameId": 1835329,
@@ -80,14 +170,26 @@
         {
           "text": "大邱",
           "language": "ko-Hani",
-          "usage": "alternate",
-          "variantType": "hanja"
+          "usage": "historical",
+          "variantType": "historicalKoreanHanja"
         },
         {
           "text": "Taegu",
           "language": "en",
-          "usage": "alternate",
-          "variantType": "formerRomanization"
+          "usage": "historical",
+          "variantType": "selectedHistoricalEnglish"
+        },
+        {
+          "text": "大邱",
+          "language": "ja",
+          "usage": "historical",
+          "variantType": "japaneseAdministrationToponym"
+        },
+        {
+          "text": "Taikyu",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedJapaneseEraEnglishSpelling"
         }
       ],
       "latitude": 35.87028,
@@ -97,9 +199,52 @@
       "sourceUrl": "https://www.geonames.org/1835329/",
       "sourceCountryCode": "KR",
       "defaultDisplayNameKo": "대구",
-      "shortDescriptionKo": "대구광역시의 중심 도시",
-      "displayTimeline": [],
-      "historicalDisplayCoverage": "modern-label-only"
+      "shortDescriptionKo": "조선시대부터 영남의 중심도시",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "대구",
+          "nameEn": "Taegu",
+          "nameNative": "大邱",
+          "nativeLanguage": "ko-Hani",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://encykorea.aks.ac.kr/Article/E0015742",
+          "researchNote": "1801년은 검수 시작 연도. 영어명은 후대 20세기 통용 표기를 소급 선정한 편집상 대표형이며 당시 영어 사용을 주장하지 않음."
+        },
+        {
+          "fromDate": "1910-08-29",
+          "nameEn": "Taikyu",
+          "nameNative": "大邱",
+          "nativeLanguage": "ja",
+          "kind": "governingAuthorityEditorialLabelTransition",
+          "sourceUrl": "https://encykorea.aks.ac.kr/Article/E0015742",
+          "researchNote": "한일병합 기준의 일본어 원어 및 일본어식 영어 대표형 선정. 법적 지명 개칭일 또는 이 철자의 최초 사용일은 아님."
+        },
+        {
+          "fromDate": "1945-08-15",
+          "nameEn": "Taegu",
+          "nameNative": "대구",
+          "nativeLanguage": "ko",
+          "kind": "governingAuthorityEditorialLabelTransition",
+          "sourceUrl": "https://encykorea.aks.ac.kr/Article/E0015742",
+          "researchNote": "광복 기준의 한국어 원어 복귀 및 20세기 영어 통용표기 선정."
+        },
+        {
+          "fromDate": "2000-07-07",
+          "nameEn": "Daegu",
+          "kind": "englishRomanizationPolicyChange",
+          "sourceUrl": "https://law.go.kr/detcInfoP.do?detcSeq=148192",
+          "researchNote": "문화관광부고시 제2000-8호 시행에 따라 영어명만 현행 로마자 표기로 전환."
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Daegu",
+      "defaultDisplayNameNative": "대구",
+      "defaultNativeLanguage": "ko",
+      "nameSelectionNotes": [
+        "大丘와 大邱가 18~19세기에 병용되었으며 1801년에는 이미 사용되던 大邱를 대표형으로 선택. 공식 개칭일 단정하지 않음.",
+        "일제강점기 영어 Taikyu, 광복 후 Taegu, 2000년 이후 Daegu."
+      ]
     },
     {
       "geonameId": 1835235,
@@ -117,21 +262,26 @@
         {
           "text": "大田",
           "language": "ko-Hani",
-          "usage": "alternate",
-          "variantType": "hanja"
+          "usage": "historical",
+          "variantType": "historicalKoreanHanja"
         },
         {
           "text": "Taejon",
           "language": "en",
-          "usage": "alternate",
-          "variantType": "formerRomanization"
+          "usage": "historical",
+          "variantType": "selectedHistoricalEnglish"
         },
         {
-          "text": "한밭",
-          "language": "ko",
-          "usage": "alternate",
-          "variantType": "traditionalNativeName",
-          "sourceUrl": "https://www.daejeon.go.kr/drh/DrhContentsHtmlView.do?menuSeq=1717"
+          "text": "大田",
+          "language": "ja",
+          "usage": "historical",
+          "variantType": "japaneseAdministrationToponym"
+        },
+        {
+          "text": "Taiden",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedJapaneseEraEnglishSpelling"
         }
       ],
       "latitude": 36.34913,
@@ -141,9 +291,53 @@
       "sourceUrl": "https://www.geonames.org/1835235/",
       "sourceCountryCode": "KR",
       "defaultDisplayNameKo": "대전",
-      "shortDescriptionKo": "전통 지명 한밭을 가진 도시",
-      "displayTimeline": [],
-      "historicalDisplayCoverage": "modern-label-only"
+      "shortDescriptionKo": "철도 개통 후 근대 도시로 성장",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "대전",
+          "nameEn": "Taejon",
+          "nameNative": "大田",
+          "nativeLanguage": "ko-Hani",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://encykorea.aks.ac.kr/Article/E0015742",
+          "researchNote": "1801년은 검수 시작 연도. 영어명은 후대 20세기 통용 표기를 소급 선정한 편집상 대표형이며 당시 영어 사용을 주장하지 않음."
+        },
+        {
+          "fromDate": "1910-08-29",
+          "nameEn": "Taiden",
+          "nameNative": "大田",
+          "nativeLanguage": "ja",
+          "kind": "governingAuthorityEditorialLabelTransition",
+          "sourceUrl": "https://www.daejeon.go.kr/drh/DrhContentsHtmlView.do?menuSeq=1719",
+          "researchNote": "한일병합 기준의 일본어 원어 및 일본어식 영어 대표형 선정. 법적 지명 개칭일 또는 이 철자의 최초 사용일은 아님."
+        },
+        {
+          "fromDate": "1945-08-15",
+          "nameEn": "Taejon",
+          "nameNative": "대전",
+          "nativeLanguage": "ko",
+          "kind": "governingAuthorityEditorialLabelTransition",
+          "sourceUrl": "https://encykorea.aks.ac.kr/Article/E0015742",
+          "researchNote": "광복 기준의 한국어 원어 복귀 및 20세기 영어 통용표기 선정."
+        },
+        {
+          "fromDate": "2000-07-07",
+          "nameEn": "Daejeon",
+          "kind": "englishRomanizationPolicyChange",
+          "sourceUrl": "https://law.go.kr/detcInfoP.do?detcSeq=148192",
+          "researchNote": "문화관광부고시 제2000-8호 시행에 따라 영어명만 현행 로마자 표기로 전환."
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Daejeon",
+      "defaultDisplayNameNative": "대전",
+      "defaultNativeLanguage": "ko",
+      "nameSelectionNotes": [
+        "1801년 大田은 회덕군 일대의 농촌 지명이지 현대 도시 지위나 규모를 뜻하지 않음.",
+        "1904~1905년 대전역·경부선 건설 이후 성장하여 1914년 대전면, 1931년 대전읍, 1935년 대전부가 됨.",
+        "한밭은 시대별 공식 대표명으로 선정하지 않음. 역사적 취락 유형·등급 조정은 별도 검토 사항."
+      ]
     },
     {
       "geonameId": 1848354,
@@ -514,5 +708,22 @@
     }
   ],
   "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
-  "historicalDisplayStatus": "timeline-staged-not-runtime"
+  "historicalDisplayStatus": "timeline-staged-not-runtime",
+  "historicalNameReview": {
+    "status": "3-of-9-city-names-reviewed",
+    "reviewedGeoNamesIds": [
+      1843564,
+      1835329,
+      1835235
+    ],
+    "pendingGeoNamesIds": [
+      1848354,
+      1856057,
+      1857910,
+      1809858,
+      1792947,
+      1799962
+    ],
+    "gradeTimelineStatus": "not-decided-or-modified"
+  }
 }
