@@ -172,5 +172,63 @@
     "Locate original stone 22 and assess Seem By vs modern Seem Sogn, especially the terminal arc.",
     "Check the western coastline/stone 1 against contemporary (1914) Ribe dike construction.",
     "Do not propagate into final German Empire polygon until the disputed stretches are reviewed."
-  ]
+  ],
+  "modernParishCheck": {
+    "source": "https://demo.geoinfo.dk/server/rest/services/DAGI_Hele_DK/MapServer/1/query",
+    "name": "Seem",
+    "historicalEvidence": false,
+    "status": "measured_against_2024_current_parish_only",
+    "lastSections": [
+      {
+        "lastKm": 1,
+        "sampleSpacingApproxM": 90.91,
+        "samples": 12,
+        "medianDistanceM": 0.0,
+        "p90DistanceM": 0.0,
+        "maximumDistanceM": 0.0,
+        "within25mFraction": 1.0,
+        "within100mFraction": 1.0
+      },
+      {
+        "lastKm": 2,
+        "sampleSpacingApproxM": 100.0,
+        "samples": 21,
+        "medianDistanceM": 0.0,
+        "p90DistanceM": 0.0,
+        "maximumDistanceM": 0.0,
+        "within25mFraction": 1.0,
+        "within100mFraction": 1.0
+      },
+      {
+        "lastKm": 3,
+        "sampleSpacingApproxM": 96.77,
+        "samples": 32,
+        "medianDistanceM": 0.0,
+        "p90DistanceM": 0.0,
+        "maximumDistanceM": 0.0,
+        "within25mFraction": 1.0,
+        "within100mFraction": 1.0
+      },
+      {
+        "lastKm": 5,
+        "sampleSpacingApproxM": 98.04,
+        "samples": 52,
+        "medianDistanceM": 0.0,
+        "p90DistanceM": 0.0,
+        "maximumDistanceM": 0.0,
+        "within25mFraction": 1.0,
+        "within100mFraction": 1.0
+      },
+      {
+        "lastKm": 8,
+        "sampleSpacingApproxM": 98.77,
+        "samples": 82,
+        "medianDistanceM": 0.0,
+        "p90DistanceM": 0.0,
+        "maximumDistanceM": 0.0,
+        "within25mFraction": 1.0,
+        "within100mFraction": 1.0
+      }
+    ]
+  }
 }
