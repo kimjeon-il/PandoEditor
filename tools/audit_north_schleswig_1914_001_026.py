@@ -195,6 +195,24 @@ def main():
             "Do not propagate into final German Empire polygon until the disputed stretches are reviewed.",
         ],
     }
+    # Separate the historical/legal parish-boundary hypothesis from the
+    # 'Seem By, Seem' modern cadastral subdivision. Only the former is
+    # explicitly called a *Sognegrænse* in the 1865 protocol.
+    dagi = read_json(SOURCE / "dagi-current-parishes-sector.geojson")
+    seem = [f for f in dagi.get("features", [])
+            if f.get("properties", {}).get("navn") == "Seem"]
+    if len(seem) != 1:
+        raise RuntimeError(f"Expected one modern Seem parish, got {len(seem)}")
+    seem_boundary = transform(TO_METRIC, shape(seem[0]["geometry"]).boundary)
+    out["modernParishCheck"] = {
+        "source": "https://demo.geoinfo.dk/server/rest/services/DAGI_Hele_DK/MapServer/1/query",
+        "name": "Seem",
+        "historicalEvidence": False,
+        "status": "measured_against_2024_current_parish_only",
+        "lastSections": [stat_distances(line, seem_boundary, km)
+                         for km in (1, 2, 3, 5, 8)],
+    }
+
     if EJERLAV_PATH.exists():
         source_poly = read_json(EJERLAV_PATH)
         cadastral = shape(source_poly["features"][0]["geometry"])
