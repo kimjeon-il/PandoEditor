@@ -2,8 +2,10 @@
 
 ## Source and package contract
 
-The bundled country assets are the exact Git blobs from
-`world-map@c0bd31d13dc8495593d78cf51f7cc195de7c9469`:
+The bundled country assets, plus the original terrain manifest, are the exact Git
+blobs from `world-map@c0bd31d13dc8495593d78cf51f7cc195de7c9469`.
+The label-anchor correction and current hydro manifest come from
+`kimjeon-il/Pando@a87f4d27fb1bc16528aa57242ecb52e28e4550b2`:
 
 | Channel | Asset | Git blob |
 |---|---|---|
@@ -12,13 +14,15 @@ The bundled country assets are the exact Git blobs from
 | Canonical country document | `countries-canonical-v0.33.0.pcg.gz` | `54146d9eeb28e4af08e094f5061bf64689e6bdf3` |
 | Canonical GPU base | `world-mesh-v0.12.6.bin.gz` | `8c73420b92e89ab64cbe75dcc5016efe2c0a22b6` |
 | Terrain package manifest | `terrain/v0.12.6/manifest.json` | `6821c49315ffd381758f81dfe4d83b6b574f0ad4` |
-| Hydro package manifest | `hydro/v0.13.1/manifest.json` | `67c648a207f4b26d69f0a86243e88c54b9241a2e` |
+| Hydro package manifest | `hydro/v0.13.1/manifest.json` | `9a9cdb719351e51d2ff509c410cae8741ac36a0a` |
 
 `assets/world/manifest.json` also pins the SHA-256 bytes and versions.
 `node tools/verify-world-assets.mjs assets/world` checks these six identities
 without a world-map checkout. Four compressed assets are embedded in the app's
 Qt resource; the two physical-data manifests are embedded as identities.
-Terrain tiles and hydro shards are **not** bundled.
+Terrain tiles and hydro shards are **not** bundled. The physical inventory keeps
+original sources for unchanged assets and uses pinned per-asset `sourceUrl`
+overrides for the refreshed hydro manifest and core metadata.
 
 The canonical PCG1 packet contains 258 countries and 548,454 exact Float64
 positions. CMG2 mesh coordinates are render-only Int32 microdegrees. The

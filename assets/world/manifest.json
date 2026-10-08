@@ -42,8 +42,8 @@
   "hydro": {
     "path": "hydro/v0.13.1/manifest.json",
     "version": "0.13.1",
-    "gitBlobSha": "67c648a207f4b26d69f0a86243e88c54b9241a2e",
-    "sha256": "427f7ec841b977034acc3e6509e9202397549aa4bcbf536e03a9808f702be203",
+    "gitBlobSha": "9a9cdb719351e51d2ff509c410cae8741ac36a0a",
+    "sha256": "c10eaffd375d5f0d90955fa253b02ec73d9daeff261fa5cfde1f73ca89d2bd80",
     "required": false
   }
 }
