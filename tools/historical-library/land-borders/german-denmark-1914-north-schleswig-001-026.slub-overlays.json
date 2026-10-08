@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "referenceDate": "1914-07-31",
+  "generatedUtc": "2026-10-08T13:46:26.801385+00:00",
+  "originalMapScale": "1:25,000",
+  "status": "preview-needs-manual-tracing",
+  "historicBorderValidated": false,
+  "historicRasterStoredInGit": false,
+  "reviewArtifactDirectory": "tools/historical-library/review-output/north-schleswig-1914-001-026",
+  "attribution": "SLUB Dresden / Deutsche Fotothek historic Messtischblatt raster",
+  "sheetOverlays": [
+    {
+      "sheetId": "0619",
+      "title": "Hügum",
+      "year": 1878,
+      "status": "preview-rendered-needs-human-review",
+      "candidateLengthKm": 5.99299,
+      "wmsMapId": "oai:de:slub-dresden:vk:id-10006020",
+      "wmsLayer": "df_dk_0010001_0619",
+      "originalLink": "https://www.deutschefotothek.de/documents/obj/71051510",
+      "bboxLonLat": [
+        8.87064214,
+        55.3,
+        8.94099505,
+        55.32887246
+      ],
+      "previewFilename": "0619-Hügum-1878-review.png",
+      "previewWidthPx": 1280,
+      "previewHeightPx": 970,
+      "previewSha256": "5f0152e5c7c53708b049ad20a867049b642a328bc0bc2b62a1a553b568d66ce4",
+      "originalResponseSha256": "8c167c2dca35d68997d4ec4fbe152f22b11d4cb4d801a85b3d4b0d48f91a6333"
+    },
+    {
+      "sheetId": "0717",
+      "title": "Hvidding-Ufer",
+      "year": 1880,
+      "status": "preview-rendered-needs-human-review",
+      "candidateLengthKm": 0.2938,
+      "wmsMapId": "oai:de:slub-dresden:vk:id-10006009",
+      "wmsLayer": "df_dk_0010001_0717",
+      "originalLink": "https://www.deutschefotothek.de/documents/obj/71051521",
+      "bboxLonLat": [
+        8.6482877,
+        55.26831161,
+        8.66666667,
+        55.2848812
+      ],
+      "previewFilename": "0717-Hvidding-Ufer-1880-review.png",
+      "previewWidthPx": 1280,
+      "previewHeightPx": 970,
+      "previewSha256": "a4764218fc5d79ce32abccf7f68b75f3b97010c8e5353aa0c3847fca1720c1cc",
+      "originalResponseSha256": "e7b446f4f2b04464950354d85a4425b39357a11faa63637059dd80e2a678910a"
+    },
+    {
+      "sheetId": "0718",
+      "title": "Hvidding",
+      "year": 1880,
+      "status": "preview-rendered-needs-human-review",
+      "candidateLengthKm": 11.88108,
+      "wmsMapId": "oai:de:slub-dresden:vk:id-10006008",
+      "wmsLayer": "df_dk_0010001_0718",
+      "originalLink": "https://www.deutschefotothek.de/documents/obj/71051522",
+      "bboxLonLat": [
+        8.66666667,
+        55.26405686,
+        8.83333333,
+        55.28926588
+      ],
+      "previewFilename": "0718-Hvidding-1880-review.png",
+      "previewWidthPx": 1280,
+      "previewHeightPx": 970,
+      "previewSha256": "b4c4ed675b1bdc19504ee79a98648584ce6867dbcd391cbd6c63f71c504a39e2",
+      "originalResponseSha256": "9084b2cb408f880837a6f7c6e0e0a024207e8c9a1c534abe095395e3a92b7785"
+    },
+    {
+      "sheetId": "0719",
+      "title": "Spandet",
+      "year": 1880,
+      "status": "preview-rendered-needs-human-review",
+      "candidateLengthKm": 8.51496,
+      "wmsMapId": "oai:de:slub-dresden:vk:id-10006007",
+      "wmsLayer": "df_dk_0010001_0719",
+      "originalLink": "https://www.deutschefotothek.de/documents/obj/71051523",
+      "bboxLonLat": [
+        8.83333333,
+        55.26013587,
+        8.94156728,
+        55.3
+      ],
+      "previewFilename": "0719-Spandet-1880-review.png",
+      "previewWidthPx": 1280,
+      "previewHeightPx": 970,
+      "previewSha256": "2e9093a2fc705e8ff08a38928fbb0e6259418839d9d1a9e9f6914ce4b6e8e37e",
+      "originalResponseSha256": "b6e6e101e91bf85907656948dcf2905d4316f5dcd5c5d7308ff8b3bf8c592eed"
+    }
+  ]
+}
