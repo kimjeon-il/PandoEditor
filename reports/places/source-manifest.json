@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "bb37f55130eb896aeb7113f90d4542509dbbb3ff",
+  "webCommit": "dbb3763f0c5103ba09d4205eb821c2e22d7b7372",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -39,11 +39,11 @@
     },
     {
       "path": "reports/places/historical-display-policy.json",
-      "gitBlobSha": "9e94ada863b7deba34c6d22a4f548ebb05305f51"
+      "gitBlobSha": "2d0fbbef2baf5bc746332331279750cfd2212cf5"
     },
     {
       "path": "reports/places/korean-map-label-policy.json",
-      "gitBlobSha": "adb117d632798a3e5c4fbc51f2d8effdce8412f1"
+      "gitBlobSha": "ce2565a2a0e2d8f6abd8f4198e5f6096578b9212"
     },
     {
       "path": "reports/places/tier1-major-cities-batch09-baltic-belarus-capitals.json",
