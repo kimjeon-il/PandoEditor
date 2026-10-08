@@ -675,8 +675,8 @@ Rectangle {
             property point finalLabelTranslation: Qt.point(0,0)
             property bool pendingLabelDrag: false
             function discardLabelDrag() { pendingLabelDrag=false; finalLabelTranslation=Qt.point(0,0) }
-            width:(placedFlag.visible?placedFlag.width+(placedText.visible?modelData.flagGap:0):0)+(placedText.visible?placedText.implicitWidth:0)
-            height:Math.max(placedFlag.visible?placedFlag.height:0,placedText.visible?placedText.implicitHeight:0)
+            width:(placedFlag.visible?placedFlag.width+(placedTextBlock.visible?modelData.flagGap:0):0)+(placedTextBlock.visible?placedTextBlock.implicitWidth:0)
+            height:Math.max(placedFlag.visible?placedFlag.height:0,placedTextBlock.visible?placedTextBlock.implicitHeight:0)
             x: labelX-width/2
             y: labelY-height/2
             z: editor.layers.length+2
@@ -691,7 +691,30 @@ Rectangle {
                 source:parent.modelData.flagVisible ? (parent.modelData.flagSource||"") : ""
                 visible:!!parent.modelData.flagVisible&&source.toString()!==""&&status!==Image.Error
             }
-            Label { id:placedText;objectName: "mapPlacedText"; textFormat:Text.PlainText;x:placedFlag.visible?placedFlag.width+parent.modelData.flagGap:0;y:(parent.height-height)/2;text:parent.modelData.name||""; visible:parent.modelData.nameVisible!==false; color:"#243746"; style:Text.Outline; styleColor:"#ffffff"; font.pixelSize:12; font.weight:Font.DemiBold }
+            Column {
+                id:placedTextBlock
+                x:placedFlag.visible?placedFlag.width+placedLabel.modelData.flagGap:0
+                y:(placedLabel.height-height)/2
+                visible:placedLabel.modelData.nameVisible!==false
+                spacing:0
+                Label {
+                    id:placedText;objectName:"mapPlacedText";textFormat:Text.PlainText
+                    text:placedLabel.modelData.name||""
+                    color:"#243746";style:Text.Outline;styleColor:"#ffffff"
+                    font.pixelSize:12;font.weight:Font.DemiBold
+                }
+                Repeater {
+                    model:placedLabel.modelData.nameLines&&placedLabel.modelData.nameLines.length>1
+                          ?placedLabel.modelData.nameLines.slice(1):[]
+                    delegate:Label {
+                        required property var modelData
+                        objectName:"mapPlacedSecondaryText";textFormat:Text.PlainText
+                        text:modelData.text||""
+                        color:"#243746";opacity:.78;style:Text.Outline;styleColor:"#ffffff"
+                        font.pixelSize:10;font.weight:Font.Normal
+                    }
+                }
+            }
             TapHandler {
                 enabled:!view.geometryEditing;gesturePolicy:TapHandler.ReleaseWithinBounds
                 onPressedChanged:{view.labelPress=pressed;view.selectionPointerChanged(pressed)}

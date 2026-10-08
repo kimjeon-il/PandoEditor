@@ -536,10 +536,15 @@ void EditorController::refreshPlacedLabelRows() {
     QVariantList rows;rows.reserve(static_cast<qsizetype>(labelEngine_.placements().size()));
     for(const auto& placement:labelEngine_.placements()) {
         const auto flag=labelFlagSources_.find(placement.ref);
+        QVariantList nameLines;nameLines.reserve(qsizetype(placement.lines.size()));
+        for(const auto& line:placement.lines)
+            nameLines.append(QVariantMap{{"language",QString::fromStdString(line.language)},
+                {"text",QString::fromStdString(line.text)}});
         rows.append(QVariantMap{
             {"ref",objectRefValue(placement.ref)},
             {"x",placement.x},{"y",placement.y},
             {"name",QString::fromStdString(placement.text)},
+            {"nameLines",nameLines},
             {"nameVisible",placement.nameVisible},{"pinned",placement.pinned},
             {"flagSource",flag==labelFlagSources_.end()?QString():flag->second},
             {"flagWidth",MapFlagWidth},{"flagHeight",MapFlagHeight},{"flagGap",MapFlagGap},

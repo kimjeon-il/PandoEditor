@@ -13,6 +13,8 @@
 inline constexpr double MapFlagWidth=18,MapFlagHeight=12,MapFlagGap=5,MapFlagMinZoom=1.8;
 inline constexpr std::size_t MapLabelCandidateLimit=2048;
 
+struct MapLabelLine { std::string language,text; };
+
 struct MapLabelSource {
     pandoeditor::ObjectRef ref;
     std::string text;
@@ -23,6 +25,7 @@ struct MapLabelSource {
     bool pinned=false;
     bool nameVisible=true;
     bool flagVisible=false;
+    std::vector<MapLabelLine> lines; // only builtin places need multiple display languages
 };
 
 struct MapLabelPlacement {
@@ -33,6 +36,7 @@ struct MapLabelPlacement {
     bool pinned=false;
     bool nameVisible=true;
     bool flagVisible=false;
+    std::vector<MapLabelLine> lines;
 };
 
 struct MapLabelLayoutOptions {

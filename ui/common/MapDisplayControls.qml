@@ -91,6 +91,30 @@ Popup {
                         UiSwitch {objectName:"viewNames";text:"이름";checked:popup.group.names===true;onClicked:editor.setPresentationVisibility(popup.group.nameKey,checked)}
                         UiSwitch {objectName:"viewFlags";text:"국기";checked:popup.group.flags===true;onClicked:editor.setPresentationVisibility(popup.group.flagKey,checked)}
                     }
+                    ColumnLayout {
+                        visible:popup.section==="labels"
+                        Layout.fillWidth:true
+                        spacing:4
+                        Label {text:"표기 언어";color:popup.colors.muted}
+                        UiSwitch {
+                            objectName:"placeLanguageKo";text:"한국어"
+                            checked:editor.placeLanguages.ko===true
+                            enabled:!checked||editor.placeLanguages.en||editor.placeLanguages.native
+                            onClicked:editor.setPlaceLanguage("ko",checked)
+                        }
+                        UiSwitch {
+                            objectName:"placeLanguageEn";text:"영어"
+                            checked:editor.placeLanguages.en===true
+                            enabled:!checked||editor.placeLanguages.ko||editor.placeLanguages.native
+                            onClicked:editor.setPlaceLanguage("en",checked)
+                        }
+                        UiSwitch {
+                            objectName:"placeLanguageNative";text:"원어"
+                            checked:editor.placeLanguages.native===true
+                            enabled:!checked||editor.placeLanguages.ko||editor.placeLanguages.en
+                            onClicked:editor.setPlaceLanguage("native",checked)
+                        }
+                    }
                     Label {text:"불투명도 "+Math.round((popup.group.opacity===undefined?1:popup.group.opacity)*100)+"%";color:popup.colors.muted}
                     Slider {objectName:"viewOpacity";Layout.fillWidth:true;from:0;to:1;value:popup.group.opacity===undefined?1:popup.group.opacity;onMoved:editor.setPresentationOpacity(popup.section,value)}
                 }

@@ -206,6 +206,7 @@ bool MapLabelEngine::projectPlacement(
     if(!projected.finite||!projected.visibleHemisphere)return false;
     output={source.ref,source.text,source.geographic,projected.x,projected.y,
             source.width,source.height,source.pinned,source.nameVisible,source.flagVisible};
+    output.lines=source.lines;
     return true;
 }
 
@@ -478,6 +479,11 @@ void MapLabelEngine::accountSources() {
         labelBytesAdd(bytes,sources.capacity(),sizeof(MapLabelSource));
         for(const auto& source:sources) {
             labelBytesAdd(bytes,labelStringStorage(source.text));
+            labelBytesAdd(bytes,source.lines.capacity(),sizeof(MapLabelLine));
+            for(const auto& line:source.lines) {
+                labelBytesAdd(bytes,labelStringStorage(line.language));
+                labelBytesAdd(bytes,labelStringStorage(line.text));
+            }
             labelBytesAdd(bytes,labelStringStorage(source.collisionGroup));
             labelBytesAdd(bytes,labelStringStorage(source.ref.domain));
             labelBytesAdd(bytes,labelStringStorage(source.ref.id));
@@ -500,6 +506,11 @@ void MapLabelEngine::accountWorkingSet() {
     labelBytesAdd(bytes,placements_.capacity(),sizeof(MapLabelPlacement));
     for(const auto& placement:placements_) {
         labelBytesAdd(bytes,labelStringStorage(placement.text));
+        labelBytesAdd(bytes,placement.lines.capacity(),sizeof(MapLabelLine));
+        for(const auto& line:placement.lines) {
+            labelBytesAdd(bytes,labelStringStorage(line.language));
+            labelBytesAdd(bytes,labelStringStorage(line.text));
+        }
         labelBytesAdd(bytes,labelStringStorage(placement.ref.domain));
         labelBytesAdd(bytes,labelStringStorage(placement.ref.id));
     }

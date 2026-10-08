@@ -29,6 +29,7 @@
 #include <pandoeditor/map/labelengine.h>
 #include "hydroruntimeprovider.h"
 #include "placeruntimeprovider.h"
+#include "placenamedisplay.h"
 #include "../renderer/terrainprovider.h"
 #include "giscontentimport.h"
 #include <pandoeditor/historicalinstantiation.h>
@@ -344,7 +345,10 @@ public:
     Q_INVOKABLE bool configurePlaceData(const QUrl& manifest);
     Q_INVOKABLE bool copySelectedPlaceForEditing();
     Q_PROPERTY(QVariantMap placeDataStatus READ placeDataStatus NOTIFY placeDataChanged)
+    Q_PROPERTY(QVariantMap placeLanguages READ placeLanguages NOTIFY placeLanguagesChanged)
     QVariantMap placeDataStatus() const;
+    QVariantMap placeLanguages() const {return placeLanguagesToVariant(placeLanguages_);}
+    Q_INVOKABLE bool setPlaceLanguage(const QString& language,bool checked);
     void setWorldResourceBudget(std::size_t bytes);
     Q_INVOKABLE void recordGpuResourceStats(QObject* source);
     QString worldStatus() const {return worldStatus_;}
@@ -551,6 +555,7 @@ signals:
     void contentEditChanged();
     void hydroFrameChanged();
     void placeDataChanged();
+    void placeLanguagesChanged();
     void worldStatusChanged();
     void startupBusyChanged();
     void terrainChanged();
@@ -877,6 +882,7 @@ private:
     QString appearancePath_;
     QVariantMap appearance_;
     QVariantMap appearanceOrigin_;
+    PlaceLanguageSelection placeLanguages_;
     bool appearancePreviewOpen_=false;
     QString terrainMode_=QStringLiteral("gray");
     // CSS window width determines Web's source DPR cap independently of the

@@ -10,6 +10,7 @@
 #include <QGuiApplication>
 #include <QStyleHints>
 #include <cmath>
+#include <stdexcept>
 
 namespace {
 // Match MapView's existing finite display fallbacks without consulting the
@@ -66,18 +67,24 @@ QVariantMap EditorController::appearancePreferences() const
 void EditorController::loadAppearancePreferences()
 {
     appearance_=defaultAppearance();
+    placeLanguages_={};
     if(appearancePath_.isEmpty())return;
     QFile file(appearancePath_);if(!file.open(QIODevice::ReadOnly))return;
     const auto document=QJsonDocument::fromJson(file.readAll());
     if(!document.isObject()||document.object().value("version").toInt()!=2)return;
     appearance_=normalizedAppearance(document.object().value("appearance").toObject().toVariantMap());
+    const auto languages=document.object().value("labels").toObject().value("place").toObject()
+        .value("languages").toObject();
+    if(!languages.isEmpty())placeLanguages_=normalizedPlaceLanguages(languages.toVariantMap());
 }
 
 bool EditorController::saveAppearancePreferences() const
 {
     if(appearancePath_.isEmpty())return true;
     if(!QDir().mkpath(QFileInfo(appearancePath_).absolutePath()))return false;
-    QJsonObject root{{"version",2},{"appearance",QJsonObject::fromVariantMap(appearance_)}};
+    QJsonObject root{{"version",2},{"appearance",QJsonObject::fromVariantMap(appearance_)},
+        {"labels",QJsonObject{{"place",QJsonObject{{"languages",
+            QJsonObject::fromVariantMap(placeLanguagesToVariant(placeLanguages_))}}}}}};
     QSaveFile file(appearancePath_);
     return file.open(QIODevice::WriteOnly)&&file.write(QJsonDocument(root).toJson(QJsonDocument::Compact))>=0&&file.commit();
 }
@@ -113,6 +120,26 @@ bool EditorController::applyAppearancePreview()
     if(!appearancePreviewOpen_)return false;
     if(!saveAppearancePreferences())return false;
     appearanceOrigin_.clear();appearancePreviewOpen_=false;emit appearanceChanged();return true;
+}
+
+bool EditorController::setPlaceLanguage(const QString& language,bool checked)
+{
+    std::optional<PlaceLanguageSelection> next;
+    try {next=toggledPlaceLanguage(placeLanguages_,language,checked);}
+    catch(const std::invalid_argument&) {return false;}
+    if(!next)return false;
+    const auto previous=placeLanguages_;
+    placeLanguages_=*next;
+    if(!saveAppearancePreferences()) {
+        placeLanguages_=previous;
+        emit errorOccurred(QStringLiteral("지명 표시 언어 설정을 저장하지 못했습니다."));
+        return false;
+    }
+    placeLabelSignature_.clear();
+    refreshBuiltinPlaceLabels();
+    invalidateViewportResources(ViewportResourceKind::Labels);
+    emit placeLanguagesChanged();
+    return true;
 }
 
 QString EditorController::terrainMode() const {return terrainMode_;}
