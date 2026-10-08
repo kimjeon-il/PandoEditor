@@ -3,6 +3,12 @@
 The compressed country preview, PCG1 canonical country packet and two CMG
 meshes are unmodified Git blobs from `world-map@c0bd31d13dc8495593d78cf51f7cc195de7c9469`.
 The source country geometry is Natural Earth 5.1.1 Admin 0 at 1:10m.
+The country label anchors and hydro 0.13.1 manifest are now pinned to
+`kimjeon-il/Pando@a87f4d27fb1bc16528aa57242ecb52e28e4550b2` (correct BJN/SER positions
+and updated hydro core-metadata integrity values). Other bundled world assets
+retain their original c0bd31d1 source identity. The physical inventory records
+explicit source URLs for the two updated hydro files while its unchanged assets
+continue to use the older pinned commit.
 The terrain manifest describes Natural Earth raster 3.2.0 at 1:10m; optional
 tiles and the hydro 0.13.1 shards must be installed separately with their own
 manifest hashes. The app must never substitute another dataset silently.
