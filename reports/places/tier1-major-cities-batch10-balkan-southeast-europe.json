@@ -40,7 +40,8 @@
           "language": "sr",
           "script": "Latn",
           "usage": "standard",
-          "note": "세르비아어 로마자 표기, 키릴 문자명과 별개 도시가 아님"
+          "note": "세르비아어 로마자 표기",
+          "researchNote": "세르비아어 로마자 표기, 키릴 문자명과 별개 도시가 아님"
         },
         {
           "text": "Belgrade",
@@ -58,7 +59,8 @@
           "usage": "alternate",
           "variantType": "ottomanEraAndModernTurkishExonym",
           "sourceUrl": "https://www.geonames.org/792680/belgrade.html",
-          "note": "오스만 제국 시기와 현대 튀르키예어에서 사용되는 명칭"
+          "note": "오스만기·현대 튀르키예어명",
+          "researchNote": "오스만 제국 시기와 현대 튀르키예어에서 사용되는 명칭"
         },
         {
           "text": "Belgrad",
@@ -73,7 +75,8 @@
           "usage": "historical",
           "variantType": "historicalHungarianName",
           "sourceUrl": "https://www.beograd.rs/en/discover-belgrade/a2015/Facts-about-Belgrade.html",
-          "note": "중세·근세의 헝가리어 역사명으로 현재 이름의 공식 개칭과 구별"
+          "note": "옛 헝가리어 지명",
+          "researchNote": "중세·근세의 헝가리어 역사명으로 현재 이름의 공식 개칭과 구별"
         }
       ],
       "latitude": 44.80401,
@@ -98,18 +101,21 @@
           {
             "year": 1867,
             "type": "ottomanGarrisonDeparture",
-            "detail": "오스만 제국 주둔군 철수와 세르비아 당국의 도시 통제 강화. 별도 도시 개칭 사건이 아님",
-            "sourceUrl": "https://www.beograd.rs/en/discover-belgrade/a2015/Facts-about-Belgrade.html"
+            "detail": "1867년 오스만 주둔군 철수",
+            "sourceUrl": "https://www.beograd.rs/en/discover-belgrade/a2015/Facts-about-Belgrade.html",
+            "researchDetail": "오스만 제국 주둔군 철수와 세르비아 당국의 도시 통제 강화. 별도 도시 개칭 사건이 아님"
           }
         ],
         "notes": [
           {
-            "detail": "튀르키예어 Belgrad, 세르비아어 Београд·Beograd, 영어 Belgrade는 언어별 명칭. 오스만 통치 기간만으로 한국어 지명을 강제 변경하지 않음.",
-            "sourceUrl": "https://www.geonames.org/792680/belgrade.html"
+            "detail": "언어별 지명은 도시 개칭과 구별",
+            "sourceUrl": "https://www.geonames.org/792680/belgrade.html",
+            "researchDetail": "튀르키예어 Belgrad, 세르비아어 Београд·Beograd, 영어 Belgrade는 언어별 명칭. 오스만 통치 기간만으로 한국어 지명을 강제 변경하지 않음."
           },
           {
-            "detail": "베오그라드의 PPLC 취락 객체와 동일 명칭의 ADM2 행정구역을 구별",
-            "sourceUrl": "https://www.geonames.org/792680/belgrade.html"
+            "detail": "PPLC 취락과 ADM2 구분",
+            "sourceUrl": "https://www.geonames.org/792680/belgrade.html",
+            "researchDetail": "베오그라드의 PPLC 취락 객체와 동일 명칭의 ADM2 행정구역을 구별"
           }
         ]
       }
@@ -138,7 +144,8 @@
           "usage": "historical",
           "variantType": "medievalBulgarianName",
           "sourceUrl": "https://www.sofia.bg/en/web/sofia-municipality/w/history",
-          "note": "현재 이름 Sofia가 14~15세기에 정착하기 전의 중세 불가리아어 지명"
+          "note": "14~15세기 이전의 중세 지명",
+          "researchNote": "현재 이름 Sofia가 14~15세기에 정착하기 전의 중세 불가리아어 지명"
         },
         {
           "text": "Sredets",
@@ -178,23 +185,27 @@
           {
             "date": "1879-04-03",
             "type": "becameBulgarianPrincipalityCapital",
-            "detail": "불가리아 공국 제헌의회에서 소피아를 수도로 선정. 구력 1879-03-22, 신력 1879-04-03",
+            "detail": "1879년 불가리아 공국 수도 지정",
             "calendar": "Gregorian",
-            "sourceUrl": "https://www.sofia.bg/en/web/sofia-municipality/w/history"
+            "sourceUrl": "https://www.sofia.bg/en/web/sofia-municipality/w/history",
+            "researchDetail": "불가리아 공국 제헌의회에서 소피아를 수도로 선정. 구력 1879-03-22, 신력 1879-04-03"
           }
         ],
         "notes": [
           {
-            "detail": "중세 Sredets에서 Sofia로의 명칭 변화는 14~15세기에 진행되어 1801년 역사명 전환 범위보다 앞선다.",
-            "sourceUrl": "https://www.sofia.bg/en/web/sofia-municipality/w/history"
+            "detail": "중세 Sredets에서 Sofia로 변화",
+            "sourceUrl": "https://www.sofia.bg/en/web/sofia-municipality/w/history",
+            "researchDetail": "중세 Sredets에서 Sofia로의 명칭 변화는 14~15세기에 진행되어 1801년 역사명 전환 범위보다 앞선다."
           },
           {
-            "detail": "1879년 수도 지위 변경은 도시명 공식 개칭이 아니다.",
-            "sourceUrl": "https://www.sofia.bg/en/web/sofia-municipality/w/history"
+            "detail": "수도 지정은 도시명 개칭 아님",
+            "sourceUrl": "https://www.sofia.bg/en/web/sofia-municipality/w/history",
+            "researchDetail": "1879년 수도 지위 변경은 도시명 공식 개칭이 아니다."
           },
           {
-            "detail": "소피아 PPLC 취락과 Sofia-Capital ADM1·Sofia ADM2 행정구역은 별도 객체",
-            "sourceUrl": "https://www.geonames.org/727011/sofia.html"
+            "detail": "PPLC 취락과 ADM1·ADM2 구별",
+            "sourceUrl": "https://www.geonames.org/727011/sofia.html",
+            "researchDetail": "소피아 PPLC 취락과 Sofia-Capital ADM1·Sofia ADM2 행정구역은 별도 객체"
           }
         ]
       }
@@ -223,7 +234,8 @@
           "usage": "historical",
           "variantType": "germanHistoricalExonym",
           "sourceUrl": "https://www.geonames.org/3186886/zagreb.html",
-          "note": "오스트리아-헝가리 제국 시기 사용된 독일어 역사적 외국 지명"
+          "note": "오스트리아권 독일어 역사명",
+          "researchNote": "오스트리아-헝가리 제국 시기 사용된 독일어 역사적 외국 지명"
         },
         {
           "text": "Zágráb",
@@ -231,7 +243,8 @@
           "usage": "alternate",
           "variantType": "hungarianExonym",
           "sourceUrl": "https://www.geonames.org/3186886/zagreb.html",
-          "note": "헝가리어 표기로 크로아티아어 Zagreb와 별도 도시가 아님"
+          "note": "헝가리어 별칭 Zágráb",
+          "researchNote": "헝가리어 표기로 크로아티아어 Zagreb와 별도 도시가 아님"
         }
       ],
       "latitude": 45.81444,
@@ -248,7 +261,8 @@
           "nameKo": "자그레브",
           "kind": "historicalLocalName",
           "sourceUrl": "https://zagreb.hr/en/zagreb-in-brief/185627",
-          "note": "1801년은 검토 시작연도이지 지금의 자그레브시 단일 행정구역 성립연도가 아님"
+          "note": "1801년은 역사명 검토 기준연도",
+          "researchNote": "1801년은 검토 시작연도이지 지금의 자그레브시 단일 행정구역 성립연도가 아님"
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801-with-municipal-boundary-note",
@@ -257,28 +271,33 @@
           {
             "date": "1850-09-07",
             "type": "unifiedMunicipalityEstablished",
-            "detail": "황제 특허로 Gradec, Kaptol 및 주변 거주지들을 하나의 자그레브시로 통합. 도시명 변경 아님",
-            "sourceUrl": "https://skupstina.zagreb.hr/old-town-hall-history/4385"
+            "detail": "1850년 자그레브시 행정 통합",
+            "sourceUrl": "https://skupstina.zagreb.hr/old-town-hall-history/4385",
+            "researchDetail": "황제 특허로 Gradec, Kaptol 및 주변 거주지들을 하나의 자그레브시로 통합. 도시명 변경 아님"
           },
           {
             "date": "1991-06-25",
             "type": "croatianIndependenceDeclared",
-            "detail": "크로아티아 의회의 독립·주권 선언 이후 독립국 수도가 됨. 도시명 개칭 아님",
-            "sourceUrl": "https://zagreb.hr/en/zagreb-in-brief/185627"
+            "detail": "1991년 크로아티아 독립 선언",
+            "sourceUrl": "https://zagreb.hr/en/zagreb-in-brief/185627",
+            "researchDetail": "크로아티아 의회의 독립·주권 선언 이후 독립국 수도가 됨. 도시명 개칭 아님"
           }
         ],
         "notes": [
           {
-            "detail": "자그레브는 1850년 통합 이전에도 지역·도시명으로 쓰였음. 1850년의 통합을 도시 설립일이나 지명 개칭일로 혼동하지 않음.",
-            "sourceUrl": "https://www.mgz.hr/en/collections/temelji-modernoga-grada%2C1131.html"
+            "detail": "1850년은 행정 통합, 개칭 아님",
+            "sourceUrl": "https://www.mgz.hr/en/collections/temelji-modernoga-grada%2C1131.html",
+            "researchDetail": "자그레브는 1850년 통합 이전에도 지역·도시명으로 쓰였음. 1850년의 통합을 도시 설립일이나 지명 개칭일로 혼동하지 않음."
           },
           {
-            "detail": "독일어 Agram과 헝가리어 Zágráb은 언어·역사적 외국 지명. 이를 통치권 변경에 맞춰 자동 한국어 표기로 대체하지 않음.",
-            "sourceUrl": "https://www.geonames.org/3186886/zagreb.html"
+            "detail": "Agram·Zágráb은 외국어명",
+            "sourceUrl": "https://www.geonames.org/3186886/zagreb.html",
+            "researchDetail": "독일어 Agram과 헝가리어 Zágráb은 언어·역사적 외국 지명. 이를 통치권 변경에 맞춰 자동 한국어 표기로 대체하지 않음."
           },
           {
-            "detail": "자그레브 도시 PPLC와 Zagreb 행정구역 ADM1 구별",
-            "sourceUrl": "https://www.geonames.org/3186886/zagreb.html"
+            "detail": "PPLC 취락과 ADM1 구분",
+            "sourceUrl": "https://www.geonames.org/3186886/zagreb.html",
+            "researchDetail": "자그레브 도시 PPLC와 Zagreb 행정구역 ADM1 구별"
           }
         ]
       }
@@ -307,7 +326,8 @@
           "usage": "historical",
           "variantType": "historicalGermanName",
           "sourceUrl": "https://www.ljubljana.si/assets/Uploads/publication/18706/castrumleibach-e.pdf",
-          "note": "중세부터 사용된 독일어 지명으로 슬로베니아어 Ljubljana와 여러 시기에 병용"
+          "note": "독일어 역사적 지명",
+          "researchNote": "중세부터 사용된 독일어 지명으로 슬로베니아어 Ljubljana와 여러 시기에 병용"
         },
         {
           "text": "Lubiana",
@@ -340,24 +360,28 @@
             "fromYear": 1809,
             "toYear": 1813,
             "type": "illyrianProvincesCapital",
-            "detail": "나폴레옹 프랑스의 일리리아주(Provinces illyriennes) 수도",
-            "sourceUrl": "https://www.ljubljana.si/sl/mestna-obcina/o-ljubljani/zgodovina-ljubljane/ljubljana-v-18-in-19-stoletju"
+            "detail": "1809~1813년 일리리아주 수도",
+            "sourceUrl": "https://www.ljubljana.si/sl/mestna-obcina/o-ljubljani/zgodovina-ljubljane/ljubljana-v-18-in-19-stoletju",
+            "researchDetail": "나폴레옹 프랑스의 일리리아주(Provinces illyriennes) 수도"
           },
           {
             "year": 1821,
             "type": "congressOfLaibach",
-            "detail": "신성동맹 군주·외교회의 개최; 독일어 명칭 Laibach가 역사적으로 사용됨",
-            "sourceUrl": "https://www.ljubljana.si/sl/mestna-obcina/o-ljubljani/zgodovina-ljubljane/ljubljana-v-18-in-19-stoletju"
+            "detail": "1821년 국제 외교회의 개최",
+            "sourceUrl": "https://www.ljubljana.si/sl/mestna-obcina/o-ljubljani/zgodovina-ljubljane/ljubljana-v-18-in-19-stoletju",
+            "researchDetail": "신성동맹 군주·외교회의 개최; 독일어 명칭 Laibach가 역사적으로 사용됨"
           }
         ],
         "notes": [
           {
-            "detail": "독일어 Laibach와 슬로베니아어 Ljubljana는 근대 이전부터 언어별로 병용됨. 1918년 전후의 국가·행정 변화만으로 도시 공식 개칭 날짜를 추론하지 않음.",
-            "sourceUrl": "https://www.ljubljana.si/assets/Uploads/publication/18706/castrumleibach-e.pdf"
+            "detail": "Laibach·Ljubljana 병용",
+            "sourceUrl": "https://www.ljubljana.si/assets/Uploads/publication/18706/castrumleibach-e.pdf",
+            "researchDetail": "독일어 Laibach와 슬로베니아어 Ljubljana는 근대 이전부터 언어별로 병용됨. 1918년 전후의 국가·행정 변화만으로 도시 공식 개칭 날짜를 추론하지 않음."
           },
           {
-            "detail": "현재 도시 PPLC와 Ljubljana ADM1 등 행정구역 별개",
-            "sourceUrl": "https://www.geonames.org/3196359/ljubljana.html"
+            "detail": "PPLC 취락과 ADM1 구분",
+            "sourceUrl": "https://www.geonames.org/3196359/ljubljana.html",
+            "researchDetail": "현재 도시 PPLC와 Ljubljana ADM1 등 행정구역 별개"
           }
         ]
       }

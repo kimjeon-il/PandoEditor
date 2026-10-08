@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "2e6ab377366611c39184809f80f4837305d95778",
+  "webCommit": "5bf6edc58b1edb59066e190c9d59fb9d6ddf0a54",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -51,7 +51,7 @@
     },
     {
       "path": "reports/places/tier1-major-cities-batch10-balkan-southeast-europe.json",
-      "gitBlobSha": "e1e5d24c2be5002a6d72498387c5f848de35373b"
+      "gitBlobSha": "90da54d53a5209031b065d001656b069c8018fd7"
     }
   ],
   "reviewInventory": {

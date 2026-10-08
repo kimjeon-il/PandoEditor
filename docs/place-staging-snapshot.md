@@ -20,7 +20,7 @@
 
 ## 출처와 일치 검사
 
-- 웹 원본: `kimjeon-il/Pando` `2e6ab377366611c39184809f80f4837305d95778`.
+- 웹 원본: `kimjeon-il/Pando` `5bf6edc58b1edb59066e190c9d59fb9d6ddf0a54`.
 - 앱 원본 복사본: `reports/places/tier1-major-cities-batch*.json`.
 - `reports/places/source-manifest.json`: 배치별 ID 수와 원본 Git blob SHA.
 - `tools/place-runtime-contract/v2-snapshot.test.mjs` 및
