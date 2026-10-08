@@ -1,0 +1,207 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "09-baltic-belarus-capitals",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0) and historical/official-language sources",
+  "checkedOn": "2026-10-08",
+  "selection": "Four PPLC city settlements: Tallinn, Riga, Vilnius, Minsk. Administrative units excluded.",
+  "coordinateConvention": "WGS84 EPSG:4326 latitude/longitude point, not boundary polygons.",
+  "countryCodeSemantics": "Present-day source metadata only; never derive historic sovereignty.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime",
+  "historicNameScope": "Names relevant to 1801-present; language and regime exonyms are not automatically converted to dated city renamings.",
+  "qualityNotes": [
+    "Tallinn Reval/Ревель: period-specific language names, not a single exact legal name transition.",
+    "Vilnius Wilno: Polish-period name does not mean Lithuanian name ceased existing.",
+    "Minsk Belarusian Мінск and Russian Минск coexist; primary native is Belarusian.",
+    "All four GeoNames IDs are PPLC populated places, not identically named ADM units.",
+    "Only verified bilingual forms; duplicate English/native strings preserved in data and deduplicated in rendering.",
+    "Korean historical timeline entries are editorial style anchors, not historical attestation of Korean spelling.",
+    "Staging only; does not publish runtime map tiles."
+  ],
+  "records": [
+    {
+      "geonameId": 588409,
+      "names": [
+        {
+          "text": "Tallinn",
+          "language": "et",
+          "usage": "standard"
+        },
+        {
+          "text": "Tallinn",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "탈린",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Reval",
+          "language": "de",
+          "usage": "historical",
+          "variantType": "formerGermanOfficialName",
+          "sourceUrl": "https://www.entsyklopeedia.ee/artikkel/reval1"
+        },
+        {
+          "text": "Ревель",
+          "language": "ru",
+          "usage": "historical",
+          "variantType": "formerRussianName",
+          "sourceUrl": "https://www.entsyklopeedia.ee/artikkel/reval1"
+        }
+      ],
+      "latitude": 59.43696,
+      "longitude": 24.75353,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/588409/",
+      "sourceCountryCode": "EE",
+      "defaultDisplayNameKo": "탈린",
+      "shortDescriptionKo": "에스토니아 수도, 옛 이름 Reval",
+      "displayTimeline": [
+        {
+          "nameKo": "탈린",
+          "fromYear": 1801,
+          "kind": "historicalMapConvention",
+          "sourceUrl": "https://www.geonames.org/588409/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 456172,
+      "names": [
+        {
+          "text": "Rīga",
+          "language": "lv",
+          "usage": "standard"
+        },
+        {
+          "text": "Riga",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "리가",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 56.946,
+      "longitude": 24.10589,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/456172/",
+      "sourceCountryCode": "LV",
+      "defaultDisplayNameKo": "리가",
+      "shortDescriptionKo": "라트비아어 Rīga와 영어 Riga",
+      "displayTimeline": [
+        {
+          "nameKo": "리가",
+          "fromYear": 1801,
+          "kind": "historicalMapConvention",
+          "sourceUrl": "https://www.geonames.org/456172/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 593116,
+      "names": [
+        {
+          "text": "Vilnius",
+          "language": "lt",
+          "usage": "standard"
+        },
+        {
+          "text": "Vilnius",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "빌뉴스",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Wilno",
+          "language": "pl",
+          "usage": "alternate",
+          "variantType": "polishHistoricalName",
+          "sourceUrl": "https://www.vle.lt/straipsnis/vilniaus-krastas/"
+        },
+        {
+          "text": "Vilna",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "historicalEnglishName",
+          "sourceUrl": "https://encyclopedia.yivo.org/article.aspx/Vilnius"
+        }
+      ],
+      "latitude": 54.68916,
+      "longitude": 25.2798,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/593116/",
+      "sourceCountryCode": "LT",
+      "defaultDisplayNameKo": "빌뉴스",
+      "shortDescriptionKo": "폴란드어 Wilno도 사용",
+      "displayTimeline": [
+        {
+          "nameKo": "빌뉴스",
+          "fromYear": 1801,
+          "kind": "historicalMapConvention",
+          "sourceUrl": "https://www.geonames.org/593116/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 625144,
+      "names": [
+        {
+          "text": "Мінск",
+          "language": "be",
+          "usage": "standard"
+        },
+        {
+          "text": "Minsk",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "민스크",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Минск",
+          "language": "ru",
+          "usage": "standard",
+          "sourceUrl": "https://constitution.by/1994/5/"
+        }
+      ],
+      "latitude": 53.90019,
+      "longitude": 27.56653,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/625144/",
+      "sourceCountryCode": "BY",
+      "defaultDisplayNameKo": "민스크",
+      "shortDescriptionKo": "벨라루스어·러시아어 이름 병존",
+      "displayTimeline": [
+        {
+          "nameKo": "민스크",
+          "fromYear": 1801,
+          "kind": "historicalMapConvention",
+          "sourceUrl": "https://www.geonames.org/625144/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    }
+  ]
+}

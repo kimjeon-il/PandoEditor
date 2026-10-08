@@ -79,13 +79,13 @@ private slots:
         QVERIFY(manifest.open(QIODevice::ReadOnly));
         const auto report=QJsonDocument::fromJson(manifest.readAll()).object();
         QCOMPARE(report.value("webCommit").toString(),
-            QStringLiteral("fc0cb82a9e363be6a3009cf07932a3c9ce59ddd2"));
+            QStringLiteral("6a69ad1a25d7ed3f7b7b3ed6ade116a83df44b4c"));
         const auto files=report.value("files").toArray();
-        QCOMPARE(files.size(),10);
+        QCOMPARE(files.size(),11);
         const auto inventory=report.value("reviewInventory").toObject();
-        QCOMPARE(inventory.value("batchCount").toInt(),8);
-        QCOMPARE(inventory.value("recordCount").toInt(),55);
-        QCOMPARE(inventory.value("distinctGeoNames").toInt(),55);
+        QCOMPARE(inventory.value("batchCount").toInt(),9);
+        QCOMPARE(inventory.value("recordCount").toInt(),59);
+        QCOMPARE(inventory.value("distinctGeoNames").toInt(),59);
         int examined=0;QSet<int> ids;
         for(const auto& item:inventory.value("byBatch").toArray()) {
             const auto meta=item.toObject();
@@ -100,7 +100,7 @@ private slots:
                 QVERIFY(id>0);QVERIFY(!ids.contains(id));ids.insert(id);
             }
         }
-        QCOMPARE(examined,55);QCOMPARE(ids.size(),55);
+        QCOMPARE(examined,59);QCOMPARE(ids.size(),59);
         for(const auto& value:files) {
             const auto row=value.toObject();
             const auto path=row.value("path").toString();

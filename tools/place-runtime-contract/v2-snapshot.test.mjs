@@ -22,8 +22,8 @@ test('native branch retains the exact Web-pinned v2 exchange artifact', () => {
 });
 
 test('all verified review snapshots remain byte-identical to Web commit', () => {
-  assert.equal(sourceManifest.webCommit, 'fc0cb82a9e363be6a3009cf07932a3c9ce59ddd2');
-  assert.equal(sourceManifest.files.length, 10);
+  assert.equal(sourceManifest.webCommit, '6a69ad1a25d7ed3f7b7b3ed6ade116a83df44b4c');
+  assert.equal(sourceManifest.files.length, 11);
   for (const entry of sourceManifest.files) {
     assert.match(entry.path, /^reports\/places\/[a-z0-9.-]+\.json$/u);
     assert.equal(blobId(file(entry.path)), entry.gitBlobSha, entry.path);
@@ -32,9 +32,9 @@ test('all verified review snapshots remain byte-identical to Web commit', () => 
 
 test('reviewed city inventory matches every copied Web batch without ID duplication', () => {
   const inventory=sourceManifest.reviewInventory;
-  assert.equal(inventory.batchCount, 8);
-  assert.equal(inventory.recordCount, 55);
-  assert.equal(inventory.distinctGeoNames, 55);
+  assert.equal(inventory.batchCount, 9);
+  assert.equal(inventory.recordCount, 59);
+  assert.equal(inventory.distinctGeoNames, 59);
   const copies=sourceManifest.files.filter(entry=>
     entry.path.startsWith('reports/places/tier1-major-cities-batch') && entry.path.endsWith('.json'));
   assert.equal(copies.length,inventory.batchCount);
