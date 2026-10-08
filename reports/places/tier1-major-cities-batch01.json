@@ -20,58 +20,79 @@
           "usage": "standard"
         },
         {
-          "text": "한성",
-          "language": "ko",
-          "usage": "historical",
-          "officialPeriod": {
-            "fromYear": 1395,
-            "toYear": 1910
-          },
-          "sourceUrl": "https://mediahub.seoul.go.kr/archives/176784"
-        },
-        {
-          "text": "漢城",
+          "text": "漢陽",
           "language": "ko-Hani",
           "usage": "historical",
+          "variantType": "historicalOfficialNativeName",
           "officialPeriod": {
-            "fromYear": 1395,
-            "toYear": 1910
+            "fromYear": 1308,
+            "toYear": 1395
           },
-          "sourceUrl": "https://mediahub.seoul.go.kr/archives/176784"
-        },
-        {
-          "text": "경성",
-          "language": "ko",
-          "usage": "historical",
-          "officialPeriod": {
-            "fromYear": 1910,
-            "toYear": 1946
-          },
-          "sourceUrl": "https://archives.seoul.go.kr/class/OC-0001"
-        },
-        {
-          "text": "京城",
-          "language": "ko-Hani",
-          "usage": "historical",
-          "officialPeriod": {
-            "fromYear": 1910,
-            "toYear": 1946
-          },
-          "sourceUrl": "https://archives.seoul.go.kr/class/OC-0001"
+          "sourceUrl": "https://db.history.go.kr/goryeo/compareViewer.do?levelId=kr_077_0010_0550_0170"
         },
         {
           "text": "한양",
           "language": "ko",
           "usage": "historical",
-          "variantType": "historicalToponym",
-          "sourceUrl": "https://history.seoul.go.kr/archive/content.do?key=2211240006"
+          "variantType": "koreanReadingOfHistoricalOfficialName",
+          "sourceUrl": "https://db.history.go.kr/goryeo/compareViewer.do?levelId=kr_077_0010_0550_0170"
         },
         {
-          "text": "漢陽",
+          "text": "Hanyang",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "englishRenderingOfHistoricalName",
+          "sourceUrl": "https://db.history.go.kr/goryeo/compareViewer.do?levelId=kr_077_0010_0550_0170"
+        },
+        {
+          "text": "漢城",
           "language": "ko-Hani",
           "usage": "historical",
-          "variantType": "historicalToponym",
-          "sourceUrl": "https://history.seoul.go.kr/archive/content.do?key=2211240006"
+          "variantType": "historicalOfficialNativeName",
+          "officialPeriod": {
+            "fromYear": 1395,
+            "toYear": 1910
+          },
+          "sourceUrl": "https://sillok.history.go.kr/id/kaa_10406006_001"
+        },
+        {
+          "text": "한성",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanReadingOfHistoricalOfficialName",
+          "sourceUrl": "https://sillok.history.go.kr/id/kaa_10406006_001"
+        },
+        {
+          "text": "Hanseong",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "englishRenderingOfHistoricalName",
+          "sourceUrl": "https://sillok.history.go.kr/id/kaa_10406006_001"
+        },
+        {
+          "text": "京城",
+          "language": "ja",
+          "usage": "historical",
+          "variantType": "japaneseAdministrationOfficialName",
+          "officialPeriod": {
+            "fromYear": 1910,
+            "toYear": 1946
+          },
+          "sourceUrl": "https://archives.seoul.go.kr/class/OC-0001"
+        },
+        {
+          "text": "경성",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanReadingOfHistoricalOfficialName",
+          "sourceUrl": "https://archives.seoul.go.kr/class/OC-0001"
+        },
+        {
+          "text": "Keijō",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "englishRenderingOfJapaneseOfficialName",
+          "sourceUrl": "https://archives.seoul.go.kr/class/OC-0001"
         }
       ],
       "latitude": 37.566,
@@ -81,28 +102,57 @@
       "sourceUrl": "https://www.geonames.org/1835848/",
       "sourceCountryCode": "KR",
       "defaultDisplayNameKo": "서울",
-      "shortDescriptionKo": "한성·경성을 거쳐 서울로 개칭",
+      "shortDescriptionKo": "한양·한성·경성을 거쳐 서울로 개칭",
       "displayTimeline": [
         {
-          "fromYear": 1801,
-          "nameKo": "한성",
+          "fromYear": 1308,
+          "nameKo": "한양",
+          "nameEn": "Hanyang",
+          "nameNative": "漢陽",
+          "nativeLanguage": "ko-Hani",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://mediahub.seoul.go.kr/archives/2018055"
+          "sourceUrl": "https://db.history.go.kr/goryeo/compareViewer.do?levelId=kr_077_0010_0550_0170",
+          "researchNote": "남경을 한양부로 개편한 연도. 남경 명칭은 사용자 요청대로 후속 검토하며 일자는 확정하지 않음."
+        },
+        {
+          "fromYear": 1395,
+          "nameKo": "한성",
+          "nameEn": "Hanseong",
+          "nameNative": "漢城",
+          "nativeLanguage": "ko-Hani",
+          "kind": "officialRenaming",
+          "sourceUrl": "https://sillok.history.go.kr/id/kaa_10406006_001",
+          "researchNote": "태조실록의 음력 1395년 6월 6일 기사. 그레고리력 일자 전환을 추정하지 않아 연도 정밀도로 기록."
         },
         {
           "fromYear": 1910,
           "nameKo": "경성",
+          "nameEn": "Keijō",
+          "nameNative": "京城",
+          "nativeLanguage": "ja",
           "kind": "officialRenaming",
-          "sourceUrl": "https://mediahub.seoul.go.kr/archives/2018055"
+          "sourceUrl": "https://archives.seoul.go.kr/class/OC-0001"
         },
         {
           "fromYear": 1946,
           "nameKo": "서울",
+          "nameEn": "Seoul",
+          "nameNative": "서울",
+          "nativeLanguage": "ko",
           "kind": "officialRenaming",
-          "sourceUrl": "https://mediahub.seoul.go.kr/archives/2018055"
+          "sourceUrl": "https://www.seoul.go.kr/seoul/history.do",
+          "researchNote": "1946년 서울시 명칭 변경과 9월 28일 서울특별자유시 지위 변경을 구분하여 정확한 개칭일은 확정하지 않음."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1308-predecessor-deferred",
+      "defaultDisplayNameEn": "Seoul",
+      "defaultDisplayNameNative": "서울",
+      "defaultNativeLanguage": "ko",
+      "nameSelectionNotes": [
+        "1308년 이전의 남경(南京)은 이번 서울 명칭 데이터에 추가하지 않음.",
+        "영어 Hanyang·Hanseong은 원어명에 대응하는 후대 로마자 전사이며 당대 법정 영어명이라는 주장이 아님.",
+        "1910~1946의 영어 Keijō는 일본어 京城의 대표 로마자 표기임. 해방 직후에도 京城 이름이 잠시 사용된 사실과 구별하여 추후 영어사료 재검토 가능."
+      ]
     },
     {
       "geonameId": 1838524,
@@ -269,17 +319,30 @@
         {
           "fromYear": 1801,
           "nameKo": "에도",
+          "nameEn": "Edo",
+          "nameNative": "江戸",
+          "nativeLanguage": "ja",
           "kind": "historicalLocalName",
           "sourceUrl": "https://www.archives.go.jp/exhibition/digital/henbou/contents/03.html"
         },
         {
           "fromDate": "1868-09-03",
           "nameKo": "도쿄",
+          "nameEn": "Tokyo",
+          "nameNative": "東京",
+          "nativeLanguage": "ja",
           "kind": "officialRenaming",
-          "sourceUrl": "https://www.archives.go.jp/exhibition/digital/henbou/contents/03.html"
+          "sourceUrl": "https://www.jacar.go.jp/exhibition/glossary/meijiasia/table/history1.html",
+          "researchNote": "1868년 9월 3일은 일본 구력 게이오 4년 7월 17일의 그레고리력 날짜."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Tokyo",
+      "defaultDisplayNameNative": "東京",
+      "defaultNativeLanguage": "ja",
+      "nameSelectionNotes": [
+        "동경 등 일본어 한자 지명의 한국 한자음은 별도 한국어 대표명이나 별칭으로 수록하지 않음."
+      ]
     },
     {
       "geonameId": 1853909,
@@ -530,9 +593,10 @@
         {
           "text": "상해",
           "language": "ko",
-          "usage": "alternate",
-          "variantType": "conventionalSinoKorean",
-          "sourceUrl": "https://www.korean.go.kr/front/page/pageView.do?mn_id=97&page_id=P000146"
+          "usage": "historical",
+          "variantType": "historicalKoreanSinoReading",
+          "sourceUrl": "https://www.korean.go.kr/front/page/pageView.do?mn_id=97&page_id=P000146",
+          "note": "1912년 이전 한국어 지도명"
         }
       ],
       "latitude": 31.22222,
@@ -554,15 +618,27 @@
         {
           "fromYear": 1801,
           "nameKo": "상해",
-          "kind": "koreanEditorialTranscription"
+          "nameEn": "Shanghai",
+          "nameNative": "上海",
+          "nativeLanguage": "zh",
+          "kind": "koreanEditorialTranscription",
+          "sourceUrl": "https://www.geonames.org/1796236/"
         },
         {
           "fromDate": "1912-01-01",
           "nameKo": "상하이",
-          "kind": "koreanEditorialTranscription"
+          "kind": "koreanEditorialTranscription",
+          "researchNote": "중화민국 건국일에 맞춘 한국어 지도 표기 기준 변경이며 중국 현지의 도시 개칭이 아님."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Shanghai",
+      "defaultDisplayNameNative": "上海",
+      "defaultNativeLanguage": "zh",
+      "nameSelectionNotes": [
+        "1912-01-01에는 한국어명만 변경; 원어 上海 및 영어 Shanghai는 동일.",
+        "옛 한국식 한자음 상해는 alternate 대신 historical 명칭으로 분류."
+      ]
     },
     {
       "geonameId": 1273294,
@@ -645,7 +721,13 @@
       "defaultDisplayNameKo": "런던",
       "shortDescriptionKo": "영국의 수도",
       "displayTimeline": [],
-      "historicalDisplayCoverage": "modern-label-only"
+      "historicalDisplayCoverage": "reviewed-stable-since-1801",
+      "defaultDisplayNameEn": "London",
+      "defaultDisplayNameNative": "London",
+      "defaultNativeLanguage": "en",
+      "nameSelectionNotes": [
+        "London 명칭 유지. City of London과 Greater London은 도시 전체의 과거 개칭이 아님."
+      ]
     },
     {
       "geonameId": 2988507,
@@ -670,7 +752,13 @@
       "defaultDisplayNameKo": "파리",
       "shortDescriptionKo": "프랑스의 수도",
       "displayTimeline": [],
-      "historicalDisplayCoverage": "modern-label-only"
+      "historicalDisplayCoverage": "reviewed-stable-since-1801",
+      "defaultDisplayNameEn": "Paris",
+      "defaultDisplayNameNative": "Paris",
+      "defaultNativeLanguage": "fr",
+      "nameSelectionNotes": [
+        "Paris 명칭 유지. 2019년 Ville de Paris 행정조직 개편은 도시 자체의 개칭이 아님."
+      ]
     }
   ],
   "countryCodeSemantics": "countryCode is GeoNames present-day source metadata only, never historical or computed sovereignty",
@@ -692,7 +780,34 @@
     "fallback": "Dates and display-language selection require separate runtime implementation. Do not infer a fixed name from sourceCountryCode.",
     "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
     "displayConvention": "The shared map-label policy is distinct from multilingual names[] and the factual usage/official periods of local names. Chinese koMapLabels values reference existing ko names[] and are applied after selecting the historically appropriate local toponym.",
-    "runtimeStatus": "Staging data only, no renderer integration."
+    "runtimeStatus": "Staging data only, no renderer integration.",
+    "preferredNameStage1": {
+      "status": "5-reviewed-of-9-staging-only",
+      "reviewedGeoNamesIds": [
+        1835848,
+        1850147,
+        1796236,
+        2643743,
+        2988507
+      ],
+      "pendingGeoNamesIds": [
+        1838524,
+        1853909,
+        1816670,
+        1273294
+      ],
+      "currentNameFields": [
+        "defaultDisplayNameKo",
+        "defaultDisplayNameEn",
+        "defaultDisplayNameNative",
+        "defaultNativeLanguage"
+      ],
+      "historicalNameFields": "displayTimeline[] has nameKo and, where changed, nameEn/nameNative/nativeLanguage; omitted nameEn/native at transitions inherit the prior selected value.",
+      "rule": "One selected native, Korean and English name at each map date, referenced to the same period-specific official local city name; sourceCountryCode cannot identify a historic governing state.",
+      "dates": "Use precise Gregorian fromDate only where verified. fromYear is approximate and is not automatically January 1.",
+      "exclusions": "Pre-1308 Namgyeong deferred. The remaining four cities in the first batch have not yet been changed to the new policy.",
+      "runtimeStatus": "review-only; production place manifest and renderer unchanged"
+    }
   },
   "historicalNameReview": {
     "earliestYear": 1801,
