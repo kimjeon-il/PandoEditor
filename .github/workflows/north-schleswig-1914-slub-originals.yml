@@ -1,0 +1,55 @@
+name: Probe georeferenced SLUB 1880 originals North Schleswig 1-26
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [work/gis]
+    paths:
+      - tools/check_north_schleswig_1914_slub_wms.py
+      - .github/workflows/north-schleswig-1914-slub-originals.yml
+      - tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.slub-discovery.json
+
+permissions:
+  contents: write
+
+concurrency:
+  group: north-schleswig-1914-slub-originals
+  cancel-in-progress: false
+
+jobs:
+  probe-four-original-sheets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/gis
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check requests shapely pillow
+      - name: Verify SLUB WMS capabilities and decode small 1880 map samples
+        run: python tools/check_north_schleswig_1914_slub_wms.py
+      - name: Validate non-final source status
+        run: |
+          python - <<'PY'
+          import json
+          p="tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.slub-wms-probe.json"
+          d=json.load(open(p))
+          assert d["candidateHistoricBorderVerified"] is False
+          assert d["imageScanFilesCommitted"] is False
+          assert {x["sheetId"] for x in d["mapProbes"]} == {"0619", "0717", "0718", "0719"}
+          for item in d["mapProbes"]:
+            print(item["sheetId"],item["status"])
+          PY
+      - name: Commit map-source access report (no copyrighted raster data)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.slub-wms-probe.json
+          if git diff --cached --quiet; then
+            echo "Unchanged."
+          else
+            git commit -m "data(gis): audit WMS access to four 1880 border originals"
+            git pull --rebase origin work/gis
+            git push origin HEAD:work/gis
+          fi
