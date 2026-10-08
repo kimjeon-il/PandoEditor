@@ -516,3 +516,59 @@ test('Delhi multilingual first-batch names change at approved historical thresho
   assert.equal(policy.maxPreferredNamesPerSlotAtAnyInstant.native,3);
   assert.equal(policy.nativeNameCardinality.normalNativeNames,1);
 });
+
+
+test('Incheon temporary Jemulpo and Korean historical romanization boundaries', () => {
+  const data = json('reports/places/tier1-major-cities-batch02-east-asia.json');
+  const byId = Object.fromEntries(data.records.map(r => [r.geonameId, r]));
+  const history = (id, date) => {
+    const r = byId[id];
+    assert.ok(r);
+    const s = {ko:r.defaultDisplayNameKo,en:r.defaultDisplayNameEn,
+      native:r.defaultDisplayNameNative,language:r.defaultNativeLanguage};
+    let prev = '';
+    for (const t of r.displayTimeline) {
+      const when = t.fromDate ?? String(t.fromYear).padStart(4,'0')+'-01-01';
+      assert.ok(when>prev, 'Sorted name changes');
+      prev = when;
+      if(when>date)break;
+      if(t.nameKo!==undefined)s.ko=t.nameKo;
+      if(t.nameEn!==undefined)s.en=t.nameEn;
+      if(t.nameNative!==undefined)s.native=t.nameNative;
+      if(t.nativeLanguage!==undefined)s.language=t.nativeLanguage;
+    }
+    return [s.ko,s.en,s.native,s.language];
+  };
+  const cases = [
+    [1843564,'1900-01-01',['인천','Inchon','仁川','ko-Hani']],
+    [1843564,'1910-08-28',['인천','Inchon','仁川','ko-Hani']],
+    [1843564,'1910-08-29',['인천','Jinsen','仁川','ja']],
+    [1843564,'1945-08-14',['인천','Jinsen','仁川','ja']],
+    [1843564,'1945-08-15',['인천','Inchon','인천','ko']],
+    [1843564,'1945-10-09',['인천','Inchon','인천','ko']],
+    [1843564,'1945-10-10',['제물포','Chemulpo','제물포','ko']],
+    [1843564,'1945-10-27',['제물포','Chemulpo','제물포','ko']],
+    [1843564,'1945-10-28',['인천','Inchon','인천','ko']],
+    [1843564,'2000-07-06',['인천','Inchon','인천','ko']],
+    [1843564,'2000-07-07',['인천','Incheon','인천','ko']],
+    [1835329,'1900-01-01',['대구','Taegu','大邱','ko-Hani']],
+    [1835329,'1910-08-29',['대구','Taikyu','大邱','ja']],
+    [1835329,'1945-08-15',['대구','Taegu','대구','ko']],
+    [1835329,'2000-07-07',['대구','Daegu','대구','ko']],
+    [1835235,'1900-01-01',['대전','Taejon','大田','ko-Hani']],
+    [1835235,'1910-08-29',['대전','Taiden','大田','ja']],
+    [1835235,'1945-08-15',['대전','Taejon','대전','ko']],
+    [1835235,'2000-07-07',['대전','Daejeon','대전','ko']]
+  ];
+  for(const [id,date,names] of cases)
+    assert.deepEqual(history(id,date),names,id+' / '+date);
+  assert.deepEqual(data.historicalNameReview.reviewedGeoNamesIds,
+    [1843564,1835329,1835235]);
+  assert.equal(data.historicalNameReview.pendingGeoNamesIds.length,6);
+  assert.equal(data.historicalNameReview.gradeTimelineStatus,'not-decided-or-modified');
+  assert.deepEqual(data.records.find(r=>r.geonameId===1843564).displayTimeline.map(
+    t=>t.fromDate??t.fromYear),
+    [1801,'1910-08-29','1945-08-15','1945-10-10','1945-10-28','2000-07-07']);
+  assert.ok(data.records.find(r=>r.geonameId===1835235).nameSelectionNotes.some(
+    t=>t.includes('1801년')));
+});
