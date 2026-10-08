@@ -67,6 +67,20 @@ node tools/sync-world-data.mjs --web-ref <위와 동일한 웹 커밋 SHA> --app
 - `tools/m71`, `tools/m72`, 이전 도형 oracle의 불변 기준 커밋은 새 앱 번들 정본으로 일괄 대체하지 않는다. 구형 fixture의 원본 추적이다.
 - 패키지별 Windows/Android 바이너리 배포 검증을 수행하지 않고, 대상 Qt/Linux 오프라인 CTest를 수행한 경우에만 그 결과를 별도로 기록한다.
 
-## 5. 검증 실적
+## 5. 실제 GitHub Actions 통합검증 — 2026-10-09
 
-실제 검증이 실행된 뒤 **최종 CI 실행 ID·결과·재시도/제약**을 이 아래에 추가한다. 검증 전에는 성공으로 주장하지 않는다.
+- 최종 앱 구현 검증: [App World Dataset Stage 4 Gate #37809630232](https://github.com/kimjeon-il/PandoEditor/actions/runs/37809630232), 원본 커밋 `2601062aa043b9d59c325e00c651aaf8fecb988e`. **offline-contract 및 qt-offline 두 작업 모두 success**.
+- 전용 워크플로: `.github/workflows/world-dataset-stage4-gate.yml`. 현재 앱 `work/gis`의 관련 코드가 변경되면 고정된 출처 및 오프라인 동작을 다시 검증한다.
+- Node.js 22 오프라인 검증: `node tools/verify-world-assets.mjs assets/world` → **7개 내장 자산 모두 SHA-256/Blob/크기 통과**. `node --test tools/world-dataset-stage4.test.mjs` → **6개 통과, 실패 0개**. `node tools/verify-release-assets.mjs --root .` → **소스 자산 18개 검사 통과, 실패 0개**.
+- 실제 웹 비교: 승인 **후보** 커밋 `65d34d172ee72867d9e19dbde2667607a2ea7d59`을 별도 웹 체크아웃으로 고정해 `node tools/sync-world-data.mjs --web-ref ... --web-root upstream-web`을 **읽기 전용** 실행. 실제 `world/current.json` SHA-256은 `960e2f55964cbaebad10f6e397bf11fb5c4ad2464803ffe640f65b08bdcfb836`. 수계/지형 `physicalDrift: []`.
+- 두 자산 `countryPreview`, `countryCanonical`은 다운로드하고 세 자산 `previewMesh`, `canonicalMesh`, `labelAnchors`는 **현재 앱의 검증된 Blob을 재사용**한 것을 실제 CI 보고서에서 확인했다. 이전 파일명에서 새로운 해시 경로로 바뀌는 역할은 5개이며, 실제 바이트가 바뀌는 역할은 2개다.
+- Linux Qt 6.8.3 + CMake Ninja로 `pandoeditor` 및 관련 Qt 검증 타깃 빌드 성공. 오프라인 CTest `builtin_world_policy_tests`, `country_label_anchor_tests`, `physical_data_store_tests` → **3/3 통과**. BJN/SER 좌표를 포함한 라벨 검증과 물리 자료 출처 처리까지 확인했다.
+- **이력:** [초기 #37808741960](https://github.com/kimjeon-il/PandoEditor/actions/runs/37808741960)에서는 동기화 계획의 검증된 byte Map을 결과에 보관하지 않아 Node 테스트가 실패했다. `c38d84c8c5ed78eb280c262fa1866698dc92f643`에서 수정. [후속 #37808840114](https://github.com/kimjeon-il/PandoEditor/actions/runs/37808840114)에서는 `app/physicaldatastore.cpp`의 `sourceUrl`/ `explicitSource` C++ 변수 선언 누락으로 빌드 실패. `4da949cf6b2a6d33924177b1e15f879dcc65f1c6`에서 보정. 최종 실행은 두 문제 모두 통과했다.
+- `tools/sync-world-data.mjs`는 `9ec3e8f0f30c0925cac2a707d3bb37c857eb3210`에서 동일 SHA·크기인 자산을 다시 내려받지 않도록 개선하고, 계획 작성 후 앱 내장 매니페스트가 다른 내용으로 바뀐 경우 이전 승인 계획을 거부하도록 강화. `2601062aa043b9d59c325e00c651aaf8fecb988e`의 단위검사는 이 변경을 포함해 검증했다.
+
+## 6. 인계 및 미검증 범위
+
+- **본 단계는 출처·동기화 구조 개편과 승인형 비교 검증까지 완료한 것**이며, 새 웹 번들의 실제 앱 내장 자산 적용(`--apply`)은 **사용자 승인 전이라 실시하지 않았다**. `origin.mode`는 현재 `mixed-pinned` 그대로다.
+- Qt Linux 오프라인 **빌드·CTest**는 통과했지만, Windows 포터블 패키지·Android APK 실기기·사용자 프로젝트 전체 저장·Undo/Redo·지형/수계 모든 타일 설치 및 전체 GPU 화면 회귀는 미검증이다.
+- 앱과 웹의 국가별 역사 라이브러리 285개 중 Blob이 다른 91개 파일의 실질 내용/압축 차이는 5단계에서 별도로 검사한다.
+- 이전 자산·지형 및 수계 구버전은 삭제하지 않았다. `main`에는 구현 코드를 병합하지 않는다. `work/*`에 진행 기록만 공유한다.
