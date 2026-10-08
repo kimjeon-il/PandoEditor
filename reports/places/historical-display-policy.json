@@ -3,14 +3,14 @@
   "status": "staged-data-only-no-runtime-renderer",
   "mapLanguage": "ko",
   "historicalReviewFromYear": 1801,
-  "purpose": "Choose Korean map label by map date from curated transitions, without confusing historical city renaming with language transcription or administrative annexation.",
+  "purpose": "Select period-specific Korean, English and one native map name for the same historically valid local toponym; distinguish authority-backed local names, real city renamings and map-editor transcription conventions.",
   "recordFields": {
     "defaultDisplayNameKo": "Current Korean map name; mandatory and must match names[].text with language ko",
     "displayTimeline": "Chronologically ordered name change points; empty for places with no verified historic change. Label references an existing Korean variant in names[].",
     "shortDescriptionKo": "Screen-facing concise Korean city description, maximum 28 Unicode code points",
     "contextualDisplayNames": "Regime/polity-specific historical names; never auto-apply based solely on date.",
     "temporalEligibility": "Optional verified date/year before which the currently named city had not yet been founded as a city; the editor suppresses the city label at earlier map dates.",
-    "names": "Curated selected preferred names by period and language, plus individually justified exceptions only. Existing names[] batches have not yet been migrated to this policy."
+    "names": "Curated preferred ko/en/native names that refer to one selected, period-specific governing-authority official toponym, with separately justified search/multilingual exceptions. The existing 1–15 city batches have not yet been migrated."
   },
   "timelineEntry": {
     "nameKo": "Reference to names[] (ko)",
@@ -21,6 +21,8 @@
   },
   "resolution": [
     "Before name resolution, test temporalEligibility if present. For a map date earlier than a verified cityEstablishedFromYear/Date, suppress its city label. Existing earlier settlements remain separate historical place objects if they qualify.",
+    "For a map date, identify the polity governing the city and the competent local administration, then select an attested official period-specific local city name. Do not assume the central state's primary language overrides a locally official name.",
+    "Resolve the English and Korean preferred names from that selected native toponym for the same date; use established period-appropriate exonyms where warranted and never mix a prior or subsequent official city name's translations.",
     "For a user-specified map date, select the most recent applicable displayTimeline entry.",
     "A fromDate rule is exact on/after the Gregorian date. A fromYear rule permits year-level label selection; if an exact day is queried within its boundary year, flag the result as approximate rather than claiming a precise effective date.",
     "The first entry's fromYear 1801 means only that the historic-name survey begins in the nineteenth century; it does not establish the city's founding date.",
@@ -41,7 +43,8 @@
     "Historical timelining is about label selection only; it does not create old boundary polygons or infer state affiliation from GeoNames sourceCountryCode.",
     "This policy is staged only; no production manifest or map runtime was changed.",
     "City establishment date/year is not interchangeable with land being inhabited; it gates the named city object only, not earlier settlements.",
-    "The one-preferred-name-per-ko/en/native-per-date rule is new staging policy only. It does not certify existing batches or change runtime behavior."
+    "The one-preferred-name-per-ko/en/native-per-date rule is new staging policy only. It does not certify existing batches or change runtime behavior.",
+    "Changing sovereignty alone does not prove a local place-name change; the official usage of the responsible authority, not modern political boundaries, is the criterion."
   ],
   "temporalEligibility": {
     "cityEstablishedFromYear": "Year of clearly documented city formation, not a Jan 1 effective day",
@@ -68,7 +71,7 @@
     ],
     "distinction": "Do not treat editorial map labels, naming standards, sovereignty shifts and historical city renamings as equivalent."
   },
-  "policyRevision": "2026-10-08-preferred-place-names",
+  "policyRevision": "2026-10-08-authority-aligned-preferred-names",
   "preferredNameSelection": {
     "scope": "A single place identity at a specific historical map date, independently for Korean (ko), English (en), and one selected local/native language (native).",
     "maxPreferredNamesPerSlotAtAnyInstant": {
@@ -79,10 +82,12 @@
     "availability": "Zero names is allowed for an unverified language/era; never fill missing slots by guessing or copy/pasting another language.",
     "temporalRule": "Store transitions only when a slot's preferred value actually changes. A ko-only change does not require duplicating or altering en/native. Do not create annual copies of unchanged values.",
     "selectionOrder": [
-      "Use the documented local official/standard settlement name valid for that period when selecting a preferred local/native name.",
-      "Choose exactly one date-appropriate representative English name and Korean map name where supported; distinguish source-language renamings from editor-chosen Korean transcription changes.",
-      "A historical name remains eligible when it was actually the period's official/preferred map name; mere historical occurrence does not guarantee retention.",
-      "Select one preferred native language/script for the default map label, and record which was selected; never conflate all local official languages into an unlabeled native field."
+      "At the requested map date, determine the city-governing polity and the local competent administration using date-appropriate evidence rather than modern source country codes.",
+      "Choose one official city name actually used by that governing polity or competent administration at that date as the default native toponym. Where official local languages differ from the central state's majority language, use documented local administrative official practice.",
+      "For that same selected native toponym and period, select one corresponding English name and one corresponding Korean name where evidence supports them; established exonyms are permitted and need not be literal transliterations.",
+      "Apply explicit Korean editorial exceptions, including the mainland-China 1912-01-01 style boundary, without misidentifying them as official changes of the Chinese city name.",
+      "Re-evaluate the names after a governing-authority transition, but change a language slot only if the relevant official toponym or justified name convention changes. Do not automatically translate sovereignty changes into city renamings.",
+      "Preserve one selected native language/script as the default and keep extra co-official local forms only under the documented multilingual exception."
     ],
     "classification": {
       "actualOfficialRename": "Historical change in the local name or legally adopted city name. Record the real date/period and evidence; do not confuse with a change of Korean transcription.",
@@ -97,10 +102,19 @@
     ],
     "exceptions": {
       "searchOnly": "Retain a nonpreferred alias solely for demonstrable search demand, with explicit rationale and provenance; it must never appear as an additional ko/en/native preferred map label. Do not bulk-import GeoNames alternateNames.",
-      "multilingual": "When a locality has genuinely co-official local languages, select one default native display name while preserving only necessary, evidence-backed additional language forms as documented exceptions. Additional forms do not silently override the one-name-per-slot display rule.",
+      "multilingual": "When a governing polity or relevant local administration used multiple official local languages, select one historically attested official city name for the default native slot, record its language/script and authority, and preserve other genuinely co-official forms only as documented exceptions. They do not create concurrent extra native map labels.",
       "historicallySignificant": "An unofficial historic form can be retained only when specifically approved as the representative map label for a documented period; absence of a period means nonpreferred.",
       "approval": "Every exception requires an explicit reason, language and evidence. No automatic retention merely because an alias appears in a source."
     },
-    "implementationBoundary": "Policy decision only. The existing 15 reviewed city batches and live PLAC map tiles are not rewritten, audited or asserted compliant in this change; perform name-by-name review and any schema/runtime enforcement separately."
+    "implementationBoundary": "Policy decision only. The existing 15 reviewed city batches and live PLAC map tiles are not rewritten, audited or asserted compliant in this change; perform name-by-name review and any schema/runtime enforcement separately.",
+    "authorityAndCorrespondence": {
+      "nativeNameSource": "For each map date, identify the polity governing the city and the competent administration, then prefer the official city name actually used by that state or its relevant local administrative authority during that period. A modern name or the central state's majority-language spelling is not automatically the historical local official name.",
+      "mixedLanguageAdministration": "Where the governing state or local administration officially used multiple languages, select one documented period-appropriate form as the default native name, with its language/script and reason identifiable; preserve an additional official-language form only under the separately justified multilingual exception.",
+      "englishNameSource": "Choose the English name corresponding to the selected native official city toponym for the same historical period, using an established English exonym when appropriate; direct transliteration is not required. Do not attach an English name for a different period's local toponym.",
+      "koreanNameSource": "Choose the Korean name corresponding to that same selected native official city toponym for the same historical period, using the established or PandoEditor editorial Korean form rather than requiring mechanical phonetic transcription; apply documented regional exceptions such as the mainland-China 1912-01-01 Korean reading switch.",
+      "changeTriggers": "A change of governing authority prompts historical review, not an automatic name replacement. Change the native slot only if the relevant official city name changes; then re-evaluate the corresponding English and Korean slots. If only the Korean editorial form changes, update ko alone.",
+      "evidenceRule": "Record the governing polity or competent authority, dates, chosen original name, language and sources when reviewing each case. Do not infer historical governance, language or local-name official status from modern GeoNames sourceCountryCode or today's labels. If evidence is insufficient, hold the proposed slot/transition for review rather than inventing a name.",
+      "timeAlignment": "The native, English and Korean preferred names must correspond to the same place and the selected native toponym at each map date; do not mix translations from different historical eras merely because they refer to the same modern city."
+    }
   }
 }
