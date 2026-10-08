@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "badac8ad8af8059ba4860322fe087ac69dd8e9c2",
+  "webCommit": "d426af898ed8784901b235d52e75cab80892a08a",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -39,7 +39,7 @@
     },
     {
       "path": "reports/places/historical-display-policy.json",
-      "gitBlobSha": "695879f1a077c1cef12753be13504306f842d9f4"
+      "gitBlobSha": "ca97fa50010ec945a26c5bf917d58df93532fd6e"
     },
     {
       "path": "reports/places/korean-map-label-policy.json",
