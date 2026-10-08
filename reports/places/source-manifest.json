@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "0d849e9f3d764584f253664936c3d3fa8eede1f2",
+  "webCommit": "432a3f375f60b2659676871e6ae9dceb03482ef6",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -64,12 +64,16 @@
     {
       "path": "reports/places/tier1-major-cities-batch13-european-microstates-mediterranean.json",
       "gitBlobSha": "1da2a153189c75f50bc331d8abe07dd8b7c1fdee"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch14-north-atlantic-anatolia-caucasus.json",
+      "gitBlobSha": "a8f2e7bcb9f5396d82862e3fe23eb3dfaf048347"
     }
   ],
   "reviewInventory": {
-    "batchCount": 13,
-    "recordCount": 77,
-    "distinctGeoNames": 77,
+    "batchCount": 14,
+    "recordCount": 82,
+    "distinctGeoNames": 82,
     "byBatch": [
       {
         "path": "reports/places/tier1-major-cities-batch01.json",
@@ -121,6 +125,10 @@
       },
       {
         "path": "reports/places/tier1-major-cities-batch13-european-microstates-mediterranean.json",
+        "recordCount": 5
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch14-north-atlantic-anatolia-caucasus.json",
         "recordCount": 5
       }
     ]
