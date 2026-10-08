@@ -66,7 +66,7 @@
         {
           "nameKo": "탈린",
           "fromYear": 1801,
-          "kind": "historicalMapConvention",
+          "kind": "koreanEditorialTranscription",
           "sourceUrl": "https://www.geonames.org/588409/"
         }
       ],
@@ -103,7 +103,7 @@
         {
           "nameKo": "리가",
           "fromYear": 1801,
-          "kind": "historicalMapConvention",
+          "kind": "historicalLocalName",
           "sourceUrl": "https://www.geonames.org/456172/"
         }
       ],
@@ -154,7 +154,7 @@
         {
           "nameKo": "빌뉴스",
           "fromYear": 1801,
-          "kind": "historicalMapConvention",
+          "kind": "koreanEditorialTranscription",
           "sourceUrl": "https://www.geonames.org/593116/"
         }
       ],
@@ -197,7 +197,7 @@
         {
           "nameKo": "민스크",
           "fromYear": 1801,
-          "kind": "historicalMapConvention",
+          "kind": "historicalLocalName",
           "sourceUrl": "https://www.geonames.org/625144/"
         }
       ],

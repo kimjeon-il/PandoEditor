@@ -79,7 +79,7 @@ private slots:
         QVERIFY(manifest.open(QIODevice::ReadOnly));
         const auto report=QJsonDocument::fromJson(manifest.readAll()).object();
         QCOMPARE(report.value("webCommit").toString(),
-            QStringLiteral("6a69ad1a25d7ed3f7b7b3ed6ade116a83df44b4c"));
+            QStringLiteral("5904ada19c68919116f277723be7e3e9523b096c"));
         const auto files=report.value("files").toArray();
         QCOMPARE(files.size(),11);
         const auto inventory=report.value("reviewInventory").toObject();

@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "6a69ad1a25d7ed3f7b7b3ed6ade116a83df44b4c",
+  "webCommit": "5904ada19c68919116f277723be7e3e9523b096c",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -47,7 +47,7 @@
     },
     {
       "path": "reports/places/tier1-major-cities-batch09-baltic-belarus-capitals.json",
-      "gitBlobSha": "261f0873745df3f19c1c261b4caa183eab464867"
+      "gitBlobSha": "c9c1ec87b1e8a1d04f5c11b1978cecabdc47ec84"
     }
   ],
   "reviewInventory": {

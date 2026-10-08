@@ -22,7 +22,7 @@ test('native branch retains the exact Web-pinned v2 exchange artifact', () => {
 });
 
 test('all verified review snapshots remain byte-identical to Web commit', () => {
-  assert.equal(sourceManifest.webCommit, '6a69ad1a25d7ed3f7b7b3ed6ade116a83df44b4c');
+  assert.equal(sourceManifest.webCommit, '5904ada19c68919116f277723be7e3e9523b096c');
   assert.equal(sourceManifest.files.length, 11);
   for (const entry of sourceManifest.files) {
     assert.match(entry.path, /^reports\/places\/[a-z0-9.-]+\.json$/u);
