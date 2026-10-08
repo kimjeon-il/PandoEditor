@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSignalSpy>
+#include <QSet>
 #include <QTemporaryDir>
 #include <QUrl>
 #include <QtTest>
@@ -81,6 +82,25 @@ private slots:
             QStringLiteral("fc0cb82a9e363be6a3009cf07932a3c9ce59ddd2"));
         const auto files=report.value("files").toArray();
         QCOMPARE(files.size(),10);
+        const auto inventory=report.value("reviewInventory").toObject();
+        QCOMPARE(inventory.value("batchCount").toInt(),8);
+        QCOMPARE(inventory.value("recordCount").toInt(),55);
+        QCOMPARE(inventory.value("distinctGeoNames").toInt(),55);
+        int examined=0;QSet<int> ids;
+        for(const auto& item:inventory.value("byBatch").toArray()) {
+            const auto meta=item.toObject();
+            const auto relative=meta.value("path").toString();
+            QVERIFY(relative.startsWith("reports/places/tier1-major-cities-batch")&&!relative.contains(".."));
+            QFile reviewed(root+"/"+relative);QVERIFY(reviewed.open(QIODevice::ReadOnly));
+            const auto rows=QJsonDocument::fromJson(reviewed.readAll()).object().value("records").toArray();
+            QCOMPARE(rows.size(),meta.value("recordCount").toInt());
+            examined+=rows.size();
+            for(const auto& row:rows) {
+                const int id=row.toObject().value("geonameId").toInt();
+                QVERIFY(id>0);QVERIFY(!ids.contains(id));ids.insert(id);
+            }
+        }
+        QCOMPARE(examined,55);QCOMPARE(ids.size(),55);
         for(const auto& value:files) {
             const auto row=value.toObject();
             const auto path=row.value("path").toString();

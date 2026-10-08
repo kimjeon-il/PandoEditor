@@ -45,5 +45,44 @@
       "path": "reports/places/korean-map-label-policy.json",
       "gitBlobSha": "9a246de6794f4c60739d115c3ced3482abbdb0af"
     }
-  ]
+  ],
+  "reviewInventory": {
+    "batchCount": 8,
+    "recordCount": 55,
+    "distinctGeoNames": 55,
+    "byBatch": [
+      {
+        "path": "reports/places/tier1-major-cities-batch01.json",
+        "recordCount": 9
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch02-east-asia.json",
+        "recordCount": 9
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch03-india-southeast-asia.json",
+        "recordCount": 7
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch04-europe-west-asia.json",
+        "recordCount": 5
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch05-americas.json",
+        "recordCount": 5
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch06-africa-oceania.json",
+        "recordCount": 4
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch07-europe-capitals.json",
+        "recordCount": 8
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch08-northern-eastern-europe.json",
+        "recordCount": 8
+      }
+    ]
+  }
 }

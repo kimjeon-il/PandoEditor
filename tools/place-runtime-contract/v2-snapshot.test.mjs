@@ -30,6 +30,32 @@ test('all verified review snapshots remain byte-identical to Web commit', () => 
   }
 });
 
+test('reviewed city inventory matches every copied Web batch without ID duplication', () => {
+  const inventory=sourceManifest.reviewInventory;
+  assert.equal(inventory.batchCount, 8);
+  assert.equal(inventory.recordCount, 55);
+  assert.equal(inventory.distinctGeoNames, 55);
+  const copies=sourceManifest.files.filter(entry=>
+    entry.path.startsWith('reports/places/tier1-major-cities-batch') && entry.path.endsWith('.json'));
+  assert.equal(copies.length,inventory.batchCount);
+  const seen=new Set();
+  let total=0;
+  for (const batch of inventory.byBatch) {
+    assert.ok(copies.some(entry=>entry.path===batch.path),'Missing source batch '+batch.path);
+    const records=json(batch.path).records;
+    assert.equal(records.length,batch.recordCount,batch.path);
+    total+=records.length;
+    for (const record of records) {
+      assert.ok(Number.isSafeInteger(record.geonameId),batch.path);
+      assert.ok(typeof record.defaultDisplayNameKo==='string' && record.defaultDisplayNameKo.trim(),batch.path);
+      assert.ok(!seen.has(record.geonameId),'Duplicate GeoNames ID '+record.geonameId);
+      seen.add(record.geonameId);
+    }
+  }
+  assert.equal(total,inventory.recordCount);
+  assert.equal(seen.size,inventory.distinctGeoNames);
+});
+
 test('portable multilingual rows and provenance match reviewed city records', () => {
   let scenarios = 0;
   const sourceCache = new Map();
