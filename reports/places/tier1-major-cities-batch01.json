@@ -115,33 +115,34 @@
           "researchNote": "남경을 한양부로 개편한 연도. 남경 명칭은 사용자 요청대로 후속 검토하며 일자는 확정하지 않음."
         },
         {
-          "fromYear": 1395,
+          "fromDate": "1395-07-01",
           "nameKo": "한성",
           "nameEn": "Hanseong",
           "nameNative": "漢城",
           "nativeLanguage": "ko-Hani",
           "kind": "officialRenaming",
           "sourceUrl": "https://sillok.history.go.kr/id/kaa_10406006_001",
-          "researchNote": "태조실록의 음력 1395년 6월 6일 기사. 그레고리력 일자 전환을 추정하지 않아 연도 정밀도로 기록."
+          "researchNote": "『태조실록』 태조 4년 음력 6월 6일(무진)을 그레고리력으로 소급 환산한 1395-07-01. 당시 율리우스력 날짜와 구분하며, 연도 경계 1395-01-01을 적용하지 않는다."
         },
         {
-          "fromYear": 1910,
+          "fromDate": "1910-10-01",
           "nameKo": "경성",
           "nameEn": "Keijō",
           "nameNative": "京城",
           "nativeLanguage": "ja",
           "kind": "officialRenaming",
-          "sourceUrl": "https://archives.seoul.go.kr/class/OC-0001"
+          "sourceUrl": "https://theme.archives.go.kr/next/place/outline.do?flag=08",
+          "researchNote": "1910-09-30 지방관 관제 공포 이후 1910-10-01 조선총독부령 제7호에 따라 경성부로 지정·개칭되었다."
         },
         {
-          "fromYear": 1946,
+          "fromDate": "1946-08-10",
           "nameKo": "서울",
           "nameEn": "Seoul",
           "nameNative": "서울",
           "nativeLanguage": "ko",
           "kind": "officialRenaming",
-          "sourceUrl": "https://www.seoul.go.kr/seoul/history.do",
-          "researchNote": "1946년 서울시 명칭 변경과 9월 28일 서울특별자유시 지위 변경을 구분하여 정확한 개칭일은 확정하지 않음."
+          "sourceUrl": "https://www.law.go.kr/LSW/lsInfoP.do?efYd=19460810&lsiSeq=62915",
+          "researchNote": "1946-08-10 시행 서울시헌장 제1조에 따라 경성부를 서울시로 칭함. 1946-09-28은 미군정 법령 제106호(서울특별시의 설치) 시행일로서 별도 행정지위 관련 사건이며 지명 개칭일과 구별한다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1308-predecessor-deferred",
@@ -151,7 +152,8 @@
       "nameSelectionNotes": [
         "1308년 이전의 남경(南京)은 이번 서울 명칭 데이터에 추가하지 않음.",
         "영어 Hanyang·Hanseong은 원어명에 대응하는 후대 로마자 전사이며 당대 법정 영어명이라는 주장이 아님.",
-        "1910~1946의 영어 Keijō는 일본어 京城의 대표 로마자 표기임. 해방 직후에도 京城 이름이 잠시 사용된 사실과 구별하여 추후 영어사료 재검토 가능."
+        "1910~1946의 영어 Keijō는 일본어 京城의 대표 로마자 표기임. 해방 직후에도 京城 이름이 잠시 사용된 사실과 구별하여 추후 영어사료 재검토 가능.",
+        "1395-07-01은 태조실록의 음력 6월 6일을 그레고리력으로 소급 환산한 날짜. 1910-10-01은 경성부 지정, 1946-08-10은 서울시헌장에 따른 명칭 변경일. 1946-09-28은 서울특별시 설치 관련 법령 시행일로 별도 처리."
       ]
     },
     {
