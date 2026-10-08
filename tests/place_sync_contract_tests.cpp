@@ -313,6 +313,53 @@ private slots:
         QCOMPARE(deduplicated.at(1).language,QStringLiteral("en"));
     }
 
+    void batch14OmittedVaticanAndYearPrecisionLabels() {
+        const QString root=QString::fromUtf8(PLACE_SYNC_REPOSITORY_ROOT);
+        QFile file(root+"/reports/places/tier1-major-cities-batch14-north-atlantic-anatolia-caucasus.json");
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QJsonObject dataset=QJsonDocument::fromJson(file.readAll()).object();
+        QCOMPARE(dataset.value("status").toString(),QStringLiteral("verified-source-staging-not-runtime"));
+        const QJsonArray cities=dataset.value("records").toArray();
+        QCOMPARE(cities.size(),5);
+        const QList<int> ids{3413829,323786,611717,616052,587084};
+        const QStringList names{QStringLiteral("레이캬비크"),QStringLiteral("앙카라"),
+            QStringLiteral("트빌리시"),QStringLiteral("예레반"),QStringLiteral("바쿠")};
+        for(qsizetype i=0;i<cities.size();++i) {
+            const QJsonObject city=cities.at(i).toObject();
+            QCOMPARE(city.value("geonameId").toInt(),ids.at(i));
+            QCOMPARE(city.value("defaultDisplayNameKo").toString(),names.at(i));
+            QCOMPARE(city.value("featureClass").toString(),QStringLiteral("P"));
+            QCOMPARE(city.value("featureCode").toString(),QStringLiteral("PPLC"));
+            QVERIFY(!names.at(i).contains(QStringLiteral("바티칸")));
+        }
+        for(int index:{2,3}) {
+            const QJsonObject city=cities.at(index).toObject();
+            const QJsonArray timeline=city.value("displayTimeline").toArray();
+            QCOMPARE(timeline.size(),2);
+            PlaceRecord record;
+            record.name=city.value("defaultDisplayNameKo").toString();
+            for(const auto& step:timeline) {
+                const QJsonObject value=step.toObject();
+                QVERIFY(!value.contains("fromDate"));
+                PlaceNameTransition change;
+                change.fromYear=value.value("fromYear").toInt();
+                change.ko=value.value("nameKo").toString();
+                record.nameTimeline.push_back(std::move(change));
+            }
+            QCOMPARE(record.nameTimeline.at(1).fromYear,1936);
+            const QString historical=index==2?QStringLiteral("티플리스"):QStringLiteral("에리반");
+            const QString modern=index==2?QStringLiteral("트빌리시"):QStringLiteral("예레반");
+            const auto oldRows=resolvePlaceDisplayRows(record,PlaceLanguageSelection{},"1935-12-31");
+            const auto newRows=resolvePlaceDisplayRows(record,PlaceLanguageSelection{},"1937-01-01");
+            QCOMPARE(oldRows.size(),std::size_t(1));
+            QCOMPARE(newRows.size(),std::size_t(1));
+            QCOMPARE(oldRows.front().text,historical);
+            QCOMPARE(newRows.front().text,modern);
+        }
+        QCOMPARE(cities.at(1).toObject().value("sourceCountryCode").toString(),QStringLiteral("TR"));
+        QCOMPARE(cities.at(4).toObject().value("sourceCountryCode").toString(),QStringLiteral("AZ"));
+    }
+
     void nativeDecoderMatchesAllFrozenWebHexVectors() {
         const auto fixtures=contract().value("fixtures").toArray();
         for(const auto& value:fixtures) {
