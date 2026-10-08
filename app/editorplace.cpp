@@ -120,7 +120,7 @@ QVariantMap EditorController::placeDataStatus() const {
     const auto identity=placeRuntime_.sourceIdentity();const auto store=placeRuntime_.storeStats();const auto runtime=placeRuntime_.stats();
     return {{"loaded",placeRuntime_.isOpen()},{"revision",identity?identity->revision:QString()},
         {"manifestSha256",identity?identity->manifestSha256:QString()},{"generation",qulonglong(identity?identity->generation:0)},
-        {"stage",!identity?QString("unloaded"):store.manifestTileCount==0?QString("empty-v1"):QString("loaded-v1")},
+        {"stage",!identity?QString("unloaded"):store.manifestTileCount==0?QString("empty-v1"):QString("loaded")},
         {"manifestTileCount",qulonglong(store.manifestTileCount)},{"manifestShardCount",qulonglong(store.manifestShardCount)},
         {"manifestStageCount",qulonglong(store.manifestStageCount)},{"sourceRecordCount",store.sourceRecordCount?QVariant::fromValue(qulonglong(*store.sourceRecordCount)):QVariant()},
         {"snapshotRecords",qulonglong(runtime.snapshotRecords)},{"retainedRecords",qulonglong(runtime.retainedRecords)},

@@ -154,8 +154,9 @@ private slots:
         QVERIFY(editor.configurePlaceData(QUrl::fromLocalFile(manifest.fileName())));
         const QString id="builtin:place:geonames:703448";
         QTRY_VERIFY_WITH_TIMEOUT(hasLines(editor,id,3),10000);
-        const auto count=std::count_if(editor.placedLabels().begin(),editor.placedLabels().end(),
-            [&](const QVariant& value){return value.toMap().value("ref").toMap().value("id")==id;});
+        const auto placed=editor.placedLabels();
+        const auto count=std::count_if(placed.cbegin(),placed.cend(),
+            [&](const QVariant& value){return value.toMap().value("ref").toMap().value("id").toString()==id;});
         QCOMPARE(count,1);
         QVERIFY(!editor.dirty());
         QVERIFY(editor.setPlaceLanguage("native",false));
