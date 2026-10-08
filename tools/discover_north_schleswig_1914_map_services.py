@@ -26,10 +26,10 @@ ENDPOINTS = [
     "https://search-slub.pikobytes.de/vk20",
 ]
 KEYWORDS = {
+    "0619": ["Hügum", "Hugum"],
+    "0717": ["Hvidding-Ufer"],
+    "0718": ["Hvidding"],
     "0719": ["Spandet"],
-    "0817": ["Kirkeby"],
-    "0818": ["Bröns", "Brons", "Brøns"],
-    "0819": ["Arrild"],
 }
 FIELDS = [
     "map_id", "title", "title_long", "description", "time_period",
@@ -119,7 +119,7 @@ def main():
         "matches": {},
         "warnings": [
             "Catalog search matches are not evidence of original raster availability.",
-            "1919 Bröns is ineligible as a 1914 reference without a verified older edition.",
+            "All four index sheets have 1878–1880 catalog editions, but catalog dating does not verify raster content.",
             "Do not assume historical map coordinates equal the modern parish-based working candidate."
         ],
     }
