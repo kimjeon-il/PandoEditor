@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "scope": "1–26 stones, 1914 German–Danish border",
   "referenceDate": "1914-07-31",
-  "queriedAtUtc": "2026-10-08T13:33:09.853713+00:00",
+  "queriedAtUtc": "2026-10-08T13:34:02.360620+00:00",
   "historicRasterObtained": false,
   "historicRasterComparedWithLine": false,
   "searchMethod": "Public SLUB Kartenforum ElasticSearch index, multi_match over descriptive fields",
@@ -85,7 +85,7 @@
     {
       "searchUrl": "https://search.kartenforum.slub-dresden.de/vk20",
       "status": "unavailable",
-      "error": "HTTPError: HTTP 400: {\"error\":{\"root_cause\":[{\"type\":\"query_shard_exception\",\"reason\":\"failed to create query: Cannot search on field [keywords] since it is not indexed.\",\"index_uuid\":\"_zRe3xRET3WVTvsURCGgdg\",\"index\":\"vk20\"}],\"type\":\"search_phase_execution_exception\",\"re"
+      "error": "HTTPError: HTTP 400: {\"error\":{\"root_cause\":[{\"type\":\"query_shard_exception\",\"reason\":\"failed to create query: Cannot search on field [title_long] since it is not indexed.\",\"index_uuid\":\"_zRe3xRET3WVTvsURCGgdg\",\"index\":\"vk20\"}],\"type\":\"search_phase_execution_exception\",\""
     },
     {
       "searchUrl": "https://search-slub.pikobytes.de/vk20",
