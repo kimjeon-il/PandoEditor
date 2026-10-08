@@ -1,0 +1,74 @@
+name: App offline 1914 Gjelsbro stone26 provisional split contract
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [work/gis]
+    paths:
+      - tools/audit_north_schleswig_1914_stone26_split.py
+      - tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.stone26-transition.*
+      - .github/workflows/north-schleswig-1914-stone26-transition.yml
+
+permissions:
+  contents: read
+
+jobs:
+  source-topology-and-confidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/gis
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --disable-pip-version-check shapely pyproj
+      - name: Verify coordinates unchanged and two derived provisional segments join
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from pyproj import Transformer
+          from shapely.geometry import shape, Point
+          from shapely.ops import transform
+
+          base=Path("tools/historical-library/land-borders")
+          stem="german-denmark-1914-north-schleswig-001-026"
+          read=lambda f:json.loads((base/f).read_text(encoding="utf-8"))
+          master=read(stem+".geojson")["features"][0]
+          segment_features=read(stem+".stone26-transition.provisional.geojson")["features"]
+          audit=read(stem+".stone26-transition.audit.json")
+          assert len(segment_features)==2
+          a,b=segment_features
+          original=master["geometry"]["coordinates"]
+          A=a["geometry"]["coordinates"]
+          B=b["geometry"]["coordinates"]
+          assert len(original)==1343
+          assert len(A)==482 and len(B)==862
+          assert A+B[1:]==original
+          assert A[-1]==B[0]
+          assert master["properties"]["doNotTreatAsFinal"] is True
+          assert all(f["properties"]["doNotTreatAsFinal"] is True for f in (a,b))
+          assert a["properties"]["historicalStone26ExactLocationConfirmed"] is False
+          assert b["properties"]["historicalRiverCourseVerified"] is False
+          assert audit["currentMasterUnmodified"] is True
+          assert audit["historicalGeometryChangeApproved"] is False
+          assert audit["historicalMarkerLocationConfirmed"] is False
+          assert audit["sourceScreenDeviationVersusHistoricBorderPx"] is None
+          assert audit["historicalThresholdPassed"] is None
+          assert audit["splitCandidate"]["vertexIndex"]==481
+          assert abs(audit["splitCandidate"]["turnAngleDegrees"]-89)<3
+          assert audit["sourceTopologyChecks"]["bothPartsSimple"] is True
+          assert abs(audit["sourceTopologyChecks"]["lengthDifferenceMeters"])<0.001
+          assert abs(audit["sourceTopologyChecks"]["splitEndpointMismatchMeters"])<0.001
+          to_m=Transformer.from_crs("EPSG:4326","EPSG:25832",always_xy=True).transform
+          pre=transform(to_m,shape(a["geometry"]))
+          post=transform(to_m,shape(b["geometry"]))
+          orig=transform(to_m,shape(master["geometry"]))
+          assert abs((pre.length+post.length)-orig.length)<0.001
+          assert pre.is_simple and post.is_simple
+          assert Point(pre.coords[-1]).distance(Point(post.coords[0]))<0.001
+          assert 20<pre.length/1000<20.2
+          assert 6.4<post.length/1000<6.8
+          print("PASS: exact-preservation 1343→482+862−1, provisional classification and meter-scale self topology.")
+          PY
