@@ -56,19 +56,26 @@ def stripped(record):
     return source
 
 
-def post_search(session, base, keyword):
+def post_search(session, base, sheet):
+    # SLUB index uses non-searchable source fields for textual metadata.
+    # Follow the actual Kartenforum client: geo_shape geometry + date range.
+    west, south, east, north = sheet["extentLonLat"]
+    polygon = [[west, south], [east, south], [east, north],
+               [west, north], [west, south]]
     query = {
-        "size": 8,
-        "_source": FIELDS,
-        "query": {"multi_match": {
-            "query": keyword,
-            "fields": ["title^4", "title_long^3"],
-            "type": "best_fields",
-            "operator": "or"
-        }},
+        "size": 120,
+        "_source": [f for f in FIELDS if f != "geometry"],
+        "query": {"bool": {"filter": [
+            {"geo_shape": {"geometry": {
+                "relation": "intersects",
+                "shape": {"type": "polygon", "coordinates": [polygon]},
+            }}},
+            {"range": {"time_period_start": {"lte": "1914-12-31"}}},
+            {"range": {"time_period_end": {"gte": "1860-01-01"}}},
+        ]}},
     }
     response = session.post(
-        f"{base}/_search", json=query, headers=HEADERS, timeout=25)
+        f"{base}/_search", json=query, headers=HEADERS, timeout=35)
     if not response.ok:
         raise requests.HTTPError(
             f"HTTP {response.status_code}: {response.text[:650]} for {base}", response=response)
@@ -79,6 +86,15 @@ def post_search(session, base, keyword):
          "metadata": stripped(m.get("_source") or {})}
         for m in matches
     ]
+
+
+def fold_ascii(value):
+    import unicodedata
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", str(value or "").lower()
+                                        .replace("ø", "o"))
+        if not unicodedata.combining(c)
+    )
 
 
 def main():
@@ -96,7 +112,7 @@ def main():
         "queriedAtUtc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "historicRasterObtained": False,
         "historicRasterComparedWithLine": False,
-        "searchMethod": "Public SLUB Kartenforum ElasticSearch index, multi_match over descriptive fields",
+        "searchMethod": "Public SLUB Kartenforum ElasticSearch geo_shape and pre-1915 date filters (per official client)",
         "sourceSoftware": "https://github.com/slub/slub_web_kartenforum/blob/master/Build/src/util/apiEs.js",
         "indexedEditions": sheet_data["sheets"],
         "endpointObservations": [],
@@ -110,25 +126,31 @@ def main():
     working = False
     for url in ENDPOINTS:
         record = {"searchUrl": url, "status": "not-reached"}
-        for number, variants in KEYWORDS.items():
-            for name in variants:
-                try:
-                    hits = post_search(session, url, name)
-                    record["status"] = "searchable"
-                    working = True
-                    bucket = discovery["matches"].setdefault(number, [])
-                    ids = {i.get("id") for i in bucket}
-                    for hit in hits:
-                        if hit.get("id") not in ids:
-                            bucket.append({"searched": name, "endpoint": url, **hit})
-                            ids.add(hit.get("id"))
-                    if hits:
-                        break
-                except (requests.RequestException, ValueError) as exc:
-                    record["status"] = "unavailable"
-                    record["error"] = safe_error(exc)
-                    break
-            if record["status"] == "unavailable":
+        for sheet in sheet_data["sheets"]:
+            number = sheet["sheetId"]
+            variants = KEYWORDS[number]
+            try:
+                hits = post_search(session, url, sheet)
+                record["status"] = "searchable"
+                working = True
+                bucket = discovery["matches"].setdefault(number, [])
+                candidates = discovery.setdefault("spatialContext", {})
+                aliases = [fold_ascii(s) for s in variants]
+                for hit in hits:
+                    metadata = hit["metadata"]
+                    title = fold_ascii(
+                        " ".join(str(metadata.get(k) or "")
+                                 for k in ("title", "title_long")))
+                    if any(alias in title for alias in aliases):
+                        bucket.append({"endpoint": url, **hit})
+                if not bucket:
+                    candidates[number] = hits[:15]
+                record.setdefault("resultsPerSheet", {})[number] = {
+                    "spatialHitsReturned": len(hits),
+                    "exactTitleMatches": len(bucket)}
+            except (requests.RequestException, ValueError) as exc:
+                record["status"] = "unavailable"
+                record["error"] = safe_error(exc)
                 break
         discovery["endpointObservations"].append(record)
         if working:
