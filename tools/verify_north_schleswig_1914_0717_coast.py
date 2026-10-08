@@ -162,7 +162,7 @@ def main():
  if master["features"][0]["properties"].get("doNotTreatAsFinal") is not True:
   raise RuntimeError("Original master should be provisional")
  candidate=master["features"][0]["geometry"]["coordinates"]
- if len(candidate)!=1343 or line.coords[0]!=candidate[0]:
+ if len(candidate)!=1343 or tuple(line.coords[0])!=tuple(candidate[0]):
   raise RuntimeError("Master reference stone1 or vertex count changed")
  gathered=read(S/"collection-summary.json")
  stone=[x for x in gathered["candidateNodes"] if x.get("tags",{}).get("alt_name","").startswith("Grænsesten nr. 1 (")]
