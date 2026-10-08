@@ -104,7 +104,7 @@ def main():
             sheet_id = f"{row:02d}{col:02d}"
             catalog = EDITION_CATALOG.get(sheet_id)
             issue_year = catalog.get("issueYear") if catalog else None
-            eligible = issue_year is not None and issue_year <= 1914
+            eligible = issue_year is not None and issue_year < 1914
             if issue_year is None:
                 state = "catalog-edition-not-identified"
             elif eligible:
