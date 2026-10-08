@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "queriedAtUtc": "2026-10-08T13:37:02.081821+00:00",
+  "referenceDate": "1914-07-31",
+  "service": "https://dienste.gdi-sh.de/WMS_SH_FD_Chronologen",
+  "officialInformation": "https://www.schleswig-holstein.de/DE/landesregierung/ministerien-behoerden/LVERMGEOSH/Service/serviceGeobasisdaten/geodatenService_Geobasisdaten_Dienste.html",
+  "reportedDataRights": "CC BY 4.0 for Chronologen up to 1950, attribution LVermGeo SH",
+  "candidateExtentLonLat": [
+    8.62,
+    55.245,
+    8.99,
+    55.335
+  ],
+  "candidateHistoricBorderVerified": false,
+  "rasterDownloaded": false,
+  "status": "capabilities-read",
+  "httpStatus": 200,
+  "contentType": "text/xml",
+  "rootBoundingBoxLonLat": [
+    7.797571,
+    53.377404,
+    11.378839,
+    55.103139
+  ],
+  "rootExtentIntersectsBorder": false,
+  "layerCount": 4,
+  "layers": [
+    {
+      "name": "0",
+      "title": "Chronologen_4_1953-1956",
+      "boundsLonLat": [
+        8.151013,
+        53.377423,
+        11.377808,
+        55.103139
+      ],
+      "extentIntersectsCandidate": false
+    },
+    {
+      "name": "1",
+      "title": "Chronologen_3_1932-1950",
+      "boundsLonLat": [
+        8.150206,
+        53.377536,
+        11.377295,
+        55.101471
+      ],
+      "extentIntersectsCandidate": false
+    },
+    {
+      "name": "2",
+      "title": "Chronologen_2_1902-1930",
+      "boundsLonLat": [
+        7.797623,
+        53.377973,
+        11.378737,
+        55.101409
+      ],
+      "extentIntersectsCandidate": false
+    },
+    {
+      "name": "3",
+      "title": "Chronologen_1_1878-1880",
+      "boundsLonLat": [
+        7.800886,
+        53.377835,
+        11.377037,
+        55.101506
+      ],
+      "extentIntersectsCandidate": false
+    }
+  ]
+}
