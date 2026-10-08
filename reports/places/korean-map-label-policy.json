@@ -5,7 +5,9 @@
   "namingPolicyNotHistory": "Korean map labels are editorial conventions; they do not change local official names, historical officialPeriods or the place identity.",
   "boundary": {
     "date": "1912-01-01",
-    "description": "For Chinese-language toponyms, use Sino-Korean reading before this date and contemporary Chinese pronunciation from this date onward. The date is the agreed map-label style threshold, not an assertion of wholesale city renamings."
+    "description": "Apply Korean Sino-Korean character readings for Chinese-language mainland toponyms before the 1912-01-01 founding of the Republic of China and a Chinese-pronunciation-based Korean map label from that date. This is a uniform PandoEditor editorial style change, not a city renaming or an assertion that Korean speakers immediately changed usage.",
+    "event": "Founding of the Republic of China / 중화민국 건국 (1912-01-01)",
+    "geographicScope": "Mainland China, for the selected Chinese-language local toponym; Hong Kong, Macau and Taiwan are not automatically included."
   },
   "rules": [
     {
@@ -18,20 +20,48 @@
     {
       "localToponymLanguage": "zh",
       "before": "1912-01-01",
-      "koreanLabelConvention": "Sino-Korean reading of selected Chinese-language local toponym"
+      "koreanLabelConvention": "Sino-Korean reading of the date-appropriate selected Chinese-language local toponym",
+      "selectedNameUsage": "historical",
+      "selectedNameVariantType": "historicalKoreanSinoReading",
+      "singlePreferredKoreanLabel": true
     },
     {
       "localToponymLanguage": "zh",
       "fromInclusive": "1912-01-01",
-      "koreanLabelConvention": "Korean transcription of Chinese pronunciation of selected Chinese-language local toponym"
+      "koreanLabelConvention": "Korean rendering of Chinese pronunciation of the date-appropriate selected Chinese-language local toponym",
+      "selectedNameUsage": "standard-for-map-period",
+      "singlePreferredKoreanLabel": true
     }
   ],
   "resolutionOrder": [
+    "First resolve actual local-city-name changes for the map date. Never turn a Korean map-transcription convention change into an asserted Chinese official rename.",
     "Choose a date-appropriate local toponym from names[] using documented official naming periods when available; year-only dates remain approximate.",
     "Apply a map-label language convention to THAT toponym, not to its present-day English name.",
     "Use a verified koMapLabels mapping if the name is covered; otherwise hold for review rather than guessing a transliteration.",
-    "Do not derive naming language, polity or sovereignty from sourceCountryCode; this is GeoNames source metadata only."
+    "Do not derive naming language, polity or sovereignty from sourceCountryCode; this is GeoNames source metadata only.",
+    "Only one preferred Korean display name may be selected at a given date. Do not keep historical Sino-Korean readings as concurrent alternate Korean map labels after the 1912-01-01 boundary."
   ],
-  "exceptions": "For Chinese minority-language, non-Mandarin and multilingual places choose the applicable local toponym/language explicitly; do not apply Mandarin reading solely because sourceCountryCode is CN.",
-  "note": "This file defines a staging convention for current and future city batches; it does not change the deployed runtime, map labels, or the existing historical name periods."
+  "exceptions": "For non-Mandarin Chinese-language varieties, minority-language and multilingual mainland localities, explicitly select the period's applicable local toponym and pronunciation; never infer Mandarin or sovereignty solely from a modern GeoNames CN country code. Hong Kong, Macau and Taiwan are outside the automatic mainland rule and require separate consideration.",
+  "note": "This policy is for future reviewed name selection, not a completed audit or runtime change. Existing 1–15 batch records, historical display transitions and deployment manifests remain unchanged until a separately approved review.",
+  "policyRevision": "2026-10-08-preferred-place-names",
+  "examples": [
+    {
+      "localToponym": "北京",
+      "before1912": "북경",
+      "from1912": "베이징",
+      "changeKind": "koreanEditorialTranscription-not-local-rename"
+    },
+    {
+      "localToponym": "上海",
+      "before1912": "상해",
+      "from1912": "상하이",
+      "changeKind": "koreanEditorialTranscription-not-local-rename"
+    },
+    {
+      "localToponym": "南京",
+      "before1912": "남경",
+      "from1912": "난징",
+      "changeKind": "koreanEditorialTranscription-not-local-rename"
+    }
+  ]
 }
