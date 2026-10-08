@@ -1,0 +1,49 @@
+{
+  "schema": "pando-editor-readonly-place-staging-v1",
+  "webRepo": "kimjeon-il/Pando",
+  "webCommit": "fc0cb82a9e363be6a3009cf07932a3c9ce59ddd2",
+  "appTarget": "data/places-tier1-major-cities",
+  "status": "verified-source-staging-not-runtime",
+  "files": [
+    {
+      "path": "reports/places/tier1-major-cities-batch01.json",
+      "gitBlobSha": "0a17878a86246dce5e2d458cd715a08ccc372ee9"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch02-east-asia.json",
+      "gitBlobSha": "6f2370e441bce0fb17277788b718fb38b61aa32b"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch03-india-southeast-asia.json",
+      "gitBlobSha": "f6ae793ec8ef150ddeb62b39a16988718cdbc76f"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch04-europe-west-asia.json",
+      "gitBlobSha": "e71e8c441779d105a6cbfd89b2e99279f3a31076"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch05-americas.json",
+      "gitBlobSha": "82a30dd5c63d700226bd84494cb9cee7ffa9f6ca"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch06-africa-oceania.json",
+      "gitBlobSha": "489b2876b94b07f4434c273312151ff8b55c0b90"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch07-europe-capitals.json",
+      "gitBlobSha": "7bea922bd8880753a1814e6293ef32367d8e92c2"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch08-northern-eastern-europe.json",
+      "gitBlobSha": "eec7898039bba6b565ab70382d743ec327d69fd1"
+    },
+    {
+      "path": "reports/places/historical-display-policy.json",
+      "gitBlobSha": "8921b55018524cc503d404fd4ae4fdd105416fe7"
+    },
+    {
+      "path": "reports/places/korean-map-label-policy.json",
+      "gitBlobSha": "9a246de6794f4c60739d115c3ced3482abbdb0af"
+    }
+  ]
+}

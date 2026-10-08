@@ -1,0 +1,455 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "04-europe-west-asia",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0)",
+  "checkedOn": "2026-10-08",
+  "selection": "Five major city points (PPLC Berlin/Rome/Madrid/Moscow, PPLA Istanbul), not ADM area records.",
+  "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), decimal degrees; settlement point, not historical city polygon.",
+  "countryCodeSemantics": "sourceCountryCode is present-day GeoNames metadata only, not historical sovereignty.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime",
+  "historicNameScope": "Main local and English forms and attested historically meaningful Korean forms used from 1801 onward.",
+  "qualityNotes": [
+    "East/West Berlin are historical sector names, not whole-city renames.",
+    "Rome and Moscow changed political status without renaming.",
+    "Madrid's older Magerit was outside the 19th-century historic-name cutoff.",
+    "Istanbul has overlapping Ottoman/Greek/Western names. The 1930 label preference is an editorial convention, not a legal city rename.",
+    "Notes and details intended for UI are at most 28 Unicode code points; archival details can be longer.",
+    "Istanbul exact date audit: 1876 constitution already says İstanbul; 1929-01-03 postal letter is reported; 1930-03-18 diplomatic usage is attested; 1930-03-28 postal-law claim is contested. Preserve 1930 year-granularity editorial timeline, not a fictitious legal effective date."
+  ],
+  "records": [
+    {
+      "geonameId": 2950159,
+      "names": [
+        {
+          "text": "Berlin",
+          "language": "de",
+          "usage": "standard"
+        },
+        {
+          "text": "베를린",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 52.52437,
+      "longitude": 13.41053,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2950159/",
+      "sourceCountryCode": "DE",
+      "defaultDisplayNameKo": "베를린",
+      "shortDescriptionKo": "1945~1990년 동·서로 분할",
+      "displayTimeline": [
+        {
+          "nameKo": "베를린",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.berlin.de/politische-bildung/politikportal/politik-in-berlin/hauptverwaltung-und-bezirksverwaltung/entstehung-und-entwicklung-der-bezirke/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 1920,
+            "type": "municipalExpansion",
+            "detail": "대베를린법으로 시역 확장",
+            "sourceUrl": "https://www.berlin.de/politische-bildung/politikportal/politik-in-berlin/hauptverwaltung-und-bezirksverwaltung/entstehung-und-entwicklung-der-bezirke/",
+            "researchDetail": "주변 7개 시와 다수 공동체·영지 지구를 시로 편입해 베를린의 영역이 크게 확대됨."
+          },
+          {
+            "year": 1945,
+            "type": "alliedSectorDivision",
+            "detail": "전후 4개 점령구역으로 분할",
+            "sourceUrl": "https://www.berlin.de/en/history/8481782-8619314-berlin-after-1945.en.html"
+          },
+          {
+            "year": 1990,
+            "type": "politicalReunification",
+            "detail": "동·서베를린 재통합",
+            "sourceUrl": "https://www.berlin.de/en/history/8481782-8619314-berlin-after-1945.en.html"
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameKo": "동베를린",
+            "relation": "historicalCitySector",
+            "note": "동부 정치구역, 도시 전체명 아님",
+            "sourceUrl": "https://www.berlin.de/en/history/8481782-8619314-berlin-after-1945.en.html"
+          },
+          {
+            "nameKo": "서베를린",
+            "relation": "historicalCitySector",
+            "note": "서부 정치구역, 도시 전체명 아님",
+            "sourceUrl": "https://www.berlin.de/en/history/8481782-8619314-berlin-after-1945.en.html"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3169070,
+      "names": [
+        {
+          "text": "Roma",
+          "language": "it",
+          "usage": "standard"
+        },
+        {
+          "text": "Rome",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "로마",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 41.89193,
+      "longitude": 12.51133,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3169070/",
+      "sourceCountryCode": "IT",
+      "defaultDisplayNameKo": "로마",
+      "shortDescriptionKo": "1871년 이탈리아 왕국 수도",
+      "displayTimeline": [
+        {
+          "nameKo": "로마",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://vive.cultura.gov.it/en/vittoriano/history/victor-emmanuel-ii-and-risorgimento-process"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1870-09-20",
+            "type": "militaryConquest",
+            "detail": "이탈리아 왕국군 로마 점령",
+            "sourceUrl": "https://vive.cultura.gov.it/en/vittoriano/history/victor-emmanuel-ii-and-risorgimento-process"
+          },
+          {
+            "date": "1871-07-01",
+            "type": "capitalRelocation",
+            "detail": "이탈리아 왕국 수도로 이전",
+            "sourceUrl": "https://vive.cultura.gov.it/en/vittoriano/history/victor-emmanuel-ii-and-risorgimento-process"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "국가 소속 변화에도 도시명 유지",
+            "sourceUrl": "https://vive.cultura.gov.it/en/vittoriano/history/victor-emmanuel-ii-and-risorgimento-process"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3117735,
+      "names": [
+        {
+          "text": "Madrid",
+          "language": "es",
+          "usage": "standard"
+        },
+        {
+          "text": "마드리드",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 40.4165,
+      "longitude": -3.70256,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3117735/",
+      "sourceCountryCode": "ES",
+      "defaultDisplayNameKo": "마드리드",
+      "shortDescriptionKo": "에스파냐의 수도",
+      "displayTimeline": [
+        {
+          "nameKo": "마드리드",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/3117735/madrid.html"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "Magerit는 근대 도시 개칭명 아님",
+            "sourceUrl": "https://www.geonames.org/3117735/madrid.html"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 524901,
+      "names": [
+        {
+          "text": "Москва",
+          "language": "ru",
+          "usage": "standard"
+        },
+        {
+          "text": "Moscow",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "모스크바",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Moskva",
+          "language": "ru-Latn",
+          "usage": "alternate",
+          "variantType": "romanization"
+        }
+      ],
+      "latitude": 55.75204,
+      "longitude": 37.61781,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/524901/",
+      "sourceCountryCode": "RU",
+      "defaultDisplayNameKo": "모스크바",
+      "shortDescriptionKo": "1918년 다시 국가 수도가 됨",
+      "displayTimeline": [
+        {
+          "nameKo": "모스크바",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.prlib.ru/history/619089"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1918-03-12",
+            "type": "capitalRelocation",
+            "detail": "소비에트 정부 수도 이전",
+            "sourceUrl": "https://www.prlib.ru/history/619089"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "수도 지위 변화, 도시명 개칭 아님",
+            "sourceUrl": "https://www.prlib.ru/history/619089"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 745044,
+      "names": [
+        {
+          "text": "İstanbul",
+          "language": "tr",
+          "usage": "standard"
+        },
+        {
+          "text": "Istanbul",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "이스탄불",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Kostantiniyye",
+          "language": "ota-Latn",
+          "usage": "historical",
+          "variantType": "ottomanDocumentaryName",
+          "note": "오스만 사료명, 이스탄불과 병용",
+          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
+        },
+        {
+          "text": "قسطنطينيه",
+          "language": "ota-Arab",
+          "usage": "historical",
+          "variantType": "ottomanArabicOrthography",
+          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
+        },
+        {
+          "text": "코스탄티니예",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanOttomanTranscription",
+          "linkedName": "Kostantiniyye",
+          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
+        },
+        {
+          "text": "Constantinopolis",
+          "language": "la",
+          "usage": "historical",
+          "variantType": "historicLatinName",
+          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
+        },
+        {
+          "text": "Constantinople",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "westernHistoricExonym",
+          "sourceUrl": "https://en.wikipedia.org/wiki/Names_of_Istanbul"
+        },
+        {
+          "text": "콘스탄티노폴리스",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanHistoricLatinName",
+          "linkedName": "Constantinopolis",
+          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
+        },
+        {
+          "text": "Κωνσταντινούπολη",
+          "language": "el",
+          "usage": "standard",
+          "variantType": "modernGreekExonym",
+          "sourceUrl": "https://digitallibrary.academyofathens.gr/archive/item/227"
+        },
+        {
+          "text": "콘스탄티누폴리",
+          "language": "ko",
+          "usage": "alternate",
+          "variantType": "koreanModernGreekName",
+          "linkedName": "Κωνσταντινούπολη",
+          "sourceUrl": "https://digitallibrary.academyofathens.gr/archive/item/227"
+        },
+        {
+          "text": "Stamboul",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "historicWesternSpelling",
+          "sourceUrl": "https://en.wikipedia.org/wiki/Names_of_Istanbul"
+        }
+      ],
+      "latitude": 41.01384,
+      "longitude": 28.94966,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/745044/",
+      "sourceCountryCode": "TR",
+      "defaultDisplayNameKo": "이스탄불",
+      "shortDescriptionKo": "오스만·그리스어 명칭 병용",
+      "displayTimeline": [
+        {
+          "nameKo": "코스탄티니예",
+          "fromYear": 1801,
+          "kind": "historicalMapConvention",
+          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul",
+          "note": "오스만식 지도 표기, 다른 명칭 병용"
+        },
+        {
+          "nameKo": "이스탄불",
+          "fromYear": 1930,
+          "kind": "koreanEditorialTranscription",
+          "sourceUrl": "https://en.teyit.org/fact-check/the-claim-that-ataturk-made-the-song-istanbul-not-constantinople-written",
+          "note": "1930년 표기 기준, 일자는 미확정",
+          "datePrecision": "year",
+          "exactDayNotConfirmed": true
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "1930년은 지도 규칙, 개칭일 아님",
+            "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
+          },
+          {
+            "detail": "그리스어 콘스탄티누폴리 현재도 사용",
+            "sourceUrl": "https://digitallibrary.academyofathens.gr/archive/item/227"
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameKo": "비잔티온",
+            "relation": "ancientPredecessorBefore1801",
+            "note": "19세기 이전 고대 도시명",
+            "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
+          }
+        ],
+        "namingEvidence": [
+          {
+            "year": 1876,
+            "eventType": "officialContemporaneousNameUse",
+            "name": "İstanbul",
+            "certainty": "confirmed",
+            "shortDescriptionKo": "1876년 헌법에 İstanbul 명기",
+            "sourceUrl": "https://www.anayasa.gov.tr/tr/mevzuat/onceki-anayasalar/1876-kanun-i-esasi",
+            "researchDetail": "1876년 오스만 헌법 제2조에서 수도를 İstanbul로 표기함. 따라서 1930년 최초 개칭이라는 기술은 부정확함."
+          },
+          {
+            "date": "1929-01-03",
+            "eventType": "reportedInternationalPostalNotification",
+            "names": [
+              "Constantinople",
+              "İstanbul"
+            ],
+            "certainty": "reported-secondary-source-primary-unchecked",
+            "shortDescriptionKo": "국제 우편 명칭 통보일로 전해짐",
+            "sourceUrl": "https://www.turkiyegazetesi.com.tr/kose-yazilari/prof-dr-ekrem-bugra-ekinci/istanbul-not-constantinople-615715",
+            "researchDetail": "1929-01-03 국제 우편기관 통보설이 다수 2차 문헌에 나타나지만 실제 통보 원문은 확인하지 못함."
+          },
+          {
+            "date": "1930-03-18",
+            "eventType": "attestedDiplomaticNameUsage",
+            "name": "Istanbul",
+            "certainty": "confirmed",
+            "shortDescriptionKo": "미국 외교문서에 Istanbul 사용",
+            "sourceUrl": "https://history.state.gov/historicaldocuments/frus1930v03/d776",
+            "researchDetail": "1930-03-18 미국 대사의 전보 헤더에 Istanbul을 사용. 국제적 사용이 3월 28일에 처음 시작된 것이 아님."
+          },
+          {
+            "date": "1930-03-28",
+            "eventType": "claimedPostalEnforcementOrInternationalLabelSwitch",
+            "names": [
+              "Constantinople",
+              "İstanbul"
+            ],
+            "certainty": "contested-date-not-for-officialRenaming",
+            "shortDescriptionKo": "우편 명칭 전환설, 법령 불확실",
+            "supportSourceUrl": "https://cdn.tbmm.gov.tr/TbmmWeb/Yayinlar/Dosya/5130d920-8665-4070-8bc8-94d5eca6798c.pdf",
+            "challengeSourceUrl": "https://en.teyit.org/fact-check/the-claim-that-ataturk-made-the-song-istanbul-not-constantinople-written",
+            "researchDetail": "터키 의회 후대 간행물은 1930-03-28 우편법과 명칭 변경을 소개하지만, Teyit은 당일 관보의 해당 법령을 찾을 수 없다고 검증함. 단일 공식 개칭일로 쓰지 않음."
+          }
+        ]
+      },
+      "contextualDisplayNames": [
+        {
+          "nameKo": "코스탄티니예",
+          "requiresAuthority": "오스만 제국",
+          "fromYear": 1801,
+          "toYear": 1922,
+          "requiresVerifiedPolityAtDate": true,
+          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul",
+          "note": "오스만 시대 문어 명칭"
+        },
+        {
+          "nameKo": "콘스탄티누폴리",
+          "requiresNameLanguage": "el",
+          "requiresExplicitLabelMode": true,
+          "sourceUrl": "https://digitallibrary.academyofathens.gr/archive/item/227",
+          "note": "현대 그리스어 명칭"
+        },
+        {
+          "nameKo": "콘스탄티노폴리스",
+          "requiresHistoricalNamingContext": "Latin/Greek historiography",
+          "requiresExplicitLabelMode": true,
+          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul",
+          "note": "그리스·로마사 서술명"
+        }
+      ]
+    }
+  ]
+}

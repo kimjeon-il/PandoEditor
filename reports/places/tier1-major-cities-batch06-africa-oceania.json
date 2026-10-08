@@ -1,0 +1,307 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "06-africa-oceania",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0)",
+  "checkedOn": "2026-10-08",
+  "selection": "Four major African/Oceanian populated-place GeoNames P records, with current source point identifiers. City != surrounding administrative area.",
+  "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), source decimal-degree point coordinates, not city or urban-area polygons.",
+  "countryCodeSemantics": "sourceCountryCode is GeoNames present-day source metadata, not historical sovereignty.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime",
+  "historicNameScope": "Selectively documented local names used in/after the 19th century. Exonyms and concurrent local names are not fabricated single-date legal renamings.",
+  "qualityNotes": [
+    "Cairo: Arabic القاهرة remains the city name; Egyptian Arabic مصر is ambiguous with the nation, so it cannot override standard labels automatically.",
+    "Lagos: Eko refers especially to Lagos Island's indigenous historic nucleus and was used alongside Lagos; Onim also has documented 19th-century use. No false Eko->Lagos date.",
+    "Johannesburg: 1886 is documented formation year. Its 1886-10-04 proclamation event does not prove an unambiguous founding day. Before 1886 suppress the Johannesburg city label.",
+    "Sydney: Warrane is the Indigenous name of Sydney Cove only, not a universal predecessor city name.",
+    "Only shortDescriptionKo and concise note/detail are UI-facing; longer researchNote/researchDetail remain provenance. Runtime map remains unchanged."
+  ],
+  "records": [
+    {
+      "geonameId": 360630,
+      "names": [
+        {
+          "text": "القاهرة",
+          "language": "ar",
+          "usage": "standard"
+        },
+        {
+          "text": "Cairo",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "카이로",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Al Qāhirah",
+          "language": "ar-Latn",
+          "usage": "alternate",
+          "variantType": "romanizedArabicName",
+          "sourceUrl": "https://www.geonames.org/360630/cairo.html"
+        },
+        {
+          "text": "مصر",
+          "language": "arz",
+          "usage": "alternate",
+          "variantType": "egyptianColloquialAmbiguousCountryName",
+          "note": "이집트 국가명과 겹치는 구어명",
+          "sourceUrl": "https://www.geonames.org/360630/cairo.html"
+        }
+      ],
+      "latitude": 30.06263,
+      "longitude": 31.24967,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/360630/",
+      "sourceCountryCode": "EG",
+      "defaultDisplayNameKo": "카이로",
+      "shortDescriptionKo": "아랍어 지명은 알카히라",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "카이로",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/360630/cairo.html"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "19세기 이후 공식 개칭 확인 안 됨",
+            "sourceUrl": "https://www.geonames.org/360630/cairo.html"
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameEn": "Fustat",
+            "nameKo": "푸스타트",
+            "relation": "olderDistinctSettlementAbsorbedIntoUrbanArea",
+            "note": "역사적 구도시, 같은 지명 아님",
+            "sourceUrl": "https://www.geonames.org/360630/cairo.html"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 2332459,
+      "names": [
+        {
+          "text": "Lagos",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "라고스",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Eko",
+          "language": "yo",
+          "usage": "alternate",
+          "variantType": "indigenousNameOfHistoricIslandCore",
+          "note": "전통 중심지 라고스섬의 토착명",
+          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934"
+        },
+        {
+          "text": "에코",
+          "language": "ko",
+          "usage": "alternate",
+          "variantType": "koreanTranscriptionOfEko",
+          "linkedName": "Eko",
+          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934"
+        },
+        {
+          "text": "Onim",
+          "language": "und-Latn",
+          "usage": "historical",
+          "variantType": "historicEuropeanExonym",
+          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934",
+          "note": "19세기 유럽권 기록의 옛 지명"
+        }
+      ],
+      "latitude": 6.45407,
+      "longitude": 3.39467,
+      "featureClass": "P",
+      "featureCode": "PPLA2",
+      "sourceUrl": "https://www.geonames.org/2332459/",
+      "sourceCountryCode": "NG",
+      "defaultDisplayNameKo": "라고스",
+      "shortDescriptionKo": "토착명 에코와 장기간 병용",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "라고스",
+          "kind": "historicalMapConvention",
+          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "에코와 라고스는 장기간 병용",
+            "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934"
+          }
+        ],
+        "events": [
+          {
+            "date": "1991-12-12",
+            "type": "nationalCapitalRelocation",
+            "detail": "연방 수도 아부자로 이전",
+            "sourceUrl": "https://faan.gov.ng/international-airports/"
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameYo": "Eko",
+            "nameKo": "에코",
+            "relation": "historicIndigenousCityCoreMainlyLagosIsland",
+            "note": "원래 라고스섬 중심의 지명",
+            "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934"
+          },
+          {
+            "nameEn": "Lagos State",
+            "relation": "distinctFirstOrderAdministrativeDivision",
+            "note": "도시와 주는 별도 지리 객체",
+            "sourceUrl": "https://www.geonames.org/2332459/lagos.html"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 993800,
+      "names": [
+        {
+          "text": "Johannesburg",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "요하네스버그",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "eGoli",
+          "language": "zu",
+          "usage": "alternate",
+          "variantType": "isizuluGoldCityNickname",
+          "note": "줄루어 계열의 황금 도시 별칭",
+          "sourceUrl": "https://www.dsae.co.za/entry/egoli/e02218"
+        },
+        {
+          "text": "Jozi",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "colloquialNickname",
+          "sourceUrl": "https://www.statssa.gov.za/?id=city-of-johannesburg-municipality&page_id=993"
+        }
+      ],
+      "latitude": -26.20227,
+      "longitude": 28.04363,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/993800/",
+      "sourceCountryCode": "ZA",
+      "defaultDisplayNameKo": "요하네스버그",
+      "shortDescriptionKo": "1886년 금광 발견 뒤 성장",
+      "displayTimeline": [
+        {
+          "fromYear": 1886,
+          "nameKo": "요하네스버그",
+          "kind": "firstVerifiedCityPeriod",
+          "sourceUrl": "https://joburg.org.za/media_/Newsroom/Pages/2021%20News%20Articles/October/Joburg-still-city-of-opportunities-135-years-later.aspx"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1886",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1886-10-04",
+            "type": "miningAreaOrSettlementProclamation",
+            "detail": "금광 정착지 선포 관련",
+            "sourceUrl": "https://joburg.org.za/media_/Newsroom/Pages/2021%20News%20Articles/October/Joburg-still-city-of-opportunities-135-years-later.aspx",
+            "researchDetail": "1886년 10월 4일 금 채굴이 공식 허가되고 란드예슬라흐테 정착지 선포가 이뤄짐. 도시의 탄생을 정확히 한날로 규정하는 데에는 견해차가 있음."
+          }
+        ],
+        "notes": [
+          {
+            "detail": "eGoli·Jozi는 병용 별칭",
+            "sourceUrl": "https://www.statssa.gov.za/?id=city-of-johannesburg-municipality&page_id=993"
+          }
+        ]
+      },
+      "temporalEligibility": {
+        "cityEstablishedFromYear": 1886,
+        "beforeCityEstablished": "suppress-city-label",
+        "sourceUrl": "https://joburg.org.za/media_/Newsroom/Pages/2021%20News%20Articles/October/Joburg-still-city-of-opportunities-135-years-later.aspx",
+        "note": "1886년 이전 도시명이 아직 성립하지 않음",
+        "researchNote": "광산촌과 취락이 1886년 금광 발견에 따라 형성됨. 형성의 정확한 월·일은 의견이 일치하지 않으므로 연도 단위로 제한함."
+      }
+    },
+    {
+      "geonameId": 2147714,
+      "names": [
+        {
+          "text": "Sydney",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "시드니",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": -33.86785,
+      "longitude": 151.20732,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/2147714/",
+      "sourceCountryCode": "AU",
+      "defaultDisplayNameKo": "시드니",
+      "shortDescriptionKo": "1842년 시 법인화",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "시드니",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/2147714/sydney.html"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1842-07-20",
+            "type": "cityIncorporation",
+            "detail": "시드니시 법인화",
+            "sourceUrl": "https://archives.cityofsydney.nsw.gov.au/nodes/view/62554"
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameEn": "Warrane",
+            "relation": "indigenousNameOfSydneyCoveNotEntireCity",
+            "note": "시드니만 일부의 원주민명",
+            "sourceUrl": "https://www.nsw.gov.au/visiting-and-exploring-nsw/walks-near-me/great-places/the-rocks-laneways",
+            "researchNote": "Warrane은 시드니 중심의 시드니만(Sydney Cove)을 가리키는 개디걸 원주민 지명이며 현대 시드니시 전체와 같은 범위가 아님."
+          }
+        ],
+        "notes": [
+          {
+            "detail": "Warrane은 도시 전체의 옛 이름 아님",
+            "sourceUrl": "https://www.nsw.gov.au/visiting-and-exploring-nsw/walks-near-me/great-places/the-rocks-laneways"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "pando-places-ko-map-label-policy-v1",
+  "status": "staged-policy-only-not-runtime",
+  "mapLanguage": "ko",
+  "namingPolicyNotHistory": "Korean map labels are editorial conventions; they do not change local official names, historical officialPeriods or the place identity.",
+  "boundary": {
+    "date": "1912-01-01",
+    "description": "For Chinese-language toponyms, use Sino-Korean reading before this date and contemporary Chinese pronunciation from this date onward. The date is the agreed map-label style threshold, not an assertion of wholesale city renamings."
+  },
+  "rules": [
+    {
+      "localToponymLanguage": "ja",
+      "applicableDates": "all",
+      "koreanLabelConvention": "Korean transcription of Japanese place-name pronunciation",
+      "exclude": "Sino-Korean readings of Japanese place-name kanji as separate aliases (e.g. 동경 for 東京, 대판 for 大阪).",
+      "historicalLocalToponyms": "Respect actual historical name changes (e.g. 江戸 -> 에도, 東京 -> 도쿄)."
+    },
+    {
+      "localToponymLanguage": "zh",
+      "before": "1912-01-01",
+      "koreanLabelConvention": "Sino-Korean reading of selected Chinese-language local toponym"
+    },
+    {
+      "localToponymLanguage": "zh",
+      "fromInclusive": "1912-01-01",
+      "koreanLabelConvention": "Korean transcription of Chinese pronunciation of selected Chinese-language local toponym"
+    }
+  ],
+  "resolutionOrder": [
+    "Choose a date-appropriate local toponym from names[] using documented official naming periods when available; year-only dates remain approximate.",
+    "Apply a map-label language convention to THAT toponym, not to its present-day English name.",
+    "Use a verified koMapLabels mapping if the name is covered; otherwise hold for review rather than guessing a transliteration.",
+    "Do not derive naming language, polity or sovereignty from sourceCountryCode; this is GeoNames source metadata only."
+  ],
+  "exceptions": "For Chinese minority-language, non-Mandarin and multilingual places choose the applicable local toponym/language explicitly; do not apply Mandarin reading solely because sourceCountryCode is CN.",
+  "note": "This file defines a staging convention for current and future city batches; it does not change the deployed runtime, map labels, or the existing historical name periods."
+}

@@ -1,0 +1,399 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "05-americas",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0)",
+  "checkedOn": "2026-10-08",
+  "selection": "Five major Americas city representative points (P/PPL New York, P/PPLA2 Los Angeles, P/PPLC Mexico City and Buenos Aires, P/PPLA São Paulo); distinguish administrative regions and metros.",
+  "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), decimal degrees; GeoNames populated-place points, never entire municipal boundary polygons.",
+  "countryCodeSemantics": "sourceCountryCode is modern GeoNames source metadata, not historically computed sovereignty.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime",
+  "historicNameScope": "Selective well-documented names used during or after 1801. Earlier founding names are linked historical settlements, not automatic complete-city renames.",
+  "qualityNotes": [
+    "For all five cities, Korean map labels remain stable since 1801 in currently validated record. Municipal incorporations, mergers and federal district changes are territorial/administrative events, not lexical renames.",
+    "New York city vs state/metro; Buenos Aires city vs province; Mexico City city vs Federal District are distinct record scopes.",
+    "Los Angeles historic Pueblo refers to predecessor settlement, not today's full expanded municipality.",
+    "Buenos Ayres is documented in 1810 but does not imply a single exact official spelling switch date.",
+    "São Paulo de Piratininga refers to early colonial settlement; name since 1801 is São Paulo, not automatic earlier-name timeline.",
+    "All UI-facing notes and details are max 28 Unicode codepoints; provenance preserved in researchDetail.",
+    "Production manifest and map runtime have not been changed."
+  ],
+  "records": [
+    {
+      "geonameId": 5128581,
+      "names": [
+        {
+          "text": "New York",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "뉴욕",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "New York City",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "municipalName",
+          "sourceUrl": "https://archaeology.cityofnewyork.us/collection/nyc-timeline/consolidation-of-the-five-borough-city"
+        },
+        {
+          "text": "뉴욕시",
+          "language": "ko",
+          "usage": "alternate",
+          "variantType": "qualifiedCityName",
+          "sourceUrl": "https://archaeology.cityofnewyork.us/collection/nyc-timeline/consolidation-of-the-five-borough-city"
+        }
+      ],
+      "latitude": 40.71427,
+      "longitude": -74.00597,
+      "featureClass": "P",
+      "featureCode": "PPL",
+      "sourceUrl": "https://www.geonames.org/5128581/",
+      "sourceCountryCode": "US",
+      "defaultDisplayNameKo": "뉴욕",
+      "shortDescriptionKo": "1898년 5개 자치구 통합",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "뉴욕",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://archaeology.cityofnewyork.us/collection/nyc-timeline/consolidation-of-the-five-borough-city"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1898-01-01",
+            "type": "municipalConsolidation",
+            "detail": "5개 자치구 통합",
+            "sourceUrl": "https://archaeology.cityofnewyork.us/collection/nyc-timeline/consolidation-of-the-five-borough-city",
+            "researchDetail": "뉴욕(맨해튼)과 브루클린, 브롱크스, 퀸스, 스태튼아일랜드가 대뉴욕시로 통합. 당시 지역별 관할과 오늘날의 구역 체계는 구분해야 함."
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameEn": "New Amsterdam",
+            "relation": "earlyHistoricalPredecessorBefore1801",
+            "note": "17세기 네덜란드 식민지명",
+            "sourceUrl": "https://www.nyc.gov/site/records/historical-records/galleries/new-amsterdam.page"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "뉴욕주·뉴욕 대도시권과 구분",
+            "sourceUrl": "https://www.geonames.org/5128581/new-york-city.html"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 5368361,
+      "names": [
+        {
+          "text": "Los Angeles",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "Los Ángeles",
+          "language": "es",
+          "usage": "standard"
+        },
+        {
+          "text": "로스앤젤레스",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "El Pueblo de Los Ángeles",
+          "language": "es",
+          "usage": "historical",
+          "variantType": "historicalPuebloDesignation",
+          "sourceUrl": "https://lacity.gov/government/history-los-angeles",
+          "note": "도시의 초기 정착지 명칭"
+        }
+      ],
+      "latitude": 34.05223,
+      "longitude": -118.24368,
+      "featureClass": "P",
+      "featureCode": "PPLA2",
+      "sourceUrl": "https://www.geonames.org/5368361/",
+      "sourceCountryCode": "US",
+      "defaultDisplayNameKo": "로스앤젤레스",
+      "shortDescriptionKo": "1850년 정식 시로 편입",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "로스앤젤레스",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://lacity.gov/government/history-los-angeles"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1850-04-04",
+            "type": "municipalIncorporation",
+            "detail": "로스앤젤레스시 법인화",
+            "sourceUrl": "https://www.loc.gov/item/today-in-history/september-04/"
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameEs": "El Pueblo de Nuestra Señora la Reina de los Ángeles de Porciúncula",
+            "relation": "historicalFoundingSettlement",
+            "note": "1781년 형성된 초기 정착지",
+            "sourceUrl": "https://lacity.gov/government/history-los-angeles",
+            "researchDetail": "1781년 정착민들이 설립한 푸에블로의 장문 명칭. 현재 로스앤젤레스시 전체의 동일 면적 옛 행정명칭이라고 보지 않음."
+          }
+        ],
+        "notes": [
+          {
+            "detail": "역사적 푸에블로·현대 시역 구분",
+            "sourceUrl": "https://lacity.gov/government/history-los-angeles"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3530597,
+      "names": [
+        {
+          "text": "México",
+          "language": "es",
+          "usage": "standard",
+          "variantType": "officialShortForm",
+          "sourceUrl": "https://geonames.nga.mil/geonames/GNSSearch/GNSDocs/policies/Mexico_Country_Policy_webversion_Latest.pdf"
+        },
+        {
+          "text": "Ciudad de México",
+          "language": "es",
+          "usage": "alternate",
+          "variantType": "officialLongForm",
+          "sourceUrl": "https://geonames.nga.mil/geonames/GNSSearch/GNSDocs/policies/Mexico_Country_Policy_webversion_Latest.pdf"
+        },
+        {
+          "text": "Mexico City",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "멕시코시티",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "CDMX",
+          "language": "es",
+          "usage": "alternate",
+          "variantType": "abbreviation",
+          "note": "현재 시·연방 구성체의 약칭",
+          "sourceUrl": "https://mexicocity.cdmx.gob.mx/e/about/about-mexico-city/?lang=en"
+        }
+      ],
+      "latitude": 19.42847,
+      "longitude": -99.12766,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3530597/",
+      "sourceCountryCode": "MX",
+      "defaultDisplayNameKo": "멕시코시티",
+      "shortDescriptionKo": "1824년 연방구 설치, 2016년 개편",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "멕시코시티",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://mexicocity.cdmx.gob.mx/e/about/about-mexico-city/?lang=en"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1824-11-18",
+            "type": "federalDistrictDesignation",
+            "detail": "연방 수도구역 지정",
+            "sourceUrl": "https://www.mexicocity.cdmx.gob.mx/historical-timeline-of-mexico-city/independent-mexico/?lang=en",
+            "researchDetail": "멕시코 연방 의회가 소칼로 광장 중심 연방 수도구역의 위치와 범위를 지정. 도시명 자체가 당시 전면 변경된 것은 아님."
+          },
+          {
+            "date": "2016-01-29",
+            "type": "federalEntityNamingReform",
+            "detail": "연방구에서 멕시코시티로 전환",
+            "sourceUrl": "https://mexicocity.cdmx.gob.mx/e/about/about-mexico-city/?lang=en",
+            "researchDetail": "Distrito Federal에서 Ciudad de México로 연방 단위 행정 명칭과 지위가 변경. 원래 도시 명칭 Ciudad de México 자체는 훨씬 이전부터 사용됨."
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameEs": "Distrito Federal",
+            "relation": "formerFederalAdministrativeArea",
+            "note": "도시명과 구분되는 옛 연방구",
+            "sourceUrl": "https://mexicocity.cdmx.gob.mx/e/about/about-mexico-city/?lang=en"
+          },
+          {
+            "nameEs": "Tenochtitlan",
+            "relation": "preColonialCityOnSameSiteBefore1801",
+            "note": "1521년 이전 아스테카 도시",
+            "sourceUrl": "https://mexicocity.cdmx.gob.mx/e/about/about-mexico-city/?lang=en"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "연방구의 변화는 도시 개칭과 구별",
+            "sourceUrl": "https://mexicocity.cdmx.gob.mx/e/about/about-mexico-city/?lang=en"
+          },
+          {
+            "detail": "México는 도시·국가의 동형 약칭",
+            "sourceUrl": "https://geonames.nga.mil/geonames/GNSSearch/GNSDocs/policies/Mexico_Country_Policy_webversion_Latest.pdf"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3448439,
+      "names": [
+        {
+          "text": "São Paulo",
+          "language": "pt",
+          "usage": "standard"
+        },
+        {
+          "text": "상파울루",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Sao Paulo",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "unaccentedAsciiVariant",
+          "sourceUrl": "https://www.geonames.org/3448439/sao-paulo.html"
+        }
+      ],
+      "latitude": -23.5475,
+      "longitude": -46.63611,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/3448439/",
+      "sourceCountryCode": "BR",
+      "defaultDisplayNameKo": "상파울루",
+      "shortDescriptionKo": "1711년 시 승격, 지명 유지",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "상파울루",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.al.sp.gov.br/geral/acervoHistorico/DetalheCenarios.jsp?cid=3550308"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "linkedPlaces": [
+          {
+            "namePt": "São Paulo de Piratininga",
+            "relation": "colonialFoundingSettlementBefore1801",
+            "note": "1554년 초기 정착지 명칭",
+            "sourceUrl": "https://www.al.sp.gov.br/geral/acervoHistorico/DetalheCenarios.jsp?cid=3550308"
+          }
+        ],
+        "events": [
+          {
+            "year": 1815,
+            "type": "administrativePromotion",
+            "detail": "상파울루 지역의 수도 지위 변동",
+            "sourceUrl": "https://www.al.sp.gov.br/geral/acervoHistorico/DetalheCenarios.jsp?cid=3550308",
+            "researchDetail": "상파울루 주의회 연혁은 1815년 12월 16일 주도 승격을 기록. 지명의 변경이 아니라 행정 지위 변동이다."
+          }
+        ],
+        "notes": [
+          {
+            "detail": "식민시대 옛 촌락명과 구분",
+            "sourceUrl": "https://www.al.sp.gov.br/geral/acervoHistorico/DetalheCenarios.jsp?cid=3550308"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3435910,
+      "names": [
+        {
+          "text": "Buenos Aires",
+          "language": "es",
+          "usage": "standard"
+        },
+        {
+          "text": "부에노스아이레스",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Buenos Ayres",
+          "language": "es",
+          "usage": "historical",
+          "variantType": "nineteenthCenturyOrthography",
+          "attestedYear": 1810,
+          "sourceUrl": "https://museo.bn.gov.ar/noticias/7-de-junio-de-1810-comienza-a-publicarse-la-gazeta-de-buenos-ayres",
+          "note": "1810년 신문명에서 사용된 옛 철자"
+        },
+        {
+          "text": "Ciudad de Buenos Aires",
+          "language": "es",
+          "usage": "alternate",
+          "variantType": "qualifiedMunicipalName",
+          "sourceUrl": "https://www.argentina.gob.ar/normativa/nacional/ley-1029-48865/texto"
+        }
+      ],
+      "latitude": -34.61315,
+      "longitude": -58.37723,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3435910/",
+      "sourceCountryCode": "AR",
+      "defaultDisplayNameKo": "부에노스아이레스",
+      "shortDescriptionKo": "1880년 아르헨티나 연방 수도 지정",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "부에노스아이레스",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://buenosaires.gob.ar/gcaba_historico/laciudad/ciudad"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1880-09-20",
+            "type": "federalCapitalLawPassed",
+            "detail": "연방 수도 지정법 통과",
+            "sourceUrl": "https://www.argentina.gob.ar/normativa/nacional/ley-1029-48865/texto",
+            "researchDetail": "1880년 법률 제1029호로 부에노스아이레스 시를 공화국 수도로 지정. 수도 지위 변화이지 도시 자체의 개칭이 아님."
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameEs": "Provincia de Buenos Aires",
+            "relation": "distinctProvinceSharingCityName",
+            "note": "동명의 주와 도시를 구분",
+            "sourceUrl": "https://www.argentina.gob.ar/normativa/nacional/ley-1029-48865/texto"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "Buenos Ayres는 19세기 옛 철자",
+            "sourceUrl": "https://museo.bn.gov.ar/noticias/7-de-junio-de-1810-comienza-a-publicarse-la-gazeta-de-buenos-ayres"
+          }
+        ]
+      }
+    }
+  ]
+}

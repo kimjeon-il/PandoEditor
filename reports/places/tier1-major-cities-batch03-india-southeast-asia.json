@@ -1,0 +1,559 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "03-india-southeast-asia",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0)",
+  "checkedOn": "2026-10-08",
+  "selection": "Seven major Indian/Southeast Asian cities with independently checked GeoNames populated-place P feature and representative point; administrative polygon IDs excluded.",
+  "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), decimal degrees; source settlement-point coordinates are not historical administrative boundaries.",
+  "countryCodeSemantics": "sourceCountryCode is modern GeoNames source metadata only, never historical country attribution.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicNameScope": "Selective attested names used during or after nineteenth century, distinguishing official renaming, romanization changes, parallel names, and territorial predecessor relationships.",
+  "qualityNotes": [
+    "Year-only officialPeriod records mean administrative name dates, not exclusive language use or identical historical polygon footprints.",
+    "Source city feature codes PPLA/PPLC/PPL are preserved rather than forced to one code; GeoNames current Ho Chi Minh City PPL is a valid major populated place.",
+    "City and metropolitan area/district names remain distinct. No extra national Hanzi-reading convention is inferred for India, Indonesia, Thailand or Vietnam.",
+    "The file is staging only; do not update production map manifest and do not claim that historical name selection renders yet."
+  ],
+  "records": [
+    {
+      "geonameId": 1275339,
+      "names": [
+        {
+          "text": "मुंबई",
+          "language": "mr",
+          "usage": "standard"
+        },
+        {
+          "text": "Mumbai",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "뭄바이",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Bombay",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "formerOfficialEnglishName",
+          "officialPeriod": {
+            "toYear": 1995
+          },
+          "sourceUrl": "https://mumbaicity.gov.in/en/history/",
+          "note": "뭄바이는 1995년 전부터 현지에서 사용",
+          "researchNote": "Mumbai/मुंबई was locally used before 1995; the date reflects official adoption, not the coinage of the current native name."
+        },
+        {
+          "text": "봄베이",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanTranscriptionOfFormerEnglishName",
+          "linkedName": "Bombay",
+          "sourceUrl": "https://mumbaicity.gov.in/en/history/"
+        }
+      ],
+      "latitude": 19.07283,
+      "longitude": 72.88261,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1275339/",
+      "sourceCountryCode": "IN",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "1995년 봄베이를 뭄바이로 개칭",
+            "sourceUrl": "https://mumbaicity.gov.in/en/history/",
+            "researchDetail": "뭄바이의 과거 공식 영어 명칭은 Bombay였으며 1995년에 Mumbai로 변경. 항만 중심과 오늘날 광역도시권의 경계는 동일하지 않음."
+          }
+        ]
+      },
+      "defaultDisplayNameKo": "뭄바이",
+      "shortDescriptionKo": "1995년 봄베이에서 뭄바이로 개칭",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "봄베이",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://mumbaicity.gov.in/en/history/"
+        },
+        {
+          "fromDate": "1995-03-04",
+          "nameKo": "뭄바이",
+          "kind": "officialRenaming",
+          "sourceUrl": "https://mumbaicity.gov.in/en/history/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 1275004,
+      "names": [
+        {
+          "text": "কলকাতা",
+          "language": "bn",
+          "usage": "standard"
+        },
+        {
+          "text": "Kolkata",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "콜카타",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Calcutta",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "formerOfficialEnglishName",
+          "officialPeriod": {
+            "toYear": 2000
+          },
+          "sourceUrl": "https://sarthac.gov.in/view-act-rule-file?file_id=206",
+          "note": "2001년 개칭, 현지명은 이전에도 사용",
+          "researchNote": "Government name switch effective 1 January 2001; local Bengali form Kolkata pre-existed the English legal change."
+        },
+        {
+          "text": "캘커타",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanTranscriptionOfFormerEnglishName",
+          "linkedName": "Calcutta",
+          "sourceUrl": "https://sarthac.gov.in/view-act-rule-file?file_id=206"
+        }
+      ],
+      "latitude": 22.56263,
+      "longitude": 88.36304,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1275004/",
+      "sourceCountryCode": "IN",
+      "defaultDisplayNameKo": "콜카타",
+      "shortDescriptionKo": "2001년 캘커타에서 콜카타로 개칭",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "캘커타",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://sarthac.gov.in/view-act-rule-file?file_id=206"
+        },
+        {
+          "fromDate": "2001-01-01",
+          "nameKo": "콜카타",
+          "kind": "officialRenaming",
+          "sourceUrl": "https://sarthac.gov.in/view-act-rule-file?file_id=206"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 1264527,
+      "names": [
+        {
+          "text": "சென்னை",
+          "language": "ta",
+          "usage": "standard"
+        },
+        {
+          "text": "Chennai",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "첸나이",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Madras",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "formerOfficialEnglishName",
+          "officialPeriod": {
+            "toYear": 1996
+          },
+          "sourceUrl": "https://indiankanoon.org/doc/149253478/",
+          "note": "1996년 개칭, 현지명은 이전에도 사용",
+          "researchNote": "In 1996 the city was renamed Chennai in all languages by law; local Chennai usage predates that legal change."
+        },
+        {
+          "text": "마드라스",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanTranscriptionOfFormerEnglishName",
+          "linkedName": "Madras",
+          "sourceUrl": "https://indiankanoon.org/doc/149253478/"
+        }
+      ],
+      "latitude": 13.08784,
+      "longitude": 80.27847,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1264527/",
+      "sourceCountryCode": "IN",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "해안 취락명과 현대 도시명은 구분",
+            "sourceUrl": "https://indiankanoon.org/doc/149253478/",
+            "researchDetail": "Madraspatnam/Chennapatnam may refer to historically distinct coastal settlements; neither is blindly treated as a modern city-wide official predecessor name."
+          }
+        ]
+      },
+      "defaultDisplayNameKo": "첸나이",
+      "shortDescriptionKo": "1996년 마드라스에서 첸나이로 개칭",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "마드라스",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://indiankanoon.org/doc/149253478/"
+        },
+        {
+          "fromYear": 1996,
+          "nameKo": "첸나이",
+          "kind": "officialRenaming",
+          "sourceUrl": "https://indiankanoon.org/doc/149253478/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 1642911,
+      "names": [
+        {
+          "text": "Jakarta",
+          "language": "id",
+          "usage": "standard"
+        },
+        {
+          "text": "자카르타",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Batavia",
+          "language": "nl",
+          "usage": "historical",
+          "variantType": "dutchColonialCityName",
+          "officialPeriod": {
+            "toYear": 1942
+          },
+          "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta",
+          "note": "1942년 개칭 후에도 Batavia 일부 사용",
+          "researchNote": "Dutch usage persisted in some contexts after 1942, including during the post-war conflict; not an exclusive worldwide cutoff."
+        },
+        {
+          "text": "바타비아",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanTranscriptionOfColonialCityName",
+          "linkedName": "Batavia",
+          "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta"
+        },
+        {
+          "text": "Djakarta",
+          "language": "id",
+          "usage": "historical",
+          "variantType": "formerIndonesianOrthography",
+          "commonlyUsedBeforeApproxYear": 1972,
+          "sourceUrl": "https://barat.jakarta.go.id/kelurahan/tamansari",
+          "note": "자카르타의 과거 철자",
+          "researchNote": "Former spelling of Jakarta, not a separate geographic place."
+        },
+        {
+          "text": "Jakarta Tokubetsu Shi",
+          "language": "ja-Latn",
+          "usage": "historical",
+          "variantType": "japaneseOccupationAdministrativeName",
+          "officialPeriod": {
+            "fromYear": 1942,
+            "toYear": 1945
+          },
+          "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta"
+        }
+      ],
+      "latitude": -6.21462,
+      "longitude": 106.84513,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/1642911/",
+      "sourceCountryCode": "ID",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "1942년 바타비아에서 자카르타로 개칭",
+            "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta",
+            "researchDetail": "Batavia는 19세기 네덜란드 식민도시 명칭. 1942년 일제 점령기에 Jakarta로 개칭됨. Jayakarta·Sunda Kelapa는 주로 19세기 이전 명칭으로, 이번 19세기 이후 기본 범위에 넣지 않음."
+          }
+        ]
+      },
+      "defaultDisplayNameKo": "자카르타",
+      "shortDescriptionKo": "1942년 바타비아에서 자카르타로 개칭",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "바타비아",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://jakarta.go.id/index.php/sejarah-jakarta"
+        },
+        {
+          "fromYear": 1942,
+          "nameKo": "자카르타",
+          "kind": "officialRenaming",
+          "sourceUrl": "https://jakarta.go.id/index.php/sejarah-jakarta"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 1609350,
+      "names": [
+        {
+          "text": "กรุงเทพมหานคร",
+          "language": "th",
+          "usage": "standard",
+          "variantType": "thaiFormalName"
+        },
+        {
+          "text": "กรุงเทพฯ",
+          "language": "th",
+          "usage": "alternate",
+          "variantType": "thaiAbbreviation"
+        },
+        {
+          "text": "Krung Thep Maha Nakhon",
+          "language": "th-Latn",
+          "usage": "alternate",
+          "variantType": "romanizationOfThaiOfficialName",
+          "sourceUrl": "https://www.thaipbs.or.th/news/content/312726"
+        },
+        {
+          "text": "Bangkok",
+          "language": "en",
+          "usage": "standard",
+          "variantType": "internationalEnglishName",
+          "sourceUrl": "https://www.thaipbs.or.th/news/content/312726"
+        },
+        {
+          "text": "방콕",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 13.75398,
+      "longitude": 100.50144,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/1609350/",
+      "sourceCountryCode": "TH",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "방콕과 끄룽텝은 현재도 병용",
+            "sourceUrl": "https://www.thaipbs.or.th/news/content/312726",
+            "researchDetail": "Bangkok과 Krung Thep Maha Nakhon은 2022년 이후에도 병용되는 이름. 2022년에 Bangkok이라는 지명이 폐지되었다고 처리하지 않음."
+          },
+          {
+            "detail": "프라나콘·톤부리는 별도 역사 구역",
+            "sourceUrl": "https://www.geonames.org/1609350/bangkok.html",
+            "researchDetail": "Phra Nakhon·Thonburi는 도시 전체의 별명이 아니라 과거 행정구역/별도 도시 이력과 연결되므로 names[]에서 제외."
+          }
+        ]
+      },
+      "defaultDisplayNameKo": "방콕",
+      "shortDescriptionKo": "방콕·끄룽텝 명칭 병용",
+      "displayTimeline": [],
+      "historicalDisplayCoverage": "modern-label-only"
+    },
+    {
+      "geonameId": 1581130,
+      "names": [
+        {
+          "text": "Hà Nội",
+          "language": "vi",
+          "usage": "standard"
+        },
+        {
+          "text": "Hanoi",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "하노이",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "河內",
+          "language": "vi-Hani",
+          "usage": "alternate",
+          "variantType": "sinoVietnameseWriting"
+        },
+        {
+          "text": "Thăng Long",
+          "language": "vi",
+          "usage": "historical",
+          "variantType": "historicCityOrCitadelToponym",
+          "officialPeriod": {
+            "toYear": 1831
+          },
+          "sourceUrl": "https://thanglong.chinhphu.vn/english/the-changing-names-of-ha-noi-110137.htm",
+          "note": "탕롱은 1831년 이후에도 문화적 명칭",
+          "researchNote": "The old Thăng Long name persists culturally and is not assumed to have disappeared in 1831."
+        },
+        {
+          "text": "탕롱",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanRenderingOfThangLong",
+          "linkedName": "Thăng Long",
+          "sourceUrl": "https://thanglong.chinhphu.vn/english/the-changing-names-of-ha-noi-110137.htm"
+        }
+      ],
+      "latitude": 21.0245,
+      "longitude": 105.84117,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/1581130/",
+      "sourceCountryCode": "VN",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "1831년 하노이성 설치, 도시 중심 포함",
+            "sourceUrl": "https://thanglong.chinhphu.vn/english/historical-stages-of-thang-long-ha-noi-110136.htm",
+            "researchDetail": "1831년 응우옌 왕조의 행정 개편으로 Hà Nội라는 명칭이 부(府)/성(省)의 중심지에 사용되기 시작. Thăng Long 시가지와 현대 하노이의 행정 경계는 같지 않음."
+          },
+          {
+            "detail": "Bắc Thành은 광역·성곽 관련 명칭",
+            "sourceUrl": "https://thanglong.chinhphu.vn/english/the-changing-names-of-ha-noi-110137.htm",
+            "researchDetail": "Bắc Thành은 당시 광역 행정/성곽 관련 명칭으로 현대 하노이 전체의 단순 옛 이름으로 자동 등록하지 않음."
+          }
+        ]
+      },
+      "defaultDisplayNameKo": "하노이",
+      "shortDescriptionKo": "탕롱·하노이의 역사적 명칭",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "탕롱",
+          "kind": "historicalUrbanCoreName",
+          "sourceUrl": "https://thanglong.chinhphu.vn/english/historical-stages-of-thang-long-ha-noi-110136.htm"
+        },
+        {
+          "fromYear": 1831,
+          "nameKo": "하노이",
+          "kind": "administrativeNameAppliedToUrbanCore",
+          "sourceUrl": "https://thanglong.chinhphu.vn/english/historical-stages-of-thang-long-ha-noi-110136.htm"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 1566083,
+      "names": [
+        {
+          "text": "Thành phố Hồ Chí Minh",
+          "language": "vi",
+          "usage": "standard"
+        },
+        {
+          "text": "Ho Chi Minh City",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "호찌민",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Sài Gòn",
+          "language": "vi",
+          "usage": "historical",
+          "variantType": "formerCityName",
+          "officialPeriod": {
+            "toYear": 1976
+          },
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/sai-gon-duoc-de-xuat-dat-ten-la-tphcm-tu-nam-1946",
+          "note": "공식 개칭 후에도 사이공 명칭 사용",
+          "researchNote": "Remains in common local usage after official renaming; former city boundaries differ from current municipality."
+        },
+        {
+          "text": "Saigon",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "formerEnglishName",
+          "linkedName": "Sài Gòn",
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/sai-gon-duoc-de-xuat-dat-ten-la-tphcm-tu-nam-1946"
+        },
+        {
+          "text": "사이공",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanRenderingOfFormerCityName",
+          "linkedName": "Sài Gòn",
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/sai-gon-duoc-de-xuat-dat-ten-la-tphcm-tu-nam-1946"
+        }
+      ],
+      "latitude": 10.82302,
+      "longitude": 106.62965,
+      "featureClass": "P",
+      "featureCode": "PPL",
+      "sourceUrl": "https://www.geonames.org/1566083/",
+      "sourceCountryCode": "VN",
+      "historicalGeography": {
+        "linkedPlaces": [
+          {
+            "nameVi": "Gia Định",
+            "nameKo": "자딘",
+            "relation": "historicalAdjacentAdministrativeTerritoryAndMunicipalPredecessor",
+            "detail": "자딘은 인접한 역사적 행정구역",
+            "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/sai-gon-duoc-de-xuat-dat-ten-la-tphcm-tu-nam-1946",
+            "researchDetail": "1976년 사이공·자딘의 행정 재편과 호찌민시 공식 명칭 채택 관련. 'Gia Định'을 현대 호찌민시의 전체 영역과 동일한 지명 별칭으로 추가하지 않음."
+          }
+        ],
+        "events": [
+          {
+            "year": 1976,
+            "type": "administrativeRenamingAndReorganization",
+            "detail": "1976-07-02 호찌민시로 공식 개칭",
+            "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/sai-gon-duoc-de-xuat-dat-ten-la-tphcm-tu-nam-1946",
+            "researchDetail": "1976년 7월 2일 Sài Gòn–Gia Định에서 Thành phố Hồ Chí Minh 공식 명칭 채택."
+          }
+        ],
+        "notes": [
+          {
+            "detail": "GeoNames PPL 도시 대표점",
+            "sourceUrl": "https://www.geonames.org/1566083/ho-chi-minh-city.html",
+            "researchDetail": "현재 GeoNames PPL 도시 대표점(id 1566083)임. 인접한 이름이 같은 ADM1 폴리곤을 혼동하지 않음."
+          }
+        ]
+      },
+      "defaultDisplayNameKo": "호찌민",
+      "shortDescriptionKo": "1976년 사이공에서 호찌민으로 개칭",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "사이공",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh"
+        },
+        {
+          "fromDate": "1976-07-02",
+          "nameKo": "호찌민",
+          "kind": "officialRenaming",
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    }
+  ],
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime"
+}

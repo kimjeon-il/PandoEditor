@@ -1,0 +1,518 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "02-east-asia",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0)",
+  "checkedOn": "2026-10-08",
+  "selection": "Nine selected East Asian major cities, GeoNames feature P/PPLA only.",
+  "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), decimal degrees; settlement points, not administrative region centroids.",
+  "countryCodeSemantics": "sourceCountryCode is modern GeoNames source metadata only, not historical sovereignty.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicNameScope": "Selective prominent names used during or after the nineteenth century; earlier origin does not exclude names still used then.",
+  "qualityNotes": [
+    "Linked historical port/jurisdiction names are not automatically aliases of the entire modern municipality.",
+    "The 1912 change is Korean editorial transcription policy, not legal Chinese city renaming.",
+    "Production manifest and renderer remain unchanged."
+  ],
+  "records": [
+    {
+      "geonameId": 1843564,
+      "names": [
+        {
+          "text": "인천",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Incheon",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "仁川",
+          "language": "ko-Hani",
+          "usage": "alternate",
+          "variantType": "hanja"
+        },
+        {
+          "text": "Inchon",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "formerRomanization"
+        }
+      ],
+      "latitude": 37.45646,
+      "longitude": 126.70515,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1843564/",
+      "sourceCountryCode": "KR",
+      "historicalGeography": {
+        "linkedPlaces": [
+          {
+            "nameKo": "제물포",
+            "nameEn": "Chemulpo",
+            "relation": "historicalHarborAndPortQuarter",
+            "note": "1883년 개항한 인천항 일대",
+            "sourceUrl": "https://www.incheon.go.kr/en/EN010701/2127755",
+            "researchNote": "1883년 개항한 역사적 인천항·항구 일대. 도시 전체의 정식 옛 이름과 동일시하지 않음."
+          }
+        ]
+      },
+      "defaultDisplayNameKo": "인천",
+      "shortDescriptionKo": "제물포항을 중심으로 성장",
+      "displayTimeline": [],
+      "historicalDisplayCoverage": "modern-label-only"
+    },
+    {
+      "geonameId": 1835329,
+      "names": [
+        {
+          "text": "대구",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Daegu",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "大邱",
+          "language": "ko-Hani",
+          "usage": "alternate",
+          "variantType": "hanja"
+        },
+        {
+          "text": "Taegu",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "formerRomanization"
+        }
+      ],
+      "latitude": 35.87028,
+      "longitude": 128.59111,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1835329/",
+      "sourceCountryCode": "KR",
+      "defaultDisplayNameKo": "대구",
+      "shortDescriptionKo": "대구광역시의 중심 도시",
+      "displayTimeline": [],
+      "historicalDisplayCoverage": "modern-label-only"
+    },
+    {
+      "geonameId": 1835235,
+      "names": [
+        {
+          "text": "대전",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Daejeon",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "大田",
+          "language": "ko-Hani",
+          "usage": "alternate",
+          "variantType": "hanja"
+        },
+        {
+          "text": "Taejon",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "formerRomanization"
+        },
+        {
+          "text": "한밭",
+          "language": "ko",
+          "usage": "alternate",
+          "variantType": "traditionalNativeName",
+          "sourceUrl": "https://www.daejeon.go.kr/drh/DrhContentsHtmlView.do?menuSeq=1717"
+        }
+      ],
+      "latitude": 36.34913,
+      "longitude": 127.38493,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1835235/",
+      "sourceCountryCode": "KR",
+      "defaultDisplayNameKo": "대전",
+      "shortDescriptionKo": "전통 지명 한밭을 가진 도시",
+      "displayTimeline": [],
+      "historicalDisplayCoverage": "modern-label-only"
+    },
+    {
+      "geonameId": 1848354,
+      "names": [
+        {
+          "text": "横浜",
+          "language": "ja",
+          "usage": "standard"
+        },
+        {
+          "text": "Yokohama",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "요코하마",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 35.43333,
+      "longitude": 139.65,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1848354/",
+      "sourceCountryCode": "JP",
+      "defaultDisplayNameKo": "요코하마",
+      "shortDescriptionKo": "일본 가나가와현의 중심 도시",
+      "displayTimeline": [],
+      "historicalDisplayCoverage": "modern-label-only"
+    },
+    {
+      "geonameId": 1856057,
+      "names": [
+        {
+          "text": "名古屋",
+          "language": "ja",
+          "usage": "standard"
+        },
+        {
+          "text": "Nagoya",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "나고야",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 35.18147,
+      "longitude": 136.90641,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1856057/",
+      "sourceCountryCode": "JP",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "那古野는 옛 지역명, 도시명과 구분",
+            "sourceUrl": "https://www.museum.city.nagoya.jp/exhibition/special/past/tenji191116.html",
+            "researchDetail": "那古野는 중세 나고야 성 주변 지역명. 19세기 도시 전체의 공식 옛 명칭으로 통합하지 않음."
+          }
+        ]
+      },
+      "defaultDisplayNameKo": "나고야",
+      "shortDescriptionKo": "옛 지역명 那古野와 구분",
+      "displayTimeline": [],
+      "historicalDisplayCoverage": "modern-label-only"
+    },
+    {
+      "geonameId": 1857910,
+      "names": [
+        {
+          "text": "京都",
+          "language": "ja",
+          "usage": "standard"
+        },
+        {
+          "text": "Kyoto",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "교토",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 35.02107,
+      "longitude": 135.75385,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1857910/",
+      "sourceCountryCode": "JP",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "平安京는 고대 수도명, 근대 개칭 아님",
+            "sourceUrl": "https://www.city.kyoto.lg.jp/kamigyo/page/0000012512.html",
+            "researchDetail": "1868년 전후에도 京都라는 명칭이 사용되었음. 平安京는 고대 수도 관련 지명으로 이 19세기 이후 목록의 공식 개칭으로 처리하지 않음."
+          }
+        ]
+      },
+      "defaultDisplayNameKo": "교토",
+      "shortDescriptionKo": "일본의 옛 수도",
+      "displayTimeline": [],
+      "historicalDisplayCoverage": "modern-label-only"
+    },
+    {
+      "geonameId": 1809858,
+      "names": [
+        {
+          "text": "广州",
+          "language": "zh-Hans",
+          "usage": "standard"
+        },
+        {
+          "text": "廣州",
+          "language": "zh-Hant",
+          "usage": "alternate",
+          "variantType": "traditionalCharacters"
+        },
+        {
+          "text": "Guangzhou",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "광저우",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "광주",
+          "language": "ko",
+          "usage": "alternate",
+          "variantType": "conventionalSinoKorean"
+        },
+        {
+          "text": "Canton",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "traditionalEnglishExonym",
+          "note": "과거 서구권 외명, 공식 중국 지명의 개칭은 아님."
+        },
+        {
+          "text": "Gwong Zau",
+          "language": "yue-Latn",
+          "usage": "alternate",
+          "variantType": "cantoneseRomanization"
+        }
+      ],
+      "latitude": 23.11667,
+      "longitude": 113.25,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1809858/",
+      "sourceCountryCode": "CN",
+      "koMapLabels": [
+        {
+          "whenLocalToponym": "广州",
+          "before1912": "광주",
+          "from1912": "광저우"
+        },
+        {
+          "whenLocalToponym": "廣州",
+          "before1912": "광주",
+          "from1912": "광저우"
+        }
+      ],
+      "defaultDisplayNameKo": "광저우",
+      "shortDescriptionKo": "1912년부터 한국어 표기 광저우",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "광주",
+          "kind": "koreanEditorialTranscription"
+        },
+        {
+          "fromDate": "1912-01-01",
+          "nameKo": "광저우",
+          "kind": "koreanEditorialTranscription"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 1792947,
+      "names": [
+        {
+          "text": "天津",
+          "language": "zh",
+          "usage": "standard"
+        },
+        {
+          "text": "Tianjin",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "톈진",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "천진",
+          "language": "ko",
+          "usage": "alternate",
+          "variantType": "conventionalSinoKorean"
+        },
+        {
+          "text": "Tientsin",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "traditionalEnglishRomanization"
+        }
+      ],
+      "latitude": 39.14222,
+      "longitude": 117.17667,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1792947/",
+      "sourceCountryCode": "CN",
+      "koMapLabels": [
+        {
+          "whenLocalToponym": "天津",
+          "before1912": "천진",
+          "from1912": "톈진"
+        }
+      ],
+      "defaultDisplayNameKo": "톈진",
+      "shortDescriptionKo": "1912년부터 한국어 표기 톈진",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "천진",
+          "kind": "koreanEditorialTranscription"
+        },
+        {
+          "fromDate": "1912-01-01",
+          "nameKo": "톈진",
+          "kind": "koreanEditorialTranscription"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 1799962,
+      "names": [
+        {
+          "text": "南京",
+          "language": "zh",
+          "usage": "standard"
+        },
+        {
+          "text": "Nanjing",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "난징",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "남경",
+          "language": "ko",
+          "usage": "alternate",
+          "variantType": "conventionalSinoKorean"
+        },
+        {
+          "text": "Nanking",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "traditionalEnglishRomanization"
+        },
+        {
+          "text": "天京",
+          "language": "zh",
+          "usage": "historical",
+          "variantType": "taipingOfficialToponym",
+          "officialPeriod": {
+            "fromYear": 1853,
+            "toYear": 1864
+          },
+          "sourceUrl": "https://www.nanjing.gov.cn/zgnjsjb/csgk/202609/t20260930_5920372.html",
+          "note": "태평천국의 통치기에 적용되는 역사적 수도명."
+        },
+        {
+          "text": "천경",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "sinoKoreanOfTaipingName",
+          "officialPeriod": {
+            "fromYear": 1853,
+            "toYear": 1864
+          },
+          "sourceUrl": "https://www.nanjing.gov.cn/zgnjsjb/csgk/202609/t20260930_5920372.html"
+        },
+        {
+          "text": "Tianjing",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "romanizationOfTaipingName",
+          "officialPeriod": {
+            "fromYear": 1853,
+            "toYear": 1864
+          },
+          "sourceUrl": "https://www.nanjing.gov.cn/zgnjsjb/csgk/202609/t20260930_5920372.html"
+        }
+      ],
+      "latitude": 32.06167,
+      "longitude": 118.77778,
+      "featureClass": "P",
+      "featureCode": "PPLA",
+      "sourceUrl": "https://www.geonames.org/1799962/",
+      "sourceCountryCode": "CN",
+      "koMapLabels": [
+        {
+          "whenLocalToponym": "南京",
+          "before1912": "남경",
+          "from1912": "난징"
+        },
+        {
+          "whenLocalToponym": "天京",
+          "before1912": "천경",
+          "note": "태평천국 통치기 1853–1864년 한정"
+        }
+      ],
+      "historicalGeography": {
+        "linkedPlaces": [
+          {
+            "nameZh": "江寧府",
+            "nameKo": "강녕부",
+            "relation": "qingAdministrativeJurisdiction",
+            "note": "강녕부는 청대의 별도 행정구역",
+            "sourceUrl": "https://www.nanjing.gov.cn/zgnjsjb/csgk/202609/t20260930_5920372.html",
+            "researchNote": "청대 부 단위 관할. 도시 대표점과 동일 객체 아님."
+          }
+        ]
+      },
+      "defaultDisplayNameKo": "난징",
+      "shortDescriptionKo": "태평천국 시기에는 천경",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "남경",
+          "kind": "koreanEditorialTranscription"
+        },
+        {
+          "fromDate": "1912-01-01",
+          "nameKo": "난징",
+          "kind": "koreanEditorialTranscription"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "contextualDisplayNames": [
+        {
+          "nameKo": "천경",
+          "requiresAuthority": "태평천국",
+          "fromYear": 1853,
+          "toYear": 1864,
+          "requiresVerifiedPolityAtDate": true,
+          "sourceUrl": "https://www.nanjing.gov.cn/zgnjsjb/csgk/202609/t20260930_5920372.html"
+        }
+      ]
+    }
+  ],
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime"
+}

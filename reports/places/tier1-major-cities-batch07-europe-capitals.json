@@ -1,0 +1,432 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "07-europe-capitals",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0)",
+  "checkedOn": "2026-10-08",
+  "selection": "Eight indisputable major European capital-city points, all GeoNames P/PPLC; never the administrative ADM area.",
+  "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), decimal-degree settlement representative points rather than city/region polygons.",
+  "countryCodeSemantics": "sourceCountryCode is present-day GeoNames metadata only, not a historical ownership assignment.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime",
+  "historicNameScope": "Names relevant to 1801 onward; coexisting national-language exonyms are not official city renamings.",
+  "qualityNotes": [
+    "Budapest is a unified city from 1873-11-17; Buda, Pest and Óbuda were separate earlier settlements and are not names[] aliases. Suppress Budapest city label before formation.",
+    "Prag/Warschau are German exonyms, not date-switch legal renamings; Brussels names are coequal French/Dutch forms.",
+    "Athens became Greek capital in 1834 but retained its city identity/name. Αθήναι is a historical Greek written form, not an automatically dated official rename.",
+    "Amsterdam is a city point, not its municipality or metro; Brussels city point is distinct from the 19-municipality capital region.",
+    "Short displayed text is <=28 Unicode codepoints. Map renderer and production manifest are unchanged."
+  ],
+  "records": [
+    {
+      "geonameId": 756135,
+      "names": [
+        {
+          "text": "Warszawa",
+          "language": "pl",
+          "usage": "standard"
+        },
+        {
+          "text": "Warsaw",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "바르샤바",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Warschau",
+          "language": "de",
+          "usage": "alternate",
+          "variantType": "germanExonym",
+          "note": "독일어 명칭, 별도 공식 개칭 아님",
+          "sourceUrl": "https://www.geonames.org/756135/warsaw.html"
+        }
+      ],
+      "latitude": 52.22977,
+      "longitude": 21.01178,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/756135/",
+      "sourceCountryCode": "PL",
+      "defaultDisplayNameKo": "바르샤바",
+      "shortDescriptionKo": "폴란드의 수도",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "바르샤바",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/756135/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 2761369,
+      "names": [
+        {
+          "text": "Wien",
+          "language": "de",
+          "usage": "standard"
+        },
+        {
+          "text": "Vienna",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "빈",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 48.20849,
+      "longitude": 16.37208,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2761369/",
+      "sourceCountryCode": "AT",
+      "defaultDisplayNameKo": "빈",
+      "shortDescriptionKo": "오스트리아의 수도",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "빈",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/2761369/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "동명 오스트리아 주와 도시 구분",
+            "sourceUrl": "https://www.geonames.org/2761369/vienna.html"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3067696,
+      "names": [
+        {
+          "text": "Praha",
+          "language": "cs",
+          "usage": "standard"
+        },
+        {
+          "text": "Prague",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "프라하",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Prag",
+          "language": "de",
+          "usage": "alternate",
+          "variantType": "germanExonym",
+          "note": "독일어 명칭, 도시 개칭은 아님",
+          "sourceUrl": "https://www.geonames.org/3067696/prague.html"
+        }
+      ],
+      "latitude": 50.08804,
+      "longitude": 14.42076,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3067696/",
+      "sourceCountryCode": "CZ",
+      "defaultDisplayNameKo": "프라하",
+      "shortDescriptionKo": "체코어·독일어 지명 병용",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "프라하",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/3067696/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 3054643,
+      "names": [
+        {
+          "text": "Budapest",
+          "language": "hu",
+          "usage": "standard"
+        },
+        {
+          "text": "부다페스트",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 47.49835,
+      "longitude": 19.04045,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3054643/",
+      "sourceCountryCode": "HU",
+      "defaultDisplayNameKo": "부다페스트",
+      "shortDescriptionKo": "1873년 부다·페슈트·오부다 통합",
+      "displayTimeline": [
+        {
+          "fromDate": "1873-11-17",
+          "nameKo": "부다페스트",
+          "kind": "municipalUnification",
+          "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1873",
+      "temporalEligibility": {
+        "cityEstablishedFromDate": "1873-11-17",
+        "beforeCityEstablished": "suppress-city-label",
+        "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest",
+        "note": "1873년 통합 이전은 별도 취락"
+      },
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1873-11-17",
+            "type": "municipalUnification",
+            "detail": "부다·페슈트·오부다 통합",
+            "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest",
+            "researchDetail": "부다(Buda)·페슈트(Pest)·오부다(Óbuda)와 마르기트섬이 통합해 하나의 수도 행정기구로 운영되기 시작. 1872년 법률과 1873년 실제 출범일을 구분."
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameHu": "Buda",
+            "nameKo": "부다",
+            "relation": "pre1873SeparateSettlement",
+            "note": "통합 전 도나우 서안의 도시",
+            "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest"
+          },
+          {
+            "nameHu": "Pest",
+            "nameKo": "페슈트",
+            "relation": "pre1873SeparateSettlement",
+            "note": "통합 전 도나우 동안의 도시",
+            "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest"
+          },
+          {
+            "nameHu": "Óbuda",
+            "nameKo": "오부다",
+            "relation": "pre1873SeparateSettlement",
+            "note": "통합 전 별개의 도시",
+            "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "1872년 법률, 1873년 통합 시행",
+            "sourceUrl": "https://archiv.budapest.hu/Lapok/Budapest-140-%C3%A9ves---v%C3%A1rosismereti-vet%C3%A9lked%C5%91t-rendeztek-k%C3%B6z%C3%A9piskol%C3%A1soknak.aspx?oe53=1"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 264371,
+      "names": [
+        {
+          "text": "Αθήνα",
+          "language": "el",
+          "usage": "standard"
+        },
+        {
+          "text": "Athens",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "아테네",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Αθήναι",
+          "language": "el",
+          "usage": "historical",
+          "variantType": "historicalFormalGreekOrthography",
+          "note": "역사적 그리스어 문어 형태",
+          "sourceUrl": "https://www.geonames.org/264371/athens.html"
+        }
+      ],
+      "latitude": 37.98376,
+      "longitude": 23.72784,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/264371/",
+      "sourceCountryCode": "GR",
+      "defaultDisplayNameKo": "아테네",
+      "shortDescriptionKo": "1834년 그리스 수도로 지정",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "아테네",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/264371/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 1834,
+            "type": "becameNationalCapital",
+            "detail": "그리스 왕국 수도로 지정",
+            "sourceUrl": "https://www.namuseum.gr/en/to-moyseio/istoria-toy-moyseioy/"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "수도 지정은 도시명 개칭 아님",
+            "sourceUrl": "https://www.namuseum.gr/en/to-moyseio/istoria-toy-moyseioy/"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 2759794,
+      "names": [
+        {
+          "text": "Amsterdam",
+          "language": "nl",
+          "usage": "standard"
+        },
+        {
+          "text": "암스테르담",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 52.37403,
+      "longitude": 4.88969,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2759794/",
+      "sourceCountryCode": "NL",
+      "defaultDisplayNameKo": "암스테르담",
+      "shortDescriptionKo": "네덜란드의 수도",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "암스테르담",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/2759794/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "같은 이름의 시·도시권과 구별",
+            "sourceUrl": "https://www.geonames.org/2759794/amsterdam.html"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 2800866,
+      "names": [
+        {
+          "text": "Bruxelles",
+          "language": "fr",
+          "usage": "standard"
+        },
+        {
+          "text": "Brussel",
+          "language": "nl",
+          "usage": "standard"
+        },
+        {
+          "text": "Brussels",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "브뤼셀",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 50.85045,
+      "longitude": 4.34878,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2800866/",
+      "sourceCountryCode": "BE",
+      "defaultDisplayNameKo": "브뤼셀",
+      "shortDescriptionKo": "프랑스어·네덜란드어 병용",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "브뤼셀",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/2800866/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "linkedPlaces": [
+          {
+            "nameEn": "Brussels-Capital Region",
+            "relation": "distinctFirstOrderAdministrativeRegion",
+            "note": "19개 자치체를 포함한 광역구역",
+            "sourceUrl": "https://governance.brussels/en/explainers/brussels-overview"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "프랑스어·네덜란드어 동등 사용",
+            "sourceUrl": "https://www.vlaanderen.be/uw-overheid/over-vlaanderen/taalwetwijzer/taalwetwijs-in-brussel"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 2267057,
+      "names": [
+        {
+          "text": "Lisboa",
+          "language": "pt",
+          "usage": "standard"
+        },
+        {
+          "text": "Lisbon",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "리스본",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 38.72509,
+      "longitude": -9.1498,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2267057/",
+      "sourceCountryCode": "PT",
+      "defaultDisplayNameKo": "리스본",
+      "shortDescriptionKo": "포르투갈의 수도",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "리스본",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/2267057/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    }
+  ]
+}

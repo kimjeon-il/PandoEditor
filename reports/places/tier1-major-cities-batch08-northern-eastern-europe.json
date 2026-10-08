@@ -1,0 +1,537 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "08-northern-eastern-europe",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0)",
+  "checkedOn": "2026-10-08",
+  "selection": "Eight clearly established European capital or federal-seat populated-place records, all GeoNames P/PPLC. Bern is de facto federal seat, not a legally designated capital.",
+  "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), geographic lat/long decimal degrees. Points are settlement representatives, not historical municipality polygons.",
+  "countryCodeSemantics": "sourceCountryCode is present-day GeoNames source metadata only, never historic sovereignty.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime",
+  "historicNameScope": "Attested names in use during/after 1801. Administrative status and orthographic/editorial transitions are not mistaken for city rename.",
+  "qualityNotes": [
+    "Oslo official legal rename effective 1925-01-01. Christiania→Kristiania is an earlier Norwegian spelling shift (state 1877, municipal 1897), not a separate Korean map label.",
+    "Kjøbenhavn→København 1906 municipal spelling change, not an official renamed city or a distinct Korean city name.",
+    "Helsinki and Helsingfors coexist in Finnish and Swedish. Dublin and Baile Átha Cliath similarly coexist.",
+    "Bern became federal seat on 1848-11-28; no technically designated Swiss de jure national capital.",
+    "Kyiv: PandoEditor Korean label convention changes 키예프→키이우 on Ukraine's 1991-08-24 independence declaration. The 2022-03-10 South Korean norm adoption remains evidence only. Ukrainian Київ and Russian Киев are coexisting language forms; no official city renaming occurred in 1991.",
+    "Bucharest 1862-02-05 Gregorian (24 Jan Julian) became capital; city name persisted.",
+    "UI notes/details and short descriptions <=28 Unicode codepoints; detailed notes and sources retained separately.",
+    "Data is staged for later merge; map runtime and production manifest not updated."
+  ],
+  "records": [
+    {
+      "geonameId": 2673730,
+      "names": [
+        {
+          "text": "Stockholm",
+          "language": "sv",
+          "usage": "standard"
+        },
+        {
+          "text": "스톡홀름",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 59.32938,
+      "longitude": 18.06871,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2673730/",
+      "sourceCountryCode": "SE",
+      "defaultDisplayNameKo": "스톡홀름",
+      "shortDescriptionKo": "스웨덴의 수도",
+      "displayTimeline": [
+        {
+          "nameKo": "스톡홀름",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/2673730/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801"
+    },
+    {
+      "geonameId": 2618425,
+      "names": [
+        {
+          "text": "København",
+          "language": "da",
+          "usage": "standard"
+        },
+        {
+          "text": "Copenhagen",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "코펜하겐",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Kjøbenhavn",
+          "language": "da",
+          "usage": "historical",
+          "variantType": "historicalDanishOrthography",
+          "sourceUrl": "https://sproget.dk/sprogviden/spoergsmaal-og-svar/dansk-sprognaevn/sv00016847/",
+          "note": "1906년 시 표기 변경, 철자 병용"
+        }
+      ],
+      "latitude": 55.67594,
+      "longitude": 12.56553,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2618425/",
+      "sourceCountryCode": "DK",
+      "defaultDisplayNameKo": "코펜하겐",
+      "shortDescriptionKo": "1906년 덴마크어 표기 변경",
+      "displayTimeline": [
+        {
+          "nameKo": "코펜하겐",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/2618425/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 1906,
+            "type": "municipalOrthographyChange",
+            "detail": "Kjøbenhavn → København",
+            "sourceUrl": "https://sproget.dk/sprogviden/spoergsmaal-og-svar/dansk-sprognaevn/sv00016847/"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "철자 변경, 도시명·발음 유지",
+            "sourceUrl": "https://sproget.dk/sprogviden/spoergsmaal-og-svar/dansk-sprognaevn/sv00016847/"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3143244,
+      "names": [
+        {
+          "text": "Oslo",
+          "language": "nb",
+          "usage": "standard"
+        },
+        {
+          "text": "오슬로",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Christiania",
+          "language": "no",
+          "usage": "historical",
+          "variantType": "earlierOfficialSpelling",
+          "sourceUrl": "https://snl.no/Oslo"
+        },
+        {
+          "text": "Kristiania",
+          "language": "no",
+          "usage": "historical",
+          "variantType": "lateNineteenthCenturyOfficialSpelling",
+          "sourceUrl": "https://snl.no/Oslo",
+          "usageNotes": {
+            "fromYearInStateRecords": 1877,
+            "fromYearInMunicipalRecords": 1897
+          }
+        },
+        {
+          "text": "크리스티아니아",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "koreanRenderingOfPriorCityName",
+          "sourceUrl": "https://snl.no/Oslo"
+        }
+      ],
+      "latitude": 59.91273,
+      "longitude": 10.74609,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3143244/",
+      "sourceCountryCode": "NO",
+      "defaultDisplayNameKo": "오슬로",
+      "shortDescriptionKo": "1925-01-01 크리스티아니아 개칭",
+      "displayTimeline": [
+        {
+          "nameKo": "크리스티아니아",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://snl.no/Oslo"
+        },
+        {
+          "nameKo": "오슬로",
+          "fromDate": "1925-01-01",
+          "kind": "officialRenaming",
+          "sourceUrl": "https://lovdata.no/lov/1924-07-11-4"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 1877,
+            "type": "writtenFormChange",
+            "detail": "정부 문서에 Kristiania 사용",
+            "sourceUrl": "https://snl.no/Oslo"
+          },
+          {
+            "year": 1897,
+            "type": "writtenFormChange",
+            "detail": "시 행정에 Kristiania 사용",
+            "sourceUrl": "https://snl.no/Oslo"
+          },
+          {
+            "date": "1925-01-01",
+            "type": "officialCityRenaming",
+            "detail": "크리스티아니아 → 오슬로",
+            "sourceUrl": "https://lovdata.no/lov/1924-07-11-4"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "옛 Oslo는 별도 구도심 지명",
+            "sourceUrl": "https://snl.no/Oslo"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 658225,
+      "names": [
+        {
+          "text": "Helsinki",
+          "language": "fi",
+          "usage": "standard"
+        },
+        {
+          "text": "Helsingfors",
+          "language": "sv",
+          "usage": "standard"
+        },
+        {
+          "text": "헬싱키",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 60.16952,
+      "longitude": 24.93545,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/658225/",
+      "sourceCountryCode": "FI",
+      "defaultDisplayNameKo": "헬싱키",
+      "shortDescriptionKo": "핀란드어·스웨덴어 명칭 병용",
+      "displayTimeline": [
+        {
+          "nameKo": "헬싱키",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/658225/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 1812,
+            "type": "becameGrandDuchyCapital",
+            "detail": "핀란드 대공국 수도 지정",
+            "sourceUrl": "https://historia.hel.fi/en/kaannekohdat/1800-luku/1812-capital-city"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "스웨덴어 Helsingfors 병용",
+            "sourceUrl": "https://historia.hel.fi/en/ilmiot/helsinki-residents/helsinki-of-many-languages"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 2964574,
+      "names": [
+        {
+          "text": "Dublin",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "Baile Átha Cliath",
+          "language": "ga",
+          "usage": "standard"
+        },
+        {
+          "text": "더블린",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 53.33306,
+      "longitude": -6.24889,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2964574/",
+      "sourceCountryCode": "IE",
+      "defaultDisplayNameKo": "더블린",
+      "shortDescriptionKo": "영어·아일랜드어 명칭 병용",
+      "displayTimeline": [
+        {
+          "nameKo": "더블린",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/2964574/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "notes": [
+          {
+            "detail": "더블린시·더블린주 구분",
+            "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/1/section/12/revised/en/html"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 2661552,
+      "names": [
+        {
+          "text": "Bern",
+          "language": "de",
+          "usage": "standard"
+        },
+        {
+          "text": "Berne",
+          "language": "fr",
+          "usage": "alternate",
+          "variantType": "frenchExonym",
+          "sourceUrl": "https://www.aboutswitzerland.eda.admin.ch/en/political-system"
+        },
+        {
+          "text": "Berna",
+          "language": "it",
+          "usage": "alternate",
+          "variantType": "italianExonym",
+          "sourceUrl": "https://www.aboutswitzerland.eda.admin.ch/en/political-system"
+        },
+        {
+          "text": "베른",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 46.94809,
+      "longitude": 7.44744,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2661552/",
+      "sourceCountryCode": "CH",
+      "defaultDisplayNameKo": "베른",
+      "shortDescriptionKo": "1848년부터 스위스 연방정부 소재지",
+      "displayTimeline": [
+        {
+          "nameKo": "베른",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/2661552/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1848-11-28",
+            "type": "becameFederalSeat",
+            "detail": "연방정부 소재지로 선정",
+            "sourceUrl": "https://bern.com/en/explore/guided-city-tours/1848-berns-birth-as-a-federal-city?type=PUBLIC"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "법률상 정식 수도는 아님",
+            "sourceUrl": "https://www.aboutswitzerland.eda.admin.ch/en/political-system"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 703448,
+      "names": [
+        {
+          "text": "Київ",
+          "language": "uk",
+          "usage": "standard"
+        },
+        {
+          "text": "Kyiv",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "키이우",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Киев",
+          "language": "ru",
+          "usage": "alternate",
+          "variantType": "russianLanguageExonym",
+          "sourceUrl": "https://mfa.gov.ua/en/correctua"
+        },
+        {
+          "text": "Kiev",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "formerCommonEnglishRomanization",
+          "sourceUrl": "https://mfa.gov.ua/en/correctua",
+          "note": "러시아어 기반 영문 전사"
+        },
+        {
+          "text": "키예프",
+          "language": "ko",
+          "usage": "alternate",
+          "variantType": "russianBasedKoreanExonym",
+          "sourceUrl": "https://www.korean.go.kr/front/board/boardStandardView.do?b_seq=877&board_id=6&mn_id=184",
+          "note": "옛 지도 표기, 검색 별칭 유지"
+        }
+      ],
+      "latitude": 50.45466,
+      "longitude": 30.5238,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/703448/",
+      "sourceCountryCode": "UA",
+      "defaultDisplayNameKo": "키이우",
+      "shortDescriptionKo": "1991년 독립 이후 키이우 표기",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "키예프",
+          "kind": "historicalMapConvention",
+          "sourceUrl": "https://www.korean.go.kr/front/board/boardStandardView.do?b_seq=877&board_id=6&mn_id=184"
+        },
+        {
+          "fromDate": "1991-08-24",
+          "nameKo": "키이우",
+          "kind": "koreanEditorialTranscription",
+          "sourceUrl": "https://zakon.rada.gov.ua/laws/show/en/1427-12",
+          "note": "독립 이후 우크라이나어 기준 표기",
+          "transitionMeaning": "PandoEditor-selected Korean map-label convention anchored to Ukraine's declaration of independence, not a renaming or change of pronunciation enacted on 1991-08-24"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1991-08-24",
+            "type": "independenceDeclaration",
+            "detail": "우크라이나 독립 선언",
+            "sourceUrl": "https://zakon.rada.gov.ua/laws/show/en/1427-12",
+            "displayEffect": "Korean map-label style transition selected by PandoEditor, not an official city rename"
+          },
+          {
+            "date": "2022-03-10",
+            "type": "referenceKoreanOrthographyDecision",
+            "detail": "국립국어원 키이우 표기 추가",
+            "sourceUrl": "https://www.korean.go.kr/front/board/boardStandardView.do?b_seq=877&board_id=6&mn_id=184"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "2022년은 도시 개칭이 아님",
+            "sourceUrl": "https://www.korean.go.kr/front/board/boardStandardView.do?b_seq=877&board_id=6&mn_id=184"
+          },
+          {
+            "detail": "1991년 전환은 편집기 표기 기준",
+            "sourceUrl": "https://zakon.rada.gov.ua/laws/show/en/1427-12"
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "nameEn": "Kyiv City",
+            "relation": "distinctTopLevelAdministrativeArea",
+            "note": "도시와 광역 행정구역 구별",
+            "sourceUrl": "https://www.geonames.org/703448/kyiv.html"
+          }
+        ]
+      },
+      "displayPolicyNote": "PandoEditor uses 키예프 before 1991-08-24 and 키이우 from that date as an editorial historical map convention, irrespective of when a Korean language authority endorsed either form. Ukrainian Київ and Russian Киев both predate independence; neither was officially renamed on that date. The 2022-03-10 standard-language authority decision is reference metadata only."
+    },
+    {
+      "geonameId": 683506,
+      "names": [
+        {
+          "text": "București",
+          "language": "ro",
+          "usage": "standard"
+        },
+        {
+          "text": "Bucharest",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "부쿠레슈티",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Bucureşti",
+          "language": "ro",
+          "usage": "alternate",
+          "variantType": "legacyCedillaOrthography",
+          "note": "옛 문자 인코딩 철자"
+        }
+      ],
+      "latitude": 44.43225,
+      "longitude": 26.10626,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/683506/",
+      "sourceCountryCode": "RO",
+      "defaultDisplayNameKo": "부쿠레슈티",
+      "shortDescriptionKo": "1862년 연합공국 수도 지정",
+      "displayTimeline": [
+        {
+          "nameKo": "부쿠레슈티",
+          "fromYear": 1801,
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/683506/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1862-02-05",
+            "type": "becameUnitedPrincipalitiesCapital",
+            "detail": "몰다비아-왈라키아 연합공국 수도 지정",
+            "sourceUrl": "https://agerpres.ro/documentare/2022/01/18/fragment-de-istorie-primul-guvern-unitar-si-primul-parlament-unic-ale-romaniei-22-si-24-ian-1862--851370",
+            "calendar": "Gregorian",
+            "note": "구력 1월 24일, 신력 2월 5일",
+            "researchDetail": "1859년 몰다비아·왈라키아의 군주 선출을 통한 결합 이후, 1862년 2월 3일 단일 정부가 구성되고 2월 5일 통합 의회가 부쿠레슈티에서 개원하며 연합공국 수도로 지정되었다."
+          }
+        ],
+        "notes": [
+          {
+            "detail": "수도 지정은 도시명 개칭 아님",
+            "sourceUrl": "https://agerpres.ro/documentare/2022/01/18/fragment-de-istorie-primul-guvern-unitar-si-primul-parlament-unic-ale-romaniei-22-si-24-ian-1862--851370"
+          }
+        ]
+      }
+    }
+  ]
+}
