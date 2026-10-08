@@ -11,6 +11,8 @@
 - **6단계:** 웹 work/gis에서 구형 GIS 자산 3,101개의 Git 트리·매니페스트·앱 출처와 코드 의존성을 감사하는 도구 및 CI 추가. Node 7/7·실데이터 감사 성공, 현재 필요 자산 불일치 0건·앱 고정 원본 7/7 일치. 오래된 GIS 파일 2,124개(564,189,000 bytes)를 보관 검토 대상으로 분류하고 **삭제·재압축 없이 보존**.
 - **7단계:** 웹 work/gis에 공개 Pages·기존 앱 Releases·웹/앱 전체 브랜치의 구형 GIS 자산 교차검증기를 추가하고 CI 실데이터 검증 **15/15 및 성공**. GitHub Pages는 main 루트 legacy 배포이며 **보관 후보 26그룹/2,124개/564,189,000 bytes의 각 그룹별 대표 URL이 현재 응답**한다. 앱 미리보기 릴리스 23개와 웹 7·앱 5개 브랜치 조사. **실제 삭제 가능으로 승인된 파일은 0개**, 기존 바이트·배포·제품 main 병합 없이 보존.
 
+- **8단계:** 웹 work/gis에 기존 공개 URL 보존을 전제로 한 **웹 7·앱 5개 브랜치 통합 정리 사전검증기** 구현·커밋. [실제 CI #37826715828](https://github.com/kimjeon-il/Pando/actions/runs/37826715828) **Node 25/25 통과**, 파일별 Git Blob·복원 커밋을 고정한 2,124개/564,189,000 bytes 삭제 잠금 목록 생성, 기존 파일이 있는 웹 브랜치 간 SHA 차이 0건. 다만 Pages가 main /에서 배포 중이며 main assets/data 1,108,435,890 bytes가 공식 1GB 제한 초과. 앱 과거 23개 릴리스·전후 URL 전체 바이트 미검증으로 **배포·삭제 승인 0건**. 원본 데이터와 Pages 설정은 미변경.
+
 ## 기준선과 구현 링크
 
 - 1단계 웹 기준 Git 스냅샷: [`2b79bcbe48c2`](https://github.com/kimjeon-il/Pando/tree/2b79bcbe48c2b725624a576c7746607771875a93)
@@ -92,6 +94,17 @@
 - **전부 retain-public-asset-url:** 지금 파일을 제거하면 기존 Pages 경로의 공개 접근을 깨뜨릴 수 있다. Git에 이전 파일이 남는 것과 현재 외부 URL의 계속된 접근은 다른 문제이므로, 승인할 삭제 후보는 0개다.
 - [7단계 보고서](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/data-versioning-phase7.md)와 [실제 브랜치·웹 URL 교차검증 JSON](https://github.com/kimjeon-il/Pando/actions/runs/37822762630/artifacts/11569922024) 기록. 앱 work/gis에도 동일한 보고서를 둔다.
 - 다음 정리 과정은 **구 URL의 동일 경로 배포 보존**이 선행되어야 한다. 예: 과거 Git 커밋에서 정본을 가져와 Pages Actions 배포 산출물에 포함하는 방식. 기존 릴리스에 대한 전체 URL·원본 바이트 정합성 시험 및 사용자 승인 전에는 삭제·재압축·Pages 배포 방식 변경을 수행하지 않는다.
+## 8단계 전체 브랜치 통합 정리 사전검증
+
+- 웹 구현: tools/plan-gis-archive-rollout.mjs, tests/unit/gis-archive-rollout.test.mjs, .github/workflows/gis-archive-stage8-preflight.yml. 웹 work/gis에만 구현했고 Pages 배포 권한과 파일 삭제 기능을 부여하지 않았다.
+- [CI #37826715828](https://github.com/kimjeon-il/Pando/actions/runs/37826715828) **25/25 단위검사 및 실데이터 프리플라이트 통과**. 브랜치별 HEAD SHA·보관 후보 경로/Blob/크기 교차검증 및 2,124개 파일에 대한 복원 가능한 SHA 고정 목록 생성.
+- 현재 공식 Pages는 **main 루트 /**에서 배포 중. main의 assets/data가 **1,108,435,890 bytes**로 공식 Published Pages site **1GB 제한을 108,435,890 bytes 초과**. Actions 전환만으로 용량 제한이 없어지지 않으므로 정적 배포 파일 구성 변경이 필요하다.
+- **기존 공개 자산 그룹 26개/2,124개/564,189,000 bytes는 그대로 보존**. 파일이 존재하는 웹 브랜치 간 다른 SHA/크기는 0건. App 브랜치 5개·이전 Releases 23개 및 Pages 공개 URL 의존성도 확인했지만 이전 바이너리 전체 정밀검사는 미실시.
+- **차단 사유:** Pages 1GB 초과, 앱 23개 릴리스 내용 미검증, 전체 2,124개 구 URL의 배포 전후 SHA 검사 미실시, Pages 전환 자체 미실시, 실제 삭제 명시 승인 필요.
+- [8단계 상세 보고서](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/data-versioning-phase8.md), [롤아웃 계획 및 2,124개 파일의 Blob 잠금 목록(JSON)](https://github.com/kimjeon-il/Pando/actions/runs/37826715828/artifacts/11572051217).
+- 실행 순서: 고정 원본·브랜치 HEAD 확인 → 1GB 이하 동일 URL 정적 산출물 구축/검증 → Pages 전환·전후 URL 검증 → 모든 브랜치별 정확한 삭제 커밋 사전작성 → 승인받은 한 번의 조정된 배치 적용 → 사후 Web/App 회귀. GitHub 다중 브랜치 ref 변경은 진정한 원자적 트랜잭션이 아니므로 각 ref마다 lease/rollback 기록 필요.
+- **8단계는 사전검증 구축 완료, 실물 삭제·배포 구성 전환은 미실시.** 5단계 미해결 Qt 컨트롤러 테스트 4건도 그대로 보류한다.
+
 ## 위험 및 남은 의존성
 
 - 웹 Worker는 새 데이터 매니페스트로 전환했지만 공유 국경선 캐시의 레거시 `v0.34.0` 경로는 호환 목적으로 유지함.
