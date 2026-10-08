@@ -42,7 +42,7 @@ WorldAsset WorldDataset::asset(const QString& key) const {
         {"countryCanonical","countries-canonical-v0.33.0.pcg.gz","0.33.0","54146d9eeb28e4af08e094f5061bf64689e6bdf3"},
         {"canonicalMesh","world-mesh-v0.12.6.bin.gz","0.12.6","8c73420b92e89ab64cbe75dcc5016efe2c0a22b6"},
         {"terrain","terrain/v0.12.6/manifest.json","0.12.6","6821c49315ffd381758f81dfe4d83b6b574f0ad4"},
-        {"hydro","hydro/v0.13.1/manifest.json","0.13.1","67c648a207f4b26d69f0a86243e88c54b9241a2e"}}};
+        {"hydro","hydro/v0.13.1/manifest.json","0.13.1","9a9cdb719351e51d2ff509c410cae8741ac36a0a"}}};
     auto found=std::find_if(identities.begin(),identities.end(),[&](const auto& item){return key==item.key;});
     require(found!=identities.end(),"Unknown world dataset asset");
     const auto object=manifest_.value(key).toObject();
