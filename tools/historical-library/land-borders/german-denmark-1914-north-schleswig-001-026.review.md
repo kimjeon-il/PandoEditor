@@ -1,5 +1,7 @@
 # 독일제국–덴마크 1914년 국경 1~26번 표석: 검증 기록
 
+> **2026-10-09 Hügum 한정 정밀 검토:** 1878년 지도에서 **Hårup의 일부 큰 곡류가 0.5 CSS px 검토 띠 밖에 나타나는 차이**를 육안 확인했다. **1914년 국경 오차로 확정하지 않았고**, 합류점 좌표도 미확정이다. 1931년 독일 국가지도 목록은 Hügum 도엽의 전면 개정 **B 1916**을 기록하나, 기준일인 1914년 이후이므로 직접 대체 자료가 아니다. [선별 검사 기록](german-denmark-1914-north-schleswig-001-026.0619-hugum-stage4.hotspots.review.md) · [±0.5px 중첩 메타데이터](german-denmark-1914-north-schleswig-001-026.0619-hugum-stage4.hotspots.json). 기존 국경선은 유지한다.
+
 > **2026-10-09 3차 Spandet 판독 중 발견한 범위 오류:** 현재 26.683km짜리 '1~26번 표석' 작업 GeoJSON에는 **Gjelsbro의 26번 이후 Gels Å 하천 구간(개략 약 6.6km)**도 포함된다. 1865년 국경획정의정서에서 26번이 끝나는 지점은 Gjelsbro이며, 강을 따라 Flads Å까지 가는 구간은 **26번 이후**다. 26번의 역사적 좌표가 아직 미확정이므로 기존 마스터 지오메트리는 보존하되, 이 파일을 '1~26번만의 최종 지도'로 취급 금지. [3차 역사 지도 검토](german-denmark-1914-north-schleswig-001-026.0719-spandet-stage3.review.md) 및 [범위 오류 진단](german-denmark-1914-north-schleswig-001-026.0719-spandet-stage3.scope-audit.json) 참고.
 
 
