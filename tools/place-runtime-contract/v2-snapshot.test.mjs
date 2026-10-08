@@ -210,6 +210,40 @@ test('batch 13 distinguishes five capital settlements from identically named sov
   assert.equal(records[1].historicalGeography.events[0].type,'traditionalFoundationLegend');
 });
 
+test('batch 14 validates five cities, excludes Vatican, and respects approximate 1936 name changes', () => {
+  const batch=json('reports/places/tier1-major-cities-batch14-north-atlantic-anatolia-caucasus.json');
+  const r=batch.records;
+  assert.deepEqual(r.map(x=>x.geonameId),[3413829,323786,611717,616052,587084]);
+  assert.deepEqual(r.map(x=>x.defaultDisplayNameKo),['레이캬비크','앙카라','트빌리시','예레반','바쿠']);
+  assert.deepEqual(r.map(x=>x.sourceCountryCode),['IS','TR','GE','AM','AZ']);
+  assert.ok(batch.selection.includes('Vatican City omitted'));
+  assert.ok(r.every(x=>x.featureClass==='P'&&x.featureCode==='PPLC'));
+  for(const city of r) {
+    assert.ok(city.names.some(n=>n.language==='ko'&&n.text===city.defaultDisplayNameKo&&n.usage==='standard'));
+    assert.ok(city.names.some(n=>n.language==='en'&&n.usage==='standard'));
+    assert.ok(city.names.some(n=>!['ko','en'].includes(n.language)&&n.usage==='standard'));
+    for(const step of city.displayTimeline)
+      assert.ok(city.names.some(n=>n.language==='ko'&&n.text===step.nameKo));
+    for(const value of [
+      city.shortDescriptionKo,...city.names.map(n=>n.note),
+      ...city.displayTimeline.map(n=>n.note),
+      ...(city.historicalGeography?.events||[]).map(n=>n.detail),
+      ...(city.historicalGeography?.notes||[]).map(n=>n.detail)
+    ].filter(Boolean))assert.ok([...value].length<=28,city.geonameId+': '+value);
+  }
+  for(const [index,before,after] of [[2,'티플리스','트빌리시'],[3,'에리반','예레반']]) {
+    const city=r[index];
+    assert.deepEqual(city.displayTimeline.map(x=>[x.fromYear,x.nameKo]),[[1801,before],[1936,after]]);
+    assert.ok(city.displayTimeline.every(x=>!x.fromDate),'Disputed 1936 date must be year-only');
+    const nameAt=year=>city.displayTimeline.filter(x=>x.fromYear<=year).at(-1)?.nameKo;
+    assert.equal(nameAt(1935),before);
+    assert.equal(nameAt(1937),after);
+  }
+  assert.equal(r[1].historicalGeography.events.find(x=>x.type==='turkishCapitalDesignated').date,'1923-10-13');
+  assert.equal(r[4].historicalGeography.events.find(x=>x.type==='azerbaijanGovernmentMovesFromGanja').date,'1918-09-17');
+  assert.ok(r.filter((x,i)=>![2,3].includes(i)).every(x=>x.displayTimeline.length===1));
+});
+
 test('portable multilingual rows and provenance match reviewed city records', () => {
   let scenarios = 0;
   const sourceCache = new Map();
