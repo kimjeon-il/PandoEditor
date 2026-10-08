@@ -1,0 +1,42 @@
+name: Audit 1914 Denmark border stones 1-26
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [work/gis]
+    paths:
+      - tools/audit_north_schleswig_1914_001_026.py
+      - .github/workflows/north-schleswig-1914-001-026-audit.yml
+      - tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.geojson
+      - tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.diagnostics.json
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/gis
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --disable-pip-version-check requests shapely pyproj
+      - name: Compare provisional boundary with modern Seem By cadastral unit
+        run: python tools/audit_north_schleswig_1914_001_026.py --fetch-seem-ejerlav --require-seem-ejerlav
+      - name: Commit provenance and non-final audit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            tools/historical-library/sources/german-empire-1914/north-schleswig-001-026/seem-by-ejerlav-current.geojson \
+            tools/historical-library/sources/german-empire-1914/north-schleswig-001-026/seem-by-ejerlav-current.provenance.json \
+            tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.audit.json
+          if git diff --cached --quiet; then
+            echo "No audit changes."
+          else
+            git commit -m "data: audit historical border against Seem By cadastral boundary"
+            git push
+          fi
