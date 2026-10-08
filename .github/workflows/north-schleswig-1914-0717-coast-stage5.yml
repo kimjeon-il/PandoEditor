@@ -1,0 +1,63 @@
+name: App offline Stage 5 0717 Hvidding-Ufer coastline/dike contract
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [work/gis]
+    paths:
+      - tools/verify_north_schleswig_1914_0717_coast.py
+      - tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.0717-hvidding-ufer-stage5.*
+      - .github/workflows/north-schleswig-1914-0717-coast-stage5.yml
+
+permissions:
+  contents: read
+
+jobs:
+  parity-with-source-and-period:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/gis
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Assert shared 0717 source topology, 1914 dike chronology and no final coastline
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=Path("tools/historical-library/land-borders")
+          stem="german-denmark-1914-north-schleswig-001-026"
+          load=lambda suf:json.loads((data/(stem+suf)).read_text(encoding="utf-8"))
+          master=load(".geojson")["features"][0]
+          segments=load(".sheet-segments.geojson")["features"]
+          clip=load(".0717-hvidding-ufer-stage5.geojson")["features"][0]
+          report=load(".0717-hvidding-ufer-stage5.json")
+          src=[x for x in segments if x["properties"]["sheetId"]=="0717"]
+          nxt=[x for x in segments if x["properties"]["sheetId"]=="0718"]
+          assert len(src)==1 and len(nxt)==1
+          coords=clip["geometry"]["coordinates"]
+          assert coords==src[0]["geometry"]["coordinates"][0]
+          assert coords[0]==master["geometry"]["coordinates"][0]
+          assert coords[-1]==nxt[0]["geometry"]["coordinates"][0][0]
+          assert len(coords)==15 and len(master["geometry"]["coordinates"])==1343
+          assert clip["properties"]["doNotTreatAsFinal"] is True
+          assert master["properties"]["doNotTreatAsFinal"] is True
+          assert report["referenceDate"]=="1914-07-31"
+          assert report["workingGeometry"]["candidateVertices"]==15
+          assert report["workingGeometry"]["join0718GapDegrees"]==0
+          assert report["chronology"]["fløjdiget"]["presentBefore1914Likely"] is True
+          assert report["chronology"]["ribediget"]["officialHandover"]=="1915-05-10"
+          assert report["chronology"]["ribediget"]["entireSystemCompleteByReferenceDate"] is False
+          assert report["chronology"]["rejsbydiget"]["existsByReferenceDate"] is False
+          assert report["primaryTreaty"]["historicalMarineBoundaryDigitized"] is False
+          assert report["historicalCoastlineIndependentlyDigitized"] is False
+          assert report["historicalScreenDeviationCssPx"] is None
+          assert report["historicalStopThresholdPassed"] is None
+          assert report["physicalCoastEdited"] is False
+          assert report["masterBorderEdited"] is False
+          assert len(report["sourceRasterImages"])==3
+          assert report["workingGeometry"]["renderDisplayEstimate"]["displayToleranceCssPx"]==.5
+          print("PASS stage5 source/chronology/topology; historic coastline and marine boundary unverified")
+          PY
