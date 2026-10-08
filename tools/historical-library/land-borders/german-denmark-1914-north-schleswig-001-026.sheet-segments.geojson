@@ -5,7 +5,7 @@
     {
       "type": "Feature",
       "properties": {
-        "sheetId": "0719",
+        "sheetId": "0619",
         "publicationBeforeReferenceDate": true,
         "candidateLengthKm": 5.99299
       },
@@ -3180,7 +3180,7 @@
     {
       "type": "Feature",
       "properties": {
-        "sheetId": "0817",
+        "sheetId": "0717",
         "publicationBeforeReferenceDate": true,
         "candidateLengthKm": 0.2938
       },
@@ -3255,8 +3255,8 @@
     {
       "type": "Feature",
       "properties": {
-        "sheetId": "0818",
-        "publicationBeforeReferenceDate": false,
+        "sheetId": "0718",
+        "publicationBeforeReferenceDate": true,
         "candidateLengthKm": 11.88108
       },
       "geometry": {
@@ -4226,7 +4226,7 @@
     {
       "type": "Feature",
       "properties": {
-        "sheetId": "0819",
+        "sheetId": "0719",
         "publicationBeforeReferenceDate": true,
         "candidateLengthKm": 8.51496
       },

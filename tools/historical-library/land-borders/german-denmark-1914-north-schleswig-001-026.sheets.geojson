@@ -5,9 +5,9 @@
     {
       "type": "Feature",
       "properties": {
-        "sheetId": "0719",
-        "title": "Spandet",
-        "publicationYear": 1880,
+        "sheetId": "0619",
+        "title": "Hügum",
+        "publicationYear": 1878,
         "surveyYear": 1878,
         "publicationBeforeReferenceDate": true,
         "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
@@ -20,7 +20,9 @@
         ],
         "geometryType": "MultiLineString",
         "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
-        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051523"
+        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051510",
+        "slubGeoreferencedMapId": "10006020",
+        "slubWmsCapabilities": "https://wms.kartenforum.slub-dresden.de/map/10006020?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities"
       },
       "geometry": {
         "type": "Polygon",
@@ -53,8 +55,8 @@
     {
       "type": "Feature",
       "properties": {
-        "sheetId": "0817",
-        "title": "Kirkeby",
+        "sheetId": "0717",
+        "title": "Hvidding-Ufer",
         "publicationYear": 1880,
         "surveyYear": 1878,
         "publicationBeforeReferenceDate": true,
@@ -68,7 +70,9 @@
         ],
         "geometryType": "MultiLineString",
         "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
-        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051540"
+        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051521",
+        "slubGeoreferencedMapId": "10006009",
+        "slubWmsCapabilities": "https://wms.kartenforum.slub-dresden.de/map/10006009?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities"
       },
       "geometry": {
         "type": "Polygon",
@@ -101,12 +105,12 @@
     {
       "type": "Feature",
       "properties": {
-        "sheetId": "0818",
-        "title": "Bröns",
-        "publicationYear": 1919,
+        "sheetId": "0718",
+        "title": "Hvidding",
+        "publicationYear": 1880,
         "surveyYear": 1878,
-        "publicationBeforeReferenceDate": false,
-        "sourceReviewStatus": "post-1914-edition-not-eligible",
+        "publicationBeforeReferenceDate": true,
+        "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
         "candidateLengthKm": 11.88108,
         "extentLonLat": [
           8.666666667,
@@ -116,7 +120,9 @@
         ],
         "geometryType": "MultiLineString",
         "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
-        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051541"
+        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051522",
+        "slubGeoreferencedMapId": "10006008",
+        "slubWmsCapabilities": "https://wms.kartenforum.slub-dresden.de/map/10006008?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities"
       },
       "geometry": {
         "type": "Polygon",
@@ -149,8 +155,8 @@
     {
       "type": "Feature",
       "properties": {
-        "sheetId": "0819",
-        "title": "Arrild",
+        "sheetId": "0719",
+        "title": "Spandet",
         "publicationYear": 1880,
         "surveyYear": 1878,
         "publicationBeforeReferenceDate": true,
@@ -164,7 +170,9 @@
         ],
         "geometryType": "MultiLineString",
         "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
-        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051542"
+        "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051523",
+        "slubGeoreferencedMapId": "10006007",
+        "slubWmsCapabilities": "https://wms.kartenforum.slub-dresden.de/map/10006007?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities"
       },
       "geometry": {
         "type": "Polygon",

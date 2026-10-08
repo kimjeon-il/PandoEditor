@@ -5,7 +5,7 @@
   "candidateStatus": "working-master-needs-historical-map-review",
   "comparisonMethod": "WGS84 6arcmin x 10arcmin grid; projected line lengths EPSG:25832",
   "referenceGrid": {
-    "northLatitude": 56.0,
+    "northLatitude": 55.9,
     "westLongitude": 5.833333333333333,
     "heightDegrees": 0.1,
     "widthDegrees": 0.16666666666666666
@@ -16,12 +16,12 @@
   "candidateLengthKm": 26.68283,
   "sheetLengthSumKm": 26.68283,
   "sheetCoverageDifferenceM": 0.0,
-  "anyUnavailablePre1914Edition": true,
+  "anyUnavailablePre1914Edition": false,
   "sheets": [
     {
-      "sheetId": "0719",
-      "title": "Spandet",
-      "publicationYear": 1880,
+      "sheetId": "0619",
+      "title": "Hügum",
+      "publicationYear": 1878,
       "surveyYear": 1878,
       "publicationBeforeReferenceDate": true,
       "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
@@ -34,11 +34,13 @@
       ],
       "geometryType": "MultiLineString",
       "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
-      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051523"
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051510",
+      "slubGeoreferencedMapId": "10006020",
+      "slubWmsCapabilities": "https://wms.kartenforum.slub-dresden.de/map/10006020?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities"
     },
     {
-      "sheetId": "0817",
-      "title": "Kirkeby",
+      "sheetId": "0717",
+      "title": "Hvidding-Ufer",
       "publicationYear": 1880,
       "surveyYear": 1878,
       "publicationBeforeReferenceDate": true,
@@ -52,15 +54,17 @@
       ],
       "geometryType": "MultiLineString",
       "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
-      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051540"
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051521",
+      "slubGeoreferencedMapId": "10006009",
+      "slubWmsCapabilities": "https://wms.kartenforum.slub-dresden.de/map/10006009?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities"
     },
     {
-      "sheetId": "0818",
-      "title": "Bröns",
-      "publicationYear": 1919,
+      "sheetId": "0718",
+      "title": "Hvidding",
+      "publicationYear": 1880,
       "surveyYear": 1878,
-      "publicationBeforeReferenceDate": false,
-      "sourceReviewStatus": "post-1914-edition-not-eligible",
+      "publicationBeforeReferenceDate": true,
+      "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
       "candidateLengthKm": 11.88108,
       "extentLonLat": [
         8.666666667,
@@ -70,11 +74,13 @@
       ],
       "geometryType": "MultiLineString",
       "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
-      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051541"
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051522",
+      "slubGeoreferencedMapId": "10006008",
+      "slubWmsCapabilities": "https://wms.kartenforum.slub-dresden.de/map/10006008?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities"
     },
     {
-      "sheetId": "0819",
-      "title": "Arrild",
+      "sheetId": "0719",
+      "title": "Spandet",
       "publicationYear": 1880,
       "surveyYear": 1878,
       "publicationBeforeReferenceDate": true,
@@ -88,8 +94,10 @@
       ],
       "geometryType": "MultiLineString",
       "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
-      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051542"
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051523",
+      "slubGeoreferencedMapId": "10006007",
+      "slubWmsCapabilities": "https://wms.kartenforum.slub-dresden.de/map/10006007?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities"
     }
   ],
-  "warning": "Geometric sheet coverage is not historic boundary evidence; 1919 Bröns edition must not verify a 1914 border."
+  "warning": "Corrected sheet-grid origin against original SLUB 1:25,000 WCS footprints; geometric coverage and pre-1914 catalog dates alone do not validate the boundary."
 }
