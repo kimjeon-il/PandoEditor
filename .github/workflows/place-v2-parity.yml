@@ -2,12 +2,11 @@ name: Place V2 Snapshot Parity
 on:
   push:
     branches:
-      - data/places-tier1-major-cities
+      - work/places
     paths:
       - 'contracts/places/**'
       - 'reports/places/**'
       - 'tools/place-runtime-contract/v2-snapshot.test.mjs'
-      - '.github/workflows/place-v2-parity.yml'
       - 'app/placenamedisplay.*'
       - 'app/placeruntimestore.*'
       - 'app/placeruntimeprovider.*'
