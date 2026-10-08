@@ -71,3 +71,26 @@
 4. 수정 전후의 국경선 접합·공유 경계 위상·표시 최대 0.5px 기준을 검증한 뒤, 웹·앱 work/gis에 동기화한다. main 병합은 별도 지시가 있기 전까지 금지한다.
 
 **3차 결론:** 지도 육안 대조와 GIS 내부 품질 검사는 완료. **‘1~26구간’의 26번 이후 범위 오류가 밝혀져 마스터 데이터 최종 확정은 보류**. 기존 좌표는 삭제·이동하지 않았음.
+
+
+## 6. 26번 표석 전환점 후속 자료 조사(2026-10-09)
+
+1865년 국경획정위원회 의정서 **Article I §§2–3**는 본 구간을 다음과 같이 구별한다: (1) 1~22번 교구 남부 경계, (2) 22~26번 동부 Seem 경계, (3) **26번 Gjelsbro부터 Gels Å를 따라 Flads Å 합류점까지**, (4) 합류점 이후 **Flads Å 오른쪽 강변 및 Obbekær 남부 경계**를 따라 27번으로 이동. 합류점 뒤의 오른쪽 강변 규정은 중류 중심선으로 임의 대체하지 말 것.
+
+주요 출처:
+- 1865년 의정서 원문 전사: https://da.wikisource.org/wiki/Freden_i_Wien_(1864)_Gr%C3%A6nsereguleringskommissionen
+- Grænseforeningen, Gels Å 및 Flads/Gram Å 합류 설명: https://graenseforeningen.dk/leksikon/gels-aa
+- Seem 지역 구술 회고(국경이 Gjelsbro와 Gels Å를 거쳐 서쪽의 두 강 합류점까지 진행): https://seemkirke.dk/mads-hansens-erindringer/
+- **Gelsbro→Gram Å 합류점 현대 하천 항행 거리 약 6.8km**: https://vejen.dk/p/Globalt%20indhold/Sejlads/regulativ-for-sejlads-p--de-s-nderjyske-amtsvandl-b.pdf
+- 1920년 Gjelsbro의 재통일 기념 아치를 **옛 국경선이 아닌 다리 근처에 설치했다**는 사진 설명: https://www.ronlev.dk/bibliotek/4142.pdf (161쪽 부근).
+- Søren Mulvad·Hans Mikkelsen, **Gelsbro – en ørnefjer!**: https://slaegtsbibliotek.dk/928701.pdf (도로 직선화와 새 Gelsbro 다리 기술).
+- Seem 주변 국경 형성 후 작은 토지 귀속 변경을 다룬 지역사: https://slaegtsbibliotek.dk/929079.pdf
+
+기존 1,343점 임시 마스터에서 **481번 인덱스**(0부터 계산), **(8.9271651995°E, 55.2965394532°N)**는 현대 교구경계 후보선이 Gels Å OSM 수로에 접하고 **진행 방향을 약 89° 바꾸는 첫 뚜렷한 전환점**이다. 현대 다리 OSM 면의 중심점까지 거리는 약 **106m**. 이후의 현대 물길을 따르는 후보선은 약 **6.6km**로, 지방자치단체 규정의 **약 6.8km**와 규모가 가깝다. 이는 전환점을 정밀 측량으로 확정한다는 뜻은 아니다.
+
+**역사적 26번 원위치 판단은 보류.** 도로/교량의 후대 변경과 1920년 기념 행사 사진에서 다리와 옛 국경이 다르다는 근거 때문에 현대 다리 중심에 맞춰 스냅해서는 안 된다.
+
+GIS 재검사 스크립트: `tools/audit_north_schleswig_1914_stone26_split.py`
+- **분리 후보 산출:** `german-denmark-1914-north-schleswig-001-026.stone26-transition.provisional.geojson` (두 선의 공유 접점이 같고, 원래 마스터 좌표를 삭제하지 않음).
+- **진단:** `german-denmark-1914-north-schleswig-001-026.stone26-transition.audit.json`.
+- 원본 지도 WMS ID 10006007의 26번 인근 확대 판독과 역사적 1914년 하천 변화 검토 전에는 **마스터 경계 좌표·구간 이름/데이터 구조를 최종 교체하지 않음**.
