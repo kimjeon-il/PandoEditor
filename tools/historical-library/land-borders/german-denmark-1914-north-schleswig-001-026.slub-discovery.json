@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "scope": "1–26 stones, 1914 German–Danish border",
+  "referenceDate": "1914-07-31",
+  "queriedAtUtc": "2026-10-08T13:32:21.810878+00:00",
+  "historicRasterObtained": false,
+  "historicRasterComparedWithLine": false,
+  "searchMethod": "Public SLUB Kartenforum ElasticSearch index, multi_match over descriptive fields",
+  "sourceSoftware": "https://github.com/slub/slub_web_kartenforum/blob/master/Build/src/util/apiEs.js",
+  "indexedEditions": [
+    {
+      "sheetId": "0719",
+      "title": "Spandet",
+      "publicationYear": 1880,
+      "surveyYear": 1878,
+      "publicationBeforeReferenceDate": true,
+      "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
+      "candidateLengthKm": 5.99299,
+      "extentLonLat": [
+        8.833333333,
+        55.3,
+        9.0,
+        55.4
+      ],
+      "geometryType": "MultiLineString",
+      "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051523"
+    },
+    {
+      "sheetId": "0817",
+      "title": "Kirkeby",
+      "publicationYear": 1880,
+      "surveyYear": 1878,
+      "publicationBeforeReferenceDate": true,
+      "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
+      "candidateLengthKm": 0.2938,
+      "extentLonLat": [
+        8.5,
+        55.2,
+        8.666666667,
+        55.3
+      ],
+      "geometryType": "MultiLineString",
+      "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051540"
+    },
+    {
+      "sheetId": "0818",
+      "title": "Bröns",
+      "publicationYear": 1919,
+      "surveyYear": 1878,
+      "publicationBeforeReferenceDate": false,
+      "sourceReviewStatus": "post-1914-edition-not-eligible",
+      "candidateLengthKm": 11.88108,
+      "extentLonLat": [
+        8.666666667,
+        55.2,
+        8.833333333,
+        55.3
+      ],
+      "geometryType": "MultiLineString",
+      "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051541"
+    },
+    {
+      "sheetId": "0819",
+      "title": "Arrild",
+      "publicationYear": 1880,
+      "surveyYear": 1878,
+      "publicationBeforeReferenceDate": true,
+      "sourceReviewStatus": "pre-1914-edition-catalogued-raster-not-reviewed",
+      "candidateLengthKm": 8.51496,
+      "extentLonLat": [
+        8.833333333,
+        55.2,
+        9.0,
+        55.3
+      ],
+      "geometryType": "MultiLineString",
+      "sourceCatalog": "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data",
+      "deutscheFotothek": "https://www.deutschefotothek.de/documents/obj/71051542"
+    }
+  ],
+  "endpointObservations": [
+    {
+      "searchUrl": "https://search.kartenforum.slub-dresden.de/vk20",
+      "status": "unavailable",
+      "error": "HTTPError: 400 Client Error: Bad Request for url: https://search.kartenforum.slub-dresden.de/vk20/_search"
+    },
+    {
+      "searchUrl": "https://search-slub.pikobytes.de/vk20",
+      "status": "unavailable",
+      "error": "ConnectionError: HTTPSConnectionPool(host='search-slub.pikobytes.de', port=443): Max retries exceeded with url: /vk20/_search (Caused by NameResolutionError(\"HTTPSConnection(host='search-slub.pikobytes.de', port=443): Failed to resolve 'search-slub.pikobytes.de' ([Errno -2] Na"
+    }
+  ],
+  "matches": {},
+  "warnings": [
+    "Catalog search matches are not evidence of original raster availability.",
+    "1919 Bröns is ineligible as a 1914 reference without a verified older edition.",
+    "Do not assume historical map coordinates equal the modern parish-based working candidate."
+  ]
+}
