@@ -188,7 +188,7 @@
     "screenStopRule": "Do not claim historical 0.5 CSS px deviation without an independently interpreted period boundary."
   },
   "reviewArtifactPath": "tools/historical-library/review-output/north-schleswig-1914-001-026/0718-east",
-  "githubActionsRunId": "37804067432",
+  "githubActionsRunId": "37805086477",
   "reviewRequired": [
     "Visually compare historical boundary marks and current red candidate in both details.",
     "Check whether historical border follows the same village/stream course.",
