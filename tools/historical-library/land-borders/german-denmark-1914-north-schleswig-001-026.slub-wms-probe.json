@@ -1,0 +1,247 @@
+{
+  "schemaVersion": 1,
+  "referenceDate": "1914-07-31",
+  "collectedUtc": "2026-10-08T13:41:45.189250+00:00",
+  "candidateHistoricBorderVerified": false,
+  "fullResolutionOriginalReviewed": false,
+  "imageScanFilesCommitted": false,
+  "sourceSearch": "https://search.kartenforum.slub-dresden.de/vk20",
+  "mapProbes": [
+    {
+      "sheetId": "0619",
+      "title": "Hügum",
+      "catalogPublicationYear": 1878,
+      "candidateLengthKm": 5.99299,
+      "status": "wms-image-decoded",
+      "mapId": "oai:de:slub-dresden:vk:id-10006020",
+      "indexTitle": "Meßtischblatt 21 : Hügum, 1878",
+      "indexGeoreferenced": true,
+      "originalPermalink": "https://www.deutschefotothek.de/documents/obj/71051510",
+      "capabilitiesUrl": "https://wms.kartenforum.slub-dresden.de/map/10006020?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities",
+      "capabilitiesHttpStatus": 200,
+      "availableWmsLayerNames": [
+        "MS",
+        "df_dk_0010001_0619"
+      ],
+      "sampleHttpStatus": 200,
+      "sampleMimeType": "image/png",
+      "sample": {
+        "format": "PNG",
+        "dimensions": [
+          768,
+          512
+        ],
+        "imageSha256": "016971ddd6dc0a510be3fcd198273ff5c9f83da2e22fb2e5844301584b0f3b11",
+        "rasterBytes": 773450,
+        "rgbaExtrema": [
+          [
+            64,
+            253
+          ],
+          [
+            62,
+            254
+          ],
+          [
+            66,
+            255
+          ],
+          [
+            255,
+            255
+          ]
+        ],
+        "opaquePixelBounds": [
+          0,
+          0,
+          768,
+          512
+        ],
+        "sampleExtentLonLat": [
+          8.8716421,
+          55.3,
+          8.939995,
+          55.3288725
+        ],
+        "distinctColors": 55752
+      }
+    },
+    {
+      "sheetId": "0717",
+      "title": "Hvidding-Ufer",
+      "catalogPublicationYear": 1880,
+      "candidateLengthKm": 0.2938,
+      "status": "wms-image-decoded",
+      "mapId": "oai:de:slub-dresden:vk:id-10006009",
+      "indexTitle": "Meßtischblatt 33 : Hvidding-Ufer, 1880",
+      "indexGeoreferenced": true,
+      "originalPermalink": "https://www.deutschefotothek.de/documents/obj/71051521",
+      "capabilitiesUrl": "https://wms.kartenforum.slub-dresden.de/map/10006009?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities",
+      "capabilitiesHttpStatus": 200,
+      "availableWmsLayerNames": [
+        "MS",
+        "df_dk_0010001_0717"
+      ],
+      "sampleHttpStatus": 200,
+      "sampleMimeType": "image/png",
+      "sample": {
+        "format": "PNG",
+        "dimensions": [
+          768,
+          512
+        ],
+        "imageSha256": "64ccf5b80f7467f48d408a376389b6a9d5866c789b75fd5140de33535fffefa6",
+        "rasterBytes": 598637,
+        "rgbaExtrema": [
+          [
+            0,
+            255
+          ],
+          [
+            0,
+            255
+          ],
+          [
+            0,
+            255
+          ],
+          [
+            0,
+            255
+          ]
+        ],
+        "opaquePixelBounds": [
+          0,
+          0,
+          723,
+          512
+        ],
+        "sampleExtentLonLat": [
+          8.6492877,
+          55.2683116,
+          8.6666667,
+          55.2848812
+        ],
+        "distinctColors": 26979
+      }
+    },
+    {
+      "sheetId": "0718",
+      "title": "Hvidding",
+      "catalogPublicationYear": 1880,
+      "candidateLengthKm": 11.88108,
+      "status": "wms-image-decoded",
+      "mapId": "oai:de:slub-dresden:vk:id-10006008",
+      "indexTitle": "Meßtischblatt 34 : Hvidding, 1880",
+      "indexGeoreferenced": true,
+      "originalPermalink": "https://www.deutschefotothek.de/documents/obj/71051522",
+      "capabilitiesUrl": "https://wms.kartenforum.slub-dresden.de/map/10006008?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities",
+      "capabilitiesHttpStatus": 200,
+      "availableWmsLayerNames": [
+        "MS",
+        "df_dk_0010001_0718"
+      ],
+      "sampleHttpStatus": 200,
+      "sampleMimeType": "image/png",
+      "sample": {
+        "format": "PNG",
+        "dimensions": [
+          768,
+          512
+        ],
+        "imageSha256": "841803eecbb82574ebcf802220d6c15f23f728f284136f20a6ee0f8086dde1a5",
+        "rasterBytes": 322206,
+        "rgbaExtrema": [
+          [
+            0,
+            250
+          ],
+          [
+            0,
+            252
+          ],
+          [
+            0,
+            255
+          ],
+          [
+            0,
+            255
+          ]
+        ],
+        "opaquePixelBounds": [
+          0,
+          0,
+          763,
+          512
+        ],
+        "sampleExtentLonLat": [
+          8.6666667,
+          55.2640569,
+          8.8333333,
+          55.2892659
+        ],
+        "distinctColors": 20483
+      }
+    },
+    {
+      "sheetId": "0719",
+      "title": "Spandet",
+      "catalogPublicationYear": 1880,
+      "candidateLengthKm": 8.51496,
+      "status": "wms-image-decoded",
+      "mapId": "oai:de:slub-dresden:vk:id-10006007",
+      "indexTitle": "Meßtischblatt 35 : Spandet, 1880",
+      "indexGeoreferenced": true,
+      "originalPermalink": "https://www.deutschefotothek.de/documents/obj/71051523",
+      "capabilitiesUrl": "https://wms.kartenforum.slub-dresden.de/map/10006007?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities",
+      "capabilitiesHttpStatus": 200,
+      "availableWmsLayerNames": [
+        "MS",
+        "df_dk_0010001_0719"
+      ],
+      "sampleHttpStatus": 200,
+      "sampleMimeType": "image/png",
+      "sample": {
+        "format": "PNG",
+        "dimensions": [
+          768,
+          512
+        ],
+        "imageSha256": "d20cbc89912c1745302c07e1950db9bf5fd9c4bc0fab69cfe76d2ab61c5c4e4b",
+        "rasterBytes": 599666,
+        "rgbaExtrema": [
+          [
+            0,
+            250
+          ],
+          [
+            0,
+            251
+          ],
+          [
+            0,
+            255
+          ],
+          [
+            0,
+            255
+          ]
+        ],
+        "opaquePixelBounds": [
+          0,
+          22,
+          768,
+          512
+        ],
+        "sampleExtentLonLat": [
+          8.8333333,
+          55.2601359,
+          8.9464141,
+          55.3
+        ],
+        "distinctColors": 26895
+      }
+    }
+  ]
+}
