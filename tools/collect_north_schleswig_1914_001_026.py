@@ -17,23 +17,33 @@ route=get_json("https://api.openstreetmap.org/api/0.6/relation/11260903/full.jso
     json.dumps(route,ensure_ascii=False,separators=(",",":")),encoding="utf-8"
 )
 
+OVERPASS=[
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+]
+def overpass(query):
+    last=None
+    for endpoint in OVERPASS:
+        try:
+            r=requests.post(endpoint,data={"data":query},headers=UA,timeout=180)
+            r.raise_for_status()
+            return r.json()
+        except Exception as exc:
+            last=exc
+            print("overpass failed",endpoint,repr(exc))
+    raise last
+
 q=r'''
-[out:json][timeout:120];
+[out:json][timeout:60];
 (
   node(55.245,8.62,55.335,8.99)["historic"="boundary_stone"];
   node(55.245,8.62,55.335,8.99)["boundary"="marker"];
   node(55.245,8.62,55.335,8.99)["name"~"Grænsesten|Graensesten|Grenzstein|Grensesten",i];
-  way(55.245,8.62,55.335,8.99)["historic"~"boundary|border",i];
-  way(55.245,8.62,55.335,8.99)["boundary"~"historic|former",i];
-  way(55.245,8.62,55.335,8.99)["name"~"grænse|graense|grenz",i];
-  relation(55.245,8.62,55.335,8.99)["historic"~"boundary|border",i];
-  relation(55.245,8.62,55.335,8.99)["boundary"~"historic|former",i];
 );
-out body geom;
+out body;
 '''
-r=requests.post("https://overpass-api.de/api/interpreter",data={"data":q},headers=UA,timeout=180)
-r.raise_for_status()
-candidates=r.json()
+candidates=overpass(q)
 (OUT/"osm-historic-border-candidates.json").write_text(
     json.dumps(candidates,ensure_ascii=False,separators=(",",":")),encoding="utf-8"
 )
@@ -46,9 +56,7 @@ q2=r'''
 );
 out body geom;
 '''
-r2=requests.post("https://overpass-api.de/api/interpreter",data={"data":q2},headers=UA,timeout=180)
-r2.raise_for_status()
-context=r2.json()
+context=overpass(q2)
 (OUT/"osm-endpoint-context.json").write_text(
     json.dumps(context,ensure_ascii=False,separators=(",",":")),encoding="utf-8"
 )
