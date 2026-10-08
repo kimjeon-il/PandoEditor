@@ -16,7 +16,7 @@
 
 namespace {
 QJsonObject contract() {
-    QFile file(QStringLiteral(PLACE_SYNC_CONTRACT_PATH));
+    QFile file(QString::fromUtf8(PLACE_SYNC_CONTRACT_PATH));
     if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("Missing frozen Web v2 exchange contract");
     const auto doc=QJsonDocument::fromJson(file.readAll());
     if(!doc.isObject())throw std::runtime_error("Malformed frozen Web exchange contract");
@@ -71,6 +71,44 @@ private slots:
         QCOMPARE(wire.value("stringFields").toArray().size(),8);
         QCOMPARE(wire.value("maxStringBytes").toInt(),16*1024);
         QCOMPARE(source.value("fixtures").toArray().size(),4);
+    }
+    void reviewedSourceMirrorIsIdenticalToPinnedWebGitBlobs() {
+        const auto root=QString::fromUtf8(PLACE_SYNC_REPOSITORY_ROOT);
+        QFile manifest(root+"/reports/places/source-manifest.json");
+        QVERIFY(manifest.open(QIODevice::ReadOnly));
+        const auto report=QJsonDocument::fromJson(manifest.readAll()).object();
+        QCOMPARE(report.value("webCommit").toString(),
+            QStringLiteral("fc0cb82a9e363be6a3009cf07932a3c9ce59ddd2"));
+        const auto files=report.value("files").toArray();
+        QCOMPARE(files.size(),10);
+        for(const auto& value:files) {
+            const auto row=value.toObject();
+            const auto path=row.value("path").toString();
+            QVERIFY(path.startsWith("reports/places/")&&!path.contains(".."));
+            QFile data(root+"/"+path);QVERIFY2(data.open(QIODevice::ReadOnly),qPrintable(path));
+            const auto raw=data.readAll();
+            QByteArray blob="blob "+QByteArray::number(raw.size());
+            blob.append(char(0));blob.append(raw);
+            const auto actual=QString::fromLatin1(QCryptographicHash::hash(blob,QCryptographicHash::Sha1).toHex());
+            QCOMPARE(actual,row.value("gitBlobSha").toString());
+        }
+        for(const auto& fixtureValue:contract().value("fixtures").toArray()) {
+            const auto fixture=fixtureValue.toObject();
+            const auto provenance=fixture.value("sourceReview").toObject();
+            const auto relative=provenance.value("reviewFile").toString();
+            QVERIFY(relative.startsWith("reports/places/tier1-major-cities-batch")&&!relative.contains(".."));
+            QFile original(root+"/"+relative);QVERIFY(original.open(QIODevice::ReadOnly));
+            const auto rows=QJsonDocument::fromJson(original.readAll()).object().value("records").toArray();
+            const auto id=provenance.value("geonameId").toInt();
+            QJsonObject reviewed;
+            for(const auto& item:rows)
+                if(item.toObject().value("geonameId").toInt()==id)reviewed=item.toObject();
+            QVERIFY(!reviewed.isEmpty());
+            const auto record=fixture.value("normalized").toObject();
+            QCOMPARE(reviewed.value("defaultDisplayNameKo"),record.value("name"));
+            QCOMPARE(reviewed.value("longitude"),record.value("coordinates").toArray().at(0));
+            QCOMPARE(reviewed.value("latitude"),record.value("coordinates").toArray().at(1));
+        }
     }
     void nativeDecoderMatchesAllFrozenWebHexVectors() {
         const auto fixtures=contract().value("fixtures").toArray();

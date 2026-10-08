@@ -270,7 +270,8 @@ if(BUILD_TESTING)
     add_executable(place_sync_contract_tests ../tests/place_sync_contract_tests.cpp)
     target_link_libraries(place_sync_contract_tests PRIVATE pandoeditor_editor Qt6::Test)
     target_compile_definitions(place_sync_contract_tests PRIVATE
-        PLACE_SYNC_CONTRACT_PATH="${PROJECT_SOURCE_DIR}/contracts/places/v2.json")
+        PLACE_SYNC_CONTRACT_PATH="${PROJECT_SOURCE_DIR}/contracts/places/v2.json"
+        PLACE_SYNC_REPOSITORY_ROOT="${PROJECT_SOURCE_DIR}")
     add_test(NAME place_sync_contract_tests COMMAND place_sync_contract_tests)
     set_tests_properties(place_sync_contract_tests PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
