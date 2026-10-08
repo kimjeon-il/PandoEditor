@@ -1,0 +1,3 @@
+# Temporary original map previews are CI artifacts, not permanent source files.
+*
+!.gitignore
