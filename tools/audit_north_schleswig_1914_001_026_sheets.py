@@ -20,10 +20,13 @@ OUT = BORDER / f"{STEM}.sheets.json"
 OUT_FOOTPRINTS = BORDER / f"{STEM}.sheets.geojson"
 OUT_PARTS = BORDER / f"{STEM}.sheet-segments.geojson"
 
-# German Messtischblatt system, post-1937 row+column catalog notation:
-# NW corner 56N / 5deg50E; 6 arcminutes high and 10 arcminutes wide.
-# https://de.wikipedia.org/wiki/Messtischblatt
-GRID_NORTH = 56.0
+# German Messtischblatt system, post-1937 row+column catalog notation.
+# Grid start row 01 NORTH at 55deg54N, not 56degN.
+# Verified against four public SLUB georeferenced WCS sheet footprints:
+# df_dk_0010001_0717/0718/0719 cover approx 55.2–55.3N;
+# df_dk_0010001_0619 covers approx 55.3–55.4N.
+# https://search.kartenforum.slub-dresden.de/vk20/_search
+GRID_NORTH = 55.9
 GRID_WEST = 5.0 + 50.0 / 60.0
 HEIGHT_DEG = 6.0 / 60.0
 WIDTH_DEG = 10.0 / 60.0
@@ -31,14 +34,14 @@ WIDTH_DEG = 10.0 / 60.0
 # This is an index of *catalogued editions*, NOT a claim that those
 # editions have been raster-accessed or georeferenced.
 EDITION_CATALOG = {
-    "0817": dict(title="Kirkeby", issueYear=1880, surveyYear=1878,
-                 objectId="71051540"),
-    "0818": dict(title="Bröns", issueYear=1919, surveyYear=1878,
-                 objectId="71051541"),
-    "0819": dict(title="Arrild", issueYear=1880, surveyYear=1878,
-                 objectId="71051542"),
+    "0619": dict(title="Hügum", issueYear=1878, surveyYear=1878,
+                 objectId="71051510", slubMapId="10006020"),
+    "0717": dict(title="Hvidding-Ufer", issueYear=1880, surveyYear=1878,
+                 objectId="71051521", slubMapId="10006009"),
+    "0718": dict(title="Hvidding", issueYear=1880, surveyYear=1878,
+                 objectId="71051522", slubMapId="10006008"),
     "0719": dict(title="Spandet", issueYear=1880, surveyYear=1878,
-                 objectId="71051523"),
+                 objectId="71051523", slubMapId="10006007"),
 }
 CATALOG_URL = "https://commons.wikimedia.org/wiki/Module:Messtischblatt/data"
 TRANSFORMER = Transformer.from_crs("EPSG:4326", "EPSG:25832", always_xy=True).transform
@@ -127,6 +130,13 @@ def main():
                     "https://www.deutschefotothek.de/documents/obj/"
                     + catalog["objectId"] if catalog else None
                 ),
+                "slubGeoreferencedMapId": catalog.get("slubMapId") if catalog else None,
+                "slubWmsCapabilities": (
+                    "https://wms.kartenforum.slub-dresden.de/map/"
+                    + catalog["slubMapId"]
+                    + "?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities"
+                    if catalog else None
+                ),
             }
             records.append(record)
             polygons.append({"type": "Feature", "properties": record,
@@ -166,8 +176,8 @@ def main():
         "sheetCoverageDifferenceM": round(delta_m, 3),
         "anyUnavailablePre1914Edition": has_outdated,
         "sheets": records,
-        "warning": ("Geometric sheet coverage is not historic boundary evidence; "
-                    "1919 Bröns edition must not verify a 1914 border."),
+        "warning": ("Corrected sheet-grid origin against original SLUB 1:25,000 WCS footprints; "
+                    "geometric coverage and pre-1914 catalog dates alone do not validate the boundary."),
     }
     write_json(OUT, report)
     write_json(OUT_FOOTPRINTS, {
