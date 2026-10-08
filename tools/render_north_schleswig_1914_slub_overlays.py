@@ -7,7 +7,6 @@ and image hashes only. Manual historical-cartographic review is required.
 """
 from __future__ import annotations
 
-import datetime as dt
 import hashlib
 import io
 import json
@@ -76,7 +75,6 @@ def main():
     manifest = {
         "schemaVersion": 1,
         "referenceDate": "1914-07-31",
-        "generatedUtc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "originalMapScale": "1:25,000",
         "status": "preview-needs-manual-tracing",
         "historicBorderValidated": False,
