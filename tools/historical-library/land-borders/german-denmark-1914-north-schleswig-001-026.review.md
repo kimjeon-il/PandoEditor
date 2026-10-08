@@ -65,3 +65,33 @@
 6. 입증된 세부 구간만 수정. 그 전에는 \`doNotTreatAsFinal=true\` 유지.
 
 사료를 열람하지 못한 단계를 완료 처리하지 않는다.
+
+
+## 6. 2026-10-08 SLUB 원본 도엽 및 번호 재검증 (중요 정정)
+
+SLUB Kartenforum의 공간 검색 인덱스와 **실제 지오리퍼런싱 WCS 원본 바운딩박스**를 대조하여, 초기에 작성했던 도엽 분할 코드의 위도 원점 오류를 확인했다.
+
+- 잘못 사용한 기준: 북단 \`56.0°N\` → 전체 도엽이 실제보다 한 줄 남쪽 이름으로 배정됨.
+- 정정 기준: 북단 \`55.9°N\`, 도엽 높이 위도 6′, 너비 경도 10′.
+- **기존 0817 Kirkeby / 0818 Bröns / 0819 Arrild / 0719 Spandet 목록과 'Bröns 1919판이 44.5%를 차지한다'는 이전 판단은 모두 폐기.**
+
+### 후보선이 실제 통과하는 4개 도엽
+
+| 도엽 | 원본 발행/측량연도 | SLUB 지오리퍼런스 ID | 후보선 길이 | 원본 WMS |
+|---|---|---|---:|---|
+| 0717 Hvidding-Ufer | 1880 / 1878 | \`10006009\` | 0.29380km | https://wms.kartenforum.slub-dresden.de/map/10006009 |
+| 0718 Hvidding | 1880 / 1878 | \`10006008\` | 11.88108km | https://wms.kartenforum.slub-dresden.de/map/10006008 |
+| 0719 Spandet | 1880 / 1878 | \`10006007\` | 8.51496km | https://wms.kartenforum.slub-dresden.de/map/10006007 |
+| 0619 Hügum | 1878 / 1878 | \`10006020\` | 5.99299km | https://wms.kartenforum.slub-dresden.de/map/10006020 |
+
+정확한 분할·상대경로는 \`*.sheets.json\`, \`*.sheets.geojson\`, \`*.sheet-segments.geojson\`을 따른다. 네 구간의 길이 합은 원본 후보선 길이와 0m 오차로 일치한다.
+
+### WMS 접근 검증 결과
+
+SLUB 공개 검색 인덱스 \`https://search.kartenforum.slub-dresden.de/vk20\`에서 4개 도엽의 발행시점, 1:25,000 축척, 원본 WMS/WCS, 지오리퍼런싱 상태를 조회했다. 각 WMS의 GetCapabilities 조회 및 작은 GetMap PNG 샘플 정상 디코딩을 모두 확인했다. 검증 내용은 \`*.slub-discovery.json\`, \`*.slub-wms-probe.json\`에 기록한다.
+
+이것은 **1880년대 원본 영상에 접근할 수 있다는 검증**일 뿐, 1914년 실제 국경선과의 세부 대조나 원본에서 수동 추적을 완료했다는 뜻이 아니다. 1878년 측량 이후 1914년까지 진행된 제방·수로 변화는 별도의 사료가 필요하다.
+
+대조용 시각 자료는 \`tools/render_north_schleswig_1914_slub_overlays.py\`가 임시 GitHub Actions 아티팩트로 만들며, 역사 지도 스캔 원본이나 대조용 PNG를 공개 Git에 직접 추가하지 않는다. 대조 후 변형·오차 및 법적 경계 원위치를 기록한 경우에만 선을 수정한다.
+
+별도의 현대 슐레스비히홀슈타인주 1878–1880 지도 서비스 \`https://dienste.gdi-sh.de/WMS_SH_FD_Chronologen\`는 경계 북단이 약 **55.103139°N**으로 조사구간 남단 55.245°N에 닿지 않아 본 구간에 쓸 수 없다 (\`*.wms-services.json\` 참고).
