@@ -19,7 +19,7 @@
 
 ## 데이터 동기화
 
-- 웹 원본 검수 커밋: `921440813ac92b6a88907c6e5359422b1e6c5230`
+- 웹 원본 검수 커밋: `0d849e9f3d764584f253664936c3d3fa8eede1f2`
 - 앱 고정 원본: `reports/places/tier1-major-cities-batch*.json`.
 - `reports/places/source-manifest.json`: 원본 Git blob SHA 및 모든 취락의 고유 GeoNames ID 수.
 - `tools/place-runtime-contract/v2-snapshot.test.mjs`: 13차 ID·언어·분단 사건·소국 국가/행정구역 구분 검증.

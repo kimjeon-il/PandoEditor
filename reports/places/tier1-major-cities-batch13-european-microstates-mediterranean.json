@@ -367,14 +367,6 @@
           "usage": "alternate",
           "variantType": "greekBasedRomanization",
           "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
-        },
-        {
-          "text": "Λευκωσία / Lefkoşa",
-          "language": "und",
-          "usage": "alternate",
-          "variantType": "bilingualGreekTurkishWriting",
-          "note": "표기 비교용, 공식 합성명 아님",
-          "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
         }
       ],
       "latitude": 35.17284,
