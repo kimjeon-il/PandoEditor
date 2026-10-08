@@ -89,22 +89,30 @@ context={"nodes":context_nodes,"ways":context_ways}
 (OUT/"osm-endpoint-context.json").write_text(json.dumps(context,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
 
 
-# Current Danish parish geometries are a useful control because the 1865 protocol
-# explicitly follows parish boundaries through this sector. They are controls,
-# not assumed historical truth without comparison.
-parish_queries=[
-    "Vester Vedsted","Seem","Hviding","Roager",
-    "Ribe Domsogn","Ribe Sankt Katharine","Sankt Katharine"
-]
-parish_results={}
-for name in parish_queries:
-    url="https://api.dataforsyningen.dk/sogne"
-    rr=requests.get(url,params={"navn":name,"format":"geojson"},headers=UA,timeout=120)
-    rr.raise_for_status()
-    parish_results[name]=rr.json()
-(OUT/"dawa-parish-controls.geojson.json").write_text(
-    json.dumps(parish_results,ensure_ascii=False,separators=(",",":")),encoding="utf-8"
-)
+
+# Identify current OSM parish/administrative relations as geometric controls for the
+# parish boundaries named in the 1865 protocol.
+parish_terms=("vester vedsted","seem","hviding","roager","ribe")
+parish_relations=[]
+for rel in relations.values():
+    tags=rel.get("tags",{})
+    name=norm(tags.get("name"))
+    boundary=norm(tags.get("boundary"))
+    admin=norm(tags.get("admin_level"))
+    if any(term in name for term in parish_terms) and boundary in ("administrative","religious_administration"):
+        parish_relations.append(rel)
+
+parish_full={}
+for rel in parish_relations:
+    rid=rel["id"]
+    try:
+        data=get_json(f"https://api.openstreetmap.org/api/0.6/relation/{rid}/full.json")
+        parish_full[str(rid)]=data
+        (OUT/f"osm-parish-relation-{rid}.full.json").write_text(
+            json.dumps(data,ensure_ascii=False,separators=(",",":")),encoding="utf-8"
+        )
+    except Exception as exc:
+        parish_full[str(rid)]={"error":repr(exc)}
 
 summary={
   "routeElements":len(route.get("elements",[])),
@@ -118,8 +126,8 @@ summary={
   "candidateWays":[{"id":w["id"],"tags":w["tags"],"pointCount":len(w.get("geometry",[]))} for w in candidate_ways],
   "contextNodes":context_nodes,
   "contextWays":[{"id":w["id"],"tags":w["tags"],"pointCount":len(w.get("geometry",[]))} for w in context_ways],
-  "parishQueries":{name:len((data or {}).get("features",[])) if isinstance(data,dict) else None for name,data in parish_results.items()},
-  "parishFeatureNames":{name:[f.get("properties",{}).get("navn") for f in (data or {}).get("features",[])] if isinstance(data,dict) else [] for name,data in parish_results.items()},
+  "parishRelationCount":len(parish_relations),
+  "parishRelations":[{"id":r["id"],"tags":r.get("tags",{}),"memberCount":len(r.get("members",[]))} for r in parish_relations],
 }
 (OUT/"collection-summary.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding="utf-8")
 print(json.dumps(summary,ensure_ascii=False,indent=2))
