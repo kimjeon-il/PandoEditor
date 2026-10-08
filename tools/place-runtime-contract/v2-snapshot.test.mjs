@@ -572,3 +572,81 @@ test('Incheon temporary Jemulpo and Korean historical romanization boundaries', 
   assert.ok(data.records.find(r=>r.geonameId===1835235).nameSelectionNotes.some(
     t=>t.includes('1801년')));
 });
+
+
+test('review-only city lifecycle interval contract covers rise, extinction, gaps and unknown years', () => {
+  const p = json('reports/places/historical-display-policy.json');
+  const cfg = p.temporalEligibility;
+  assert.equal(cfg.futureIntervalsField, 'activeIntervals');
+  assert.equal(cfg.reviewStatusField, 'lifecycleReviewStatus');
+  assert.deepEqual(cfg.reviewStatusValues, ['unreviewed','provisional','verified']);
+  assert.deepEqual(cfg.boundarySemantics.resultValues, ['eligible','ineligible','unresolved']);
+  for (const key of ['cityEstablishedFromYear','cityEstablishedFromDate','beforeCityEstablished'])
+    assert.ok(cfg.legacyCompatibility.supportedFields.includes(key));
+  assert.ok(p.historicalCityIdentity.separateIdentityRule.includes('separate city records/IDs'));
+  assert.ok(p.lifecycleFollowup.explicitlyDeferred.includes('City-grade timeline'));
+  const status = (period,date) => {
+    const y = date.slice(0,4);
+    const start = period.fromDate != null
+      ? date >= period.fromDate ? true : false
+      : period.fromYear != null
+      ? y < String(period.fromYear) ? false : y === String(period.fromYear) ? null : true
+      : true;
+    const end = period.untilDateExclusive != null
+      ? date < period.untilDateExclusive ? true : false
+      : period.untilYear != null
+      ? y < String(period.untilYear) ? true : y === String(period.untilYear) ? null : false
+      : true;
+    if (start === false || end === false) return 'ineligible';
+    if (start === null || end === null) return 'unresolved';
+    return 'eligible';
+  };
+  const at = (caseData,date) => {
+    if (caseData.lifecycleReviewStatus !== 'verified') return 'unresolved';
+    const covered = status(caseData.reviewedCoverage,date);
+    if (covered !== 'eligible') return 'unresolved';
+    const episodes = caseData.activeIntervals.map(period=>status(period,date));
+    if (episodes.includes('eligible')) return 'eligible';
+    if (episodes.includes('unresolved')) return 'unresolved';
+    return 'ineligible';
+  };
+  const scope = {fromDate:'1000-01-01',untilDateExclusive:'2100-01-01'};
+  const newer = {lifecycleReviewStatus:'verified',reviewedCoverage:scope,
+    activeIntervals:[{fromDate:'1859-07-01'}]};
+  assert.equal(at(newer,'1859-06-30'),'ineligible');
+  assert.equal(at(newer,'1859-07-01'),'eligible');
+  const vanished = {lifecycleReviewStatus:'verified',reviewedCoverage:scope,
+    activeIntervals:[{untilDateExclusive:'1750-04-18'}]};
+  assert.equal(at(vanished,'1750-04-17'),'eligible');
+  assert.equal(at(vanished,'1750-04-18'),'ineligible');
+  const rebuilt = {lifecycleReviewStatus:'verified',reviewedCoverage:scope,
+    activeIntervals:[
+      {fromDate:'1600-01-01',untilDateExclusive:'1650-01-01'},
+      {fromDate:'1700-01-01'}
+    ]};
+  assert.equal(at(rebuilt,'1649-12-31'),'eligible');
+  assert.equal(at(rebuilt,'1650-01-01'),'ineligible');
+  assert.equal(at(rebuilt,'1700-01-01'),'eligible');
+  const uncertainYear = {lifecycleReviewStatus:'verified',reviewedCoverage:scope,
+    activeIntervals:[{fromYear:1859,untilYear:1950}]};
+  assert.equal(at(uncertainYear,'1858-12-31'),'ineligible');
+  assert.equal(at(uncertainYear,'1859-06-01'),'unresolved');
+  assert.equal(at(uncertainYear,'1860-01-01'),'eligible');
+  assert.equal(at(uncertainYear,'1950-06-01'),'unresolved');
+  assert.equal(at(uncertainYear,'1951-01-01'),'ineligible');
+  assert.equal(at({...newer,lifecycleReviewStatus:'provisional'},'1900-01-01'),'unresolved');
+  assert.equal(at(newer,'0900-01-01'),'unresolved');
+  const central = json('reports/places/tier1-major-cities-batch15-central-asia-capitals.json');
+  for (const [id,year] of [[1526273,1830],[1528675,1868],[162183,1881]]) {
+    const city=central.records.find(x=>x.geonameId===id);
+    assert.equal(city.temporalEligibility.cityEstablishedFromYear,year);
+    assert.equal(Object.hasOwn(city.temporalEligibility,'activeIntervals'),false);
+  }
+  const east = json('reports/places/tier1-major-cities-batch02-east-asia.json');
+  for (const id of [1848354,1835235]) {
+    const city=east.records.find(x=>x.geonameId===id);
+    assert.ok(city);
+    assert.equal(Object.hasOwn(city,'temporalEligibility'),false,
+      'Do not preassign Yokohama or Daejeon dates while historic tier threshold is deferred');
+  }
+});
