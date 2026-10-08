@@ -1,0 +1,439 @@
+{
+  "schema": "pando-places-tier1-review-v6",
+  "batch": "13-european-microstates-mediterranean-capitals",
+  "status": "verified-source-staging-not-runtime",
+  "source": "GeoNames (CC BY 4.0), Andorra government, San Marino tourism authority, Monaco legal gazette, Valletta Local Council, Cyprus authorities and UNFICYP",
+  "checkedOn": "2026-10-08",
+  "selection": "Five verified country-capital P/PPLC settlement records: Andorra la Vella, City of San Marino, Monaco, Valletta and Nicosia. Small-capital exception applies irrespective of population.",
+  "coordinateConvention": "GeoNames WGS84 EPSG:4326 point, latitude/longitude. Never a municipality or sovereign-country boundary polygon.",
+  "countryCodeSemantics": "Present-day GeoNames source metadata only, not historical political sovereignty or legal territory recognition. Nicosia CY is not an assertion that one point resolves the 1974 line.",
+  "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
+  "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
+  "historicalDisplayStatus": "timeline-staged-not-runtime",
+  "historicNameScope": "1801-onward map-name review with earlier founding or administrative history retained as context, not a false modern city-renaming timeline.",
+  "qualityNotes": [
+    "All 5 IDs are P/PPLC capital settlements, including low-population microstate capitals, not country PCLI or administrative ADM1 records.",
+    "Andorra la Vella 3041563, San Marino city 3168070, Monaco 2993458, Valletta 2562305 and Nicosia 146268 are intentionally distinct from country/administration similarly named objects.",
+    "Monaco 2993458 is the city-place representative for the city-state; Monaco-Ville is a smaller historic neighbourhood, not its 1801-onward former official name.",
+    "San Marino's traditional 301 founding is a legend and not a verified exact PPLC settlement foundation date. A separate 885 document records an earlier organized community.",
+    "Valletta's foundation 1566-03-28 and transfer of the Order's seat in 1571 are founding/administrative events, not a city rename.",
+    "Andorra's 1993-03-14 constitutional referendum is a modern political event, not the creation or renaming of its existing capital.",
+    "Nicosia's Greek Λευκωσία, Turkish Lefkoşa and English Nicosia coexist; 1963 and 1974 partition milestones must not trigger an automatic Korean map-label change.",
+    "Nicosia's PPLC coordinate is a representative point. UN buffer-zone geometry, de facto administration and cross-city area partition require independently reviewed geospatial layers.",
+    "English/local text may match exactly (Andorra la Vella, San Marino, Monaco); keep distinct name fields in staging and deduplicate only the rendered text.",
+    "All interface-facing short descriptions and note/detail strings contain at most 28 Unicode code points. Research details and all source URLs remain stored separately.",
+    "This is reviewed staging, not publication to real PLAC v2 tile shards or an alteration of any main branch."
+  ],
+  "records": [
+    {
+      "geonameId": 3041563,
+      "names": [
+        {
+          "text": "Andorra la Vella",
+          "language": "ca",
+          "usage": "standard",
+          "note": "안도라의 카탈루냐어 수도명",
+          "sourceUrl": "https://www.geonames.org/3041563/andorra-la-vella.html"
+        },
+        {
+          "text": "Andorra la Vella",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "안도라라베야",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Andorre-la-Vieille",
+          "language": "fr",
+          "usage": "alternate",
+          "variantType": "frenchExonym",
+          "note": "프랑스어 관용 표기",
+          "sourceUrl": "https://www.geonames.org/3041563/andorra-la-vella.html"
+        }
+      ],
+      "latitude": 42.50779,
+      "longitude": 1.52109,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3041563/andorra-la-vella.html",
+      "sourceCountryCode": "AD",
+      "defaultDisplayNameKo": "안도라라베야",
+      "shortDescriptionKo": "안도라의 카탈루냐어권 수도",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "안도라라베야",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/3041563/andorra-la-vella.html"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1993-03-14",
+            "type": "andorranConstitutionReferendum",
+            "detail": "1993년 헌법 국민투표 승인",
+            "researchDetail": "안도라 헌법은 1993년 3월 14일 국민투표로 승인되었다. 헌법의 법적 공포·시행일과 승인일은 구별한다. 이 사건은 수도의 개칭이나 취락 신설 시점이 아니다.",
+            "sourceUrl": "https://www.govern.ad/ca/tematiques/cultura-i-esports/patrimoni-cultural/coneixer-el-patrimoni-cultural/historia-d-andorra"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "국가 AD와 수도 취락 분리",
+            "researchDetail": "Andorra la Vella(GeoNames 3041563)는 P/PPLC 수도 취락이며, 안도라 공국 PCLI(3041565) 및 Andorra la Vella ADM1 행정구역과 별개의 객체다.",
+            "sourceUrl": "https://www.geonames.org/3041563/andorra-la-vella.html"
+          },
+          {
+            "detail": "영어·카탈루냐어 철자 동일",
+            "researchDetail": "Andorra la Vella라는 영어·카탈루냐어 명칭을 별도 언어 항목으로 보존하고 지도에서 두 행이 완전히 같을 때만 중복 표시를 억제한다.",
+            "sourceUrl": "https://visitandorra.com/en/discover-andorra/a-brief-history"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3168070,
+      "names": [
+        {
+          "text": "San Marino",
+          "language": "it",
+          "usage": "standard",
+          "note": "산마리노시의 이탈리아어 이름",
+          "sourceUrl": "https://www.geonames.org/3168070/san-marino.html"
+        },
+        {
+          "text": "Città di San Marino",
+          "language": "it",
+          "usage": "alternate",
+          "variantType": "disambiguatingItalianCityDesignation",
+          "note": "국가명과 구별하는 도시형",
+          "sourceUrl": "https://www.geonames.org/3168070/san-marino.html"
+        },
+        {
+          "text": "San Marino",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "City of San Marino",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "disambiguatingEnglishCityDesignation",
+          "sourceUrl": "https://www.geonames.org/3168070/san-marino.html"
+        },
+        {
+          "text": "산마리노",
+          "language": "ko",
+          "usage": "standard"
+        }
+      ],
+      "latitude": 43.93667,
+      "longitude": 12.44639,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/3168070/san-marino.html",
+      "sourceCountryCode": "SM",
+      "defaultDisplayNameKo": "산마리노",
+      "shortDescriptionKo": "산마리노 공화국의 소규모 수도",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "산마리노",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/3168070/san-marino.html"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "year": 301,
+            "type": "traditionalFoundationLegend",
+            "detail": "301년 건국 전승",
+            "researchDetail": "산마리노 관광청은 서기 301년의 공동체 성립을 성 마리누스 전승으로 소개한다. 사료상 확정된 산마리노시의 도시 건립 날짜 또는 현재 영토 경계의 성립일로 사용할 수 없다.",
+            "sourceUrl": "https://www.visitsanmarino.com/pub1/VisitSM/en/contenuto/About-San-Marino/STORIA.html"
+          },
+          {
+            "year": 885,
+            "type": "earlyCommunityDocument",
+            "detail": "885년 공동체 관련 기록",
+            "researchDetail": "산마리노 관광청은 'Placito Feretrano'를 몬테 티타노 공동체의 권리관계를 입증하는 초기 문서로 소개한다. 301년 전승과 사료 기록을 구별한다.",
+            "sourceUrl": "https://www.visitsanmarino.com/pub1/VisitSM/en/contenuto/About-San-Marino/STORIA.html"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "도시 3168070, 국가 3168068",
+            "researchDetail": "GeoNames ID 3168070은 산마리노 수도 P/PPLC 취락, 3168068은 산마리노 공화국 A/PCLI, 산마리노시 Castello ADM1도 별도 객체다.",
+            "sourceUrl": "https://www.geonames.org/3168070/san-marino.html"
+          },
+          {
+            "detail": "인구 기준 예외의 수도",
+            "researchDetail": "도시 인구가 일반 대도시 기준보다 작지만 수도는 도시 선정 정책의 명시적 예외로 포함한다. Città di San Marino는 같은 도시의 설명형 명칭이다.",
+            "sourceUrl": "https://www.visitsanmarino.com/pub1/VisitSM/en/contenuto/About-San-Marino/I-NOVE-CASTELLI.html"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 2993458,
+      "names": [
+        {
+          "text": "Monaco",
+          "language": "fr",
+          "usage": "standard",
+          "note": "프랑스어 도시·국가 공통 이름",
+          "sourceUrl": "https://www.geonames.org/2993458/monaco.html"
+        },
+        {
+          "text": "Monaco",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "모나코",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Mùnegu",
+          "language": "lij",
+          "usage": "alternate",
+          "variantType": "monegasqueLigurianLocalName",
+          "note": "모네가스크·리구리아계 이름",
+          "sourceUrl": "https://www.geonames.org/2993458/monaco.html"
+        }
+      ],
+      "latitude": 43.73718,
+      "longitude": 7.42145,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2993458/monaco.html",
+      "sourceCountryCode": "MC",
+      "defaultDisplayNameKo": "모나코",
+      "shortDescriptionKo": "동명 공국과 구분하는 도시 취락",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "모나코",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/2993458/monaco.html"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "2013-09-13",
+            "type": "modernUrbanQuarterRegulation",
+            "detail": "모나코 도시구역 관련 법령",
+            "researchDetail": "2013년 모나코 도시구역 관련 칙령은 Monaco-Ville을 특정 역사 지구·보호 구역으로 구분한다. 이는 '모나코' 도시 전체가 그 날짜에 Monaco-Ville로 개칭되었다는 뜻이 아니다.",
+            "sourceUrl": "https://journaldemonaco.gouv.mc/fr/Journaux/2013/Journal-8142/Ordonnance-Souveraine-n-4.481-du-13-septembre-2013-modifiant-les-dispositions-de-l-ordonnance-souveraine-n-3.647-du-9-septembre-1966-concernant-l-Urbanisme-la-Construction-et-la-Voirie-modifiee"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "국가 2993457과 도시 분리",
+            "researchDetail": "GeoNames 2993458은 P/PPLC 수도 취락이며 2993457은 모나코 공국 A/PCLI이다. 양쪽을 이름이 같다는 이유로 중복 레코드로 삭제하거나 하나의 파일 ID로 병합하지 않는다.",
+            "sourceUrl": "https://www.geonames.org/2993458/monaco.html"
+          },
+          {
+            "detail": "Monaco-Ville은 역사적 지구",
+            "researchDetail": "Monaco-Ville은 공국 안의 옛 시가지·특정 지구이며 Monaco 전역의 동의어 또는 한때 공식 개칭명이라는 의미로 1801년 이후 표시 연표에 넣지 않는다.",
+            "sourceUrl": "https://journaldemonaco.gouv.mc/fr/Journaux/2013/Journal-8142/Ordonnance-Souveraine-n-4.481-du-13-septembre-2013-modifiant-les-dispositions-de-l-ordonnance-souveraine-n-3.647-du-9-septembre-1966-concernant-l-Urbanisme-la-Construction-et-la-Voirie-modifiee"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 2562305,
+      "names": [
+        {
+          "text": "Il-Belt Valletta",
+          "language": "mt",
+          "usage": "standard",
+          "note": "몰타어 수도명, Il-Belt 포함",
+          "sourceUrl": "https://beltvallettalc.gov.mt/en/"
+        },
+        {
+          "text": "Valletta",
+          "language": "mt",
+          "usage": "alternate",
+          "variantType": "malteseShortName",
+          "sourceUrl": "https://www.geonames.org/2562305/valletta.html"
+        },
+        {
+          "text": "Valletta",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "발레타",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "La Valletta",
+          "language": "it",
+          "usage": "alternate",
+          "variantType": "italianExonym",
+          "sourceUrl": "https://www.geonames.org/2562305/valletta.html"
+        }
+      ],
+      "latitude": 35.89968,
+      "longitude": 14.5148,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/2562305/valletta.html",
+      "sourceCountryCode": "MT",
+      "defaultDisplayNameKo": "발레타",
+      "shortDescriptionKo": "1566년 건설된 몰타의 수도",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "발레타",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://beltvallettalc.gov.mt/en/"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1566-03-28",
+            "type": "foundationStoneLaid",
+            "detail": "1566년 신도시 착공",
+            "researchDetail": "성 요한 기사단의 새 요새도시 발레타 건설은 1566년 3월 28일 초석을 놓으면서 시작되었다. 1801년 이후의 도시명 변경 사건과 다르다.",
+            "sourceUrl": "https://primeminister.gov.mt/office-of-the-prime-minister-2/"
+          },
+          {
+            "year": 1571,
+            "type": "orderTransfersConventToValletta",
+            "detail": "1571년 기사단 수도 이전",
+            "researchDetail": "1571년 성 요한 기사단이 비토리오사에서 발레타로 기관·거점을 이전했으며, 새 도시 이름을 1571년에 바꾼 것이 아니다.",
+            "sourceUrl": "https://beltvallettalc.gov.mt/en/"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "몰타어 Il-Belt Valletta",
+            "researchDetail": "Maltese Il-Belt Valletta는 '도시'라는 요소가 포함된 몰타어 명칭이다. 영어 Valletta와 원어가 달라 언어 동시 표시 시 두 형태를 보존한다.",
+            "sourceUrl": "https://beltvallettalc.gov.mt/en/"
+          },
+          {
+            "detail": "도시와 ADM1·국가 분리",
+            "researchDetail": "GeoNames P/PPLC 2562305는 수도 취락이며 8334638은 발레타 ADM1 행정구역, 몰타 국가 PCLI는 별도 객체다.",
+            "sourceUrl": "https://www.geonames.org/8334638/valletta.html"
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 146268,
+      "names": [
+        {
+          "text": "Λευκωσία",
+          "language": "el",
+          "script": "Grek",
+          "usage": "standard",
+          "note": "그리스어 도시명",
+          "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+        },
+        {
+          "text": "Lefkoşa",
+          "language": "tr",
+          "script": "Latn",
+          "usage": "standard",
+          "note": "튀르키예어 도시명",
+          "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+        },
+        {
+          "text": "Nicosia",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "니코시아",
+          "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Lefkosia",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "greekBasedRomanization",
+          "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+        },
+        {
+          "text": "Λευκωσία / Lefkoşa",
+          "language": "und",
+          "usage": "alternate",
+          "variantType": "bilingualGreekTurkishWriting",
+          "note": "표기 비교용, 공식 합성명 아님",
+          "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+        }
+      ],
+      "latitude": 35.17284,
+      "longitude": 33.35397,
+      "featureClass": "P",
+      "featureCode": "PPLC",
+      "sourceUrl": "https://www.geonames.org/146268/nicosia.html",
+      "sourceCountryCode": "CY",
+      "defaultDisplayNameKo": "니코시아",
+      "shortDescriptionKo": "그리스어·튀르키예어 병존 수도",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "니코시아",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801-with-geopolitical-boundary-separation",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1963-12-30",
+            "type": "nicosiaGreenLineFirstEstablished",
+            "detail": "1963년 시내 그린라인 설정",
+            "researchDetail": "그린라인은 1963년 12월 30일 민족 간 긴장 상황에서 니코시아 시내에 처음 설정되었다. 지명이나 PPLC 도시 객체가 두 개로 개칭·분리된 날짜는 아니다.",
+            "sourceUrl": "https://www.mof.gov.cy/mof/customs/customs.nsf/All/6C816214735FA1C9422577B300240AAC?OpenDocument=&print="
+          },
+          {
+            "date": "1974-08-16",
+            "type": "cyprusCeasefireLines",
+            "detail": "1974년 정전선·완충지대",
+            "researchDetail": "UNFICYP는 1974년 8월 16일 정전 이후 군사적 대치선을 현재 완충지대의 경계 근거로 기록한다. 1963년부터의 니코시아 그린라인과 섬 전체로 확장된 1974년 후속 분단을 구별해야 한다.",
+            "sourceUrl": "https://unficyp.unmissions.org/en/about-buffer-zone"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "그리스어·튀르키예어 병용",
+            "researchDetail": "Λευκωσία(그리스어), Lefkoşa(튀르키예어), Nicosia(영어)는 같은 도시의 언어별 명칭이다. 분단 시점에 일괄 법적 개칭된 이름으로 취급하지 않는다.",
+            "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+          },
+          {
+            "detail": "1974년 분단과 시 경계 구분",
+            "researchDetail": "GeoNames ID 146268은 대표점 하나를 가진 P/PPLC 취락이다. 시내 그린라인·유엔 완충지대·북부와 남부의 실효행정 범위는 기하 경계 자료로 별도 구축할 대상이지, 한 좌표로 면적을 분할해서는 안 된다.",
+            "sourceUrl": "https://unficyp.unmissions.org/en/about-buffer-zone"
+          },
+          {
+            "detail": "CY는 현재 GeoNames 메타",
+            "researchDetail": "sourceCountryCode CY는 GeoNames 현재 원천 데이터의 국가 코드로, 북부 실효행정·국제법상 지위의 역사 변화나 국가 승인 결론을 이 레코드 하나로 판정하지 않는다.",
+            "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+          },
+          {
+            "detail": "니코시아구 ADM1은 별도",
+            "researchDetail": "GeoNames 146267은 니코시아구 행정구역 A/ADM1이며, 검수 대상 146268은 수도 P/PPLC 취락이다.",
+            "sourceUrl": "https://www.geonames.org/146267/nicosia-district.html"
+          }
+        ]
+      }
+    }
+  ]
+}

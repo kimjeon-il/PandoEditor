@@ -176,6 +176,40 @@ test('batch 12 has four independently verified central-European capital city IDs
   assert.equal(records[3].names.find(n=>n.language==='en'&&n.usage==='standard')?.text,'Vaduz');
 });
 
+test('batch 13 distinguishes five capital settlements from identically named sovereigns and administrative areas', () => {
+  const records=json('reports/places/tier1-major-cities-batch13-european-microstates-mediterranean.json').records;
+  assert.deepEqual(records.map(r=>r.geonameId),[3041563,3168070,2993458,2562305,146268]);
+  assert.deepEqual(records.map(r=>r.defaultDisplayNameKo),
+    ['안도라라베야','산마리노','모나코','발레타','니코시아']);
+  assert.deepEqual(records.map(r=>r.sourceCountryCode),['AD','SM','MC','MT','CY']);
+  for(const r of records) {
+    assert.equal(r.featureClass,'P',r.geonameId);
+    assert.equal(r.featureCode,'PPLC',r.geonameId);
+    assert.equal(r.displayTimeline.length,1,'Do not fabricate a city rename from a sovereignty or administrative change');
+    assert.equal(r.displayTimeline[0].fromYear,1801);
+    assert.equal(r.displayTimeline[0].nameKo,r.defaultDisplayNameKo);
+    assert.ok(r.names.some(n=>n.language==='ko'&&n.usage==='standard'&&n.text===r.defaultDisplayNameKo));
+    assert.ok(r.names.some(n=>n.language==='en'&&n.usage==='standard'));
+    assert.ok(r.names.some(n=>n.language!=='ko'&&n.language!=='en'&&n.usage==='standard'));
+    for(const value of [r.shortDescriptionKo,
+      ...r.names.map(n=>n.note),
+      ...(r.historicalGeography?.events||[]).map(n=>n.detail),
+      ...(r.historicalGeography?.notes||[]).map(n=>n.detail)].filter(Boolean))
+      assert.ok([...value].length<=28,r.geonameId+' overly long display note: '+value);
+  }
+  assert.ok(records[1].historicalGeography.notes.some(n=>n.researchDetail?.includes('3168068')));
+  assert.ok(records[2].historicalGeography.notes.some(n=>n.researchDetail?.includes('2993457')));
+  assert.ok(records[3].historicalGeography.notes.some(n=>n.researchDetail?.includes('8334638')));
+  assert.ok(records[4].historicalGeography.notes.some(n=>n.researchDetail?.includes('146267')));
+  assert.ok(records[4].names.some(n=>n.language==='el'&&n.text==='Λευκωσία'));
+  assert.ok(records[4].names.some(n=>n.language==='tr'&&n.text==='Lefkoşa'));
+  assert.deepEqual(records[4].historicalGeography.events.map(e=>[e.date,e.type]),[
+    ['1963-12-30','nicosiaGreenLineFirstEstablished'],['1974-08-16','cyprusCeasefireLines']
+  ]);
+  assert.ok(records[4].historicalGeography.notes.some(n=>n.researchDetail?.includes('기하')));
+  assert.equal(records[1].historicalGeography.events[0].type,'traditionalFoundationLegend');
+});
+
 test('portable multilingual rows and provenance match reviewed city records', () => {
   let scenarios = 0;
   const sourceCache = new Map();

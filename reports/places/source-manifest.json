@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "b2dfbe523be315331073c8781ee2c141edab74c6",
+  "webCommit": "921440813ac92b6a88907c6e5359422b1e6c5230",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -60,12 +60,16 @@
     {
       "path": "reports/places/tier1-major-cities-batch12-central-eastern-europe-capitals.json",
       "gitBlobSha": "365d1343b6e9bff6dcd1380818253223978aa88a"
+    },
+    {
+      "path": "reports/places/tier1-major-cities-batch13-european-microstates-mediterranean.json",
+      "gitBlobSha": "6876b288edb685de191fd3ec5e5ad57e0bf74cf4"
     }
   ],
   "reviewInventory": {
-    "batchCount": 12,
-    "recordCount": 72,
-    "distinctGeoNames": 72,
+    "batchCount": 13,
+    "recordCount": 77,
+    "distinctGeoNames": 77,
     "byBatch": [
       {
         "path": "reports/places/tier1-major-cities-batch01.json",
@@ -114,6 +118,10 @@
       {
         "path": "reports/places/tier1-major-cities-batch12-central-eastern-europe-capitals.json",
         "recordCount": 4
+      },
+      {
+        "path": "reports/places/tier1-major-cities-batch13-european-microstates-mediterranean.json",
+        "recordCount": 5
       }
     ]
   }

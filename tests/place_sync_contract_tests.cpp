@@ -257,6 +257,62 @@ private slots:
                  QStringLiteral("LI"));
     }
 
+    void batch13FiveCapitalsAndNicosiaMultilingualNames() {
+        const QString root=QString::fromUtf8(PLACE_SYNC_REPOSITORY_ROOT);
+        QFile file(root+"/reports/places/tier1-major-cities-batch13-european-microstates-mediterranean.json");
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const auto document=QJsonDocument::fromJson(file.readAll()).object();
+        QCOMPARE(document.value("status").toString(),QStringLiteral("verified-source-staging-not-runtime"));
+        const auto records=document.value("records").toArray();
+        QCOMPARE(records.size(),5);
+        const QList<int> ids{3041563,3168070,2993458,2562305,146268};
+        const QStringList labels{QStringLiteral("안도라라베야"),QStringLiteral("산마리노"),
+            QStringLiteral("모나코"),QStringLiteral("발레타"),QStringLiteral("니코시아")};
+        const QStringList countries{"AD","SM","MC","MT","CY"};
+        for(qsizetype i=0;i<records.size();++i) {
+            const QJsonObject city=records.at(i).toObject();
+            QCOMPARE(city.value("geonameId").toInt(),ids.at(i));
+            QCOMPARE(city.value("defaultDisplayNameKo").toString(),labels.at(i));
+            QCOMPARE(city.value("sourceCountryCode").toString(),countries.at(i));
+            QCOMPARE(city.value("featureClass").toString(),QStringLiteral("P"));
+            QCOMPARE(city.value("featureCode").toString(),QStringLiteral("PPLC"));
+            const auto timeline=city.value("displayTimeline").toArray();
+            QCOMPARE(timeline.size(),1);
+            QCOMPARE(timeline.at(0).toObject().value("fromYear").toInt(),1801);
+            QCOMPARE(timeline.at(0).toObject().value("nameKo").toString(),labels.at(i));
+        }
+        const auto nicosia=records.at(4).toObject();
+        const auto names=nicosia.value("names").toArray();
+        bool greek=false,turkish=false;
+        for(const auto& value:names) {
+            const QJsonObject name=value.toObject();
+            if(name.value("language")=="el"&&name.value("text")==QStringLiteral("Λευκωσία"))
+                greek=true;
+            if(name.value("language")=="tr"&&name.value("text")==QStringLiteral("Lefkoşa"))
+                turkish=true;
+        }
+        QVERIFY(greek&&turkish);
+        const auto events=nicosia.value("historicalGeography").toObject().value("events").toArray();
+        QCOMPARE(events.size(),2);
+        QCOMPARE(events.at(0).toObject().value("date").toString(),QStringLiteral("1963-12-30"));
+        QCOMPARE(events.at(1).toObject().value("date").toString(),QStringLiteral("1974-08-16"));
+        PlaceRecord record;
+        record.name=QStringLiteral("니코시아");
+        record.nameEn="Nicosia";
+        record.nameNative=QStringLiteral("Λευκωσία");
+        PlaceLanguageSelection languages;languages.en=true;languages.native=true;
+        const auto three=resolvePlaceDisplayRows(record,languages);
+        QCOMPARE(three.size(),std::size_t(3));
+        QCOMPARE(three.at(0).text,QStringLiteral("니코시아"));
+        QCOMPARE(three.at(1).text,QStringLiteral("Nicosia"));
+        QCOMPARE(three.at(2).text,QStringLiteral("Λευκωσία"));
+        record.name=QStringLiteral("산마리노");
+        record.nameEn="San Marino";record.nameNative="San Marino";
+        const auto deduplicated=resolvePlaceDisplayRows(record,languages);
+        QCOMPARE(deduplicated.size(),std::size_t(2));
+        QCOMPARE(deduplicated.at(1).language,QStringLiteral("en"));
+    }
+
     void nativeDecoderMatchesAllFrozenWebHexVectors() {
         const auto fixtures=contract().value("fixtures").toArray();
         for(const auto& value:fixtures) {
