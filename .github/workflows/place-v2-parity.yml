@@ -1,0 +1,30 @@
+name: Place V2 Snapshot Parity
+on:
+  push:
+    branches:
+      - data/places-tier1-major-cities
+    paths:
+      - 'contracts/places/**'
+      - 'reports/places/**'
+      - 'tools/place-runtime-contract/v2-snapshot.test.mjs'
+      - '.github/workflows/place-v2-parity.yml'
+  pull_request:
+    paths:
+      - 'contracts/places/**'
+      - 'reports/places/**'
+      - 'tools/place-runtime-contract/v2-snapshot.test.mjs'
+      - '.github/workflows/place-v2-parity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-v2-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Compare native mirror with pinned Web
+        run: node --test tools/place-runtime-contract/v2-snapshot.test.mjs
