@@ -37,7 +37,9 @@ jobs:
           r=json.loads(f.read_text())
           assert r["historicalRasterComparisonPerformed"] is False
           assert abs(r["sheetCoverageDifferenceM"]) <= 2
-          assert r["anyUnavailablePre1914Edition"], "Unexpected: all relevant sheets now eligible; recheck dates"
+          assert not r["anyUnavailablePre1914Edition"], "Public first editions must predate 1914"
+          assert {s["sheetId"] for s in r["sheets"]} == {"0619", "0717", "0718", "0719"}
+          assert all(s["publicationYear"] <= 1880 for s in r["sheets"])
           print("Candidate remains non-final; raster verification still pending.")
           PY
       - name: Commit derived sheet index (not source raster)
