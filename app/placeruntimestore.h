@@ -10,15 +10,21 @@
 #include <stdexcept>
 #include <vector>
 
-// Fixed Web ebcfae4d27b29cbbea6416a7045a4806930204be place-contract/codec/store.
-// Builtin records are source values, never project objects or history entries.
+// The legacy v1 oracle is pinned at ebcfae4; current Web v2 contract is in
+// contracts/places/v2.json. Builtin records remain transient source data.
 struct PlaceRuntimeLimits {
     static constexpr std::size_t Candidates=1500,LayoutCandidates=2048,TileRecords=512,
         QueryTiles=96,ShardBytes=512*1024,CacheBytes=24*1024*1024,
         SearchResults=50,RetainedRecords=256,ManifestBytes=8*1024*1024;
 };
+struct PlaceNameTransition {
+    QString fromDate;
+    int fromYear=0;  // exactly one of fromYear/fromDate is present
+    QString ko,en,native;
+};
 struct PlaceRecord {
-    QString id,source,sourceId,name,kind,countryCode,featureCode;
+    QString id,source,sourceId,name,nameEn,nameNative,kind,countryCode,featureCode;
+    std::vector<PlaceNameTransition> nameTimeline;
     pandoeditor::Point coordinates;
     double population=0,priority=40,minZoom=0;
 };

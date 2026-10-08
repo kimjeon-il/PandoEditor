@@ -49,6 +49,7 @@ add_library(pandoeditor_editor STATIC
     worlddatasetloader.cpp worlddatasetloader.h
     terrainimageprovider.cpp terrainimageprovider.h
     placeruntimestore.cpp placeruntimestore.h
+    placenamedisplay.cpp placenamedisplay.h
     placeruntimeprovider.cpp placeruntimeprovider.h
     editorplace.cpp
     resourcecachecoordinator.cpp resourcecachecoordinator.h
