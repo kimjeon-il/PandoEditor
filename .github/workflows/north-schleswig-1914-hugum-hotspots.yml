@@ -1,0 +1,61 @@
+name: App offline Hügum Hårup/confluence hotspot source contract
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [work/gis]
+    paths:
+      - tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.0619-hugum-stage4.hotspots.*
+      - tools/review_north_schleswig_1914_hugum_hotspots.py
+      - .github/workflows/north-schleswig-1914-hugum-hotspots.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify-shared-gis-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/gis
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify 1914 caution and display-space tolerance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          b=Path("tools/historical-library/land-borders")
+          stem="german-denmark-1914-north-schleswig-001-026"
+          data=json.loads((b/(stem+".0619-hugum-stage4.hotspots.json")).read_text(encoding="utf-8"))
+          m=json.loads((b/(stem+".geojson")).read_text(encoding="utf-8"))
+          stage=json.loads((b/(stem+".0619-hugum-stage4.json")).read_text(encoding="utf-8"))
+          render=data["rendering"]
+          assert m["features"][0]["properties"]["doNotTreatAsFinal"] is True
+          assert len(m["features"][0]["geometry"]["coordinates"])==1343
+          assert stage["geometry"]["sourceVertexCount"]==790
+          assert data["referenceDate"]=="1914-07-31"
+          assert data["masterUnmodified"] is True
+          assert data["historicBorderCertified"] is False
+          assert data["rasterFilesCommittedToGit"] is False
+          assert render["mapContentWidthCssPx"]==2560
+          assert render["flatZoom"]==64
+          assert render["viewToleranceCssPx"]==0.5
+          assert abs(render["toleranceDegrees"]-(0.5*360/(2560*64)))<1e-12
+          assert render["historicalReferenceDigitized"] is False
+          assert render["measuredDifferenceToHistorical1914CssPx"] is None
+          assert render["targetPassed"] is None
+          assert set(data["panels"]) == {"harup-meander","gels-flads-confluence"}
+          assert all(not p["historicalLineDigitized"] for p in data["panels"].values())
+          rev=data["otherPublishedRevision"]
+          assert rev["reportedLastSubstantialRevision"]=="B 1916"
+          assert rev["lastRevisionAfterReferenceDate"] is True
+          assert rev["reportedFirstEditionYear"]==1880
+          assert data["nearContemporarySeries"]["later0619SheetAcquired"] is False
+          doc=(b/(stem+".0619-hugum-stage4.hotspots.review.md")).read_text(encoding="utf-8")
+          assert "1914" in doc and "1878" in doc and "1916" in doc
+          assert "미측정" in doc and "보류" in doc
+          print("PASS: app parity Hügum exception evidence; master intact; historic 1914 accuracy not invented.")
+          PY
