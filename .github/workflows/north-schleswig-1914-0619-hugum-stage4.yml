@@ -1,0 +1,64 @@
+name: App offline Stage4 Hügum 0619 historical border contract
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [work/gis]
+    paths:
+      - tools/historical-library/land-borders/german-denmark-1914-north-schleswig-001-026.0619-hugum-stage4.*
+      - tools/verify_north_schleswig_1914_0619_hugum.py
+      - .github/workflows/north-schleswig-1914-0619-hugum-stage4.yml
+
+permissions:
+  contents: read
+
+jobs:
+  offline-geospatial-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/gis
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --disable-pip-version-check shapely pyproj
+      - name: Assert 0619 overlay review source geometry and non-final classification
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from pyproj import Transformer
+          from shapely.geometry import shape,Point
+          from shapely.ops import transform
+          data=Path("tools/historical-library/land-borders")
+          stem="german-denmark-1914-north-schleswig-001-026"
+          load=lambda suf:json.loads((data/(stem+suf)).read_text(encoding="utf-8"))
+          review=load(".0619-hugum-stage4.json")
+          clip=load(".0619-hugum-stage4.geojson")
+          original=load(".geojson")
+          parts=load(".sheet-segments.geojson")
+          post=load(".stone26-transition.provisional.geojson")
+          w=Transformer.from_crs("EPSG:4326","EPSG:25832",always_xy=True).transform
+          geoms={x["properties"]["sheetId"]:transform(w,shape(x["geometry"])) for x in parts["features"]}
+          candidate=transform(w,shape(clip["features"][0]["geometry"]))
+          assert candidate.geom_type=="LineString" and candidate.is_simple
+          assert abs(candidate.length/1000-5.99299)<0.02
+          assert candidate.hausdorff_distance(geoms["0619"])<0.01
+          west=geoms["0719"].geoms[0]
+          assert Point(west.coords[-1]).distance(Point(candidate.coords[0]))<0.01
+          river=transform(w,shape(post["features"][1]["geometry"]))
+          assert Point(candidate.coords[-1]).distance(Point(river.coords[-1]))<0.01
+          assert original["features"][0]["properties"]["doNotTreatAsFinal"] is True
+          assert clip["features"][0]["properties"]["doNotTreatAsFinal"] is True
+          assert review["riverChannelModifiedInMaster"] is False
+          assert review["historicSourceLineDigitized"] is False
+          assert review["historicStopCriterionPassed"] is None
+          assert review["historicDeviationMeasuredCssPx"] is None
+          assert review["fladsAaConfluenceHistoricallyValidated"] is False
+          assert review["sourceHierarchy"]["modernRegulationReachMeters"]==6400
+          assert review["geometry"]["sourceGeometrySimple"] is True
+          assert len(review["images"])==6
+          assert review["geometry"]["renderDisplayEstimate"]["candidateVersusOwnSimplificationHausdorffCssPx"]<=0.5
+          print("PASS: Hügum 0619 source continuity and 1878 WMS provenance; 1914 historic river remains provisional.")
+          PY
