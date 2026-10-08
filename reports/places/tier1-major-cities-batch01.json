@@ -701,45 +701,46 @@
         {
           "text": "दिल्ली",
           "language": "hi",
-          "usage": "standard"
+          "usage": "standard",
+          "sourceUrl": "https://language.delhi.gov.in/",
+          "script": "Deva"
         },
         {
           "text": "Delhi",
           "language": "en",
-          "usage": "standard"
+          "usage": "standard",
+          "sourceUrl": "https://www.geonames.org/1273294/"
         },
         {
           "text": "델리",
           "language": "ko",
-          "usage": "standard"
-        },
-        {
-          "text": "Dilli",
-          "language": "hi-Latn",
-          "usage": "alternate",
-          "variantType": "romanizedLocalName",
-          "sourceUrl": "https://www.ndmc.gov.in/ndmc/act.aspx"
-        },
-        {
-          "text": "Dehli",
-          "language": "en",
-          "usage": "historical",
-          "variantType": "historicalEnglishSpelling",
-          "sourceUrl": "https://www.ndmc.gov.in/ndmc/act.aspx"
+          "usage": "standard",
+          "sourceUrl": "https://www.geonames.org/1273294/"
         },
         {
           "text": "دہلی",
           "language": "ur",
           "usage": "standard",
-          "variantType": "localLanguage",
-          "sourceUrl": "https://language.delhi.gov.in/language/activity"
+          "variantType": "coOfficialNativeLanguage",
+          "sourceUrl": "https://prsindia.org/files/bills_acts/acts_states/delhi/2003/2003Delhi8.pdf",
+          "script": "Arab"
         },
         {
           "text": "ਦਿੱਲੀ",
-          "language": "pa-Guru",
+          "language": "pa",
           "usage": "standard",
-          "variantType": "localLanguage",
-          "sourceUrl": "https://language.delhi.gov.in/language/activity"
+          "variantType": "coOfficialNativeLanguage",
+          "sourceUrl": "https://prsindia.org/files/bills_acts/acts_states/delhi/2003/2003Delhi8.pdf",
+          "script": "Guru"
+        },
+        {
+          "text": "دهلی",
+          "language": "fa",
+          "usage": "historical",
+          "variantType": "mughalPersianEditorialNativeSelection",
+          "sourceUrl": "https://searcharchives.bl.uk/catalog/032-004341440",
+          "script": "Arab",
+          "researchNote": "1801년 지도용으로 선택한 페르시아어 지명형. 제시된 영국도서관 카탈로그는 당시 페르시아어 문서의 존재를 뒷받침하지만 이 도시명 철자의 직접 공문서 증거는 아니므로 확정적 법정명으로 주장하지 않는다."
         }
       ],
       "latitude": 28.65195,
@@ -749,9 +750,131 @@
       "sourceUrl": "https://www.geonames.org/1273294/",
       "sourceCountryCode": "IN",
       "defaultDisplayNameKo": "델리",
-      "shortDescriptionKo": "힌디어·우르두어 등의 다언어 도시",
-      "displayTimeline": [],
-      "historicalDisplayCoverage": "modern-label-only"
+      "shortDescriptionKo": "1858·1947·2004년 원어 표기 전환",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "델리",
+          "nameEn": "Delhi",
+          "nameNative": "دهلی",
+          "nativeLanguage": "fa",
+          "nativeNames": [
+            {
+              "text": "دهلی",
+              "language": "fa",
+              "script": "Arab"
+            }
+          ],
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://searcharchives.bl.uk/catalog/032-004341440",
+          "researchNote": "무굴기 페르시아어 대표명을 1801년 조사 시작점부터 잠정 적용. 1801년은 개칭일이 아니며, 초기 델리 행정의 정확한 공식 표기와 적용 기간은 추가 사료로 검증할 필요가 있다."
+        },
+        {
+          "fromDate": "1858-11-01",
+          "nameNative": "دہلی",
+          "nativeLanguage": "ur",
+          "nativeNames": [
+            {
+              "text": "دہلی",
+              "language": "ur",
+              "script": "Arab"
+            }
+          ],
+          "kind": "governingAuthorityEditorialLabelTransition",
+          "sourceUrl": "https://www.qdl.qa/en/archive/81055/vdc_100023510061.0x000089",
+          "researchNote": "영국 왕실 직접통치 개시를 기준으로 편집상 원어를 페르시아어에서 우르두어로 선정. 실제 우르두어 사용은 이전에도 있었으며 이 날짜는 언어 최초 채택·법정 도시 개칭일이 아니다."
+        },
+        {
+          "fromDate": "1947-08-15",
+          "nameNative": "दिल्ली",
+          "nativeLanguage": "hi",
+          "nativeNames": [
+            {
+              "text": "दिल्ली",
+              "language": "hi",
+              "script": "Deva"
+            },
+            {
+              "text": "دہلی",
+              "language": "ur",
+              "script": "Arab"
+            }
+          ],
+          "kind": "postIndependenceEditorialMultilingualTransition",
+          "sourceUrl": "https://nehruarchive.in/documents/urdu-and-hindi-regional-languages-of-delhi-24-september-1957-yj45w9",
+          "researchNote": "인도 독립일을 힌디어·우르두어 병기 시작의 지도 편집상 경계로 선택. 1947년 양 언어의 법정 동시 지정일이 아니다. 네루의 1957년 기록에 1952년 의회에서 힌디어·우르두어·영어가 사용됐다고 언급됨."
+        },
+        {
+          "fromDate": "2004-01-26",
+          "nativeNames": [
+            {
+              "text": "दिल्ली",
+              "language": "hi",
+              "script": "Deva"
+            },
+            {
+              "text": "دہلی",
+              "language": "ur",
+              "script": "Arab"
+            },
+            {
+              "text": "ਦਿੱਲੀ",
+              "language": "pa",
+              "script": "Guru"
+            }
+          ],
+          "kind": "coOfficialLanguageLegislationCommencement",
+          "sourceUrl": "https://cdnbbsr.s3waas.gov.in/s3ec0232b3ee0272954b956a7d1f86f76a/uploads/2024/05/2024050482.pdf",
+          "researchNote": "델리 공용어법(법령명 2000, 2003-07-02 공포)의 2004-01-26 시행을 기준으로 펀자브어를 추가. 힌디어·우르두어는 그대로 유지되며 당일 처음 사용되기 시작했다는 의미가 아니다. 정부 법률 원문은 별도 sourceUrl에서 확인."
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801-mughal-persian-form-provisional",
+      "defaultDisplayNameEn": "Delhi",
+      "defaultDisplayNameNative": "दिल्ली",
+      "defaultNativeLanguage": "hi",
+      "defaultNativeNames": [
+        {
+          "text": "दिल्ली",
+          "language": "hi",
+          "script": "Deva"
+        },
+        {
+          "text": "دہلی",
+          "language": "ur",
+          "script": "Arab"
+        },
+        {
+          "text": "ਦਿੱਲੀ",
+          "language": "pa",
+          "script": "Guru"
+        }
+      ],
+      "nameSelectionNotes": [
+        "Delhi(영어)·델리(한국어)는 모든 시기에 동일하므로 원어명 전환 때 중복 변경하지 않음.",
+        "1801~1858년 페르시아어 دهلی의 정확한 행정상 공식성은 추가 검증 대상으로 보존하며 1801년을 역사적 개칭일로 해석하지 않음.",
+        "1858-11-01과 1947-08-15는 정치체제 변화에 맞춘 편집상 대표 원어 전환일, 2004-01-26은 법령 시행일.",
+        "1947년에는 힌디어 दिल्ली와 우르두어 دہلی를 함께 선정, 2004년부터 펀자브어 ਦਿੱਲੀ를 추가. 세 현지어는 각각 독립된 실제 공적·사회적 사용이 확인되므로 같은 시점 병기를 허용.",
+        "1837년 언어개혁, 1950년 인도 헌법, 1952년 델리 의회 언어 사용은 이름 변경일과 구분. 뉴델리·샤자하나바드는 델리의 개칭명이 아니라 별도 지명/도시구역."
+      ],
+      "multilingualNativeNamePolicy": {
+        "status": "approved-exception",
+        "maxSimultaneousNativeNames": 3,
+        "selectedOrdering": [
+          "hi",
+          "ur",
+          "pa"
+        ],
+        "classification": "period-specific official/local usage and editorial selection; not legal city rename",
+        "evidenceUrls": [
+          "https://nehruarchive.in/documents/urdu-and-hindi-regional-languages-of-delhi-24-september-1957-yj45w9",
+          "https://prsindia.org/files/bills_acts/acts_states/delhi/2003/2003Delhi8.pdf",
+          "https://cdnbbsr.s3waas.gov.in/s3ec0232b3ee0272954b956a7d1f86f76a/uploads/2024/05/2024050482.pdf",
+          "https://artandculture.delhi.gov.in/art-and-culture/office-memorandum-regarding-order-official-languages-languages-other-hindi-and"
+        ],
+        "sourceCountryCodeNotHistoricalAuthority": true,
+        "firstDateEvidenceLimit": "The 1858 and 1947 transition dates are editorial markers, not documentary proof of first language use or de jure name change.",
+        "runtimeNote": "review-stage only: nativeNames[] are not yet serialized/displayed as multiple rows in PLAC v2."
+      }
     },
     {
       "geonameId": 2643743,
@@ -837,7 +960,7 @@
     "displayConvention": "The shared map-label policy is distinct from multilingual names[] and the factual usage/official periods of local names. Chinese koMapLabels values reference existing ko names[] and are applied after selecting the historically appropriate local toponym.",
     "runtimeStatus": "Staging data only, no renderer integration.",
     "preferredNameStage1": {
-      "status": "8-reviewed-of-9-staging-only",
+      "status": "9-reviewed-of-9-staging-only",
       "reviewedGeoNamesIds": [
         1835848,
         1838524,
@@ -845,12 +968,11 @@
         1853909,
         1816670,
         1796236,
+        1273294,
         2643743,
         2988507
       ],
-      "pendingGeoNamesIds": [
-        1273294
-      ],
+      "pendingGeoNamesIds": [],
       "currentNameFields": [
         "defaultDisplayNameKo",
         "defaultDisplayNameEn",
@@ -858,22 +980,32 @@
         "defaultNativeLanguage"
       ],
       "historicalNameFields": "displayTimeline[] has nameKo and, where changed, nameEn/nameNative/nativeLanguage; omitted nameEn/native at transitions inherit the prior selected value.",
-      "rule": "One selected native, Korean and English name at each map date, referenced to the same period-specific official local city name; sourceCountryCode cannot identify a historic governing state.",
+      "rule": "One ko and en preferred name per map date. Native name is one normally or up to three simultaneous official/local forms under documented multilingual exception; each period's names correspond to the same city, not automatic sovereignty changes.",
       "dates": "Use precise Gregorian fromDate only where verified. fromYear is approximate and is not automatically January 1.",
-      "exclusions": "Pre-1308 Namgyeong remains deferred. Delhi remains pending in first batch. Batches 2–15 have not been audited to this policy.",
+      "exclusions": "Pre-1308 Namgyeong remains deferred. All nine first-batch cities have name selections; batches 2–15 are not audited. Delhi Persian official-name evidence is provisional.",
       "runtimeStatus": "review-only; production place manifest and renderer unchanged",
-      "temporalPreferredFields": "displayTimeline[] stores fromDate or fromYear and only changed language fields. Missing ko/en/native names inherit the previous preferred selection. nativeLanguage denotes the governing authority's selected local name language.",
+      "temporalPreferredFields": "displayTimeline[] holds fromYear or fromDate and only changed ko/en/native fields. For approved multilingual exceptions nativeNames[] replaces the full period's ordered list (1–3 entries), while nameNative/nativeLanguage remain the selected primary for the existing scalar interface.",
       "newReviewedCities": [
         1838524,
         1853909,
-        1816670
+        1816670,
+        1273294
       ],
       "extraTimelineKinds": [
         "governingAuthorityEditorialLabelTransition",
         "historicalOrthographyEditorialTransition",
         "postwarEditorialNameRestoration",
-        "englishRomanizationPolicyChange"
+        "englishRomanizationPolicyChange",
+        "postIndependenceEditorialMultilingualTransition",
+        "coOfficialLanguageLegislationCommencement"
       ]
+    },
+    "multilingualNativeList": {
+      "allowedOnlyUnderApprovedException": true,
+      "maxNativeNames": 3,
+      "defaults": "defaultNativeNames[] is a list of {text,language,script} for the present date. Its first item must match defaultDisplayNameNative/defaultNativeLanguage.",
+      "historicTransitions": "displayTimeline[].nativeNames[] replaces the entire simultaneous local-language set from that transition date; omission means inherit the previously selected set. The scalar nameNative/nativeLanguage remains the first chosen primary if it changes.",
+      "noUnsupportedRuntimeClaims": "Only the staging review supports lists now. Published PLAC v2 still has one nameNative, and current app/web runtime is not changed by this review."
     }
   },
   "historicalNameReview": {
