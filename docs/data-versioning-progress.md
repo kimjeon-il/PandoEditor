@@ -136,6 +136,15 @@
 - 현재 Pages는 여전히 웹 `main` 루트 직접 배포 방식. [실제 Pages 빌드 #37868609497](https://github.com/kimjeon-il/Pando/actions/runs/37868609497) 성공. [삭제 전용 검증 #37869177623](https://github.com/kimjeon-il/Pando/actions/runs/37869177623) Node 5/5 성공: 구형 매니페스트 URL HTTP 404, 최신 매니페스트 URL HTTP 200, 웹 7개 브랜치 모두 구형 0·현행 335, 앱 5개 모두 최신 지형 참조.
 - `main` 전체 현재 추적 파일 크기 **832,753,069 bytes**(데이터 **734,341,743 bytes**). 보수적 Pages 게시 프로필 `main` **673,492,217 bytes**, GIS 전환 프로필 **695,918,028 bytes**로 두 프로필 모두 1GB 이내. 구버전 보관 후보는 현재 **25그룹·1,789파일·190,094,853 bytes**이며, 자동으로 추가 삭제하지 않는다.
 - [11단계 실삭제 보고서·7브랜치 롤백 SHA](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/data-versioning-phase11.md), [335개 원본 복원 블롭·크기 목록](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/terrain-v0120-retirement-evidence.json). 기타 앱 Qt 회귀 미해결, 전체 제품 코드 `main` 병합·Pages Actions 게시 방식 전환은 별도 작업이다.
+## 현행 수계 데이터 최적화 1단계 (2026-10-09)
+
+- 작업 브랜치: 웹 `work/gis` (웹·앱 제품/데이터 바이너리 변경 없음). [전용 구현/검증 문서](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/active-hydro-optimization-stage1.md).
+- 현행 `hydro/v0.13.1`은 자체 2파일/782,600 bytes만 두고, `v0.13.0`의 인덱스·상세 메타데이터·3개 샤드 **5개/11,244,495 bytes를 재사용**. `v0.13.0` 전체 7개/12,045,791 bytes는 그대로 보존.
+- **[실제 GitHub Actions #37903489555](https://github.com/kimjeon-il/Pando/actions/runs/37903489555) 성공**: Node 단위시험 **8/8**, 실제 수계 바이너리 7개의 파일 크기+SHA-256 일치, 버전 간 도형/인덱스 참조 무결성 통과, 현행·선행 폴더 내 미참조 파일 0개, 앱 `main` v1·`work/gis` v2의 웹 원본 Git Blob/SHA-256 핀 일치.
+- gzip level9 재압축 가상 벤치마크에서 전체 파일의 추가 잠재 절감량은 **34,594 bytes**. 앱 원본 핀·웹 배포 경로 변경에 비해 실익이 작아 **재압축하지 않음**. 이번 단계의 최적화는 현행 재사용 관계 자동 검증/회귀 방지 구현이다.
+- 신규 검사: `tools/check-current-hydro-layout.mjs`, `tests/unit/current-hydro-layout.test.mjs`, `.github/workflows/active-hydro-optimization-gate.yml`. [JSON CI artifact](https://github.com/kimjeon-il/Pando/actions/runs/37903489555/artifacts/11603990024).
+- **구버전 수계 `v0.12.2`~`v0.12.6`의 1,769개/약154MB는 그대로 보존**. 파일 최적화 명목으로 수계 형상·명칭을 수정하거나 앱 리소스를 교체하거나 `main` 제품 코드를 병합하지 않는다. 실제 삭제는 후속 단계에서 사용 의존성 확인 후 별도 시행.
+
 ## 위험 및 남은 의존성
 
 - 웹 Worker는 새 데이터 매니페스트로 전환했지만 공유 국경선 캐시의 레거시 `v0.34.0` 경로는 호환 목적으로 유지함.
