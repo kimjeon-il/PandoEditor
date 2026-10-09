@@ -9,6 +9,13 @@ on:
       - 'app/hydroshardreader.cpp'
       - 'app/hydroruntimeprovider.cpp'
       - 'assets/world/hydro/v0.13.2/**'
+      - 'assets/world/manifest.json'
+      - 'assets/world/physical-inventory-c0bd31d1.json'
+      - 'app/editorcontroller.cpp'
+      - 'app/editorriverselection.cpp'
+      - 'app/editorpresentation.cpp'
+      - 'app/worlddatasetloader.cpp'
+      - 'app/CMakeLists.txt'
       - '.github/workflows/hydro-packfile-native-gate.yml'
   workflow_dispatch:
 
@@ -39,7 +46,8 @@ jobs:
       - name: Compile Hydro runtime, manifest and full real dataset tests
         run: |
           cmake -S . -B build-hydro-packfile -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
-          cmake --build build-hydro-packfile --target hydro_manifest_tests hydro_runtime_tests hydro_full_dataset_tests --parallel 2
+          cmake --build build-hydro-packfile --target hydro_manifest_tests hydro_runtime_tests hydro_full_dataset_tests river_selection_controller_tests physical_data_store_tests --parallel 2
       - name: Verify historical compatibility and new 2-file real dataset
         run: |
-          ctest --test-dir build-hydro-packfile --output-on-failure -R '^(hydro_manifest_tests|hydro_runtime_tests|hydro_full_dataset_tests)$'
+          ctest --test-dir build-hydro-packfile --output-on-failure -R '^(hydro_manifest_tests|hydro_runtime_tests|hydro_full_dataset_tests|river_selection_controller_tests|physical_data_store_tests)
+
