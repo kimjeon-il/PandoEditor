@@ -558,13 +558,34 @@ test('Incheon temporary Jemulpo and Korean historical romanization boundaries', 
     [1835235,'1900-01-01',['대전','Taejon','大田','ko-Hani']],
     [1835235,'1910-08-29',['대전','Taiden','大田','ja']],
     [1835235,'1945-08-15',['대전','Taejon','대전','ko']],
-    [1835235,'2000-07-07',['대전','Daejeon','대전','ko']]
+    [1835235,'2000-07-07',['대전','Daejeon','대전','ko']],
+    [1848354,'1859-07-01',['요코하마','Yokohama','横浜','ja']],
+    [1856057,'1801-01-01',['나고야','Nagoya','名古屋','ja']],
+    [1857910,'1801-01-01',['교토','Kyoto','京都','ja']],
+    [1809858,'1911-12-31',['광주','Canton','廣州','zh-Hant']],
+    [1809858,'1912-01-01',['광저우','Canton','廣州','zh-Hant']],
+    [1809858,'1956-05-31',['광저우','Canton','廣州','zh-Hant']],
+    [1809858,'1956-06-01',['광저우','Canton','广州','zh-Hans']],
+    [1809858,'1978-12-31',['광저우','Canton','广州','zh-Hans']],
+    [1809858,'1979-01-01',['광저우','Guangzhou','广州','zh-Hans']],
+    [1792947,'1911-12-31',['천진','Tientsin','天津','zh']],
+    [1792947,'1912-01-01',['톈진','Tientsin','天津','zh']],
+    [1792947,'1978-12-31',['톈진','Tientsin','天津','zh']],
+    [1792947,'1979-01-01',['톈진','Tianjin','天津','zh']],
+    [1799962,'1853-03-28',['남경','Nanking','南京','zh']],
+    [1799962,'1853-03-29',['천경',"T'ien-ching",'天京','zh']],
+    [1799962,'1864-07-18',['천경',"T'ien-ching",'天京','zh']],
+    [1799962,'1864-07-19',['남경','Nanking','南京','zh']],
+    [1799962,'1912-01-01',['난징','Nanking','南京','zh']],
+    [1799962,'1978-12-31',['난징','Nanking','南京','zh']],
+    [1799962,'1979-01-01',['난징','Nanjing','南京','zh']]
   ];
   for(const [id,date,names] of cases)
     assert.deepEqual(history(id,date),names,id+' / '+date);
   assert.deepEqual(data.historicalNameReview.reviewedGeoNamesIds,
-    [1843564,1835329,1835235]);
-  assert.equal(data.historicalNameReview.pendingGeoNamesIds.length,6);
+    [1843564,1835329,1835235,1848354,1856057,1857910,1809858,1792947,1799962]);
+  assert.equal(data.historicalNameReview.pendingGeoNamesIds.length,0);
+  assert.equal(data.historicalNameReview.status,'9-of-9-city-names-reviewed');
   assert.equal(data.historicalNameReview.gradeTimelineStatus,'not-decided-or-modified');
   assert.deepEqual(data.records.find(r=>r.geonameId===1843564).displayTimeline.map(
     t=>t.fromDate??t.fromYear),
@@ -643,10 +664,12 @@ test('review-only city lifecycle interval contract covers rise, extinction, gaps
     assert.equal(Object.hasOwn(city.temporalEligibility,'activeIntervals'),false);
   }
   const east = json('reports/places/tier1-major-cities-batch02-east-asia.json');
-  for (const id of [1848354,1835235]) {
+  for (const [id,firstShown] of [[1848354,'1859-07-01'],[1835235,'1905-01-01']]) {
     const city=east.records.find(x=>x.geonameId===id);
     assert.ok(city);
-    assert.equal(Object.hasOwn(city,'temporalEligibility'),false,
-      'Do not preassign Yokohama or Daejeon dates while historic tier threshold is deferred');
+    assert.equal(city.temporalEligibility.cityEstablishedFromDate,firstShown);
+    assert.equal(city.temporalEligibility.beforeCityEstablished,'suppress-city-label');
+    assert.equal(Object.hasOwn(city.temporalEligibility,'activeIntervals'),false,
+      'Do not infer a verified urban-grade timeline or future lifecycle intervals');
   }
 });
