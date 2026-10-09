@@ -15,6 +15,8 @@
 
 - **9단계:** GitHub Pages의 실제 게시 파일 최소보존 구성을 `main`·`work/gis` Git 트리와 앱 고정 출처에 대조해 **2,124개 구 URL 원본 Blob 2/2 동일** 확인. [CI #37828988316](https://github.com/kimjeon-il/Pando/actions/runs/37828988316) **Node 35/35 통과**. 개발/연구용 파일을 제외하고도 `main` 1,047,586,364 bytes(+47,586,364), `work/gis` 1,070,012,175 bytes(+70,012,175)로 **Pages 게시 사이트 1GB 제한 초과**. GIS 가져오기 GDAL을 빼는 비호환안도 검증하고 배포 승인 거부. 배포 설정·기존 파일 삭제·제품 main 병합 미실시.
 
+- **10단계:** 실제 Pages 전환·구형 파일 정리·`main` 제품 코드 반영을 위한 **선별 병합 및 일괄 삭제 시뮬레이션**을 웹 `work/gis`에 구현. [실제 CI #37866525748](https://github.com/kimjeon-il/Pando/actions/runs/37866525748) **49/49 통과**, 웹 7·앱 5개 브랜치 SHA 확인, 웹 23개·앱 17개 파일 선별 병합 검토 목록, 앱 3-way 수동 충돌 6건, 구형 2,124개 파일의 웹 브랜치별 Blob 차이 0건. 이전 배포 URL을 유지하도록 바이너리 해시를 검사하는 오프라인 Pages 스테이징 도구와 비활성 배포 승인 템플릿 준비. **1GB 초과·Qt 회귀·공개 URL 전수 바이트 검증 미완료로 배포/삭제/메인 제품 코드 병합 미시행.**
+
 ## 기준선과 구현 링크
 
 - 1단계 웹 기준 Git 스냅샷: [`2b79bcbe48c2`](https://github.com/kimjeon-il/Pando/tree/2b79bcbe48c2b725624a576c7746607771875a93)
@@ -116,6 +118,15 @@
 - GitHub Pages 정식 제한은 **게시 사이트 1GB**. Actions 업로드용 tarball의 별도 용량 한도는 이 제한을 대체하지 않는다. 원본 삭제나 새 CDN 이전만으로 기존 `github.io/Pando/assets/data/...` 공개 URL이 유지되지 않으므로 안전한 배포 전환이 아직 불가능하다.
 - [9단계 웹·앱 공통 상세 보고서](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/data-versioning-phase9.md). 개발·연구 원본을 **배포 목록에서만 가상 제외**, 실제 파일·Pages 설정·앱·브랜치 제품 구현은 변경하지 않음. 배포/삭제가 가능한 것으로 승인된 파일 0개.
 - 다음 단계에서 **GIS 기능·전체 기존 공개 경로·1GB 제약을 양립시키는 검증 가능한 호스팅/포맷 구조**를 확정해야 함. 불가하면 기존 URL 정책 변경은 명시적으로 다시 승인받아야 함.
+## 10단계 Pages 전환·구파일 일괄 정리·main 제품 코드 반영 준비
+
+- 웹 `work/gis` 구현: `tools/prepare-pages-release-bundle.mjs`(실제 바이트+Git Blob SHA 재검증, 1GB 차단, 새 스테이징 폴더 생성), `tools/plan-gis-release-transactions.mjs`(전체 브랜치 롤백 SHA·정확한 파일 삭제 가상 계획 및 3-way 선별 병합 검토), `tests/unit/pages-release-staging.test.mjs`, `tests/unit/gis-release-transactions.test.mjs`, `.github/workflows/gis-release-stage10-preflight.yml`(읽기 권한만).
+- [실제 CI #37866525748](https://github.com/kimjeon-il/Pando/actions/runs/37866525748) **49/49 단위검사 통과**. 실데이터 원본 검사·web 7 / app 5 브랜치 HEAD·2,124개 원본 Blob 비교 성공. [승인 차단 사유, 선별 병합 파일·브랜치별 예상 삭제 및 복원 HEAD SHA(JSON)](https://github.com/kimjeon-il/Pando/actions/runs/37866525748/artifacts/11588098513).
+- 웹 전체 `work/gis`는 main 대비 **232 commits ahead / 10 behind**, 앱은 **144 ahead / 11 behind**(조사 시점). 전체 GIS 브랜치 병합 금지; 웹 데이터 버전 관리 대상 **23개 파일**, 앱 **17개 파일**만 선별하고 각각 다른 183/78개 변경 경로를 제외. 앱 공통 조상 이후 양쪽 모두 수정한 파일 **6개**를 수동 병합 검토 대상으로 별도 기록.
+- GitHub Pages 현행 1GB 제한 초과: main 게시 프로필 **1,047,586,364 bytes**, GIS 호환 프로필 **1,070,012,175 bytes**. `--mode stage`는 이 상태에서 실제 배포 파일 복사를 **거부**하며 CI는 비파괴 `--mode check`만 실행. 아울러 Stage 5 앱 Qt 편집 컨트롤러 테스트 실패 4건, 이전 앱 릴리스 23건의 내용 감사, 기존 모든 공개 URL 본문 SHA-256 비교가 남아 있음.
+- [선별 병합 및 배포 상세 실행 보고서](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/data-versioning-phase10.md), [승인 후 활성화할 GitHub Pages workflow **비활성 템플릿**](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/gis-pages-activation.template.yml). 해당 템플릿은 `.github/workflows/`에 두지 않아 실 배포를 트리거하지 않는다.
+- 실제 릴리스 준비 다음 조건: 1GB 이하로 옛 바이너리 URL 2,124개+GIS 가져오기/수계/지형/역사 국가 기능 보존 증명 → 앱 충돌 6개/Qt 실패 4개 해결 → 웹/앱 `main` 대상 파일 선별 통합 및 회귀 → Pages Actions 전환 승인/보호 환경 설정 → 구 URL 전수 바이트 대조 성공 → 사용자 승인 뒤에만 7개 웹 브랜치별 HEAD-lease 원본 정리, 실패 시 롤백.
+- **10단계 결과는 준비 완료/실행 보류**: 구버전 파일을 지우거나 앱 내장 기본지도, Pages 설정, `main` 제품 코드를 변경하지 않았다. 기존 상설 브랜치·워크트리도 그대로 유지.
 ## 위험 및 남은 의존성
 
 - 웹 Worker는 새 데이터 매니페스트로 전환했지만 공유 국경선 캐시의 레거시 `v0.34.0` 경로는 호환 목적으로 유지함.
