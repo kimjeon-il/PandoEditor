@@ -51,6 +51,9 @@ jobs:
           assert report["chronology"]["ribediget"]["officialHandover"]=="1915-05-10"
           assert report["chronology"]["ribediget"]["entireSystemCompleteByReferenceDate"] is False
           assert report["chronology"]["rejsbydiget"]["existsByReferenceDate"] is False
+          assert report["chronology"]["rahedeSluse"]["referenceDate1914Exists"] is False
+          assert report["chronology"]["rahedeSluse"]["modernLandmarkNotPeriodFeature"] is True
+          assert report["chronology"]["vesterVedstedBaekSluse"]["notInterchangeableWithRahedeSluse"] is True
           assert report["primaryTreaty"]["historicalMarineBoundaryDigitized"] is False
           assert report["historicalCoastlineIndependentlyDigitized"] is False
           assert report["historicalScreenDeviationCssPx"] is None
