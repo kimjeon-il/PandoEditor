@@ -535,12 +535,6 @@
           "variantType": "historicalPreferredEnglishExonym",
           "note": "과거 서구권 외명, 공식 중국 지명의 개칭은 아님.",
           "researchNote": "1979-01-01 이전의 영어 대표 관용 외칭을 편집상 선택. 중국 도시가 법적으로 Canton으로 개칭된 적이 있다는 의미가 아님."
-        },
-        {
-          "text": "Gwong Zau",
-          "language": "yue-Latn",
-          "usage": "alternate",
-          "variantType": "cantoneseRomanization"
         }
       ],
       "latitude": 23.11667,
@@ -722,18 +716,6 @@
           "sourceUrl": "https://www.nanjing.gov.cn/zgnjsjb/csgk/202609/t20260930_5920372.html"
         },
         {
-          "text": "Tianjing",
-          "language": "en",
-          "usage": "alternate",
-          "variantType": "modernPinyinSearchAlias",
-          "officialPeriod": {
-            "fromYear": 1853,
-            "toYear": 1864
-          },
-          "sourceUrl": "https://www.nanjing.gov.cn/zgnjsjb/csgk/202609/t20260930_5920372.html",
-          "researchNote": "태평천국 시기 원어 天京의 현대 한어병음식 검색 별칭. 1853–1864 지도 대표 영어명은 T'ien-ching."
-        },
-        {
           "text": "T'ien-ching",
           "language": "en",
           "usage": "historical",
@@ -743,7 +725,7 @@
             "toYear": 1864
           },
           "sourceUrl": "https://www.nanjing.gov.cn/zgnjsjb/csgk/202609/t20260930_5920372.html",
-          "researchNote": "태평천국 통치기 天京에 대응하는 역사적 영어 표기; 지도에서 Tianjing 대신 사용."
+          "researchNote": "태평천국 통치기 天京에 대응하는 역사적 영어 표기; 시대별 지도 영어 대표명으로 선정."
         }
       ],
       "latitude": 32.06167,
