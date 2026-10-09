@@ -157,22 +157,23 @@ void PhysicalDataStoreTests::pinnedInventoryAndViewportSelectionAreLazy() {
     QFile inventoryFile(QStringLiteral(PHYSICAL_INVENTORY));QVERIFY(inventoryFile.open(QIODevice::ReadOnly));
     const auto inventory=parsePhysicalInventory(inventoryFile.readAll());QVERIFY2(inventory.valid(),qPrintable(inventory.error));
     QCOMPARE(inventory.dataset,QStringLiteral("world"));QCOMPARE(inventory.version,QStringLiteral("c0bd31d1"));
-    QCOMPARE(inventory.assets.size(),342);
+    QCOMPARE(inventory.assets.size(),337);
     QVERIFY(std::any_of(inventory.assets.cbegin(),inventory.assets.cend(),[](const auto& asset){return asset.path=="terrain/v0.12.6/4/21-10.webp";}));
-    QVERIFY(std::any_of(inventory.assets.cbegin(),inventory.assets.cend(),[](const auto& asset){return asset.path=="hydro/v0.13.0/shards/s2.bin";}));
+    QVERIFY(std::none_of(inventory.assets.cbegin(),inventory.assets.cend(),[](const auto& asset){return asset.path.startsWith("hydro/v0.13.0/")||asset.path.startsWith("hydro/v0.13.1/");}));
     const auto hydroManifest=std::find_if(inventory.assets.cbegin(),inventory.assets.cend(),[](const auto& asset){
-        return asset.path=="hydro/v0.13.1/manifest.json";
+        return asset.path=="hydro/v0.13.2/manifest.json";
     });
-    const auto hydroCore=std::find_if(inventory.assets.cbegin(),inventory.assets.cend(),[](const auto& asset){
-        return asset.path=="hydro/v0.13.1/metadata-core.json.gz";
+    const auto hydroBinary=std::find_if(inventory.assets.cbegin(),inventory.assets.cend(),[](const auto& asset){
+        return asset.path=="hydro/v0.13.2/hydro.bin";
     });
-    QVERIFY(hydroManifest!=inventory.assets.cend());QVERIFY(hydroCore!=inventory.assets.cend());
-    QCOMPARE(hydroManifest->sha256,QString("c10eaffd375d5f0d90955fa253b02ec73d9daeff261fa5cfde1f73ca89d2bd80"));
-    QCOMPARE(hydroCore->sha256,QString("700b886134bbc44fa7686f8f2c131be53a73a5c2ebaabb468b50ea3e4000cee5"));
-    QCOMPARE(hydroCore->bytes,qint64(729625));
-    const auto upstream=QStringLiteral("https://raw.githubusercontent.com/kimjeon-il/Pando/a87f4d27fb1bc16528aa57242ecb52e28e4550b2/assets/data/");
+    QVERIFY(hydroManifest!=inventory.assets.cend());QVERIFY(hydroBinary!=inventory.assets.cend());
+    QCOMPARE(hydroManifest->sha256,QString("2bde5c10bdf4d26fd29d2b983b70029022cfaa9fda816a105e6f4338b85f0d24"));
+    QCOMPARE(hydroManifest->bytes,qint64(53375));
+    QCOMPARE(hydroBinary->sha256,QString("91c2268c6dbfdfa7fc6103d8ad0b4eeca71f6c522df5c0118db69a3654ff532a"));
+    QCOMPARE(hydroBinary->bytes,qint64(11974120));
+    const auto upstream=QStringLiteral("https://raw.githubusercontent.com/kimjeon-il/Pando/8de07030cccff5e7ec3c68e6beb6bb288c95afb2/assets/data/");
     QCOMPARE(hydroManifest->url.toString(),upstream+hydroManifest->path);
-    QCOMPARE(hydroCore->url.toString(),upstream+hydroCore->path);
+    QCOMPARE(hydroBinary->url.toString(),upstream+hydroBinary->path);
 
     const QByteArray manifest=R"({"version":"0.12.6","crs":"EPSG:4326","tileFormat":"lossless WebP RGBA","gutter":1,"levels":[{"id":0,"width":1350,"height":675,"columns":2,"rows":1,"tileSize":1024},{"id":1,"width":2700,"height":1350,"columns":3,"rows":2,"tileSize":1024},{"id":2,"width":5400,"height":2700,"columns":6,"rows":3,"tileSize":1024},{"id":3,"width":10800,"height":5400,"columns":11,"rows":6,"tileSize":1024},{"id":4,"width":21600,"height":10800,"columns":22,"rows":11,"tileSize":1024}]})";
     QStringList resolved;TerrainTileProvider provider(manifest,QString(),[&](const QString& path){resolved.push_back(path);return path;});
