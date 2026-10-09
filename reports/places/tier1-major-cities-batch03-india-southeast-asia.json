@@ -392,8 +392,10 @@
         {
           "text": "河內",
           "language": "vi-Hani",
-          "usage": "alternate",
-          "variantType": "sinoVietnameseWriting"
+          "usage": "historical",
+          "variantType": "formerOfficialHanCharacterWriting",
+          "sourceUrl": "https://thanglong.chinhphu.vn/english/historical-stages-of-thang-long-ha-noi-110136.htm",
+          "researchNote": "1831년 하노이성 설치 후 사용된 역사적 한문 지명. 1888년 이후에도 문화·기록에서 사용."
         },
         {
           "text": "Thăng Long",
@@ -414,6 +416,38 @@
           "variantType": "koreanRenderingOfThangLong",
           "linkedName": "Thăng Long",
           "sourceUrl": "https://thanglong.chinhphu.vn/english/the-changing-names-of-ha-noi-110137.htm"
+        },
+        {
+          "text": "昇龍",
+          "language": "vi-Hani",
+          "usage": "historical",
+          "variantType": "historicalThangLongNativeWriting",
+          "sourceUrl": "https://thanglong.chinhphu.vn/english/historical-stages-of-thang-long-ha-noi-110136.htm",
+          "researchNote": "탕롱(Thăng Long)의 1805년 이전 한자 표기"
+        },
+        {
+          "text": "昇隆",
+          "language": "vi-Hani",
+          "usage": "historical",
+          "variantType": "historicalThangLongOrthography",
+          "sourceUrl": "https://zh.wikisource.org/zh-hant/大南寔錄/大南寔錄正編第一紀/卷27",
+          "researchNote": "1805년 음력 평8월 이후 탕롱 한자 표기. 정확한 양력 일자 미확인."
+        },
+        {
+          "text": "Thang Long",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedHistoricalEnglish",
+          "sourceUrl": "https://thanglong.chinhphu.vn/english/historical-stages-of-thang-long-ha-noi-110136.htm",
+          "researchNote": "1801~1831 시계열용 영어 대표명"
+        },
+        {
+          "text": "Hanoï",
+          "language": "fr",
+          "usage": "historical",
+          "variantType": "frenchConcessionOfficialUsage",
+          "sourceUrl": "https://www.archives.org.vn/gioi-thieu-tai-lieu-nghiep-vu/ve-mot-so-do-tung-duoc-coi-la-da-mat-trong-lich-su-can-dai-viet-nam-so-do-dinh-kem-du-so-576-cua-vua-dong-khanh-lap-cac-thanh-pho-ha-noi-hai-phong-va-da-nang-thanh-nhuong-dia-phap-thang-muoi-nam-1888.htm",
+          "researchNote": "하노이 프랑스 양여지 시정부의 프랑스어 대표 표기"
         }
       ],
       "latitude": 21.0245,
@@ -442,28 +476,62 @@
         {
           "fromYear": 1801,
           "nameKo": "탕롱",
+          "nameEn": "Thang Long",
+          "nameNative": "昇龍",
+          "nativeLanguage": "vi-Hani",
           "kind": "historicalUrbanCoreName",
-          "sourceUrl": "https://thanglong.chinhphu.vn/english/historical-stages-of-thang-long-ha-noi-110136.htm"
+          "sourceUrl": "https://thanglong.chinhphu.vn/english/historical-stages-of-thang-long-ha-noi-110136.htm",
+          "researchNote": "1801은 조사 시작 연도이지 도성 설립일이 아님."
         },
         {
-          "fromYear": 1831,
+          "fromYear": 1805,
+          "nameNative": "昇隆",
+          "nativeLanguage": "vi-Hani",
+          "kind": "historicalOrthographyEditorialTransition",
+          "sourceUrl": "https://zh.wikisource.org/zh-hant/大南寔錄/大南寔錄正編第一紀/卷27",
+          "researchNote": "《대남식록》 자롱 4년 음력 평8월에 昇龍→昇隆 변경 기록. 양력 정확한 월일 미확인으로 연도 정밀도 유지."
+        },
+        {
+          "fromDate": "1831-11-04",
           "nameKo": "하노이",
+          "nameEn": "Hanoi",
+          "nameNative": "河內",
+          "nativeLanguage": "vi-Hani",
           "kind": "administrativeNameAppliedToUrbanCore",
-          "sourceUrl": "https://thanglong.chinhphu.vn/english/historical-stages-of-thang-long-ha-noi-110136.htm"
+          "sourceUrl": "https://thanglong.chinhphu.vn/english/historical-stages-of-thang-long-ha-noi-110136.htm",
+          "researchNote": "민망 12년 음력 10월 초하루 하노이성 설치의 양력 환산일을 도시 대표명 전환 편집 기준으로 선정. 현대적 시(市) 개칭 명령일과는 구별."
+        },
+        {
+          "fromDate": "1888-10-03",
+          "nameNative": "Hanoï",
+          "nativeLanguage": "fr",
+          "kind": "governingAuthorityEditorialLabelTransition",
+          "sourceUrl": "https://www.archives.org.vn/gioi-thieu-tai-lieu-nghiep-vu/ve-mot-so-do-tung-duoc-coi-la-da-mat-trong-lich-su-can-dai-viet-nam-so-do-dinh-kem-du-so-576-cua-vua-dong-khanh-lap-cac-thanh-pho-ha-noi-hai-phong-va-da-nang-thanh-nhuong-dia-phap-thang-muoi-nam-1888.htm",
+          "researchNote": "1888-10-01 동카인 황제 칙령 및 10-03 프랑스 총독 승인으로 하노이 시가지 양여. 통킹 보호국 전체의 영토 귀속 변경과 구별."
+        },
+        {
+          "fromDate": "1945-07-20",
+          "nameNative": "Hà Nội",
+          "nativeLanguage": "vi",
+          "kind": "governingAuthorityEditorialLabelTransition",
+          "researchNote": "1945-07-20을 일본 측의 시 행정권 이양에 따른 베트남어 지명 사용 시작의 편집상 기준일로 채택. 일부 자료의 07-21 시장 취임과 구별. 1947~1954년 프랑스 군사 주둔에도 베트남국 측 하노이 시정부의 Hà Nội 사용을 인정하여 표기 유지."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Hanoi",
+      "defaultDisplayNameNative": "Hà Nội",
+      "defaultNativeLanguage": "vi"
     },
     {
       "geonameId": 1566083,
       "names": [
         {
-          "text": "Thành phố Hồ Chí Minh",
+          "text": "Hồ Chí Minh",
           "language": "vi",
           "usage": "standard"
         },
         {
-          "text": "Ho Chi Minh City",
+          "text": "Ho Chi Minh",
           "language": "en",
           "usage": "standard"
         },
@@ -476,7 +544,7 @@
           "text": "Sài Gòn",
           "language": "vi",
           "usage": "historical",
-          "variantType": "formerCityName",
+          "variantType": "historicalVietnameseCityName",
           "officialPeriod": {
             "toYear": 1976
           },
@@ -499,6 +567,38 @@
           "variantType": "koreanRenderingOfFormerCityName",
           "linkedName": "Sài Gòn",
           "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/sai-gon-duoc-de-xuat-dat-ten-la-tphcm-tu-nam-1946"
+        },
+        {
+          "text": "Thành phố Hồ Chí Minh",
+          "language": "vi",
+          "usage": "alternate",
+          "variantType": "fullOfficialAdministrativeName",
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh",
+          "researchNote": "공식 행정구역 전체 명칭. 지도 대표 원어명은 Hồ Chí Minh."
+        },
+        {
+          "text": "Ho Chi Minh City",
+          "language": "en",
+          "usage": "alternate",
+          "variantType": "fullOfficialAdministrativeName",
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh",
+          "researchNote": "영어 공식 전체 도시명; 지도 대표 영어명은 Ho Chi Minh."
+        },
+        {
+          "text": "柴棍",
+          "language": "vi-Hani",
+          "usage": "historical",
+          "variantType": "historicalChuNomSaigon",
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh",
+          "researchNote": "19세기 이전부터 기록된 사이공 지명의 한자 기반 현지 문자 표기. 嘉定은 별도 행정구역 명칭."
+        },
+        {
+          "text": "Saïgon",
+          "language": "fr",
+          "usage": "historical",
+          "variantType": "frenchColonialRepresentativeName",
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh",
+          "researchNote": "프랑스 행정 시기의 대표 프랑스어 표기. 당시에 Saigon 철자도 쓰였음."
         }
       ],
       "latitude": 10.82302,
@@ -541,17 +641,43 @@
         {
           "fromYear": 1801,
           "nameKo": "사이공",
+          "nameEn": "Saigon",
+          "nameNative": "柴棍",
+          "nativeLanguage": "vi-Hani",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh"
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh",
+          "researchNote": "현재 도시 핵심부의 역사적 현지 지명. 왕조 행정명 嘉定(자딘)과 동일어가 아니며 1801년은 지명 검수 시작 기준."
+        },
+        {
+          "fromDate": "1862-06-05",
+          "nameNative": "Saïgon",
+          "nativeLanguage": "fr",
+          "kind": "territorialCessionEditorialLabelTransition",
+          "researchNote": "1862년 임술조약 체결에 따른 자딘성 할양을 프랑스어 대표 원어로의 편집상 전환 기준으로 채택. 비준서 교환은 1863년 4월로 구분하며 최초 철자 사용일·즉각적인 조약 효력 발생일로 주장하지 않음."
+        },
+        {
+          "fromDate": "1945-08-14",
+          "nameNative": "Sài Gòn",
+          "nativeLanguage": "vi",
+          "kind": "territorialRestorationEditorialLabelTransition",
+          "researchNote": "1945년 베트남 제국의 남부 귀속 선언에 맞춘 잠정 원어 표기 전환일. 사이공 시정부의 행정권 실제 이양과 후속 프랑스 재점령기 공식 표기는 별도 검증이 필요한 미확정 사항.",
+          "dateStatus": "provisional"
         },
         {
           "fromDate": "1976-07-02",
           "nameKo": "호찌민",
+          "nameEn": "Ho Chi Minh",
+          "nameNative": "Hồ Chí Minh",
+          "nativeLanguage": "vi",
           "kind": "officialRenaming",
-          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh"
+          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh",
+          "researchNote": "베트남 국회가 Thành phố Hồ Chí Minh으로 공식 개칭. 판도편집기는 행정단위 접미사 City/Thành phố를 제외한 호찌민/Ho Chi Minh/Hồ Chí Minh을 지도 표시 대표명으로 사용."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Ho Chi Minh",
+      "defaultDisplayNameNative": "Hồ Chí Minh",
+      "defaultNativeLanguage": "vi"
     }
   ],
   "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
