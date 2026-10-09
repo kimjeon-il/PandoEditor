@@ -16,6 +16,9 @@ on:
       - 'app/editorpresentation.cpp'
       - 'app/worlddatasetloader.cpp'
       - 'app/CMakeLists.txt'
+      - 'tests/physical_data_store_tests.cpp'
+      - 'tests/hydro_manifest_tests.cpp'
+      - 'tests/hydro_full_dataset_tests.cpp'
       - '.github/workflows/hydro-packfile-native-gate.yml'
   workflow_dispatch:
 
