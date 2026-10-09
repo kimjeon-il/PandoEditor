@@ -34,18 +34,19 @@
     }
   ],
   "resolutionOrder": [
-    "Determine the governing polity and competent administrative authority for the map date; choose the Chinese-language city toponym officially used in that context before applying Korean naming conventions. Where multiple local official languages exist, document the selected one.",
+    "For each map date, determine the established local city name and naming practice under sustained civil administration. Military occupation, temporary wartime rule and shifting front lines do not automatically replace that name with the occupier's language. Document a lasting territorial/legal change before reconsidering official language or name.",
     "Match the Korean label to that selected period-appropriate native toponym; do not apply a reading of a different city's name or a different historical official name.",
     "First resolve actual local-city-name changes for the map date. Never turn a Korean map-transcription convention change into an asserted Chinese official rename.",
-    "Choose a date-appropriate local toponym from names[] using documented official naming periods when available; year-only dates remain approximate.",
+    "Choose the locally attested name from period-preferred historical entries, not any arbitrary names[] alias or extra spelling; year-only dates remain approximate.",
     "Apply a map-label language convention to THAT toponym, not to its present-day English name.",
     "Use a verified koMapLabels mapping if the name is covered; otherwise hold for review rather than guessing a transliteration.",
     "Do not derive naming language, polity or sovereignty from sourceCountryCode; this is GeoNames source metadata only.",
-    "Only one preferred Korean display name may be selected at a given date. Do not keep historical Sino-Korean readings as concurrent alternate Korean map labels after the 1912-01-01 boundary."
+    "Only one preferred Korean display name may be selected at a given date. Do not keep historical Sino-Korean readings as concurrent alternate Korean map labels after the 1912-01-01 boundary.",
+    "Do not store short forms, nicknames, redundant romanizations, search-only aliases or occupying-power exonyms unless a form is explicitly selected as the preferred historical map name for an evidenced period. Maintain independent ko/en/native selection."
   ],
   "exceptions": "For non-Mandarin Chinese-language varieties, minority-language and multilingual mainland localities, explicitly select the period's applicable local toponym and pronunciation; never infer Mandarin or sovereignty solely from a modern GeoNames CN country code. Hong Kong, Macau and Taiwan are outside the automatic mainland rule and require separate consideration.",
-  "note": "Korean map labels must correspond to the period's governing-authority official city toponym. The 1912-01-01 mainland-China style switch is an independent editorial change in Korean reading, not a change of the locally official name. This is a staged policy for future review; existing 1–15 city batches, runtime tiles and historical timelines are not modified.",
-  "policyRevision": "2026-10-08-authority-aligned-preferred-names",
+  "note": "Chinese mainland Korean map pronunciation changes at 1912-01-01 are editorial, not legal city renamings. The global no-alias and temporary-occupation naming rules apply to ongoing batch reviews; already staged data elsewhere may need targeted cleanup. Runtime/place tiles are not changed by this policy update.",
+  "policyRevision": "2026-10-09-wartime-continuity-no-aliases",
   "examples": [
     {
       "localToponym": "北京",
@@ -65,5 +66,11 @@
       "from1912": "난징",
       "changeKind": "koreanEditorialTranscription-not-local-rename"
     }
-  ]
+  ],
+  "occupationAndAliasRule": {
+    "militaryOccupation": "Do not switch a Chinese or other local native name to the temporary occupier's language solely because an army controls the city; use sustained local naming and documented official changes.",
+    "formalTransfer": "A durable legal territorial transfer can prompt a review of local official language and naming, without itself mandating a new name.",
+    "actualRenaming": "Documented formal renaming is evaluated separately even during wartime; an occupation exonym with no lasting locally selected status is not an automatic preferred name.",
+    "aliasRetention": "No auxiliary aliases, unused transliterations, abbreviations or search-only records in names[]; previously selected historical preferred names remain valid for their dated periods."
+  }
 }
