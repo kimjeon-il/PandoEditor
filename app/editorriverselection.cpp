@@ -75,7 +75,7 @@ void EditorController::continueRiverPreparation(std::uint64_t generation,std::ui
     if(pending.dispatched||!pending.pendingAssets.empty())return;
     if(!hydroRuntime_.isOpen()){
         if(pending.sourceChoice.isEmpty()){
-            const QStringList bootstrap{"hydro/v0.13.1/manifest.json","hydro/v0.13.0/index.bin.gz","hydro/v0.13.1/metadata-core.json.gz"};
+            const QStringList bootstrap{"hydro/v0.13.2/manifest.json","hydro/v0.13.2/hydro.bin"};
             if(!physicalStore_){fail(TerritoryRiverStatus::SourceError,"하천 자료 목록을 사용할 수 없습니다.");return;}
             for(const auto& path:bootstrap)if(!physicalAssets_.contains(path)){fail(TerritoryRiverStatus::SourceError,"하천 기본 자료가 목록에 없습니다.");return;}
             QStringList requests;
@@ -84,7 +84,7 @@ void EditorController::continueRiverPreparation(std::uint64_t generation,std::ui
             if(!pending.pendingAssets.empty())return;
             if(!pending.failedAssets.empty()){fail(TerritoryRiverStatus::SourceError,QStringLiteral("하천 기본 자료를 불러오지 못했습니다. 다시 시도해 주세요."));return;}
         }
-        auto source=pending.sourceChoice;if(source.isEmpty())source=QDir(physicalRoot_).filePath("hydro/v0.13.1/manifest.json");QString error;
+        auto source=pending.sourceChoice;if(source.isEmpty())source=QDir(physicalRoot_).filePath("hydro/v0.13.2/manifest.json");QString error;
         pending.openingSource=true;
         const auto opened=hydroRuntime_.open(source,projectInstanceId(),mobileMode_,error);
         // open publishes synchronously; observers may cancel or replace this

@@ -189,7 +189,7 @@ qt_add_resources(pandoeditor world_data BIG_RESOURCES PREFIX "/world" BASE "${PR
         "${PROJECT_SOURCE_DIR}/assets/world/countries-canonical-v0.33.0.pcg.gz"
         "${PROJECT_SOURCE_DIR}/assets/world/world-mesh-v0.12.6.bin.gz"
         "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.12.6/manifest.json"
-        "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.1/manifest.json"
+        "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.2/manifest.json"
         "${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-c0bd31d1.json")
 
 file(GLOB_RECURSE DEFAULT_FLAG_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/assets/defaults/flags/*")
@@ -810,7 +810,7 @@ if(BUILD_TESTING)
     qt_add_resources(river_selection_controller_tests sample PREFIX "/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/sample.pando.json")
     qt_add_resources(river_selection_controller_tests physical_metadata PREFIX "/world" BASE "${PROJECT_SOURCE_DIR}/assets/world"
         FILES "${PROJECT_SOURCE_DIR}/assets/world/physical-inventory-c0bd31d1.json"
-              "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.1/manifest.json"
+              "${PROJECT_SOURCE_DIR}/assets/world/hydro/v0.13.2/manifest.json"
               "${PROJECT_SOURCE_DIR}/assets/world/terrain/v0.12.6/manifest.json")
     add_test(NAME river_selection_controller_tests COMMAND river_selection_controller_tests -o -,txt)
     set_tests_properties(river_selection_controller_tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")

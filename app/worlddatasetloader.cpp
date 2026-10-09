@@ -97,11 +97,11 @@ WorldCanonicalResult WorldDatasetLoader::canonical(const QString& root) {
     auto classified=materializeBuiltinWorld(packet);
     auto document=std::make_shared<pandoeditor::ProjectDocument>(std::move(classified.document));
     document->physicalData.dataset="pandolab-water-shards-v5";
-    document->physicalData.version="0.13.1";
+    document->physicalData.version="0.13.2";
     QString hydroAvailability=QStringLiteral("Pinned hydro package not installed");
     const auto dataRoot=source.optionalDataRoot();
     if(!dataRoot.isEmpty()) {
-        const auto path=QDir(dataRoot).filePath("hydro/v0.13.1/manifest.json");
+        const auto path=QDir(dataRoot).filePath("hydro/v0.13.2/manifest.json");
         if(QFileInfo::exists(path)) {
             QFile external(path);
             if(!external.open(QIODevice::ReadOnly)||external.readAll()!=source.read("hydro")) {
