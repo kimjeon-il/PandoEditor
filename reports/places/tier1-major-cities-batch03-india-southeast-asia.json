@@ -440,24 +440,12 @@
           "researchNote": "1831년 하노이성 설치 후 사용된 역사적 한문 지명. 1888년 이후에도 문화·기록에서 사용."
         },
         {
-          "text": "Thăng Long",
-          "language": "vi",
-          "usage": "historical",
-          "variantType": "historicCityOrCitadelToponym",
-          "officialPeriod": {
-            "toYear": 1831
-          },
-          "sourceUrl": "https://thanglong.chinhphu.vn/english/the-changing-names-of-ha-noi-110137.htm",
-          "note": "탕롱은 1831년 이후에도 문화적 명칭",
-          "researchNote": "The old Thăng Long name persists culturally and is not assumed to have disappeared in 1831."
-        },
-        {
           "text": "탕롱",
           "language": "ko",
           "usage": "historical",
           "variantType": "koreanRenderingOfThangLong",
-          "linkedName": "Thăng Long",
-          "sourceUrl": "https://thanglong.chinhphu.vn/english/the-changing-names-of-ha-noi-110137.htm"
+          "sourceUrl": "https://thanglong.chinhphu.vn/english/the-changing-names-of-ha-noi-110137.htm",
+          "researchNote": "1801~1831년 지도 한국어 대표명이며 원어 대표 표기는 시대에 따라 昇龍/昇隆으로 구분한다."
         },
         {
           "text": "昇龍",
@@ -611,22 +599,6 @@
           "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/sai-gon-duoc-de-xuat-dat-ten-la-tphcm-tu-nam-1946"
         },
         {
-          "text": "Thành phố Hồ Chí Minh",
-          "language": "vi",
-          "usage": "alternate",
-          "variantType": "fullOfficialAdministrativeName",
-          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh",
-          "researchNote": "공식 행정구역 전체 명칭. 지도 대표 원어명은 Hồ Chí Minh."
-        },
-        {
-          "text": "Ho Chi Minh City",
-          "language": "en",
-          "usage": "alternate",
-          "variantType": "fullOfficialAdministrativeName",
-          "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh",
-          "researchNote": "영어 공식 전체 도시명; 지도 대표 영어명은 Ho Chi Minh."
-        },
-        {
           "text": "柴棍",
           "language": "vi-Hani",
           "usage": "historical",
@@ -666,7 +638,21 @@
             "type": "administrativeRenamingAndReorganization",
             "detail": "1976-07-02 호찌민시로 공식 개칭",
             "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/sai-gon-duoc-de-xuat-dat-ten-la-tphcm-tu-nam-1946",
-            "researchDetail": "1976년 7월 2일 Sài Gòn–Gia Định에서 Thành phố Hồ Chí Minh 공식 명칭 채택."
+            "researchDetail": "1976년 7월 2일 Sài Gòn–Gia Định에서 Thành phố Hồ Chí Minh 공식 명칭 채택.",
+            "officialAdministrativeNames": [
+              {
+                "language": "vi",
+                "text": "Thành phố Hồ Chí Minh",
+                "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh",
+                "researchNote": "공식 행정구역 전체 명칭. 지도 대표 원어명은 Hồ Chí Minh."
+              },
+              {
+                "language": "en",
+                "text": "Ho Chi Minh City",
+                "sourceUrl": "https://hdnd.hochiminhcity.gov.vn/tin-tuc/tin-tong-hop/50-nam-ngay-thanh-pho-sai-gon-mang-ten-thanh-pho-ho-chi-minh-02-7-1976-02-7-2026-bai-2-tu-hao-ten-goi-thanh-pho-ho-chi-minh",
+                "researchNote": "영어 공식 전체 도시명; 지도 대표 영어명은 Ho Chi Minh."
+              }
+            ]
           }
         ],
         "notes": [
