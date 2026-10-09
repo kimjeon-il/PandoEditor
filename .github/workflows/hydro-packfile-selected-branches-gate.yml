@@ -12,6 +12,7 @@ on:
       - 'assets/world/manifest.json'
       - 'assets/world/physical-inventory-c0bd31d1.json'
       - 'app/editorcontroller.cpp'
+      - 'app/physicaldatastore.cpp'
       - 'app/editorriverselection.cpp'
       - 'app/editorpresentation.cpp'
       - 'app/worlddatasetloader.cpp'
