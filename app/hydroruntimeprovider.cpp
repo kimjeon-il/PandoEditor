@@ -264,6 +264,8 @@ std::vector<HydroRiverAssetRequirement> HydroRuntimeProvider::riverPartitionAsse
     const std::vector<pandoeditor::GeoBounds>& bounds) const {
     const auto ids=queryLogicalRivers(bounds);
     if(ids.empty())return {};
+    if(dataset_->manifest.version=="0.13.2")
+        return {riverAssetRequirement(dataset_->manifest.container)};
     std::set<std::uint16_t> shards;
     for(const auto id:ids)for(const auto pack:dataset_->index.logicalPacks.at(id))
         shards.insert(dataset_->index.packSpecs.at(pack).shard);
@@ -498,9 +500,14 @@ QStringList HydroRuntimeProvider::requiredAssetPaths(const pandoeditor::HydroFla
         const auto tiles=pandoeditor::hydroViewportTiles(dataset_->stages,view);
         for(const auto& tile:tiles)if(const auto found=dataset_->index.tilePacks.find(tile);found!=dataset_->index.tilePacks.end())
             for(const auto id:found->second)shards.insert(dataset_->index.packSpecs.at(id).shard);
-        for(const auto shard:shards) {
-            const auto relative=QDir(dataset_->manifest.assetRoot).relativeFilePath(dataset_->manifest.shards.at(shard).asset.path);
+        if(dataset_->manifest.version=="0.13.2" && !shards.empty()) {
+            const auto relative=QDir(dataset_->manifest.assetRoot).relativeFilePath(dataset_->manifest.container.path);
             result.push_back(QStringLiteral("hydro/")+QDir::fromNativeSeparators(relative));
+        } else {
+            for(const auto shard:shards) {
+                const auto relative=QDir(dataset_->manifest.assetRoot).relativeFilePath(dataset_->manifest.shards.at(shard).asset.path);
+                result.push_back(QStringLiteral("hydro/")+QDir::fromNativeSeparators(relative));
+            }
         }
     }catch(const std::exception&) {}
     return result;
