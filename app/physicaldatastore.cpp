@@ -46,8 +46,8 @@ PhysicalInventory parsePhysicalInventory(const QByteArray& bytes) {
         asset.dataset=result.dataset;asset.version=result.version;asset.path=row.value("path").toString();
         const auto count=row.value("bytes").toDouble(-1);asset.bytes=qint64(count);
         asset.sha256=row.value("sha256").toString();
-        const sourceUrl=row.value("sourceUrl");
-        const explicitSource=!sourceUrl.isUndefined();
+        const auto sourceUrl=row.value("sourceUrl");
+        const bool explicitSource=!sourceUrl.isUndefined();
         asset.url=explicitSource?(sourceUrl.isString()?QUrl(sourceUrl.toString()):QUrl())
                                 :result.baseUrl.resolved(QUrl(asset.path));
         if(!safePath(asset.path)||!std::isfinite(count)||count<=0||std::floor(count)!=count||
