@@ -5,13 +5,13 @@
 
 struct HydroAssetSpec {
     QString url,path,assetRoot,sha256;
-    qint64 bytes=0;
+    qint64 bytes=0,offset=0,fileBytes=0;
 };
 struct HydroStageSpec { int id=0,columns=0,rows=0; double minZoom=0; };
 struct HydroShardSpec { int id=0,packs=0; HydroAssetSpec asset; };
 struct HydroManifest {
     QString manifestPath,root,assetRoot,version,dataset,schema,crs,error;
-    HydroAssetSpec index,metadataCore,metadataDetail;
+    HydroAssetSpec index,metadataCore,metadataDetail,container;
     QVector<HydroStageSpec> stages;
     QVector<HydroShardSpec> shards;
     QStringList layers;
