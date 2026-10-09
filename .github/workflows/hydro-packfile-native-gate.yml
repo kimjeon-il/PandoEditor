@@ -49,6 +49,8 @@ jobs:
           cmake --build build-hydro-packfile --target hydro_manifest_tests hydro_runtime_tests hydro_full_dataset_tests river_selection_controller_tests physical_data_store_tests --parallel 2
       - name: Verify historical compatibility and new 2-file real dataset
         run: |
-          ctest --test-dir build-hydro-packfile --output-on-failure --timeout 240 -R '^(hydro_manifest_tests|hydro_runtime_tests|hydro_full_dataset_tests|river_selection_controller_tests|physical_data_store_tests)
-
-
+          ./build-hydro-packfile/app/hydro_manifest_tests -o -,txt
+          ./build-hydro-packfile/app/hydro_runtime_tests -o -,txt
+          ./build-hydro-packfile/app/hydro_full_dataset_tests -o -,txt
+          ./build-hydro-packfile/app/river_selection_controller_tests -o -,txt
+          ./build-hydro-packfile/app/physical_data_store_tests -o -,txt
