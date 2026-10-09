@@ -3,7 +3,7 @@
   "batch": "03-india-southeast-asia",
   "status": "verified-source-staging-not-runtime",
   "source": "GeoNames (CC BY 4.0)",
-  "checkedOn": "2026-10-08",
+  "checkedOn": "2026-10-09",
   "selection": "Seven major Indian/Southeast Asian cities with independently checked GeoNames populated-place P feature and representative point; administrative polygon IDs excluded.",
   "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), decimal degrees; source settlement-point coordinates are not historical administrative boundaries.",
   "countryCodeSemantics": "sourceCountryCode is modern GeoNames source metadata only, never historical country attribution.",
@@ -13,7 +13,9 @@
     "Year-only officialPeriod records mean administrative name dates, not exclusive language use or identical historical polygon footprints.",
     "Source city feature codes PPLA/PPLC/PPL are preserved rather than forced to one code; GeoNames current Ho Chi Minh City PPL is a valid major populated place.",
     "City and metropolitan area/district names remain distinct. No extra national Hanzi-reading convention is inferred for India, Indonesia, Thailand or Vietnam.",
-    "The file is staging only; do not update production map manifest and do not claim that historical name selection renders yet."
+    "The file is staging only; do not update production map manifest and do not claim that historical name selection renders yet.",
+    "For the five reviewed Indian/Indonesian/Thai cities, names[] contains only currently or historically selected preferred map labels, never search aliases, nicknames or redundant romanizations.",
+    "Temporary wartime occupation, front-line changes and short-lived military administrations do not trigger occupying-language substitution or automatic historical-name reversions; a documented official city renaming is separately eligible."
   ],
   "records": [
     {
@@ -44,7 +46,7 @@
           },
           "sourceUrl": "https://mumbaicity.gov.in/en/history/",
           "note": "뭄바이는 1995년 전부터 현지에서 사용",
-          "researchNote": "Mumbai/मुंबई was locally used before 1995; the date reflects official adoption, not the coinage of the current native name."
+          "researchNote": "1995-05-04 지도 명칭 전환 기준으로 선택. 'Bombay'는 1801~1995 해당 기간 대표 영어명이며 별칭이 아님."
         },
         {
           "text": "봄베이",
@@ -76,17 +78,24 @@
         {
           "fromYear": 1801,
           "nameKo": "봄베이",
+          "nameEn": "Bombay",
+          "nameNative": "मुंबई",
+          "nativeLanguage": "mr",
           "kind": "historicalLocalName",
           "sourceUrl": "https://mumbaicity.gov.in/en/history/"
         },
         {
-          "fromDate": "1995-03-04",
+          "fromDate": "1995-05-04",
           "nameKo": "뭄바이",
+          "nameEn": "Mumbai",
           "kind": "officialRenaming",
-          "sourceUrl": "https://mumbaicity.gov.in/en/history/"
+          "researchNote": "1995-05-04는 판도편집기에서 채택한 주정부 개칭 결정 기준일. 최초 도시명 변경의 법적 효력 발생일은 미확인; 1996-09-04는 기존 주법의 명칭 변경 법률 시행일이며 최초 개칭일과 구별."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Mumbai",
+      "defaultDisplayNameNative": "मुंबई",
+      "defaultNativeLanguage": "mr"
     },
     {
       "geonameId": 1275004,
@@ -139,17 +148,25 @@
         {
           "fromYear": 1801,
           "nameKo": "캘커타",
+          "nameEn": "Calcutta",
+          "nameNative": "কলকাতা",
+          "nativeLanguage": "bn",
           "kind": "historicalLocalName",
           "sourceUrl": "https://sarthac.gov.in/view-act-rule-file?file_id=206"
         },
         {
           "fromDate": "2001-01-01",
           "nameKo": "콜카타",
+          "nameEn": "Kolkata",
           "kind": "officialRenaming",
-          "sourceUrl": "https://sarthac.gov.in/view-act-rule-file?file_id=206"
+          "sourceUrl": "https://sarthac.gov.in/view-act-rule-file?file_id=206",
+          "researchNote": "2001-01-01은 Calcutta→Kolkata의 법정 영어 도시명 전환 시점. 벵골어 কলকাতা는 이전부터 현지에서 사용됐으므로 원어 변경 없음."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Kolkata",
+      "defaultDisplayNameNative": "কলকাতা",
+      "defaultNativeLanguage": "bn"
     },
     {
       "geonameId": 1264527,
@@ -211,71 +228,78 @@
         {
           "fromYear": 1801,
           "nameKo": "마드라스",
+          "nameEn": "Madras",
+          "nameNative": "சென்னை",
+          "nativeLanguage": "ta",
           "kind": "historicalLocalName",
           "sourceUrl": "https://indiankanoon.org/doc/149253478/"
         },
         {
-          "fromYear": 1996,
+          "fromDate": "1996-09-30",
           "nameKo": "첸나이",
+          "nameEn": "Chennai",
           "kind": "officialRenaming",
-          "sourceUrl": "https://indiankanoon.org/doc/149253478/"
+          "sourceUrl": "https://indiankanoon.org/doc/149253478/",
+          "researchNote": "1996-09-30은 개칭 법률 시행일. 1996-07-17 명칭 변경 발표일·1996-09-05 재가일과 구분. 타밀어 சென்னை는 앞서부터 사용됐으므로 원어명은 그대로 유지."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Chennai",
+      "defaultDisplayNameNative": "சென்னை",
+      "defaultNativeLanguage": "ta"
     },
     {
       "geonameId": 1642911,
       "names": [
-        {
-          "text": "Jakarta",
-          "language": "id",
-          "usage": "standard"
-        },
         {
           "text": "자카르타",
           "language": "ko",
           "usage": "standard"
         },
         {
-          "text": "Batavia",
-          "language": "nl",
-          "usage": "historical",
-          "variantType": "dutchColonialCityName",
-          "officialPeriod": {
-            "toYear": 1942
-          },
-          "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta",
-          "note": "1942년 개칭 후에도 Batavia 일부 사용",
-          "researchNote": "Dutch usage persisted in some contexts after 1942, including during the post-war conflict; not an exclusive worldwide cutoff."
+          "text": "Jakarta",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "Jakarta",
+          "language": "id",
+          "usage": "standard"
         },
         {
           "text": "바타비아",
           "language": "ko",
           "usage": "historical",
-          "variantType": "koreanTranscriptionOfColonialCityName",
-          "linkedName": "Batavia",
+          "variantType": "selectedHistoricalKoreanName",
           "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta"
+        },
+        {
+          "text": "Batavia",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedHistoricalEnglishName",
+          "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta"
+        },
+        {
+          "text": "Batavia",
+          "language": "nl",
+          "usage": "historical",
+          "variantType": "selectedHistoricalDutchName",
+          "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta"
+        },
+        {
+          "text": "Djakarta",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedHistoricalEnglishSpelling",
+          "researchNote": "1942-12-08~1972-08-16 시대별 지도 대표 영어 표기; 로마자 철자 이력이지 별칭이 아님."
         },
         {
           "text": "Djakarta",
           "language": "id",
           "usage": "historical",
-          "variantType": "formerIndonesianOrthography",
-          "commonlyUsedBeforeApproxYear": 1972,
-          "sourceUrl": "https://barat.jakarta.go.id/kelurahan/tamansari",
-          "note": "자카르타의 과거 철자",
-          "researchNote": "Former spelling of Jakarta, not a separate geographic place."
-        },
-        {
-          "text": "Jakarta Tokubetsu Shi",
-          "language": "ja-Latn",
-          "usage": "historical",
-          "variantType": "japaneseOccupationAdministrativeName",
-          "officialPeriod": {
-            "fromYear": 1942,
-            "toYear": 1945
-          },
-          "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta"
+          "variantType": "selectedHistoricalIndonesianOrthography",
+          "sourceUrl": "https://barat.jakarta.go.id/kelurahan/tamansari"
         }
       ],
       "latitude": -6.21462,
@@ -289,7 +313,7 @@
           {
             "detail": "1942년 바타비아에서 자카르타로 개칭",
             "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta",
-            "researchDetail": "Batavia는 19세기 네덜란드 식민도시 명칭. 1942년 일제 점령기에 Jakarta로 개칭됨. Jayakarta·Sunda Kelapa는 주로 19세기 이전 명칭으로, 이번 19세기 이후 기본 범위에 넣지 않음."
+            "researchDetail": "1942-12-08 일본 군정의 개칭 공고를 기준으로 바타비아→자카르타를 적용. 일본어 도시명을 원어로 채택하지 않고 인도네시아어 Djakarta를 사용한다. 1947~1949 네덜란드 측 Batavia 행정명 재사용은 일시적인 전시·전후 지배이며 지도 지명 복귀로 처리하지 않는다. Jayakarta와 Sunda Kelapa는 1801년 이후 대표명으로 채택하지 않았다."
           }
         ]
       },
@@ -299,17 +323,35 @@
         {
           "fromYear": 1801,
           "nameKo": "바타비아",
+          "nameEn": "Batavia",
+          "nameNative": "Batavia",
+          "nativeLanguage": "nl",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://jakarta.go.id/index.php/sejarah-jakarta"
+          "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta"
         },
         {
-          "fromYear": 1942,
+          "fromDate": "1942-12-08",
           "nameKo": "자카르타",
+          "nameEn": "Djakarta",
+          "nameNative": "Djakarta",
+          "nativeLanguage": "id",
           "kind": "officialRenaming",
-          "sourceUrl": "https://jakarta.go.id/index.php/sejarah-jakarta"
+          "sourceUrl": "https://www.jakarta.go.id/index.php/sejarah-jakarta",
+          "researchNote": "일본 군정의 Batavia→Djakarta 공식 개칭 공고를 기준으로 선택. 군사 점령을 이유로 일본어 원어명으로 자동 변경한 것은 아님. 1947~1949 네덜란드 측 Batavia의 재사용으로 지도 명칭을 되돌리지 않음."
+        },
+        {
+          "fromDate": "1972-08-17",
+          "nameEn": "Jakarta",
+          "nameNative": "Jakarta",
+          "nativeLanguage": "id",
+          "kind": "historicalOrthographyEditorialTransition",
+          "researchNote": "인도네시아 새 철자법 EYD 시행일에 따른 Djakarta→Jakarta 전환. 한국어 자카르타는 유지하며 도시의 새로운 개칭은 아님."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Jakarta",
+      "defaultDisplayNameNative": "Jakarta",
+      "defaultNativeLanguage": "id"
     },
     {
       "geonameId": 1609350,
@@ -319,19 +361,6 @@
           "language": "th",
           "usage": "standard",
           "variantType": "thaiFormalName"
-        },
-        {
-          "text": "กรุงเทพฯ",
-          "language": "th",
-          "usage": "alternate",
-          "variantType": "thaiAbbreviation"
-        },
-        {
-          "text": "Krung Thep Maha Nakhon",
-          "language": "th-Latn",
-          "usage": "alternate",
-          "variantType": "romanizationOfThaiOfficialName",
-          "sourceUrl": "https://www.thaipbs.or.th/news/content/312726"
         },
         {
           "text": "Bangkok",
@@ -355,9 +384,9 @@
       "historicalGeography": {
         "notes": [
           {
-            "detail": "방콕과 끄룽텝은 현재도 병용",
+            "detail": "대표 지명 3개 언어 유지",
             "sourceUrl": "https://www.thaipbs.or.th/news/content/312726",
-            "researchDetail": "Bangkok과 Krung Thep Maha Nakhon은 2022년 이후에도 병용되는 이름. 2022년에 Bangkok이라는 지명이 폐지되었다고 처리하지 않음."
+            "researchDetail": "영어 Bangkok과 태국어 กรุงเทพมหานคร은 동일 도시의 서로 다른 언어 대표명. 2022년 표기 논의는 도시 개칭이 아님. 불필요한 태국어 약칭과 로마자 표기 변형은 names[]에 보존하지 않는다."
           },
           {
             "detail": "프라나콘·톤부리는 별도 역사 구역",
@@ -367,9 +396,22 @@
         ]
       },
       "defaultDisplayNameKo": "방콕",
-      "shortDescriptionKo": "방콕·끄룽텝 명칭 병용",
-      "displayTimeline": [],
-      "historicalDisplayCoverage": "modern-label-only"
+      "shortDescriptionKo": "태국의 수도, 명칭 유지",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "방콕",
+          "nameEn": "Bangkok",
+          "nameNative": "กรุงเทพมหานคร",
+          "nativeLanguage": "th",
+          "kind": "historicalLocalName",
+          "sourceUrl": "https://www.thaipbs.or.th/news/content/312726"
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Bangkok",
+      "defaultDisplayNameNative": "กรุงเทพมหานคร",
+      "defaultNativeLanguage": "th"
     },
     {
       "geonameId": 1581130,
