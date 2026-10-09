@@ -405,7 +405,7 @@ void EditorController::syncHydroData() {
     auto source=displayText(project_.document().physicalData.source);
     if(source.isEmpty()&&!physicalRoot_.isEmpty()) {
         ensureHydroBootstrap();
-        const auto candidate=QDir(physicalRoot_).filePath("hydro/v0.13.1/manifest.json");
+        const auto candidate=QDir(physicalRoot_).filePath("hydro/v0.13.2/manifest.json");
         if(inspectHydroData(candidate).ready)source=QFileInfo(candidate).absolutePath();
     }
     if(source.isEmpty())return;

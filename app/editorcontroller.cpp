@@ -353,7 +353,7 @@ void EditorController::initializePhysicalData() {
         QFile file(resource);if(file.open(QIODevice::ReadOnly))physicalStore_->installVerified(*found,file.readAll());
     };
     seed("terrain/v0.12.6/manifest.json",QDir(worldDataRoot_).filePath("terrain/v0.12.6/manifest.json"));
-    seed("hydro/v0.13.1/manifest.json",QDir(worldDataRoot_).filePath("hydro/v0.13.1/manifest.json"));
+    seed("hydro/v0.13.2/manifest.json",QDir(worldDataRoot_).filePath("hydro/v0.13.2/manifest.json"));
     seed("terrain/v0.13.3/manifest.json",":/world/terrain/v0.13.3/manifest.json");
     connect(physicalStore_.get(),&PhysicalDataStore::activityChanged,this,[this](int active,int queued) {
         physicalActive_=active;physicalQueued_=queued;emit terrainChanged();emit stateChanged();
@@ -414,8 +414,7 @@ void EditorController::requestPhysicalAsset(const QString& relativePath) {
 }
 void EditorController::ensureHydroBootstrap() {
     if(!physicalStore_)return;
-    for(const auto& path:{QStringLiteral("hydro/v0.13.0/index.bin.gz"),
-                          QStringLiteral("hydro/v0.13.1/metadata-core.json.gz")})
+    for(const auto& path:{QStringLiteral("hydro/v0.13.2/hydro.bin")})
         if(!promotePhysicalAsset(path)) {
             const auto asset=physicalAssets_.constFind(path);
             if(asset!=physicalAssets_.cend()&&!physicalStore_->resolveExisting(*asset).isEmpty()) {

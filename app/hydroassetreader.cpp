@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <zlib.h>
 #include <limits>
+#include <algorithm>
 
 namespace {
 bool contained(const QString& root,const QString& path) {
@@ -23,17 +24,23 @@ bool openChecked(const HydroAssetSpec& asset,QFile& file,QString& error) {
         error=QStringLiteral("수계 자산 경로를 열 수 없거나 범위를 벗어났습니다: ")+asset.url;return false;
     }
     file.setFileName(actual);
-    if(!file.open(QIODevice::ReadOnly)||file.size()!=asset.bytes){
+    if(!file.open(QIODevice::ReadOnly)||file.size()!=(asset.fileBytes>0?asset.fileBytes:asset.bytes)){
         error=QStringLiteral("수계 자산 길이가 다르거나 읽을 수 없습니다: ")+asset.url;return false;
     }
     return true;
 }
 bool digest(QFile& file,const HydroAssetSpec& asset,QString& error) {
+    if(asset.offset<0||asset.bytes<1||
+       asset.offset>file.size()||asset.bytes>file.size()-asset.offset||
+       !file.seek(asset.offset)){
+        error=QStringLiteral("수계 자산 영역이 올바르지 않습니다: ")+asset.url;return false;
+    }
     QCryptographicHash hash(QCryptographicHash::Sha256);
-    while(!file.atEnd()) {
-        const auto chunk=file.read(1024*1024);
+    qint64 remaining=asset.bytes;
+    while(remaining>0){
+        const auto chunk=file.read(std::min<qint64>(1024*1024,remaining));
         if(chunk.isEmpty()){error=QStringLiteral("수계 자산 읽기에 실패했습니다: ")+asset.url;return false;}
-        hash.addData(chunk);
+        hash.addData(chunk);remaining-=chunk.size();
     }
     if(hash.result().toHex()!=asset.sha256.toLatin1()){
         error=QStringLiteral("수계 자산 SHA-256이 다릅니다: ")+asset.url;return false;
@@ -52,9 +59,9 @@ QByteArray readHydroAsset(const HydroAssetSpec& asset,bool gzip,QString& error,q
     error.clear();
     QFile file;
     if(!openChecked(asset,file,error)||!digest(file,asset,error))return {};
-    if(!file.seek(0)){error=QStringLiteral("수계 자산 seek에 실패했습니다: ")+asset.url;return {};}
-    if(file.size()>maxDecoded && !gzip){error=QStringLiteral("수계 자산 크기가 한도를 초과했습니다.");return {};}
-    const QByteArray compressed=file.readAll();
+    if(!file.seek(asset.offset)){error=QStringLiteral("수계 자산 seek에 실패했습니다: ")+asset.url;return {};}
+    if(asset.bytes>maxDecoded && !gzip){error=QStringLiteral("수계 자산 크기가 한도를 초과했습니다.");return {};}
+    const QByteArray compressed=file.read(asset.bytes);
     if(compressed.size()!=asset.bytes||file.error()!=QFileDevice::NoError){
         error=QStringLiteral("수계 자산 읽기에 실패했습니다: ")+asset.url;return {};
     }
