@@ -17,6 +17,8 @@
 
 - **10단계:** 실제 Pages 전환·구형 파일 정리·`main` 제품 코드 반영을 위한 **선별 병합 및 일괄 삭제 시뮬레이션**을 웹 `work/gis`에 구현. [실제 CI #37866525748](https://github.com/kimjeon-il/Pando/actions/runs/37866525748) **49/49 통과**, 웹 7·앱 5개 브랜치 SHA 확인, 웹 23개·앱 17개 파일 선별 병합 검토 목록, 앱 3-way 수동 충돌 6건, 구형 2,124개 파일의 웹 브랜치별 Blob 차이 0건. 이전 배포 URL을 유지하도록 바이너리 해시를 검사하는 오프라인 Pages 스테이징 도구와 비활성 배포 승인 템플릿 준비. **1GB 초과·Qt 회귀·공개 URL 전수 바이트 검증 미완료로 배포/삭제/메인 제품 코드 병합 미시행.**
 
+- **11단계:** **구버전 URL 영구 보존 정책 해제**(2026-10-09) 후, 웹 **7개 브랜치에서 구형 지형 `terrain/v0.12.0/` 335개·374,094,147 bytes 실제 삭제 커밋 적용**. 웹 최신 지형 `v0.12.6`은 전부 335개 보존, 앱 5개 브랜치는 내장 자료 그대로 유지·동일 URL 정책 문서 추가. [Pages 재배포 #37868609497](https://github.com/kimjeon-il/Pando/actions/runs/37868609497) 성공, [현재/구형 URL·12브랜치 검증 #37869177623](https://github.com/kimjeon-il/Pando/actions/runs/37869177623) 5/5 성공(구형 404·현행 200). `main` 전체 추적 파일 **832,753,069 bytes**, 데이터만 **734,341,743 bytes**. 단계9/10 업데이트 CI 각각 35/35·49/49 성공. Pages 방식 전환·main 제품 코드 병합 미실행.
+
 ## 기준선과 구현 링크
 
 - 1단계 웹 기준 Git 스냅샷: [`2b79bcbe48c2`](https://github.com/kimjeon-il/Pando/tree/2b79bcbe48c2b725624a576c7746607771875a93)
@@ -127,13 +129,20 @@
 - [선별 병합 및 배포 상세 실행 보고서](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/data-versioning-phase10.md), [승인 후 활성화할 GitHub Pages workflow **비활성 템플릿**](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/gis-pages-activation.template.yml). 해당 템플릿은 `.github/workflows/`에 두지 않아 실 배포를 트리거하지 않는다.
 - 실제 릴리스 준비 다음 조건: 1GB 이하로 옛 바이너리 URL 2,124개+GIS 가져오기/수계/지형/역사 국가 기능 보존 증명 → 앱 충돌 6개/Qt 실패 4개 해결 → 웹/앱 `main` 대상 파일 선별 통합 및 회귀 → Pages Actions 전환 승인/보호 환경 설정 → 구 URL 전수 바이트 대조 성공 → 사용자 승인 뒤에만 7개 웹 브랜치별 HEAD-lease 원본 정리, 실패 시 롤백.
 - **10단계 결과는 준비 완료/실행 보류**: 구버전 파일을 지우거나 앱 내장 기본지도, Pages 설정, `main` 제품 코드를 변경하지 않았다. 기존 상설 브랜치·워크트리도 그대로 유지.
+## 현재 적용 중인 데이터 URL 정책 및 실제 정리 현황 (2026-10-09)
+
+- **이 절은 6~10단계 당시 작성한 과거 URL 영구 보존 조건보다 우선한다.** 이제 더 이상 사용하지 않는 버전의 `assets/data/**` URL에 대한 영구 접근/리디렉션을 보장하지 않는다. 현행 런타임·생성기·앱에서 실제 참조하는 자산은 계속 유지한다. [공통 정책](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/data-url-retention-policy.md).
+- 승인된 첫 삭제 그룹: 웹 `assets/data/terrain/v0.12.0/` **335개 / 374,094,147 bytes**. 웹의 현존 7개 브랜치에서 정확한 Git Blob의 파일만 제거하고 기존 `v0.12.6` **335개는 유지**. 앱 브랜치 5개에는 **정책 문서만 반영**, 앱 내장 지도 데이터 변경 없음.
+- 현재 Pages는 여전히 웹 `main` 루트 직접 배포 방식. [실제 Pages 빌드 #37868609497](https://github.com/kimjeon-il/Pando/actions/runs/37868609497) 성공. [삭제 전용 검증 #37869177623](https://github.com/kimjeon-il/Pando/actions/runs/37869177623) Node 5/5 성공: 구형 매니페스트 URL HTTP 404, 최신 매니페스트 URL HTTP 200, 웹 7개 브랜치 모두 구형 0·현행 335, 앱 5개 모두 최신 지형 참조.
+- `main` 전체 현재 추적 파일 크기 **832,753,069 bytes**(데이터 **734,341,743 bytes**). 보수적 Pages 게시 프로필 `main` **673,492,217 bytes**, GIS 전환 프로필 **695,918,028 bytes**로 두 프로필 모두 1GB 이내. 구버전 보관 후보는 현재 **25그룹·1,789파일·190,094,853 bytes**이며, 자동으로 추가 삭제하지 않는다.
+- [11단계 실삭제 보고서·7브랜치 롤백 SHA](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/data-versioning-phase11.md), [335개 원본 복원 블롭·크기 목록](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/terrain-v0120-retirement-evidence.json). 기타 앱 Qt 회귀 미해결, 전체 제품 코드 `main` 병합·Pages Actions 게시 방식 전환은 별도 작업이다.
 ## 위험 및 남은 의존성
 
 - 웹 Worker는 새 데이터 매니페스트로 전환했지만 공유 국경선 캐시의 레거시 `v0.34.0` 경로는 호환 목적으로 유지함.
 - `build-world-preview.mjs`의 출력 기준은 프로그램 버전 대신 고정 데이터 입력 매니페스트로 변경됐으며, 구형 배포 자산은 호환성을 위해 유지함.
 - 웹 수계 v0.13.1은 v0.13.0 index/detail/shards를 사용하므로 현재 모두 유지.
 - 웹·앱 역사 라이브러리 91개 바이트 차이 중 색인 1개·국가별 90개는 5단계에서 의미 검증 완료. 국경 형상 차이는 0건이며, 앱 원본 데이터 갱신은 수행하지 않음.
-- 신규 불변 SHA 경로와 옛 버전 경로가 공존한다. 6단계에서 직접 참조를 감사하고 7단계에서 공식 Pages의 구 URL 표본 접근을 검증했다. 모든 보관 검토 그룹이 아직 공개되므로 URL 보존 이관 전 파일 삭제는 보류.
+- 신규 불변 SHA 경로와 승인되지 않은 잔여 구버전 경로가 공존한다. 구 URL 영구 보존 의무는 11단계에서 해제했으며, 지형 v0.12.0은 실제 삭제했다. 나머지 구버전 그룹은 별도 승인/의존 확인 후 정리한다.
 - 앱은 `assets/world/manifest.json` v2에 출처·SHA를 통합하고, Qt 리소스 경로를 해당 매니페스트에서 유도하도록 변경. 이미 포함된 원본 지도 바이트와 앱 오프라인 실행 정책은 유지.
 
 ## 브랜치 반영 규칙
