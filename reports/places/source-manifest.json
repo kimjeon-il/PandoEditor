@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "9c904b9d32483555513221d66f57742d9f92eadf",
+  "webCommit": "da128f7cafbfc6511bf9b883a95d6382d35f67d3",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -11,11 +11,11 @@
     },
     {
       "path": "reports/places/tier1-major-cities-batch02-east-asia.json",
-      "gitBlobSha": "4a61d421df27f8cb12e17914f48d71e428104210"
+      "gitBlobSha": "947b5be0d95fab09de52eb109de189c386e78800"
     },
     {
       "path": "reports/places/tier1-major-cities-batch03-india-southeast-asia.json",
-      "gitBlobSha": "ee6e3f1ee48668960ee5a5b2ea455021c496fea4"
+      "gitBlobSha": "9212cbe10cb9337b4cbd2b4eb0574165c3c72393"
     },
     {
       "path": "reports/places/tier1-major-cities-batch04-europe-west-asia.json",
