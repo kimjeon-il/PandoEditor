@@ -88,6 +88,8 @@ bool HydroRuntimeProvider::open(const QString& path,const QString& projectInstan
     auto candidate=std::make_shared<Dataset>(mobile);
     candidate->manifest=readHydroManifest(path);
     if(!candidate->manifest.valid()){error=candidate->manifest.error;return false;}
+    if(candidate->manifest.version=="0.13.2" &&
+       !verifyHydroAsset(candidate->manifest.container,error))return false;
     const auto index=readHydroAsset(candidate->manifest.index,true,error);
     if(!error.isEmpty())return false;
     const auto core=readHydroAsset(candidate->manifest.metadataCore,true,error);

@@ -9,6 +9,8 @@
 #include <QUrl>
 #include <cmath>
 #include <limits>
+#include <algorithm>
+#include <QPair>
 
 namespace {
 bool contained(const QString& root,const QString& path) {
@@ -40,6 +42,21 @@ bool asset(const QJsonValue& value,const HydroManifest& manifest,HydroAssetSpec&
         error=label+QStringLiteral(" 경로 또는 검증 정보가 올바르지 않습니다.");return false;
     }
     result.bytes=static_cast<qint64>(count);
+    result.fileBytes=result.bytes;
+    if(manifest.version=="0.13.2" && label!=QStringLiteral("container")){
+        const auto offsetValue=object.value("offset");
+        const double start=offsetValue.toDouble(-1);
+        if(!offsetValue.isDouble()||!std::isfinite(start)||start<0||
+           start>std::numeric_limits<qint64>::max()||std::floor(start)!=start||
+           result.url!=manifest.container.url||manifest.container.bytes<=0){
+            error=label+QStringLiteral(" 통합 파일 위치가 올바르지 않습니다.");return false;
+        }
+        result.offset=static_cast<qint64>(start);
+        result.fileBytes=manifest.container.bytes;
+        if(result.offset>result.fileBytes||result.bytes>result.fileBytes-result.offset){
+            error=label+QStringLiteral(" 통합 파일 범위가 올바르지 않습니다.");return false;
+        }
+    }
     result.assetRoot=manifest.assetRoot;
     result.path=QDir::cleanPath(QDir::fromNativeSeparators(
         QDir(manifest.root).absoluteFilePath(result.url)));
@@ -76,8 +93,17 @@ HydroManifest readHydroManifest(const QString& path) {
     result.dataset=object.value("dataset").toString();
     result.schema=object.value("schema").toString();
     result.crs=object.value("crs").toString();
-    if(result.version!="0.13.1"||result.schema!="pandolab-water-shards-v5"||result.crs!="EPSG:4326"){
+    if((result.version!="0.13.1"&&result.version!="0.13.2")||result.schema!="pandolab-water-shards-v5"||result.crs!="EPSG:4326"){
         result.error=QStringLiteral("웹 기준 수계 0.13.1 자료가 아닙니다.");return result;
+    }
+    if(result.version=="0.13.2"){
+        const auto package=object.value("container").toObject();
+        if(package.value("format").toString()!="byte-concatenated-subresources-v1"||
+           !asset(object.value("container"),result,result.container,result.error,"container")||
+           result.container.url!="hydro.bin"||result.container.offset!=0){
+            if(result.error.isEmpty())result.error=QStringLiteral("통합 수계 컨테이너 정보가 올바르지 않습니다.");
+            return result;
+        }
     }
     const auto stages=object.value("stages").toArray();
     if(stages.size()!=4){result.error=QStringLiteral("수계 단계 정보가 올바르지 않습니다.");return result;}
@@ -126,5 +152,21 @@ HydroManifest readHydroManifest(const QString& path) {
         result.layers.append(id);
     }
     if(result.layers.isEmpty())result.error=QStringLiteral("수계 layer 목록이 없습니다.");
+    if(result.error.isEmpty() && result.version=="0.13.2"){
+        QVector<QPair<qint64,qint64>> parts;
+        const auto append=[&](const HydroAssetSpec& part){
+            parts.append(qMakePair(part.offset,part.bytes));
+        };
+        append(result.index);append(result.metadataCore);append(result.metadataDetail);
+        for(const auto& shard:result.shards)append(shard.asset);
+        std::sort(parts.begin(),parts.end(),[](const auto& left,const auto& right){return left.first<right.first;});
+        qint64 cursor=0;
+        for(const auto& part:parts){
+            if(part.first!=cursor){result.error=QStringLiteral("통합 수계 영역이 중복되거나 누락됐습니다.");return result;}
+            cursor+=part.second;
+        }
+        if(cursor!=result.container.bytes)
+            result.error=QStringLiteral("통합 수계 전체 길이가 일치하지 않습니다.");
+    }
     return result;
 }
