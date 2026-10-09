@@ -1,0 +1,65 @@
+name: Stage immutable Hydro v0.13.2 two-file package in native GIS branch
+
+on:
+  push:
+    branches: [work/gis]
+    paths:
+      - '.github/workflows/hydro-packfile-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  stage-native-hydro:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /assets/world/hydro/v0.13.2/
+            /.github/workflows/hydro-packfile-sync.yml
+      - uses: actions/checkout@v4
+        with:
+          repository: kimjeon-il/Pando
+          ref: 8de07030cccff5e7ec3c68e6beb6bb288c95afb2
+          path: pinned-web
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /assets/data/hydro/v0.13.2/
+      - name: Verify immutable Web files and stage exact native copies
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          src=Path('pinned-web/assets/data/hydro/v0.13.2')
+          dest=Path('assets/world/hydro/v0.13.2')
+          expected={
+              'manifest.json':(53375,'2bde5c10bdf4d26fd29d2b983b70029022cfaa9fda816a105e6f4338b85f0d24'),
+              'hydro.bin':(11974120,'91c2268c6dbfdfa7fc6103d8ad0b4eeca71f6c522df5c0118db69a3654ff532a'),
+          }
+          dest.mkdir(parents=True,exist_ok=True)
+          for name,(length,sha) in expected.items():
+              data=(src/name).read_bytes()
+              assert len(data)==length and hashlib.sha256(data).hexdigest()==sha,name
+              (dest/name).write_bytes(data)
+              assert (dest/name).read_bytes()==data
+          print('Two-file native Hydro 0.13.2 matches pinned Web SHA-256: 2/2')
+          PY
+      - name: Commit only two source-identical native hydro files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- assets/world/hydro/v0.13.2/manifest.json assets/world/hydro/v0.13.2/hydro.bin
+          if git diff --cached --quiet; then
+            echo 'Native Hydro source bytes unchanged'
+          else
+            git commit -m 'data(gis): stage two-file v0.13.2 native hydro package'
+            git push origin HEAD:refs/heads/work/gis
+          fi
