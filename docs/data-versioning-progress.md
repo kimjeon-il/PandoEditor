@@ -145,6 +145,17 @@
 - 신규 검사: `tools/check-current-hydro-layout.mjs`, `tests/unit/current-hydro-layout.test.mjs`, `.github/workflows/active-hydro-optimization-gate.yml`. [JSON CI artifact](https://github.com/kimjeon-il/Pando/actions/runs/37903489555/artifacts/11603990024).
 - **구버전 수계 `v0.12.2`~`v0.12.6`의 1,769개/약154MB는 그대로 보존**. 파일 최적화 명목으로 수계 형상·명칭을 수정하거나 앱 리소스를 교체하거나 `main` 제품 코드를 병합하지 않는다. 실제 삭제는 후속 단계에서 사용 의존성 확인 후 별도 시행.
 
+## 수계 정리 2단계 — 구버전 사용처 분류 (2026-10-09)
+
+- 웹 `work/gis`에 전체 구형 수계 의존성 검사기, 단위 테스트, 전용 GitHub Actions 및 상세 보고서 구현. 웹·앱 제품 바이너리, `main` 제품 코드, Pages 배포 방식은 변경하지 않음.
+- [최종 CI #37907189047](https://github.com/kimjeon-il/Pando/actions/runs/37907189047) **성공**: Node 단위검사 **10/10**, 웹 7·앱 5 브랜치의 각 파일 Git Blob·크기 및 수계 매니페스트/출처 참조 대조.
+- [완전한 파일별 삭제 잠금 목록/사용처 JSON artifact](https://github.com/kimjeon-il/Pando/actions/runs/37907189047/artifacts/11605111244). [2단계 상세 보고서](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/legacy-hydro-stage2.md).
+- 구형 수계 `v0.12.2~v0.12.6` 총 **1,769개/153,982,948 bytes**를 다음 단계 **삭제 후보 1,742개/67,013,742 bytes** (`v0.12.2`, `v0.12.5`, `v0.12.6`), **보류 27개/86,969,206 bytes** (`v0.12.3`, `v0.12.4`)로 분리.
+- 보류 사유: 과거 수계 비교 `tools/report-hydro-v0124.py`가 v0.12.3/v0.12.4를, 재포장 `tools/repack-water-v0125.py`가 v0.12.4를 **입력 자료**로 사용. v0.12.5는 해당 재포장 도구의 **출력물**로 현재 지도 의존성 없음.
+- CI의 과거 버전 제외 규칙, synthetic 테스트 입력, 저장 프로젝트 terrain 0.12.6 버전은 실제 수계 다운로드와 구분. 실제 구형 수계 데이터를 로드하는 신규 테스트·fixture는 후속 정리를 차단하도록 검사.
+- **현행 v0.13.1과 공유 바이너리 v0.13.0을 유지**하고 이 둘에 연결되는 구형 후보 경로는 0개. 외부 사용자 프로젝트·과거 네이티브 릴리스 본문은 개별 검증하지 않았으므로 추가 위험으로 보존.
+- **2단계는 사전 판별만 완료**. 실제 구버전 수계 파일 삭제는 0개. 다음 단계에서 연구 도구 입력 복원 방식과 최종 배포/브랜치 검사 이후 정확한 Blob이 일치하는 파일만 삭제할 수 있다.
+
 ## 위험 및 남은 의존성
 
 - 웹 Worker는 새 데이터 매니페스트로 전환했지만 공유 국경선 캐시의 레거시 `v0.34.0` 경로는 호환 목적으로 유지함.
