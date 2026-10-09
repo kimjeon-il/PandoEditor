@@ -8,6 +8,7 @@ on:
       - 'app/hydroassetreader.cpp'
       - 'app/hydroshardreader.cpp'
       - 'app/hydroruntimeprovider.cpp'
+      - 'assets/world/hydro/v0.13.1/**'
       - 'assets/world/hydro/v0.13.2/**'
       - 'assets/world/manifest.json'
       - 'assets/world/physical-inventory-c0bd31d1.json'
@@ -40,6 +41,8 @@ jobs:
         with:
           persist-credentials: false
           filter: blob:none
+      - name: Reject obsolete native hydro manifest
+        run: test ! -e assets/world/hydro/v0.13.1/manifest.json
       - name: Install native build dependencies
         run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
       - uses: jurplel/install-qt-action@v4
