@@ -70,15 +70,15 @@
     }
   },
   "hydro": {
-    "path": "hydro/v0.13.1/manifest.json",
-    "version": "0.13.1",
-    "gitBlobSha": "9a9cdb719351e51d2ff509c410cae8741ac36a0a",
-    "sha256": "c10eaffd375d5f0d90955fa253b02ec73d9daeff261fa5cfde1f73ca89d2bd80",
+    "path": "hydro/v0.13.2/manifest.json",
+    "version": "0.13.2",
+    "gitBlobSha": "6f6606ad01be6a9e295995222bfa984876e8caff",
+    "sha256": "2bde5c10bdf4d26fd29d2b983b70029022cfaa9fda816a105e6f4338b85f0d24",
     "required": false,
-    "bytes": 52975,
+    "bytes": 53375,
     "source": {
-      "ref": "a87f4d27fb1bc16528aa57242ecb52e28e4550b2",
-      "path": "assets/data/hydro/v0.13.1/manifest.json"
+      "ref": "8de07030cccff5e7ec3c68e6beb6bb288c95afb2",
+      "path": "assets/data/hydro/v0.13.2/manifest.json"
     }
   },
   "labelAnchors": {
