@@ -234,6 +234,20 @@ def main():
       "existsByReferenceDate":False,
       "source":"https://graenseforeningen.dk/leksikon/rejsby-diget"
     },
+    "rahedeSluse":{
+      "type":"Råhede Bæk sluice at 1923–1925 Rejsby Dike (modern landmark)",
+      "referenceDate1914Exists":False,
+      "constructionEpoch":"1923–1925",
+      "priorTo1925":"Råhede Bæk (old international border watercourse) had its own separate outlet to the Wadden Sea; Vester Vedsted Bæk was discharged separately through the Ribe-Darum system",
+      "modernLandmarkNotPeriodFeature":True,
+      "source":"https://tidsskrift.dk/geografisktidsskrift/article/download/46290/57034?inline=1"
+    },
+    "vesterVedstedBaekSluse":{
+      "period":"1911–1914",
+      "location":"Vester Vedsted Bæk outlet in Ribe-Darum sea dike",
+      "notInterchangeableWithRahedeSluse":True,
+      "source":"https://tidsskrift.dk/geografisktidsskrift/article/download/46290/57034?inline=1"
+    },
     "graniteStone1":{
       "originalClaim":"Restored to historical/original position 2014-08-20",
       "osmMarkerId":stone[0]["id"],
@@ -256,6 +270,8 @@ def main():
     "A sea-wall/dike crest is not automatically the mean-high-tide shoreline, cadastral land edge, or 1914 maritime border.",
     "Ribediget completed/handed over May 1915 does not prove local Fløjdiget absent July 1914.",
     "The 1923-25 Rejsby dike and its later sea drainage/sluice geometry must not be used in a 1914 coastline.",
+    "Råhede Sluse is a post-1923/25 landmark: it did not exist as this modern sluice in July 1914. Keep Råhede Bæk and Vester Vedsted Bæk separate 1914 outlets.",
+    "The 2014 stone No. 1 reinstallation is an oral/heritage restoration claim, not a geodetic survey of 1914 tidal shoreline or sea-wall toe.",
     "1880 pre-dike map is a baseline only; cannot certify 1914 coast or flanking land of the German/Danish state.",
     "The 2014 restoration claim for stone1 does not establish contemporary 1914 tide edge geometry.",
     "Current 0.2938km candidate has not passed an independent historical deviation test.",
