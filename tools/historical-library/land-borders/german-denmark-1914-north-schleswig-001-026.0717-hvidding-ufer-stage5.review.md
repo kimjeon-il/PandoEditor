@@ -82,3 +82,13 @@
 **작업 판정: overlay-reviewed / provisional.** 기존 국경 마스터는 변경하지 않았다.
 
 6차 전체 통합 검증에서 잔여 과제로 (1) 1번·1914년 해안 접점과 해상 국경 분리, (2) 26번 잠정 분리와 이후 하천 연결, (3) Hårup 일부 큰 물굽이 차이, (4) Flads Å 합류점·오른쪽 강변, (5) 1914년 역사적 변경일과 공유 국경 토폴로지를 확인한다. 새 역사자료 없는 곳을 임의로 수 m 재측량하지 않는다.
+
+## 6. 다음 차수에 확인할 1901~1914년 지도 원자료
+
+1880년 도엽과 1914년 사이의 **실제 물리 해안선**을 더 좁히려면, 지도 자체의 공간 기준과 공사 후 형상이 필요하다. 추가로 확인한 다음 자료는 **목록상 존재하지만 아직 해당 원본을 정밀 지오리퍼런싱하지 않았다**.
+
+- **1901년 Ribe 해안 제방 제안 지적도** — [Ribe Byhistoriske Arkiv 검색 목록](https://arkiv.dk/soeg?ValgteArkiverIds=280&searchString=Hillerup) 중 *Forslag til et Havdige fra V. Vedsted til Skellet mellem Tanderup og Hillerup, matrikelkort 1901*. **제안(설계) 도면이므로 1914년 실제 준공 상태로 취급 금지.**
+- **1910~1912년 제방·Vester Vedsted 수문 건설 사진** — [지역 기록](https://arkiv.dk/vis/3503609). 제방 착공·공사 과정 확인에 도움이 되지만 지적 경계의 좌표 원본으로 취급하지 않는다.
+- **1901~1914년 북측 덴마크 영토의 1:20,000 Lave målebordsblade** — [덴마크 지도정보청 역사 지도](https://gst.dk/data-og-kort/historiske-kort) 및 [공식 도엽 설명](https://dataforsyningen.dk/asset/PDF/signaturforklaringer/HistoriskeKort-M%C3%A5lebordsblade-linksSignaturforklaringer.pdf). **Vester Vedsted 개별 도엽을 이 시점에 확보한 것은 아님.** '옛 독일령 Sønderjylland는 1938년부터 제작'이라는 제한을 당시 덴마크 영토였던 북측 Vester Vedsted까지 일괄 확대하지 않는다.
+
+**우선 조사 대상은 1912~1914년의 실제 남쪽 측면 제방 공사도·해안고정점·수문 도면**이다. 원도엽이 없으면 1880년 물가를 임의 확대·이동하지 않고, 1914년 해안선 형상은 provisional로 남긴다.
