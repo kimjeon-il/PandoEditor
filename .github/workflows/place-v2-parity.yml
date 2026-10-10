@@ -6,7 +6,7 @@ on:
     paths:
       - 'contracts/places/**'
       - 'reports/places/**'
-      - 'tools/place-runtime-contract/v2-snapshot.test.mjs'
+      - 'tools/place-runtime-contract/**'
       - 'app/placenamedisplay.*'
       - 'app/placeruntimestore.*'
       - 'app/placeruntimeprovider.*'
@@ -20,11 +20,12 @@ on:
       - 'ui/common/MapDisplayControls.qml'
       - 'ui/common/MapView.qml'
       - 'tests/place_sync_contract_tests.cpp'
+      - '.github/workflows/place-v2-parity.yml'
   pull_request:
     paths:
       - 'contracts/places/**'
       - 'reports/places/**'
-      - 'tools/place-runtime-contract/v2-snapshot.test.mjs'
+      - 'tools/place-runtime-contract/**'
       - '.github/workflows/place-v2-parity.yml'
       - 'app/placenamedisplay.*'
       - 'app/placeruntimestore.*'
@@ -53,6 +54,12 @@ jobs:
           node-version: 22
       - name: Compare native mirror with pinned Web
         run: node --test tools/place-runtime-contract/v2-snapshot.test.mjs
+      - name: Exercise live Web parity comparison logic without network
+        run: node --test tools/place-runtime-contract/live-web-parity.test.mjs
+      - name: Detect drift from current Web work/places
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/place-runtime-contract/live-web-parity.mjs
 
   native-place-v2:
     runs-on: ubuntu-24.04
