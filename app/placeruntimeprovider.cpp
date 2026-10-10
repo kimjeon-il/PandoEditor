@@ -97,7 +97,7 @@ std::optional<PlaceRecord> PlaceRuntimeProvider::recordById(const QString& id) c
 }
 void PlaceRuntimeProvider::retain(const PlaceRecord& record) {
     if(!store_||!PlaceRuntimeStore::isBuiltinId(record.id)||record.id!="builtin:place:"+record.source+":"+record.sourceId)return;
-    if(record.name.isEmpty()||record.name.toUcs4().size()>256||record.nameEn.toUcs4().size()>256||record.nameNative.toUcs4().size()>256||record.nameTimeline.size()>16||record.sourceId.toUcs4().size()>128||record.source.toUcs4().size()>32||record.countryCode.toUcs4().size()>8||record.featureCode.toUcs4().size()>32||
+    if(record.name.isEmpty()||record.name.toUcs4().size()>256||record.nameEn.toUcs4().size()>256||record.nameNative.toUcs4().size()>256||record.nameNativeExtras.size()>2||std::any_of(record.nameNativeExtras.cbegin(),record.nameNativeExtras.cend(),[](const QString& value){return value.isEmpty()||value.toUcs4().size()>256;})||record.nameTimeline.size()>16||record.sourceId.toUcs4().size()>128||record.source.toUcs4().size()>32||record.countryCode.toUcs4().size()>8||record.featureCode.toUcs4().size()>32||
        !std::isfinite(record.coordinates.x)||std::abs(record.coordinates.x)>180||!std::isfinite(record.coordinates.y)||std::abs(record.coordinates.y)>90||
        !std::isfinite(record.population)||record.population<0||!std::isfinite(record.priority)||!std::isfinite(record.minZoom)||record.minZoom<0)return;
     retentionOrder_.removeAll(record.id);retentionOrder_.append(record.id);retained_.insert(record.id,record);trimRetention();
