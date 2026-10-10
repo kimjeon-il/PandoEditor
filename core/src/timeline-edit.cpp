@@ -33,9 +33,10 @@ template<class Rows,class Change> TimelineRecords replace(const TimelineRecords&
         const std::string& id,const std::string& cursor,Change change) {
     const auto month=parseTemporal(cursor);
     if(month.precision!="month")throw TimelineError("INVALID_TIMELINE_CURSOR","month precision required");
+    const auto point=temporalMonthEnd(month.canonical);
     auto result=original;
     auto& rows=result.*field;
-    const auto it=std::find_if(rows.begin(),rows.end(),[&](const auto& row){return row.entityId==id&&active(row.validity,month);});
+    const auto it=std::find_if(rows.begin(),rows.end(),[&](const auto& row){return row.entityId==id&&active(row.validity,point);});
     if(it==rows.end())throw TimelineError("TIMELINE_INACTIVE","entity has no record at month end");
     auto changed=*it;
     if(!change(changed))return original;
