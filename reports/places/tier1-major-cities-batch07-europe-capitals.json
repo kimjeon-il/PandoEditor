@@ -3,33 +3,44 @@
   "batch": "07-europe-capitals",
   "status": "verified-source-staging-not-runtime",
   "source": "GeoNames (CC BY 4.0)",
-  "checkedOn": "2026-10-08",
-  "selection": "Eight indisputable major European capital-city points, all GeoNames P/PPLC; never the administrative ADM area.",
+  "checkedOn": "2026-10-10",
+  "selection": "Eight current European capital-city GeoNames P/PPLC records plus one separate historical predecessor Pest GeoNames P/PPLX record, with city-label validity ending at Budapest's 1873-11-17 unification.",
   "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), decimal-degree settlement representative points rather than city/region polygons.",
   "countryCodeSemantics": "sourceCountryCode is present-day GeoNames metadata only, not a historical ownership assignment.",
   "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
   "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
   "historicalDisplayStatus": "timeline-staged-not-runtime",
-  "historicNameScope": "Names relevant to 1801 onward; coexisting national-language exonyms are not official city renamings.",
+  "historicNameScope": "Historical capital city name records from 1801 onward, plus Pest as a verified formerly independent city only before its 1873-11-17 merger. Native/exonym co-usage and urban temporal eligibility are recorded separately.",
   "qualityNotes": [
-    "Budapest is a unified city from 1873-11-17; Buda, Pest and Óbuda were separate earlier settlements and are not names[] aliases. Suppress Budapest city label before formation.",
-    "Prag/Warschau are German exonyms, not date-switch legal renamings; Brussels names are coequal French/Dutch forms.",
-    "Athens became Greek capital in 1834 but retained its city identity/name. Αθήναι is a historical Greek written form, not an automatically dated official rename.",
+    "Budapest is the unified city only from 1873-11-17. The separate historical Pest place (GeoNames 3046446, modern PPLX, coordinates 47.5/19.0833333) is shown in the city layer before 1873-11-17 and suppressed from that date by staged temporalEligibility.activeIntervals; Budapest GeoNames 3054643 is suppressed before that date by its existing temporalEligibility.cityEstablishedFromDate. Buda and Óbuda remain linked predecessor settlements, not aliases of Budapest.",
+    "Warsaw: 1801 Prussian Warschau/바르샤우, 1807-07-09 Duchy of Warsaw treaty Warszawa/바르샤바, 1868 year-level Russianized administration Варшава, 1917-12-07 Regency Kingdom Polish cabinet Warszawa. English Warsaw remains unchanged; Congress Poland from 1815 is not treated as direct Russian imperial territory. Prague: 1801 German Prag/프라크, 1861-11-01 municipal adoption of Czech Praha/프라하, English Prague unchanged. Neither language transition is construed as a new legal city name. Brussels' concurrent French/Dutch names continue under existing policy.",
+    "Athens: selected Ottoman Turkish آتینا / Korean 아티나 from 1801; Greek Ἀθῆναι / Korean 아테네 from 1833-03-31 (Ottoman withdrawal), then Greek Ἀθήνα c. 1976 and Αθήνα c. 1982. English Athens remains unchanged. Korean is the selected native-language pronunciation convention by period, not evidence of contemporary Korean historical usage or an actual city renaming.",
     "Amsterdam is a city point, not its municipality or metro; Brussels city point is distinct from the 19-municipality capital region.",
-    "Short displayed text is <=28 Unicode codepoints. Map renderer and production manifest are unchanged."
+    "Short displayed text is <=28 Unicode codepoints. Map renderer and production manifest are unchanged.",
+    "GeoNames PPLX Pest is a scoped exception to the modern capital PPLC selection: independent historic municipality until 1873, then part of modern Budapest. As of this staged report, runtime label resolver does not consume activeIntervals; the historical display rule is pending runtime integration.",
+    "Vienna, Budapest, Amsterdam, and Lisbon now have explicit period ko/en/native names without introducing unsupported naming transitions. Budapest and Pest remain separate historic city IDs before 1873-11-17 and Pest is suppressed as independent city thereafter.",
+    "Warsaw and Prague trilingual timelines finalized: 1915 wartime occupation does not prompt a Warsaw name switch; 1894 Prague Czech street-sign directive does not imply a city rename. The 1868 Warsaw transition is approximate year precision. Production runtime and Pest/Budapest historic separation are unchanged."
   ],
   "records": [
     {
       "geonameId": 756135,
       "names": [
         {
-          "text": "Warszawa",
-          "language": "pl",
-          "usage": "standard"
+          "text": "Warschau",
+          "language": "de",
+          "usage": "historical",
+          "variantType": "selectedPrussianGermanCityName",
+          "note": "1801~1807년 프로이센 통치 시기"
         },
         {
-          "text": "Warsaw",
-          "language": "en",
+          "text": "바르샤우",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedGermanBasedKoreanName"
+        },
+        {
+          "text": "Warszawa",
+          "language": "pl",
           "usage": "standard"
         },
         {
@@ -38,12 +49,16 @@
           "usage": "standard"
         },
         {
-          "text": "Warschau",
-          "language": "de",
-          "usage": "alternate",
-          "variantType": "germanExonym",
-          "note": "독일어 명칭, 별도 공식 개칭 아님",
-          "sourceUrl": "https://www.geonames.org/756135/warsaw.html"
+          "text": "Варшава",
+          "language": "ru",
+          "usage": "historical",
+          "variantType": "selectedRussianAdministrativeCityName",
+          "note": "1868~1917년의 러시아어 행정 대표형"
+        },
+        {
+          "text": "Warsaw",
+          "language": "en",
+          "usage": "standard"
         }
       ],
       "latitude": 52.22977,
@@ -53,16 +68,106 @@
       "sourceUrl": "https://www.geonames.org/756135/",
       "sourceCountryCode": "PL",
       "defaultDisplayNameKo": "바르샤바",
-      "shortDescriptionKo": "폴란드의 수도",
+      "shortDescriptionKo": "1868년 러시아어·1917년 폴란드어",
       "displayTimeline": [
         {
           "fromYear": 1801,
+          "nameKo": "바르샤우",
+          "nameEn": "Warsaw",
+          "nameNative": "Warschau",
+          "nativeLanguage": "de",
+          "kind": "historicalPrussianAdministrativeName",
+          "note": "프로이센령 독일어 대표명",
+          "researchNote": "1801년은 19세기 역사 지명 검수 시작 연도이며 프로이센 통치기의 독일어 Warschau를 선택한다. 영어 Warsaw는 별도 영어 관용명으로 유지. 1806년 나폴레옹군 점령만으로 도시명 전환하지 않는다."
+        },
+        {
+          "fromDate": "1807-07-09",
           "nameKo": "바르샤바",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/756135/"
+          "nameNative": "Warszawa",
+          "nativeLanguage": "pl",
+          "kind": "treatyBasedLanguageSelection",
+          "sourceUrl": "https://www.napoleon.org/en/history-of-the-two-empires/articles/treaty-between-prussia-and-france-tilsit-9-july-1807",
+          "note": "틸지트 조약·바르샤바 공국",
+          "researchNote": "1807-07-09 프랑스-프로이센 틸지트 조약 제13·15조로 프로이센이 폴란드 분할 영토의 주권을 포기하고 작센 국왕이 바르샤바 공국을 갖게 되는 시점에 폴란드어 원어 대표명을 선택. 1815년 폴란드 입헌왕국 성립과 1832년 자치권 축소에도 폴란드어명 Warszawa 유지. 영어 Warsaw 불변."
+        },
+        {
+          "fromYear": 1868,
+          "nameNative": "Варшава",
+          "nativeLanguage": "ru",
+          "kind": "historicalAdministrativeLanguageSelection",
+          "sourceUrl": "https://crispa.uw.edu.pl/object/files/603524/display/Default",
+          "note": "러시아화 행정언어 대표명",
+          "researchNote": "1867년 폴란드 왕국 자치기관 해체·러시아식 지방행정 통합 이후 1868년 러시아어 행정간행물과 공문 사용을 근거로 원어 대표명을 러시아어 Варшава로 선택. 정확한 개칭 효력일이 아니라 연도 단위 편집 기준이며 폴란드어 Warszawa 사용이 폐지되었다는 의미가 아니다."
+        },
+        {
+          "fromDate": "1917-12-07",
+          "nameNative": "Warszawa",
+          "nativeLanguage": "pl",
+          "kind": "polishRegencyGovernmentEditorialLanguageSelection",
+          "sourceUrl": "https://dzieje.pl/aktualnosci/rada-regencyjna",
+          "note": "섭정왕국 폴란드 내각 출범",
+          "researchNote": "독일·오스트리아헝가리 통제 아래 폴란드 왕국 섭정회의가 1917-12-07 얀 쿠하제프스키 내각을 임명한 날짜를 현지 폴란드 정부 성립의 지도 편집 기준으로 선택한다. 1915년 독일군의 군사 점령, 1916년 11월 5일의 왕국 선언, 1918년 3월 브레스트-리토프스크 조약, 1918년 11월 독립 회복과 구별한다. 영어 Warsaw·한국어 바르샤바는 변화 없음. 이는 완전한 독립국 수립일이 아니다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1807-1868-1917-language-transitions",
+      "defaultDisplayNameEn": "Warsaw",
+      "defaultDisplayNameNative": "Warszawa",
+      "defaultNativeLanguage": "pl",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1807-07-09",
+            "type": "tilsitTreatyWarsawDuchy",
+            "detail": "틸지트 조약·바르샤바 공국",
+            "sourceUrl": "https://www.napoleon.org/en/history-of-the-two-empires/articles/treaty-between-prussia-and-france-tilsit-9-july-1807"
+          },
+          {
+            "year": 1815,
+            "type": "constitutionalCongressPoland",
+            "detail": "폴란드 입헌왕국 성립",
+            "researchDetail": "러시아 황제가 폴란드 국왕을 겸했지만 별도 헌법·행정부 및 폴란드어 행정 사용을 유지했다. 러시아 직할령이라는 뜻이 아니다."
+          },
+          {
+            "year": 1832,
+            "type": "polishKingdomAutonomyCurtailment",
+            "detail": "폴란드 왕국 자치권 축소"
+          },
+          {
+            "year": 1867,
+            "type": "russianAdministrativeIntegration",
+            "detail": "러시아식 행정체제 통합",
+            "researchDetail": "폴란드 왕국 중앙 자치기관 해체 및 러시아 행정제도의 확대. 도시 대표 원어명은 1868년 러시아어 시 행정 정착을 편집 기준으로 선택."
+          },
+          {
+            "year": 1868,
+            "type": "russianAdministrativeLanguageInWarsaw",
+            "detail": "바르샤바 러시아어 공문 확대",
+            "sourceUrl": "https://crispa.uw.edu.pl/object/files/603524/display/Default"
+          },
+          {
+            "date": "1917-12-07",
+            "type": "polishRegencyCabinetAppointed",
+            "detail": "폴란드 섭정왕국 내각 구성",
+            "sourceUrl": "https://dzieje.pl/aktualnosci/rada-regencyjna"
+          },
+          {
+            "date": "1918-11-11",
+            "type": "polishIndependenceRestored",
+            "detail": "폴란드 독립 회복",
+            "researchDetail": "독립 회복은 별도 정치사 사건. 이 자료에서는 폴란드어 원어명 대표 전환을 1917-12-07로 채택한다."
+          }
+        ],
+        "notes": [
+          {
+            "detail": "1815~1867년 폴란드 왕국 별도",
+            "researchDetail": "폴란드 왕국은 러시아 황제와 군주를 공유하였으나 폴란드어의 행정·교육 사용을 유지했고 단계적으로 자치권이 축소되었다. 원어명을 1815년부터 러시아어로 바꾸지 않는다."
+          },
+          {
+            "detail": "1915년 군사 점령은 전환 제외",
+            "researchDetail": "독일군의 일시 점령 그 자체는 원어명 변경 기준이 아니다. 폴란드 내각 출범일인 1917년 12월 7일을 별도 근거로 선택."
+          }
+        ]
+      }
     },
     {
       "geonameId": 2761369,
@@ -95,8 +200,12 @@
         {
           "fromYear": 1801,
           "nameKo": "빈",
+          "nameEn": "Vienna",
+          "nameNative": "Wien",
+          "nativeLanguage": "de",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/2761369/"
+          "sourceUrl": "https://www.geonames.org/2761369/",
+          "researchNote": "1801년부터 시대별 대표 이름 빈 / Vienna / Wien을 유지한다. 합스부르크 제국에서 현대 오스트리아로 정치체제가 바뀌어도 도시 개칭은 없다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -107,19 +216,29 @@
             "sourceUrl": "https://www.geonames.org/2761369/vienna.html"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Vienna",
+      "defaultDisplayNameNative": "Wien",
+      "defaultNativeLanguage": "de"
     },
     {
       "geonameId": 3067696,
       "names": [
         {
-          "text": "Praha",
-          "language": "cs",
-          "usage": "standard"
+          "text": "Prag",
+          "language": "de",
+          "usage": "historical",
+          "variantType": "selectedEarlyHabsburgGermanAdministrativeCityName"
         },
         {
-          "text": "Prague",
-          "language": "en",
+          "text": "프라크",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedGermanBasedKoreanCityName"
+        },
+        {
+          "text": "Praha",
+          "language": "cs",
           "usage": "standard"
         },
         {
@@ -128,12 +247,9 @@
           "usage": "standard"
         },
         {
-          "text": "Prag",
-          "language": "de",
-          "usage": "alternate",
-          "variantType": "germanExonym",
-          "note": "독일어 명칭, 도시 개칭은 아님",
-          "sourceUrl": "https://www.geonames.org/3067696/prague.html"
+          "text": "Prague",
+          "language": "en",
+          "usage": "standard"
         }
       ],
       "latitude": 50.08804,
@@ -143,16 +259,167 @@
       "sourceUrl": "https://www.geonames.org/3067696/",
       "sourceCountryCode": "CZ",
       "defaultDisplayNameKo": "프라하",
-      "shortDescriptionKo": "체코어·독일어 지명 병용",
+      "shortDescriptionKo": "1861년 체코어 시 행정 확대",
       "displayTimeline": [
         {
           "fromYear": 1801,
+          "nameKo": "프라크",
+          "nameEn": "Prague",
+          "nameNative": "Prag",
+          "nativeLanguage": "de",
+          "kind": "historicalHabsburgAdministrativeName",
+          "note": "오스트리아 제국 초기 독일어 행정",
+          "sourceUrl": "https://edext.praha.eu/web/praha/ulicni-tabule-historie",
+          "researchNote": "1801년은 역사 지명 검수 시작 연도. 당시 합스부르크 국가·도시 행정의 독일어 우세를 기준으로 Prag를 원어 대표명, 프라크를 한국어 편집 음역으로 사용한다. 체코어 Praha도 주민·체코어 문헌에서 이미 사용되었으며 영어 Prague는 유지한다."
+        },
+        {
+          "fromDate": "1861-11-01",
           "nameKo": "프라하",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/3067696/"
+          "nameNative": "Praha",
+          "nativeLanguage": "cs",
+          "kind": "municipalCzechAdministrativeLanguageEditorialSelection",
+          "note": "프라하시 체코어 행정 채택",
+          "sourceUrl": "https://www.ahmp.cz/index.html?mid=46&page=page%2Fdocs%2Fvyvoj-prazske-samospravy-II-D.html&wstyle=0",
+          "researchNote": "1861-04-11 체코계 시장 프란티셰크 프슈트로스 선출 이후 프라하 시정부가 1861-11-01부터 지방행정 업무에서 체코어를 일관되게 사용하도록 정한 것을 원어 대표명 Praha와 한국어 프라하의 편집상 전환 기준으로 삼는다. 이는 도시가 새 법적 이름으로 개칭되었다는 뜻이 아니다. 국가 상급기관에서 독일어, 도시 주민·문헌에서 체코어와 독일어 사용은 한동안 병존했다. 1894-04-20 체코어 단독 거리 표지, 1918년 체코슬로바키아 독립은 지명 변경이 아니므로 별도 전환점을 추가하지 않는다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1861-czech-municipal-language-selection",
+      "defaultDisplayNameEn": "Prague",
+      "defaultDisplayNameNative": "Praha",
+      "defaultNativeLanguage": "cs",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1861-04-11",
+            "type": "czechMayorElectedInPrague",
+            "detail": "체코계 시장 프슈트로스 선출",
+            "sourceUrl": "https://www.ahmp.cz/index.html?mid=46&page=page%2Fdocs%2Fvyvoj-prazske-samospravy-II-A.html&wstyle=0"
+          },
+          {
+            "date": "1861-11-01",
+            "type": "czechPragueMunicipalAdministration",
+            "detail": "프라하시 체코어 행정 시행",
+            "sourceUrl": "https://www.ahmp.cz/index.html?mid=46&page=page%2Fdocs%2Fvyvoj-prazske-samospravy-II-D.html&wstyle=0",
+            "researchDetail": "시정부 내부 업무에서 체코어를 일관되게 사용하도록 정한 날짜. 독일어 사용의 전국적 종료, 도시명 신규 창설, 모든 공문의 즉각적 언어 변경은 아니다."
+          },
+          {
+            "date": "1894-04-20",
+            "type": "czechOnlyStreetNameSigns",
+            "detail": "프라하 체코어 거리 표지 고시",
+            "sourceUrl": "https://edext.praha.eu/web/praha/ulicni-tabule-historie",
+            "researchDetail": "거리명 표지의 체코어 단독 사용에 관한 시정부 고시. 도시 자체의 공식 이름을 바꾼 날로 해석하지 않는다."
+          },
+          {
+            "date": "1918-10-28",
+            "type": "czechoslovakIndependenceDeclared",
+            "detail": "체코슬로바키아 독립 선언",
+            "sourceUrl": "https://prague.eu/cs/objevujte/obecni-dum/",
+            "researchDetail": "독립은 1861년 이후 사용한 현지 시정부의 체코어 도시명 Praha를 새로 만든 사건이 아니다."
+          }
+        ],
+        "notes": [
+          {
+            "detail": "1894년은 거리명 표지의 언어 변경",
+            "sourceUrl": "https://edext.praha.eu/web/praha/ulicni-tabule-historie",
+            "researchDetail": "1894-04-20은 프라하시 전체 거리표지의 체코어 단독화 고시로 1861-11-01 이후 시작된 체코어 지방행정과 구별한다."
+          },
+          {
+            "detail": "독일어 Prag의 병용 지속",
+            "researchDetail": "독일어 Prag는 1861년 이후 합스부르크 제국·독일어 문서와 독일어 사용자 사이에서 계속 쓰였으나 지도 선택 원어명은 시정부의 체코어 행정을 기준으로 Praha를 선택한다."
+          }
+        ]
+      }
+    },
+    {
+      "geonameId": 3046446,
+      "names": [
+        {
+          "text": "Pest",
+          "language": "hu",
+          "usage": "historical",
+          "variantType": "historicalIndependentCityName"
+        },
+        {
+          "text": "Pest",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "historicalIndependentCityName"
+        },
+        {
+          "text": "페슈트",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "historicalIndependentCityKoreanName"
+        }
+      ],
+      "latitude": 47.5,
+      "longitude": 19.0833333,
+      "featureClass": "P",
+      "featureCode": "PPLX",
+      "sourceUrl": "https://www.geonames.org/3046446/pest.html",
+      "sourceCountryCode": "HU",
+      "defaultDisplayNameKo": "페슈트",
+      "defaultDisplayNameEn": "Pest",
+      "defaultDisplayNameNative": "Pest",
+      "defaultNativeLanguage": "hu",
+      "shortDescriptionKo": "1873년 부다페스트에 통합된 옛 도시",
+      "displayTimeline": [
+        {
+          "fromYear": 1801,
+          "nameKo": "페슈트",
+          "nameEn": "Pest",
+          "nameNative": "Pest",
+          "nativeLanguage": "hu",
+          "kind": "historicalIndependentCity",
+          "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest",
+          "note": "1873년 통합 전 독립 도시",
+          "researchNote": "1801년은 역사 지명 검수 시작 연도이지 페슈트의 설립 연도가 아니다. 페슈트는 도나우 동쪽에 있던 독립 도시로 1873-11-17 부다·오부다와 통합됐다. 현대 GeoNames는 Pest를 PPLX(도시 내 지역)로 분류하지만 역사적으로는 독립 도시이므로 별도 ID 3046446을 보존한다. 영어 Pest와 헝가리어 Pest는 동일 철자이다."
+        }
+      ],
+      "historicalDisplayCoverage": "reviewed-since-1801-until-1873-merger-for-independent-city",
+      "temporalEligibility": {
+        "lifecycleReviewStatus": "verified",
+        "reviewedCoverage": {
+          "fromYear": 1801,
+          "untilYear": 2026
+        },
+        "activeIntervals": [
+          {
+            "untilDateExclusive": "1873-11-17",
+            "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest",
+            "researchNote": "역사적 독립 도시로서의 페슈트 표시는 1873-11-16까지. 1873-11-17부터는 별도 도시 표시를 종료하고 통합된 부다페스트(GeoNames 3054643)를 표시한다. 1801년 이전은 조사 범위 밖이며, 통합 후 Pest라는 지역명 자체가 소멸했다는 뜻은 아니다."
+          }
+        ],
+        "afterIndependentCityMerger": "suppress-city-label",
+        "note": "1873-11-17부터 독립 도시 라벨 제외",
+        "researchNote": "PPLX는 현재 GeoNames의 지역 분류다. 옛 독립 도시로 표시할 때만 city-label eligibility를 부여한다. 현대 Pest의 지역 지명 검색·보존은 독립 도시 표시 제외와 별개. activeIntervals는 현재 조사 데이터에만 존재하며 실제 렌더러는 아직 이를 적용하지 않는다."
+      },
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1873-11-17",
+            "type": "mergedIntoBudapest",
+            "detail": "부다·오부다와 통합해 부다페스트 성립",
+            "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest"
+          }
+        ],
+        "linkedPlaces": [
+          {
+            "geonameId": 3054643,
+            "nameHu": "Budapest",
+            "nameKo": "부다페스트",
+            "relation": "successorUnifiedCityFrom1873-11-17",
+            "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "1873년 이전에만 독립 도시 표시",
+            "researchDetail": "별도 Pest 역사 도시 객체로 관리한다. 현대 부다페스트와 좌표가 다르며 이름만 바꾼 같은 좌표 객체로 합치지 않는다. 1873년 이후 Pest의 지역명 지속 사용은 독립 도시 라벨과 별개.",
+            "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest"
+          }
+        ]
+      }
     },
     {
       "geonameId": 3054643,
@@ -160,6 +427,11 @@
         {
           "text": "Budapest",
           "language": "hu",
+          "usage": "standard"
+        },
+        {
+          "text": "Budapest",
+          "language": "en",
           "usage": "standard"
         },
         {
@@ -180,8 +452,13 @@
         {
           "fromDate": "1873-11-17",
           "nameKo": "부다페스트",
+          "nameEn": "Budapest",
+          "nameNative": "Budapest",
+          "nativeLanguage": "hu",
           "kind": "municipalUnification",
-          "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest"
+          "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest",
+          "note": "부다·페슈트·오부다 통합",
+          "researchNote": "1873년 11월 17일부터 기존 별도 도시 부다·페슈트·오부다의 통합 도시 Budapest를 나타낸다. 이 날짜 이전에는 부다페스트 통합 도시 라벨을 제외하고 페슈트를 별도 ID 3046446으로 표시하는 기존 temporalEligibility 정책을 유지한다. 영어와 헝가리어 표기는 모두 Budapest다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1873",
@@ -212,9 +489,10 @@
           {
             "nameHu": "Pest",
             "nameKo": "페슈트",
-            "relation": "pre1873SeparateSettlement",
-            "note": "통합 전 도나우 동안의 도시",
-            "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest"
+            "relation": "pre1873IndependentCity",
+            "note": "1873년 통합 이전의 독립 도시. 1873-11-17 이후 독립 도시 표시 종료",
+            "sourceUrl": "https://old.bparchiv.hu/hirek/150-eves-budapest",
+            "geonameId": 3046446
           },
           {
             "nameHu": "Óbuda",
@@ -230,15 +508,40 @@
             "sourceUrl": "https://archiv.budapest.hu/Lapok/Budapest-140-%C3%A9ves---v%C3%A1rosismereti-vet%C3%A9lked%C5%91t-rendeztek-k%C3%B6z%C3%A9piskol%C3%A1soknak.aspx?oe53=1"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Budapest",
+      "defaultDisplayNameNative": "Budapest",
+      "defaultNativeLanguage": "hu"
     },
     {
       "geonameId": 264371,
       "names": [
         {
+          "text": "آتینا",
+          "language": "ota-Arab",
+          "usage": "historical",
+          "variantType": "selectedOttomanAdministrativeName",
+          "note": "1801년 오스만 행정 기준 대표명"
+        },
+        {
+          "text": "Ἀθῆναι",
+          "language": "el",
+          "usage": "historical",
+          "variantType": "selectedKatharevousaFormalName",
+          "sourceUrl": "https://www.geonames.org/264371/athens.html"
+        },
+        {
+          "text": "Ἀθήνα",
+          "language": "el",
+          "usage": "historical",
+          "variantType": "selectedPolytonicDemoticName",
+          "note": "1976년 문어체 제도 전환과 1982년 단조식 채택 사이 지도 대표형"
+        },
+        {
           "text": "Αθήνα",
           "language": "el",
-          "usage": "standard"
+          "usage": "standard",
+          "sourceUrl": "https://www.geonames.org/264371/athens.html"
         },
         {
           "text": "Athens",
@@ -251,12 +554,11 @@
           "usage": "standard"
         },
         {
-          "text": "Αθήναι",
-          "language": "el",
+          "text": "아티나",
+          "language": "ko",
           "usage": "historical",
-          "variantType": "historicalFormalGreekOrthography",
-          "note": "역사적 그리스어 문어 형태",
-          "sourceUrl": "https://www.geonames.org/264371/athens.html"
+          "variantType": "selectedOttomanEraKoreanMapName",
+          "note": "오스만어 Atina의 편집상 한글 표기"
         }
       ],
       "latitude": 37.98376,
@@ -270,28 +572,83 @@
       "displayTimeline": [
         {
           "fromYear": 1801,
-          "nameKo": "아테네",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/264371/"
+          "nameKo": "아티나",
+          "nameEn": "Athens",
+          "nameNative": "آتینا",
+          "nativeLanguage": "ota-Arab",
+          "kind": "historicalAdministrativeLanguageSelection",
+          "sourceUrl": "https://www.geonames.org/264371/athens.html",
+          "note": "오스만 튀르크어 원어 대표명",
+          "researchNote": "오스만 제국 시기의 지도 원어명을 آتینا(Atina)로 선택하며, 한국어명도 그 발음에 맞춰 아티나로 표시한다. 영어 Athens는 유지한다. 이 표기는 과거 한국어 실제 사용례를 주장하는 것이 아닌 판도편집기의 시대별 발음 표기 원칙이다. 1801년은 조사 시작 연도다."
+        },
+        {
+          "fromDate": "1833-03-31",
+          "nameNative": "Ἀθῆναι",
+          "nativeLanguage": "el",
+          "kind": "postOttomanGreekLanguageSelection",
+          "note": "그리스 측 통치 재개 후 그리스어 기준",
+          "researchNote": "1833-03-31 오스만군 아크로폴리스 철수를 지도 그리스어 Ἀθῆναι 및 한국어 아테네를 동시에 채택하는 기준일로 사용한다. 아테네는 한국어 지도 관용 표기로, 해당 날짜에 그리스어 원어명 자체가 새로 만들어졌거나 도시가 법적으로 개명됐다는 뜻은 아니다. 영어 Athens는 이전과 동일하게 유지한다.",
+          "nameKo": "아테네"
+        },
+        {
+          "fromYear": 1976,
+          "nameNative": "Ἀθήνα",
+          "nativeLanguage": "el",
+          "kind": "historicalGreekOfficialLanguageReform",
+          "note": "1976년 그리스어 민중어 공용화",
+          "researchNote": "1976년 공식 언어를 디모티키로 전환한 제도 변화를 원어 대표명 Ἀθῆναι→Ἀθήνα의 연도 단위 편집 기준으로 선정한다. 도시명 자체의 법적 개칭일은 아니며 일 단위 전환일은 확정하지 않는다."
+        },
+        {
+          "fromYear": 1982,
+          "nameNative": "Αθήνα",
+          "nativeLanguage": "el",
+          "kind": "historicalGreekOrthography",
+          "note": "1982년 단조식 철자법 적용",
+          "researchNote": "1982년 단조식 철자법 채택을 원어 대표명 Ἀθήνα→Αθήνα의 연도 단위 편집 기준으로 선정한다. 한국어 아테네·영어 Athens는 계속 유지한다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1833-03-31-greek-korean-display-switch-1976-1982-greek-orthography",
       "historicalGeography": {
         "events": [
+          {
+            "date": "1833-03-31",
+            "type": "greekControlOfAthens",
+            "detail": "오스만군 아테네 철수",
+            "researchDetail": "그리스 측의 행정언어를 원어 대표명으로 선택하는 편집 기준일이며 도시의 새로운 법적 개칭일로 보지 않는다."
+          },
           {
             "year": 1834,
             "type": "becameNationalCapital",
             "detail": "그리스 왕국 수도로 지정",
             "sourceUrl": "https://www.namuseum.gr/en/to-moyseio/istoria-toy-moyseioy/"
+          },
+          {
+            "year": 1976,
+            "type": "demoticGreekOfficialLanguageAdoption",
+            "detail": "그리스 민중어 공식 언어 채택",
+            "researchDetail": "역사적 문어형에서 민중어형으로 대표명 변경, 지명 자체 개칭은 아님."
+          },
+          {
+            "year": 1982,
+            "type": "greekMonotonicOrthographyAdoption",
+            "detail": "그리스어 단조식 철자법 채택",
+            "researchDetail": "Athena 원어명에서 다조식 악센트·숨표의 변경에 해당."
           }
         ],
         "notes": [
           {
-            "detail": "수도 지정은 도시명 개칭 아님",
-            "sourceUrl": "https://www.namuseum.gr/en/to-moyseio/istoria-toy-moyseioy/"
+            "detail": "1833년 통치권·원어 전환",
+            "researchDetail": "오스만 튀르크어에서 그리스어로 바뀌는 지도 원어 대표 언어의 편집상 전환이다."
+          },
+          {
+            "detail": "1976·1982년 표기만 변경",
+            "researchDetail": "1976년 디모티키 공식화 및 1982년 단조식 채택은 아테네 도시의 법적 개칭이 아니라 그리스어 대표 표기 선택의 변화다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Athens",
+      "defaultDisplayNameNative": "Αθήνα",
+      "defaultNativeLanguage": "el"
     },
     {
       "geonameId": 2759794,
@@ -299,6 +656,11 @@
         {
           "text": "Amsterdam",
           "language": "nl",
+          "usage": "standard"
+        },
+        {
+          "text": "Amsterdam",
+          "language": "en",
           "usage": "standard"
         },
         {
@@ -319,8 +681,12 @@
         {
           "fromYear": 1801,
           "nameKo": "암스테르담",
+          "nameEn": "Amsterdam",
+          "nameNative": "Amsterdam",
+          "nativeLanguage": "nl",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/2759794/"
+          "sourceUrl": "https://www.geonames.org/2759794/",
+          "researchNote": "1801년 이후 네덜란드어·영어명 Amsterdam과 한국어명 암스테르담을 유지. 수도 지위 변화는 명칭 변경이 아니다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -331,7 +697,10 @@
             "sourceUrl": "https://www.geonames.org/2759794/amsterdam.html"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Amsterdam",
+      "defaultDisplayNameNative": "Amsterdam",
+      "defaultNativeLanguage": "nl"
     },
     {
       "geonameId": 2800866,
@@ -369,8 +738,48 @@
         {
           "fromYear": 1801,
           "nameKo": "브뤼셀",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/2800866/"
+          "nameEn": "Brussels",
+          "nameNative": "Bruxelles",
+          "nativeLanguage": "fr",
+          "kind": "historicalAdministrativeLanguageSelection",
+          "sourceUrl": "https://www.vlaanderen.be/uw-overheid/over-vlaanderen/taalwetwijzer/taalwetwijs-in-brussel",
+          "note": "프랑스어 행정 대표명",
+          "researchNote": "1801년 당시 프랑스 지배기의 프랑스어 행정 대표형 Bruxelles를 선택. 네덜란드어 Brussel도 주민 사이에 사용되었으나 대표 이름 선택과 별개다."
+        },
+        {
+          "fromDate": "1823-01-01",
+          "nameNative": "Brussel",
+          "nativeLanguage": "nl",
+          "kind": "historicalAdministrativeLanguageSelection",
+          "note": "네덜란드 왕국 행정언어 기준",
+          "researchNote": "1823년 1월 1일 네덜란드 왕국의 네덜란드어 행정·사법 사용 기준을 원어 대표명 선택에 적용. 프랑스어 Bruxelles의 사용 중단이나 새 지명 부여를 뜻하지 않는다."
+        },
+        {
+          "fromDate": "1830-10-04",
+          "nameNative": "Bruxelles",
+          "nativeLanguage": "fr",
+          "kind": "historicalAdministrativeLanguageSelection",
+          "note": "벨기에 독립 후 프랑스어 우선",
+          "researchNote": "1830년 10월 4일 벨기에 독립 선언을 프랑스어 행정 대표명 선택의 편집상 기준으로 사용. 기존 네덜란드어 Brussel도 계속 사용됐다."
+        },
+        {
+          "fromYear": 1921,
+          "nameNative": "Bruxelles",
+          "nativeLanguage": "fr",
+          "nativeNames": [
+            {
+              "text": "Bruxelles",
+              "language": "fr"
+            },
+            {
+              "text": "Brussel",
+              "language": "nl"
+            }
+          ],
+          "kind": "historicalCoOfficialNativeLanguages",
+          "sourceUrl": "https://www.vlaanderen.be/uw-overheid/over-vlaanderen/taalwetwijzer/taalwetwijs-in-brussel",
+          "note": "프랑스어·네덜란드어 공동 행정명",
+          "researchNote": "1921년 브뤼셀의 이중언어 행정제도 정립을 연도 정밀도의 편집 기준으로 사용. 프랑스어 Bruxelles와 네덜란드어 Brussel을 공동 원어로 선택한다. 이 두 이름은 훨씬 이전부터 병용됐으며 1921년 새로 만들어지거나 일괄 개칭된 것이 아니다. 첫 번째 원어 대표명은 Bruxelles로 둔다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -385,11 +794,47 @@
         ],
         "notes": [
           {
+            "detail": "1921년 이후 두 원어 병기",
+            "sourceUrl": "https://www.vlaanderen.be/uw-overheid/over-vlaanderen/taalwetwijzer/taalwetwijs-in-brussel",
+            "researchDetail": "Bruxelles(fr)와 Brussel(nl)은 별개의 도시가 아니라 동시 공식 원어명이다. 1921년 공동 선택은 행정언어 지위의 편집 기준이고 이름이 새로 만들어진 것은 아니다."
+          },
+          {
             "detail": "프랑스어·네덜란드어 동등 사용",
             "sourceUrl": "https://www.vlaanderen.be/uw-overheid/over-vlaanderen/taalwetwijzer/taalwetwijs-in-brussel"
           }
+        ],
+        "events": [
+          {
+            "date": "1823-01-01",
+            "type": "dutchAdministrativeLanguageImplementation",
+            "detail": "네덜란드어 행정 사용 확대"
+          },
+          {
+            "date": "1830-10-04",
+            "type": "belgiumIndependence",
+            "detail": "벨기에 독립 선언"
+          },
+          {
+            "year": 1921,
+            "type": "brusselsBilingualAdministrationStatus",
+            "detail": "브뤼셀 행정상 이중언어 지위",
+            "researchDetail": "이중언어 제도의 주요 연도이며 1932년 언어법에서도 행정상 적용이 명확해졌다."
+          }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Brussels",
+      "defaultDisplayNameNative": "Bruxelles",
+      "defaultNativeLanguage": "fr",
+      "defaultNativeNames": [
+        {
+          "text": "Bruxelles",
+          "language": "fr"
+        },
+        {
+          "text": "Brussel",
+          "language": "nl"
+        }
+      ]
     },
     {
       "geonameId": 2267057,
@@ -422,11 +867,18 @@
         {
           "fromYear": 1801,
           "nameKo": "리스본",
+          "nameEn": "Lisbon",
+          "nameNative": "Lisboa",
+          "nativeLanguage": "pt",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/2267057/"
+          "sourceUrl": "https://www.geonames.org/2267057/",
+          "researchNote": "1801년 이후 포르투갈어 Lisboa, 영어 Lisbon, 한국어 리스본 이름 변경 없음."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Lisbon",
+      "defaultDisplayNameNative": "Lisboa",
+      "defaultNativeLanguage": "pt"
     }
   ]
 }

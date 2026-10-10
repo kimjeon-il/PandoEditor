@@ -16,9 +16,9 @@
     "Five independently checked GeoNames P/PPLC capital settlements; Reykjavik 3413829, Ankara 323786, Tbilisi 611717, Yerevan 616052, Baku 587084.",
     "Reykjavík's 1786 municipal privileges, the 1904 self-government administrative capital, the 1918 sovereign kingdom and the 1944 republic are different events; none is a city-name change.",
     "Ankara became capital 1923-10-13, not evidence that the Turkish city and foreign-language Angora were legally renamed on that day.",
-    "Tbilisi and Yerevan have historical Russian names Tiflis and Erivan; the 1936 Soviet ordinance changed official Russian forms. Pando's Korean label convention uses year-only transitions because primary and secondary date transcriptions disagree on August 16 versus 17.",
-    "Tbilisi Georgian თბილისი/older ტფილისი and Yerevan Armenian Երևան coexist with Russian-era official forms. Never equate one script's spelling reform with all local names being absent previously.",
-    "Baku Bakı and Russian Баку refer to one city, and 1918-09-17 government arrival from Ganja does not constitute a city-name change.",
+    "Tbilisi: 1801 Russian Empire Тифлисъ/Tiflis/티플리스; from 1918-05-26 independent Georgian ტფილისი/Tiflis/트필리시; from 1936-08-17 Georgian თბილისი/Tbilisi/트빌리시. The English 1936 change is an editorial standard, not a proven simultaneous change in all English use.",
+    "Yerevan: from 1801 Persian ایروان/Erivan/이라반; 1828-02-22 Russian Эривань/Erivan/에리반; 1918-05-28 Armenian Երեւան/Yerevan/예레반; script only on 1922-03-04 Յերեվան and 1940-08-15 Երևան. Soviet 1936 Russian-name adjustment is not an Armenian or English map-name transition.",
+    "Baku: native Persian باکو from 1801; Russian Баку at 1813-10-24 Treaty of Gulistan; Azerbaijani Arabic-script باکو at 1918-09-15 Azerbaijani-Ottoman capture of Baku, NOT 1918-09-17 government move; pre-1940 Latin Bakь from 1929-01-01; Azerbaijani Cyrillic Бакы from 1940-01-01; modern Bakı from 1991-12-25 alphabet restoration act. English Baku and Korean 바쿠 remain unchanged. No city legal renaming is implied.",
     "Caucasus' continental classification is geographically variable; countries' modern ISO codes do not imply that the cities are legally or historically within a single defined continent.",
     "First 1801 timeline entries denote the beginning of Korean editorial survey, not documentary evidence that modern Korean transliterations were already used in 1801.",
     "All UI-facing summary/name notes are <=28 Unicode codepoints; expanded researchNote/researchDetail preserves full evidence.",
@@ -46,13 +46,6 @@
           "text": "레이캬비크",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Reykjavík",
-          "language": "en",
-          "usage": "alternate",
-          "variantType": "diacriticPreservingEnglish",
-          "sourceUrl": "https://www.geonames.org/3413829/"
         }
       ],
       "latitude": 64.13548,
@@ -146,27 +139,11 @@
           "sourceUrl": "https://www.ankara.bel.tr/ankara/ankara-nin-kisa-tarihi"
         },
         {
-          "text": "Angora",
-          "language": "tr",
-          "usage": "historical",
-          "variantType": "formerOttomanEraRomanizedName",
-          "note": "옛 도시명 관련 표기",
-          "sourceUrl": "https://www.ankara.bel.tr/ankara/ankara-nin-kisa-tarihi"
-        },
-        {
           "text": "Engürü",
           "language": "ota",
           "usage": "historical",
           "variantType": "ottomanTurkishName",
           "note": "오스만 시대 표기",
-          "sourceUrl": "https://www.ankara.bel.tr/ankara/ankara-nin-kisa-tarihi"
-        },
-        {
-          "text": "Ankyra",
-          "language": "grc",
-          "usage": "historical",
-          "variantType": "ancientGreekName",
-          "note": "고대의 그리스어 이름",
           "sourceUrl": "https://www.ankara.bel.tr/ankara/ankara-nin-kisa-tarihi"
         }
       ],
@@ -226,60 +203,51 @@
       "geonameId": 611717,
       "names": [
         {
-          "text": "თბილისი",
-          "language": "ka",
-          "usage": "standard",
-          "note": "현행 조지아어명",
-          "sourceUrl": "https://www.geonames.org/611717/"
-        },
-        {
-          "text": "ტფილისი",
-          "language": "ka",
-          "usage": "historical",
-          "variantType": "olderGeorgianSpelling",
-          "note": "1936년 이전 조지아어 표기",
-          "sourceUrl": "https://istmat.org/node/47162"
-        },
-        {
-          "text": "Tbilisi",
-          "language": "en",
-          "usage": "standard"
-        },
-        {
-          "text": "Tiflis",
-          "language": "en",
-          "usage": "historical",
-          "variantType": "formerCommonEnglishExonym",
-          "note": "1936년 전후 과거 영어명",
-          "sourceUrl": "https://www.geonames.org/611717/"
-        },
-        {
-          "text": "Тифлис",
+          "text": "Тифлисъ",
           "language": "ru",
           "usage": "historical",
-          "variantType": "pre1936OfficialRussianName",
-          "note": "1936년 이전 러시아어명",
-          "sourceUrl": "https://istmat.org/node/47162"
-        },
-        {
-          "text": "Тбилиси",
-          "language": "ru",
-          "usage": "alternate",
-          "variantType": "post1936RussianName",
-          "note": "1936년 이후 러시아어명",
-          "sourceUrl": "https://istmat.org/node/47162"
+          "variantType": "selectedRussianEmpireName",
+          "sourceUrl": "https://www.geonames.org/611717/"
         },
         {
           "text": "티플리스",
           "language": "ko",
           "usage": "historical",
-          "variantType": "historicMapKoreanTranscription",
-          "note": "옛 Tiflis 기반 지도 표기",
+          "variantType": "selectedRussianEmpireKoreanName"
+        },
+        {
+          "text": "Tiflis",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedHistoricalEnglishName"
+        },
+        {
+          "text": "ტფილისი",
+          "language": "ka",
+          "usage": "historical",
+          "variantType": "selectedPre1936GeorgianName",
           "sourceUrl": "https://istmat.org/node/47162"
+        },
+        {
+          "text": "트필리시",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedGeorgianBasedKoreanName"
+        },
+        {
+          "text": "თბილისი",
+          "language": "ka",
+          "usage": "standard",
+          "sourceUrl": "https://www.geonames.org/611717/"
         },
         {
           "text": "트빌리시",
           "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Tbilisi",
+          "language": "en",
           "usage": "standard"
         }
       ],
@@ -290,26 +258,42 @@
       "sourceUrl": "https://www.geonames.org/611717/tbilisi.html",
       "sourceCountryCode": "GE",
       "defaultDisplayNameKo": "트빌리시",
-      "shortDescriptionKo": "1936년 러시아어 공식명 정비",
+      "shortDescriptionKo": "1918년 독립·1936년 조지아어 지명 변경",
       "displayTimeline": [
         {
           "fromYear": 1801,
           "nameKo": "티플리스",
-          "kind": "koreanEditorialTranscription",
-          "sourceUrl": "https://istmat.org/node/47162",
-          "note": "러시아어 Tiflis 기준 옛 표기",
-          "researchNote": "1801년부터의 지도 표기는 러시아어·영어 역사명 Tiflis를 따른 Pando 편집 규칙으로, 조지아어의 역사형 ტფილისი 및 현행 თბილისი와 구별해야 한다."
+          "nameEn": "Tiflis",
+          "nameNative": "Тифлисъ",
+          "nativeLanguage": "ru",
+          "kind": "historicalRussianEmpireName",
+          "sourceUrl": "https://www.tbilisi.gov.ge/pages/history",
+          "note": "러시아 제국기 러시아어 기준",
+          "researchNote": "1801년은 편집상 검수 시작점. 제국 시대 원어 대표명은 러시아어 문어형 Тифлисъ로, 영어 통용명 Tiflis를 별도로 유지한다."
         },
         {
-          "fromYear": 1936,
+          "fromDate": "1918-05-26",
+          "nameKo": "트필리시",
+          "nameNative": "ტფილისი",
+          "nativeLanguage": "ka",
+          "kind": "independentGeorgianLanguageSelection",
+          "sourceUrl": "https://www.tbilisi.gov.ge/pages/history",
+          "note": "조지아 독립 후 조지아어 기준",
+          "researchNote": "조지아 민주공화국 독립일에 원어 대표 언어를 제국 러시아어에서 조지아어로 전환하는 지도 편집 규칙. 영어명 Tiflis는 그 뒤에도 널리 사용되므로 유지하며, 한국어명은 당대 조지아어 원어형을 따라 트필리시로 선정한다."
+        },
+        {
+          "fromDate": "1936-08-17",
           "nameKo": "트빌리시",
-          "kind": "koreanEditorialTranscription",
+          "nameEn": "Tbilisi",
+          "nameNative": "თბილისი",
+          "nativeLanguage": "ka",
+          "kind": "historicalNameAndEnglishEditorialTransition",
           "sourceUrl": "https://istmat.org/node/47162",
-          "note": "1936년 정비 기준 표기 전환",
-          "researchNote": "소련 중앙집행위원회의 1936-08-17 서명·1936-08-22 공고 문헌에서는 러시아어 'Тифлис'→'Тбилиси'가 기록된다. 다른 문헌은 1936-08-16로 일자를 제시하므로 실제 효력의 특정 일자를 확정하지 않고 연도 정밀도로 한국어 표시를 전환한다."
+          "note": "1936년 현지 지명 정비 기준",
+          "researchNote": "1936년 조지아어 ტფილისი→თბილისი와 소련 중앙집행위원회의 러시아어 Тифлис→Тбилиси 정비를 함께 반영. 1936-08-17은 결정문 날짜를 사용한 편집상 전환점으로 관보 공고일 08-22 및 다른 전사본의 08-16과 구분한다. 영어 Tiflis→Tbilisi 역시 이 사건에 맞춘 편집 기준이며 영어권 전체의 동시 사용 전환을 뜻하지 않는다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801-with-year-granularity-1936-convention",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1918-and-1936-language-transitions",
       "historicalGeography": {
         "events": [
           {
@@ -320,23 +304,23 @@
             "sourceUrl": "https://www.tbilisi.gov.ge/pages/history"
           },
           {
-            "year": 1918,
             "type": "georgianIndependence",
-            "detail": "1918년 조지아 독립",
-            "sourceUrl": "https://www.tbilisi.gov.ge/pages/history"
+            "detail": "1918년 조지아 독립·원어 대표 언어 전환",
+            "sourceUrl": "https://www.tbilisi.gov.ge/pages/history",
+            "date": "1918-05-26"
           },
           {
-            "year": 1936,
             "type": "russianCityNameStandardization",
-            "detail": "1936년 러시아어명 정비",
-            "researchDetail": "소련 중앙집행위원회가 Тифлис를 Тбилиси(Тифлис)로 정비한 행정 문건. 조지아어·독일어·튀르키예어 명칭을 모두 동시에 바꾼 사건으로 보지 않는다.",
-            "sourceUrl": "https://istmat.org/node/47162"
+            "detail": "1936년 러시아어·조지아어 지명 정비",
+            "researchDetail": "소련 중앙집행위원회 러시아어 Тифлис→Тбилиси 정비와 조지아어 ტფილისი→თბილისი의 전환을 구별해 기록한다. 8월 17일은 결정문 날짜이며 8월 22일 공고와 분리한다.",
+            "sourceUrl": "https://istmat.org/node/47162",
+            "date": "1936-08-17"
           }
         ],
         "notes": [
           {
             "detail": "1936년 일자 문헌 차이 보존",
-            "researchDetail": "1936-08-17(결정문)과 1936-08-16(다른 전사본)의 차이가 있어 정확한 일자 기반 도시명 전환은 유보한다. fromYear:1936은 역사 검토 연도 정밀도다.",
+            "researchDetail": "1936-08-17 결정문, 1936-08-22 공고 및 다른 전사본의 08-16을 구별한다. 지도 표기 전환 기준으로 결정문 날짜 08-17을 사용하며 법적 효력일을 확정했다는 뜻은 아니다.",
             "sourceUrl": "https://doc20vek.ru/node/1565"
           },
           {
@@ -348,65 +332,71 @@
             "sourceUrl": "https://www.geonames.org/611717/"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Tbilisi",
+      "defaultDisplayNameNative": "თბილისი",
+      "defaultNativeLanguage": "ka"
     },
     {
       "geonameId": 616052,
       "names": [
         {
-          "text": "Երևան",
-          "language": "hy",
-          "usage": "standard",
-          "note": "동부 아르메니아어 공식명",
-          "sourceUrl": "https://www.geonames.org/616052/"
+          "text": "ایروان",
+          "language": "fa",
+          "usage": "historical",
+          "variantType": "selectedQajarPersianName"
         },
         {
-          "text": "Երեւան",
-          "language": "hyw",
-          "usage": "standard",
-          "note": "서부 아르메니아어 문자형",
-          "sourceUrl": "https://www.geonames.org/616052/"
-        },
-        {
-          "text": "Yerevan",
-          "language": "en",
-          "usage": "standard"
+          "text": "이라반",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedPersianBasedKoreanName"
         },
         {
           "text": "Erivan",
           "language": "en",
           "usage": "historical",
-          "variantType": "RussianBasedHistoricalEnglishName",
-          "note": "옛 영어·러시아어 기반명",
-          "sourceUrl": "https://www.geonames.org/616052/"
+          "variantType": "selectedHistoricalEnglishName"
         },
         {
           "text": "Эривань",
           "language": "ru",
           "usage": "historical",
-          "variantType": "pre1936OfficialRussianName",
-          "note": "1936년 이전 러시아어명",
-          "sourceUrl": "https://istmat.org/node/47162"
-        },
-        {
-          "text": "Ереван",
-          "language": "ru",
-          "usage": "alternate",
-          "variantType": "post1936RussianName",
-          "note": "1936년 이후 러시아어명",
+          "variantType": "selectedRussianEmpireName",
           "sourceUrl": "https://istmat.org/node/47162"
         },
         {
           "text": "에리반",
           "language": "ko",
           "usage": "historical",
-          "variantType": "historicalKoreanMapConvention",
-          "note": "옛 Erivan 기반 지도 표기",
-          "sourceUrl": "https://istmat.org/node/47162"
+          "variantType": "selectedRussianBasedKoreanName"
+        },
+        {
+          "text": "Երեւան",
+          "language": "hy",
+          "usage": "historical",
+          "variantType": "selectedPre1922ArmenianOrthography"
+        },
+        {
+          "text": "Յերեվան",
+          "language": "hy",
+          "usage": "historical",
+          "variantType": "selected1922To1940ArmenianOrthography"
+        },
+        {
+          "text": "Երևան",
+          "language": "hy",
+          "usage": "standard",
+          "sourceUrl": "https://www.geonames.org/616052/"
         },
         {
           "text": "예레반",
           "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Yerevan",
+          "language": "en",
           "usage": "standard"
         }
       ],
@@ -417,28 +407,64 @@
       "sourceUrl": "https://www.geonames.org/616052/yerevan.html",
       "sourceCountryCode": "AM",
       "defaultDisplayNameKo": "예레반",
-      "shortDescriptionKo": "1936년 러시아어 지명 정비",
+      "shortDescriptionKo": "1828년 할양·1918년 독립·아르메니아어 철자 개정",
       "displayTimeline": [
         {
           "fromYear": 1801,
-          "nameKo": "에리반",
-          "kind": "koreanEditorialTranscription",
-          "sourceUrl": "https://istmat.org/node/47162",
-          "note": "옛 Erivan 기반 한국어 표기",
-          "researchNote": "19~20세기 초 러시아어 Эривань 및 과거 영어명 Erivan을 기준으로 한 Pando의 지도 편집 표기로, 동시대 아르메니아어가 반드시 그 이름을 사용했다는 뜻은 아니다."
+          "nameKo": "이라반",
+          "nameEn": "Erivan",
+          "nameNative": "ایروان",
+          "nativeLanguage": "fa",
+          "kind": "historicalQajarPersianName",
+          "note": "카자르 왕조 페르시아어 기준",
+          "researchNote": "1828년 정식 할양 전까지 페르시아어 도시명 ایروان 및 한국어 음역 이라반을 지도 대표명으로 사용한다. 영어 표기는 역사적으로 사용된 Erivan을 유지한다. 1801년은 공통 조사 시작 연도다."
         },
         {
-          "fromYear": 1936,
+          "fromDate": "1828-02-22",
+          "nameKo": "에리반",
+          "nameNative": "Эривань",
+          "nativeLanguage": "ru",
+          "kind": "treatyCessionLanguageSelection",
+          "note": "러시아 제국 정식 편입",
+          "researchNote": "투르크만차이 조약 비준·할양일(1828-02-10 율리우스력/1828-02-22 그레고리력)에 원어를 페르시아어에서 러시아어로 변경한다. 영어 Erivan은 그대로 유지한다."
+        },
+        {
+          "fromDate": "1918-05-28",
           "nameKo": "예레반",
-          "kind": "koreanEditorialTranscription",
-          "sourceUrl": "https://istmat.org/node/47162",
-          "note": "1936년 정비 후 지도명 전환",
-          "researchNote": "소련 중앙집행위원회의 러시아어 'Эривань'→'Ереван' 표기 정비를 기준으로 1936년부터의 한국어 지도 표기 규칙을 채택한다. 원문 서명 1936-08-17과 다른 전사본의 1936-08-16 차이 때문에 일 단위 변경은 확정하지 않는다."
+          "nameEn": "Yerevan",
+          "nameNative": "Երեւան",
+          "nativeLanguage": "hy",
+          "kind": "independentArmenianLanguageSelection",
+          "sourceUrl": "https://www.yerevan.am/en/old-yerevan/",
+          "note": "아르메니아 독립·현지어 기준",
+          "researchNote": "아르메니아 제1공화국 성립을 기준으로 원어를 아르메니아어로 바꾸고 한국어를 예레반, 영어를 Yerevan으로 선정한다. 영어권 Erivan/Erevan 병용은 별도의 개칭 사건이 아니며 영어명 변경일도 편집상 기준이다."
+        },
+        {
+          "fromDate": "1922-03-04",
+          "nameNative": "Յերեվան",
+          "nativeLanguage": "hy",
+          "kind": "historicalArmenianOrthography",
+          "note": "아르메니아어 1차 철자법 개정",
+          "researchNote": "1922년 철자법 개혁 결정일을 원어 철자 전환 기준으로 사용한다. 한국어 예레반·영어 Yerevan·발음에는 변화 없음."
+        },
+        {
+          "fromDate": "1940-08-15",
+          "nameNative": "Երևան",
+          "nativeLanguage": "hy",
+          "kind": "historicalArmenianOrthography",
+          "note": "아르메니아어 철자법 재개정",
+          "researchNote": "1940년 철자법 재개정의 날짜를 원어 철자 전환 기준으로 사용한다. 한국어 예레반·영어 Yerevan·발음에는 변화 없음."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801-with-year-granularity-1936-convention",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1828-1918-1922-1940-transitions",
       "historicalGeography": {
         "events": [
+          {
+            "date": "1828-02-22",
+            "type": "cededToRussianEmpire",
+            "detail": "투르크만차이 조약에 따른 러시아 편입",
+            "researchDetail": "1827년 군사 점령과 1828년 정식 할양을 구별한다."
+          },
           {
             "date": "1918-05-28",
             "type": "firstArmenianRepublicCapital",
@@ -453,10 +479,20 @@
             "sourceUrl": "https://www.yerevan.am/en/old-yerevan/"
           },
           {
-            "year": 1936,
             "type": "russianCityNameStandardization",
-            "detail": "1936년 러시아어 지명 정비",
-            "sourceUrl": "https://www.visityerevan.am/browse/yerevan-yerevan-chronology/en/"
+            "detail": "러시아어 Эривань→Ереван 표기 정비(원어 전환 없음)",
+            "sourceUrl": "https://www.visityerevan.am/browse/yerevan-yerevan-chronology/en/",
+            "date": "1936-08-17"
+          },
+          {
+            "date": "1922-03-04",
+            "type": "armenianOrthographicReform",
+            "detail": "아르메니아어 1차 철자법 개정"
+          },
+          {
+            "date": "1940-08-15",
+            "type": "armenianOrthographicRevision",
+            "detail": "아르메니아어 철자법 재개정"
           }
         ],
         "notes": [
@@ -467,7 +503,7 @@
           },
           {
             "detail": "정비 일자는 연도 정밀도",
-            "researchDetail": "원문 문헌의 소련 중앙집행위원회 결정 서명일과 타 전사본의 하루 차이로 1936년 전체를 원칙 변경 연도로만 사용한다.",
+            "researchDetail": "1936-08-17 결정문 날짜와 다른 전사본의 08-16을 구별한다. 1936년 러시아어 지명 정비는 아르메니아어 원어·한국어명·영어명 전환일로 사용하지 않는다.",
             "sourceUrl": "https://doc20vek.ru/node/1565"
           },
           {
@@ -480,16 +516,54 @@
             "sourceUrl": "https://www.geonames.org/616052/"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Yerevan",
+      "defaultDisplayNameNative": "Երևան",
+      "defaultNativeLanguage": "hy"
     },
     {
       "geonameId": 587084,
       "names": [
         {
+          "text": "باکو",
+          "language": "fa",
+          "usage": "historical",
+          "variantType": "selectedQajarPersianName",
+          "note": "1813년 정식 할양 이전 페르시아어 대표명"
+        },
+        {
+          "text": "Баку",
+          "language": "ru",
+          "usage": "historical",
+          "variantType": "selectedRussianEmpireName",
+          "note": "러시아 제국 시기 원어 대표명"
+        },
+        {
+          "text": "باکو",
+          "language": "az-Arab",
+          "usage": "historical",
+          "variantType": "selectedAzerbaijaniArabicScriptName",
+          "note": "1918년 바쿠 확보 이후 아랍 문자 표기"
+        },
+        {
+          "text": "Bakь",
+          "language": "az-Latn",
+          "usage": "historical",
+          "variantType": "selectedPre1940LatinAzerbaijaniName",
+          "note": "1929년부터 사용한 구 라틴 문자 철자"
+        },
+        {
+          "text": "Бакы",
+          "language": "az-Cyrl",
+          "usage": "historical",
+          "variantType": "selectedSovietCyrillicAzerbaijaniName",
+          "note": "1940년 이후 아제르바이잔어 키릴 문자 표기"
+        },
+        {
           "text": "Bakı",
           "language": "az",
           "usage": "standard",
-          "note": "아제르바이잔어 현행 도시명",
+          "note": "현행 아제르바이잔어명",
           "sourceUrl": "https://www.geonames.org/587084/"
         },
         {
@@ -501,22 +575,6 @@
           "text": "바쿠",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Баку",
-          "language": "ru",
-          "usage": "alternate",
-          "variantType": "russianExonym",
-          "note": "러시아어 병용 지명",
-          "sourceUrl": "https://www.geonames.org/587084/"
-        },
-        {
-          "text": "Bakü",
-          "language": "tr",
-          "usage": "alternate",
-          "variantType": "turkishExonym",
-          "note": "튀르키예어 표기",
-          "sourceUrl": "https://www.geonames.org/587084/"
         }
       ],
       "latitude": 40.37767,
@@ -531,19 +589,84 @@
         {
           "fromYear": 1801,
           "nameKo": "바쿠",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/587084/"
+          "nameEn": "Baku",
+          "nameNative": "باکو",
+          "nativeLanguage": "fa",
+          "kind": "historicalQajarPersianName",
+          "sourceUrl": "https://www.geonames.org/587084/",
+          "note": "페르시아 지배기 원어명",
+          "researchNote": "1801년은 조사 시작 연도. 1806년 러시아군의 군사 점령과 1813년 굴리스탄 조약에 따른 정식 할양을 구분해 조약 체결 전까지 페르시아어 대표명 باکو를 유지한다. 한국어 바쿠·영어 Baku는 편집상 전 기간 유지한다."
+        },
+        {
+          "fromDate": "1813-10-24",
+          "nameNative": "Баку",
+          "nativeLanguage": "ru",
+          "kind": "treatyCessionLanguageSelection",
+          "note": "굴리스탄 조약·러시아어 기준",
+          "researchNote": "1813년 10월 24일(그레고리력) 굴리스탄 조약으로 바쿠에 대한 러시아 제국의 영유권을 인정한 시점을 원어 대표 언어 전환일로 채택한다. 러시아군의 1806년 점령일과 구별한다. 실제 법적 지명 개칭이 아니라 당대 통치국 언어 선정 규칙이다."
+        },
+        {
+          "fromDate": "1918-09-15",
+          "nameNative": "باکو",
+          "nativeLanguage": "az-Arab",
+          "kind": "territorialControlLanguageSelection",
+          "sourceUrl": "https://meclis.gov.az/news-az.php?id=14&lang=en",
+          "note": "1918년 바쿠 확보 기준",
+          "researchNote": "아제르바이잔 민주공화국의 독립 선언일 1918-05-28, 아제르바이잔군·오스만군의 바쿠 확보일 1918-09-15, 아제르바이잔 정부의 간자→바쿠 이전일 1918-09-17을 구분한다. 원어 전환은 영토 실효 지배가 시작된 9월 15일을 기준으로 한다. 영어 Baku·한국어 바쿠는 변화 없음."
+        },
+        {
+          "fromDate": "1929-01-01",
+          "nameNative": "Bakь",
+          "nativeLanguage": "az-Latn",
+          "kind": "historicalAzerbaijaniScriptReform",
+          "note": "아랍 문자→구 라틴 문자",
+          "researchNote": "1929년 1월 1일 아제르바이잔의 구 라틴 문자 전면 적용을 원어 철자 전환 기준으로 채택. 옛 라틴 문자에 쓰인 ь 모양 글자를 현대 철자 Bakı와 혼동하지 않는다. 음운상 도시 개칭이 아니라 문자체계 변경이다."
+        },
+        {
+          "fromDate": "1940-01-01",
+          "nameNative": "Бакы",
+          "nativeLanguage": "az-Cyrl",
+          "kind": "historicalAzerbaijaniScriptReform",
+          "note": "구 라틴 문자→키릴 문자",
+          "researchNote": "1939년 키릴 문자 도입법에 따른 1940년 1월 1일 전환을 지도 편집 기준으로 선정. 아제르바이잔어 Бакы와 러시아어 Баку는 별도 언어 표기이며 도시 개칭은 아니다."
+        },
+        {
+          "fromDate": "1991-12-25",
+          "nameNative": "Bakı",
+          "nativeLanguage": "az",
+          "kind": "historicalAzerbaijaniScriptReform",
+          "note": "아제르바이잔어 라틴 문자 복원",
+          "researchNote": "1991년 12월 25일 라틴 문자 복원법을 원어 지도 표기 전환 기준으로 선정. 실제 아제르바이잔 공공·출판 영역에서의 문자 전환은 2001년까지 단계적으로 진행됐으며 이날 모든 매체가 동시에 전환된 것은 아니다. 한국어 바쿠·영어 Baku는 계속 유지한다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801-with-statehood-events",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1813-1918-political-and-1929-1940-1991-script-transitions",
       "historicalGeography": {
         "events": [
+          {
+            "date": "1806-10-15",
+            "type": "russianMilitaryCapture",
+            "detail": "러시아군 바쿠 점령",
+            "researchDetail": "1806년 10월 3일 율리우스력 / 10월 15일 그레고리력의 군사 점령. 정식 할양과 구분."
+          },
+          {
+            "date": "1813-10-24",
+            "type": "gulistanTreatyRecognizesRussianRule",
+            "detail": "굴리스탄 조약으로 러시아 편입",
+            "researchDetail": "지배국 언어에 맞춰 도시 원어 대표명을 페르시아어에서 러시아어로 선정하는 편집상 전환 시점."
+          },
           {
             "date": "1918-05-28",
             "type": "azerbaijanDemocraticRepublicDeclared",
             "detail": "1918년 아제르바이잔 독립",
             "researchDetail": "아제르바이잔 민주공화국의 독립 선언은 1918년 5월 28일이다. 당시 정부가 바쿠에 바로 주둔한 것은 아니며 간자 등지의 지위를 구별한다.",
             "sourceUrl": "https://meclis.gov.az/news-az.php?id=14&lang=en"
+          },
+          {
+            "date": "1918-09-15",
+            "type": "azerbaijaniOttomanForcesTakeBaku",
+            "detail": "아제르바이잔군·오스만군 바쿠 확보",
+            "sourceUrl": "https://meclis.gov.az/news-az.php?id=14&lang=en",
+            "researchDetail": "9월 15일 군사적 확보를 바쿠 원어명 대표 언어 전환 기준으로 채택. 9월 17일 정부 이전과 구별."
           },
           {
             "date": "1918-09-17",
@@ -553,20 +676,52 @@
             "sourceUrl": "https://meclis.gov.az/news-az.php?id=14&lang=en"
           },
           {
-            "year": 1991,
+            "date": "1920-04-28",
+            "type": "azerbaijanSovietGovernmentEstablished",
+            "detail": "아제르바이잔 소비에트화",
+            "researchDetail": "소련 구성공화국 시기에도 아제르바이잔어를 원어 대표 언어로 계속 사용하므로 지도명 전환점은 추가하지 않는다."
+          },
+          {
+            "date": "1929-01-01",
+            "type": "azerbaijaniLatinScriptImplementation",
+            "detail": "아제르바이잔어 구 라틴 문자 전환"
+          },
+          {
+            "date": "1940-01-01",
+            "type": "azerbaijaniCyrillicScriptImplementation",
+            "detail": "아제르바이잔어 키릴 문자 전환"
+          },
+          {
+            "date": "1991-10-18",
             "type": "azerbaijanIndependenceRestored",
-            "detail": "1991년 독립 회복",
+            "detail": "아제르바이잔 독립 회복",
+            "researchDetail": "독립일은 문자개혁법 제정일 1991-12-25와 구분한다.",
             "sourceUrl": "https://meclis.gov.az/news-az.php?id=14&lang=en"
+          },
+          {
+            "date": "1991-12-25",
+            "type": "azerbaijaniLatinScriptRestorationAct",
+            "detail": "아제르바이잔어 라틴 문자 복원법"
+          },
+          {
+            "date": "2001-08-01",
+            "type": "azerbaijaniLatinScriptTransitionCompletion",
+            "detail": "라틴 문자 행정·출판 전환 완료 기준",
+            "researchDetail": "실제 사용 전환의 주요 완결 시점이며 법률 채택일과 구별한다."
           }
         ],
         "notes": [
           {
-            "detail": "Bakı와 Баку는 언어 차이",
-            "sourceUrl": "https://www.geonames.org/587084/"
+            "detail": "언어 변동과 문자개혁 분리",
+            "researchDetail": "1801~1813 페르시아어, 1813~1918 러시아어, 1918년 바쿠 확보부터 아제르바이잔어를 시대별 원어로 선택. 이후 아랍·라틴·키릴·라틴 문자변화를 기록. 실제 도시 개칭과 혼동하지 않는다."
           },
           {
-            "detail": "1918년 9월 이전 정부는 간자",
-            "researchDetail": "아제르바이잔 민주공화국의 선언과 바쿠로의 정부 이전에는 시간차가 있으며, 단순히 1918년 5월부터 바쿠가 실효 수도였다고 쓰지 않는다.",
+            "detail": "영어 Baku·한국어 바쿠 유지",
+            "researchDetail": "페르시아·러시아 제국·아제르바이잔 시기에 영어와 한국어 대표명을 별도 변환하지 않는다."
+          },
+          {
+            "detail": "1918년 9월 15일 실효 지배",
+            "researchDetail": "5월 28일 공화국 독립과 9월 15일 바쿠 점령, 9월 17일 정부 이전은 서로 다른 사건이다.",
             "sourceUrl": "https://meclis.gov.az/news-az.php?id=14&lang=en"
           },
           {
@@ -574,7 +729,10 @@
             "sourceUrl": "https://www.geonames.org/587084/"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Baku",
+      "defaultDisplayNameNative": "Bakı",
+      "defaultNativeLanguage": "az"
     }
   ]
 }

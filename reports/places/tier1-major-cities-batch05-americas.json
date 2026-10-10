@@ -12,13 +12,14 @@
   "historicalDisplayStatus": "timeline-staged-not-runtime",
   "historicNameScope": "Selective well-documented names used during or after 1801. Earlier founding names are linked historical settlements, not automatic complete-city renames.",
   "qualityNotes": [
-    "For all five cities, Korean map labels remain stable since 1801 in currently validated record. Municipal incorporations, mergers and federal district changes are territorial/administrative events, not lexical renames.",
-    "New York city vs state/metro; Buenos Aires city vs province; Mexico City city vs Federal District are distinct record scopes.",
-    "Los Angeles historic Pueblo refers to predecessor settlement, not today's full expanded municipality.",
-    "Buenos Ayres is documented in 1810 but does not imply a single exact official spelling switch date.",
-    "São Paulo de Piratininga refers to early colonial settlement; name since 1801 is São Paulo, not automatic earlier-name timeline.",
-    "All UI-facing notes and details are max 28 Unicode codepoints; provenance preserved in researchDetail.",
-    "Production manifest and map runtime have not been changed."
+    "The five reviewed Americas cities retain one chosen Korean, English and native name per applicable period; historical map-label transitions are LA at 1848-05-30 and Buenos Aires native orthography at approximate fromYear=1860.",
+    "New York municipality is separate from the homonymous state/metro; Mexico City city is separate from its federal district/state; Buenos Aires city is separate from the province.",
+    "Los Angeles uses Spanish Los Ángeles / 로스앙헬레스 through 1848-05-29, then English Los Angeles / 로스앤젤레스 from US treaty-ratification exchange on 1848-05-30. The language/editorial change does not prohibit continued Spanish usage; 1850 incorporation is administrative only.",
+    "Buenos Ayres is attested in the 1801 Boneo map and 1821 local newspaper. RAE spelling modernization in 1815 did not end Argentine usage; Buenos Aires is attested in a 1860 national law. Set approximate 1860 native spelling switch, never an invented legal exact-day rename.",
+    "Mexico City's representative native name is Ciudad de México throughout the survey; neither 1824 federal district designation nor the 2016 federal-entity reform renamed the already existent city.",
+    "São Paulo retains its diacritic in both Portuguese and English selected names. Its early São Paulo de Piratininga foundation is linked history, not an in-period alias.",
+    "Only current and selected period historical names are retained in names[]; omitted administrative qualifiers, abbreviations, ASCII substitutes and unselected variants are not stored.",
+    "Production manifest and map runtime remain unchanged."
   ],
   "records": [
     {
@@ -33,20 +34,6 @@
           "text": "뉴욕",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "New York City",
-          "language": "en",
-          "usage": "alternate",
-          "variantType": "municipalName",
-          "sourceUrl": "https://archaeology.cityofnewyork.us/collection/nyc-timeline/consolidation-of-the-five-borough-city"
-        },
-        {
-          "text": "뉴욕시",
-          "language": "ko",
-          "usage": "alternate",
-          "variantType": "qualifiedCityName",
-          "sourceUrl": "https://archaeology.cityofnewyork.us/collection/nyc-timeline/consolidation-of-the-five-borough-city"
         }
       ],
       "latitude": 40.71427,
@@ -61,8 +48,12 @@
         {
           "fromYear": 1801,
           "nameKo": "뉴욕",
+          "nameEn": "New York",
+          "nameNative": "New York",
+          "nativeLanguage": "en",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://archaeology.cityofnewyork.us/collection/nyc-timeline/consolidation-of-the-five-borough-city"
+          "sourceUrl": "https://archaeology.cityofnewyork.us/collection/nyc-timeline/consolidation-of-the-five-borough-city",
+          "researchNote": "1898년 대뉴욕 통합은 행정구역 확장이지 도시 개칭이 아니다. New York City, 뉴욕시는 도시를 지칭하는 일반 행정·설명 표현이며 별도의 기간 대표명으로 저장하지 않는다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -90,7 +81,10 @@
             "sourceUrl": "https://www.geonames.org/5128581/new-york-city.html"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "New York",
+      "defaultDisplayNameNative": "New York",
+      "defaultNativeLanguage": "en"
     },
     {
       "geonameId": 5368361,
@@ -101,22 +95,23 @@
           "usage": "standard"
         },
         {
-          "text": "Los Ángeles",
-          "language": "es",
-          "usage": "standard"
-        },
-        {
           "text": "로스앤젤레스",
           "language": "ko",
           "usage": "standard"
         },
         {
-          "text": "El Pueblo de Los Ángeles",
+          "text": "Los Ángeles",
           "language": "es",
           "usage": "historical",
-          "variantType": "historicalPuebloDesignation",
-          "sourceUrl": "https://lacity.gov/government/history-los-angeles",
-          "note": "도시의 초기 정착지 명칭"
+          "variantType": "selectedHistoricalSpanishNativeName",
+          "sourceUrl": "https://lacity.gov/government/history-los-angeles"
+        },
+        {
+          "text": "로스앙헬레스",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedHistoricalKoreanSpanishPronunciation",
+          "sourceUrl": "https://lacity.gov/government/history-los-angeles"
         }
       ],
       "latitude": 34.05223,
@@ -126,23 +121,46 @@
       "sourceUrl": "https://www.geonames.org/5368361/",
       "sourceCountryCode": "US",
       "defaultDisplayNameKo": "로스앤젤레스",
-      "shortDescriptionKo": "1850년 정식 시로 편입",
+      "shortDescriptionKo": "1848년 미국 편입·1850년 시 성립",
       "displayTimeline": [
         {
           "fromYear": 1801,
-          "nameKo": "로스앤젤레스",
+          "nameKo": "로스앙헬레스",
+          "nameEn": "Los Angeles",
+          "nameNative": "Los Ángeles",
+          "nativeLanguage": "es",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://lacity.gov/government/history-los-angeles"
+          "sourceUrl": "https://lacity.gov/government/history-los-angeles",
+          "note": "에스파냐·멕시코 시대 발음 적용",
+          "researchNote": "1801년은 검수 시작 연도다. 누에바에스파냐 및 멕시코 시기의 에스파냐어 지명 Los Ángeles를 바탕으로 한국어 대표명을 로스앙헬레스로 선정한다. 영어 Los Angeles는 그 시기에 공식 영어 행정명으로 사용했다는 의미가 아니라 동일 지명의 대응 영어 표기다."
+        },
+        {
+          "fromDate": "1848-05-30",
+          "nameKo": "로스앤젤레스",
+          "kind": "territorialCessionEditorialLabelTransition",
+          "sourceUrl": "https://www.archives.gov/milestone-documents/treaty-of-guadalupe-hidalgo",
+          "note": "미국 정식 할양으로 한국어·원어 표기 전환",
+          "researchNote": "과달루페이달고 조약 1848-02-02 체결이 아니라 1848-05-30 비준서 교환을 미국 정식 할양 기준일로 채택. 이 시점부터 지도 대표 한국어명을 로스앙헬레스→로스앤젤레스, 대표 원어명을 에스파냐어 Los Ángeles→영어 Los Angeles로 함께 전환한다. 영어 이름 Los Angeles는 이전에도 대응 영어명으로 기재됐으므로 변화가 없다. 이는 지도 대표언어 선택이며 미국령 편입 후에도 주민·에스파냐어 문헌에서 Los Ángeles가 계속 사용됐고 법적 일괄 개칭·사용 금지를 뜻하지 않는다.",
+          "nameNative": "Los Angeles",
+          "nativeLanguage": "en"
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
       "historicalGeography": {
         "events": [
           {
+            "date": "1848-05-30",
+            "type": "formalTerritorialCession",
+            "detail": "조약 비준서 교환으로 미국에 정식 편입",
+            "sourceUrl": "https://www.archives.gov/milestone-documents/treaty-of-guadalupe-hidalgo",
+            "researchDetail": "1848-02-02 과달루페이달고 조약 서명, 1848-05-30 비준서 교환으로 캘리포니아가 미국으로 정식 할양됨. 군사 점령과 조약 체결일을 법적 할양 경계로 대신하지 않는다."
+          },
+          {
             "date": "1850-04-04",
             "type": "municipalIncorporation",
             "detail": "로스앤젤레스시 법인화",
-            "sourceUrl": "https://www.loc.gov/item/today-in-history/september-04/"
+            "sourceUrl": "https://streets.lacity.gov/about-us/history",
+            "researchDetail": "1850-04-04 로스앤젤레스시 법인화. 미국 할양·영어 원어명 선정 기준은 이미 1848-05-30이므로 법인화는 도시 행정 연혁만 설명하며 새 명칭 전환점이 아니다."
           }
         ],
         "linkedPlaces": [
@@ -157,27 +175,23 @@
         "notes": [
           {
             "detail": "역사적 푸에블로·현대 시역 구분",
-            "sourceUrl": "https://lacity.gov/government/history-los-angeles"
+            "sourceUrl": "https://lacity.gov/government/history-los-angeles",
+            "researchDetail": "할양 전 에스파냐·멕시코의 Los Ángeles와 그 이후 영어 대표명 Los Angeles를 구분한다. 미국령이 된 뒤에도 에스파냐어 사용은 계속됐으며, 1848년 원어 선택 전환은 실제 사용 중단을 뜻하지 않는다. 옛 푸에블로와 현대 시역은 별도 범위다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Los Angeles",
+      "defaultDisplayNameNative": "Los Angeles",
+      "defaultNativeLanguage": "en"
     },
     {
       "geonameId": 3530597,
       "names": [
         {
-          "text": "México",
-          "language": "es",
-          "usage": "standard",
-          "variantType": "officialShortForm",
-          "sourceUrl": "https://geonames.nga.mil/geonames/GNSSearch/GNSDocs/policies/Mexico_Country_Policy_webversion_Latest.pdf"
-        },
-        {
           "text": "Ciudad de México",
           "language": "es",
-          "usage": "alternate",
-          "variantType": "officialLongForm",
-          "sourceUrl": "https://geonames.nga.mil/geonames/GNSSearch/GNSDocs/policies/Mexico_Country_Policy_webversion_Latest.pdf"
+          "usage": "standard",
+          "sourceUrl": "https://mexicocity.cdmx.gob.mx/e/about/about-mexico-city/?lang=en"
         },
         {
           "text": "Mexico City",
@@ -188,14 +202,6 @@
           "text": "멕시코시티",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "CDMX",
-          "language": "es",
-          "usage": "alternate",
-          "variantType": "abbreviation",
-          "note": "현재 시·연방 구성체의 약칭",
-          "sourceUrl": "https://mexicocity.cdmx.gob.mx/e/about/about-mexico-city/?lang=en"
         }
       ],
       "latitude": 19.42847,
@@ -210,8 +216,12 @@
         {
           "fromYear": 1801,
           "nameKo": "멕시코시티",
+          "nameEn": "Mexico City",
+          "nameNative": "Ciudad de México",
+          "nativeLanguage": "es",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://mexicocity.cdmx.gob.mx/e/about/about-mexico-city/?lang=en"
+          "sourceUrl": "https://mexicocity.cdmx.gob.mx/e/about/about-mexico-city/?lang=en",
+          "researchNote": "Ciudad de México는 에스파냐 식민기부터 사용한 도시명이고, 1824년 연방구의 설치와 2016년 연방단위 Distrito Federal→Ciudad de México의 개편은 도시 자체의 최초 지명 부여 또는 개칭과 구별한다. México라는 지명 단독형은 국가와 혼동 가능성이 있는 미선택 축약형이고 CDMX는 현대 행정 단위 약어여서 지도 names[]에 보관하지 않는다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -256,7 +266,10 @@
             "sourceUrl": "https://geonames.nga.mil/geonames/GNSSearch/GNSDocs/policies/Mexico_Country_Policy_webversion_Latest.pdf"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Mexico City",
+      "defaultDisplayNameNative": "Ciudad de México",
+      "defaultNativeLanguage": "es"
     },
     {
       "geonameId": 3448439,
@@ -267,16 +280,14 @@
           "usage": "standard"
         },
         {
-          "text": "상파울루",
-          "language": "ko",
+          "text": "São Paulo",
+          "language": "en",
           "usage": "standard"
         },
         {
-          "text": "Sao Paulo",
-          "language": "en",
-          "usage": "alternate",
-          "variantType": "unaccentedAsciiVariant",
-          "sourceUrl": "https://www.geonames.org/3448439/sao-paulo.html"
+          "text": "상파울루",
+          "language": "ko",
+          "usage": "standard"
         }
       ],
       "latitude": -23.5475,
@@ -291,8 +302,12 @@
         {
           "fromYear": 1801,
           "nameKo": "상파울루",
+          "nameEn": "São Paulo",
+          "nameNative": "São Paulo",
+          "nativeLanguage": "pt",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.al.sp.gov.br/geral/acervoHistorico/DetalheCenarios.jsp?cid=3550308"
+          "sourceUrl": "https://www.al.sp.gov.br/geral/acervoHistorico/DetalheCenarios.jsp?cid=3550308",
+          "researchNote": "São Paulo de Piratininga는 1554년 초기 정착지 명칭으로 역사적 선행 취락 관계에만 보존한다. Sao Paulo는 현대 표기의 ASCII 악센트 누락일 뿐 역사적으로 선택된 다른 지도 이름이 아니므로 삭제한다. 영어 이름에서도 São Paulo 철자를 유지한다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -320,7 +335,10 @@
             "sourceUrl": "https://www.al.sp.gov.br/geral/acervoHistorico/DetalheCenarios.jsp?cid=3550308"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "São Paulo",
+      "defaultDisplayNameNative": "São Paulo",
+      "defaultNativeLanguage": "pt"
     },
     {
       "geonameId": 3435910,
@@ -328,6 +346,11 @@
         {
           "text": "Buenos Aires",
           "language": "es",
+          "usage": "standard"
+        },
+        {
+          "text": "Buenos Aires",
+          "language": "en",
           "usage": "standard"
         },
         {
@@ -339,17 +362,9 @@
           "text": "Buenos Ayres",
           "language": "es",
           "usage": "historical",
-          "variantType": "nineteenthCenturyOrthography",
-          "attestedYear": 1810,
-          "sourceUrl": "https://museo.bn.gov.ar/noticias/7-de-junio-de-1810-comienza-a-publicarse-la-gazeta-de-buenos-ayres",
-          "note": "1810년 신문명에서 사용된 옛 철자"
-        },
-        {
-          "text": "Ciudad de Buenos Aires",
-          "language": "es",
-          "usage": "alternate",
-          "variantType": "qualifiedMunicipalName",
-          "sourceUrl": "https://www.argentina.gob.ar/normativa/nacional/ley-1029-48865/texto"
+          "variantType": "selectedHistoricalSpanishOrthography",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Plano_de_Buenos_Aires_de_1801_por_Boneo_y_Villalonga.jpg",
+          "researchNote": "1801년 보네오 지도의 표제 Buenos Ayres와 1821년 지역 신문 El Argos de Buenos Ayres에서 옛 철자 사용이 확인된다. 1860년을 현대식 철자의 편집상 대표명 선택 기준으로 삼되 옛 철자의 최종 사용일이나 법적 개칭일로 보지 않는다."
         }
       ],
       "latitude": -34.61315,
@@ -364,8 +379,30 @@
         {
           "fromYear": 1801,
           "nameKo": "부에노스아이레스",
+          "nameEn": "Buenos Aires",
+          "nameNative": "Buenos Ayres",
+          "nativeLanguage": "es",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://buenosaires.gob.ar/gcaba_historico/laciudad/ciudad"
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Plano_de_Buenos_Aires_de_1801_por_Boneo_y_Villalonga.jpg",
+          "note": "1801년 지도에서 옛 철자 확인",
+          "researchNote": "1801년 Martín Boneo y Villalonga의 지명 지도 표제에 Buenos Ayres가 등장하며 1821년 지역 신문에서도 사용된다. 근현대 조사 시작 시점의 원어 대표 표기를 이 형태로 선정. 영어명 Buenos Aires 및 한국어명 부에노스아이레스는 후대 지도 표기 관행을 이용한 편집상 대응형이다."
+        },
+        {
+          "fromYear": 1860,
+          "nameNative": "Buenos Aires",
+          "nativeLanguage": "es",
+          "kind": "historicalOrthographyEditorialTransition",
+          "sourceUrl": "https://www.argentina.gob.ar/normativa/nacional/ley-234-280951/texto",
+          "datePrecision": "year",
+          "exactDayNotConfirmed": true,
+          "note": "1860년 무렵 에스파냐어 철자 전환",
+          "researchNote": "1815년 RAE 정서법 개정 후에도 부에노스아이레스 지역은 1820년대~1850년대 Buenos Ayres를 사용했고, 1860-06-23 아르헨티나 제234호 법률 원문에는 Buenos Aires가 나타난다. 1850년대에는 혼용됐으며 공식 지명 개칭일이나 옛 철자의 법적 폐지일을 확인하지 못했다. 따라서 1860년을 역사적 철자 변화의 연도 단위 편집 기준으로 선정. 같은 지명에 대한 철자 변화일 뿐 도시명 개칭이 아니다.",
+          "evidenceUrls": [
+            "https://commons.wikimedia.org/wiki/File:Plano_de_Buenos_Aires_de_1801_por_Boneo_y_Villalonga.jpg",
+            "https://www.bn.gov.ar/noticias/12-de-mayo-de-1821-comienza-a-publicarse-el-argos-de-buenos-ayres",
+            "https://www.argentina.gob.ar/normativa/nacional/ley-234-280951/texto",
+            "https://es.wikisource.org/wiki/Ortograf%C3%ADa_de_la_lengua_castellana_(1815)"
+          ]
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -389,11 +426,15 @@
         ],
         "notes": [
           {
-            "detail": "Buenos Ayres는 19세기 옛 철자",
-            "sourceUrl": "https://museo.bn.gov.ar/noticias/7-de-junio-de-1810-comienza-a-publicarse-la-gazeta-de-buenos-ayres"
+            "detail": "1860년은 철자 정착의 편집 기준",
+            "sourceUrl": "https://www.argentina.gob.ar/normativa/nacional/ley-234-280951/texto",
+            "researchDetail": "1815년 철자법 규범과 아르헨티나의 실제 표기 관행을 구분한다. 1853년 원문에서 Buenos Ayres가 확인됐다는 연구가 있으며 1860년 제234호 국가 법률에서는 Buenos Aires가 사용된다. 단일 법적 개칭일은 발견되지 않았다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Buenos Aires",
+      "defaultDisplayNameNative": "Buenos Aires",
+      "defaultNativeLanguage": "es"
     }
   ]
 }

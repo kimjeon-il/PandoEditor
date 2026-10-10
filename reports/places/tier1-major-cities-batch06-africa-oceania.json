@@ -12,16 +12,23 @@
   "historicalDisplayStatus": "timeline-staged-not-runtime",
   "historicNameScope": "Selectively documented local names used in/after the 19th century. Exonyms and concurrent local names are not fabricated single-date legal renamings.",
   "qualityNotes": [
-    "Cairo: Arabic القاهرة remains the city name; Egyptian Arabic مصر is ambiguous with the nation, so it cannot override standard labels automatically.",
-    "Lagos: Eko refers especially to Lagos Island's indigenous historic nucleus and was used alongside Lagos; Onim also has documented 19th-century use. No false Eko->Lagos date.",
-    "Johannesburg: 1886 is documented formation year. Its 1886-10-04 proclamation event does not prove an unambiguous founding day. Before 1886 suppress the Johannesburg city label.",
-    "Sydney: Warrane is the Indigenous name of Sydney Cove only, not a universal predecessor city name.",
-    "Only shortDescriptionKo and concise note/detail are UI-facing; longer researchNote/researchDetail remain provenance. Runtime map remains unchanged."
+    "Cairo: from survey year 1801 Ottoman Turkish قاهره (Kâhire) is selected as map native name; from approximate 1870 Egyptian administrative Arabic القاهرة is selected. Korean 카이로 and English Cairo stay unchanged. This is an editorial language switch, not a legal city renaming.",
+    "Lagos: pre-1861-08-06 Yoruba Èkó / ko 에코 for the indigenous Lagos Island nucleus, English Lagos throughout; at British cession treaty 1861-08-06 the preferred native/ko labels become English Lagos / 라고스. This does not erase later Yoruba usage or equate Èkó with the entire urban agglomeration.",
+    "Johannesburg: names remain unchanged from city formation 1886. An 1886-10-03 city-name assignment account and an 1886-10-04 mining-settlement proclamation are distinct events; neither is imposed as an unambiguous city start day. Before 1886 suppress the modern Johannesburg city label.",
+    "Sydney: Sydney remains the selected English/Korean/native name from 1801, and incorporation on 1842-07-20 is administrative only. Warrane names Sydney Cove, not necessarily the whole city.",
+    "Only period-preferred names remain in names[]; no unselected aliases, nickname or translations. Runtime map and manifest remain unchanged."
   ],
   "records": [
     {
       "geonameId": 360630,
       "names": [
+        {
+          "text": "قاهره",
+          "language": "ota-Arab",
+          "usage": "historical",
+          "variantType": "selectedOttomanTurkishWrittenName",
+          "note": "오스만 튀르크어 Kâhire의 아랍문자 표기"
+        },
         {
           "text": "القاهرة",
           "language": "ar",
@@ -36,21 +43,6 @@
           "text": "카이로",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Al Qāhirah",
-          "language": "ar-Latn",
-          "usage": "alternate",
-          "variantType": "romanizedArabicName",
-          "sourceUrl": "https://www.geonames.org/360630/cairo.html"
-        },
-        {
-          "text": "مصر",
-          "language": "arz",
-          "usage": "alternate",
-          "variantType": "egyptianColloquialAmbiguousCountryName",
-          "note": "이집트 국가명과 겹치는 구어명",
-          "sourceUrl": "https://www.geonames.org/360630/cairo.html"
         }
       ],
       "latitude": 30.06263,
@@ -60,20 +52,37 @@
       "sourceUrl": "https://www.geonames.org/360630/",
       "sourceCountryCode": "EG",
       "defaultDisplayNameKo": "카이로",
-      "shortDescriptionKo": "아랍어 지명은 알카히라",
+      "shortDescriptionKo": "1870년 아랍어 행정 확대",
       "displayTimeline": [
         {
           "fromYear": 1801,
           "nameKo": "카이로",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/360630/cairo.html"
+          "nameEn": "Cairo",
+          "nameNative": "قاهره",
+          "nativeLanguage": "ota-Arab",
+          "kind": "historicalAdministrativeLanguageSelection",
+          "sourceUrl": "https://www.geonames.org/360630/cairo.html",
+          "note": "오스만 튀르크어 Kâhire 기준",
+          "researchNote": "1801년부터의 조사 범위에서 이집트 행정의 오스만 튀르크어 사용을 고려하여 격식 있는 현지 행정 이름 قاهره(Kâhire)를 지도 원어로 선택한다. 이는 아랍어 القاهرة가 실제 현지에서 사용되지 않았다는 주장이 아니다. 카이로는 도시명 변경이나 영어명 변경 없이 유지한다."
+        },
+        {
+          "fromYear": 1870,
+          "nameNative": "القاهرة",
+          "nativeLanguage": "ar",
+          "kind": "editorialAdministrativeLanguageSelection",
+          "note": "아랍어 행정 공문 확대로 원어 선택",
+          "researchNote": "1870년 1월경 이스마일 파샤의 이집트 행정에서 아랍어 공문 사용 확대를 지도 원어 대표 언어의 전환 연도로 채택한다. 정확한 모든 기관의 동시 전환 또는 공식 도시 개칭이 아니므로 연도 단위 fromYear로 기록한다. 한국어 카이로와 영어 Cairo는 변경하지 않는다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1870-native-language-transition",
       "historicalGeography": {
         "notes": [
           {
-            "detail": "19세기 이후 공식 개칭 확인 안 됨",
+            "detail": "카히레·알카히라의 언어 차이",
+            "researchDetail": "오스만 튀르크어 قاهره(Kâhire)와 아랍어 القاهرة(al-Qāhira)는 같은 도시의 언어별 표기이며, 1870년 원어 전환은 지도 편집상 대표 언어 선택이다."
+          },
+          {
+            "detail": "푸스타트는 별도의 옛 취락",
             "sourceUrl": "https://www.geonames.org/360630/cairo.html"
           }
         ],
@@ -85,12 +94,38 @@
             "note": "역사적 구도시, 같은 지명 아님",
             "sourceUrl": "https://www.geonames.org/360630/cairo.html"
           }
+        ],
+        "events": [
+          {
+            "year": 1870,
+            "type": "egyptianArabicAdministrativeLanguageExpansion",
+            "detail": "이집트 아랍어 공문 사용 확대",
+            "researchDetail": "이스마일 파샤 시대 행정언어 선택의 점진적 변화를 가리킨다. 모든 도시 지명의 법적 개칭 또는 단일 시행일이 아니다."
+          }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Cairo",
+      "defaultDisplayNameNative": "القاهرة",
+      "defaultNativeLanguage": "ar"
     },
     {
       "geonameId": 2332459,
       "names": [
+        {
+          "text": "Èkó",
+          "language": "yo",
+          "usage": "historical",
+          "variantType": "selectedPreBritishYorubaName",
+          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934",
+          "note": "라고스섬 토착 중심 취락 지명"
+        },
+        {
+          "text": "에코",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedYorubaBasedKoreanName",
+          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934"
+        },
         {
           "text": "Lagos",
           "language": "en",
@@ -100,30 +135,6 @@
           "text": "라고스",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Eko",
-          "language": "yo",
-          "usage": "alternate",
-          "variantType": "indigenousNameOfHistoricIslandCore",
-          "note": "전통 중심지 라고스섬의 토착명",
-          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934"
-        },
-        {
-          "text": "에코",
-          "language": "ko",
-          "usage": "alternate",
-          "variantType": "koreanTranscriptionOfEko",
-          "linkedName": "Eko",
-          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934"
-        },
-        {
-          "text": "Onim",
-          "language": "und-Latn",
-          "usage": "historical",
-          "variantType": "historicEuropeanExonym",
-          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934",
-          "note": "19세기 유럽권 기록의 옛 지명"
         }
       ],
       "latitude": 6.45407,
@@ -133,24 +144,46 @@
       "sourceUrl": "https://www.geonames.org/2332459/",
       "sourceCountryCode": "NG",
       "defaultDisplayNameKo": "라고스",
-      "shortDescriptionKo": "토착명 에코와 장기간 병용",
+      "shortDescriptionKo": "1861년 영국령 편입",
       "displayTimeline": [
         {
           "fromYear": 1801,
+          "nameKo": "에코",
+          "nameEn": "Lagos",
+          "nameNative": "Èkó",
+          "nativeLanguage": "yo",
+          "kind": "historicalIndigenousLocalNameSelection",
+          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934",
+          "note": "라고스섬 토착명 Èkó 선택",
+          "researchNote": "Èkó는 원래 라고스섬의 역사적 중심부를 중심으로 사용된 요루바어 지명이다. 1801년 이전 지명의 최초 성립일이나 현대 라고스 시역 전체가 Eko로만 불렸음을 뜻하지 않는다. 유럽어 Lagos도 오래전부터 병존했으므로 영어 대표명은 계속 Lagos로 둔다. Èkó의 성조·악센트는 현대 요루바어 정서법으로 정규화한 것이다."
+        },
+        {
+          "fromDate": "1861-08-06",
           "nameKo": "라고스",
-          "kind": "historicalMapConvention",
-          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934"
+          "nameNative": "Lagos",
+          "nativeLanguage": "en",
+          "kind": "treatyCessionEditorialLabelTransition",
+          "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934",
+          "note": "영국에 할양된 날 대표명 전환",
+          "researchNote": "1861년 8월 6일 라고스 할양 조약을 기점으로 영어를 대표 원어로 선택하고 한국어명을 에코에서 라고스로 변경한다. 이는 토착 이름 Èkó의 폐지나 기존 Lagos 이름의 최초 등장일이 아니며, 실제 현지 사용은 이후에도 병존했다. 영어명 Lagos는 전 기간 유지한다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1861-cession-label-transition",
       "historicalGeography": {
         "notes": [
           {
-            "detail": "에코와 라고스는 장기간 병용",
-            "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934"
+            "detail": "Èkó와 Lagos는 오랫동안 병용",
+            "sourceUrl": "https://ans-names.pitt.edu/ans/article/view/1934",
+            "researchDetail": "Èkó는 특히 라고스섬 중심의 현지 토착명이며, 포르투갈 유래 Lagos도 영국 편입 전부터 존재했다. 1861년은 법적·행정상 대표 언어의 편집 경계이지 실제 개칭일이 아니다."
           }
         ],
         "events": [
+          {
+            "date": "1861-08-06",
+            "type": "treatyCessionToBritain",
+            "detail": "라고스 영국 할양 조약",
+            "researchDetail": "8월 6일 영국의 영토 할양 조약을 기준으로 요루바어 토착 대표명에서 영어 행정 대표명으로 전환하는 Pando 편집 규칙. 주민의 Èkó 사용이 중단된 날은 아니다."
+          },
           {
             "date": "1991-12-12",
             "type": "nationalCapitalRelocation",
@@ -173,7 +206,10 @@
             "sourceUrl": "https://www.geonames.org/2332459/lagos.html"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Lagos",
+      "defaultDisplayNameNative": "Lagos",
+      "defaultNativeLanguage": "en"
     },
     {
       "geonameId": 993800,
@@ -187,21 +223,6 @@
           "text": "요하네스버그",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "eGoli",
-          "language": "zu",
-          "usage": "alternate",
-          "variantType": "isizuluGoldCityNickname",
-          "note": "줄루어 계열의 황금 도시 별칭",
-          "sourceUrl": "https://www.dsae.co.za/entry/egoli/e02218"
-        },
-        {
-          "text": "Jozi",
-          "language": "en",
-          "usage": "alternate",
-          "variantType": "colloquialNickname",
-          "sourceUrl": "https://www.statssa.gov.za/?id=city-of-johannesburg-municipality&page_id=993"
         }
       ],
       "latitude": -26.20227,
@@ -216,13 +237,25 @@
         {
           "fromYear": 1886,
           "nameKo": "요하네스버그",
+          "nameEn": "Johannesburg",
+          "nameNative": "Johannesburg",
+          "nativeLanguage": "en",
           "kind": "firstVerifiedCityPeriod",
-          "sourceUrl": "https://joburg.org.za/media_/Newsroom/Pages/2021%20News%20Articles/October/Joburg-still-city-of-opportunities-135-years-later.aspx"
+          "sourceUrl": "https://joburg.org.za/media_/Newsroom/Pages/2021%20News%20Articles/October/Joburg-still-city-of-opportunities-135-years-later.aspx",
+          "note": "1886년 금광촌 형성 시기",
+          "researchNote": "도시명 Johannesburg의 사용은 1886년 금광촌 형성과 연결된다. 1886-10-03 명칭 부여 관련 기록과 1886-10-04 금광 정착지 선포 기록은 별개의 사건이며 정확한 도시 첫 성립일을 합의된 일 단위로 단정하지 않는다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1886",
       "historicalGeography": {
         "events": [
+          {
+            "date": "1886-10-03",
+            "type": "johannesburgNamingRecorded",
+            "detail": "요하네스버그 도시명 부여 기록",
+            "sourceUrl": "https://joburg.org.za/media_/Newsroom/Pages/2021%20News%20Articles/October/Joburg-still-city-of-opportunities-135-years-later.aspx",
+            "researchDetail": "도시명 명명 시점으로 소개되는 1886년 10월 3일을 기록. 법률상 유일하고 명백한 설립일이라고 주장하지 않는다."
+          },
           {
             "date": "1886-10-04",
             "type": "miningAreaOrSettlementProclamation",
@@ -244,7 +277,10 @@
         "sourceUrl": "https://joburg.org.za/media_/Newsroom/Pages/2021%20News%20Articles/October/Joburg-still-city-of-opportunities-135-years-later.aspx",
         "note": "1886년 이전 도시명이 아직 성립하지 않음",
         "researchNote": "광산촌과 취락이 1886년 금광 발견에 따라 형성됨. 형성의 정확한 월·일은 의견이 일치하지 않으므로 연도 단위로 제한함."
-      }
+      },
+      "defaultDisplayNameEn": "Johannesburg",
+      "defaultDisplayNameNative": "Johannesburg",
+      "defaultNativeLanguage": "en"
     },
     {
       "geonameId": 2147714,
@@ -272,8 +308,13 @@
         {
           "fromYear": 1801,
           "nameKo": "시드니",
+          "nameEn": "Sydney",
+          "nameNative": "Sydney",
+          "nativeLanguage": "en",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/2147714/sydney.html"
+          "sourceUrl": "https://www.geonames.org/2147714/sydney.html",
+          "note": "영국 정착지 시대부터 이름 유지",
+          "researchNote": "1788년 영국 정착지의 이름 Sydney가 1801년부터의 지도 검수 기간에 계속 적용된다. 1842-07-20 시 법인화와 1901년 호주 연방 성립은 도시 이름 변경이 아니다. 원주민 지명 Warrane은 Sydney Cove에 해당하므로 현대 시드니시 전체의 옛 대표명으로 저장하지 않는다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -301,7 +342,10 @@
             "sourceUrl": "https://www.nsw.gov.au/visiting-and-exploring-nsw/walks-near-me/great-places/the-rocks-laneways"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Sydney",
+      "defaultDisplayNameNative": "Sydney",
+      "defaultNativeLanguage": "en"
     }
   ]
 }

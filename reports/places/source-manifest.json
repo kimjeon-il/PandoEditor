@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "da128f7cafbfc6511bf9b883a95d6382d35f67d3",
+  "webCommit": "b171f422994e92608c42bbb3e5582c9a3c0a765f",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -11,7 +11,7 @@
     },
     {
       "path": "reports/places/tier1-major-cities-batch02-east-asia.json",
-      "gitBlobSha": "947b5be0d95fab09de52eb109de189c386e78800"
+      "gitBlobSha": "b4434cbd2856a35ae6bd481811ee8606c9ebd361"
     },
     {
       "path": "reports/places/tier1-major-cities-batch03-india-southeast-asia.json",
@@ -19,23 +19,23 @@
     },
     {
       "path": "reports/places/tier1-major-cities-batch04-europe-west-asia.json",
-      "gitBlobSha": "e71e8c441779d105a6cbfd89b2e99279f3a31076"
+      "gitBlobSha": "ea845b13fe12d5acde38157a9615f59d5219c2e7"
     },
     {
       "path": "reports/places/tier1-major-cities-batch05-americas.json",
-      "gitBlobSha": "82a30dd5c63d700226bd84494cb9cee7ffa9f6ca"
+      "gitBlobSha": "de8b9e6ce3ef90620e8e3603d9c304c6916de02a"
     },
     {
       "path": "reports/places/tier1-major-cities-batch06-africa-oceania.json",
-      "gitBlobSha": "489b2876b94b07f4434c273312151ff8b55c0b90"
+      "gitBlobSha": "49ca9f23d1e634dd9ad72b2b77528dcfc7ba0292"
     },
     {
       "path": "reports/places/tier1-major-cities-batch07-europe-capitals.json",
-      "gitBlobSha": "7bea922bd8880753a1814e6293ef32367d8e92c2"
+      "gitBlobSha": "b46abcd6860f241b295fcb93802e048483cdebbf"
     },
     {
       "path": "reports/places/tier1-major-cities-batch08-northern-eastern-europe.json",
-      "gitBlobSha": "eec7898039bba6b565ab70382d743ec327d69fd1"
+      "gitBlobSha": "c889a9f21f4a3b974588bbedd42bc7b4ed6b0c93"
     },
     {
       "path": "reports/places/historical-display-policy.json",
@@ -47,37 +47,37 @@
     },
     {
       "path": "reports/places/tier1-major-cities-batch09-baltic-belarus-capitals.json",
-      "gitBlobSha": "c9c1ec87b1e8a1d04f5c11b1978cecabdc47ec84"
+      "gitBlobSha": "0a6d7cbc994787648ddb3112220c81c1a3fe445c"
     },
     {
       "path": "reports/places/tier1-major-cities-batch10-balkan-southeast-europe.json",
-      "gitBlobSha": "90da54d53a5209031b065d001656b069c8018fd7"
+      "gitBlobSha": "7a6d77ffe74b9113a2087e9564c38408c8ed3cb2"
     },
     {
       "path": "reports/places/tier1-major-cities-batch11-western-balkans-capitals.json",
-      "gitBlobSha": "fa2c52614c8b7c676abf5ef3c4648f0d28319be8"
+      "gitBlobSha": "089b9f120ae90c758aa46d0ee25ec34a17ba5a7c"
     },
     {
       "path": "reports/places/tier1-major-cities-batch12-central-eastern-europe-capitals.json",
-      "gitBlobSha": "365d1343b6e9bff6dcd1380818253223978aa88a"
+      "gitBlobSha": "b7680d86fe5b06ed928945842c1bd02a7fd9be47"
     },
     {
       "path": "reports/places/tier1-major-cities-batch13-european-microstates-mediterranean.json",
-      "gitBlobSha": "1da2a153189c75f50bc331d8abe07dd8b7c1fdee"
+      "gitBlobSha": "194cc5fe4cf2e86fde1b23ea00b6fcbeb5394560"
     },
     {
       "path": "reports/places/tier1-major-cities-batch14-north-atlantic-anatolia-caucasus.json",
-      "gitBlobSha": "a8f2e7bcb9f5396d82862e3fe23eb3dfaf048347"
+      "gitBlobSha": "5da8abd66d5b56cae531a60ef744c088b16cb927"
     },
     {
       "path": "reports/places/tier1-major-cities-batch15-central-asia-capitals.json",
-      "gitBlobSha": "0f1bb9ed451bd15b85a2926d7f899b2eaed9e463"
+      "gitBlobSha": "5764365b3531fbffd1b530f0c866e7fd54d0589e"
     }
   ],
   "reviewInventory": {
     "batchCount": 15,
-    "recordCount": 87,
-    "distinctGeoNames": 87,
+    "recordCount": 88,
+    "distinctGeoNames": 88,
     "byBatch": [
       {
         "path": "reports/places/tier1-major-cities-batch01.json",
@@ -105,7 +105,7 @@
       },
       {
         "path": "reports/places/tier1-major-cities-batch07-europe-capitals.json",
-        "recordCount": 8
+        "recordCount": 9
       },
       {
         "path": "reports/places/tier1-major-cities-batch08-northern-eastern-europe.json",

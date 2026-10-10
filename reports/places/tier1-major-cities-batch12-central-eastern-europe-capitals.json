@@ -3,8 +3,8 @@
   "batch": "12-central-eastern-europe-capitals",
   "status": "verified-source-staging-not-runtime",
   "source": "GeoNames (CC BY 4.0), Bratislava government/municipal historical records, Chisinau city chronology, Luxembourg City and Vaduz official municipal sites",
-  "checkedOn": "2026-10-08",
-  "selection": "Four selected not-yet-reviewed capitals in central and eastern Europe: Bratislava (SK), Chișinău (MD), Luxembourg city (LU), Vaduz (LI). Only GeoNames P/PPLC settled place objects.",
+  "checkedOn": "2026-10-10",
+  "selection": "Four reviewed capital settled-place records in central/eastern Europe: Bratislava (SK), Chișinău (MD), Luxembourg city (LU), Vaduz (LI). Only GeoNames P/PPLC objects; small-capital Vaduz kept by capital exception.",
   "coordinateConvention": "GeoNames WGS84 EPSG:4326 point coordinates. Latitude/longitude values identify settlements, never historical municipality polygons.",
   "countryCodeSemantics": "sourceCountryCode represents present-day GeoNames source metadata and must not be used to infer historical sovereignty or name choice.",
   "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
@@ -13,13 +13,13 @@
   "historicNameScope": "Attested names since 1801, with earlier documented etymology retained only as historical context; dates distinguish evidence precision and editorial naming conventions.",
   "qualityNotes": [
     "All four records are GeoNames feature class P / code PPLC capital settlements; administrative polygons and similarly named country entities are excluded.",
-    "Bratislava's official-name gazette notice effective 1919-03-27 is distinguished from reported February 1919 early administrative use. 1801 Pressburg-based Korean display is an editorial historical convention, not the only official nineteenth-century language name.",
-    "German Pressburg, Hungarian Pozsony and Slovak Prešporok are contemporaneous language/historical forms. Their coexistence is not converted to successive false administrative city renamings.",
-    "Chișinău has Romanian Chișinău and Russian Кишинёв. Russian rule, 1918 union, Soviet rule and modern independence remain historical events, not automatic changes in a Korean map label.",
-    "Luxembourg the city (GeoNames 2960316) is not Luxembourg the country (2960313) nor city municipal territory (2960317). French, German and Luxembourgish names are stored independently.",
-    "Vaduz is a small capital below normal urban population thresholds but is included under the explicit capital exception. The identical native and English name is kept in source, deduplicated only on rendering.",
+    "Bratislava: 1801 Pozsony/Pressburg ko 포조니, 1849-10-24 Pressburg/Pozsony ko 프레스부르크, 1867-07-28 Pozsony/Pressburg ko 포조니 (preferred-first period-nativeNames, not legally coequal names). English Pressburg throughout pre-1919. Official Bratislava/브라티슬라바 and English Bratislava from 1919-03-27. 1860-10-20 Hungarian administrative restoration is historical event only, not a label switch.",
+    "Pozsony and Pressburg coexist as Hungarian/German names of the same city; priority orders track the selected administrative regime rather than fictional sequential legal renamings. 1919-03-27 is retained as the Bratislava gazette switch.",
+    "Chișinău: historic Moldavian Romanian Cyrillic Кишинъу and edited English Kischenau from 1801; imperial Russian Кишиневъ from treaty 1812-05-28; Romanian Chișinău from union 1918-04-09; Latin Moldavian/Russian transitional co-names 1940-08-02; Soviet Cyrillic Moldavian Кишинэу + Russian Кишинёв from legal effective date 1941-03-01; Romanian again from governorate legislation 1941-09-03; Soviet co-names restored at user-chosen treaty 1944-09-12 (not military recapture 08-24); Latin Chișinău state-language name only from 1989-08-31. All sovereignty/language event thresholds are editorial naming selections, not automatic urban renamings.",
+    "Luxembourg (GeoNames PPLC 2960316, distinct from country 2960313 and administrative area 2960317): French Luxembourg from 1801; French+German Luxembourg/Luxemburg from 1830-06-04 decree-signing editorial threshold; Luxembourgish+French+German Lëtzebuerg/Luxembourg/Luxemburg from 1984-03-02 languages-law effective date. English Luxembourg City and Korean 룩셈부르크 unchanged; language/script thresholds are not city renamings.",
+    "Vaduz: small capital below common urban population cutoffs; included by explicit capital exception with rank independent from political status. German native/English Vaduz, Korean 파두츠 unchanged since the 1801 review start, and full timeline/modern language defaults now explicitly stored.",
     "Ancient/medieval fortress references (Lucilinburhuc) and the medieval origin of Vaduz are historical context, not additional modern city objects.",
-    "Historical survey from 1801 means editorial coverage only, not proof that the modern Korean spelling existed at that date.",
+    "Historical survey from 1801 is editorial coverage, not founding date nor proof the selected 1801 Korean/English form was recorded that exact year; the 1804 English Kischenau example and later imperial Russian name are deliberately projected to editorial thresholds with provenance.",
     "All shortDescriptionKo and UI-facing note/detail values are limited to 28 Unicode code points; longer source material is saved in researchNote/researchDetail.",
     "Cities are review-stage only: no PLAC tile/search shard, runtime manifest, or application main branch changed."
   ],
@@ -28,10 +28,42 @@
       "geonameId": 3060972,
       "names": [
         {
+          "text": "Pozsony",
+          "language": "hu",
+          "usage": "historical",
+          "variantType": "selectedHistoricHungarianOfficialName",
+          "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
+        },
+        {
+          "text": "Pressburg",
+          "language": "de",
+          "usage": "historical",
+          "variantType": "selectedHistoricGermanLocalName",
+          "sourceUrl": "https://www.visitbratislava.com/about/three-countries-one-destination/"
+        },
+        {
+          "text": "Pressburg",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedHistoricEnglishExonym",
+          "sourceUrl": "https://www.visitbratislava.com/about/three-countries-one-destination/"
+        },
+        {
+          "text": "포조니",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedHungarianBasedKoreanName"
+        },
+        {
+          "text": "프레스부르크",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedGermanBasedKoreanName"
+        },
+        {
           "text": "Bratislava",
           "language": "sk",
           "usage": "standard",
-          "note": "1919년 이후 슬로바키아어 공식명",
           "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
         },
         {
@@ -43,53 +75,6 @@
           "text": "브라티슬라바",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "프레스부르크",
-          "language": "ko",
-          "usage": "historical",
-          "variantType": "koreanRenderingOfGermanPressburg",
-          "note": "19세기 독일어명 기반 편집 표기",
-          "sourceUrl": "https://www.visitbratislava.com/about/three-countries-one-destination/"
-        },
-        {
-          "text": "포조니",
-          "language": "ko",
-          "usage": "historical",
-          "variantType": "koreanRenderingOfHungarianPozsony",
-          "note": "헝가리어 Pozsony의 한국어형",
-          "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
-        },
-        {
-          "text": "Pressburg",
-          "language": "de",
-          "usage": "historical",
-          "variantType": "pre1919GermanAdministrativeName",
-          "note": "1919년 이전 독일어 도시명",
-          "sourceUrl": "https://www.visitbratislava.com/about/three-countries-one-destination/"
-        },
-        {
-          "text": "Pozsony",
-          "language": "hu",
-          "usage": "alternate",
-          "variantType": "historicalHungarianOfficialAndContemporaryExonym",
-          "note": "19세기 관용·공식 헝가리어명",
-          "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
-        },
-        {
-          "text": "Prešporok",
-          "language": "sk",
-          "usage": "historical",
-          "variantType": "pre1919SlovakForm",
-          "note": "현행명 이전 슬로바키아어명",
-          "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
-        },
-        {
-          "text": "Posonium",
-          "language": "la",
-          "usage": "historical",
-          "variantType": "historicalLatinName",
-          "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
         }
       ],
       "latitude": 48.14816,
@@ -99,26 +84,80 @@
       "sourceUrl": "https://www.geonames.org/3060972/bratislava.html",
       "sourceCountryCode": "SK",
       "defaultDisplayNameKo": "브라티슬라바",
-      "shortDescriptionKo": "1919년 도시 공식명 변경",
+      "shortDescriptionKo": "1919년 브라티슬라바 공식 명칭",
       "displayTimeline": [
         {
-          "nameKo": "프레스부르크",
           "fromYear": 1801,
-          "kind": "koreanEditorialTranscription",
+          "nameKo": "포조니",
+          "nameEn": "Pressburg",
+          "nameNative": "Pozsony",
+          "nativeLanguage": "hu",
+          "nativeNames": [
+            {
+              "text": "Pozsony",
+              "language": "hu"
+            },
+            {
+              "text": "Pressburg",
+              "language": "de"
+            }
+          ],
+          "kind": "historicalHungarianGermanCoexistingNames",
           "sourceUrl": "https://www.visitbratislava.com/about/three-countries-one-destination/",
-          "note": "독일어명 기준 옛 지도 표기",
-          "researchNote": "1801년~1919년 지도는 독일어 Pressburg를 바탕으로 프레스부르크로 표기하는 편집 관례를 채택한다. 19세기 헝가리 행정에서는 Pozsony도 공식적으로 쓰였으므로 하나의 유일한 법정 명칭으로 간주하지 않는다."
+          "note": "헝가리어 우선·독일어 병기",
+          "researchNote": "1801년 헝가리 왕국은 신성 로마 제국의 일반 구성국이 아니었고, 독일어 Pressburg와 헝가리어 Pozsony가 오래 병존했다. 헝가리어 중앙 공식언어 도입은 1844년이므로 1801년 Pozsony 우선은 현지 헝가리 왕국 지명 관행에 따른 편집 선택이며 독일어명이 없었다는 뜻이 아니다. 영어는 전통 관용명 Pressburg 유지."
         },
         {
-          "nameKo": "브라티슬라바",
+          "fromDate": "1849-10-24",
+          "nameKo": "프레스부르크",
+          "nameNative": "Pressburg",
+          "nativeLanguage": "de",
+          "nativeNames": [
+            {
+              "text": "Pressburg",
+              "language": "de"
+            },
+            {
+              "text": "Pozsony",
+              "language": "hu"
+            }
+          ],
+          "kind": "historicalAdministrativeLanguagePriorityChange",
+          "note": "중앙집권 독일어 행정 우선",
+          "researchNote": "1849년 혁명 진압 후 하이나우의 1849-10-24 임시 행정조직 명령을 독일어 우선 대표명 전환의 편집 기준으로 선택. 양 언어는 지역에서 여전히 병존했으며 브라티슬라바시 자체의 법적 명칭 개정일이라는 의미는 아니다. 영어 Pressburg는 그대로 유지한다."
+        },
+        {
+          "fromDate": "1867-07-28",
+          "nameKo": "포조니",
+          "nameNative": "Pozsony",
+          "nativeLanguage": "hu",
+          "nativeNames": [
+            {
+              "text": "Pozsony",
+              "language": "hu"
+            },
+            {
+              "text": "Pressburg",
+              "language": "de"
+            }
+          ],
+          "kind": "historicalAustroHungarianCompromiseEditorialSelection",
+          "note": "대타협 헝가리어 우선 복원",
+          "researchNote": "1860-10-20 칙서에 따른 헝가리어 행정 복원을 역사적 사건으로만 기록하고, 1867-07-28 대타협 관련 헝가리 법률 재가를 안정적인 헝가리 자치정부 복원에 따른 지도 원어 우선순위 변경일로 선택한다. Pressburg도 주민·일부 도시 행정문서에서 계속 사용됐으므로 함께 병기한다. 영어 Pressburg 계속 유지."
+        },
+        {
           "fromDate": "1919-03-27",
+          "nameKo": "브라티슬라바",
+          "nameEn": "Bratislava",
+          "nameNative": "Bratislava",
+          "nativeLanguage": "sk",
           "kind": "officialRenaming",
           "sourceUrl": "https://volksgruppen.orf.at/v2/slovaci/meldungen/stories/2972520/",
-          "note": "1919-03-27 명칭 고시",
-          "researchNote": "슬로바키아 국가 포털에서는 1919년 2월 행정상의 명칭 사용을 기술하고, ORF 2019년 기사는 1919-03-27 관보 고시의 효력을 명시한다. Pando에서는 정확한 공시일을 표시 전환 기준으로 채택하며 두 기록의 차이를 보존한다."
+          "note": "1919년 공식 지명 고시",
+          "researchNote": "1919-03-27 도시명 Bratislava의 고시를 새 지도 대표명의 정확한 편집 기준으로 유지. 1919년 2월 무렵의 초기 행정 사용 기록도 존재하나 이 시점으로 소급하지 않는다. 이전 시대의 Pozsony·Pressburg는 사용된 언어별 이름이었고, 순차적인 법적 도시 개칭이 아니었다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801-with-exact-1919-rename",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1849-and-1867-priority-reversals-and-1919-rename",
       "historicalGeography": {
         "events": [
           {
@@ -135,12 +174,30 @@
             "detail": "Bratislava 명칭 고시",
             "researchDetail": "명칭의 1919년 2월 초기 사용 기록과 3월 27일 관보 고시 효력의 정밀도 차이를 기록한다.",
             "sourceUrl": "https://volksgruppen.orf.at/v2/slovaci/meldungen/stories/2972520/"
+          },
+          {
+            "date": "1849-10-24",
+            "type": "hungarianInterimCentralAdministration",
+            "detail": "합스부르크 중앙집권 행정 강화",
+            "researchDetail": "행정 상급기관의 독일어 사용 우선 조치. 도시 자체의 독일어 개칭일로 취급하지 않는다."
+          },
+          {
+            "date": "1860-10-20",
+            "type": "octoberDiplomaHungarianRestoration",
+            "detail": "헝가리어 행정 부분 복원",
+            "researchDetail": "헝가리어 복원을 기록하되 1867년까지 별도 지명 전환점을 추가하지 않는다."
+          },
+          {
+            "date": "1867-07-28",
+            "type": "austroHungarianCompromiseLawConfirmed",
+            "detail": "대타협 헝가리 자치정부 복원",
+            "researchDetail": "헝가리어·독일어 병기 가운데 헝가리어 Pozsony를 첫 원어명으로 복귀시키는 편집상 기준일."
           }
         ],
         "notes": [
           {
             "detail": "Pressburg·Pozsony는 언어별 명칭",
-            "researchDetail": "독일어 Pressburg, 헝가리어 Pozsony, 슬로바키아어 Prešporok 등은 중첩된 역사적 언어 형태로 단순히 도시가 언어 순서대로 공식 개칭한 것은 아니다.",
+            "researchDetail": "Pozsony(헝가리어 국가행정명)와 Pressburg(독일어 주민·일부 시 행정명)는 장기간 병용됐으며 도시 자체가 1849년·1867년에 법적 개칭된 것은 아니다. 1849~1867년에는 Pressburg를 첫 원어명, 그 전후 1801~1849·1867~1919년에는 Pozsony를 첫 원어명으로 선택한다. 헝가리 왕국의 자치권 상실·복원과 실제 언어 사용은 구분한다.",
             "sourceUrl": "https://www.slovensko.sk/sk/lokality/_a9a73232-f853-4d69-9b13-189650e28842"
           },
           {
@@ -149,23 +206,72 @@
             "sourceUrl": "https://www.geonames.org/3060972/"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Bratislava",
+      "defaultDisplayNameNative": "Bratislava",
+      "defaultNativeLanguage": "sk"
     },
     {
       "geonameId": 618426,
       "names": [
         {
+          "text": "Кишинъу",
+          "language": "ro",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedMoldavianTraditionalCyrillic",
+          "sourceUrl": "https://onomajournal.org/wp-content/uploads/2023/12/Onoma-58-1.08-Herzen-Herzen-final.pdf"
+        },
+        {
+          "text": "Кишиневъ",
+          "language": "ru",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedImperialRussianOrthography",
+          "sourceUrl": "https://onomajournal.org/wp-content/uploads/2023/12/Onoma-58-1.08-Herzen-Herzen-final.pdf"
+        },
+        {
           "text": "Chișinău",
           "language": "ro",
+          "script": "Latn",
           "usage": "standard",
-          "note": "몰도바 공용어 루마니아어명",
           "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+        },
+        {
+          "text": "Кишинэу",
+          "language": "ro",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedSovietMoldavianCyrillic",
+          "sourceUrl": "https://onomajournal.org/wp-content/uploads/2023/12/Onoma-58-1.08-Herzen-Herzen-final.pdf"
+        },
+        {
+          "text": "Кишинёв",
+          "language": "ru",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedRussianAdministrativeName",
+          "sourceUrl": "https://onomajournal.org/wp-content/uploads/2023/12/Onoma-58-1.08-Herzen-Herzen-final.pdf"
+        },
+        {
+          "text": "Kischenau",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedEarlyEnglishCartographicForm",
+          "sourceUrl": "https://onomajournal.org/wp-content/uploads/2023/12/Onoma-58-1.08-Herzen-Herzen-final.pdf"
+        },
+        {
+          "text": "Kishinev",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedRussianPeriodEnglishName",
+          "sourceUrl": "https://onomajournal.org/wp-content/uploads/2023/12/Onoma-58-1.08-Herzen-Herzen-final.pdf"
         },
         {
           "text": "Chisinau",
           "language": "en",
           "usage": "standard",
-          "sourceUrl": "https://www.geonames.org/618426/"
+          "sourceUrl": "https://www.geonames.org/618426/chisinau.html"
         },
         {
           "text": "키시너우",
@@ -173,28 +279,10 @@
           "usage": "standard"
         },
         {
-          "text": "Кишинёв",
-          "language": "ru",
-          "usage": "alternate",
-          "variantType": "russianExonymHistoricallyAdministrative",
-          "note": "제정·소련기의 러시아어명",
-          "sourceUrl": "https://visit.chisinau.md/ru/istoric/"
-        },
-        {
-          "text": "Kishinev",
-          "language": "en",
-          "usage": "historical",
-          "variantType": "russianBasedEnglishRomanization",
-          "note": "러시아어 기반 과거 영문명",
-          "sourceUrl": "https://www.geonames.org/618426/"
-        },
-        {
           "text": "키시네프",
           "language": "ko",
           "usage": "historical",
-          "variantType": "koreanRenderingOfRussianName",
-          "note": "러시아어 기반 옛 표기",
-          "sourceUrl": "https://visit.chisinau.md/ru/istoric/"
+          "variantType": "selectedRussianPeriodKoreanTranscription"
         }
       ],
       "latitude": 47.00902,
@@ -204,103 +292,336 @@
       "sourceUrl": "https://www.geonames.org/618426/chisinau.html",
       "sourceCountryCode": "MD",
       "defaultDisplayNameKo": "키시너우",
-      "shortDescriptionKo": "루마니아어·러시아어 명칭 병존",
+      "shortDescriptionKo": "1801년 키릴·소련기 두 언어 병기",
       "displayTimeline": [
         {
-          "nameKo": "키시너우",
           "fromYear": 1801,
-          "kind": "koreanEditorialTranscription",
-          "sourceUrl": "https://visit.chisinau.md/en/istoric/",
-          "note": "루마니아어명 기준 지도 표기",
-          "researchNote": "1812년 이후 러시아어 Кишинёв가 제정 러시아·소련 기록에 쓰인 것은 확인되지만, 언어 사용과 영토 귀속 전환만으로 한국어 기본 지명의 특정 일자 전환을 임의 생성하지 않는다."
+          "nameKo": "키시너우",
+          "nameEn": "Kischenau",
+          "nameNative": "Кишинъу",
+          "nativeLanguage": "ro",
+          "nativeNames": [
+            {
+              "text": "Кишинъу",
+              "language": "ro",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "traditionalMoldavianRomanianCyrillicEditorialSelection",
+          "sourceUrl": "https://onomajournal.org/wp-content/uploads/2023/12/Onoma-58-1.08-Herzen-Herzen-final.pdf",
+          "note": "몰다비아 공국 전통 키릴 표기",
+          "researchNote": "당시 몰다비아 공국에서는 루마니아어를 전통 키릴 문자로 기록했다. 연구에서 Кишинъу, 1800년 Кишънъу 등 변형을 확인하며 Кишинъу를 지도 대표 원어로 편집상 선택한다. 영어 Kischenau는 1804년 지도에서 처음 확인된 특정 사례를 1801년 조사 시작에 소급 적용한 편집 선택이며 1801년 실사용·법정명이라 주장하지 않는다. Кишинэу는 20세기 소련식 철자이므로 사용하지 않는다."
+        },
+        {
+          "fromDate": "1812-05-28",
+          "nameKo": "키시네프",
+          "nameEn": "Kishinev",
+          "nameNative": "Кишиневъ",
+          "nativeLanguage": "ru",
+          "nativeNames": [
+            {
+              "text": "Кишиневъ",
+              "language": "ru",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "russianEmpireTerritorialCessionEditorialSelection",
+          "sourceUrl": "https://agerpres.ro/documentare/2020/03/27/documentar-102-ani-de-la-unirea-basarabiei-cu-romania--474498",
+          "note": "1812년 러시아 편입·제국 철자",
+          "researchNote": "1812-05-28(신력) 부쿠레슈티 조약에 따른 러시아 영토 편입을 러시아어 행정 대표명 전환 기준으로 선택한다. 제정 러시아 철자 Кишиневъ는 1817년 이후 지도에서 특히 확인되므로 1812년부터의 선택은 소급 편집이며 해당 연도 최초 사용일을 뜻하지 않는다. 초기 제국 행정에서 현지 루마니아어가 바로 사라졌다는 뜻도 아니다."
+        },
+        {
+          "fromDate": "1918-04-09",
+          "nameKo": "키시너우",
+          "nameEn": "Chisinau",
+          "nameNative": "Chișinău",
+          "nativeLanguage": "ro",
+          "nativeNames": [
+            {
+              "text": "Chișinău",
+              "language": "ro",
+              "script": "Latn"
+            }
+          ],
+          "kind": "bessarabiaRomanianUnionEditorialSelection",
+          "sourceUrl": "https://agerpres.ro/documentare/2026/03/27/27-martie---ziua-unirii-basarabiei-cu-romania--1541606",
+          "note": "베사라비아 루마니아 통합 의결",
+          "researchNote": "1918-04-09(신력, 구력 03-27) 베사라비아 의회의 루마니아 통합 의결일을 도시 원어·한국어·영어 표기 전환의 편집 기준으로 채택한다. Chișinău는 통합 전에 이미 존재한 현지 언어명이었고 이날 새로운 법적 도시명이 탄생한 것은 아니다."
+        },
+        {
+          "fromDate": "1940-08-02",
+          "nameKo": "키시네프",
+          "nameEn": "Kishinev",
+          "nameNative": "Chișinău",
+          "nativeLanguage": "ro",
+          "nativeNames": [
+            {
+              "text": "Chișinău",
+              "language": "ro",
+              "script": "Latn"
+            },
+            {
+              "text": "Кишинёв",
+              "language": "ru",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "moldavianSSRFormationLatinRussianTransitionalSelection",
+          "sourceUrl": "https://istmat.org/node/19820",
+          "note": "몰도바 SSR 성립·문자 전환 전",
+          "researchNote": "1940-08-02 몰도바 소비에트 사회주의 공화국 수립을 편집 기준으로 택한다. 전쟁 전 현지 루마니아어 라틴 철자 Chișinău 및 러시아어 Кишинёв를 과도기 공동 명칭으로 선택했다. 1940-11-11 소련 정부의 신문자 전환 지시와 1941년 초 행정 기관의 선행 사용 허용으로 전환이 단계적으로 진행됐으며, 1940-08-02가 두 언어에 동등한 법적 공용어 지위를 새로 부여한 날짜는 아니다."
+        },
+        {
+          "fromDate": "1941-03-01",
+          "nameKo": "키시네프",
+          "nameEn": "Kishinev",
+          "nameNative": "Кишинэу",
+          "nativeLanguage": "ro",
+          "nativeNames": [
+            {
+              "text": "Кишинэу",
+              "language": "ro",
+              "script": "Cyrl"
+            },
+            {
+              "text": "Кишинёв",
+              "language": "ru",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "moldavianSSRCyrillicLegalStartAndRussianCoUse",
+          "sourceUrl": "https://www.diacronia.ro/indexing/details/A31162/pdf",
+          "note": "소련식 몰도바어 키릴 공식화",
+          "researchNote": "몰도바 SSR이 1941-02-10 제정한 문자 전환법의 1941-03-01 시행일을 기준으로 몰도바어 Кишинэу 및 러시아어 Кишинёв를 병기한다. 1940년 11월 소련 정부 결정과 1941년 1월 일부 기관에서 시작할 수 있었던 선행 사용과 법정 시행일을 구별한다. ISO ro는 루마니아어와 언어적 연속성이 있는 당시의 '몰도바어' 표기를 나타내고, 소련식 키릴 문자는 별도 script Cyrl로 표시한다."
+        },
+        {
+          "fromDate": "1941-09-03",
+          "nameKo": "키시너우",
+          "nameEn": "Chisinau",
+          "nameNative": "Chișinău",
+          "nativeLanguage": "ro",
+          "nativeNames": [
+            {
+              "text": "Chișinău",
+              "language": "ro",
+              "script": "Latn"
+            }
+          ],
+          "kind": "romanianBessarabiaGovernorshipEditorialSelection",
+          "sourceUrl": "https://analelebucovinei.ro/02_2023/9_buc_cultura.pdf",
+          "note": "루마니아 베사라비아 행정 법제화",
+          "researchNote": "1941-09-03 루마니아 베사라비아·부코비나 통치 조직에 관한 법령을 현지 행정 원어명 복원 편집 기준으로 채택한다. 1941-07-16 키시너우의 군사적 점령과는 구분한다. 전쟁기 루마니아 통치가 국제법상 모든 주권 분쟁을 최종 해결했다는 뜻도 아니다."
+        },
+        {
+          "fromDate": "1944-09-12",
+          "nameKo": "키시네프",
+          "nameEn": "Kishinev",
+          "nameNative": "Кишинэу",
+          "nativeLanguage": "ro",
+          "nativeNames": [
+            {
+              "text": "Кишинэу",
+              "language": "ro",
+              "script": "Cyrl"
+            },
+            {
+              "text": "Кишинёв",
+              "language": "ru",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "sovietRomanianArmisticeBorderRecognitionEditorialSelection",
+          "sourceUrl": "https://legislatie.just.ro/public/DetaliiDocument/31",
+          "note": "휴전협정으로 소련 국경 복원 확인",
+          "researchNote": "사용자가 확정한 1944-09-12 루마니아·연합국 휴전협정 제4조(1940년 소련·루마니아 국경 복원)를 지도 대표명 전환의 편집 기준으로 채택한다. 1944-08-24 소련군의 군사적 탈환과는 별개의 기준이다. 몰도바 SSR은 이미 1940년에 창설됐으므로 소련이 새 공화국을 창설·재편입한 날짜로 해석하지 않는다. 몰도바어 Кишинэу와 러시아어 Кишинёв를 병기한다."
+        },
+        {
+          "fromDate": "1989-08-31",
+          "nameKo": "키시너우",
+          "nameEn": "Chisinau",
+          "nameNative": "Chișinău",
+          "nativeLanguage": "ro",
+          "nativeNames": [
+            {
+              "text": "Chișinău",
+              "language": "ro",
+              "script": "Latn"
+            }
+          ],
+          "kind": "moldavianSSRLawRestoresLatinStateLanguageSelection",
+          "sourceUrl": "https://en.wikisource.org/wiki/Translation:Law_%22on_Functioning_of_Languages_on_the_Territory_of_the_Moldavian_SSR%22",
+          "note": "몰도바어 국가어·로마자 복귀",
+          "researchNote": "1989-08-31 문자·언어 관련 법제 개편에서 라틴 문자 기반 몰도바어를 국가어로 정한 날부터 Chișinău를 지도 단일 대표 원어명으로 선택한다. 실제 행정 전환에는 경과기간이 있었고 러시아어는 민족 간 소통 언어로 계속 사용됐다. 러시아어 Кишинёв가 사회적으로 사라지거나 금지됐다는 뜻이 아니다. 1991-08-27 독립 선언은 추가 도시 개칭 기준이 아니다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801-with-contextual-russian-name",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1812-1918-1940-1941-1944-1989-name-and-script-editorial-thresholds",
       "historicalGeography": {
         "events": [
           {
             "year": 1436,
             "type": "firstRecordedSettlementToponym",
-            "detail": "1436년 지명 문헌에 처음 등장",
+            "detail": "1436년 지명 문헌 최초 등장",
             "sourceUrl": "https://visit.chisinau.md/en/istoric/"
           },
           {
-            "year": 1812,
-            "type": "bessarabiaRussianEmpireAdministration",
-            "detail": "1812년 러시아제국 관할",
-            "researchDetail": "오스만·러시아 전쟁과 1812년 부쿠레슈티 조약 후 베사라비아가 러시아에 편입되었다. 제국 내 행정 중심지는 도시 개칭일과 구분한다.",
-            "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+            "date": "1812-05-28",
+            "type": "bessarabiaCededToRussianEmpire",
+            "detail": "부쿠레슈티 조약 러시아 편입",
+            "sourceUrl": "https://agerpres.ro/documentare/2020/03/27/documentar-102-ani-de-la-unirea-basarabiei-cu-romania--474498",
+            "researchDetail": "구력 1812-05-16 / 신력 05-28. 영토 편입일과 개별 도시의 개칭일은 다르다."
           },
           {
-            "year": 1918,
+            "date": "1918-04-09",
             "type": "bessarabiaUnionWithRomania",
-            "detail": "1918년 루마니아와 결합",
+            "detail": "베사라비아 루마니아 통합 의결",
+            "sourceUrl": "https://agerpres.ro/documentare/2026/03/27/27-martie---ziua-unirii-basarabiei-cu-romania--1541606",
+            "researchDetail": "구력 03-27 / 신력 04-09. 1918년 베사라비아 입법회의의 의결일을 지도 편집 기준으로 사용한다."
+          },
+          {
+            "date": "1940-08-02",
+            "type": "moldavianSSRFormation",
+            "detail": "몰도바 SSR 수립",
             "sourceUrl": "https://visit.chisinau.md/en/istoric/"
           },
           {
-            "year": 1940,
-            "type": "moldavianSovietPeriod",
-            "detail": "1940년 소련 통치 개시",
-            "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+            "date": "1940-11-11",
+            "type": "sovietDirectiveForCyrillicTransition",
+            "detail": "소련 문자 전환 행정 결정",
+            "sourceUrl": "https://istmat.org/node/19820",
+            "researchDetail": "1941-01부터 일부 행정 기관 등에서 새 키릴 문자 사용 개시를 허용하고 공화국 법률을 준비하도록 지시했다."
           },
           {
-            "year": 1991,
+            "date": "1941-03-01",
+            "type": "moldavianSSRCyrillicLawEffective",
+            "detail": "몰도바어 키릴 문자 법령 시행",
+            "sourceUrl": "https://www.diacronia.ro/indexing/details/A31162/pdf",
+            "researchDetail": "1941-02-10 제정법이 03-01부터 전 지역에 키릴 문자 체계를 적용하도록 규정했다."
+          },
+          {
+            "date": "1941-07-16",
+            "type": "romanianMilitaryCaptureOfChisinau",
+            "detail": "루마니아군 키시너우 점령",
+            "sourceUrl": "https://analelebucovinei.ro/02_2023/9_buc_cultura.pdf",
+            "researchDetail": "군사적 도시 점령은 09-03 행정 통치 체계 법제화와 별도 사건이다."
+          },
+          {
+            "date": "1941-09-03",
+            "type": "romanianBessarabiaGovernorshipLaw",
+            "detail": "루마니아 베사라비아 행정 법제화",
+            "sourceUrl": "https://analelebucovinei.ro/02_2023/9_buc_cultura.pdf"
+          },
+          {
+            "date": "1944-08-24",
+            "type": "sovietMilitaryRecaptureOfChisinau",
+            "detail": "소련군 키시너우 탈환",
+            "sourceUrl": "https://visit.chisinau.md/en/istoric/",
+            "researchDetail": "군사 탈환일이지만 지도 원어 대표명 복원은 사용자 선택에 따라 1944-09-12 휴전협정에 맞춘다."
+          },
+          {
+            "date": "1944-09-12",
+            "type": "romanianAlliedArmisticeRestores1940Boundary",
+            "detail": "소련·루마니아 국경 복원 확인",
+            "sourceUrl": "https://legislatie.just.ro/public/DetaliiDocument/31",
+            "researchDetail": "휴전협정 제4조. 1940년부터 존재하던 몰도바 SSR의 통치를 회복하는 국제적 승인 시점으로서 지도 대표명을 바꾼다."
+          },
+          {
+            "date": "1989-08-31",
+            "type": "moldavianSSRLanguagesAndLatinScriptLaws",
+            "detail": "국가어 지정·로마자 복귀",
+            "sourceUrl": "https://en.wikisource.org/wiki/Translation:Law_%22on_Functioning_of_Languages_on_the_Territory_of_the_Moldavian_SSR%22",
+            "researchDetail": "1989년 언어법과 문자 정책 변화를 원어명 단일화 편집 기준으로 사용한다. 러시아어가 즉시 모든 공식·사회적 사용에서 사라진 것은 아니다."
+          },
+          {
+            "date": "1991-08-27",
             "type": "moldovaIndependence",
-            "detail": "1991년 몰도바 독립",
-            "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+            "detail": "몰도바 독립",
+            "sourceUrl": "https://visit.chisinau.md/en/istoric/",
+            "researchDetail": "독립은 Chișinău 명칭의 별도 개칭 사건이 아니므로 표시 구간 추가 없음."
           }
         ],
         "notes": [
           {
-            "detail": "Chișinău와 Кишинёв는 언어 차이",
-            "researchDetail": "키시너우를 러시아어 키시네프와 같은 도시의 언어별 명칭으로 관리한다. 1812·1918·1940·1991년 정치적 전환을 지도 기본명 변경으로 자동 번역하지 않는다.",
-            "sourceUrl": "https://visit.chisinau.md/en/istoric/"
+            "detail": "몰다비아 공국의 옛 키릴 표기",
+            "sourceUrl": "https://onomajournal.org/wp-content/uploads/2023/12/Onoma-58-1.08-Herzen-Herzen-final.pdf",
+            "researchDetail": "연구에서 Кишинъу 등 전통 키릴 문자형을 확인한다. 같은 시기의 Кишънъу 등도 존재하나 선정된 대표형 외 철자를 names[]의 불필요한 별칭으로 추가하지 않는다."
           },
           {
-            "detail": "도시와 Chișinău ADM1 구별",
-            "researchDetail": "GeoNames 618426은 도시 취락 PPLC이며 Chișinău Municipality는 별도 ADM1 레코드이다.",
-            "sourceUrl": "https://www.geonames.org/618426/"
+            "detail": "1804년 영어 Kischenau 소급 선정",
+            "sourceUrl": "https://onomajournal.org/wp-content/uploads/2023/12/Onoma-58-1.08-Herzen-Herzen-final.pdf",
+            "researchDetail": "1804년 영어 지도 사용례가 확인된다. 1801년 지명 조사 시작 시점으로 소급한 것은 편집상 선택이지 1801년 영어 철자 최초 확인이 아니다."
+          },
+          {
+            "detail": "제정 러시아 옛 철자 Кишиневъ",
+            "sourceUrl": "https://onomajournal.org/wp-content/uploads/2023/12/Onoma-58-1.08-Herzen-Herzen-final.pdf",
+            "researchDetail": "1817년 이후 옛 러시아어 지도에서 Кишиневъ 기록. 1812년 편입일과 철자 최초 기록일은 다르다."
+          },
+          {
+            "detail": "1940~1941 라틴·키릴 과도기",
+            "sourceUrl": "https://istmat.org/node/19820",
+            "researchDetail": "1940-11-11 결정으로 1941-01부터 기관 등에서 문자 전환을 시작할 수 있었다. 지도는 1941-03-01 법정 시행일로 전환점을 고정한다."
+          },
+          {
+            "detail": "소련기 몰도바어·러시아어 구별",
+            "sourceUrl": "https://guides.loc.gov/moldovan-collection-at-the-library-of-congress/transliteration-guide",
+            "researchDetail": "Кишинэу는 소련식 몰도바어(루마니아어) 키릴 문자형, Кишинёв는 러시아어 표기이다. 두 철자를 동일 언어의 별칭으로 처리하지 않는다."
+          },
+          {
+            "detail": "1944-09-12 휴전협정 기준 확정",
+            "sourceUrl": "https://legislatie.just.ro/public/DetaliiDocument/31",
+            "researchDetail": "1944-08-24 군사 탈환과 09-12 휴전협정 국경 인정 구분. 사용자가 09-12를 대표명 전환 기준으로 지정했다."
+          },
+          {
+            "detail": "1989 이후 러시아어는 사용 지속",
+            "sourceUrl": "https://en.wikisource.org/wiki/Translation:Law_%22on_Functioning_of_Languages_on_the_Territory_of_the_Moldavian_SSR%22",
+            "researchDetail": "1989년 라틴 문자·국가어 복귀 후에는 Chișinău만 지도 대표 원어로 수록하나 러시아어 이름의 사용 자체를 부정하지 않는다."
+          },
+          {
+            "detail": "도시와 Chișinău ADM1 구분",
+            "sourceUrl": "https://www.geonames.org/618426/chisinau.html",
+            "researchDetail": "GeoNames 618426은 수도 취락 PPLC이며 동일 명칭의 행정단위와 별도 객체다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Chisinau",
+      "defaultDisplayNameNative": "Chișinău",
+      "defaultNativeLanguage": "ro",
+      "defaultNativeNames": [
+        {
+          "text": "Chișinău",
+          "language": "ro",
+          "script": "Latn"
+        }
+      ]
     },
     {
       "geonameId": 2960316,
       "names": [
         {
+          "text": "Luxembourg",
+          "language": "fr",
+          "script": "Latn",
+          "usage": "standard",
+          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/facts-figures"
+        },
+        {
+          "text": "Luxemburg",
+          "language": "de",
+          "script": "Latn",
+          "usage": "standard",
+          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/facts-figures"
+        },
+        {
           "text": "Lëtzebuerg",
           "language": "lb",
+          "script": "Latn",
           "usage": "standard",
-          "note": "룩셈부르크어 도시명",
           "sourceUrl": "https://www.vdl.lu/en/news/ons-stad-dindustriestad-letzebuerg-freier-haut"
         },
         {
           "text": "Luxembourg City",
           "language": "en",
           "usage": "standard",
-          "note": "국가명과 구별하는 영어 형태",
           "sourceUrl": "https://www.geonames.org/2960316/luxembourg.html"
-        },
-        {
-          "text": "Luxembourg",
-          "language": "en",
-          "usage": "alternate",
-          "variantType": "shortEnglishCityName",
-          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/facts-figures"
-        },
-        {
-          "text": "Luxembourg",
-          "language": "fr",
-          "usage": "standard",
-          "note": "프랑스어 도시·국가명",
-          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/facts-figures"
-        },
-        {
-          "text": "Luxemburg",
-          "language": "de",
-          "usage": "standard",
-          "note": "독일어 도시명",
-          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/facts-figures"
         },
         {
           "text": "룩셈부르크",
@@ -315,46 +636,160 @@
       "sourceUrl": "https://www.geonames.org/2960316/luxembourg.html",
       "sourceCountryCode": "LU",
       "defaultDisplayNameKo": "룩셈부르크",
-      "shortDescriptionKo": "동명 국가·행정구역과 별도 도시",
+      "shortDescriptionKo": "1830년 2개·1984년 3개 언어",
       "displayTimeline": [
         {
-          "nameKo": "룩셈부르크",
           "fromYear": 1801,
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/history"
+          "nameKo": "룩셈부르크",
+          "nameEn": "Luxembourg City",
+          "nameNative": "Luxembourg",
+          "nativeLanguage": "fr",
+          "nativeNames": [
+            {
+              "text": "Luxembourg",
+              "language": "fr",
+              "script": "Latn"
+            }
+          ],
+          "kind": "frenchAdministrativePeriodMapName",
+          "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/history",
+          "note": "프랑스 통치기 프랑스어 대표명",
+          "researchNote": "1801년 현재의 룩셈부르크시는 프랑스 통치기 포레(Forests) 데파르트망의 중심지였으므로 프랑스어 Luxembourg를 대표 원어명으로 선택한다. 독일어 Luxemburg와 지역 룩셈부르크어 Lëtzebuerg도 언어권에서 존재했으나 1801~1830 지도 병기 대상으로 추가하지 않는다. 영어 Luxembourg City는 동명 국가와 구별하기 위한 편집상 명칭이며 1801년 최초 영어 사용례를 주장하지 않는다."
+        },
+        {
+          "fromDate": "1830-06-04",
+          "nameKo": "룩셈부르크",
+          "nameEn": "Luxembourg City",
+          "nameNative": "Luxembourg",
+          "nativeLanguage": "fr",
+          "nativeNames": [
+            {
+              "text": "Luxembourg",
+              "language": "fr",
+              "script": "Latn"
+            },
+            {
+              "text": "Luxemburg",
+              "language": "de",
+              "script": "Latn"
+            }
+          ],
+          "kind": "royalGrandDucalLanguageDecreeFrenchGermanMapNames",
+          "sourceUrl": "https://legilux.public.lu/eli/etat/leg/argd/1830/06/04/n1/jo",
+          "note": "프랑스어·독일어 행정 병기",
+          "researchNote": "1830-06-04 왕령대공령의 언어 관련 규정 개정을 두 언어 지명 Luxembourg·Luxemburg 공동 원어 병기의 편집 기준으로 선택한다. 이는 언어 사용의 최초 시작일이나 개별 도시의 법적 개칭일이 아니다. 1830년 법령 공개 자료의 메타데이터에 비정상적으로 서명일 전 시행일이 기록되어 있으므로 실제 발효일로 단정하지 않고 법령 서명일을 편집 기준으로 사용한다. 1834-02-22 공문서에서 프랑스어·독일어 사용을 규정한 명령으로 후속 확인된다."
+        },
+        {
+          "fromDate": "1984-03-02",
+          "nameKo": "룩셈부르크",
+          "nameEn": "Luxembourg City",
+          "nameNative": "Lëtzebuerg",
+          "nativeLanguage": "lb",
+          "nativeNames": [
+            {
+              "text": "Lëtzebuerg",
+              "language": "lb",
+              "script": "Latn"
+            },
+            {
+              "text": "Luxembourg",
+              "language": "fr",
+              "script": "Latn"
+            },
+            {
+              "text": "Luxemburg",
+              "language": "de",
+              "script": "Latn"
+            }
+          ],
+          "kind": "luxembourg1984LanguagesLawTrilingualAdministrativeNames",
+          "sourceUrl": "https://legilux.public.lu/eli/etat/leg/loi/1984/02/24/n1/jo",
+          "note": "언어법 시행·세 언어 병기",
+          "researchNote": "1984-02-24 법률의 1984-03-02 시행일에 룩셈부르크어가 국가 언어로 법률상 인정되고 프랑스어·독일어·룩셈부르크어 세 언어의 행정·사법적 사용이 명시되었다. 이를 Lëtzebuerg, Luxembourg, Luxemburg 3개 원어명 공동 수록의 편집 기준으로 정한다. 룩셈부르크어가 이날 처음 사용되거나 도시 자체가 개명된 것은 아니다. 2023년 헌법상의 언어 지위 강화는 명칭 전환점으로 추가하지 않는다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1830-french-german-and-1984-trilingual-editorial-thresholds",
       "historicalGeography": {
         "events": [
           {
             "year": 963,
             "type": "nameOriginAtEarlyFort",
             "detail": "963년 옛 요새명 기록",
-            "researchDetail": "963년 기록의 Lucilinburhuc는 룩셈부르크라는 지명의 기원으로 소개되는 초기 요새명이며 1801년 이후 도시의 공식 개칭을 뜻하지 않는다.",
+            "researchDetail": "Lucilinburhuc는 중세 요새 지명 기원에 관한 역사 자료이고 1801년 이후 대표 도시명의 별칭으로 저장하지 않는다.",
             "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/history"
+          },
+          {
+            "date": "1830-06-04",
+            "type": "royalGrandDucalDecreeOnLanguages",
+            "detail": "왕령대공령 언어 사용 변경",
+            "sourceUrl": "https://legilux.public.lu/eli/etat/leg/argd/1830/06/04/n1/jo",
+            "researchDetail": "프랑스어·독일어 지명 병기 시작은 도시 개명일이 아닌 편집 기준. 법령 데이터의 게시·시행일 오류 가능성 때문에 서명일로 표시."
+          },
+          {
+            "date": "1834-02-22",
+            "type": "frenchGermanPublicActsDecree",
+            "detail": "공문서 프랑스어·독일어 사용",
+            "sourceUrl": "https://legilux.public.lu/eli/etat/leg/loi/1984/02/24/n1/jo",
+            "researchDetail": "1984년 언어법에서 폐지 대상으로 명시한 공문서 언어 관련 왕령대공령이다. 지도 원어 병기 변경은 이미 1830년을 채택했으므로 별도 구간 없음."
           },
           {
             "year": 1867,
             "type": "fortressDismantling",
             "detail": "1867년 요새 철거 시작",
-            "researchDetail": "런던 조약과 룩셈부르크 요새 철거는 군사·정치적 역사 사건이지 룩셈부르크 도시는 새 이름으로 바뀌지 않았다.",
+            "researchDetail": "런던 조약과 요새 철거는 정치적 사건이지 도시 개명이 아니다.",
             "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/history"
+          },
+          {
+            "date": "1984-03-02",
+            "type": "languagesLawEffective",
+            "detail": "룩셈부르크어·불어·독어 행정 언어",
+            "sourceUrl": "https://legilux.public.lu/eli/etat/leg/loi/1984/02/24/n1/jo",
+            "researchDetail": "1984-02-24 서명, 02-27 공포, 03-02 시행. 세 언어 행정 사용권을 명문화."
           }
         ],
         "notes": [
           {
-            "detail": "도시·국가·칸톤·ADM2 별개",
-            "researchDetail": "P/PPLC 2960316은 도시이다. 룩셈부르크 대공국 PCLI 2960313, Ville de Luxembourg ADM2 2960317과 동일하게 합치지 않는다.",
-            "sourceUrl": "https://www.geonames.org/2960317/ville-de-luxembourg.html"
+            "detail": "도시·국가·행정구역 구별",
+            "sourceUrl": "https://www.geonames.org/2960317/ville-de-luxembourg.html",
+            "researchDetail": "GeoNames 2960316은 도시 PPLC, 2960313은 국가, 2960317은 행정단위로 각각 별도 객체다."
           },
           {
-            "detail": "Lëtzebuerg·Luxembourg 병존",
-            "researchDetail": "룩셈부르크어 Lëtzebuerg, 프랑스어 Luxembourg, 독일어 Luxemburg는 공동 언어의 형태다. 영어 표시명 Luxembourg City는 동명 국가와의 구별을 돕는다.",
-            "sourceUrl": "https://www.luxembourg-city.com/en/about-luxembourg-city/presentation/facts-figures"
+            "detail": "3개 언어 이름은 동일 도시",
+            "sourceUrl": "https://legilux.public.lu/eli/etat/leg/loi/1984/02/24/n1/jo",
+            "researchDetail": "Lëtzebuerg(룩셈부르크어), Luxembourg(프랑스어), Luxemburg(독일어)는 병존하는 언어별 이름이며 순차적으로 실재 도시명이 교체된 것이 아니다."
+          },
+          {
+            "detail": "1830년은 법령 서명일 편집 기준",
+            "sourceUrl": "https://legilux.public.lu/eli/etat/leg/argd/1830/06/04/n1/jo",
+            "researchDetail": "Legilux의 1830-06-04 왕령대공령은 공개되어 있으나 입력된 원래 발효일 메타데이터가 서명보다 이른 비정상 날짜이므로 1830-06-04를 법적 시행일로 표기하지 않는다."
+          },
+          {
+            "detail": "2023년 헌법 지위 강화 별도",
+            "sourceUrl": "https://legilux.public.lu/eli/etat/leg/loi/1984/02/24/n1/jo",
+            "researchDetail": "룩셈부르크어 헌법상 지위 강화가 이미 채택된 3개 이름의 추가 철자·명칭 변경은 유발하지 않는다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Luxembourg City",
+      "defaultDisplayNameNative": "Lëtzebuerg",
+      "defaultNativeLanguage": "lb",
+      "defaultNativeNames": [
+        {
+          "text": "Lëtzebuerg",
+          "language": "lb",
+          "script": "Latn"
+        },
+        {
+          "text": "Luxembourg",
+          "language": "fr",
+          "script": "Latn"
+        },
+        {
+          "text": "Luxemburg",
+          "language": "de",
+          "script": "Latn"
+        }
+      ]
     },
     {
       "geonameId": 3042030,
@@ -384,16 +819,28 @@
       "sourceUrl": "https://www.geonames.org/3042030/vaduz.html",
       "sourceCountryCode": "LI",
       "defaultDisplayNameKo": "파두츠",
-      "shortDescriptionKo": "리히텐슈타인의 수도",
+      "shortDescriptionKo": "소규모 수도·근현대 지명 유지",
       "displayTimeline": [
         {
-          "nameKo": "파두츠",
           "fromYear": 1801,
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.vaduz.li/en/vaduz/portrait/vaduz"
+          "nameKo": "파두츠",
+          "nameEn": "Vaduz",
+          "nameNative": "Vaduz",
+          "nativeLanguage": "de",
+          "nativeNames": [
+            {
+              "text": "Vaduz",
+              "language": "de",
+              "script": "Latn"
+            }
+          ],
+          "kind": "historicalGermanLocalNameNoConfirmedRenaming",
+          "sourceUrl": "https://www.vaduz.li/en/vaduz/portrait/vaduz",
+          "note": "독일어 Vaduz 장기 유지",
+          "researchNote": "1801년은 지도 역사명 조사 시작 연도이며 도시 창건일이나 당시 새 개명일이 아니다. 1150년 최초 문헌 기록, 1719년 공국 형성, 1939년 군주 상주지 변동은 도시명 Vaduz의 근현대 공식 개칭을 뜻하지 않는다. 영어 Vaduz와 독일어 Vaduz는 문자열이 같아도 언어별 필드로 저장한다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-no-verified-name-change",
       "historicalGeography": {
         "events": [
           {
@@ -427,9 +874,24 @@
             "detail": "도시 PPLC와 Vaduz ADM1 분리",
             "researchDetail": "GeoNames 3042030은 수도 취락 P/PPLC이고 Vaduz 행정구역은 별도 계층의 레코드이다.",
             "sourceUrl": "https://www.geonames.org/3042030/"
+          },
+          {
+            "detail": "수도 예외와 도시 등급 독립",
+            "sourceUrl": "https://www.geonames.org/3042030/vaduz.html",
+            "researchDetail": "GeoNames PPLC 수도 취락 수록 예외를 적용하지만 인구·도시화 수준으로 정하는 역사적 도시 등급을 수도라는 이유만으로 상향하지 않는다. 영어·독일어 Vaduz가 동일해도 자료에서는 언어별로 보존한다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Vaduz",
+      "defaultDisplayNameNative": "Vaduz",
+      "defaultNativeLanguage": "de",
+      "defaultNativeNames": [
+        {
+          "text": "Vaduz",
+          "language": "de",
+          "script": "Latn"
+        }
+      ]
     }
   ]
 }

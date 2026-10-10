@@ -3,8 +3,8 @@
   "batch": "13-european-microstates-mediterranean-capitals",
   "status": "verified-source-staging-not-runtime",
   "source": "GeoNames (CC BY 4.0), Andorra government, San Marino tourism authority, Monaco legal gazette, Valletta Local Council, Cyprus authorities and UNFICYP",
-  "checkedOn": "2026-10-08",
-  "selection": "Five verified country-capital P/PPLC settlement records: Andorra la Vella, City of San Marino, Monaco, Valletta and Nicosia. Small-capital exception applies irrespective of population.",
+  "checkedOn": "2026-10-10",
+  "selection": "Five GeoNames P/PPLC capital city records retained. Historical-name review finalized for Andorra la Vella, San Marino city, Monaco and Valletta; Nicosia historical transitions are pending further analysis of 1878-1914 de jure Ottoman sovereignty versus British de facto administration and languages.",
   "coordinateConvention": "GeoNames WGS84 EPSG:4326 point, latitude/longitude. Never a municipality or sovereign-country boundary polygon.",
   "countryCodeSemantics": "Present-day GeoNames source metadata only, not historical political sovereignty or legal territory recognition. Nicosia CY is not an assertion that one point resolves the 1974 line.",
   "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
@@ -14,15 +14,16 @@
   "qualityNotes": [
     "All 5 IDs are P/PPLC capital settlements, including low-population microstate capitals, not country PCLI or administrative ADM1 records.",
     "Andorra la Vella 3041563, San Marino city 3168070, Monaco 2993458, Valletta 2562305 and Nicosia 146268 are intentionally distinct from country/administration similarly named objects.",
-    "Monaco 2993458 is the city-place representative for the city-state; Monaco-Ville is a smaller historic neighbourhood, not its 1801-onward former official name.",
-    "San Marino's traditional 301 founding is a legend and not a verified exact PPLC settlement foundation date. A separate 885 document records an earlier organized community.",
-    "Valletta's foundation 1566-03-28 and transfer of the Order's seat in 1571 are founding/administrative events, not a city rename.",
-    "Andorra's 1993-03-14 constitutional referendum is a modern political event, not the creation or renaming of its existing capital.",
-    "Nicosia's Greek Λευκωσία, Turkish Lefkoşa and English Nicosia coexist; 1963 and 1974 partition milestones must not trigger an automatic Korean map-label change.",
+    "Monaco 2993458: city-state capital city-place representative, not Monaco-Ville quarter. Historical French-period Fort-Hercule / ko 포르에르퀼 / en Fort-Hercule from 1801, Monaco restored at 1814-05-30 treaty/editorial transition; 1805 administrative arrondissement realignment does not establish an earlier formal city rename.",
+    "San Marino city's Italian/English San Marino continues throughout 1801-onward review; 301 founding tradition is unverified as an exact urban founding event, 885 early document is contextual evidence, and Città di San Marino remains an explanatory descriptor not an additional official map name.",
+    "Valletta: Italian La Valletta from 1801; Italian and English names from 1921-05-16 constitution effective date; Maltese Il-Belt Valletta plus English and historical transitional Italian from 1934-10-01 language-letter-patent change; Maltese/English only from 1936-09-02 constitution effective date. The 1934-36 Italian form is a documented historical/editorial transition, NOT a claim of three legally equal official languages. Founded 1566-03-28; seat 1571.",
+    "Andorra la Vella remains Andorra la Vella in Catalan/English throughout review from 1801; the 1993-03-14 constitution referendum did not rename the capital.",
+    "Nicosia record UNCHANGED and historical naming transitions RESERVED for separate review; 1878-1914 de jure Ottoman sovereignty with de facto British administration, British annexation 1914-11-05, and later constitutional/language boundaries must be treated separately. This batch edit does not approve a Nicosia timeline.",
     "Nicosia's PPLC coordinate is a representative point. UN buffer-zone geometry, de facto administration and cross-city area partition require independently reviewed geospatial layers.",
     "English/local text may match exactly (Andorra la Vella, San Marino, Monaco); keep distinct name fields in staging and deduplicate only the rendered text.",
     "All interface-facing short descriptions and note/detail strings contain at most 28 Unicode code points. Research details and all source URLs remain stored separately.",
-    "This is reviewed staging, not publication to real PLAC v2 tile shards or an alteration of any main branch."
+    "This is reviewed staging, not publication to real PLAC v2 tile shards or an alteration of any main branch.",
+    "User approved the naming decisions for the four capitals above; Nicosia displayTimeline, names[], and historicalGeography are deliberately left untouched until its 1878-1914 naming and language history is resolved."
   ],
   "records": [
     {
@@ -44,14 +45,6 @@
           "text": "안도라라베야",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Andorre-la-Vieille",
-          "language": "fr",
-          "usage": "alternate",
-          "variantType": "frenchExonym",
-          "note": "프랑스어 관용 표기",
-          "sourceUrl": "https://www.geonames.org/3041563/andorra-la-vella.html"
         }
       ],
       "latitude": 42.50779,
@@ -61,16 +54,28 @@
       "sourceUrl": "https://www.geonames.org/3041563/andorra-la-vella.html",
       "sourceCountryCode": "AD",
       "defaultDisplayNameKo": "안도라라베야",
-      "shortDescriptionKo": "안도라의 카탈루냐어권 수도",
+      "shortDescriptionKo": "카탈루냐어 수도명 장기 유지",
       "displayTimeline": [
         {
           "fromYear": 1801,
           "nameKo": "안도라라베야",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/3041563/andorra-la-vella.html"
+          "nameEn": "Andorra la Vella",
+          "nameNative": "Andorra la Vella",
+          "nativeLanguage": "ca",
+          "nativeNames": [
+            {
+              "text": "Andorra la Vella",
+              "language": "ca",
+              "script": "Latn"
+            }
+          ],
+          "kind": "catalanLocalNameContinuity",
+          "sourceUrl": "https://www.geonames.org/3041563/andorra-la-vella.html",
+          "note": "카탈루냐어 지명 유지",
+          "researchNote": "1801년부터 카탈루냐어 Andorra la Vella를 원어 대표명으로 유지한다. 안도라의 1993-03-14 헌법 국민투표와 국가체제 변경은 새 도시 개칭으로 보지 않는다. 영어 지명 철자는 카탈루냐어와 동일하며 별도 언어 항목으로 보존한다. 1801년은 조사 시작 연도이지 도시 창립일이 아니다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-no-verified-renaming",
       "historicalGeography": {
         "events": [
           {
@@ -93,7 +98,17 @@
             "sourceUrl": "https://visitandorra.com/en/discover-andorra/a-brief-history"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Andorra la Vella",
+      "defaultDisplayNameNative": "Andorra la Vella",
+      "defaultNativeLanguage": "ca",
+      "defaultNativeNames": [
+        {
+          "text": "Andorra la Vella",
+          "language": "ca",
+          "script": "Latn"
+        }
+      ]
     },
     {
       "geonameId": 3168070,
@@ -106,24 +121,9 @@
           "sourceUrl": "https://www.geonames.org/3168070/san-marino.html"
         },
         {
-          "text": "Città di San Marino",
-          "language": "it",
-          "usage": "alternate",
-          "variantType": "disambiguatingItalianCityDesignation",
-          "note": "국가명과 구별하는 도시형",
-          "sourceUrl": "https://www.geonames.org/3168070/san-marino.html"
-        },
-        {
           "text": "San Marino",
           "language": "en",
           "usage": "standard"
-        },
-        {
-          "text": "City of San Marino",
-          "language": "en",
-          "usage": "alternate",
-          "variantType": "disambiguatingEnglishCityDesignation",
-          "sourceUrl": "https://www.geonames.org/3168070/san-marino.html"
         },
         {
           "text": "산마리노",
@@ -138,16 +138,28 @@
       "sourceUrl": "https://www.geonames.org/3168070/san-marino.html",
       "sourceCountryCode": "SM",
       "defaultDisplayNameKo": "산마리노",
-      "shortDescriptionKo": "산마리노 공화국의 소규모 수도",
+      "shortDescriptionKo": "수도명 유지·301년은 건국 전승",
       "displayTimeline": [
         {
           "fromYear": 1801,
           "nameKo": "산마리노",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/3168070/san-marino.html"
+          "nameEn": "San Marino",
+          "nameNative": "San Marino",
+          "nativeLanguage": "it",
+          "nativeNames": [
+            {
+              "text": "San Marino",
+              "language": "it",
+              "script": "Latn"
+            }
+          ],
+          "kind": "italianLocalCapitalNameContinuity",
+          "sourceUrl": "https://www.geonames.org/3168070/san-marino.html",
+          "note": "이탈리아어 지명 유지",
+          "researchNote": "도시의 원어명 San Marino와 영어 San Marino, 한국어 산마리노를 1801년 조사 시작부터 유지한다. Città di San Marino는 동명 국가와 도시를 구별하는 설명형 형태로 지도 별칭을 추가하지 않는다. 서기 301년 성 마리누스 전승과 885년 문헌 기록은 도시의 1801년 이후 공식 명칭 변경 근거가 아니다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-no-verified-renaming",
       "historicalGeography": {
         "events": [
           {
@@ -177,35 +189,60 @@
             "sourceUrl": "https://www.visitsanmarino.com/pub1/VisitSM/en/contenuto/About-San-Marino/I-NOVE-CASTELLI.html"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "San Marino",
+      "defaultDisplayNameNative": "San Marino",
+      "defaultNativeLanguage": "it",
+      "defaultNativeNames": [
+        {
+          "text": "San Marino",
+          "language": "it",
+          "script": "Latn"
+        }
+      ]
     },
     {
       "geonameId": 2993458,
       "names": [
         {
+          "text": "Fort-Hercule",
+          "language": "fr",
+          "script": "Latn",
+          "usage": "historical",
+          "variantType": "selectedFrenchAnnexationPeriodName",
+          "sourceUrl": "https://www.mairie.mc/en/"
+        },
+        {
           "text": "Monaco",
           "language": "fr",
+          "script": "Latn",
           "usage": "standard",
-          "note": "프랑스어 도시·국가 공통 이름",
-          "sourceUrl": "https://www.geonames.org/2993458/monaco.html"
+          "sourceUrl": "https://www.mairie.mc/en/"
+        },
+        {
+          "text": "Fort-Hercule",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedFrenchPeriodEnglishName",
+          "sourceUrl": "https://www.mairie.mc/en/"
         },
         {
           "text": "Monaco",
           "language": "en",
-          "usage": "standard"
+          "usage": "standard",
+          "sourceUrl": "https://www.geonames.org/2993458/monaco.html"
+        },
+        {
+          "text": "포르에르퀼",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedFrenchPeriodKoreanTranscription",
+          "sourceUrl": "https://www.mairie.mc/en/"
         },
         {
           "text": "모나코",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Mùnegu",
-          "language": "lij",
-          "usage": "alternate",
-          "variantType": "monegasqueLigurianLocalName",
-          "note": "모네가스크·리구리아계 이름",
-          "sourceUrl": "https://www.geonames.org/2993458/monaco.html"
         }
       ],
       "latitude": 43.73718,
@@ -215,18 +252,76 @@
       "sourceUrl": "https://www.geonames.org/2993458/monaco.html",
       "sourceCountryCode": "MC",
       "defaultDisplayNameKo": "모나코",
-      "shortDescriptionKo": "동명 공국과 구분하는 도시 취락",
+      "shortDescriptionKo": "1814년 포르에르퀼 명칭 복원",
       "displayTimeline": [
         {
           "fromYear": 1801,
+          "nameKo": "포르에르퀼",
+          "nameEn": "Fort-Hercule",
+          "nameNative": "Fort-Hercule",
+          "nativeLanguage": "fr",
+          "nativeNames": [
+            {
+              "text": "Fort-Hercule",
+              "language": "fr",
+              "script": "Latn"
+            }
+          ],
+          "kind": "frenchRepublicAnnexationFortHerculeHistoricalName",
+          "sourceUrl": "https://www.mairie.mc/en/",
+          "note": "프랑스 편입기 Fort-Hercule",
+          "researchNote": "1793-02-14 프랑스가 모나코를 병합하면서 Fort-Hercule 명칭이 사용됐다. 1801년은 이 프랑스 통치기에 해당하므로 프랑스어 Fort-Hercule을 도시 원어명, 한국어 포르에르퀼을 편집상 음역, 영어 Fort-Hercule을 시대 일치 표기로 선택한다. 한국어는 당대 실사용이 확인된 명칭이 아니다. 모나코 정부·시청 자료는 Fort-Hercule 1793~1814 구간을 설명한다."
+        },
+        {
+          "fromDate": "1814-05-30",
           "nameKo": "모나코",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/2993458/monaco.html"
+          "nameEn": "Monaco",
+          "nameNative": "Monaco",
+          "nativeLanguage": "fr",
+          "nativeNames": [
+            {
+              "text": "Monaco",
+              "language": "fr",
+              "script": "Latn"
+            }
+          ],
+          "kind": "monacoRestorationAfterFrenchAnnexation",
+          "sourceUrl": "https://en.gouv.mc/Government-Institutions/History-and-Heritage/Periods/Times-of-trouble-1793-1861",
+          "note": "1814년 모나코 공국 복원",
+          "researchNote": "1814-05-30 파리조약과 그리말디 통치권의 복원(오노레 4세 복위 기준)에 따라 프랑스 합병기 Fort-Hercule에서 Monaco로 지도 대표명을 돌린다. 실제 현지 모든 행정기관이 이날 명칭 사용을 동시에 전환했다는 뜻이 아니다. 일부 지역 역사자료에서 언급하는 1805년 Monaco 명칭 복원설은 도시명 법령과의 일치 여부를 검증하지 못했으므로 별도 전환일로 채택하지 않는다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-french-annexation-name-and-1814-restoration",
       "historicalGeography": {
         "events": [
+          {
+            "date": "1793-02-14",
+            "type": "frenchRepublicAnnexationFortHercule",
+            "detail": "1793년 프랑스 병합·명칭 변경",
+            "sourceUrl": "https://www.gouv.mc/Gouvernement-et-Institutions/Histoire-et-Patrimoine/Epoques/Le-temps-des-difficultes-1793-1861/Annexion-a-la-France",
+            "researchDetail": "모나코가 프랑스에 병합되어 1793~1814년 Fort-Hercule이라는 명칭을 사용했다. 1801년 명칭 구간의 배경 사건이다."
+          },
+          {
+            "date": "1814-05-30",
+            "type": "monacoPrincipalityRestoration",
+            "detail": "1814년 그리말디 통치권 복원",
+            "sourceUrl": "https://en.gouv.mc/Government-Institutions/History-and-Heritage/Periods/Times-of-trouble-1793-1861",
+            "researchDetail": "파리조약·공국 복원과 오노레 4세의 군주 지위 시작을 1814-05-30 편집 기준으로 사용한다. 도시 행정의 실무 철자 사용 최초일을 뜻하지 않는다."
+          },
+          {
+            "date": "1793-02-14",
+            "type": "frenchAnnexationOfMonaco",
+            "detail": "1793년 프랑스 병합",
+            "sourceUrl": "https://www.gouv.mc/Gouvernement-et-Institutions/Histoire-et-Patrimoine/Epoques/Le-temps-des-difficultes-1793-1861/Annexion-a-la-France",
+            "researchDetail": "프랑스혁명 당시 합병 후 Fort-Hercule이라는 지명이 사용됐다. 1801년 조사 범위보다 이른 사건이다."
+          },
+          {
+            "date": "1814-05-30",
+            "type": "firstTreatyOfParisGrimaldiRestoration",
+            "detail": "1814년 군주권·지명 복원",
+            "sourceUrl": "https://en.gouv.mc/Government-Institutions/History-and-Heritage/Periods/Times-of-trouble-1793-1861",
+            "researchDetail": "제1차 파리조약에 근거한 군주권 복원. 1814년 5월 30일은 표기 전환을 위한 편집 기준이고 개별 시정부 명칭 변경 공고의 확인된 시행일은 아니다."
+          },
           {
             "date": "2013-09-13",
             "type": "modernUrbanQuarterRegulation",
@@ -245,43 +340,59 @@
             "detail": "Monaco-Ville은 역사적 지구",
             "researchDetail": "Monaco-Ville은 공국 안의 옛 시가지·특정 지구이며 Monaco 전역의 동의어 또는 한때 공식 개칭명이라는 의미로 1801년 이후 표시 연표에 넣지 않는다.",
             "sourceUrl": "https://journaldemonaco.gouv.mc/fr/Journaux/2013/Journal-8142/Ordonnance-Souveraine-n-4.481-du-13-septembre-2013-modifiant-les-dispositions-de-l-ordonnance-souveraine-n-3.647-du-9-septembre-1966-concernant-l-Urbanisme-la-Construction-et-la-Voirie-modifiee"
+          },
+          {
+            "detail": "Fort-Hercule와 Monaco 구간 구분",
+            "sourceUrl": "https://www.mairie.mc/en/",
+            "researchDetail": "시정부는 프랑스 병합기 1793~1814년에 Fort-Hercule 사용을 기록한다. 1805년 행정구역 개편 문헌에 Monaco라는 이름이 남아 있는 것은 1805년에 국가적 공식 이름이 복원됐다는 충분한 증거가 아니다."
+          },
+          {
+            "detail": "1805년 조기 복원설은 추가 검증",
+            "sourceUrl": "https://www.mairie.mc/en/",
+            "researchDetail": "일부 지역 역사 자료가 1805년 Monaco 명칭 복원을 거론하지만 모나코 정부·시청은 Fort-Hercule 1793~1814를 설명한다. 정확한 개별 도시명 법령 확인 전에는 1814-05-30을 안정적인 편집 기준으로 유지한다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Monaco",
+      "defaultDisplayNameNative": "Monaco",
+      "defaultNativeLanguage": "fr",
+      "defaultNativeNames": [
+        {
+          "text": "Monaco",
+          "language": "fr",
+          "script": "Latn"
+        }
+      ]
     },
     {
       "geonameId": 2562305,
       "names": [
         {
-          "text": "Il-Belt Valletta",
-          "language": "mt",
-          "usage": "standard",
-          "note": "몰타어 수도명, Il-Belt 포함",
-          "sourceUrl": "https://beltvallettalc.gov.mt/en/"
-        },
-        {
-          "text": "Valletta",
-          "language": "mt",
-          "usage": "alternate",
-          "variantType": "malteseShortName",
-          "sourceUrl": "https://www.geonames.org/2562305/valletta.html"
+          "text": "La Valletta",
+          "language": "it",
+          "script": "Latn",
+          "usage": "historical",
+          "variantType": "selectedHistoricalItalianName",
+          "sourceUrl": "https://www.treccani.it/enciclopedia/valletta_(Enciclopedia-Italiana)/"
         },
         {
           "text": "Valletta",
           "language": "en",
-          "usage": "standard"
+          "script": "Latn",
+          "usage": "standard",
+          "sourceUrl": "https://www.geonames.org/2562305/valletta.html"
+        },
+        {
+          "text": "Il-Belt Valletta",
+          "language": "mt",
+          "script": "Latn",
+          "usage": "standard",
+          "sourceUrl": "https://beltvallettalc.gov.mt/en/"
         },
         {
           "text": "발레타",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "La Valletta",
-          "language": "it",
-          "usage": "alternate",
-          "variantType": "italianExonym",
-          "sourceUrl": "https://www.geonames.org/2562305/valletta.html"
         }
       ],
       "latitude": 35.89968,
@@ -291,16 +402,102 @@
       "sourceUrl": "https://www.geonames.org/2562305/valletta.html",
       "sourceCountryCode": "MT",
       "defaultDisplayNameKo": "발레타",
-      "shortDescriptionKo": "1566년 건설된 몰타의 수도",
+      "shortDescriptionKo": "1921·1934·1936년 언어 병기",
       "displayTimeline": [
         {
           "fromYear": 1801,
           "nameKo": "발레타",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://beltvallettalc.gov.mt/en/"
+          "nameEn": "Valletta",
+          "nameNative": "La Valletta",
+          "nativeLanguage": "it",
+          "nativeNames": [
+            {
+              "text": "La Valletta",
+              "language": "it",
+              "script": "Latn"
+            }
+          ],
+          "kind": "historicalItalianAdministrationNameSelection",
+          "sourceUrl": "https://www.treccani.it/enciclopedia/valletta_(Enciclopedia-Italiana)/",
+          "note": "이탈리아어 도시명 대표",
+          "researchNote": "1801년 이후 몰타는 영국 보호·통치로 넘어가지만 이탈리아어 La Valletta가 장기간 행정·문화 언어로 사용된 점을 고려해 원어 대표명으로 선택한다. 영어 Valletta는 시기를 통틀어 지도 대응명으로 사용하며 영국 행정기관에서 이탈리아어 사용이 사라진 것은 아니다. 이탈리아어 관사는 이름의 역사형에 포함하여 선택한다."
+        },
+        {
+          "fromDate": "1921-05-16",
+          "nameKo": "발레타",
+          "nameEn": "Valletta",
+          "nameNative": "La Valletta",
+          "nativeLanguage": "it",
+          "nativeNames": [
+            {
+              "text": "La Valletta",
+              "language": "it",
+              "script": "Latn"
+            },
+            {
+              "text": "Valletta",
+              "language": "en",
+              "script": "Latn"
+            }
+          ],
+          "kind": "malta1921ConstitutionEnglishItalianCoofficial",
+          "sourceUrl": "https://nationalarchives.gov.mt/wp-content/uploads/2023/12/Annual-Report-2020.pdf",
+          "note": "1921년 영어·이탈리아어 공식",
+          "researchNote": "1921-04-30 공포한 자치헌법은 1921-05-16 시행됐으며 영어와 이탈리아어를 공식 언어로 인정했다. La Valletta·Valletta를 지도 원어 병기 예외로 선택하고, 1921년을 개별 도시의 법적 개칭일이라고 보지 않는다. 이탈리아어 대표형 우선순위는 장기간 현지 행정·법원에서의 사용을 반영한 편집상 선택이다."
+        },
+        {
+          "fromDate": "1934-10-01",
+          "nameKo": "발레타",
+          "nameEn": "Valletta",
+          "nameNative": "Il-Belt Valletta",
+          "nativeLanguage": "mt",
+          "nativeNames": [
+            {
+              "text": "Il-Belt Valletta",
+              "language": "mt",
+              "script": "Latn"
+            },
+            {
+              "text": "Valletta",
+              "language": "en",
+              "script": "Latn"
+            },
+            {
+              "text": "La Valletta",
+              "language": "it",
+              "script": "Latn"
+            }
+          ],
+          "kind": "malta1934MalteseRecognitionTransitionalTrilingualSelection",
+          "sourceUrl": "https://www.treccani.it/enciclopedia/malta_res-6fcd60ba-8b74-11dc-8e9d-0016357eee51_(Enciclopedia-Italiana)/",
+          "note": "몰타어 공식화·세 언어 과도기",
+          "researchNote": "1934-08-16 어문 관련 Letters Patent가 1934-10-01 시행됐다. 몰타어가 공식 지위로 승격되고, 영어 및 기존 이탈리아어가 법제와 사회에서 복합적으로 이어진 과도기이다. 지도 원어에서는 Il-Belt Valletta, Valletta, La Valletta를 역사적 병기로 보존하되, 특히 이탈리아어는 이미 1934년 10월부터 법원·행정·입법에서 실질적으로 배제되므로 세 언어가 동등하게 행정에서 사용됐다고 단정하지 않는다. 형식상 헌정 지위 종료일은 1936-09-02로 선택한다."
+        },
+        {
+          "fromDate": "1936-09-02",
+          "nameKo": "발레타",
+          "nameEn": "Valletta",
+          "nameNative": "Il-Belt Valletta",
+          "nativeLanguage": "mt",
+          "nativeNames": [
+            {
+              "text": "Il-Belt Valletta",
+              "language": "mt",
+              "script": "Latn"
+            },
+            {
+              "text": "Valletta",
+              "language": "en",
+              "script": "Latn"
+            }
+          ],
+          "kind": "malta1936EnglishMalteseOfficialLanguagesOnly",
+          "sourceUrl": "https://www.treccani.it/enciclopedia/malta_res-6fcd60ba-8b74-11dc-8e9d-0016357eee51_(Enciclopedia-Italiana)/",
+          "note": "이탈리아어 공식 지위 제외",
+          "researchNote": "1936-08-12의 Letters Patent는 1936-09-02 시행돼 몰타어·영어의 공식 지위를 확정했고 이탈리아어를 공식 명칭 병기에서 제외한다. 1934-10-01 이미 여러 공적 영역에서 이탈리아어를 실질적으로 배제한 사실과 1936년 헌정상 공식 지위 종료를 구분한다. 1964-09-21 몰타 독립은 도시명·두 언어 병기를 바꾸지 않으므로 별도 명칭 전환점으로 만들지 않는다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1921-1934-1936-language-status-editorial-thresholds",
       "historicalGeography": {
         "events": [
           {
@@ -316,6 +513,62 @@
             "detail": "1571년 기사단 수도 이전",
             "researchDetail": "1571년 성 요한 기사단이 비토리오사에서 발레타로 기관·거점을 이전했으며, 새 도시 이름을 1571년에 바꾼 것이 아니다.",
             "sourceUrl": "https://beltvallettalc.gov.mt/en/"
+          },
+          {
+            "date": "1921-05-16",
+            "type": "malta1921ConstitutionEffective",
+            "detail": "1921년 영어·이탈리아어 공식",
+            "sourceUrl": "https://nationalarchives.gov.mt/wp-content/uploads/2023/12/Annual-Report-2020.pdf",
+            "researchDetail": "1921-04-30 헌법 공포, 05-16 발효. 1921년 이전에도 영어·이탈리아어 사용이 있었다."
+          },
+          {
+            "date": "1934-10-01",
+            "type": "malta1934LanguageChangesEffective",
+            "detail": "1934년 몰타어 공식화",
+            "sourceUrl": "https://www.treccani.it/enciclopedia/malta_res-6fcd60ba-8b74-11dc-8e9d-0016357eee51_%28Enciclopedia-Italiana%29/",
+            "researchDetail": "1934-08-16 자 특허장 개정의 발효일이다. 1934년 이탈리아어 법원·행정 사용 폐지와 몰타어 승격을 반영. 과도기 공동 원어명 3개는 완전한 법적 공용어 동등성의 선언이 아니다."
+          },
+          {
+            "date": "1936-09-02",
+            "type": "malta1936ConstitutionEffective",
+            "detail": "1936년 몰타어·영어 공식 확정",
+            "sourceUrl": "https://www.um.edu.mt/library/oar/handle/123456789/13479",
+            "researchDetail": "1936-08-12 자 헌정 특허장 발효. 이탈리아어 공식 체계 종료를 지도 병기에서 반영한다."
+          },
+          {
+            "date": "1964-09-21",
+            "type": "maltaIndependenceConstitution",
+            "detail": "1964년 몰타 독립",
+            "sourceUrl": "https://www.constitution.mt/constitution/chapter/1/article/5",
+            "researchDetail": "헌법상 몰타어·영어 공용어 체계를 유지하며 지도 명칭 전환은 불필요하다."
+          },
+          {
+            "date": "1921-05-16",
+            "type": "malta1921ConstitutionInForce",
+            "detail": "1921년 영·이탈리아어 공식",
+            "sourceUrl": "https://nationalarchives.gov.mt/wp-content/uploads/2023/12/Annual-Report-2020.pdf",
+            "researchDetail": "1921-04-30 공포한 자치헌법의 시행일. 독자적인 발레타 도시 개칭이 아니다."
+          },
+          {
+            "date": "1934-10-01",
+            "type": "malta1934LanguageLettersPatentEffective",
+            "detail": "1934년 몰타어 공식화 시행",
+            "sourceUrl": "https://www.treccani.it/enciclopedia/malta_res-6fcd60ba-8b74-11dc-8e9d-0016357eee51_(Enciclopedia-Italiana)/",
+            "researchDetail": "1934-08-16 언어 관련 칙서가 10-01 발효. 몰타어 공식화, 이탈리아어의 행정·법원 내 실질적 배제를 구분 기록한다."
+          },
+          {
+            "date": "1936-09-02",
+            "type": "malta1936LettersPatentEffective",
+            "detail": "1936년 공식언어 지위 재정리",
+            "sourceUrl": "https://www.treccani.it/enciclopedia/malta_res-6fcd60ba-8b74-11dc-8e9d-0016357eee51_(Enciclopedia-Italiana)/",
+            "researchDetail": "1936-08-12 칙서가 09-02 시행. 영어·몰타어 공식 지위 확정."
+          },
+          {
+            "date": "1964-09-21",
+            "type": "maltaIndependence",
+            "detail": "1964년 몰타 독립",
+            "sourceUrl": "https://www.constitution.mt/constitution/chapter/1/article/5",
+            "researchDetail": "몰타어·영어 병기는 독립과 무관하게 이미 실시됐으며 도시명 변경이 아니다."
           }
         ],
         "notes": [
@@ -328,9 +581,39 @@
             "detail": "도시와 ADM1·국가 분리",
             "researchDetail": "GeoNames P/PPLC 2562305는 수도 취락이며 8334638은 발레타 ADM1 행정구역, 몰타 국가 PCLI는 별도 객체다.",
             "sourceUrl": "https://www.geonames.org/8334638/valletta.html"
+          },
+          {
+            "detail": "1934~1936 세 언어 병기는 편집 선택",
+            "sourceUrl": "https://www.treccani.it/enciclopedia/malta_res-6fcd60ba-8b74-11dc-8e9d-0016357eee51_%28Enciclopedia-Italiana%29/",
+            "researchDetail": "1934-10-01부터 핵심 공무에서 이탈리아어 공식 사용이 폐지됐다. 1936-09-02까지 이탈리아어 지명을 남긴 것은 과도기의 역사명 추적용 한시 예외로서 3개 동등 공용어를 주장하지 않는다."
+          },
+          {
+            "detail": "이탈리아어 La Valletta는 대표 역사형",
+            "sourceUrl": "https://www.um.edu.mt/library/oar/handle/123456789/111561",
+            "researchDetail": "초기 기사단 및 영국 통치기 도시의 이탈리아어 공식·문화적 전통에 따른 선택이며 영어 Valletta·몰타어 Il-Belt Valletta와 다른 행정개칭이 아니다."
+          },
+          {
+            "detail": "1934·1936 법적 지위 단계 분리",
+            "sourceUrl": "https://www.treccani.it/enciclopedia/malta_res-6fcd60ba-8b74-11dc-8e9d-0016357eee51_(Enciclopedia-Italiana)/",
+            "researchDetail": "1934년 이탈리아어의 행정·법원·입법 사용 배제가 진행되었지만, 이전 헌정 구조가 1936-09-02 완전히 대체됐다. 1934~1936의 세 이름 보존은 편집상의 과도기 기록이지 세 언어가 모든 공식 부문에서 동등했다는 주장이 아니다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Valletta",
+      "defaultDisplayNameNative": "Il-Belt Valletta",
+      "defaultNativeLanguage": "mt",
+      "defaultNativeNames": [
+        {
+          "text": "Il-Belt Valletta",
+          "language": "mt",
+          "script": "Latn"
+        },
+        {
+          "text": "Valletta",
+          "language": "en",
+          "script": "Latn"
+        }
+      ]
     },
     {
       "geonameId": 146268,
@@ -360,13 +643,6 @@
           "text": "니코시아",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Lefkosia",
-          "language": "en",
-          "usage": "alternate",
-          "variantType": "greekBasedRomanization",
-          "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
         }
       ],
       "latitude": 35.17284,

@@ -3,7 +3,7 @@
   "batch": "08-northern-eastern-europe",
   "status": "verified-source-staging-not-runtime",
   "source": "GeoNames (CC BY 4.0)",
-  "checkedOn": "2026-10-08",
+  "checkedOn": "2026-10-10",
   "selection": "Eight clearly established European capital or federal-seat populated-place records, all GeoNames P/PPLC. Bern is de facto federal seat, not a legally designated capital.",
   "coordinateConvention": "Dataset-wide WGS84 (EPSG:4326), geographic lat/long decimal degrees. Points are settlement representatives, not historical municipality polygons.",
   "countryCodeSemantics": "sourceCountryCode is present-day GeoNames source metadata only, never historic sovereignty.",
@@ -12,14 +12,15 @@
   "historicalDisplayStatus": "timeline-staged-not-runtime",
   "historicNameScope": "Attested names in use during/after 1801. Administrative status and orthographic/editorial transitions are not mistaken for city rename.",
   "qualityNotes": [
-    "Oslo official legal rename effective 1925-01-01. Christiania→Kristiania is an earlier Norwegian spelling shift (state 1877, municipal 1897), not a separate Korean map label.",
-    "Kjøbenhavn→København 1906 municipal spelling change, not an official renamed city or a distinct Korean city name.",
-    "Helsinki and Helsingfors coexist in Finnish and Swedish. Dublin and Baile Átha Cliath similarly coexist.",
-    "Bern became federal seat on 1848-11-28; no technically designated Swiss de jure national capital.",
-    "Kyiv: PandoEditor Korean label convention changes 키예프→키이우 on Ukraine's 1991-08-24 independence declaration. The 2022-03-10 South Korean norm adoption remains evidence only. Ukrainian Київ and Russian Киев are coexisting language forms; no official city renaming occurred in 1991.",
-    "Bucharest 1862-02-05 Gregorian (24 Jan Julian) became capital; city name persisted.",
+    "Oslo: Norwegian Christiania from 1801, Kristiania in municipal usage from approximate 1897, official Oslo from 1925-01-01 (1924-07-11 law). English Christiania and Korean 크리스티아니아 remain until the 1925 legal rename; do not confuse 1877 state spelling with 1897 municipal practice.",
+    "Copenhagen: Kjøbenhavn to København selected native spelling switch in approximate 1906 based on municipal orthography change. Korean 코펜하겐 and English Copenhagen remain constant; exact day unknown and national orthography permitted overlap.",
+    "Helsinki: 1902-06-19 bilingual Finnish/Swedish editorial transition, not official city rename. Dublin: from 1922-12-06 Irish Free State Constitution Article 4, editorial English Dublin / Irish Baile Átha Cliath concurrent native forms; both names existed earlier, and no city renaming is implied.",
+    "Bern: from 1801 the chosen German/English/Korean names stay Bern/Bern/베른. The 1848-11-28 federal seat selection is not a city rename; French Berne is not included as a second native name of the German-speaking city.",
+    "Kyiv: imperial Russian pre-reform Кіевъ from 1801; primary Ukrainian Київ from 1918-03-24; Ukrainian/Russian administrative nativeNames[] from 1923-08-01; primary Ukrainian alone from 1990-01-01; Korean 키예프→키이우 and English Kiev→Kyiv on 1991-08-24 by editorial convention. No official city rename. 2022 Korean norm is reference only.",
+    "Bucharest: Romanian Cyrillic Букурещй before 1860-02-20, Latin Bucuresci thereafter and București from the 1904-03-30 Academy spelling decision, both dates Gregorian conversions. Administrative Latin adoption and orthography are editorial thresholds, not city renames. 1907 royal decree/publication and 1862-02-05 United Principalities capital status remain historical events.",
     "UI notes/details and short descriptions <=28 Unicode codepoints; detailed notes and sources retained separately.",
-    "Data is staged for later merge; map runtime and production manifest not updated."
+    "Data is staged for later merge; map runtime and production manifest not updated.",
+    "Batch 08 Stockholm, Copenhagen, Oslo, Helsinki, Dublin, Bern, Kyiv and Bucharest trilingual/period native timelines now reviewed. All changes remain research staging only; published PLAC/map runtime and main are untouched."
   ],
   "records": [
     {
@@ -28,6 +29,11 @@
         {
           "text": "Stockholm",
           "language": "sv",
+          "usage": "standard"
+        },
+        {
+          "text": "Stockholm",
+          "language": "en",
           "usage": "standard"
         },
         {
@@ -46,21 +52,36 @@
       "shortDescriptionKo": "스웨덴의 수도",
       "displayTimeline": [
         {
-          "nameKo": "스톡홀름",
           "fromYear": 1801,
+          "nameKo": "스톡홀름",
+          "nameEn": "Stockholm",
+          "nameNative": "Stockholm",
+          "nativeLanguage": "sv",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/2673730/"
+          "sourceUrl": "https://www.geonames.org/2673730/",
+          "researchNote": "1801년부터 조사 범위 전체에서 스웨덴어 Stockholm, 영어 Stockholm, 한국어 스톡홀름을 유지한다. 1801년은 검수 범위의 시작일이지 도시 성립일이 아니다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801",
+      "defaultDisplayNameEn": "Stockholm",
+      "defaultDisplayNameNative": "Stockholm",
+      "defaultNativeLanguage": "sv"
     },
     {
       "geonameId": 2618425,
       "names": [
         {
+          "text": "Kjøbenhavn",
+          "language": "da",
+          "usage": "historical",
+          "variantType": "selectedHistoricalMunicipalSpelling",
+          "sourceUrl": "https://sproget.dk/sprogviden/spoergsmaal-og-svar/dansk-sprognaevn/sv00016847/"
+        },
+        {
           "text": "København",
           "language": "da",
-          "usage": "standard"
+          "usage": "standard",
+          "sourceUrl": "https://sproget.dk/sprogviden/spoergsmaal-og-svar/dansk-sprognaevn/sv00016847/"
         },
         {
           "text": "Copenhagen",
@@ -71,14 +92,6 @@
           "text": "코펜하겐",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Kjøbenhavn",
-          "language": "da",
-          "usage": "historical",
-          "variantType": "historicalDanishOrthography",
-          "sourceUrl": "https://sproget.dk/sprogviden/spoergsmaal-og-svar/dansk-sprognaevn/sv00016847/",
-          "note": "1906년 시 표기 변경, 철자 병용"
         }
       ],
       "latitude": 55.67594,
@@ -91,13 +104,27 @@
       "shortDescriptionKo": "1906년 덴마크어 표기 변경",
       "displayTimeline": [
         {
-          "nameKo": "코펜하겐",
           "fromYear": 1801,
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/2618425/"
+          "nameKo": "코펜하겐",
+          "nameEn": "Copenhagen",
+          "nameNative": "Kjøbenhavn",
+          "nativeLanguage": "da",
+          "kind": "historicalDanishOrthography",
+          "sourceUrl": "https://sproget.dk/sprogviden/spoergsmaal-og-svar/dansk-sprognaevn/sv00016847/",
+          "note": "1906년 이전 덴마크어 철자",
+          "researchNote": "도시의 역사적 덴마크어 철자 Kjøbenhavn을 1801년부터의 원어 대표명으로 선택한다. 한국어 코펜하겐·영어 Copenhagen은 시대별 변경하지 않는다."
+        },
+        {
+          "fromYear": 1906,
+          "nameNative": "København",
+          "nativeLanguage": "da",
+          "kind": "municipalOrthographyChange",
+          "sourceUrl": "https://sproget.dk/sprogviden/spoergsmaal-og-svar/dansk-sprognaevn/sv00016847/",
+          "note": "시정부의 덴마크어 철자 변경",
+          "researchNote": "1906년 코펜하겐 시정부가 Kjøbenhavn→København 표기를 채택한 시기를 원어 전환점으로 선택한다. 실제 정확한 시행 일자를 확인하지 못해 fromYear만 기록한다. 두 철자는 국가 정서법에서 1938년까지 병용 가능했으며, 도시 자체 개칭이나 발음 변경은 아니다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1906-danish-orthography-transition",
       "historicalGeography": {
         "events": [
           {
@@ -113,45 +140,57 @@
             "sourceUrl": "https://sproget.dk/sprogviden/spoergsmaal-og-svar/dansk-sprognaevn/sv00016847/"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Copenhagen",
+      "defaultDisplayNameNative": "København",
+      "defaultNativeLanguage": "da"
     },
     {
       "geonameId": 3143244,
       "names": [
         {
-          "text": "Oslo",
-          "language": "nb",
-          "usage": "standard"
-        },
-        {
-          "text": "오슬로",
-          "language": "ko",
-          "usage": "standard"
-        },
-        {
           "text": "Christiania",
           "language": "no",
           "usage": "historical",
-          "variantType": "earlierOfficialSpelling",
+          "variantType": "selectedEarlyNorwegianOfficialSpelling",
           "sourceUrl": "https://snl.no/Oslo"
         },
         {
           "text": "Kristiania",
           "language": "no",
           "usage": "historical",
-          "variantType": "lateNineteenthCenturyOfficialSpelling",
-          "sourceUrl": "https://snl.no/Oslo",
-          "usageNotes": {
-            "fromYearInStateRecords": 1877,
-            "fromYearInMunicipalRecords": 1897
-          }
+          "variantType": "selectedLateNorwegianMunicipalSpelling",
+          "sourceUrl": "https://snl.no/Oslo"
+        },
+        {
+          "text": "Christiania",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedHistoricalEnglishExonym",
+          "sourceUrl": "https://snl.no/Oslo"
         },
         {
           "text": "크리스티아니아",
           "language": "ko",
           "usage": "historical",
-          "variantType": "koreanRenderingOfPriorCityName",
+          "variantType": "selectedPre1925KoreanName",
           "sourceUrl": "https://snl.no/Oslo"
+        },
+        {
+          "text": "Oslo",
+          "language": "nb",
+          "usage": "standard",
+          "sourceUrl": "https://snl.no/Oslo"
+        },
+        {
+          "text": "Oslo",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "오슬로",
+          "language": "ko",
+          "usage": "standard"
         }
       ],
       "latitude": 59.91273,
@@ -164,19 +203,38 @@
       "shortDescriptionKo": "1925-01-01 크리스티아니아 개칭",
       "displayTimeline": [
         {
-          "nameKo": "크리스티아니아",
           "fromYear": 1801,
+          "nameKo": "크리스티아니아",
+          "nameEn": "Christiania",
+          "nameNative": "Christiania",
+          "nativeLanguage": "no",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://snl.no/Oslo"
+          "sourceUrl": "https://snl.no/Oslo",
+          "note": "노르웨이어 구 철자",
+          "researchNote": "1801년부터 노르웨이 시정부의 기존 철자 Christiania를 원어 대표명으로 사용한다. 영어권의 통용명 Christiania와 한국어 크리스티아니아를 별도로 유지한다. 1801년은 조사 시작 연도다."
         },
         {
-          "nameKo": "오슬로",
+          "fromYear": 1897,
+          "nameNative": "Kristiania",
+          "nativeLanguage": "no",
+          "kind": "municipalSpellingPracticeChange",
+          "sourceUrl": "https://snl.no/Oslo",
+          "note": "시정부 Kristiania 표기 사용",
+          "researchNote": "중앙 국가기관은 1877년부터 Kristiania를 사용했으나, 지도 원어명은 시정부가 표기를 바꾸어 사용하기 시작한 1897년부터 적용한다. 별도 공식 시의회 개칭 결의가 확인되지 않아 연도 단위로 저장한다. 영어 Christiania와 한국어 크리스티아니아는 그대로 둔다."
+        },
+        {
           "fromDate": "1925-01-01",
+          "nameKo": "오슬로",
+          "nameEn": "Oslo",
+          "nameNative": "Oslo",
+          "nativeLanguage": "nb",
           "kind": "officialRenaming",
-          "sourceUrl": "https://lovdata.no/lov/1924-07-11-4"
+          "sourceUrl": "https://lovdata.no/lov/1924-07-11-4",
+          "note": "Oslo 공식 개칭 시행",
+          "researchNote": "1924-07-11 개칭법 제정과 1925-01-01 실제 시행을 구분한다. 이날부터 원어 Oslo, 한국어 오슬로, 영어 Oslo를 지도 대표명으로 사용한다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1897-orthography-and-1925-official-renaming",
       "historicalGeography": {
         "events": [
           {
@@ -192,6 +250,12 @@
             "sourceUrl": "https://snl.no/Oslo"
           },
           {
+            "date": "1924-07-11",
+            "type": "osloRenamingActPassed",
+            "detail": "오슬로 개칭법 제정",
+            "sourceUrl": "https://lovdata.no/lov/1924-07-11-4"
+          },
+          {
             "date": "1925-01-01",
             "type": "officialCityRenaming",
             "detail": "크리스티아니아 → 오슬로",
@@ -202,22 +266,52 @@
           {
             "detail": "옛 Oslo는 별도 구도심 지명",
             "sourceUrl": "https://snl.no/Oslo"
+          },
+          {
+            "detail": "1897년은 시정부 표기 관행",
+            "sourceUrl": "https://snl.no/Oslo",
+            "researchDetail": "국가기관의 1877년 사용과 시정부의 1897년 사용을 구별한다. 시의회가 도시 이름을 1897년에 법적 개칭했다고 주장하지 않는다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Oslo",
+      "defaultDisplayNameNative": "Oslo",
+      "defaultNativeLanguage": "nb"
     },
     {
       "geonameId": 658225,
       "names": [
         {
-          "text": "Helsinki",
-          "language": "fi",
-          "usage": "standard"
+          "text": "Helsingfors",
+          "language": "sv",
+          "usage": "standard",
+          "sourceUrl": "https://historia.hel.fi/en/ilmiot/helsinki-residents/helsinki-of-many-languages"
         },
         {
           "text": "Helsingfors",
-          "language": "sv",
-          "usage": "standard"
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedPre1902EnglishExonym",
+          "sourceUrl": "https://en.wikisource.org/wiki/1911_Encyclop%C3%A6dia_Britannica/Helsingfors"
+        },
+        {
+          "text": "헬싱포르스",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedPre1902KoreanMapName",
+          "sourceUrl": "https://historia.hel.fi/en/ilmiot/helsinki-residents/helsinki-of-many-languages"
+        },
+        {
+          "text": "Helsinki",
+          "language": "fi",
+          "usage": "standard",
+          "sourceUrl": "https://historia.hel.fi/en/ilmiot/helsinki-residents/helsinki-of-many-languages"
+        },
+        {
+          "text": "Helsinki",
+          "language": "en",
+          "usage": "standard",
+          "sourceUrl": "https://historia.hel.fi/en/ilmiot/helsinki-residents/helsinki-of-many-languages"
         },
         {
           "text": "헬싱키",
@@ -232,16 +326,44 @@
       "sourceUrl": "https://www.geonames.org/658225/",
       "sourceCountryCode": "FI",
       "defaultDisplayNameKo": "헬싱키",
-      "shortDescriptionKo": "핀란드어·스웨덴어 명칭 병용",
+      "shortDescriptionKo": "1902년부터 핀란드어·스웨덴어 병용",
       "displayTimeline": [
         {
-          "nameKo": "헬싱키",
           "fromYear": 1801,
+          "nameKo": "헬싱포르스",
+          "nameEn": "Helsingfors",
+          "nameNative": "Helsingfors",
+          "nativeLanguage": "sv",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/658225/"
+          "sourceUrl": "https://historia.hel.fi/en/ilmiot/helsinki-residents/helsinki-of-many-languages",
+          "note": "스웨덴어 중심의 기존 대표 명칭",
+          "researchNote": "1801년부터 스웨덴어 Helsingfors를 원어 대표명으로 선택한다. 한국어 헬싱포르스는 지도의 편집상 표기이고 당시 한국어 사용 실증은 아니다. 영어 Helsingfors는 1911년 브리태니커에도 기록되나, 모든 영어 출판물이 1902년에 일제히 명칭을 바꾼 것은 아니다. 1801년은 조사 시작 연도다."
+        },
+        {
+          "fromDate": "1902-06-19",
+          "nameKo": "헬싱키",
+          "nameEn": "Helsinki",
+          "nameNative": "Helsinki",
+          "nativeLanguage": "fi",
+          "nativeNames": [
+            {
+              "text": "Helsinki",
+              "language": "fi",
+              "script": "Latn"
+            },
+            {
+              "text": "Helsingfors",
+              "language": "sv",
+              "script": "Latn"
+            }
+          ],
+          "kind": "historicalCoOfficialNativeLanguages",
+          "sourceUrl": "https://fi.wikisource.org/wiki/Kieliasetus_1902",
+          "note": "핀란드어·스웨덴어 공식 병기 기준",
+          "researchNote": "1902-06-19 핀란드어·스웨덴어의 행정적 사용을 규정한 언어칙령을 지도 편집상 병기 시작 기준일로 채택한다. Helsinki와 Helsingfors는 그 이전에도 쓰인 이름이며 실제 도시 개명이나 두 이름의 최초 사용일을 뜻하지 않는다. 헬싱키 시의회 회의록은 1903년부터 양언어로 작성됐다. 한국어 헬싱키·영어 Helsinki로의 대표 표기 선택도 편집상 전환이지 영어권 전체의 즉각적인 사용 변경 주장은 아니다. 1923년 언어법 시행은 별도 이름 전환점으로 두지 않는다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1902-bilingual-native-names",
       "historicalGeography": {
         "events": [
           {
@@ -249,15 +371,48 @@
             "type": "becameGrandDuchyCapital",
             "detail": "핀란드 대공국 수도 지정",
             "sourceUrl": "https://historia.hel.fi/en/kaannekohdat/1800-luku/1812-capital-city"
+          },
+          {
+            "date": "1902-06-19",
+            "type": "officialLanguageDecree",
+            "detail": "핀란드어·스웨덴어 관청사용 언어칙령",
+            "sourceUrl": "https://fi.wikisource.org/wiki/Kieliasetus_1902"
+          },
+          {
+            "year": 1903,
+            "type": "municipalBilingualMinutes",
+            "detail": "시의회 회의록 양언어 작성 시작",
+            "sourceUrl": "https://historia.hel.fi/fi/ilmiot/vallankayttoa-ja-hallintoa/kaupunginvaltuuston-ensimmainen-poytakirja-1211875"
           }
         ],
         "notes": [
           {
-            "detail": "스웨덴어 Helsingfors 병용",
-            "sourceUrl": "https://historia.hel.fi/en/ilmiot/helsinki-residents/helsinki-of-many-languages"
+            "detail": "스웨덴어 Helsingfors 공식명 유지",
+            "sourceUrl": "https://historia.hel.fi/en/ilmiot/helsinki-residents/helsinki-of-many-languages",
+            "researchDetail": "1902년 이후에도 Helsingfors는 스웨덴어 공식 명칭이다. 원어 배열의 두 이름은 동시 사용 명칭이며 별칭으로 처리하지 않는다."
+          },
+          {
+            "detail": "1923년은 명칭 전환점으로 사용 안 함",
+            "sourceUrl": "https://www.finlex.fi/fi/lainsaadanto/saadoskokoelma/1922/148",
+            "researchDetail": "1922년 언어법의 후속 시행과 헬싱키의 이중언어 법적 지위는 1902년 편집상 병기 시작을 뒤집거나 별도의 개명 이력을 만들지 않는다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Helsinki",
+      "defaultDisplayNameNative": "Helsinki",
+      "defaultNativeLanguage": "fi",
+      "defaultNativeNames": [
+        {
+          "text": "Helsinki",
+          "language": "fi",
+          "script": "Latn"
+        },
+        {
+          "text": "Helsingfors",
+          "language": "sv",
+          "script": "Latn"
+        }
+      ]
     },
     {
       "geonameId": 2964574,
@@ -265,12 +420,14 @@
         {
           "text": "Dublin",
           "language": "en",
-          "usage": "standard"
+          "usage": "standard",
+          "sourceUrl": "https://www.logainm.ie/download/baile-atha-cliath-dublin.pdf"
         },
         {
           "text": "Baile Átha Cliath",
           "language": "ga",
-          "usage": "standard"
+          "usage": "standard",
+          "sourceUrl": "https://www.logainm.ie/download/baile-atha-cliath-dublin.pdf"
         },
         {
           "text": "더블린",
@@ -288,21 +445,74 @@
       "shortDescriptionKo": "영어·아일랜드어 명칭 병용",
       "displayTimeline": [
         {
-          "nameKo": "더블린",
           "fromYear": 1801,
+          "nameKo": "더블린",
+          "nameEn": "Dublin",
+          "nameNative": "Dublin",
+          "nativeLanguage": "en",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/2964574/"
+          "sourceUrl": "https://www.dublincity.ie/library/blog/dublin-city-and-river",
+          "researchNote": "1801년부터 기존 영어 Dublin을 지도 대표 원어명으로 선택한다. 아일랜드어 Baile Átha Cliath는 수세기 전부터 쓰였지만 해당 시기의 행정적 동등 병기 선택 기준은 아니다. 1801년은 조사 시작일이다."
+        },
+        {
+          "fromDate": "1922-12-06",
+          "nameNative": "Dublin",
+          "nativeLanguage": "en",
+          "nativeNames": [
+            {
+              "text": "Dublin",
+              "language": "en",
+              "script": "Latn"
+            },
+            {
+              "text": "Baile Átha Cliath",
+              "language": "ga",
+              "script": "Latn"
+            }
+          ],
+          "kind": "historicalCoOfficialNativeLanguages",
+          "sourceUrl": "https://www.irishstatutebook.ie/eli/1922/act/1/schedule/1/enacted/en/html",
+          "note": "자유국 성립·영어·아일랜드어 병기",
+          "researchNote": "1922-12-06 아일랜드 자유국 성립 및 헌법 제4조의 아일랜드어 국어·영어 동등 공용어 규정을 공동 원어명 병기 편집 기준으로 채택한다. 이 날 Baile Átha Cliath라는 지명이 처음 쓰이거나 더블린이 법적으로 개명된 것은 아니다. 영어 Dublin, 한국어 더블린은 계속 사용한다. 1937년 헌법 시행도 새 도시명 전환점이 아니다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1922-bilingual-editorial-transition",
       "historicalGeography": {
         "notes": [
           {
             "detail": "더블린시·더블린주 구분",
             "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/1/section/12/revised/en/html"
+          },
+          {
+            "detail": "아일랜드어명은 1922년 이전부터 사용",
+            "sourceUrl": "https://www.logainm.ie/download/baile-atha-cliath-dublin.pdf",
+            "researchDetail": "아일랜드어 Baile Átha Cliath와 영어 Dublin은 서로 독립된 오랜 지명 전통을 갖고 있다. 공식 언어의 헌법상 인정일과 지명의 최초 사용일은 다르며 국가 차원 공식 언어 지위와 더블린 지방정부 개별 표지판 시행일도 동일시하지 않는다."
+          }
+        ],
+        "events": [
+          {
+            "date": "1922-12-06",
+            "type": "irishFreeStateEstablished",
+            "detail": "아일랜드 자유국 성립·헌법 발효",
+            "sourceUrl": "https://www.irishstatutebook.ie/eli/1922/act/1/schedule/1/enacted/en/html"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Dublin",
+      "defaultDisplayNameNative": "Dublin",
+      "defaultNativeLanguage": "en",
+      "defaultNativeNames": [
+        {
+          "text": "Dublin",
+          "language": "en",
+          "script": "Latn"
+        },
+        {
+          "text": "Baile Átha Cliath",
+          "language": "ga",
+          "script": "Latn"
+        }
+      ]
     },
     {
       "geonameId": 2661552,
@@ -310,21 +520,14 @@
         {
           "text": "Bern",
           "language": "de",
-          "usage": "standard"
+          "usage": "standard",
+          "sourceUrl": "https://www.bern.ch/en/"
         },
         {
-          "text": "Berne",
-          "language": "fr",
-          "usage": "alternate",
-          "variantType": "frenchExonym",
-          "sourceUrl": "https://www.aboutswitzerland.eda.admin.ch/en/political-system"
-        },
-        {
-          "text": "Berna",
-          "language": "it",
-          "usage": "alternate",
-          "variantType": "italianExonym",
-          "sourceUrl": "https://www.aboutswitzerland.eda.admin.ch/en/political-system"
+          "text": "Bern",
+          "language": "en",
+          "usage": "standard",
+          "sourceUrl": "https://www.bern.ch/en/"
         },
         {
           "text": "베른",
@@ -342,10 +545,14 @@
       "shortDescriptionKo": "1848년부터 스위스 연방정부 소재지",
       "displayTimeline": [
         {
-          "nameKo": "베른",
           "fromYear": 1801,
+          "nameKo": "베른",
+          "nameEn": "Bern",
+          "nameNative": "Bern",
+          "nativeLanguage": "de",
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/2661552/"
+          "sourceUrl": "https://www.bern.ch/en/",
+          "researchNote": "1801년부터 검토 범위 내에서 독일어 Bern, 영어 Bern, 한국어 베른으로 일관되게 표시한다. 1848-11-28 연방정부 소재지 지정은 명칭 변경이 아니며 1801년은 도시 설립일이 아니다."
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -362,17 +569,49 @@
           {
             "detail": "법률상 정식 수도는 아님",
             "sourceUrl": "https://www.aboutswitzerland.eda.admin.ch/en/political-system"
+          },
+          {
+            "detail": "시 행정어는 독일어, 원어명 Bern",
+            "sourceUrl": "https://www.bern.ch/en/",
+            "researchDetail": "베른주의 프랑스어 명칭 Berne는 별도로 존재하지만 독일어 사용 도시인 베른의 지도 대표 원어명은 Bern 한 개만 선택한다. 영어도 Bern을 선택한다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Bern",
+      "defaultDisplayNameNative": "Bern",
+      "defaultNativeLanguage": "de"
     },
     {
       "geonameId": 703448,
       "names": [
         {
+          "text": "Кіевъ",
+          "language": "ru",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedImperialRussianPreReformSpelling",
+          "sourceUrl": "https://ru.wikisource.org/wiki/История_русской_армии_и_флота/1911-1913_(ДО)/01/1.01"
+        },
+        {
+          "text": "Киев",
+          "language": "ru",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedSovietRussianAdministrativeForm",
+          "sourceUrl": "https://textbooks.net.ua/content/view/1065/52/"
+        },
+        {
           "text": "Київ",
           "language": "uk",
-          "usage": "standard"
+          "script": "Cyrl",
+          "usage": "standard",
+          "sourceUrl": "https://mova.gov.ua/news/richnytsia-pershoho-movnoho-zakonu-ukrainy"
+        },
+        {
+          "text": "Kiev",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedPre1991EnglishMapName"
         },
         {
           "text": "Kyiv",
@@ -380,32 +619,15 @@
           "usage": "standard"
         },
         {
+          "text": "키예프",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedPre1991KoreanMapName"
+        },
+        {
           "text": "키이우",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Киев",
-          "language": "ru",
-          "usage": "alternate",
-          "variantType": "russianLanguageExonym",
-          "sourceUrl": "https://mfa.gov.ua/en/correctua"
-        },
-        {
-          "text": "Kiev",
-          "language": "en",
-          "usage": "historical",
-          "variantType": "formerCommonEnglishRomanization",
-          "sourceUrl": "https://mfa.gov.ua/en/correctua",
-          "note": "러시아어 기반 영문 전사"
-        },
-        {
-          "text": "키예프",
-          "language": "ko",
-          "usage": "alternate",
-          "variantType": "russianBasedKoreanExonym",
-          "sourceUrl": "https://www.korean.go.kr/front/board/boardStandardView.do?b_seq=877&board_id=6&mn_id=184",
-          "note": "옛 지도 표기, 검색 별칭 유지"
         }
       ],
       "latitude": 50.45466,
@@ -420,21 +642,96 @@
         {
           "fromYear": 1801,
           "nameKo": "키예프",
-          "kind": "historicalMapConvention",
-          "sourceUrl": "https://www.korean.go.kr/front/board/boardStandardView.do?b_seq=877&board_id=6&mn_id=184"
+          "nameEn": "Kiev",
+          "nameNative": "Кіевъ",
+          "nativeLanguage": "ru",
+          "kind": "historicalImperialRussianOrthography",
+          "sourceUrl": "https://ru.wikisource.org/wiki/История_русской_армии_и_флота/1911-1913_(ДО)/01/1.01",
+          "note": "러시아 제국 시기 구철자",
+          "researchNote": "1801년부터 제정 러시아의 구철자 Кіевъ를 지도 원어 대표명으로 선택한다. 혁명 전 러시아어는 і와 어말 ъ를 사용했고 이후 구철자 개혁을 거쳤다. 영어 Kiev와 한국어 키예프는 역사 지도 편집상 관용명이다. 1801년은 조사 시작 시점이며 우크라이나어 Київ가 존재하지 않았다는 뜻이 아니다."
+        },
+        {
+          "fromDate": "1918-03-24",
+          "nameNative": "Київ",
+          "nativeLanguage": "uk",
+          "kind": "historicalOfficialLanguageEditorialShift",
+          "sourceUrl": "https://mova.gov.ua/news/richnytsia-pershoho-movnoho-zakonu-ukrainy",
+          "note": "우크라이나어 공적 사용 기준",
+          "researchNote": "1918-03-24는 우크라이나 인민공화국의 언어법이 신문에 공표된 날짜다. 이를 지도 대표 원어를 Київ로 선택하는 편집 기준으로 사용한다. 내전기에는 실제 통치 주체가 여러 차례 바뀌었으나 점령·전선 이동마다 표기를 반복 전환하지 않는다. 도시 자체 개명으로 취급하지 않으며 영어 Kiev와 한국어 키예프도 유지한다."
+        },
+        {
+          "fromDate": "1923-08-01",
+          "nameNative": "Київ",
+          "nativeLanguage": "uk",
+          "nativeNames": [
+            {
+              "text": "Київ",
+              "language": "uk",
+              "script": "Cyrl"
+            },
+            {
+              "text": "Киев",
+              "language": "ru",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "historicalAdministrativeBilingualNames",
+          "sourceUrl": "https://textbooks.net.ua/content/view/1065/52/",
+          "note": "우크라이나어·러시아어 행정 병용",
+          "researchNote": "1923-08-01 우크라이나 SSR 언어 평등·우크라이나어 진흥 결의를 지도 공동 원어명 선택 기준으로 사용한다. 결의는 공적 소통에서 우크라이나어 우선과 러시아어 사용을 함께 규정한다. 두 이름은 번역 관계에 있는 동시 행정 사용형이지 별개의 도시나 새 개칭 결과가 아니다. 1920년에도 언어 평등 결의가 있어 1923년을 최초 공용 언어 사용일이라고 주장하지 않는다."
+        },
+        {
+          "fromDate": "1990-01-01",
+          "nativeNames": [
+            {
+              "text": "Київ",
+              "language": "uk",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "stateLanguageStatusEditorialShift",
+          "sourceUrl": "https://zakon.rada.gov.ua/laws/card/en/8312-11/ed19891028",
+          "note": "우크라이나어 단독 대표 원어 선택",
+          "researchNote": "1989-10-28 우크라이나 SSR 언어법의 1990-01-01 시행을 대표 원어를 우크라이나어 하나로 정리하는 지도 편집 기준으로 삼는다. 우크라이나어 국가언어 지위의 확립을 반영하지만 러시아어 사용·권리가 사라졌다고 주장하지 않는다. 대표 원어 Київ 자체는 이전과 동일하므로 중복 변경하지 않는다."
         },
         {
           "fromDate": "1991-08-24",
           "nameKo": "키이우",
-          "kind": "koreanEditorialTranscription",
+          "nameEn": "Kyiv",
+          "kind": "koreanEnglishEditorialTranscription",
           "sourceUrl": "https://zakon.rada.gov.ua/laws/show/en/1427-12",
-          "note": "독립 이후 우크라이나어 기준 표기",
-          "transitionMeaning": "PandoEditor-selected Korean map-label convention anchored to Ukraine's declaration of independence, not a renaming or change of pronunciation enacted on 1991-08-24"
+          "note": "독립 후 한·영 지도 표기 전환",
+          "researchNote": "우크라이나 독립 선언일을 지도 편집상의 한국어 키예프→키이우, 영어 Kiev→Kyiv 전환점으로 함께 사용한다. 이는 도시의 실제 개칭일도 영어권 전체 관행의 즉시 변경일도 아니다. 현지 원어 Київ는 그대로다.",
+          "transitionMeaning": "PandoEditor editorial selection for both ko and en anchored to Ukrainian independence, not a legal city rename."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1918-1923-1990-1991-language-transitions",
       "historicalGeography": {
         "events": [
+          {
+            "date": "1918-03-24",
+            "type": "ukrainianPeopleRepublicLanguageLawPublication",
+            "detail": "우크라이나어 공식 사용 법령 공표",
+            "sourceUrl": "https://mova.gov.ua/news/richnytsia-pershoho-movnoho-zakonu-ukrainy"
+          },
+          {
+            "date": "1923-08-01",
+            "type": "ukrainianSSRLanguageEqualityUkrainizationAct",
+            "detail": "우크라이나어·러시아어 공적 병용",
+            "sourceUrl": "https://textbooks.net.ua/content/view/1065/52/"
+          },
+          {
+            "date": "1989-10-28",
+            "type": "ukrainianSSRStateLanguageLawPassed",
+            "detail": "우크라이나어 국가언어법 제정",
+            "sourceUrl": "https://zakon.rada.gov.ua/laws/card/en/8312-11/ed19891028"
+          },
+          {
+            "date": "1990-01-01",
+            "type": "ukrainianSSRStateLanguageLawEffective",
+            "detail": "우크라이나어 국가언어법 시행",
+            "sourceUrl": "https://zakon.rada.gov.ua/laws/card/en/8312-11/ed19891028"
+          },
           {
             "date": "1991-08-24",
             "type": "independenceDeclaration",
@@ -457,6 +754,11 @@
           {
             "detail": "1991년 전환은 편집기 표기 기준",
             "sourceUrl": "https://zakon.rada.gov.ua/laws/show/en/1427-12"
+          },
+          {
+            "detail": "러시아어 이름은 공식 개명 아님",
+            "sourceUrl": "https://textbooks.net.ua/content/view/1065/52/",
+            "researchDetail": "우크라이나 SSR의 Київ / Киев는 언어별 표기다. 1918~1922년 정치·군사적 점령 변화마다 도시 원어를 되돌리지 않는다."
           }
         ],
         "linkedPlaces": [
@@ -468,15 +770,36 @@
           }
         ]
       },
-      "displayPolicyNote": "PandoEditor uses 키예프 before 1991-08-24 and 키이우 from that date as an editorial historical map convention, irrespective of when a Korean language authority endorsed either form. Ukrainian Київ and Russian Киев both predate independence; neither was officially renamed on that date. The 2022-03-10 standard-language authority decision is reference metadata only."
+      "displayPolicyNote": "From 1801 select Russian imperial pre-reform Кіевъ; from 1918-03-24 select Ukrainian Київ; 1923-08-01 to 1989-12-31 select administrative bilingual nativeNames[] (Київ / Киев); from 1990-01-01 select Ukrainian Київ only. Korean 키예프 and English Kiev persist until 1991-08-23, both change editorially to 키이우 and Kyiv on 1991-08-24. None of these language-status or map-transcription boundaries is an official Kyiv city rename. Ukrainian and Russian forms predated the chosen transitions; 2022 South Korean standardization remains citation only.",
+      "defaultDisplayNameEn": "Kyiv",
+      "defaultDisplayNameNative": "Київ",
+      "defaultNativeLanguage": "uk"
     },
     {
       "geonameId": 683506,
       "names": [
         {
+          "text": "Букурещй",
+          "language": "ro",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedPre1860RomanianCyrillicSpelling",
+          "sourceUrl": "https://www.loc.gov/catdir/cpso/romanization/romanian.pdf"
+        },
+        {
+          "text": "Bucuresci",
+          "language": "ro",
+          "script": "Latn",
+          "usage": "historical",
+          "variantType": "selectedPre1904RomanianLatinOrthography",
+          "sourceUrl": "https://old.biblacad.ro/bnr/brmautori.php?aut=m&limit=10&page=210"
+        },
+        {
           "text": "București",
           "language": "ro",
-          "usage": "standard"
+          "script": "Latn",
+          "usage": "standard",
+          "sourceUrl": "https://dspace.bcucluj.ro/handle/123456789/68512"
         },
         {
           "text": "Bucharest",
@@ -487,13 +810,6 @@
           "text": "부쿠레슈티",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Bucureşti",
-          "language": "ro",
-          "usage": "alternate",
-          "variantType": "legacyCedillaOrthography",
-          "note": "옛 문자 인코딩 철자"
         }
       ],
       "latitude": 44.43225,
@@ -503,18 +819,49 @@
       "sourceUrl": "https://www.geonames.org/683506/",
       "sourceCountryCode": "RO",
       "defaultDisplayNameKo": "부쿠레슈티",
-      "shortDescriptionKo": "1862년 연합공국 수도 지정",
+      "shortDescriptionKo": "1860년 문자·1904년 철자 변경",
       "displayTimeline": [
         {
-          "nameKo": "부쿠레슈티",
           "fromYear": 1801,
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/683506/"
+          "nameKo": "부쿠레슈티",
+          "nameEn": "Bucharest",
+          "nameNative": "Букурещй",
+          "nativeLanguage": "ro",
+          "kind": "historicalRomanianCyrillicOrthography",
+          "sourceUrl": "https://www.loc.gov/catdir/cpso/romanization/romanian.pdf",
+          "note": "루마니아어 키릴 문자 표기",
+          "researchNote": "1801년부터의 초기 원어 대표명은 역사적 루마니아어 키릴 문자 Букурещй를 선택한다. 19세기에는 키릴·과도기 혼합·라틴 표기가 겹쳤으므로 유일한 당시 철자라고 주장하지 않는다. 한국어 부쿠레슈티와 영어 Bucharest는 지도 편집상의 통일명이다. 1801년은 조사 범위 시작점이다."
+        },
+        {
+          "fromDate": "1860-02-20",
+          "nameNative": "Bucuresci",
+          "nativeLanguage": "ro",
+          "kind": "officialRomanianLatinScriptAdoptionEditorial",
+          "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/9/94/Ion_Ghica_-_Opere._Volumul_1.pdf",
+          "note": "왈라키아 행정 라틴 문자 도입",
+          "researchNote": "1860-02-08(율리우스력), 그레고리력 1860-02-20에 해당하는 이온 기카의 라틴 문자 행정문서 사용 명령을 부쿠레슈티 원어명 문자 전환의 편집 기준으로 채택한다. 왈라키아 행정에 적용되는 명령이며 루마니아어권 전역의 동시 전환이나 모든 인쇄물의 즉각적인 교체를 뜻하지 않는다. 당시 라틴 표기형 Bucuresci를 선택한다."
+        },
+        {
+          "fromDate": "1904-03-30",
+          "nameNative": "București",
+          "nativeLanguage": "ro",
+          "kind": "academyOrthographyReformEditorial",
+          "sourceUrl": "https://dspace.bcucluj.ro/handle/123456789/68512",
+          "note": "학술원 정서법 개정 의결 기준",
+          "researchNote": "루마니아 학술원의 1904-03-17(율리우스력), 그레고리력 1904-03-30 정서법 개정 의결을 원어 철자 Bucuresci→București 선택의 편집 기준으로 채택한다. 개별 시정부의 즉시 시행일이나 구 철자 사용의 즉각적 종료를 주장하지 않는다. 국가기관 의무 적용은 별도로 1907-02-27(구력) 왕령·1907-03-25(구력) 관보 공표 기록이 있다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1860-script-and-1904-orthography",
       "historicalGeography": {
         "events": [
+          {
+            "date": "1860-02-20",
+            "type": "wallachiaLatinScriptAdministrativeOrder",
+            "detail": "왈라키아 행정 라틴 문자 채택",
+            "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/9/94/Ion_Ghica_-_Opere._Volumul_1.pdf",
+            "calendar": "Gregorian",
+            "researchDetail": "당시 율리우스력 1860-02-08에 이온 기카가 정부 문서에 라틴 문자 사용을 명령했다. 지도 선택 날짜는 +12일 환산이다."
+          },
           {
             "date": "1862-02-05",
             "type": "becameUnitedPrincipalitiesCapital",
@@ -523,15 +870,47 @@
             "calendar": "Gregorian",
             "note": "구력 1월 24일, 신력 2월 5일",
             "researchDetail": "1859년 몰다비아·왈라키아의 군주 선출을 통한 결합 이후, 1862년 2월 3일 단일 정부가 구성되고 2월 5일 통합 의회가 부쿠레슈티에서 개원하며 연합공국 수도로 지정되었다."
+          },
+          {
+            "date": "1904-03-30",
+            "type": "romanianAcademyOrthographyDecision",
+            "detail": "학술원 루마니아어 철자 개정",
+            "sourceUrl": "https://dspace.bcucluj.ro/handle/123456789/68512",
+            "calendar": "Gregorian",
+            "researchDetail": "1904-03-17 구력(3월 30일 신력) 아카데미 정서법 개정 의결을 대표 원어 철자 선택 기준으로 사용한다. 실제 보급과 잔존 구철자 사용은 점진적이었다."
+          },
+          {
+            "date": "1907-03-12",
+            "type": "royalDecreeAcademyOrthographyMandatory",
+            "detail": "국가기관 정서법 의무 적용 왕령",
+            "sourceUrl": "https://old.biblacad.ro/bnr/brmautori.php?aut=a&limit=20&page=60",
+            "calendar": "Gregorian",
+            "researchDetail": "1907-02-27 구력 왕령 978호. 역사적 정서법의 국가기관 의무 채택을 확인하는 자료이며 추가 지도 이름 전환점은 아니다."
+          },
+          {
+            "date": "1907-04-07",
+            "type": "romanianOrthographyGazettePublication",
+            "detail": "정서법 의무 적용 관보 게재",
+            "sourceUrl": "https://old.biblacad.ro/bnr/brmautori.php?aut=a&limit=20&page=60",
+            "calendar": "Gregorian",
+            "researchDetail": "1907-03-25 구력 관보 289호 게재. 별도 이름 전환점을 추가하지 않는다."
           }
         ],
         "notes": [
           {
             "detail": "수도 지정은 도시명 개칭 아님",
             "sourceUrl": "https://agerpres.ro/documentare/2022/01/18/fragment-de-istorie-primul-guvern-unitar-si-primul-parlament-unic-ale-romaniei-22-si-24-ian-1862--851370"
+          },
+          {
+            "detail": "문자·정서법 변경은 도시 개칭 아님",
+            "sourceUrl": "https://dspace.bcucluj.ro/handle/123456789/68512",
+            "researchDetail": "도시의 연속성을 유지하며 원어 문자와 정서법만 시기별 선택한다. 1862년 연합공국 수도 지정도 도시명 변경과 무관하며 기존 사건을 유지한다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Bucharest",
+      "defaultDisplayNameNative": "București",
+      "defaultNativeLanguage": "ro"
     }
   ]
 }

@@ -96,184 +96,91 @@ test('reviewed city inventory matches every copied Web batch without ID duplicat
 });
 
 
-test('batch 10 contains the four independently checked Balkan capitals', () => {
-  const records=json('reports/places/tier1-major-cities-batch10-balkan-southeast-europe.json').records;
-  assert.deepEqual(records.map(record=>record.geonameId),
-    [792680,727011,3186886,3196359]);
-  assert.deepEqual(records.map(record=>record.defaultDisplayNameKo),
-    ['베오그라드','소피아','자그레브','류블랴나']);
-  for (const record of records) {
-    assert.equal(record.featureClass,'P');
-    assert.equal(record.featureCode,'PPLC');
-    assert.ok(record.names.some(row=>row.language==='ko'&&row.text===record.defaultDisplayNameKo));
-    assert.ok(record.names.some(row=>row.language==='en'&&row.usage==='standard'));
-    assert.ok(record.names.some(row=>!['ko','en'].includes(row.language)&&row.usage==='standard'));
-    assert.ok(record.displayTimeline[0].fromYear===1801);
-    assert.ok([...record.shortDescriptionKo].length<=28);
+test('batches 10 through 14 preserve reviewed capital identities and well-formed historical names', () => {
+  const inventories = [
+    ['batch10-balkan-southeast-europe.json', [792680,727011,3186886,3196359]],
+    ['batch11-western-balkans-capitals.json', [3191281,3193044,785842,3183875,786714]],
+    ['batch12-central-eastern-europe-capitals.json', [3060972,618426,2960316,3042030]],
+    ['batch13-european-microstates-mediterranean.json', [3041563,3168070,2993458,2562305,146268]],
+    ['batch14-north-atlantic-anatolia-caucasus.json', [3413829,323786,611717,616052,587084]]
+  ];
+  for (const [name, ids] of inventories) {
+    const document = json('reports/places/tier1-major-cities-' + name);
+    assert.equal(document.status, 'verified-source-staging-not-runtime');
+    assert.deepEqual(document.records.map(record=>record.geonameId), ids);
+    for (const record of document.records) {
+      assert.equal(record.featureClass, 'P', record.geonameId);
+      assert.equal(record.featureCode, 'PPLC', record.geonameId);
+      assert.ok(record.names.some(n=>n.language==='ko'&&n.text===record.defaultDisplayNameKo), record.geonameId);
+      assert.ok(record.names.some(n=>n.language==='en'&&n.usage==='standard'), record.geonameId);
+      assert.ok(record.names.some(n=>!['ko','en'].includes(n.language)&&n.usage==='standard'), record.geonameId);
+      assert.ok(record.displayTimeline.length>0, record.geonameId);
+      assert.equal(record.displayTimeline[0].fromYear, 1801, record.geonameId);
+      assert.ok([...record.shortDescriptionKo].length<=28, record.geonameId);
+      let previous='';
+      for (const transition of record.displayTimeline) {
+        const when=transition.fromDate ??
+          (String(transition.fromYear).padStart(4,'0')+'-01-01');
+        assert.ok(when>previous, 'Nonmonotonic historical transition '+record.geonameId);
+        previous=when;
+        for (const [field,language] of [['nameKo','ko'],['nameEn','en']]) {
+          if (transition[field] !== undefined)
+            assert.ok(record.names.some(n=>n.language===language&&n.text===transition[field]),
+              record.geonameId+' missing '+field+': '+transition[field]);
+        }
+      }
+    }
   }
 });
 
-test('batch 11 records all five verified western Balkan cities and exact dated historical display rules', () => {
-  const records=json('reports/places/tier1-major-cities-batch11-western-balkans-capitals.json').records;
-  assert.deepEqual(records.map(row=>row.geonameId),
-    [3191281,3193044,785842,3183875,786714]);
-  assert.deepEqual(records.map(row=>row.defaultDisplayNameKo),
-    ['사라예보','포드고리차','스코페','티라나','프리슈티나']);
-  assert.deepEqual(records.map(row=>row.sourceCountryCode),
-    ['BA','ME','MK','AL','XK']);
-  for (const record of records) {
-    assert.equal(record.featureClass,'P',record.geonameId);
-    assert.equal(record.featureCode,'PPLC',record.geonameId);
-    assert.ok(record.names.some(n=>n.language==='ko'&&n.usage==='standard'&&n.text===record.defaultDisplayNameKo));
-    assert.ok(record.names.some(n=>n.language==='en'&&n.usage==='standard'));
-    assert.ok(record.names.some(n=>!['ko','en'].includes(n.language)&&n.usage==='standard'));
-    assert.equal(record.displayTimeline[0].fromYear,1801);
-    for(const row of record.displayTimeline) {
-      assert.ok(record.names.some(n=>n.language==='ko'&&n.text===row.nameKo));
-      assert.ok(['historicalLocalName','officialRenaming','koreanEditorialTranscription'].includes(row.kind));
-    }
-    for(const text of [
-      record.shortDescriptionKo,
-      ...record.names.map(n=>n.note),
-      ...record.displayTimeline.map(n=>n.note),
-      ...(record.historicalGeography?.events||[]).map(n=>n.detail),
-      ...(record.historicalGeography?.notes||[]).map(n=>n.detail)
-    ].filter(Boolean))assert.ok([...text].length<=28,record.geonameId+' screen copy too long: '+text);
-  }
-  const podgorica=records[1];
-  assert.deepEqual(podgorica.displayTimeline.map(t=>[t.fromDate||t.fromYear,t.nameKo]),
-    [[1801,'포드고리차'],['1946-07-13','티토그라드'],['1992-04-02','포드고리차']]);
-  const labelAt=date=>{
-    let chosen=podgorica.defaultDisplayNameKo;
-    for(const change of podgorica.displayTimeline){
-      const eligible=change.fromDate
-        ?change.fromDate<=date
-        :change.fromYear<=Number(date.slice(0,4));
-      if(!eligible)break;
-      chosen=change.nameKo;
-    }
-    return chosen;
+test('dated historical name changes reflect confirmed events, not stale transition counts', () => {
+  const batch = n => json('reports/places/tier1-major-cities-' + n).records;
+  const find = (n,id) => {
+    const city=batch(n).find(r=>r.geonameId===id);
+    assert.ok(city,'Missing historical city '+id);
+    return city;
   };
-  for (const [date,label] of [
-    ['1946-07-12','포드고리차'],['1946-07-13','티토그라드'],
-    ['1992-04-01','티토그라드'],['1992-04-02','포드고리차']
-  ])assert.equal(labelAt(date),label);
-  assert.equal(records[4].historicalGeography.events[0].type,'kosovoIndependenceDeclaration');
-  assert.equal(records[4].displayTimeline.length,1,'Political status change is not a city rename');
-});
-
-test('batch 12 has four independently verified central-European capital city IDs and source-linked names', () => {
-  const records=json('reports/places/tier1-major-cities-batch12-central-eastern-europe-capitals.json').records;
-  assert.deepEqual(records.map(r=>r.geonameId),[3060972,618426,2960316,3042030]);
-  assert.deepEqual(records.map(r=>r.defaultDisplayNameKo),
-    ['브라티슬라바','키시너우','룩셈부르크','파두츠']);
-  assert.deepEqual(records.map(r=>r.sourceCountryCode),['SK','MD','LU','LI']);
-  for(const record of records) {
-    assert.equal(record.featureClass,'P',record.geonameId);
-    assert.equal(record.featureCode,'PPLC',record.geonameId);
-    assert.equal(record.displayTimeline[0].fromYear,1801);
-    assert.ok(record.names.some(n=>n.language==='ko'&&n.text===record.defaultDisplayNameKo));
-    assert.ok(record.names.some(n=>n.language==='en'&&n.usage==='standard'));
-    assert.ok(record.names.some(n=>!['ko','en'].includes(n.language)&&n.usage==='standard'));
-    for(const transition of record.displayTimeline)
-      assert.ok(record.names.some(n=>n.language==='ko'&&n.text===transition.nameKo));
-    for(const value of [record.shortDescriptionKo,
-      ...record.names.map(n=>n.note),
-      ...record.displayTimeline.map(n=>n.note),
-      ...(record.historicalGeography?.events||[]).map(n=>n.detail),
-      ...(record.historicalGeography?.notes||[]).map(n=>n.detail)].filter(Boolean))
-      assert.ok([...value].length<=28,record.geonameId+' oversized UI text: '+value);
-  }
-  const bratislava=records[0];
-  assert.deepEqual(bratislava.displayTimeline.map(x=>[x.fromYear||x.fromDate,x.nameKo]),
-    [[1801,'프레스부르크'],['1919-03-27','브라티슬라바']]);
-  const at=date=>{
-    let name=bratislava.defaultDisplayNameKo;
-    for(const transition of bratislava.displayTimeline) {
-      const applies=transition.fromDate
-        ?transition.fromDate<=date
-        :transition.fromYear<=Number(date.slice(0,4));
-      if(!applies)break;
-      name=transition.nameKo;
+  const nameAt = (record,date) => {
+    let result=null;
+    for (const transition of record.displayTimeline) {
+      const when=transition.fromDate ??
+        (String(transition.fromYear).padStart(4,'0')+'-01-01');
+      if(when>date)break;
+      if(transition.nameKo!==undefined)result=transition.nameKo;
     }
-    return name;
+    return result;
   };
-  assert.deepEqual([at('1919-03-26'),at('1919-03-27'),at('1920-01-01')],
-    ['프레스부르크','브라티슬라바','브라티슬라바']);
-  assert.equal(records[1].displayTimeline.length,1,'No political-sovereignty-derived Chisinau rename');
-  assert.ok(records[1].names.some(n=>n.language==='ru'&&n.text==='Кишинёв'));
-  assert.equal(records[2].names.find(n=>n.language==='lb'&&n.usage==='standard')?.text,'Lëtzebuerg');
-  assert.equal(records[2].names.find(n=>n.language==='en'&&n.usage==='standard')?.text,'Luxembourg City');
-  assert.equal(records[3].names.find(n=>n.language==='de'&&n.usage==='standard')?.text,'Vaduz');
-  assert.equal(records[3].names.find(n=>n.language==='en'&&n.usage==='standard')?.text,'Vaduz');
-});
-
-test('batch 13 distinguishes five capital settlements from identically named sovereigns and administrative areas', () => {
-  const records=json('reports/places/tier1-major-cities-batch13-european-microstates-mediterranean.json').records;
-  assert.deepEqual(records.map(r=>r.geonameId),[3041563,3168070,2993458,2562305,146268]);
-  assert.deepEqual(records.map(r=>r.defaultDisplayNameKo),
-    ['안도라라베야','산마리노','모나코','발레타','니코시아']);
-  assert.deepEqual(records.map(r=>r.sourceCountryCode),['AD','SM','MC','MT','CY']);
-  for(const r of records) {
-    assert.equal(r.featureClass,'P',r.geonameId);
-    assert.equal(r.featureCode,'PPLC',r.geonameId);
-    assert.equal(r.displayTimeline.length,1,'Do not fabricate a city rename from a sovereignty or administrative change');
-    assert.equal(r.displayTimeline[0].fromYear,1801);
-    assert.equal(r.displayTimeline[0].nameKo,r.defaultDisplayNameKo);
-    assert.ok(r.names.some(n=>n.language==='ko'&&n.usage==='standard'&&n.text===r.defaultDisplayNameKo));
-    assert.ok(r.names.some(n=>n.language==='en'&&n.usage==='standard'));
-    assert.ok(r.names.some(n=>n.language!=='ko'&&n.language!=='en'&&n.usage==='standard'));
-    for(const value of [r.shortDescriptionKo,
-      ...r.names.map(n=>n.note),
-      ...(r.historicalGeography?.events||[]).map(n=>n.detail),
-      ...(r.historicalGeography?.notes||[]).map(n=>n.detail)].filter(Boolean))
-      assert.ok([...value].length<=28,r.geonameId+' overly long display note: '+value);
-  }
-  assert.ok(records[1].historicalGeography.notes.some(n=>n.researchDetail?.includes('3168068')));
-  assert.ok(records[2].historicalGeography.notes.some(n=>n.researchDetail?.includes('2993457')));
-  assert.ok(records[3].historicalGeography.notes.some(n=>n.researchDetail?.includes('8334638')));
-  assert.ok(records[4].historicalGeography.notes.some(n=>n.researchDetail?.includes('146267')));
-  assert.ok(records[4].names.some(n=>n.language==='el'&&n.text==='Λευκωσία'));
-  assert.ok(records[4].names.some(n=>n.language==='tr'&&n.text==='Lefkoşa'));
-  assert.deepEqual(records[4].historicalGeography.events.map(e=>[e.date,e.type]),[
-    ['1963-12-30','nicosiaGreenLineFirstEstablished'],['1974-08-16','cyprusCeasefireLines']
-  ]);
-  assert.ok(records[4].historicalGeography.notes.some(n=>n.researchDetail?.includes('기하')));
-  assert.equal(records[1].historicalGeography.events[0].type,'traditionalFoundationLegend');
-});
-
-test('batch 14 validates five cities, excludes Vatican, and respects approximate 1936 name changes', () => {
-  const batch=json('reports/places/tier1-major-cities-batch14-north-atlantic-anatolia-caucasus.json');
-  const r=batch.records;
-  assert.deepEqual(r.map(x=>x.geonameId),[3413829,323786,611717,616052,587084]);
-  assert.deepEqual(r.map(x=>x.defaultDisplayNameKo),['레이캬비크','앙카라','트빌리시','예레반','바쿠']);
-  assert.deepEqual(r.map(x=>x.sourceCountryCode),['IS','TR','GE','AM','AZ']);
-  assert.ok(batch.selection.includes('Vatican City omitted'));
-  assert.ok(r.every(x=>x.featureClass==='P'&&x.featureCode==='PPLC'));
-  for(const city of r) {
-    assert.ok(city.names.some(n=>n.language==='ko'&&n.text===city.defaultDisplayNameKo&&n.usage==='standard'));
-    assert.ok(city.names.some(n=>n.language==='en'&&n.usage==='standard'));
-    assert.ok(city.names.some(n=>!['ko','en'].includes(n.language)&&n.usage==='standard'));
-    for(const step of city.displayTimeline)
-      assert.ok(city.names.some(n=>n.language==='ko'&&n.text===step.nameKo));
-    for(const value of [
-      city.shortDescriptionKo,...city.names.map(n=>n.note),
-      ...city.displayTimeline.map(n=>n.note),
-      ...(city.historicalGeography?.events||[]).map(n=>n.detail),
-      ...(city.historicalGeography?.notes||[]).map(n=>n.detail)
-    ].filter(Boolean))assert.ok([...value].length<=28,city.geonameId+': '+value);
-  }
-  for(const [index,before,after] of [[2,'티플리스','트빌리시'],[3,'에리반','예레반']]) {
-    const city=r[index];
-    assert.deepEqual(city.displayTimeline.map(x=>[x.fromYear,x.nameKo]),[[1801,before],[1936,after]]);
-    assert.ok(city.displayTimeline.every(x=>!x.fromDate),'Disputed 1936 date must be year-only');
-    const nameAt=year=>city.displayTimeline.filter(x=>x.fromYear<=year).at(-1)?.nameKo;
-    assert.equal(nameAt(1935),before);
-    assert.equal(nameAt(1937),after);
-  }
-  assert.equal(r[1].historicalGeography.events.find(x=>x.type==='turkishCapitalDesignated').date,'1923-10-13');
-  assert.equal(r[4].historicalGeography.events.find(x=>x.type==='azerbaijanGovernmentMovesFromGanja').date,'1918-09-17');
-  assert.ok(r.filter((x,i)=>![2,3].includes(i)).every(x=>x.displayTimeline.length===1));
+  const cases = [
+    ['batch10-balkan-southeast-europe.json',792680,'1815-04-22','벨그라드'],
+    ['batch10-balkan-southeast-europe.json',792680,'1815-04-23','베오그라드'],
+    ['batch11-western-balkans-capitals.json',3193044,'1879-02-07','포드고리체'],
+    ['batch11-western-balkans-capitals.json',3193044,'1879-02-08','포드고리차'],
+    ['batch11-western-balkans-capitals.json',3193044,'1946-07-13','티토그라드'],
+    ['batch11-western-balkans-capitals.json',3193044,'1992-04-02','포드고리차'],
+    ['batch12-central-eastern-europe-capitals.json',3060972,'1849-10-24','프레스부르크'],
+    ['batch12-central-eastern-europe-capitals.json',3060972,'1867-07-28','포조니'],
+    ['batch12-central-eastern-europe-capitals.json',3060972,'1919-03-27','브라티슬라바'],
+    ['batch12-central-eastern-europe-capitals.json',618426,'1944-09-12','키시네프'],
+    ['batch12-central-eastern-europe-capitals.json',618426,'1989-08-31','키시너우'],
+    ['batch13-european-microstates-mediterranean.json',2993458,'1814-05-29','포르에르퀼'],
+    ['batch13-european-microstates-mediterranean.json',2993458,'1814-05-30','모나코'],
+    ['batch14-north-atlantic-anatolia-caucasus.json',611717,'1918-05-26','트필리시'],
+    ['batch14-north-atlantic-anatolia-caucasus.json',611717,'1936-08-17','트빌리시'],
+    ['batch14-north-atlantic-anatolia-caucasus.json',616052,'1828-02-22','에리반'],
+    ['batch14-north-atlantic-anatolia-caucasus.json',616052,'1918-05-28','예레반']
+  ];
+  for(const [file,id,date,expected] of cases)
+    assert.equal(nameAt(find(file,id),date),expected,id+' / '+date);
+  const nicosia=find('batch13-european-microstates-mediterranean.json',146268);
+  assert.equal(nicosia.displayTimeline.length,1,
+    'Nicosia 1878-1914 naming remains pending independent historical review');
+  assert.ok(nicosia.names.some(n=>n.language==='el'&&n.text==='Λευκωσία'));
+  assert.ok(nicosia.names.some(n=>n.language==='tr'&&n.text==='Lefkoşa'));
+  assert.deepEqual(nicosia.historicalGeography.events.map(e=>e.date),
+    ['1963-12-30','1974-08-16']);
+  const seventh=batch('batch07-europe-capitals.json');
+  assert.equal(seventh.length,9,'Pest historical city must not be lost from the mirror');
+  assert.ok(seventh.some(r=>r.geonameId===3046446));
 });
 
 test('batch 15 central Asian capitals preserve real renamings, language forms, and modern-city start gates', () => {

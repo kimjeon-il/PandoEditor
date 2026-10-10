@@ -3,7 +3,7 @@
   "batch": "09-baltic-belarus-capitals",
   "status": "verified-source-staging-not-runtime",
   "source": "GeoNames (CC BY 4.0) and historical/official-language sources",
-  "checkedOn": "2026-10-08",
+  "checkedOn": "2026-10-10",
   "selection": "Four PPLC city settlements: Tallinn, Riga, Vilnius, Minsk. Administrative units excluded.",
   "coordinateConvention": "WGS84 EPSG:4326 latitude/longitude point, not boundary polygons.",
   "countryCodeSemantics": "Present-day source metadata only; never derive historic sovereignty.",
@@ -12,22 +12,46 @@
   "historicalDisplayStatus": "timeline-staged-not-runtime",
   "historicNameScope": "Names relevant to 1801-present; language and regime exonyms are not automatically converted to dated city renamings.",
   "qualityNotes": [
-    "Tallinn Reval/Ревель: period-specific language names, not a single exact legal name transition.",
-    "Vilnius Wilno: Polish-period name does not mean Lithuanian name ceased existing.",
-    "Minsk Belarusian Мінск and Russian Минск coexist; primary native is Belarusian.",
-    "All four GeoNames IDs are PPLC populated places, not identically named ADM units.",
-    "Only verified bilingual forms; duplicate English/native strings preserved in data and deduplicated in rendering.",
-    "Korean historical timeline entries are editorial style anchors, not historical attestation of Korean spelling.",
-    "Staging only; does not publish runtime map tiles."
+    "Tallinn: Reval/German to Russian Ревель from shared 1889-11-21 Gregorian imperial municipal-language decree issuance (1889-11-09 Julian), a chosen editorial date, not a separately established legal effective/implementation day. Estonian Tallinn transition stays approximate 1918; English Reval remains until then.",
+    "Riga: German Riga to Russian Рига using the same 1889-11-21 Gregorian decree-issuance threshold as Tallinn. Previously chosen approximate 1891 city-level uptake retained in historicalGeography as usage evidence, not displayTimeline. Latvian Rīga from 1918-11-18; English Riga and Korean 리가 unchanged. Decree issuance is not a verified city-level effective day.",
+    "Vilnius: user-authorized editorial Lithuanian Vilnius at 1918-02-16 independence declaration; Polish Wilno from formal Central Lithuania annexation ratification 1922-03-24; Lithuanian Vilnius restored 1939-10-28. 1918 did not immediately end German military occupation; 1920 Polish occupation does not itself trigger a name change; Polish sovereignty was disputed.",
+    "Minsk: imperial Russian Минскъ -> Минск from 1918-10-15 Russian Soviet orthography decree effective date, as an editorial threshold only (German occupation of Minsk makes actual city-level implementation unverified). Belarusian Менск and Russian Минск bilingual selection from 1920-07-31; Belarusian Менск -> Мінск 1939-07-29; Belarusian-only native display from 1990-09-01; Belarusian/Russian display from 1996-11-27. Korean 민스크 and English Minsk unchanged, 1991 Менск restoration not enacted.",
+    "Only historically selected names and justified concurrent native names are stored in names[]. Coexisting language-specific forms do not mean each was newly created when selected.",
+    "The shared 1889-11-21 Gregorian date is the 1889-11-09 Julian Baltic municipal-language decree issuance, not a separately verified legal effective/municipal implementation date. Tallinn's 1918 Estonian selection is year-granularity only and must NEVER be interpreted as January 1; other tentative name dates must not be fabricated.",
+    "All four GeoNames IDs remain modern PPLC populated places (not administrative areas); metadata country code is not used to infer historic sovereignty.",
+    "Staging-only scope approved for Tallinn (588409), Riga (456172), Vilnius (593116), and Minsk (625144) with the 1920-07-31 language-policy anchor. Published place tiles, manifest, runtime, web main, and app data remain unchanged."
   ],
   "records": [
     {
       "geonameId": 588409,
       "names": [
         {
+          "text": "Reval",
+          "language": "de",
+          "usage": "historical",
+          "variantType": "selectedPre1889GermanAdministrationName",
+          "sourceUrl": "https://arhiiv.eki.ee/dict/knr/index.cgi?Q=reval"
+        },
+        {
+          "text": "Ревель",
+          "language": "ru",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selected1889RussianMunicipalName",
+          "sourceUrl": "https://arhiiv.eki.ee/dict/knr/index.cgi?Q=reval"
+        },
+        {
           "text": "Tallinn",
           "language": "et",
-          "usage": "standard"
+          "usage": "standard",
+          "sourceUrl": "https://arhiiv.eki.ee/dict/knr/index.cgi?Q=reval"
+        },
+        {
+          "text": "Reval",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedPre1918EnglishExonym",
+          "sourceUrl": "https://arhiiv.eki.ee/dict/knr/index.cgi?Q=reval"
         },
         {
           "text": "Tallinn",
@@ -35,23 +59,21 @@
           "usage": "standard"
         },
         {
+          "text": "레발",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedEarlyMapTranscription"
+        },
+        {
+          "text": "레벨",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedLateImperialMapTranscription"
+        },
+        {
           "text": "탈린",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Reval",
-          "language": "de",
-          "usage": "historical",
-          "variantType": "formerGermanOfficialName",
-          "sourceUrl": "https://www.entsyklopeedia.ee/artikkel/reval1"
-        },
-        {
-          "text": "Ревель",
-          "language": "ru",
-          "usage": "historical",
-          "variantType": "formerRussianName",
-          "sourceUrl": "https://www.entsyklopeedia.ee/artikkel/reval1"
         }
       ],
       "latitude": 59.43696,
@@ -61,24 +83,99 @@
       "sourceUrl": "https://www.geonames.org/588409/",
       "sourceCountryCode": "EE",
       "defaultDisplayNameKo": "탈린",
-      "shortDescriptionKo": "에스토니아 수도, 옛 이름 Reval",
+      "shortDescriptionKo": "1889-11-21 러시아어·1918년 에스토니아어",
       "displayTimeline": [
         {
-          "nameKo": "탈린",
           "fromYear": 1801,
-          "kind": "koreanEditorialTranscription",
-          "sourceUrl": "https://www.geonames.org/588409/"
+          "nameKo": "레발",
+          "nameEn": "Reval",
+          "nameNative": "Reval",
+          "nativeLanguage": "de",
+          "kind": "historicalGermanAdministrativeName",
+          "sourceUrl": "https://arhiiv.eki.ee/dict/knr/index.cgi?Q=reval",
+          "researchNote": "1801년부터 발트 독일인 중심의 도시 행정에서 쓰인 독일어 Reval을 원어 대표명으로 선택한다. 영어 Reval, 한국어 레발은 같은 도시의 지도 표현을 위해 선택했다. 1801년은 조사 범위 시작 연도이며 에스토니아어 Tallinn이 존재하지 않았다는 뜻은 아니다."
+        },
+        {
+          "nameKo": "레벨",
+          "nameNative": "Ревель",
+          "nativeLanguage": "ru",
+          "kind": "historicalRussianAdministrationDecreeEditorialThreshold",
+          "sourceUrl": "https://www.tallinn.ee/ru/o-gorodskoy-vlasti",
+          "note": "발트 도시행정 러시아어 의무화 명령",
+          "researchNote": "1889-11-09(율리우스력) / 1889-11-21(그레고리력) 발트 도시 자치기관 러시아어 의무 사용 명령의 발령일을 지도 대표 원어명 전환을 위한 편집 기준일로 선택한다. 별도 시행일은 확인되지 않았고 모든 시청이 이 날 즉시 러시아어로 전면 전환했다는 뜻도 아니다. Reval에서 러시아어 Ревель를 대표 원어로 선택하며 한국어 레벨(편집상 전사), 영어 Reval을 유지한다. 실제 개명일과 구별한다.",
+          "fromDate": "1889-11-21"
+        },
+        {
+          "fromYear": 1918,
+          "nameKo": "탈린",
+          "nameEn": "Tallinn",
+          "nameNative": "Tallinn",
+          "nativeLanguage": "et",
+          "kind": "historicalEstonianNameEditorialAdoption",
+          "sourceUrl": "https://www.tallinn.ee/en/history-tallinn",
+          "note": "에스토니아 독립·원어명 변경",
+          "researchNote": "1918년 에스토니아 독립과 그해 11월 에스토니아 시정부 복귀를 묶어 원어 Tallinn, 한국어 탈린, 영어 Tallinn을 선택한다. 2월 독립 선언 직후 독일군 점령이 이어졌으며 공식 이름 교체의 확정 일자는 자료상 검증되지 않아 fromYear로만 기록한다. Tallinn은 과거에도 쓰였고 초기에는 Tallinna 표기도 공존했으므로 도시명을 1918년에 처음 만들었다는 뜻은 아니다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1889-11-21-decree-and-1918-estonian-name",
+      "defaultDisplayNameEn": "Tallinn",
+      "defaultDisplayNameNative": "Tallinn",
+      "defaultNativeLanguage": "et",
+      "historicalGeography": {
+        "events": [
+          {
+            "type": "imperialMunicipalRussianAdministration",
+            "detail": "발트 도시행정 러시아어 의무 명령 발령",
+            "sourceUrl": "https://www.tallinn.ee/ru/o-gorodskoy-vlasti",
+            "researchDetail": "1889-11-09 구력 발령을 1889-11-21 신력으로 환산. 발령일을 지도 표기 선택 기준으로 사용할 뿐 별도 시행일은 확인되지 않았다.",
+            "date": "1889-11-21"
+          },
+          {
+            "date": "1918-02-24",
+            "type": "estonianIndependenceDeclaration",
+            "detail": "에스토니아 독립 선언",
+            "sourceUrl": "https://www.tallinn.ee/en/history-tallinn"
+          },
+          {
+            "date": "1918-11-12",
+            "type": "estonianMunicipalAdministrationRestored",
+            "detail": "에스토니아 시정부 활동 재개",
+            "sourceUrl": "https://www.tallinn.ee/ru/o-gorodskoy-vlasti"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "Reval·Ревель는 언어별 도시명",
+            "sourceUrl": "https://arhiiv.eki.ee/dict/knr/index.cgi?Q=reval",
+            "researchDetail": "Reval(독일어), Ревель(러시아어), Tallinn(에스토니아어)은 독립 전후 이미 알려졌던 지명이다. 1889·1918은 지도 원어명 선택 기준이고 각각 독립적 법적 개명일을 입증하지 않는다."
+          }
+        ]
+      }
     },
     {
       "geonameId": 456172,
       "names": [
         {
+          "text": "Riga",
+          "language": "de",
+          "usage": "historical",
+          "variantType": "selectedGermanAdministrativeName",
+          "sourceUrl": "https://www.riga.lv/en/view-history-municipalities"
+        },
+        {
+          "text": "Рига",
+          "language": "ru",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedImperialRussianAdministrativeName",
+          "sourceUrl": "https://rusneb.ru/catalog/000199_000009_003516290/"
+        },
+        {
           "text": "Rīga",
           "language": "lv",
-          "usage": "standard"
+          "script": "Latn",
+          "usage": "standard",
+          "sourceUrl": "https://www.riga.lv/en/rigas-vesture"
         },
         {
           "text": "Riga",
@@ -98,48 +195,134 @@
       "sourceUrl": "https://www.geonames.org/456172/",
       "sourceCountryCode": "LV",
       "defaultDisplayNameKo": "리가",
-      "shortDescriptionKo": "라트비아어 Rīga와 영어 Riga",
+      "shortDescriptionKo": "1889-11-21 러시아어·1918년 라트비아어",
       "displayTimeline": [
         {
-          "nameKo": "리가",
           "fromYear": 1801,
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/456172/"
+          "nameKo": "리가",
+          "nameEn": "Riga",
+          "nameNative": "Riga",
+          "nativeLanguage": "de",
+          "kind": "historicalGermanAdministrativeName",
+          "sourceUrl": "https://www.riga.lv/en/view-history-municipalities",
+          "researchNote": "1801년부터 독일어 중심의 리가 시 행정 명칭 Riga를 대표 원어로 선택한다. 라트비아어 Rīga도 이전부터 사용됐으며 원어 선택 전환이 도시 자체의 개칭을 의미하지 않는다. 한국어 리가와 영어 Riga는 전체 기간 유지한다. 1801년은 조사 시작 연도다."
+        },
+        {
+          "nameNative": "Рига",
+          "nativeLanguage": "ru",
+          "kind": "historicalRussianAdministrationDecreeEditorialThreshold",
+          "sourceUrl": "https://www.pdf-archive.com/2017/04/18/rigasche-stadtblatter-1889-ocr-ta/",
+          "note": "발트 도시행정 러시아어 의무화 명령",
+          "researchNote": "1889-11-09(율리우스력) / 1889-11-21(그레고리력) 발트 도시 자치기관 러시아어 의무화 명령의 발령일을 탈린과 일괄 적용하는 대표 원어명 편집 기준으로 삼는다. 같은 해 리가의 Rigasche Stadtblätter에는 이 명령이 소개된다. 1891년 리가시 러시아어 자료 발행은 정착 과정의 추가 증거이지 별도 지도 전환점이 아니다. 법령의 별도 시행일과 리가 행정의 실제 전면 전환일은 미확인이다. 독일어 Riga에서 러시아어 Рига로 대표 원어만 바꾸며 한국어 리가·영어 Riga는 유지한다.",
+          "fromDate": "1889-11-21"
+        },
+        {
+          "fromDate": "1918-11-18",
+          "nameNative": "Rīga",
+          "nativeLanguage": "lv",
+          "kind": "historicalLatvianAdministrativeNameSelection",
+          "sourceUrl": "https://www.riga.lv/en/rigas-vesture",
+          "note": "라트비아 독립·대표 원어 변경",
+          "researchNote": "라트비아의 1918-11-18 독립 선언을 원어 대표명을 라트비아어 Rīga로 선택하는 기준으로 삼는다. 독립전쟁으로 시정 권력이 여러 번 바뀌었지만 임시 점령세력의 언어를 따라 다시 바꾸지 않는다. 라트비아어 Rīga는 훨씬 이전에도 존재했으므로 법적 도시 개명이나 최초 등장일로 해석하지 않는다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1889-11-21-decree-and-1918-latvian-name",
+      "defaultDisplayNameEn": "Riga",
+      "defaultDisplayNameNative": "Rīga",
+      "defaultNativeLanguage": "lv",
+      "historicalGeography": {
+        "events": [
+          {
+            "type": "balticMunicipalRussification",
+            "detail": "발트 도시행정 러시아어 의무 명령 발령",
+            "sourceUrl": "https://www.pdf-archive.com/2017/04/18/rigasche-stadtblatter-1889-ocr-ta/",
+            "researchDetail": "1889-11-09 구력(1889-11-21 신력) 정부의 발트 지역 도시 자치행정 러시아어 의무화 명령. 당시 리가에서 나온 Rigasche Stadtblätter의 명령 게재·소개 기록으로 리가에도 적용됨을 확인. 시행일은 별도 미확인.",
+            "date": "1889-11-21"
+          },
+          {
+            "year": 1891,
+            "type": "rigaRussianAdministrativeLanguageAdoption",
+            "detail": "리가시 러시아어 행정 자료 확인",
+            "sourceUrl": "https://rusneb.ru/catalog/000199_000009_003516290/",
+            "researchDetail": "1891년 리가 시정부의 러시아어 예산 등 문서가 기록되어 1889년 발령 뒤 실제 확산·사용을 뒷받침한다. 1891년은 지명 대표 언어 전환일이 아니라 사료상 확인 시기이므로 지도 displayTimeline에 추가하지 않는다."
+          },
+          {
+            "date": "1918-11-18",
+            "type": "latvianIndependenceDeclaration",
+            "detail": "라트비아 독립 선언",
+            "sourceUrl": "https://www.riga.lv/en/rigas-vesture"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "Riga·Рига·Rīga는 동일 도시",
+            "sourceUrl": "https://www.riga.lv/en/rigas-vesture",
+            "researchDetail": "독일어 Riga, 러시아어 Рига, 라트비아어 Rīga는 동일 도시의 언어별 표기이며 영어 Riga와 한국어 리가는 유지한다. 1940년 소련 지배 시작과 1991년 독립 회복을 자동 원어 전환점으로 처리하지 않는다."
+          }
+        ]
+      }
     },
     {
       "geonameId": 593116,
       "names": [
         {
+          "text": "Вильна",
+          "language": "ru",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedImperialRussianName",
+          "sourceUrl": "https://encyclopedia.yivo.org/article.aspx/Vilnius"
+        },
+        {
           "text": "Vilnius",
           "language": "lt",
-          "usage": "standard"
-        },
-        {
-          "text": "Vilnius",
-          "language": "en",
-          "usage": "standard"
-        },
-        {
-          "text": "빌뉴스",
-          "language": "ko",
-          "usage": "standard"
+          "script": "Latn",
+          "usage": "standard",
+          "sourceUrl": "https://www.lrt.lt/en/news-in-english/19/1362088/wh"
         },
         {
           "text": "Wilno",
           "language": "pl",
-          "usage": "alternate",
-          "variantType": "polishHistoricalName",
-          "sourceUrl": "https://www.vle.lt/straipsnis/vilniaus-krastas/"
+          "script": "Latn",
+          "usage": "historical",
+          "variantType": "selectedPolishAnnexationPeriodName",
+          "sourceUrl": "https://www.vle.lt/straipsnis/vilniaus-klausimas/"
         },
         {
           "text": "Vilna",
           "language": "en",
           "usage": "historical",
-          "variantType": "historicalEnglishName",
+          "variantType": "selectedImperialPeriodEnglishName",
           "sourceUrl": "https://encyclopedia.yivo.org/article.aspx/Vilnius"
+        },
+        {
+          "text": "Wilno",
+          "language": "en",
+          "usage": "historical",
+          "variantType": "selectedPolishPeriodEnglishMapForm",
+          "sourceUrl": "https://www.vle.lt/straipsnis/vilniaus-klausimas/"
+        },
+        {
+          "text": "Vilnius",
+          "language": "en",
+          "usage": "standard"
+        },
+        {
+          "text": "빌나",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedImperialPeriodKoreanMapName"
+        },
+        {
+          "text": "빌노",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedPolishPeriodKoreanMapName"
+        },
+        {
+          "text": "빌뉴스",
+          "language": "ko",
+          "usage": "standard"
         }
       ],
       "latitude": 54.68916,
@@ -149,24 +332,131 @@
       "sourceUrl": "https://www.geonames.org/593116/",
       "sourceCountryCode": "LT",
       "defaultDisplayNameKo": "빌뉴스",
-      "shortDescriptionKo": "폴란드어 Wilno도 사용",
+      "shortDescriptionKo": "1918·1922·1939년 대표 지명 변경",
       "displayTimeline": [
         {
-          "nameKo": "빌뉴스",
           "fromYear": 1801,
-          "kind": "koreanEditorialTranscription",
-          "sourceUrl": "https://www.geonames.org/593116/"
+          "nameKo": "빌나",
+          "nameEn": "Vilna",
+          "nameNative": "Вильна",
+          "nativeLanguage": "ru",
+          "kind": "historicalImperialRussianAdministrativeName",
+          "sourceUrl": "https://encyclopedia.yivo.org/article.aspx/Vilnius",
+          "researchNote": "1801년부터 러시아 제국기의 도시 행정 원어 Вильна, 영어 Vilna, 한국어 빌나를 대표 표기로 선택한다. 1801년은 검토 시작 시점이며 기존 리투아니아어 Vilnius와 폴란드어 Wilno의 사용을 부정하지 않는다."
+        },
+        {
+          "fromDate": "1918-02-16",
+          "nameKo": "빌뉴스",
+          "nameEn": "Vilnius",
+          "nameNative": "Vilnius",
+          "nativeLanguage": "lt",
+          "kind": "lithuanianIndependenceEditorialNameSelection",
+          "sourceUrl": "https://www.lrt.lt/en/news-in-english/19/1362088/wh",
+          "note": "리투아니아 독립·Vilnius 선택",
+          "researchNote": "사용자 확정 기준: 1918-02-16 리투아니아 독립 선언문에서 빌뉴스를 수도로 명시한 때부터 리투아니아어 Vilnius를 대표 원어, 영어 Vilnius, 한국어 빌뉴스로 선택한다. 도시가 그날 곧바로 독일 점령에서 해방된 것은 아니다. 이후 1919~1920년 소련·폴란드 등 임시 군사 통제 변화가 있었지만 지도 전쟁 중 원어명 변동은 추적하지 않는다. 이 날짜를 시의 법적 개칭이나 실질 행정권 인수일로 오인하지 않는다."
+        },
+        {
+          "fromDate": "1922-03-24",
+          "nameKo": "빌노",
+          "nameEn": "Wilno",
+          "nameNative": "Wilno",
+          "nativeLanguage": "pl",
+          "kind": "polishFormalAnnexationNameSelection",
+          "sourceUrl": "https://www.vle.lt/straipsnis/vilniaus-klausimas/",
+          "note": "중앙리투아니아 폴란드 편입",
+          "researchNote": "1922-03-24 폴란드 의회가 중앙리투아니아 편입을 비준한 날짜부터 폴란드어 Wilno를 대표 원어로 선택한다. 1920-10-09 폴란드군의 빌뉴스 점령과 1922년 정식 편입을 구분한 결정이다. 영어 Wilno·한국어 빌노 역시 편집기에서 기간에 맞춰 선택한 표기일 뿐 당시 영어권에서 Vilna 등 기존 이름의 사용이 중단됐다는 뜻은 아니다. 리투아니아 측은 폴란드의 영유권을 인정하지 않았다."
+        },
+        {
+          "fromDate": "1939-10-28",
+          "nameKo": "빌뉴스",
+          "nameEn": "Vilnius",
+          "nameNative": "Vilnius",
+          "nativeLanguage": "lt",
+          "kind": "lithuanianCivilAdministrationRestoration",
+          "sourceUrl": "https://www.lrt.lt/en/news-in-english/19/1876534/vilnius-and-its-700-year-history-key-dates",
+          "note": "리투아니아 행정권 회복",
+          "researchNote": "1939-10-10 소련·리투아니아 조약 체결과 1939-10-28 리투아니아군의 빌뉴스 입성은 구분한다. 실제 행정권 복귀일을 지도 명칭 전환점으로 사용해 Vilnius/빌뉴스를 복원한다. 1940년 소련 점령 및 독일 점령, 1990년 독립 회복 등은 임시 점령언어로 재변경할 근거가 아니다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1918-lithuanian-1922-polish-1939-lithuanian",
+      "defaultDisplayNameEn": "Vilnius",
+      "defaultDisplayNameNative": "Vilnius",
+      "defaultNativeLanguage": "lt",
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1918-02-16",
+            "type": "lithuanianIndependenceDeclaration",
+            "detail": "리투아니아 독립·빌뉴스 수도 선언",
+            "sourceUrl": "https://www.lrt.lt/en/news-in-english/19/1362088/wh",
+            "researchDetail": "독일군 점령하 독립선언이었으므로 독립과 즉각적인 실효 지배를 구분한다. 지도상 리투아니아어 대표명 전환은 사용자 편집 기준이다."
+          },
+          {
+            "date": "1920-10-09",
+            "type": "polishMilitaryOccupation",
+            "detail": "폴란드군 빌뉴스 점령",
+            "sourceUrl": "https://www.vle.lt/straipsnis/vilniaus-klausimas/",
+            "researchDetail": "중앙리투아니아의 수립과 후속 편입에 앞선 점령이다. 점령일부터 지도 원어를 바꾸지 않는다."
+          },
+          {
+            "date": "1922-03-24",
+            "type": "polishAnnexationRatified",
+            "detail": "폴란드 중앙리투아니아 편입 비준",
+            "sourceUrl": "https://www.vle.lt/straipsnis/vilniaus-klausimas/"
+          },
+          {
+            "date": "1939-10-10",
+            "type": "sovietLithuanianVilniusTransferTreaty",
+            "detail": "빌뉴스 이양 조약 체결",
+            "sourceUrl": "https://www.lrt.lt/en/news-in-english/19/1876534/vilnius-and-its-700-year-history-key-dates"
+          },
+          {
+            "date": "1939-10-28",
+            "type": "lithuanianVilniusAdministrationRestored",
+            "detail": "리투아니아군 빌뉴스 진입",
+            "sourceUrl": "https://www.lrt.lt/en/news-in-english/19/1876534/vilnius-and-its-700-year-history-key-dates"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "각 언어명은 새 지명 제정이 아님",
+            "sourceUrl": "https://www.vle.lt/straipsnis/vilniaus-klausimas/",
+            "researchDetail": "Вильна(러시아어), Wilno(폴란드어), Vilnius(리투아니아어)는 시대별 대표 행정언어에 따른 동시 존재 명칭이다. 한국어 빌나·빌노·빌뉴스도 시대별 지도용 편집 이름으로 선택했다."
+          }
+        ]
+      }
     },
     {
       "geonameId": 625144,
       "names": [
         {
+          "text": "Минскъ",
+          "language": "ru",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedImperialRussianPreReformSpelling"
+        },
+        {
+          "text": "Менск",
+          "language": "be",
+          "script": "Cyrl",
+          "usage": "historical",
+          "variantType": "selectedPre1939BelarusianOfficialName",
+          "sourceUrl": "https://news.mail.ru/society/67208587/"
+        },
+        {
           "text": "Мінск",
           "language": "be",
-          "usage": "standard"
+          "script": "Cyrl",
+          "usage": "standard",
+          "sourceUrl": "https://news.mail.ru/society/67208587/"
+        },
+        {
+          "text": "Минск",
+          "language": "ru",
+          "script": "Cyrl",
+          "usage": "standard",
+          "sourceUrl": "https://constitution.by/1994/5/"
         },
         {
           "text": "Minsk",
@@ -177,12 +467,6 @@
           "text": "민스크",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Минск",
-          "language": "ru",
-          "usage": "standard",
-          "sourceUrl": "https://constitution.by/1994/5/"
         }
       ],
       "latitude": 53.90019,
@@ -192,16 +476,204 @@
       "sourceUrl": "https://www.geonames.org/625144/",
       "sourceCountryCode": "BY",
       "defaultDisplayNameKo": "민스크",
-      "shortDescriptionKo": "벨라루스어·러시아어 이름 병존",
+      "shortDescriptionKo": "1939년 철자 개정·1996년 언어 병기",
       "displayTimeline": [
         {
-          "nameKo": "민스크",
           "fromYear": 1801,
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/625144/"
+          "nameKo": "민스크",
+          "nameEn": "Minsk",
+          "nameNative": "Минскъ",
+          "nativeLanguage": "ru",
+          "kind": "historicalImperialRussianPreReformSpelling",
+          "sourceUrl": "https://news.mail.ru/society/67208587/",
+          "researchNote": "1801년 조사 시작 시점에는 러시아 제국의 구철자 Минскъ를 대표 원어명으로 선택한다. 이는 모든 문헌의 유일한 당시 표기였다는 의미가 아니며 지도 한국어 민스크와 영어 Minsk는 유지한다. 구철자에서 새 철자로의 편집상 전환일은 1918-10-15 러시아 소비에트 정부 정서법 개혁 시행일로 별도 기록한다."
+        },
+        {
+          "fromDate": "1918-10-15",
+          "nameNative": "Минск",
+          "nativeLanguage": "ru",
+          "kind": "russianOrthographyReformEditorialThreshold",
+          "sourceUrl": "https://istmat.org/node/31587",
+          "note": "러시아어 정서법 개혁 시행",
+          "researchNote": "1918-10-10 러시아 소비에트 정부의 '새 정서법 도입에 관한 법령'이 모든 정부 발행물·공식 문서를 1918-10-15부터 새 정서법으로 작성하도록 규정했다. 이에 어말 경음부호 ъ를 제거한 Минск를 지도 러시아어 대표 원어명으로 선택한다. 이는 러시아어 정서법의 시행일을 사용한 편집상 기준이며 실제 민스크의 개명이나 도시 행정의 해당 날짜 적용을 입증하지 않는다. 민스크는 당시 독일군 점령하에 있었으므로 현지 사용 관행과 법령 효력의 지역적 차이를 구분한다. 한국어 민스크·영어 Minsk는 변경하지 않는다."
+        },
+        {
+          "nameNative": "Менск",
+          "nativeLanguage": "be",
+          "nativeNames": [
+            {
+              "text": "Менск",
+              "language": "be",
+              "script": "Cyrl"
+            },
+            {
+              "text": "Минск",
+              "language": "ru",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "historicalMultilingualPublicLanguageEqualityEditorialSelection",
+          "sourceUrl": "https://docs.historyrussia.org/ru/nodes/158003",
+          "note": "벨라루스 SSR 언어 평등 선언",
+          "researchNote": "1920-07-31 벨라루스 SSR 재수립 선언의 채택일을 지도 원어명 병기 시작의 편집 기준일로 사용한다. 선언은 벨라루스어·러시아어·폴란드어·이디시어 네 언어의 국가기관·교육·문화 분야에서의 동등한 사용권을 인정했다. 지도에서는 당시 선택된 벨라루스어 Менск 및 러시아어 Минск만 nativeNames[]로 기록하지만, 이를 단 두 개 언어만 공식 인정됐다는 뜻이나 네 언어별 도시명이 모두 공식 병기됐다는 입증으로 해석하지 않는다. 독일 점령하 벨라루스 인민공화국의 1918년 선언과 1919년 첫 SSR 성립은 이 날짜보다 앞서지만 동등한 도시명 병기의 직접 근거로 사용하지 않는다. 1919~1920년 폴란드군의 군사점령은 원어명 자동 변경 사유가 아니다. 1920년 7월 31일은 해당 도시의 개명일이나 문헌상 최초 병기일이 아니다.",
+          "fromDate": "1920-07-31"
+        },
+        {
+          "fromDate": "1939-07-29",
+          "nameNative": "Мінск",
+          "nativeLanguage": "be",
+          "nativeNames": [
+            {
+              "text": "Мінск",
+              "language": "be",
+              "script": "Cyrl"
+            },
+            {
+              "text": "Минск",
+              "language": "ru",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "officialBelarusianOrthographyNameChange",
+          "sourceUrl": "https://news.mail.ru/society/67208587/",
+          "note": "Менск→Мінск 공식 철자 변경",
+          "researchNote": "1939-07-29 벨라루스 SSR 최고회의가 공식 벨라루스어 표기를 Менск에서 Мінск로 변경했다. 러시아어 Минск는 그대로다. 이는 벨라루스어 지명 철자/공식 표기의 실질적 변경이며 두 언어 표기를 같은 키릴 철자로 통일했다는 주장은 아니다. 이전 병기 개시 시점은 1919년 잠정안에서 1920-07-31 선언 기준으로 교체했으나 1939년의 철자 변경일은 유지한다."
+        },
+        {
+          "fromDate": "1990-09-01",
+          "nativeNames": [
+            {
+              "text": "Мінск",
+              "language": "be",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "belarusianSoleStateLanguageEditorialSelection",
+          "sourceUrl": "https://studfile.net/preview/2890693/",
+          "note": "벨라루스어 단독 국가언어 기준",
+          "researchNote": "1990-01-26 벨라루스 SSR 언어법의 시행 기준일 1990-09-01부터 지도 공동 원어명 중 러시아어를 제외하고 벨라루스어 Мінск만 선택한다. 러시아어 실제 사용이나 행정적 의사소통이 사라졌다는 뜻은 아니다. 국가언어 제도의 편집상 기준이 도시 자체 이름 변경은 아니다."
+        },
+        {
+          "fromDate": "1996-11-27",
+          "nativeNames": [
+            {
+              "text": "Мінск",
+              "language": "be",
+              "script": "Cyrl"
+            },
+            {
+              "text": "Минск",
+              "language": "ru",
+              "script": "Cyrl"
+            }
+          ],
+          "kind": "belarusianRussianCoOfficialNativeLanguages",
+          "sourceUrl": "https://constitution.by/",
+          "note": "벨라루스어·러시아어 국가언어",
+          "researchNote": "1995년 5월 국민투표 이후 1996-11-27 시행된 개정 헌법 제17조가 벨라루스어·러시아어를 국가언어로 규정하므로 두 이름을 공동 원어명으로 다시 선택한다. 1996년은 민스크 도시 개명일이 아니라 두 언어의 동등 공식 지위를 기준으로 한 지도 데이터 병기 복원일이다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801"
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1918-10-15-russian-orthography-1920-07-31-multilingual-1939-spelling-1990-1996-language-changes",
+      "defaultDisplayNameEn": "Minsk",
+      "defaultDisplayNameNative": "Мінск",
+      "defaultNativeLanguage": "be",
+      "defaultNativeNames": [
+        {
+          "text": "Мінск",
+          "language": "be",
+          "script": "Cyrl"
+        },
+        {
+          "text": "Минск",
+          "language": "ru",
+          "script": "Cyrl"
+        }
+      ],
+      "historicalGeography": {
+        "events": [
+          {
+            "date": "1918-10-15",
+            "type": "russianOrthographyReformEffectiveEditorialReference",
+            "detail": "러시아어 새 정서법 적용 기준",
+            "sourceUrl": "https://istmat.org/node/31587",
+            "researchDetail": "1918-10-10 발령된 러시아 소비에트 정부 법령에 1918-10-15부터 정부 발행물·공문서에서 새 정서법을 사용하도록 명시되어 있다. 이는 어말 ъ가 있는 Минскъ에서 Минск로 바꾸는 지도 편집 기준이며 1918년 독일 점령하 민스크 현지 행정의 해당 일자 실제 전환을 증명하지 않는다."
+          },
+          {
+            "year": 1919,
+            "type": "sovietBelarusGovernmentFormation",
+            "detail": "벨라루스 SSR 초기 정부 수립",
+            "sourceUrl": "https://news.mail.ru/society/67208587/",
+            "researchDetail": "1919년 첫 벨라루스 SSR 수립은 역사적 사건으로 유지한다. 다만 지명 공식 병용의 시작을 입증하지 않으므로 displayTimeline 전환점으로는 사용하지 않는다."
+          },
+          {
+            "date": "1920-07-31",
+            "type": "belarusSSRDeclarationFourLanguagesEqualStatus",
+            "detail": "벨라루스 SSR 재수립·4개 언어 평등",
+            "sourceUrl": "https://docs.historyrussia.org/ru/nodes/158003",
+            "researchDetail": "선언의 채택일을 지도상 Менск/Минск 공동 원어명 선택 기준으로 사용한다. 선언은 벨라루스어·러시아어·폴란드어·이디시어 네 언어의 공적 사용권을 명시했으며 도시별 네 표기의 동시 공식 사용을 직접 증명하는 것은 아니다."
+          },
+          {
+            "date": "1921-02-05",
+            "type": "belarusSSRFourLanguageRightsReaffirmed",
+            "detail": "벨라루스 SSR 네 언어 평등 재확인",
+            "sourceUrl": "https://zapadrus.org/zaprus/istbl/341--1919-1939.html",
+            "researchDetail": "벨라루스 중앙집행위원회가 네 언어의 평등 지위를 재확인한 날. 최초 병용 전환점과는 별도로 역사적 근거로만 기록한다."
+          },
+          {
+            "date": "1939-07-29",
+            "type": "minskBelarusianOfficialNameSpelling",
+            "detail": "Менск→Мінск 공식 표기 변경",
+            "sourceUrl": "https://news.mail.ru/society/67208587/"
+          },
+          {
+            "date": "1990-01-26",
+            "type": "belarusSSRLanguageLawPassed",
+            "detail": "벨라루스어 국가언어법 제정",
+            "sourceUrl": "https://be.wikisource.org/wiki/Закон_Рэспублікі_Беларусь_«Аб_мовах_у_Рэспубліцы_Беларусь»"
+          },
+          {
+            "date": "1990-09-01",
+            "type": "belarusSSRLanguageLawEffective",
+            "detail": "벨라루스어 국가언어법 시행",
+            "sourceUrl": "https://studfile.net/preview/2890693/"
+          },
+          {
+            "date": "1995-05-14",
+            "type": "belarusReferendumOnOfficialLanguages",
+            "detail": "러시아어 지위 국민투표",
+            "sourceUrl": "https://constitution.by/"
+          },
+          {
+            "date": "1996-11-27",
+            "type": "belarusConstitutionBilingualEffective",
+            "detail": "헌법상 벨라루스어·러시아어 동등",
+            "sourceUrl": "https://constitution.by/"
+          }
+        ],
+        "notes": [
+          {
+            "detail": "1991년 Менск 복원안은 미채택",
+            "sourceUrl": "https://news.mail.ru/society/67208587/",
+            "researchDetail": "1991년 시 차원의 Менск 복원 시도가 최종 승인되지 않았으므로 1939년 이후 현행 벨라루스어 Мінск를 계속 사용한다."
+          },
+          {
+            "detail": "국가언어 지위와 사용 언어 구별",
+            "sourceUrl": "https://constitution.by/",
+            "researchDetail": "1990년 벨라루스어 단독 국가언어 편집 기준과 1996년 동등 공식 언어 기준은 1990년대 실생활/행정의 러시아어 사용 여부를 직접 증명하지 않는다."
+          },
+          {
+            "detail": "1918년 인민공화국은 독일 점령하",
+            "sourceUrl": "https://www.radabnr.org/en/bnr-rada-on-the-cooperation-with-the-jewish-people-a-statement-from-1921/",
+            "researchDetail": "1918년 3월 벨라루스 인민공화국 독립 선언이 있었으나 민스크에서 독일군의 실질 점령·군사 통제가 계속됐다. 인민공화국 독립 선언일을 행정상 도시명의 정식 병기 개시일로 자동 설정하지 않는다."
+          },
+          {
+            "detail": "네 언어 권리와 두 지명 선택 구분",
+            "sourceUrl": "https://docs.historyrussia.org/ru/nodes/158003",
+            "researchDetail": "공적 사용권이 인정된 네 언어 중 역사 지도 원어명 배열에는 벨라루스어 Менск와 러시아어 Минск를 선택했다. 폴란드어·이디시어를 국가 차원에서 인정하지 않았다는 뜻이 아니며 동시 도시명 표기의 최초 사용일은 밝혀지지 않았다."
+          }
+        ]
+      },
+      "displayPolicyNote": "1920-07-31 is the declaration adoption and the editor's selected concurrent native-name threshold (Belarusian Менск / Russian Минск), not an attested first name-use date or city rename. Declaration protected Belarusian, Russian, Polish, and Yiddish equally in public dealings, education, and culture; selected two preferred local names do not negate the four-language rights. The 1919 foundation, the 1918 Belarusian People's Republic proclamation under German occupation, and Polish military occupation do not independently constitute a city-name renaming. Official Belarusian Менск→Мінск 1939-07-29; nativeNames monolingual from 1990-09-01 legal editorial boundary; Belarusian/Russian nativeNames restored from 1996-11-27 constitutional provision. Russian pre-reform Минскъ changes editorially to Минск from 1918-10-15, the effective date written into the Russian Soviet government's 1918-10-10 orthography decree for government publications/documents. Minsk was German-occupied then, so this editor-selected date is NOT evidence of actual Minsk municipal implementation or an official city rename. Korean 민스크 and English Minsk do not change."
     }
   ]
 }

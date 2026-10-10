@@ -180,7 +180,7 @@ private slots:
         const auto city=records.at(1).toObject();
         PlaceRecord testRecord;testRecord.name=city.value("defaultDisplayNameKo").toString();
         const auto timeline=city.value("displayTimeline").toArray();
-        QCOMPARE(timeline.size(),3);
+        QCOMPARE(timeline.size(),4);
         for(const auto& value:timeline) {
             const auto item=value.toObject();PlaceNameTransition transition;
             if(item.contains("fromDate"))transition.fromDate=item.value("fromDate").toString();
@@ -197,7 +197,12 @@ private slots:
             QCOMPARE(actual.size(),std::size_t(1));
             QCOMPARE(actual.front().text,expected.at(i));
         }
-        QCOMPARE(records.at(4).toObject().value("displayTimeline").toArray().size(),1);
+        const auto pristina=records.at(4).toObject().value("displayTimeline").toArray();
+        QCOMPARE(pristina.size(),5);
+        QCOMPARE(pristina.at(3).toObject().value("fromDate").toString(),
+                 QStringLiteral("1990-09-28"));
+        QCOMPARE(pristina.at(4).toObject().value("fromDate").toString(),
+                 QStringLiteral("2000-07-27"));
         QCOMPARE(records.at(4).toObject().value("sourceCountryCode").toString(),
                  QStringLiteral("XK"));
     }
@@ -235,7 +240,7 @@ private slots:
         }
         const auto bratislava=records.at(0).toObject();
         const auto timeline=bratislava.value("displayTimeline").toArray();
-        QCOMPARE(timeline.size(),2);
+        QCOMPARE(timeline.size(),4);
         PlaceRecord place;place.name=bratislava.value("defaultDisplayNameKo").toString();
         for(const auto& entry:timeline) {
             const auto raw=entry.toObject();PlaceNameTransition transition;
@@ -245,14 +250,19 @@ private slots:
             place.nameTimeline.push_back(std::move(transition));
         }
         const QStringList dates{"1919-03-26","1919-03-27","1920-01-01"};
-        const QStringList expected{QStringLiteral("프레스부르크"),
+        const QStringList expected{QStringLiteral("포조니"),
             QStringLiteral("브라티슬라바"),QStringLiteral("브라티슬라바")};
         for(qsizetype i=0;i<dates.size();++i) {
             const auto rows=resolvePlaceDisplayRows(place,PlaceLanguageSelection{},dates.at(i));
             QCOMPARE(rows.size(),std::size_t(1));
             QCOMPARE(rows.front().text,expected.at(i));
         }
-        QCOMPARE(records.at(1).toObject().value("displayTimeline").toArray().size(),1);
+        const auto chisinau=records.at(1).toObject().value("displayTimeline").toArray();
+        QCOMPARE(chisinau.size(),8);
+        QCOMPARE(chisinau.at(6).toObject().value("fromDate").toString(),
+                 QStringLiteral("1944-09-12"));
+        QCOMPARE(chisinau.at(7).toObject().value("fromDate").toString(),
+                 QStringLiteral("1989-08-31"));
         QCOMPARE(records.at(3).toObject().value("sourceCountryCode").toString(),
                  QStringLiteral("LI"));
     }
@@ -277,11 +287,24 @@ private slots:
             QCOMPARE(city.value("featureClass").toString(),QStringLiteral("P"));
             QCOMPARE(city.value("featureCode").toString(),QStringLiteral("PPLC"));
             const auto timeline=city.value("displayTimeline").toArray();
-            QCOMPARE(timeline.size(),1);
+            QVERIFY(!timeline.isEmpty());
             QCOMPARE(timeline.at(0).toObject().value("fromYear").toInt(),1801);
-            QCOMPARE(timeline.at(0).toObject().value("nameKo").toString(),labels.at(i));
+            QVERIFY(!timeline.at(0).toObject().value("nameKo").toString().isEmpty());
         }
+        const auto monaco=records.at(2).toObject().value("displayTimeline").toArray();
+        QCOMPARE(monaco.size(),2);
+        QCOMPARE(monaco.at(0).toObject().value("nameKo").toString(),
+                 QStringLiteral("포르에르퀼"));
+        QCOMPARE(monaco.at(1).toObject().value("fromDate").toString(),
+                 QStringLiteral("1814-05-30"));
+        const auto valletta=records.at(3).toObject().value("displayTimeline").toArray();
+        QCOMPARE(valletta.size(),4);
+        QCOMPARE(valletta.at(2).toObject().value("fromDate").toString(),
+                 QStringLiteral("1934-10-01"));
+        QCOMPARE(valletta.at(3).toObject().value("fromDate").toString(),
+                 QStringLiteral("1936-09-02"));
         const auto nicosia=records.at(4).toObject();
+        QCOMPARE(nicosia.value("displayTimeline").toArray().size(),1);
         const auto names=nicosia.value("names").toArray();
         bool greek=false,turkish=false;
         for(const auto& value:names) {
@@ -332,30 +355,26 @@ private slots:
             QCOMPARE(city.value("featureCode").toString(),QStringLiteral("PPLC"));
             QVERIFY(!names.at(i).contains(QStringLiteral("바티칸")));
         }
-        for(int index:{2,3}) {
-            const QJsonObject city=cities.at(index).toObject();
-            const QJsonArray timeline=city.value("displayTimeline").toArray();
-            QCOMPARE(timeline.size(),2);
-            PlaceRecord record;
-            record.name=city.value("defaultDisplayNameKo").toString();
-            for(const auto& step:timeline) {
-                const QJsonObject value=step.toObject();
-                QVERIFY(!value.contains("fromDate"));
-                PlaceNameTransition change;
-                change.fromYear=value.value("fromYear").toInt();
-                change.ko=value.value("nameKo").toString();
-                record.nameTimeline.push_back(std::move(change));
-            }
-            QCOMPARE(record.nameTimeline.at(1).fromYear,1936);
-            const QString historical=index==2?QStringLiteral("티플리스"):QStringLiteral("에리반");
-            const QString modern=index==2?QStringLiteral("트빌리시"):QStringLiteral("예레반");
-            const auto oldRows=resolvePlaceDisplayRows(record,PlaceLanguageSelection{},"1935-12-31");
-            const auto newRows=resolvePlaceDisplayRows(record,PlaceLanguageSelection{},"1937-01-01");
-            QCOMPARE(oldRows.size(),std::size_t(1));
-            QCOMPARE(newRows.size(),std::size_t(1));
-            QCOMPARE(oldRows.front().text,historical);
-            QCOMPARE(newRows.front().text,modern);
-        }
+        const auto tbilisi=cities.at(2).toObject().value("displayTimeline").toArray();
+        QCOMPARE(tbilisi.size(),3);
+        QCOMPARE(tbilisi.at(0).toObject().value("nameKo").toString(),
+                 QStringLiteral("티플리스"));
+        QCOMPARE(tbilisi.at(1).toObject().value("fromDate").toString(),
+                 QStringLiteral("1918-05-26"));
+        QCOMPARE(tbilisi.at(2).toObject().value("fromDate").toString(),
+                 QStringLiteral("1936-08-17"));
+        QCOMPARE(tbilisi.at(2).toObject().value("nameKo").toString(),
+                 QStringLiteral("트빌리시"));
+        const auto yerevan=cities.at(3).toObject().value("displayTimeline").toArray();
+        QCOMPARE(yerevan.size(),5);
+        QCOMPARE(yerevan.at(0).toObject().value("nameKo").toString(),
+                 QStringLiteral("이라반"));
+        QCOMPARE(yerevan.at(1).toObject().value("fromDate").toString(),
+                 QStringLiteral("1828-02-22"));
+        QCOMPARE(yerevan.at(2).toObject().value("fromDate").toString(),
+                 QStringLiteral("1918-05-28"));
+        QCOMPARE(yerevan.at(2).toObject().value("nameKo").toString(),
+                 QStringLiteral("예레반"));
         QCOMPARE(cities.at(1).toObject().value("sourceCountryCode").toString(),QStringLiteral("TR"));
         QCOMPARE(cities.at(4).toObject().value("sourceCountryCode").toString(),QStringLiteral("AZ"));
     }

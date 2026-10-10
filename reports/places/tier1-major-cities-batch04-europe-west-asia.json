@@ -10,14 +10,14 @@
   "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
   "historicalDisplayPolicyFile": "reports/places/historical-display-policy.json",
   "historicalDisplayStatus": "timeline-staged-not-runtime",
-  "historicNameScope": "Main local and English forms and attested historically meaningful Korean forms used from 1801 onward.",
+  "historicNameScope": "Major-city names reviewed from 1801 onward except Istanbul, whose explicitly sourced chronology is extended to the 330 Byzantine capital through its 1453 Ottoman transition.",
   "qualityNotes": [
-    "East/West Berlin are historical sector names, not whole-city renames.",
+    "Berlin, Rome and Madrid: verified unchanged preferred Korean, English and native forms from 1801 to present; the initial 1801 survey boundary is not a foundation or legal naming date.",
     "Rome and Moscow changed political status without renaming.",
     "Madrid's older Magerit was outside the 19th-century historic-name cutoff.",
-    "Istanbul has overlapping Ottoman/Greek/Western names. The 1930 label preference is an editorial convention, not a legal city rename.",
+    "Istanbul: timeline extended to Byzantine Constantinople (from 330 editorial year); Ottoman formal Kostantiniyye starts at 1453-05-29 Julian / 1453-06-07 proleptic Gregorian conquest; this is selection of era map name, not first use of a newly coined name. Ottoman Kostantiniyye and İstanbul coexisted.",
     "Notes and details intended for UI are at most 28 Unicode code points; archival details can be longer.",
-    "Istanbul exact date audit: 1876 constitution already says İstanbul; 1929-01-03 postal letter is reported; 1930-03-18 diplomatic usage is attested; 1930-03-28 postal-law claim is contested. Preserve 1930 year-granularity editorial timeline, not a fictitious legal effective date."
+    "Istanbul: 1928-11-03 changes native script only, قسطنطينيه → editorial Kostantiniyye, not İstanbul. 1929 year-only postal event changes ko/en/native together to 이스탄불 / Istanbul / İstanbul. Jan 3 vs Jan 5 secondary-source reports, no verified original notice; 1930-03-28 claimed law is contested, not treated as official rename."
   ],
   "records": [
     {
@@ -31,6 +31,11 @@
         {
           "text": "베를린",
           "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Berlin",
+          "language": "en",
           "usage": "standard"
         }
       ],
@@ -47,7 +52,10 @@
           "nameKo": "베를린",
           "fromYear": 1801,
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.berlin.de/politische-bildung/politikportal/politik-in-berlin/hauptverwaltung-und-bezirksverwaltung/entstehung-und-entwicklung-der-bezirke/"
+          "sourceUrl": "https://www.berlin.de/politische-bildung/politikportal/politik-in-berlin/hauptverwaltung-und-bezirksverwaltung/entstehung-und-entwicklung-der-bezirke/",
+          "nameEn": "Berlin",
+          "nameNative": "Berlin",
+          "nativeLanguage": "de"
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -87,7 +95,10 @@
             "sourceUrl": "https://www.berlin.de/en/history/8481782-8619314-berlin-after-1945.en.html"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Berlin",
+      "defaultDisplayNameNative": "Berlin",
+      "defaultNativeLanguage": "de"
     },
     {
       "geonameId": 3169070,
@@ -121,7 +132,10 @@
           "nameKo": "로마",
           "fromYear": 1801,
           "kind": "historicalLocalName",
-          "sourceUrl": "https://vive.cultura.gov.it/en/vittoriano/history/victor-emmanuel-ii-and-risorgimento-process"
+          "sourceUrl": "https://vive.cultura.gov.it/en/vittoriano/history/victor-emmanuel-ii-and-risorgimento-process",
+          "nameEn": "Rome",
+          "nameNative": "Roma",
+          "nativeLanguage": "it"
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -146,7 +160,10 @@
             "sourceUrl": "https://vive.cultura.gov.it/en/vittoriano/history/victor-emmanuel-ii-and-risorgimento-process"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Rome",
+      "defaultDisplayNameNative": "Roma",
+      "defaultNativeLanguage": "it"
     },
     {
       "geonameId": 3117735,
@@ -159,6 +176,11 @@
         {
           "text": "마드리드",
           "language": "ko",
+          "usage": "standard"
+        },
+        {
+          "text": "Madrid",
+          "language": "en",
           "usage": "standard"
         }
       ],
@@ -175,7 +197,10 @@
           "nameKo": "마드리드",
           "fromYear": 1801,
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/3117735/madrid.html"
+          "sourceUrl": "https://www.esmadrid.com/en/history-madrid",
+          "nameEn": "Madrid",
+          "nameNative": "Madrid",
+          "nativeLanguage": "es"
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -183,10 +208,13 @@
         "notes": [
           {
             "detail": "Magerit는 근대 도시 개칭명 아님",
-            "sourceUrl": "https://www.geonames.org/3117735/madrid.html"
+            "sourceUrl": "https://www.esmadrid.com/en/history-madrid"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Madrid",
+      "defaultDisplayNameNative": "Madrid",
+      "defaultNativeLanguage": "es"
     },
     {
       "geonameId": 524901,
@@ -205,12 +233,6 @@
           "text": "모스크바",
           "language": "ko",
           "usage": "standard"
-        },
-        {
-          "text": "Moskva",
-          "language": "ru-Latn",
-          "usage": "alternate",
-          "variantType": "romanization"
         }
       ],
       "latitude": 55.75204,
@@ -226,7 +248,10 @@
           "nameKo": "모스크바",
           "fromYear": 1801,
           "kind": "historicalLocalName",
-          "sourceUrl": "https://www.prlib.ru/history/619089"
+          "sourceUrl": "https://www.prlib.ru/history/619089",
+          "nameEn": "Moscow",
+          "nameNative": "Москва",
+          "nativeLanguage": "ru"
         }
       ],
       "historicalDisplayCoverage": "reviewed-since-1801",
@@ -245,7 +270,10 @@
             "sourceUrl": "https://www.prlib.ru/history/619089"
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Moscow",
+      "defaultDisplayNameNative": "Москва",
+      "defaultNativeLanguage": "ru"
     },
     {
       "geonameId": 745044,
@@ -266,14 +294,6 @@
           "usage": "standard"
         },
         {
-          "text": "Kostantiniyye",
-          "language": "ota-Latn",
-          "usage": "historical",
-          "variantType": "ottomanDocumentaryName",
-          "note": "오스만 사료명, 이스탄불과 병용",
-          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
-        },
-        {
           "text": "قسطنطينيه",
           "language": "ota-Arab",
           "usage": "historical",
@@ -285,14 +305,7 @@
           "language": "ko",
           "usage": "historical",
           "variantType": "koreanOttomanTranscription",
-          "linkedName": "Kostantiniyye",
-          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
-        },
-        {
-          "text": "Constantinopolis",
-          "language": "la",
-          "usage": "historical",
-          "variantType": "historicLatinName",
+          "linkedName": "قسطنطينيه",
           "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
         },
         {
@@ -306,31 +319,23 @@
           "text": "콘스탄티노폴리스",
           "language": "ko",
           "usage": "historical",
-          "variantType": "koreanHistoricLatinName",
-          "linkedName": "Constantinopolis",
-          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
+          "variantType": "selectedByzantineKoreanName",
+          "sourceUrl": "https://www.metmuseum.org/de/essays/byzantium-ca-330-1453"
         },
         {
-          "text": "Κωνσταντινούπολη",
-          "language": "el",
-          "usage": "standard",
-          "variantType": "modernGreekExonym",
-          "sourceUrl": "https://digitallibrary.academyofathens.gr/archive/item/227"
-        },
-        {
-          "text": "콘스탄티누폴리",
-          "language": "ko",
-          "usage": "alternate",
-          "variantType": "koreanModernGreekName",
-          "linkedName": "Κωνσταντινούπολη",
-          "sourceUrl": "https://digitallibrary.academyofathens.gr/archive/item/227"
-        },
-        {
-          "text": "Stamboul",
-          "language": "en",
+          "text": "Κωνσταντινούπολις",
+          "language": "grc",
           "usage": "historical",
-          "variantType": "historicWesternSpelling",
-          "sourceUrl": "https://en.wikipedia.org/wiki/Names_of_Istanbul"
+          "variantType": "selectedByzantineNativeName",
+          "sourceUrl": "https://www.metmuseum.org/de/essays/byzantium-ca-330-1453"
+        },
+        {
+          "text": "Kostantiniyye",
+          "language": "ota-Latn",
+          "usage": "historical",
+          "variantType": "selectedLatinTranscriptionOfOttomanPreferredName",
+          "sourceUrl": "https://www.ataturkansiklopedisi.gov.tr/detay/616/Harf-Devrimi",
+          "note": "1928~1929년 지도 표기의 편집상 문자 전환. 1928년 실제 공식 이름이 이 표기뿐이었다는 의미가 아님."
         }
       ],
       "latitude": 41.01384,
@@ -340,31 +345,61 @@
       "sourceUrl": "https://www.geonames.org/745044/",
       "sourceCountryCode": "TR",
       "defaultDisplayNameKo": "이스탄불",
-      "shortDescriptionKo": "오스만·그리스어 명칭 병용",
+      "shortDescriptionKo": "1929년 국제 표기 전환",
       "displayTimeline": [
         {
-          "nameKo": "코스탄티니예",
-          "fromYear": 1801,
+          "fromYear": 330,
+          "nameKo": "콘스탄티노폴리스",
+          "nameEn": "Constantinople",
+          "nameNative": "Κωνσταντινούπολις",
+          "nativeLanguage": "grc",
           "kind": "historicalMapConvention",
-          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul",
-          "note": "오스만식 지도 표기, 다른 명칭 병용"
+          "sourceUrl": "https://www.metmuseum.org/de/essays/byzantium-ca-330-1453",
+          "note": "동로마 시대 그리스어 지명",
+          "researchNote": "330년 로마 제국의 새 수도 개설을 시대별 지도표기 시작의 편집 기준으로 선택. 도시가 같은 날 법률로 처음 콘스탄티노폴리스로 개칭되었다는 의미는 아님. 1453년 함락 전까지의 시대 대표명이며 Byzantion 및 New Rome 등은 별도 사료상 표현."
+        },
+        {
+          "fromDate": "1453-06-07",
+          "historicalEventDate": "1453-05-29",
+          "historicalEventCalendar": "Julian",
+          "nameKo": "코스탄티니예",
+          "nameNative": "قسطنطينيه",
+          "nativeLanguage": "ota-Arab",
+          "kind": "governingAuthorityEditorialLabelTransition",
+          "sourceUrl": "https://ttk.gov.tr/istanbulun-fethi/",
+          "note": "1453년 오스만 정복부터 대표명",
+          "researchNote": "1453-05-29 율리우스력(당대 관례상의 함락일)은 역산 그레고리력 1453-06-07과 같은 날이다. displayTimeline.fromDate는 데이터 규약대로 그레고리력에 맞추고 사료 날짜를 historicalEventDate에 별도로 보존. 이 날짜는 오스만 시대 격식명 Kostantiniyye의 지도 대표 표기 시작일이지 지명의 최초 사용일·단독 법적 개칭일이 아니다. 오스만의 İstanbul 사용도 병존."
+        },
+        {
+          "fromDate": "1928-11-03",
+          "nameNative": "Kostantiniyye",
+          "nativeLanguage": "ota-Latn",
+          "kind": "historicalOrthographyEditorialTransition",
+          "sourceUrl": "https://www.ataturkansiklopedisi.gov.tr/detay/616/Harf-Devrimi",
+          "note": "라틴 문자 표기로만 전환",
+          "researchNote": "1928-11-03 튀르키예 문자개혁법 제1353호 발효일을 대표 지명의 라틴 문자 표시 전환 편집일로 채택. 오스만어 قسطنطينيه의 학술적/편집상 라틴 전사 Kostantiniyye를 사용하여 같은 지명을 유지한다. 실제 1928년 공화국 공식 지명이 유일하게 Kostantiniyye였다는 주장은 아님. İstanbul은 그 전부터 국내 공식 법률에 사용됐고 문자 전환 시행도 1929년까지 단계적으로 진행됐다."
         },
         {
           "nameKo": "이스탄불",
-          "fromYear": 1930,
+          "fromYear": 1929,
           "kind": "koreanEditorialTranscription",
-          "sourceUrl": "https://en.teyit.org/fact-check/the-claim-that-ataturk-made-the-song-istanbul-not-constantinople-written",
-          "note": "1930년 표기 기준, 일자는 미확정",
+          "note": "1929년 1월 국제 우편 명칭 통보를 지도 편집 기준으로 선택",
           "datePrecision": "year",
-          "exactDayNotConfirmed": true
+          "exactDayNotConfirmed": true,
+          "nameEn": "Istanbul",
+          "sourceUrl": "https://www.ekrembugraekinci.com/article/?ID=1386&istanbul--not-constantinople=",
+          "researchNote": "1929년 1월 튀르키예 우편당국이 국제 우편기관에 Constantinople 대신 Istanbul을 사용하도록 통보했다는 기록에 근거한 한국어·영어 지도 대표명 편집 전환이며, 원어명 표기도 Kostantiniyye에서 İstanbul로 함께 바꾼다. 3일과 5일로 번역본의 일자가 상충하고 통보 원문은 확인되지 않아 연도 단위로만 지정한다. 외국어 실사용은 1930년에도 전환 중이었다. 튀르키예 국내 도시명 법적 개칭일이 아니다.",
+          "nameNative": "İstanbul",
+          "nativeLanguage": "tr"
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801",
+      "historicalDisplayCoverage": "reviewed-since-330-year-exception",
       "historicalGeography": {
         "notes": [
           {
-            "detail": "1930년은 지도 규칙, 개칭일 아님",
-            "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul"
+            "detail": "1929년 국제우편 사건은 지도 편집 기준",
+            "sourceUrl": "https://www.ekrembugraekinci.com/article/?ID=1386&istanbul--not-constantinople=",
+            "researchDetail": "이미 1924년 튀르키예 국내 공식 법률에 İstanbul이 등장한다. 지도 이름의 1929년 전환은 국내 법적 개칭이 아니라 국제 표기 통보의 편집상 기준이다."
           },
           {
             "detail": "그리스어 콘스탄티누폴리 현재도 사용",
@@ -381,6 +416,26 @@
         ],
         "namingEvidence": [
           {
+            "year": 330,
+            "eventType": "byzantineImperialCapitalNamingContext",
+            "name": "Κωνσταντινούπολις",
+            "certainty": "verified-era-editorial-330-year",
+            "shortDescriptionKo": "330년 콘스탄티노폴리스 수도",
+            "sourceUrl": "https://www.metmuseum.org/de/essays/byzantium-ca-330-1453",
+            "researchDetail": "330년 콘스탄티누스의 신도시 수도 개설에 따른 편집상 그리스어 이름 시작 연도. 명칭 자체의 첫 법적 공포일이라는 뜻은 아니다."
+          },
+          {
+            "date": "1453-06-07",
+            "historicalEventDate": "1453-05-29",
+            "historicalEventCalendar": "Julian",
+            "eventType": "ottomanConquestEditorialNameBoundary",
+            "name": "قسطنطينيه",
+            "certainty": "confirmed-conquest-date-editorial-name-selection",
+            "shortDescriptionKo": "1453년 정복 뒤 오스만 대표명",
+            "sourceUrl": "https://ttk.gov.tr/istanbulun-fethi/",
+            "researchDetail": "오스만 제국의 콘스탄티노폴리스 함락 1453-05-29(율리우스력)=1453-06-07(역산 그레고리력). 기존 그리스어 지명의 사용이나 오스만 튀르크어 Istanbul의 병존을 부정하는 개칭일이 아니다."
+          },
+          {
             "year": 1876,
             "eventType": "officialContemporaneousNameUse",
             "name": "İstanbul",
@@ -390,16 +445,36 @@
             "researchDetail": "1876년 오스만 헌법 제2조에서 수도를 İstanbul로 표기함. 따라서 1930년 최초 개칭이라는 기술은 부정확함."
           },
           {
+            "date": "1924-04-21",
+            "eventType": "officialContemporaneousRepublicNameUse",
+            "name": "İstanbul",
+            "certainty": "confirmed",
+            "shortDescriptionKo": "1924년 공화국 법률에 İstanbul",
+            "sourceUrl": "https://www5.tbmm.gov.tr/tutanaklar/KANUNLAR_KARARLAR/kanuntbmmc002/kanuntbmmc002/kanuntbmmc00200493.pdf",
+            "researchDetail": "법률 제493호 「İstanbul Darülfünununun şahsiyeti hükmiyesi hakkında kanun」의 제목과 제1조에 İstanbul이 등장한다. 따라서 공화국 내부 공식 Istanbul 사용은 1929년보다 이르지만 옛 명칭의 동시 사용 종료일은 확인되지 않았다."
+          },
+          {
+            "date": "1928-11-03",
+            "eventType": "officialTurkishLatinAlphabetLaw",
+            "name": "İstanbul",
+            "certainty": "confirmed-law-date-editorial-name-transition",
+            "shortDescriptionKo": "튀르키예 라틴 문자법 시행",
+            "sourceUrl": "https://www5.tbmm.gov.tr/tutanaklar/KANUNLAR_KARARLAR/kanuntbmmc007/kanuntbmmc007/kanuntbmmc00701353.pdf",
+            "researchDetail": "제1353호 문자개혁법 공포일. 새로운 도시명 개칭이 아닌 원어 문자 전환을 위한 지도 편집 경계다. 실제 공공기관 사용은 단계적으로 전환됐다."
+          },
+          {
             "date": "1929-01-03",
             "eventType": "reportedInternationalPostalNotification",
             "names": [
               "Constantinople",
               "İstanbul"
             ],
-            "certainty": "reported-secondary-source-primary-unchecked",
+            "certainty": "reported-secondary-sources-disagree-on-exact-day-primary-unchecked",
             "shortDescriptionKo": "국제 우편 명칭 통보일로 전해짐",
             "sourceUrl": "https://www.turkiyegazetesi.com.tr/kose-yazilari/prof-dr-ekrem-bugra-ekinci/istanbul-not-constantinople-615715",
-            "researchDetail": "1929-01-03 국제 우편기관 통보설이 다수 2차 문헌에 나타나지만 실제 통보 원문은 확인하지 못함."
+            "researchDetail": "찰스 H. 셰릴의 1934년 저작에 기초한 튀르키예어 번역·소개자료가 1929-01-03과 1929-01-05를 각각 기재한다. 국제 우편 통보 원문은 확인하지 못했으므로 1929년을 지도 편집 기준으로만 사용한다. 1924년부터의 국내 공식 İstanbul 사용과 구분.",
+            "alternativeDateReported": "1929-01-05",
+            "alternativeSourceUrl": "https://www.scribd.com/document/827108899/Charles-N-Sherrill-Bir-ABD-Buyukelcisinin-Turkiye-Hat%C4%B1ralar%C4%B1-Mustafa"
           },
           {
             "date": "1930-03-18",
@@ -423,17 +498,30 @@
             "challengeSourceUrl": "https://en.teyit.org/fact-check/the-claim-that-ataturk-made-the-song-istanbul-not-constantinople-written",
             "researchDetail": "터키 의회 후대 간행물은 1930-03-28 우편법과 명칭 변경을 소개하지만, Teyit은 당일 관보의 해당 법령을 찾을 수 없다고 검증함. 단일 공식 개칭일로 쓰지 않음."
           }
+        ],
+        "events": [
+          {
+            "date": "1453-06-07",
+            "historicalEventDate": "1453-05-29",
+            "historicalEventCalendar": "Julian",
+            "type": "ottomanConquest",
+            "detail": "오스만 제국의 도시 점령",
+            "sourceUrl": "https://ttk.gov.tr/istanbulun-fethi/",
+            "researchDetail": "1453-05-29 율리우스력=1453-06-07 역산 그레고리력. 지도 역사적 지명 전환점을 점령일과 연결."
+          }
         ]
       },
       "contextualDisplayNames": [
         {
           "nameKo": "코스탄티니예",
           "requiresAuthority": "오스만 제국",
-          "fromYear": 1801,
           "toYear": 1922,
           "requiresVerifiedPolityAtDate": true,
           "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul",
-          "note": "오스만 시대 문어 명칭"
+          "note": "오스만 시대 정식 문서에 사용한 격식명",
+          "fromDate": "1453-06-07",
+          "historicalEventDate": "1453-05-29",
+          "historicalEventCalendar": "Julian"
         },
         {
           "nameKo": "콘스탄티누폴리",
@@ -441,15 +529,11 @@
           "requiresExplicitLabelMode": true,
           "sourceUrl": "https://digitallibrary.academyofathens.gr/archive/item/227",
           "note": "현대 그리스어 명칭"
-        },
-        {
-          "nameKo": "콘스탄티노폴리스",
-          "requiresHistoricalNamingContext": "Latin/Greek historiography",
-          "requiresExplicitLabelMode": true,
-          "sourceUrl": "https://islamansiklopedisi.org.tr/istanbul",
-          "note": "그리스·로마사 서술명"
         }
-      ]
+      ],
+      "defaultDisplayNameEn": "Istanbul",
+      "defaultDisplayNameNative": "İstanbul",
+      "defaultNativeLanguage": "tr"
     }
   ]
 }

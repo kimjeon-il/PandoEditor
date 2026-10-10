@@ -37,14 +37,6 @@
         },
         {
           "text": "Astana",
-          "language": "kk",
-          "script": "Latn",
-          "usage": "standard",
-          "note": "카자흐어 라틴 문자형",
-          "sourceUrl": "https://www.geonames.org/1526273/astana.html"
-        },
-        {
-          "text": "Astana",
           "language": "en",
           "usage": "standard"
         },
@@ -324,26 +316,10 @@
           "text": "Ташкент",
           "language": "ru",
           "script": "Cyrl",
-          "usage": "alternate",
+          "usage": "historical",
           "variantType": "russianLanguageExonym",
           "note": "러시아어 표기",
           "sourceUrl": "https://www.geonames.org/1512569/tashkent.html"
-        },
-        {
-          "text": "Chach",
-          "language": "en",
-          "usage": "historical",
-          "variantType": "ancientOasisToponym",
-          "note": "고대 오아시스·지역명",
-          "sourceUrl": "https://tashkent.uz/en/city/salom-tashkent"
-        },
-        {
-          "text": "Shash",
-          "language": "en",
-          "usage": "historical",
-          "variantType": "historicalArabicExonym",
-          "note": "중세 아랍어 지역명",
-          "sourceUrl": "https://tashkent.uz/en/city/salom-tashkent"
         }
       ],
       "latitude": 41.26465,
@@ -586,14 +562,6 @@
           "usage": "standard"
         },
         {
-          "text": "Душанбе",
-          "language": "ru",
-          "script": "Cyrl",
-          "usage": "alternate",
-          "variantType": "russianLanguageForm",
-          "sourceUrl": "https://www.geonames.org/1221874/dushanbe.html"
-        },
-        {
           "text": "Сталинабад",
           "language": "ru",
           "script": "Cyrl",
@@ -733,7 +701,7 @@
           "text": "Ашхабад",
           "language": "ru",
           "script": "Cyrl",
-          "usage": "alternate",
+          "usage": "historical",
           "variantType": "russianLanguageExonym",
           "note": "1927년 이후 러시아어 형태",
           "sourceUrl": "https://mfa.gov.tm/ru/140-years/history"
