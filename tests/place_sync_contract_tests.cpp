@@ -40,11 +40,11 @@ QJsonArray rows(const std::vector<PlaceDisplayRow>& actual) {
     for(const auto& row:actual)result.append(QJsonArray{row.language,row.text});
     return result;
 }
-QByteArray writeV2Manifest(const QJsonObject& fixture,const QString& directory) {
+QByteArray writeFixtureManifest(const QJsonObject& fixture,const QString& directory) {
     const auto payload=QByteArray::fromHex(fixture.value("tileHex").toString().toLatin1());
     QFile shard(directory+"/place.bin");
     if(!shard.open(QIODevice::WriteOnly)||shard.write(payload)!=payload.size())
-        throw std::runtime_error("Failed writing v2 native fixture shard");
+        throw std::runtime_error("Failed writing place fixture shard");
     shard.close();
     const auto sha=QString::fromLatin1(QCryptographicHash::hash(payload,QCryptographicHash::Sha256).toHex());
     QJsonObject row{{"shard","sample"},{"offset",0},{"length",payload.size()},{"sha256",sha}};
@@ -524,7 +524,7 @@ private slots:
         QTemporaryDir temporary;QVERIFY(temporary.isValid());
         const auto fixture=contractV3().value("fixtures").toArray().at(0).toObject();
         QFile manifest(temporary.filePath("manifest.json"));
-        const auto data=writeV2Manifest(fixture,temporary.path());
+        const auto data=writeFixtureManifest(fixture,temporary.path());
         QVERIFY(manifest.open(QIODevice::WriteOnly));QCOMPARE(manifest.write(data),qint64(data.size()));
         manifest.close();
         EditorController editor;
@@ -584,7 +584,7 @@ private slots:
         QTemporaryDir temporary;QVERIFY(temporary.isValid());
         const auto fixture=contract().value("fixtures").toArray().at(0).toObject();
         QFile manifest(temporary.filePath("manifest.json"));
-        const auto data=writeV2Manifest(fixture,temporary.path());
+        const auto data=writeFixtureManifest(fixture,temporary.path());
         QVERIFY(manifest.open(QIODevice::WriteOnly));QCOMPARE(manifest.write(data),qint64(data.size()));
         manifest.close();
         EditorController editor;
