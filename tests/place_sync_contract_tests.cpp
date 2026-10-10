@@ -24,6 +24,14 @@ QJsonObject contract() {
     if(!doc.isObject())throw std::runtime_error("Malformed frozen Web exchange contract");
     return doc.object();
 }
+QJsonObject contractV3() {
+    const auto path=QString::fromUtf8(PLACE_SYNC_REPOSITORY_ROOT)+"/contracts/places/v3.json";
+    QFile file(path);
+    if(!file.open(QIODevice::ReadOnly))throw std::runtime_error("Missing shared PLAC v3 contract");
+    const auto doc=QJsonDocument::fromJson(file.readAll());
+    if(!doc.isObject())throw std::runtime_error("Invalid PLAC v3 contract");
+    return doc.object();
+}
 PlaceLanguageSelection flags(const QJsonObject& value) {
     return normalizedPlaceLanguages(value.toVariantMap());
 }
@@ -304,7 +312,14 @@ private slots:
         QCOMPARE(valletta.at(3).toObject().value("fromDate").toString(),
                  QStringLiteral("1936-09-02"));
         const auto nicosia=records.at(4).toObject();
-        QCOMPARE(nicosia.value("displayTimeline").toArray().size(),1);
+        const auto history=nicosia.value("displayTimeline").toArray();
+        QCOMPARE(history.size(),5);
+        QCOMPARE(history.at(1).toObject().value("fromDate").toString(),QStringLiteral("1878-07-05"));
+        QCOMPARE(history.at(2).toObject().value("fromDate").toString(),QStringLiteral("1914-11-05"));
+        QCOMPARE(history.at(3).toObject().value("fromYear").toInt(),1930);
+        QCOMPARE(history.at(4).toObject().value("fromDate").toString(),QStringLiteral("1960-08-16"));
+        QCOMPARE(history.at(1).toObject().value("nativeNames").toArray().size(),3);
+        QCOMPARE(history.at(4).toObject().value("nativeNames").toArray().size(),2);
         const auto names=nicosia.value("names").toArray();
         bool greek=false,turkish=false;
         for(const auto& value:names) {
@@ -316,9 +331,9 @@ private slots:
         }
         QVERIFY(greek&&turkish);
         const auto events=nicosia.value("historicalGeography").toObject().value("events").toArray();
-        QCOMPARE(events.size(),2);
-        QCOMPARE(events.at(0).toObject().value("date").toString(),QStringLiteral("1963-12-30"));
-        QCOMPARE(events.at(1).toObject().value("date").toString(),QStringLiteral("1974-08-16"));
+        QCOMPARE(events.size(),7);
+        QCOMPARE(events.at(5).toObject().value("date").toString(),QStringLiteral("1963-12-30"));
+        QCOMPARE(events.at(6).toObject().value("date").toString(),QStringLiteral("1974-08-16"));
         PlaceRecord record;
         record.name=QStringLiteral("니코시아");
         record.nameEn="Nicosia";
@@ -471,6 +486,63 @@ private slots:
             QVERIFY_EXCEPTION_THROWN(PlaceRuntimeStore::decodeTile(payload.left(payload.size()-1)),
                 std::exception);
         }
+    }
+
+    void v3NativeDecoderMatchesMultilingualNicosiaHexAndTimeline() {
+        const auto source=contractV3();
+        QCOMPARE(source.value("schema").toString(),QStringLiteral("pando-place-sync-v3"));
+        const auto wire=source.value("wire").toObject();
+        QCOMPARE(wire.value("version").toInt(),3);
+        QCOMPARE(wire.value("recordBytes").toInt(),72);
+        QCOMPARE(wire.value("stringFields").toArray().size(),9);
+        const auto fixtures=source.value("fixtures").toArray();
+        QCOMPARE(fixtures.size(),1);
+        const auto fixture=fixtures.front().toObject();
+        const auto bytes=QByteArray::fromHex(fixture.value("tileHex").toString().toLatin1());
+        const auto records=PlaceRuntimeStore::decodeTile(bytes);
+        QCOMPARE(records.size(),std::size_t(1));
+        const auto& record=records.front();
+        QCOMPARE(record.name,QStringLiteral("니코시아"));
+        QCOMPARE(record.nameEn,QStringLiteral("Nicosia"));
+        QCOMPARE(record.nameNative,QStringLiteral("Λευκωσία"));
+        QCOMPARE(record.nameNativeExtras,QStringList({QStringLiteral("Lefkoşa")}));
+        QCOMPARE(record.nameTimeline.size(),std::size_t(5));
+        QVERIFY(record.nameTimeline.at(1).nativeExtras.has_value());
+        QCOMPARE(record.nameTimeline.at(1).nativeExtras.value(),
+                 QStringList({QStringLiteral("Nicosia"),QStringLiteral("Λευκωσία")}));
+        for(const auto& value:fixture.value("scenarios").toArray()) {
+            const auto scenario=value.toObject();
+            const auto date=scenario.value("date").isNull()?QString():scenario.value("date").toString();
+            QCOMPARE(rows(resolvePlaceDisplayRows(record,flags(scenario.value("languages").toObject()),date)),
+                     scenario.value("rows").toArray());
+        }
+        auto corrupted=bytes;corrupted[4]=char(9);
+        QVERIFY_EXCEPTION_THROWN(PlaceRuntimeStore::decodeTile(corrupted),std::exception);
+        QVERIFY_EXCEPTION_THROWN(PlaceRuntimeStore::decodeTile(bytes.left(bytes.size()-1)),std::exception);
+    }
+    void builtinV3NicosiaShowsOnePlaceWithFourVisibleNameRows() {
+        QTemporaryDir temporary;QVERIFY(temporary.isValid());
+        const auto fixture=contractV3().value("fixtures").toArray().at(0).toObject();
+        QFile manifest(temporary.filePath("manifest.json"));
+        const auto data=writeV2Manifest(fixture,temporary.path());
+        QVERIFY(manifest.open(QIODevice::WriteOnly));QCOMPARE(manifest.write(data),qint64(data.size()));
+        manifest.close();
+        EditorController editor;
+        editor.resizeMapCamera(800,600);
+        editor.publishMapView({{"viewportWidth",800},{"viewportHeight",600},{"centerLongitude",0},
+            {"centerLatitude",0},{"scale",100},{"translateX",400},{"translateY",300}});
+        QVERIFY(editor.setPlaceLanguage("en",true));
+        QVERIFY(editor.setPlaceLanguage("native",true));
+        QVERIFY(editor.configurePlaceData(QUrl::fromLocalFile(manifest.fileName())));
+        const QString id="builtin:place:geonames:146268";
+        QTRY_VERIFY_WITH_TIMEOUT(hasLines(editor,id,4),10000);
+        const auto placed=editor.placedLabels();
+        const auto count=std::count_if(placed.cbegin(),placed.cend(),
+            [&](const QVariant& value){return value.toMap().value("ref").toMap().value("id").toString()==id;});
+        QCOMPARE(count,1);
+        QVERIFY(editor.setPlaceLanguage("en",false));
+        QTRY_VERIFY_WITH_TIMEOUT(hasLines(editor,id,3),10000);
+        QVERIFY(!editor.dirty());
     }
     void languageToggleRejectsAllOffAndResolvesDuplicates() {
         PlaceLanguageSelection flags;
