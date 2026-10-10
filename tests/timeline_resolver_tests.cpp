@@ -23,6 +23,9 @@ int main() {
     endedMidMonth.geometryBindings.at(2).validity.to="1910-01-15";
     endedMidMonth.parentRelations.at(1).validity.to="1910-01-15";
     const auto januaryAfterEnd=resolveWorld(endedMidMonth,context,"1910-01");
+    auto exactEndpointRecords=records;
+    exactEndpointRecords.geometryBindings.front().validity.to="1915-12-24";
+    const auto exactEndpointChanged=replaceGeometryBindingAtMonth(exactEndpointRecords,"A","1914-07",{"shape",3});
     const auto changed=replaceGeometryBindingAtMonth(records,"A","1914-06",{"shape",3});
     const auto reparented=replaceParentRelationAtMonth(records,"B","1914-07","","explicit");
     const auto ended=truncateTimelineEntityAtMonth(records,"A","1914-07");
@@ -35,7 +38,9 @@ int main() {
     const bool good=june.entities.size()==2&&june.entities.at(0).geometryRef.version==1
         &&july.entities.at(0).geometryRef.version==2&&july.entities.at(1).parentId=="A"
         &&july.entities.at(1).rootId=="A"&&july.entities.at(1).ancestors==std::vector<std::string>{"A"}
-        &&before.entities.size()==1&&januaryAfterEnd.entities.size()==1&&changed.geometryBindings.size()==4
+        &&before.entities.size()==1&&januaryAfterEnd.entities.size()==1
+        &&exactEndpointChanged.geometryBindings.at(1).validity.to=="1915-12-24"
+        &&changed.geometryBindings.size()==4
         &&changed.geometryBindings.front().validity.to=="1914-05"
         &&changed.geometryBindings.at(1).validity.from=="1914-06"
         &&changed.geometryBindings.at(1).geometryRef.version==3
