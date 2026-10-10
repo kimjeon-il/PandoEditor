@@ -10,6 +10,7 @@
 #include <QJsonObject>
 #include <QMap>
 #include <QRegularExpression>
+#include <QSet>
 #include <QStringDecoder>
 #include <QJsonParseError>
 #include <QUrl>
@@ -61,7 +62,8 @@ bool inViewport(const PlaceRecord& r,const PlaceViewport& v) {
     const auto p=projected(r,v);if(!p)return false;
     // A language toggle must not require a fresh tile request. Admit a place if
     // any recorded language can fit, then measure the chosen rows on the UI thread.
-    for(const auto& name:{r.name,r.nameEn,r.nameNative}) {
+    QStringList candidateNames{r.name,r.nameEn,r.nameNative};candidateNames.append(r.nameNativeExtras);
+    for(const auto& name:candidateNames) {
         if(name.isEmpty())continue;
         const double width=std::max(22.,double(name.toUcs4().size())*9+16),height=19;
         if(p->x-width/2>=v.safeLeft&&p->x+width/2<=v.view.viewportWidth-v.safeRight&&
@@ -162,10 +164,17 @@ std::size_t PlaceRuntimeStore::recordBytes(const PlaceRecord& r) {
     std::size_t bytes=sizeof(PlaceRecord)+textBytes(r.id)+textBytes(r.source)+textBytes(r.sourceId)+
         textBytes(r.name)+textBytes(r.nameEn)+textBytes(r.nameNative)+textBytes(r.kind)+
         textBytes(r.countryCode)+textBytes(r.featureCode)+
+        std::size_t(r.nameNativeExtras.capacity())*sizeof(QString)+
         r.nameTimeline.capacity()*sizeof(PlaceNameTransition);
-    for(const auto& transition:r.nameTimeline)
+    for(const auto& extra:r.nameNativeExtras)bytes+=textBytes(extra);
+    for(const auto& transition:r.nameTimeline) {
         bytes+=textBytes(transition.fromDate)+textBytes(transition.ko)+
             textBytes(transition.en)+textBytes(transition.native);
+        if(transition.nativeExtras) {
+            bytes+=std::size_t(transition.nativeExtras->capacity())*sizeof(QString);
+            for(const auto& name:*transition.nativeExtras)bytes+=textBytes(name);
+        }
+    }
     return bytes;
 }
 bool PlaceRuntimeStore::isBuiltinId(const QString& id) {static const QRegularExpression p("^builtin:place:[a-z0-9-]+:.+$");return p.match(id).hasMatch();}
@@ -178,10 +187,10 @@ std::vector<PlaceRecord> PlaceRuntimeStore::decodeTile(const QByteArray& bytes) 
     const auto* p=reinterpret_cast<const uchar*>(bytes.constData());
     const auto u16=[&](std::size_t offset){return qFromLittleEndian<quint16>(p+offset);};
     const auto u32=[&](std::size_t offset){return qFromLittleEndian<quint32>(p+offset);};
-    // v1 stays readable for fixed 2026-10-07 P7 oracle fixtures; new published
-    // native/Web places use the exact v2 field/byte offsets in the exchange JSON.
+    // v1/v2 frozen oracle fixtures remain readable, while new publications use
+    // PLAC v3's ninth string field for up to two additional native names.
     const quint16 version=u16(4);
-    const std::size_t stride=version==2?68:version==1?56:0;
+    const std::size_t stride=version==3?72:version==2?68:version==1?56:0;
     require(u32(0)==0x43414c50&&stride&&u16(6)==stride,"PL-PLACE-CODEC: header");
     const std::size_t count=u32(8),poolBytes=u32(12),poolStart=32+stride*count;
     require(count<=PlaceRuntimeLimits::TileRecords&&poolStart+poolBytes==std::size_t(bytes.size())&&
@@ -190,7 +199,7 @@ std::vector<PlaceRecord> PlaceRuntimeStore::decodeTile(const QByteArray& bytes) 
     for(std::size_t offset=0;offset<poolBytes;) {
         require(offset+4<=poolBytes,"PL-PLACE-CODEC: string header");
         const auto length=u32(poolStart+offset);
-        require(length<=(version==2?16*1024u:1024u)&&offset+4+length<=poolBytes,"PL-PLACE-CODEC: string length");
+        require(length<=(version>=2?16*1024u:1024u)&&offset+4+length<=poolBytes,"PL-PLACE-CODEC: string length");
         QStringDecoder decoder(QStringDecoder::Utf8,QStringConverter::Flag::Stateless);
         const QString value=decoder.decode(QByteArrayView(bytes.constData()+poolStart+offset+4,length));
         require(!decoder.hasError(),"PL-PLACE-CODEC: invalid UTF-8");
@@ -198,6 +207,22 @@ std::vector<PlaceRecord> PlaceRuntimeStore::decodeTile(const QByteArray& bytes) 
     }
     const auto f64=[&](std::size_t offset){const auto bits=qFromLittleEndian<quint64>(p+offset);double value;std::memcpy(&value,&bits,sizeof(value));return value;};
     const auto f32=[&](std::size_t offset){const auto bits=u32(offset);float value;std::memcpy(&value,&bits,sizeof(value));return double(value);};
+    const auto extrasFromJson=[&](const QJsonValue& value,const QString& primary)->QStringList {
+        require(value.isArray(),"PL-PLACE-CODEC: native extra list required");
+        const auto array=value.toArray();
+        require(array.size()<=2&&(array.isEmpty()||!primary.isEmpty()),"PL-PLACE-CODEC: native extra count");
+        QSet<QString> seen;
+        if(!primary.isEmpty())seen.insert(primary.normalized(QString::NormalizationForm_KC).toLower());
+        QStringList names;
+        for(const auto& element:array) {
+            require(element.isString(),"PL-PLACE-CODEC: native extra name");
+            const auto name=text(element.toString(),256,true);
+            const auto key=name.normalized(QString::NormalizationForm_KC).toLower();
+            require(!seen.contains(key),"PL-PLACE-CODEC: duplicate native name");
+            seen.insert(key);names.append(name);
+        }
+        return names;
+    };
     std::vector<PlaceRecord> records;records.reserve(count);
     for(std::size_t i=0;i<count;++i) {
         const auto base=32+i*stride;
@@ -209,17 +234,24 @@ std::vector<PlaceRecord> PlaceRuntimeStore::decodeTile(const QByteArray& bytes) 
                 std::isfinite(r.minZoom)&&r.minZoom>=0,"PL-PLACE-CODEC: ranking");
         const auto kind=p[base+32];require(kind<Kinds.size(),"PL-PLACE-CODEC: kind");
         r.kind=Kinds[kind];
-        QString timelineText;
+        QString nativeExtrasText,timelineText;
         QString* fields[]={&r.sourceId,&r.name,&r.countryCode,&r.source,&r.featureCode,
-            &r.nameEn,&r.nameNative,&timelineText};
-        const int max[]={128,256,8,32,32,256,256,16*1024};
-        const int fieldCount=version==2?8:5;
+            &r.nameEn,&r.nameNative,&nativeExtrasText,&timelineText};
+        const int max[]={128,256,8,32,32,256,256,16*1024,16*1024};
+        const int fieldCount=version==3?9:version==2?8:5;
         for(int j=0;j<fieldCount;++j) {
             const auto off=u32(base+36+j*4);
             require(pool.contains(off),"PL-PLACE-CODEC: string offset");
-            *fields[j]=j==7?pool[off]:text(pool[off],max[j],j==0||j==1||j==3);
+            const int target=(version==2&&j==7)?8:j;
+            *fields[target]=target>=7?pool[off]:text(pool[off],max[target],j==0||j==1||j==3);
         }
-        if(version==2) {
+        if(version==3) {
+            QJsonParseError error;
+            const auto doc=QJsonDocument::fromJson(nativeExtrasText.toUtf8(),&error);
+            require(error.error==QJsonParseError::NoError&&doc.isArray(),"PL-PLACE-CODEC: native extras JSON");
+            r.nameNativeExtras=extrasFromJson(doc.array(),r.nameNative);
+        }
+        if(version>=2) {
             QJsonParseError error;
             const auto doc=QJsonDocument::fromJson(timelineText.toUtf8(),&error);
             require(error.error==QJsonParseError::NoError&&doc.isArray()&&
@@ -255,6 +287,10 @@ std::vector<PlaceRecord> PlaceRuntimeStore::decodeTile(const QByteArray& bytes) 
                     if(QString::fromLatin1(lang)=="ko")transition.ko=variant;
                     if(QString::fromLatin1(lang)=="en")transition.en=variant;
                     if(QString::fromLatin1(lang)=="native")transition.native=variant;
+                }
+                if(obj.contains("nativeExtras")) {
+                    require(version==3&&!transition.native.isEmpty(),"PL-PLACE-CODEC: native extras require primary");
+                    transition.nativeExtras=extrasFromJson(obj.value("nativeExtras"),transition.native);
                 }
                 require(!transition.ko.isEmpty()||!transition.en.isEmpty()||
                         !transition.native.isEmpty(),"PL-PLACE-CODEC: empty name transition");
