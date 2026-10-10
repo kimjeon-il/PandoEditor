@@ -41,7 +41,7 @@ ResolvedWorld resolveWorld(const TimelineRecords& records,const TimelineValidati
     if(cursor.precision!="month")throw TimelineError("INVALID_TIMELINE_CURSOR","month precision required");
     const auto point=temporalMonthEnd(cursor.canonical);
     const auto normalized=normalizeTimelineRecords(records,context);
-    ResolvedWorld result;result.month=point.canonical;
+    ResolvedWorld result;result.month=cursor.canonical;
     for(const auto& identity:context.entities) {
         if(!selected(normalized.lifetimes,identity.id,point))continue;
         const auto* geometry=selected(normalized.geometryBindings,identity.id,point);
