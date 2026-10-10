@@ -53,6 +53,12 @@ int main() {
     assert((month.endKey==TemporalKey{1914,7,31}));
     assert(month.start==19140701 && month.end==19140731);
     assert(normalizeTemporal(std::optional<std::string>{" 1914-07 "})=="1914-07");
+    assert(temporalMonthEnd("1953-07").canonical=="1953-07-31");
+    assert(temporalMonthEnd("2000-02").canonical=="2000-02-29");
+    assert(temporalMonthEnd("-0001-02").canonical=="-0001-02-28");
+    assert(temporalMonthEnd("1953-07").precision=="date");
+    invalid([]{temporalMonthEnd("1953");});
+    invalid([]{temporalMonthEnd("1953-07-27");});
     const int lastDays[]={31,28,31,30,31,30,31,31,30,31,30,31};
     for(int m=1;m<=12;++m) {
         const auto value=parseTemporal("1914-"+std::string(m<10?"0":"")+std::to_string(m));
