@@ -31,6 +31,7 @@ struct TemporalInterval {
 // Month values span the whole month. A timeline resolver must explicitly use
 // the end boundary when it needs a month-end reference point.
 TemporalValue parseTemporal(const std::string&);
+TemporalValue temporalMonthEnd(const std::string&);
 std::optional<std::string> normalizeTemporal(const std::optional<std::string>&);
 int compareTemporal(const TemporalValue&,const TemporalValue&,
                     TemporalBoundary left=TemporalBoundary::Start,
