@@ -1,15 +1,24 @@
-# 앱 PLAC v2 언어별 지명 이식 및 동기화 계약
+# 앱 PLAC v3 복수 원어명 표시 및 동기화 계약
 
 원본 웹: `kimjeon-il/Pando:work/places`; 출처 고정 커밋은 `reports/places/source-manifest.json`의 `webCommit`으로 추적한다.
 앱 작업: `kimjeon-il/PandoEditor:work/places`.
 
-앱의 `contracts/places/v2.json`은 원본 웹 브랜치에서 가져온 교환 계약이다.
+앱의 `contracts/places/v3.json`은 웹의 최신 복수 원어명 교환 계약과 동일하며, `v2.json`은 이전 검증 사례용으로 보존한다.
+
+
+## 2026-10-11 PLAC v3 복수 원어명 이식
+
+- 웹·앱의 새 교환 정본은 **`contracts/places/v3.json`** (동일 JSON)이다. 신규 Web 인코더가 PLAC v3(72바이트, 9개 문자열 슬롯)를 내보내며 Qt 디코더도 읽는다. 기존 v1/v2 데이터에 대한 고정 회귀 입력은 변경하지 않고 보존한다.
+- 대표 원어명은 기존 `nameNative`, 추가 원어명 최대 2개는 `nameNativeExtras`이며, 기간별 변화는 `PlaceNameTransition.native`/`nativeExtras` 목록으로 표현한다. 다른 시기의 추가 이름이 남지 않도록 대표명이 바뀔 때 이전 목록을 초기화한다.
+- 중복 텍스트는 공백 제거·NFKC·소문자 비교를 적용하여 **한국어→영어→모든 원어명 순서**로 최초 한 번만 표시한다. 이때 같은 언어 `native` 행을 여러 개 허용하며 각 지명은 Qt 라벨 엔진에서 하나의 충돌 상자를 사용한다.
+- 13차 니코시아 5개 역사 명칭 구간의 웹 검수 원본을 앱 `reports/places/`에도 미러했고 `source-manifest.json`의 blob SHA를 갱신했다. 공유 v3 니코시아 HEX 테스트 벡터는 웹 인코더 출력·Qt 디코더/라벨 출력 일치를 검증하도록 추가했다.
+- **범위 제외:** 지도 지명 배포 타일은 비어 있으며 실행 데이터 생성, 현재 지도 시점을 원어명 해석에 자동 주입하는 기능, `main` 통합은 수행하지 않았다. 역사 관련 언어 코드·문자 근거는 검수 JSON이 보존한다.
 
 ## 구현 구조
 
-- `app/placeruntimestore.h/.cpp`: PLAC v2 바이너리 레코드와 다국어/연도·일자 이력 디코딩. 기존 P7 v1 고정 테스트 자료도 유지.
+- `app/placeruntimestore.h/.cpp`: PLAC v3 바이너리·추가 원어명(최대 2개)·날짜별 이력 디코딩. 기존 P7 v1·v2 고정 검증 자료도 유지.
 - `app/placenamedisplay.h/.cpp`: 언어 토글, 기본값, 날짜별 지명 선택, 중복 제거 정책의 단일 C++ 소유자.
-- `app/placeruntimeprovider.cpp`: v2 레코드 유지 및 선택·캐시·Worker 생명주기.
+- `app/placeruntimeprovider.cpp`: v3 레코드 유지 및 선택·캐시·Worker 생명주기.
 - `app/editorplace.cpp`: Qt 폰트 실측에 따른 여러 언어의 단일 충돌 상자 계산.
 - `engine/include/pandoeditor/map/labelengine.h`, `engine/src/labelengine.cpp`: 하나의 지명 ID에 여러 텍스트 행 전달.
 - `app/editorpresentation.cpp`, `ui/common/MapView.qml`: 다중 행 실제 표시, 우선 언어 강조.
@@ -27,7 +36,7 @@
 - 중국 대륙의 중국어계 지명은 **1912-01-01(중화민국 건국)** 전에는 한국식 한자음, 이후에는 중국어 발음 기반 한국어 지명을 사용한다. 중국에서 실제로 개칭한 사건과는 별도로 기록한다.
 - 웹과 앱의 규칙 정본을 `reports/places/historical-display-policy.json` 및 `reports/places/korean-map-label-policy.json`으로 동기화하였다. 1차 9개 도시의 명칭 검토를 마쳤다. 델리는 1858-11-01 우르두어 대표 전환, 1947-08-15 힌디어·우르두어 병기, 2004-01-26 펀자브어 추가를 검수용 원어명 목록에 반영했다. 1858·1947은 편집상 날짜이고, 무굴기 페르시아어 공식성은 추가 검증이 필요하다. 2~15차와 실행용 데이터·바이너리 계약·렌더러는 변경하지 않았다.
 
-복수 원어명은 `defaultNativeNames[]` 및 `displayTimeline[].nativeNames[]`에 시점별 전체 목록으로 보존했다. 기존 PLAC v2는 단일 원어명만 표시하며 실제 병기·배율별 출력 기능은 아직 구현하지 않았다.
+복수 원어명의 검수 근거는 `defaultNativeNames[]` 및 `displayTimeline[].nativeNames[]`에 시점별 보존한다. PLAC v3 표시 기능은 구현됐지만 검수 배치의 실행 타일 게시 및 배율별 표시 선택은 아직 수행하지 않았다.
 
 
 ## 2차 동아시아 9개 도시 명칭 검수 (2026-10-09)
