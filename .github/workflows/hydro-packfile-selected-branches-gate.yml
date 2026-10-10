@@ -1,0 +1,68 @@
+name: Hydro v0.13.2 native pin selected-branch gate
+
+on:
+  push:
+    branches: [main, work/objects, work/places, work/ui]
+    paths:
+      - 'app/hydromanifest.*'
+      - 'app/hydroassetreader.cpp'
+      - 'app/hydroshardreader.cpp'
+      - 'app/hydroruntimeprovider.cpp'
+      - 'assets/world/hydro/v0.13.1/**'
+      - 'assets/world/hydro/v0.13.2/**'
+      - 'assets/world/manifest.json'
+      - 'assets/world/physical-inventory-c0bd31d1.json'
+      - 'app/editorcontroller.cpp'
+      - 'app/physicaldatastore.cpp'
+      - 'app/editorriverselection.cpp'
+      - 'app/editorpresentation.cpp'
+      - 'app/worlddatasetloader.cpp'
+      - 'app/worlddataset.cpp'
+      - 'tools/verify-world-assets.mjs'
+      - 'app/CMakeLists.txt'
+      - 'tests/physical_data_store_tests.cpp'
+      - 'tests/river_selection_controller_tests.cpp'
+      - 'tests/hydro_manifest_tests.cpp'
+      - 'tests/hydro_full_dataset_tests.cpp'
+      - '.github/workflows/hydro-packfile-selected-branches-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-hydro:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      LC_ALL: C.UTF-8
+      PANDOEDITOR_HYDRO_FULL_MANIFEST: ${{ github.workspace }}/assets/world/hydro/v0.13.2/manifest.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+      - name: Verify pinned world v1 and hydro package metadata
+        run: node tools/verify-world-assets.mjs assets/world
+      - name: Reject obsolete native hydro manifest
+        run: test ! -e assets/world/hydro/v0.13.1/manifest.json
+      - name: Install native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build zlib1g-dev libegl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0 fonts-noto-cjk
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          modules: 'qtshadertools qtimageformats'
+          cache: true
+      - name: Compile Hydro runtime, manifest and full real dataset tests
+        run: |
+          cmake -S . -B build-hydro-packfile -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+          cmake --build build-hydro-packfile --target hydro_manifest_tests hydro_runtime_tests hydro_full_dataset_tests river_selection_controller_tests physical_data_store_tests --parallel 2
+      - name: Verify historical compatibility and new 2-file real dataset
+        run: |
+          ./build-hydro-packfile/app/hydro_manifest_tests -o -,txt
+          ./build-hydro-packfile/app/hydro_runtime_tests -o -,txt
+          ./build-hydro-packfile/app/hydro_full_dataset_tests -o -,txt
+          ./build-hydro-packfile/app/river_selection_controller_tests -o -,txt
+          ./build-hydro-packfile/app/physical_data_store_tests -o -,txt
