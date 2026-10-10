@@ -130,6 +130,9 @@ private slots:
             window->resize(mobile?360:1100,760);exposeForTest(window);
             auto* controls=visualItem(window->contentItem(),"timelineControls");
             QVERIFY(controls&&controls->isVisible());
+            auto* basis=visualItem(window->contentItem(),"timelineMonthEndBasis");
+            QVERIFY(basis&&basis->isVisible());
+            QCOMPARE(basis->property("text").toString(), mobile ? QStringLiteral("월말") : QStringLiteral("월말 기준"));
             const auto revision=editor.revision();const auto dirty=editor.dirty();
             QVERIFY(clickControl(window,"timelineNextMonth"));
             QTRY_COMPARE(editor.timelineMonth(),QStringLiteral("1914-08"));
