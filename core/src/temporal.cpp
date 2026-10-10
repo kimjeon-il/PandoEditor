@@ -91,6 +91,13 @@ std::optional<std::string> normalizeTemporal(const std::optional<std::string>& i
     auto parsed=optionalPoint(input);
     return parsed?std::optional<std::string>(parsed->canonical):std::nullopt;
 }
+TemporalValue temporalMonthEnd(const std::string& input) {
+    const auto month=parseTemporal(input);
+    if(month.precision!="month")throw std::invalid_argument("INVALID_DATE: month precision required");
+    auto day=std::to_string(month.endKey.day);
+    if(day.size()<2)day="0"+day;
+    return parseTemporal(month.canonical+"-"+day);
+}
 int compareTemporal(const TemporalValue& left,const TemporalValue& right,
                     TemporalBoundary leftBoundary,TemporalBoundary rightBoundary) {
     const auto& a=boundary(left,leftBoundary);
