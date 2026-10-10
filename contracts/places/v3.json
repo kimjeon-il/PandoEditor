@@ -1,0 +1,348 @@
+{
+  "schema": "pando-place-sync-v3",
+  "dataContractVersion": 3,
+  "wire": {
+    "magicAscii": "PLAC",
+    "littleEndian": true,
+    "magic": 1128352848,
+    "version": 3,
+    "headerBytes": 32,
+    "recordBytes": 72,
+    "stringOffsetBase": 36,
+    "stringOffsetStride": 4,
+    "stringFields": [
+      "sourceId",
+      "name",
+      "countryCode",
+      "source",
+      "featureCode",
+      "nameEn",
+      "nameNative",
+      "nameNativeExtrasText",
+      "nameTimelineText"
+    ],
+    "maxStringBytes": 16384,
+    "stringFieldOffsets": [
+      {
+        "field": "sourceId",
+        "byteOffset": 36
+      },
+      {
+        "field": "name",
+        "byteOffset": 40
+      },
+      {
+        "field": "countryCode",
+        "byteOffset": 44
+      },
+      {
+        "field": "source",
+        "byteOffset": 48
+      },
+      {
+        "field": "featureCode",
+        "byteOffset": 52
+      },
+      {
+        "field": "nameEn",
+        "byteOffset": 56
+      },
+      {
+        "field": "nameNative",
+        "byteOffset": 60
+      },
+      {
+        "field": "nameNativeExtrasText",
+        "byteOffset": 64
+      },
+      {
+        "field": "nameTimelineText",
+        "byteOffset": 68
+      }
+    ],
+    "longitudeOffset": 0,
+    "latitudeOffset": 8,
+    "populationOffset": 16,
+    "priorityOffset": 24,
+    "minZoomOffset": 28,
+    "kindOffset": 32,
+    "timelineSerialization": "UTF-8 JSON array, nativeExtras optional per dated transition",
+    "nativeExtrasSerialization": "JSON array of zero to two distinct strings; primary stored in nameNative"
+  },
+  "domain": {
+    "builtinIdFormat": "builtin:place:{source}:{sourceId}",
+    "placeKinds": [
+      "capital",
+      "city",
+      "region",
+      "town",
+      "mountain",
+      "water",
+      "custom"
+    ],
+    "languageOrder": [
+      "ko",
+      "en",
+      "native"
+    ],
+    "defaultLanguages": {
+      "ko": true,
+      "en": false,
+      "native": false
+    },
+    "maxNameTransitions": 16,
+    "timelineDateFormats": [
+      "fromYear integer",
+      "fromDate YYYY-MM-DD"
+    ],
+    "duplicateNameComparison": "trim -> NFKC -> lower-case; enabled ko, then en, then all native names in array order",
+    "missingLanguagePolicy": "omit missing translation; never fabricate names from source country code",
+    "languageTogglePolicy": "at least one enabled; reject an unchanged or all-disabled request",
+    "nameFields": {
+      "ko": "name",
+      "en": "nameEn",
+      "nativePrimary": "nameNative",
+      "nativeAdditional": "nameNativeExtras"
+    },
+    "maxNativeNames": 3,
+    "timelineNames": "date + optional ko/en/native plus nativeExtras when native is present; a new native primary clears all preceding extras unless explicitly replaced",
+    "nativeExtraConstraints": "maximum 2 extra names; distinct after trim/NFKC/lowercase; no additional name without a primary"
+  },
+  "display": {
+    "webEstimatedBox": {
+      "minimumWidth": 22,
+      "textPadding": 16,
+      "latinCharWidth": 8,
+      "otherCharWidth": 11,
+      "firstLineHeight": 19,
+      "extraLineHeight": 14
+    },
+    "geometryNotice": "CSS-pixel heuristic, not native Qt font measurements",
+    "collisionPolicy": "one atomic collision box per place including up to three native rows"
+  },
+  "limits": {
+    "candidates": 1500,
+    "layoutCandidates": 2048,
+    "tileRecords": 512,
+    "queryTiles": 96,
+    "shardBytes": 524288,
+    "cacheBytes": 25165824,
+    "searchResults": 50,
+    "retainedRecords": 256
+  },
+  "fixtures": [
+    {
+      "id": "nicosia-multinative",
+      "sourceReview": {
+        "reviewFile": "reports/places/tier1-major-cities-batch13-european-microstates-mediterranean.json",
+        "geonameId": 146268
+      },
+      "input": {
+        "source": "geonames",
+        "sourceId": "146268",
+        "name": "니코시아",
+        "nameEn": "Nicosia",
+        "nameNative": "Λευκωσία",
+        "nameNativeExtras": [
+          "Lefkoşa"
+        ],
+        "kind": "capital",
+        "coordinates": [
+          33.36667,
+          35.16667
+        ],
+        "countryCode": "CY",
+        "featureCode": "PPLC",
+        "priority": 90,
+        "minZoom": 0,
+        "population": 0,
+        "nameTimeline": [
+          {
+            "fromYear": 1801,
+            "ko": "레프코샤",
+            "native": "لفقوشه"
+          },
+          {
+            "fromDate": "1878-07-05",
+            "native": "لفقوشه",
+            "nativeExtras": [
+              "Nicosia",
+              "Λευκωσία"
+            ]
+          },
+          {
+            "fromDate": "1914-11-05",
+            "ko": "니코시아",
+            "native": "Nicosia",
+            "nativeExtras": [
+              "Λευκωσία",
+              "لفقوشه"
+            ]
+          },
+          {
+            "fromYear": 1930,
+            "native": "Nicosia",
+            "nativeExtras": [
+              "Λευκωσία",
+              "Lefkoşa"
+            ]
+          },
+          {
+            "fromDate": "1960-08-16",
+            "native": "Λευκωσία",
+            "nativeExtras": [
+              "Lefkoşa"
+            ]
+          }
+        ]
+      },
+      "scenarios": [
+        {
+          "date": null,
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "ko",
+              "니코시아"
+            ],
+            [
+              "en",
+              "Nicosia"
+            ],
+            [
+              "native",
+              "Λευκωσία"
+            ],
+            [
+              "native",
+              "Lefkoşa"
+            ]
+          ]
+        },
+        {
+          "date": "1878-07-04",
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "ko",
+              "레프코샤"
+            ],
+            [
+              "en",
+              "Nicosia"
+            ],
+            [
+              "native",
+              "لفقوشه"
+            ]
+          ]
+        },
+        {
+          "date": "1878-07-05",
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "ko",
+              "레프코샤"
+            ],
+            [
+              "en",
+              "Nicosia"
+            ],
+            [
+              "native",
+              "لفقوشه"
+            ],
+            [
+              "native",
+              "Λευκωσία"
+            ]
+          ]
+        },
+        {
+          "date": "1914-11-05",
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "ko",
+              "니코시아"
+            ],
+            [
+              "en",
+              "Nicosia"
+            ],
+            [
+              "native",
+              "Λευκωσία"
+            ],
+            [
+              "native",
+              "لفقوشه"
+            ]
+          ]
+        },
+        {
+          "date": "1930-05-01",
+          "languages": {
+            "ko": true,
+            "en": true,
+            "native": true
+          },
+          "rows": [
+            [
+              "ko",
+              "니코시아"
+            ],
+            [
+              "en",
+              "Nicosia"
+            ],
+            [
+              "native",
+              "Λευκωσία"
+            ],
+            [
+              "native",
+              "Lefkoşa"
+            ]
+          ]
+        },
+        {
+          "date": "1960-08-16",
+          "languages": {
+            "ko": false,
+            "en": false,
+            "native": true
+          },
+          "rows": [
+            [
+              "native",
+              "Λευκωσία"
+            ],
+            [
+              "native",
+              "Lefkoşa"
+            ]
+          ]
+        }
+      ],
+      "tileHex": "504c4143030048000100000020020000880200000000000000000000000000005036e50aefae4040b79c4b715595414000000000000000000000b4420000000000000000000000000a0000001a000000200000002c000000340000003f0000005300000063000000060000003134363236380c000000eb8b88ecbd94ec8b9cec95840200000043590800000067656f6e616d65730400000050504c43070000004e69636f73696110000000ce9bceb5cf85cebacf89cf83ceafceb10c0000005b224c65666b6fc59f61225db90100005b7b2266726f6d59656172223a313830312c226b6f223a22eba088ed9484ecbd94ec83a4222c226e6174697665223a22d984d981d982d988d8b4d987227d2c7b2266726f6d44617465223a22313837382d30372d3035222c226e6174697665223a22d984d981d982d988d8b4d987222c226e6174697665457874726173223a5b224e69636f736961222c22ce9bceb5cf85cebacf89cf83ceafceb1225d7d2c7b2266726f6d44617465223a22313931342d31312d3035222c226b6f223a22eb8b88ecbd94ec8b9cec9584222c226e6174697665223a224e69636f736961222c226e6174697665457874726173223a5b22ce9bceb5cf85cebacf89cf83ceafceb1222c22d984d981d982d988d8b4d987225d7d2c7b2266726f6d59656172223a313933302c226e6174697665223a224e69636f736961222c226e6174697665457874726173223a5b22ce9bceb5cf85cebacf89cf83ceafceb1222c224c65666b6fc59f61225d7d2c7b2266726f6d44617465223a22313936302d30382d3136222c226e6174697665223a22ce9bceb5cf85cebacf89cf83ceafceb1222c226e6174697665457874726173223a5b224c65666b6fc59f61225d7d5d"
+    }
+  ]
+}
