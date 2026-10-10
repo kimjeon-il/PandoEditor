@@ -1,0 +1,133 @@
+{
+  "type": "FeatureCollection",
+  "name": "Cecilienkoog 1905 mapped dyke — NON-FINAL",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "provisional-dyke:deutsches-reich:1914:cecilienkoog-1905",
+      "properties": {
+        "referenceDate": "1914-07-31",
+        "constructionInterval": "1903–1905 (local municipality)",
+        "mapSheetEpochGroup": "1902–1930 (exact sheet survey/revision year unverified)",
+        "status": "PROVISIONAL_SOURCE_MAP_DYKE_TRACE_ONLY",
+        "mappedFeatureType": "seaward-protection-dyke-alignment",
+        "notAHistoricalLegalSeaCoast": true,
+        "notAHighTideLine": true,
+        "isNotCountryPolygon": true,
+        "mapSource": "https://dienste.gdi-sh.de/WMS_SH_FD_Chronologen",
+        "mapWmsLayer": "2",
+        "mapRasterSha256": "90a34e2a80a1c86b6925b01b00fe1ecdb87c8c7b2793c82090db23522ec48d6f",
+        "mapAttribution": "© GeoBasis-DE/LVermGeo SH/CC BY 4.0",
+        "chronologyEvidence": "https://www.reussenkoege.de/k%C3%B6ge-hallig/cecilienkoog/",
+        "traceSource": "tools/historical-library/sources/german-coastline/cecilienkoog-1905-dyke-manual-source.json",
+        "readOnlyEvidence": true,
+        "doNotPromote": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.913977547,
+            54.594537102
+          ],
+          [
+            8.913198618,
+            54.594200236
+          ],
+          [
+            8.912278066,
+            54.593893993
+          ],
+          [
+            8.911357513,
+            54.593526502
+          ],
+          [
+            8.910507772,
+            54.593220259
+          ],
+          [
+            8.909622625,
+            54.592822144
+          ],
+          [
+            8.90880829,
+            54.592515901
+          ],
+          [
+            8.907887737,
+            54.592179034
+          ],
+          [
+            8.907002591,
+            54.591780919
+          ],
+          [
+            8.906188256,
+            54.591413428
+          ],
+          [
+            8.905905009,
+            54.591229682
+          ],
+          [
+            8.905869603,
+            54.590709069
+          ],
+          [
+            8.906117444,
+            54.589943463
+          ],
+          [
+            8.906471503,
+            54.589208481
+          ],
+          [
+            8.906967185,
+            54.588351001
+          ],
+          [
+            8.907462867,
+            54.587432273
+          ],
+          [
+            8.908029361,
+            54.586360424
+          ],
+          [
+            8.908631261,
+            54.585288575
+          ],
+          [
+            8.909233161,
+            54.584186101
+          ],
+          [
+            8.909870466,
+            54.583083628
+          ],
+          [
+            8.910543178,
+            54.581889282
+          ],
+          [
+            8.911180484,
+            54.580878681
+          ],
+          [
+            8.911817789,
+            54.579806832
+          ],
+          [
+            8.912525907,
+            54.578673734
+          ],
+          [
+            8.912986183,
+            54.578030624
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,521 @@
+{
+  "schemaVersion": 2,
+  "id": "historical-country:deutsches-reich:1914-07-31-modern-coast-working-base-r3",
+  "referenceDate": "1914-07-31",
+  "source": {
+    "title": "HistoGIS - Deutsches Reich, 1871-02-27 to 1919-12-31",
+    "repository": "acdh-oeaw/histogis-data",
+    "path": "single_files/deutsches-reich__1871-02-27_1919-12-31.geojson",
+    "license": "CC BY 4.0",
+    "sourceName": "German Empire Stateborders 1871 2",
+    "sourceFeatureId": 10092,
+    "sourcePolygonCount": 27,
+    "sourceCoordinateCount": 7935,
+    "declaredSpatialExtentKm2": 542359.1232126306
+  },
+  "osHistoryAlignment": {
+    "source": "OSHistory/hgis-germany-transformer",
+    "correctionLineCount": 146,
+    "meanDistanceToEndpointA_km": 1.361979,
+    "meanDistanceToEndpointB_km": 0.494411,
+    "medianDistanceToEndpointA_km": 1.117242,
+    "medianDistanceToEndpointB_km": 0.204191,
+    "endpointBCloserCount": 110,
+    "endpointACloserCount": 36,
+    "decision": "Do not apply the linear correction again to this HistoGIS skeleton; it is already materially closer to the correction target endpoints."
+  },
+  "heligolandPatch": {
+    "helgoland": {
+      "source": "Pleiades-preserved OpenStreetMap relation 3787052",
+      "license": "ODbL 1.0",
+      "coordinateCount": 567,
+      "bbox": [
+        7.8648436,
+        54.1693099,
+        7.9001626,
+        54.1907839
+      ],
+      "approxAreaKm2": 1.071814
+    },
+    "dune": {
+      "source": "OpenStreetMap way 273992076",
+      "license": "ODbL 1.0",
+      "coordinateCount": 406,
+      "bbox": [
+        7.8993155,
+        54.1796038,
+        7.9214341,
+        54.1917198
+      ],
+      "approxAreaKm2": 0.626575
+    },
+    "replacedLowResolutionComponents": [
+      {
+        "bbox": [
+          7.879893,
+          54.178168,
+          7.904145,
+          54.194648
+        ],
+        "coords": 10
+      },
+      {
+        "bbox": [
+          7.912364,
+          54.186998,
+          7.933442,
+          54.195299
+        ],
+        "coords": 5
+      }
+    ]
+  },
+  "normalization": {
+    "removedConsecutiveDuplicateCoordinates": 2
+  },
+  "validation": {
+    "allRingsClosed": true,
+    "properSelfIntersections": 0,
+    "insidePoints": [
+      "Berlin",
+      "Strasbourg",
+      "Metz",
+      "Poznan",
+      "Danzig",
+      "Konigsberg",
+      "Memel",
+      "Hultschin",
+      "Haderslev",
+      "Eupen",
+      "Helgoland",
+      "Dune",
+      "Als"
+    ],
+    "outsidePoints": [
+      "Belfort",
+      "Copenhagen",
+      "Prague",
+      "LuxembourgCity",
+      "Warsaw"
+    ],
+    "approxAreaKm2": 542175.289,
+    "bounds": [
+      5.875153,
+      47.2705079,
+      22.8904465,
+      55.8937234
+    ],
+    "polygonComponentCount": 23,
+    "ringCount": 23,
+    "coordinateCount": 7198
+  },
+  "notes": [
+    "Working skeleton uses the current website's modern coastline as an interim high-resolution reference.",
+    "Historical land-border arcs are retained from the previous working base except for terminal snap points at the coast.",
+    "The modern coastline is explicitly temporary and should later be replaced by reconstructed 1914 shoreline in Codex."
+  ],
+  "coastlineRefinement": {
+    "northSeaDollartToJade": {
+      "status": "applied",
+      "revision": "r1",
+      "sector": {
+        "historicalMainRingStartIndexBeforeRefinement": 6526,
+        "historicalMainRingEndIndexBeforeRefinement": 110,
+        "startCoordinate": [
+          7.206956223453415,
+          53.23766503860818
+        ],
+        "endCoordinate": [
+          8.235494963162175,
+          53.54768919979703
+        ]
+      },
+      "method": {
+        "historicalGeometry": "HistoGIS German Empire working skeleton",
+        "currentDetailGeometry": "OpenStreetMap processed coastline, EPSG:4326",
+        "currentSource": "https://osmdata.openstreetmap.de/download/coastlines-split-4326.zip",
+        "currentLicense": "ODbL 1.0",
+        "thresholdMetres": 150,
+        "rule": "Insert current coastline detail only where point-to-historical-segment distance <= 150 m; retain the historical geometry elsewhere."
+      },
+      "periodControlReferences": [
+        {
+          "series": "Preußische Landesaufnahme 1:25,000",
+          "coverage": "Niedersachsen/Bremen",
+          "period": "1877-1912",
+          "officialWms": "https://www.geobasisdaten.niedersachsen.de/doorman/auth/pl25?SERVICE=WMS&REQUEST=GetCapabilities",
+          "accessResult": "HTTP 401 from automated runner; metadata used as historical control reference, not as extracted geometry."
+        },
+        {
+          "sheet": "2508 Pewsum",
+          "year": 1892
+        },
+        {
+          "sheet": "2509 Loppersum",
+          "year": 1893
+        },
+        {
+          "sheet": "2609 Emden",
+          "year": 1893
+        },
+        {
+          "sheet": "2413 Jever",
+          "year": 1893
+        },
+        {
+          "sheet": "2414 Wilhelmshaven",
+          "year": 1892
+        },
+        {
+          "sheet": "2513 Neustadt-Gödens",
+          "year": 1900
+        },
+        {
+          "sheet": "2514 Steinhausen",
+          "year": 1900
+        },
+        {
+          "sheet": "2515 Jadebusen",
+          "year": 1900
+        }
+      ],
+      "stats": {
+        "oldMainRingPoints": 6593,
+        "originalSectorPoints": 177,
+        "currentCoastCandidatePoints": 4201,
+        "acceptedCurrentPoints": 1617,
+        "rejectedCurrentPoints": 2584,
+        "historicalSegmentsRefined": 63,
+        "insertedCurrentPoints": 1160,
+        "refinedSectorPoints": 1336,
+        "newMainRingPoints": 7752,
+        "totalCoordinateCount": 10065,
+        "previousApproxAreaKm2": 540330.865,
+        "refinedApproxAreaKm2": 540329.296686,
+        "areaDeltaKm2": -1.568314
+      },
+      "validation": {
+        "endpointsPreserved": true,
+        "allRingsClosed": true,
+        "properSelfIntersections": 0,
+        "controlPointsPassed": true
+      }
+    }
+  },
+  "coastlineReplacement": {
+    "mode": "modern-website-coastline-interim",
+    "canonicalSource": "assets/data/countries-ne-5.1.1.geojson",
+    "sourceCountries": [
+      "DEU",
+      "DNK",
+      "POL",
+      "RUS",
+      "LTU"
+    ],
+    "mainCoast": {
+      "northSea": {
+        "sourcePointCount": 332,
+        "start": [
+          7.194591,
+          53.245022
+        ],
+        "end": [
+          8.659353,
+          55.305813
+        ]
+      },
+      "baltic": {
+        "sourcePointCount": 1094,
+        "start": [
+          9.599294,
+          55.373358
+        ],
+        "end": [
+          21.044688,
+          55.873725
+        ]
+      }
+    },
+    "coastLandJunctionSnaps": {
+      "northSeaNetherlands": {
+        "base": [
+          7.206956223453415,
+          53.23766503860818
+        ],
+        "modern": [
+          7.194591,
+          53.245022
+        ],
+        "distanceKm": 1.158
+      },
+      "northSchleswigWest": {
+        "base": [
+          8.667053423753185,
+          55.27002185294047
+        ],
+        "modern": [
+          8.659353,
+          55.305813
+        ],
+        "distanceKm": 3.988
+      },
+      "northSchleswigEast": {
+        "base": [
+          9.602189791063482,
+          55.36179165065492
+        ],
+        "modern": [
+          9.599294,
+          55.373358
+        ],
+        "distanceKm": 1.292
+      },
+      "memelNorth": {
+        "base": [
+          21.06512135301155,
+          55.87565987970258
+        ],
+        "modern": [
+          21.044688,
+          55.873725
+        ],
+        "distanceKm": 1.294
+      }
+    },
+    "modernIslandComponents": [
+      {
+        "source": "DEU",
+        "component": 1,
+        "bbox": [
+          13.75294,
+          53.844062,
+          14.210053,
+          54.17829
+        ],
+        "coordinateCount": 88
+      },
+      {
+        "source": "DEU",
+        "component": 2,
+        "bbox": [
+          6.659516,
+          53.562893,
+          6.798106,
+          53.620063
+        ],
+        "coordinateCount": 22
+      },
+      {
+        "source": "DEU",
+        "component": 3,
+        "bbox": [
+          6.87379,
+          53.672756,
+          7.08546,
+          53.694159
+        ],
+        "coordinateCount": 5
+      },
+      {
+        "source": "DEU",
+        "component": 4,
+        "bbox": [
+          7.133149,
+          53.701402,
+          7.34669,
+          53.729438
+        ],
+        "coordinateCount": 10
+      },
+      {
+        "source": "DEU",
+        "component": 5,
+        "bbox": [
+          7.366547,
+          53.721137,
+          7.435557,
+          53.736721
+        ],
+        "coordinateCount": 10
+      },
+      {
+        "source": "DEU",
+        "component": 6,
+        "bbox": [
+          8.120128,
+          53.714301,
+          8.195974,
+          53.739163
+        ],
+        "coordinateCount": 14
+      },
+      {
+        "source": "DEU",
+        "component": 7,
+        "bbox": [
+          7.469574,
+          53.727118,
+          7.627208,
+          53.7626
+        ],
+        "coordinateCount": 16
+      },
+      {
+        "source": "DEU",
+        "component": 8,
+        "bbox": [
+          7.660899,
+          53.757799,
+          7.812836,
+          53.786566
+        ],
+        "coordinateCount": 14
+      },
+      {
+        "source": "DEU",
+        "component": 9,
+        "bbox": [
+          7.854503,
+          53.776353,
+          7.955577,
+          53.796291
+        ],
+        "coordinateCount": 13
+      },
+      {
+        "source": "DEU",
+        "component": 10,
+        "bbox": [
+          11.375662,
+          53.961127,
+          11.497895,
+          54.030951
+        ],
+        "coordinateCount": 18
+      },
+      {
+        "source": "DEU",
+        "component": 11,
+        "bbox": [
+          11.528494,
+          54.056952,
+          11.615896,
+          54.112128
+        ],
+        "coordinateCount": 10
+      },
+      {
+        "source": "DEU",
+        "component": 12,
+        "bbox": [
+          8.812836,
+          54.466498,
+          8.963145,
+          54.530463
+        ],
+        "coordinateCount": 20
+      },
+      {
+        "source": "DEU",
+        "component": 13,
+        "bbox": [
+          11.005707,
+          54.412665,
+          11.31422,
+          54.535956
+        ],
+        "coordinateCount": 28
+      },
+      {
+        "source": "DEU",
+        "component": 14,
+        "bbox": [
+          13.061371,
+          54.468451,
+          13.157237,
+          54.606024
+        ],
+        "coordinateCount": 28
+      },
+      {
+        "source": "DEU",
+        "component": 15,
+        "bbox": [
+          13.115489,
+          54.228217,
+          13.766449,
+          54.688422
+        ],
+        "coordinateCount": 252
+      },
+      {
+        "source": "DEU",
+        "component": 16,
+        "bbox": [
+          8.291515,
+          54.618964,
+          8.401378,
+          54.71483
+        ],
+        "coordinateCount": 17
+      },
+      {
+        "source": "DEU",
+        "component": 17,
+        "bbox": [
+          8.394542,
+          54.685004,
+          8.593761,
+          54.756415
+        ],
+        "coordinateCount": 19
+      },
+      {
+        "source": "DEU",
+        "component": 18,
+        "bbox": [
+          8.277029,
+          54.742377,
+          8.65447,
+          55.065334
+        ],
+        "coordinateCount": 41
+      },
+      {
+        "source": "DEU",
+        "component": 19,
+        "bbox": [
+          8.595876,
+          54.492377,
+          8.700938,
+          54.55858
+        ],
+        "coordinateCount": 13
+      },
+      {
+        "source": "DNK",
+        "component": 4,
+        "name": "Als",
+        "bbox": [
+          9.628429,
+          54.859524,
+          10.065115,
+          55.085395
+        ],
+        "coordinateCount": 68
+      }
+    ],
+    "highResolutionOverrides": [
+      {
+        "name": "Helgoland",
+        "source": "OSM relation 3787052",
+        "coordinateCount": 567
+      },
+      {
+        "name": "Düne",
+        "source": "OSM way 273992076",
+        "coordinateCount": 406
+      }
+    ]
+  }
+}

@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 1,
+  "id": "netherlands-historical-coastline-change-events",
+  "asOf": "2026-10-09",
+  "scope": "Historical physical land/water events within the geographical Netherlands study area; modernCountry is a locator, never an owner across eras.",
+  "baseline": {
+    "canonicalGeometryVersion": "state:NLD:natural-earth-5.1.1",
+    "referenceDate": "current source geometry (not a surveyed 2026 epoch)",
+    "maxFlatZoom": 64,
+    "contentWidthCssPx": 2560,
+    "toleranceCssPx": 0.5
+  },
+  "dataPolicy": {
+    "recordEventsRegardlessOfEra": true,
+    "ownershipSeparateFromCoastalChange": true,
+    "eventYearIsNotExactShorelineSwitch": true,
+    "closureDateIsNotDryLandDate": true,
+    "doNotInferGeometryFromConstructionTimeline": true,
+    "doNotAutoReplaceCoastline": true,
+    "waterBodyTopologySeparateFromCountryPolygon": true
+  },
+  "sources": {
+    "rws-zuiderzee": {
+      "publisher": "Rijkswaterstaat",
+      "url": "https://www.rijkswaterstaat.nl/water/waterbeheer/bescherming-tegen-het-water/100-jaar-zuiderzeewet"
+    },
+    "rws-houtribdijk": {
+      "publisher": "Rijkswaterstaat",
+      "url": "https://www.rijkswaterstaat.nl/water/waterbeheer/bescherming-tegen-het-water/waterkeringen/dijken/houtribdijk"
+    },
+    "rws-lauwerszee-1969": {
+      "publisher": "Rijkswaterstaat archival publication",
+      "url": "https://open.rijkswaterstaat.nl/zoeken/%40137314/ontwikkeling-vegetatie-lauwerszee/"
+    },
+    "port-rotterdam-2013": {
+      "publisher": "Port of Rotterdam Authority",
+      "url": "https://www.portofrotterdam.com/en/news-and-press-releases/maasvlakte-2-five-years-operation"
+    },
+    "kadaster-topotijdreis": {
+      "publisher": "Kadaster",
+      "url": "https://www.topotijdreis.nl/"
+    },
+    "pdok-coastline": {
+      "publisher": "Kadaster / PDOK",
+      "url": "https://www.pdok.nl/ogc-apis/-/article/zeegebieden"
+    }
+  },
+  "events": [
+    {
+      "id": "amsteldiepdijk-1924",
+      "name": "Amsteldiepdijk / Wieringen mainland link",
+      "modernCountry": "NLD",
+      "sea": "Zuiderzee",
+      "eventType": "sea-dyke-and-island-connection",
+      "datedWorks": {
+        "startYear": 1924,
+        "endYear": 1924,
+        "dating": "completion-year",
+        "hydraulicClosureDate": null,
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "island-to-mainland-connection",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "rws-houtribdijk"
+        ]
+      },
+      "note": "Physical connection changes topology; the dike completion is not a general dry-land conversion date."
+    },
+    {
+      "id": "wieringermeer-1930",
+      "name": "Wieringermeer polder",
+      "modernCountry": "NLD",
+      "sea": "Zuiderzee",
+      "eventType": "polder-drainage",
+      "datedWorks": {
+        "startYear": 1930,
+        "endYear": 1930,
+        "dating": "polder-dry-year",
+        "hydraulicClosureDate": null,
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "water-to-dry-land",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "rws-zuiderzee"
+        ]
+      },
+      "note": "Dry-land year is corroborated, but the exact exposed land boundary and drainage stages require dated map geometry."
+    },
+    {
+      "id": "afsluitdijk-1927-1932",
+      "name": "Afsluitdijk / Zuiderzee closure",
+      "modernCountry": "NLD",
+      "sea": "Zuiderzee / Wadden Sea",
+      "eventType": "sea-inlet-closure",
+      "datedWorks": {
+        "startYear": 1927,
+        "endYear": 1932,
+        "dating": "construction-interval",
+        "hydraulicClosureDate": "1932-05-28",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "tidal-sea-to-enclosed-lake-connectivity",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "rws-zuiderzee",
+          "rws-houtribdijk"
+        ]
+      },
+      "note": "Closure date is established for the last sea gap. Do not treat closure as an instantaneous conversion of all enclosed water into land."
+    },
+    {
+      "id": "noordoostpolder-1942",
+      "name": "Noordoostpolder",
+      "modernCountry": "NLD",
+      "sea": "IJsselmeer",
+      "eventType": "polder-drainage",
+      "datedWorks": {
+        "startYear": 1942,
+        "endYear": 1942,
+        "dating": "polder-dry-year",
+        "hydraulicClosureDate": null,
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "water-to-dry-land-and-island-connectivity",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "rws-zuiderzee"
+        ]
+      },
+      "note": "Restoration before this polder must assess Urk island connectivity rather than subtracting generic new land only."
+    },
+    {
+      "id": "oostelijk-flevoland-1957",
+      "name": "Oostelijk Flevoland",
+      "modernCountry": "NLD",
+      "sea": "IJsselmeer",
+      "eventType": "polder-drainage",
+      "datedWorks": {
+        "startYear": 1957,
+        "endYear": 1957,
+        "dating": "polder-dry-year",
+        "hydraulicClosureDate": null,
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "water-to-dry-land",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "rws-zuiderzee"
+        ]
+      },
+      "note": "Check dated water-edge rather than equating the calendar year to an exact polygon switch."
+    },
+    {
+      "id": "zuidelijk-flevoland-1968",
+      "name": "Zuidelijk Flevoland",
+      "modernCountry": "NLD",
+      "sea": "IJsselmeer",
+      "eventType": "polder-drainage",
+      "datedWorks": {
+        "startYear": 1968,
+        "endYear": 1968,
+        "dating": "polder-dry-year",
+        "hydraulicClosureDate": null,
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "water-to-dry-land",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "rws-zuiderzee"
+        ]
+      },
+      "note": "Retain neighboring water bodies and land connection constraints."
+    },
+    {
+      "id": "lauwerszee-1969",
+      "name": "Lauwerszee closure / Lauwersmeer",
+      "modernCountry": "NLD",
+      "sea": "Wadden Sea",
+      "eventType": "sea-inlet-closure",
+      "datedWorks": {
+        "startYear": 1969,
+        "endYear": 1969,
+        "dating": "closure-year",
+        "hydraulicClosureDate": "1969-05-23",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "tidal-inlet-to-enclosed-lake-connectivity",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "rws-lauwerszee-1969"
+        ]
+      },
+      "note": "Rijkswaterstaat describes subsequent varied ecological and drying processes; closure is not a single full-area land conversion."
+    },
+    {
+      "id": "houtribdijk-1963-1976",
+      "name": "Houtribdijk / Markermeer separation",
+      "modernCountry": "NLD",
+      "sea": "IJsselmeer / Markermeer",
+      "eventType": "lake-separation-barrier",
+      "datedWorks": {
+        "startYear": 1963,
+        "endYear": 1976,
+        "dating": "construction-interval",
+        "hydraulicClosureDate": "1975-09-04",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "lake-to-lake-barrier-and-connectivity",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "rws-houtribdijk"
+        ]
+      },
+      "note": "The final dam gap was closed in 1975, whereas further works and road opening continued into 1976. Record as water-separation, not reclamation of Markermeer."
+    },
+    {
+      "id": "maasvlakte-2-2008-2013",
+      "name": "Maasvlakte 2 port reclamation",
+      "modernCountry": "NLD",
+      "sea": "North Sea",
+      "eventType": "port-reclamation",
+      "datedWorks": {
+        "startYear": 2008,
+        "endYear": 2013,
+        "dating": "construction-and-opening-interval",
+        "hydraulicClosureDate": null,
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "new-open-sea-coastline-and-port-basins",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "port-rotterdam-2013",
+          "pdok-coastline",
+          "kadaster-topotijdreis"
+        ]
+      },
+      "note": "Port officially opened May 2013; precise dates of dry land, outer seawall and separate harbour-basin edges require dated geometry. Pando Natural Earth baseline does not contain the published centroid sample."
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "id": "netherlands-phase0-country-minus-water-area-audit",
+  "asOf": "2026-10-10",
+  "branch": "work/gis",
+  "scope": "European Netherlands components of current state:NLD compared with current bundled Natural Earth lake polygons and CBS 2022 land/inland-water totals.",
+  "method": {
+    "countrySource": "assets/data/territorial-entities/source/countries/nld.json",
+    "countryBlobSha": "b6bb670257d4e73d5fc4cf1880064b91bb365c8b",
+    "countryGeometryVersionId": "state:NLD:natural-earth-5.1.1",
+    "lakeSource": "assets/data/hydro/lakes_base.geojson",
+    "lakeBlobSha": "02ec805c9ec3347b81b7b6ec3aba5ed5eb0028a8",
+    "lakeDataset": "Natural Earth 5.0.0 1:10m",
+    "areaMethod": "spherical polygon area, R=6371008.8 m; suitable for same-run comparative audit, not cadastral area",
+    "europeanComponentRule": "NLD polygon components with positive longitude and latitude > 40; excludes Bonaire, Sint Eustatius and Saba components",
+    "waterSubtractionRule": "subtract every bundled lake polygon whose bbox intersects European NLD; all vertices of the two matching lakes were verified inside current European NLD"
+  },
+  "measurements": {
+    "europeanNld": {
+      "componentCount": 9,
+      "approximateAreaKm2": 36957.003574446935
+    },
+    "caribbeanNldComponentsExcluded": {
+      "componentCount": 3,
+      "approximateAreaKm2": 296.3617188724706
+    },
+    "bundledWaterPolygons": [
+      {
+        "id": "lakes_base:1159118273",
+        "name": "Lauwersmeer",
+        "approximateAreaKm2": 30.722083585178396,
+        "vertexCount": 19,
+        "allVerticesInsideEuropeanNld": true
+      },
+      {
+        "id": "lakes_base:1159126631",
+        "name": "IJsselmeer",
+        "note": "Single Natural Earth polygon also covers Markermeer; has one interior hole around major dry-land area.",
+        "approximateAreaKm2": 1961.5755399804073,
+        "vertexCount": 193,
+        "allVerticesInsideEuropeanNld": true
+      }
+    ],
+    "bundledWaterTotalKm2": 1992.2976235655856,
+    "currentCountryMinusBundledLakesKm2": 34964.70595088135,
+    "cbs2022": {
+      "landKm2": 33626,
+      "inlandWaterKm2": 3748.92,
+      "landPlusInlandWaterKm2": 37374.92,
+      "outsideWaterKm2": 4168.45
+    },
+    "comparisons": {
+      "countryVsCbsLandPlusInlandWaterKm2": -417.91642555306396,
+      "countryVsCbsLandPlusInlandWaterPercent": -1.1181869252162553,
+      "currentMinusLakesVsCbsLandKm2": 1338.705950881347,
+      "currentMinusLakesVsCbsLandPercent": 3.9811648417322574,
+      "bundledLakesShareOfCbsInlandWaterPercent": 53.14202042113162,
+      "inlandWaterNotRepresentedByBundledLakeAreaKm2": 1756.6223764344145,
+      "inlandWaterNotRepresentedPercent": 46.85797957886838,
+      "hypotheticalCountryMinusCompleteCbsInlandWaterKm2": 33208.08357444694,
+      "hypotheticalVsCbsLandKm2": -417.9164255530603,
+      "hypotheticalVsCbsLandPercent": -1.2428369252169729
+    }
+  },
+  "interpretation": [
+    "The current Pando European NLD polygon is closer to CBS land+inland-water than to dry land, confirming that large inland waters are part of the country polygon semantics.",
+    "Subtracting only the current bundled Natural Earth lake polygons leaves about 34,965 km2, roughly 1,339 km2 (3.98%) above CBS dry land.",
+    "The bundled lake polygons account for only about 53% of CBS inland-water area by area. Natural Earth lakes are a selective cartographic layer, not a complete Dutch water mask.",
+    "A complete BRT/CBS-aligned water mask should make country-minus-water much closer to dry land, but an actual geometric overlay with TOP10NL waterdeel_vlak has not yet been executed.",
+    "The remaining ~1.1% base-area deficit relative to CBS land+inland-water is consistent with Natural Earth coastline/generalization and differing boundary/water semantics; it sets an approximate floor on area agreement even with a complete water mask."
+  ],
+  "officialReferences": [
+    "https://www.cbs.nl/nl-nl/cijfers/detail/86211NED",
+    "https://www.cbs.nl/nl-nl/achtergrond/2026/10/zuid-holland-heeft-van-alle-provincies-grootste-deel-bebouwd-terrein",
+    "https://api.pdok.nl/kadaster/brt-top10nl/ogc/v1/collections/waterdeel_vlak?f=html"
+  ],
+  "noGeometryModified": true
+}

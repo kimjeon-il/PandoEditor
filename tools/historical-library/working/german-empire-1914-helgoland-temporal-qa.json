@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "referenceDate": "1914-07-31",
+  "region": "Helgoland Hauptinsel and Düne",
+  "workingGeometry": "tools/historical-library/working/german-empire-1914-base.geojson",
+  "historicalEventCatalog": "tools/historical-library/sources/german-coastline/change-events.json",
+  "evidenceState": "source-indexed; independent dated vector shoreline not extracted",
+  "geometryState": "PROVISIONAL_MODERN_PROXY",
+  "historicalOverlayMeasured": false,
+  "historicalScreenHausdorffCssPx": null,
+  "mapReviewPolicy": {
+    "projection": "flat-equirectangular",
+    "zoom": 64,
+    "contentWidthCssPx": 2560,
+    "toleranceCssPx": 0.5,
+    "screenPixelsPerDegree": 455.111111
+  },
+  "referenceMaps": [
+    {
+      "id": "ukho-chart-126-helgoland-1914",
+      "url": "https://commons.wikimedia.org/wiki/File:Admiralty_Chart_No_126_Helgoland,_Published_1914.jpg",
+      "date": "1914-09-22",
+      "scaleDenominator": 15000,
+      "surveyRevisionDateVerified": false,
+      "gcpCountReportedByWarper": 6,
+      "actualGeoreferencingErrorChecked": false
+    },
+    {
+      "id": "baedeker-1910",
+      "url": "https://commons.wikimedia.org/wiki/File:Map_helgoland_1910.jpg",
+      "date": "1910",
+      "surveyRevisionDateVerified": false
+    },
+    {
+      "id": "die-kueste-2009-figure4",
+      "url": "https://izw.baw.de/publikationen/die-kueste/0/k076109.pdf",
+      "figure": "Figure 4, printed p. 148 (1890/1903/1916/1928/1940/1970)",
+      "comparisonOnly": true
+    }
+  ],
+  "periodNotes": [
+    "1908-1916 southern harbor reclamation means 1914 is a midway coastline; the completed 1916 port is not an exact 1914 substitute.",
+    "1938-1941 Nordostland and Düne expansion means modern polygons cannot be considered authoritative for the German Empire.",
+    "1919 Versailles Article 115 addressed naval structures and reclaimed land; legal removal orders alone do not prove that a dry-land shoreline returned to a prior location.",
+    "Do not automatically delete areas, shrink both islands uniformly, or infer exact 1914 geometry from a historical area figure.",
+    "GIS polygon editing is blocked until independent period geometry and georeferencing accuracy have been reviewed."
+  ],
+  "modernProxyComponents": [
+    {
+      "name": "Helgoland Hauptinsel",
+      "polygonOrdinalInWorkingSource": 21,
+      "ringVertexCount": 567,
+      "bboxWgs84": [
+        7.8648436,
+        54.1693099,
+        7.9001626,
+        54.1907839
+      ],
+      "approxModernProxyAreaKm2": 1.071867,
+      "approxScreenWidthCssPx": 16.074,
+      "approxScreenHeightCssPx": 9.773,
+      "historicalShapeStatus": "not-digitized",
+      "modernProxyOrigin": "OpenStreetMap relation 3787052"
+    },
+    {
+      "name": "Düne",
+      "polygonOrdinalInWorkingSource": 22,
+      "ringVertexCount": 406,
+      "bboxWgs84": [
+        7.8993155,
+        54.1796038,
+        7.9214341,
+        54.1917198
+      ],
+      "approxModernProxyAreaKm2": 0.62657,
+      "approxScreenWidthCssPx": 10.066,
+      "approxScreenHeightCssPx": 5.514,
+      "historicalShapeStatus": "not-digitized",
+      "modernProxyOrigin": "OpenStreetMap way 273992076"
+    }
+  ],
+  "blockers": [
+    "1914 UKHO raster has not been locally rectified, independent coastal line not digitized.",
+    "The present HistoGIS country source does not independently supply these island polygons; using it to validate modern proxies is circular.",
+    "No quantitative measured 1914-vs-proxy Hausdorff value exists."
+  ]
+}

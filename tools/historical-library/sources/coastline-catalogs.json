@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "worldwide-historical-coastal-event-catalog-registry",
+  "asOf": "2026-10-09",
+  "purpose": "Read-only discovery manifest of independently maintained geographical coastal-event inventories; never a duplicate editable event store or a runtime-ready geometry source.",
+  "dataPolicy": {
+    "manifestIsNotCanonicalGeometry": true,
+    "catalogsAreGeographicNotCountryOwned": true,
+    "noEventCopyInManifest": true,
+    "ignoreUnverifiedGeometryForWorldBuild": true
+  },
+  "catalogs": [
+    {
+      "id": "german-1914-coastal-region",
+      "path": "tools/historical-library/sources/german-coastline/change-events.json",
+      "scope": "Coastal sites geographically related to the 1914 German Empire, including later administrations and shared boundary sectors.",
+      "status": "source-indexed-events-with-separate-provisional-working-geometry"
+    },
+    {
+      "id": "netherlands-coastal-region",
+      "path": "tools/historical-library/sources/netherlands/change-events.json",
+      "scope": "Netherlands coastline, inland sea closures and polder/port changes, including Dollard/Ems shared coastline evidence.",
+      "status": "source-indexed-only"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "id": "netherlands-phase0-country-minus-water-audit",
+  "asOf": "2026-10-10",
+  "branch": "work/gis",
+  "purpose": "Test how closely current Pando NLD country geometry minus the bundled Natural Earth lake polygons approximates actual dry land.",
+  "method": {
+    "country": "Spherical area of current state:NLD:natural-earth-5.1.1 polygon components; European and Caribbean components separated by location.",
+    "waterMask": "Spherical area of every bundled Natural Earth lake feature intersecting the European Netherlands study BBOX 3,50.5,7.3,53.7.",
+    "officialControl": "CBS NBBG2022 land and inland-water areas for Nederland; Caribbean island areas from Rijksoverheid.",
+    "caveat": "Area comparison is a validation of aggregate coverage, not an exact polygon overlay against CBS/BRT water geometry."
+  },
+  "sources": {
+    "pandoCountry": {
+      "path": "assets/data/territorial-entities/source/countries/nld.json",
+      "blobSha": "b6bb670257d4e73d5fc4cf1880064b91bb365c8b",
+      "geometryVersionId": "state:NLD:natural-earth-5.1.1"
+    },
+    "pandoLakes": {
+      "path": "assets/data/hydro/lakes_base.geojson",
+      "blobSha": "02ec805c9ec3347b81b7b6ec3aba5ed5eb0028a8",
+      "dataset": "Natural Earth 5.0.0 1:10m"
+    },
+    "cbs2022": {
+      "url": "https://www.cbs.nl/nl-nl/cijfers/detail/86211ned",
+      "referenceYear": 2022,
+      "note": "CBS defines land/water using BRT topographic water surfaces; table is definitive for NBBG2022."
+    },
+    "caribbeanAreas": {
+      "url": "https://www.rijksoverheid.nl/vraag-en-antwoord/caribische-deel-van-het-koninkrijk/waaruit-bestaat-het-koninkrijk-der-nederlanden"
+    }
+  },
+  "europeanNetherlands": {
+    "pandoCountryAreaKm2": 36957.003574446935,
+    "cbsLandAreaKm2": 33626,
+    "cbsInlandWaterAreaKm2": 3748.92,
+    "cbsLandPlusInlandWaterKm2": 37374.92,
+    "pandoBaselineVsLandPlusInlandWater": {
+      "differenceKm2": -417.91642555306316,
+      "percent": -1.1181734316837666
+    },
+    "bundledLakeMask": {
+      "features": [
+        {
+          "id": "lakes_base:1159126631",
+          "name": "IJsselmeer",
+          "areaKm2": 1961.5755399804073
+        },
+        {
+          "id": "lakes_base:1159118273",
+          "name": "Lauwersmeer",
+          "areaKm2": 30.722083585178396
+        }
+      ],
+      "totalAreaKm2": 1992.2976235655856,
+      "equivalentShareOfCbsInlandWaterPercent": 53.14324188207765
+    },
+    "pandoCountryMinusBundledLakes": {
+      "derivedLandAreaKm2": 34964.70595088135,
+      "officialLandAreaKm2": 33626,
+      "excessKm2": 1338.7059508813472,
+      "excessPercent": 3.981163239402097,
+      "verdict": "not-accurate-as-full-dry-land-mask"
+    },
+    "officialInlandWaterClassesKm2": {
+      "ijsselmeerAndMarkermeer": 1820.88,
+      "closedSeaArms": 320.85,
+      "rhineAndMeuse": 183.16,
+      "randmeren": 155.14,
+      "reservoirs": 13.33,
+      "recreationalInlandWater": 112.7,
+      "extractionWater": 37.04,
+      "flowAndSludgeFields": 4.86,
+      "otherInlandWater": 1100.95
+    },
+    "netOfficialInlandWaterNotRemovedByCurrentMaskEquivalentKm2": 1756.6223764344145,
+    "note": "The net figure includes cancellation from the generalized IJsselmeer polygon being about 140.7 km2 larger than the CBS IJsselmeer+Markermeer category; it is not a direct polygon-difference measurement."
+  },
+  "wholeStateIncludingCaribbeanComponents": {
+    "pandoEuropeanAreaKm2": 36957.003574446935,
+    "pandoCaribbeanAreaKm2": 296.36171887247065,
+    "pandoTotalAreaKm2": 37253.3652933194,
+    "officialCaribbeanLandAreaKm2": 322,
+    "officialCombinedDryLandAreaKm2": 33948,
+    "pandoMinusEuropeanBundledLakesKm2": 35261.067669753815,
+    "excessVsCombinedDryLandKm2": 1313.0676697538147,
+    "excessVsCombinedDryLandPercent": 3.867879314698408,
+    "note": "Caribbean components are not part of the CBS Nederland NBBG2022 area table; official island areas are added separately only for a whole-state sanity check."
+  },
+  "shapeAssessment": {
+    "zuiderzeeFlevoland": "broad-dry-land-pattern-usable-but-houtribdijk-markermeer-separation-and-randmeren-are-incomplete",
+    "lauwersmeer": "explicit-modern-lake-present",
+    "rhineMeuseDelta": "poor-for-dry-land-mask-because-river-and-closed-sea-arm-water-polygons-are-not-in-the-current-lake-mask",
+    "randstadAndSmallerLakes": "incomplete-many-smaller-water-surfaces-absent",
+    "caribbean": "no-major-inland-water-mask-issue-for-this-test-but-1:10m-coast-generalization-is-large-on-small-islands"
+  },
+  "conclusion": {
+    "exactStatement": "Current NLD country polygon minus current bundled lake polygons is not an accurate dry-land polygon.",
+    "broadStatement": "It reproduces the broad modern central reclamation pattern reasonably, especially major IJsselmeer/Flevoland land-water structure, but leaves too much inland water classified as land.",
+    "nextDataNeed": "A fuller BRT/TOP10NL or NBBG-derived water polygon mask is needed before treating subtraction as a canonical modern dry-land baseline."
+  },
+  "noProductionGeometryModified": true
+}

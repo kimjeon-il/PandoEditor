@@ -1,0 +1,36 @@
+{
+  "referenceDate": "1914-07-31",
+  "inputs": {
+    "websiteCountries": [
+      "DEU",
+      "DNK",
+      "LTU",
+      "POL",
+      "RUS"
+    ],
+    "coastBufferMeters": 12000,
+    "historicalMatchBufferMeters": 12000
+  },
+  "validation": {
+    "valid": true,
+    "geometryType": "MultiPolygon",
+    "componentCount": 29,
+    "historicalAreaKm2": 542359.123,
+    "modernCoastAreaKm2": 544282.767,
+    "symmetricDifferenceKm2": 3918.726,
+    "differenceOutsideCoastZoneKm2": 0.0,
+    "helgolandAreaKm2": 1.07648,
+    "duneAreaKm2": 0.629302,
+    "boundsWGS84": [
+      5.875153,
+      47.2705079,
+      22.8904465,
+      56.001247
+    ]
+  },
+  "notes": [
+    "This is an intermediate working base: modern coastline + historical inland frontier.",
+    "Coastal land-border endpoints are temporary and will be re-snapped after 1914 shoreline reconstruction.",
+    "No intended geometry change outside the 12 km modern-coast surgery zone."
+  ]
+}

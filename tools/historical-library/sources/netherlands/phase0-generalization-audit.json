@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "id": "netherlands-phase0-natural-earth-generalization-audit",
+  "asOf": "2026-10-10",
+  "branch": "work/gis",
+  "purpose": "Quantify whether the apparent Maasvlakte 2 mismatch can plausibly arise from Natural Earth 1:10m generalization rather than treating it as a verified reclamation omission.",
+  "pandoBaseline": {
+    "sourcePath": "assets/data/territorial-entities/source/countries/nld.json",
+    "blobSha": "b6bb670257d4e73d5fc4cf1880064b91bb365c8b",
+    "geometryVersionId": "state:NLD:natural-earth-5.1.1",
+    "componentPolygons": 12,
+    "totalPositions": 854,
+    "approximateSphericalAreaKm2": 37253.36529331941,
+    "approximatePerimeterKm": 1974.6900643934414,
+    "meanSegmentLengthMeters": 2345.237606167983,
+    "medianSegmentLengthMeters": 1672.9544659393348
+  },
+  "rotterdamStudySegment": {
+    "bbox": [
+      3.8,
+      51.8,
+      4.3,
+      52.1
+    ],
+    "sampledOuterRingVertices": 17,
+    "sampledRunLengthKm": 26.24269096043006,
+    "meanSegmentLengthMeters": 1640.1681850268787,
+    "medianSegmentLengthMeters": 903.549897791404,
+    "maxSegmentLengthKm": 4.55712353535232,
+    "priorMaasvlakte2PlaceToBoundaryKm": 2.65634,
+    "interpretation": "The prior point-to-boundary distance is of the same order as the generalized source segment lengths and therefore cannot by itself prove a missing reclamation footprint."
+  },
+  "highPrecisionComparisonMetadata": {
+    "dataset": "geoBoundaries gbOpen NLD ADM0",
+    "boundaryYearRepresented": 2022,
+    "source": "National Georegister",
+    "sourceDataUpdateDate": "2023-01-19",
+    "vertexCount": 36029,
+    "perimeterKm": 2041.1885056940812,
+    "meanPerimeterSpacingMetersApprox": 56.6556152352082,
+    "vertexCountRatioVsPando": 42.18852459016394,
+    "sourceUrl": "https://www.geoboundaries.org/api/current/gbOpen/NLD/ADM0/"
+  },
+  "cbsAreaCrosscheck2022": {
+    "totalLandAndWaterKm2": 41543.37,
+    "landKm2": 33626,
+    "inlandWaterKm2": 3748.92,
+    "outsideWaterKm2": 4168.45,
+    "landPlusInlandWaterKm2": 37374.92,
+    "pandoMinusLandPlusInlandWaterKm2": -121.55470668058842,
+    "pandoRelativeDifferencePercent": -0.3252306805756064,
+    "pandoExcessOverLandKm2": 3627.36529331941,
+    "excessAsPercentOfCbsInlandWater": 96.75760734609995,
+    "sourceUrl": "https://www.cbs.nl/nl-nl/cijfers/detail/86211ned"
+  },
+  "findings": [
+    "Pando/Natural Earth preserves Netherlands aggregate land-plus-inland-water area surprisingly closely while using far fewer vertices.",
+    "Local coastline displacement at max zoom can be large even when national aggregate area is close.",
+    "The country polygon semantically includes substantial inland water; point-in-country is not a dry-land classifier.",
+    "Subtracting all relevant inland-water geometry would move the footprint toward actual dry-land area, but the current Natural Earth lakes layer is incomplete/generalized and contains only two intersecting named lake features in the Netherlands study bbox.",
+    "Maasvlakte 2 remains unclassified at footprint level until current TOP10NL/PDOK coastline coordinates are directly compared with the Natural Earth line."
+  ],
+  "noGeometryModified": true
+}

@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "id": "german-empire-1914-northsea-dollart-jade-r1",
+  "referenceDate": "1914-07-31",
+  "status": "applied",
+  "revision": "r1",
+  "sector": {
+    "historicalMainRingStartIndexBeforeRefinement": 6526,
+    "historicalMainRingEndIndexBeforeRefinement": 110,
+    "startCoordinate": [
+      7.206956223453415,
+      53.23766503860818
+    ],
+    "endCoordinate": [
+      8.235494963162175,
+      53.54768919979703
+    ]
+  },
+  "method": {
+    "historicalGeometry": "HistoGIS German Empire working skeleton",
+    "currentDetailGeometry": "OpenStreetMap processed coastline, EPSG:4326",
+    "currentSource": "https://osmdata.openstreetmap.de/download/coastlines-split-4326.zip",
+    "currentLicense": "ODbL 1.0",
+    "thresholdMetres": 150,
+    "rule": "Insert current coastline detail only where point-to-historical-segment distance <= 150 m; retain the historical geometry elsewhere."
+  },
+  "periodControlReferences": [
+    {
+      "series": "Preußische Landesaufnahme 1:25,000",
+      "coverage": "Niedersachsen/Bremen",
+      "period": "1877-1912",
+      "officialWms": "https://www.geobasisdaten.niedersachsen.de/doorman/auth/pl25?SERVICE=WMS&REQUEST=GetCapabilities",
+      "accessResult": "HTTP 401 from automated runner; metadata used as historical control reference, not as extracted geometry."
+    },
+    {
+      "sheet": "2508 Pewsum",
+      "year": 1892
+    },
+    {
+      "sheet": "2509 Loppersum",
+      "year": 1893
+    },
+    {
+      "sheet": "2609 Emden",
+      "year": 1893
+    },
+    {
+      "sheet": "2413 Jever",
+      "year": 1893
+    },
+    {
+      "sheet": "2414 Wilhelmshaven",
+      "year": 1892
+    },
+    {
+      "sheet": "2513 Neustadt-Gödens",
+      "year": 1900
+    },
+    {
+      "sheet": "2514 Steinhausen",
+      "year": 1900
+    },
+    {
+      "sheet": "2515 Jadebusen",
+      "year": 1900
+    }
+  ],
+  "stats": {
+    "oldMainRingPoints": 6593,
+    "originalSectorPoints": 177,
+    "currentCoastCandidatePoints": 4201,
+    "acceptedCurrentPoints": 1617,
+    "rejectedCurrentPoints": 2584,
+    "historicalSegmentsRefined": 63,
+    "insertedCurrentPoints": 1160,
+    "refinedSectorPoints": 1336,
+    "newMainRingPoints": 7752,
+    "totalCoordinateCount": 10065,
+    "previousApproxAreaKm2": 540330.865,
+    "refinedApproxAreaKm2": 540329.296686,
+    "areaDeltaKm2": -1.568314
+  },
+  "validation": {
+    "endpointsPreserved": true,
+    "allRingsClosed": true,
+    "properSelfIntersections": 0,
+    "controlPointsPassed": true
+  },
+  "historicalValidation": {
+    "geometryPatchApplied": "modern-detail-densification-only",
+    "independent1914CoastlineVectorDigitized": false,
+    "periodMapRasterReferencedButNotGeoreferenced": true,
+    "periodMapWmsLastAccess": "HTTP 401 (recorded in periodControlReferences)",
+    "independentHistoricallyCorrectShorelineMeasured": false,
+    "maxFlatZoom64ScreenDifferenceCssPx": null,
+    "periodBoundaryVerification": "not-run",
+    "interpretation": "Topological and inside/outside tests marked passed in validation do NOT demonstrate 1914 shoreline correctness. The <=150 m proximity rule can copy later reclaimed-coast detail and must not be equated to historical evidence.",
+    "geometryModificationRequired": "selective independent 1914 sheet control for Dollart/Emden, Leybucht, Jade and Wilhelmshaven before final historical promotion"
+  }
+}

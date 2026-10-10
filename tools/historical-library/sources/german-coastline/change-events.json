@@ -1,0 +1,908 @@
+{
+  "schemaVersion": 1,
+  "id": "german-historical-coastline-change-events",
+  "asOf": "2026-10-09",
+  "scope": "Coastal locations associated geographically with the German Empire in 1914 and later German state histories; evidence is independent of the political owner at event time.",
+  "baseline": {
+    "referenceDate": "1914-07-31",
+    "currentInterimGeometry": "tools/historical-library/working/german-empire-1914-base.geojson",
+    "canonicalRule": "Historical coastline reconstruction policy in docs/historical-border-reconstruction-policy.md",
+    "maxFlatZoom": 64,
+    "contentWidthCssPx": 2560,
+    "toleranceCssPx": 0.5
+  },
+  "dataPolicy": {
+    "recordEventsRegardlessOfEra": true,
+    "eventYearIsNotExactShorelineSwitch": true,
+    "enclosedAreaIsNotEquivalentToDryLand": true,
+    "doNotInferGeometryFromConstructionTimeline": true,
+    "doNotAutoReplaceCoastline": true,
+    "ownershipSeparateFromCoastalChange": true,
+    "geometryState": "all entries source-indexed; historical geometry not digitized"
+  },
+  "sources": {
+    "wilhelmshaven-tourism": {
+      "publisher": "Wilhelmshaven Touristik",
+      "url": "https://www.wilhelmshaven-touristik.de/erleben/freizeit-und-ausfluege/ruestringer-berg-sturmfluten-und-landgewinne"
+    },
+    "nlwkn-leybucht": {
+      "publisher": "NLWKN Niedersachsen",
+      "url": "https://www.nlwkn.niedersachsen.de/startseite/hochwasser_kustenschutz/kustenschutz/ausgewahlte_projekte/kustenschutz_projekt_leybucht/kuestenschutz-projekt-leybucht-43552.html"
+    },
+    "beltringharder-koog": {
+      "publisher": "Beltringharder Koog information site",
+      "url": "https://www.beltringharderkoog.de/der-beltringharder-koog/entstehung/"
+    },
+    "sh-hauke": {
+      "publisher": "Land Schleswig-Holstein, Landesamt für Umwelt",
+      "url": "https://umweltanwendungen.schleswig-holstein.de/Naturschutzgebiete/916-hauke_haien_koog/916_Gebiet.php"
+    },
+    "sh-eider": {
+      "publisher": "Land Schleswig-Holstein, Landesamt für Umwelt",
+      "url": "https://umweltanwendungen.schleswig-holstein.de/Naturschutzgebiete/136-gruene_insel_mit_eiderwatt/136_Gruene_Insel.php"
+    },
+    "speicherkoog-history": {
+      "publisher": "Bürgerinitiative für Naturschutz im Speicherkoog",
+      "url": "https://www.bi-speicherkoog.de/m/seite/413271/der-speicherkoog.html"
+    },
+    "gdynia-museum-1921": {
+      "publisher": "Muzeum Miasta Gdyni",
+      "url": "https://muzeumgdynia.pl/2022/08/otwierajac-okno-na-swiat-albumy-fotograficzne-z-budowy-gdynskiego-portu/"
+    },
+    "gdynia-museum-1937": {
+      "publisher": "Muzeum Miasta Gdyni",
+      "url": "https://muzeumgdynia.pl/2021/05/plan-portu-gdynia/"
+    },
+    "schleswig-helgoland": {
+      "publisher": "Land Schleswig-Holstein",
+      "url": "https://www.schleswig-holstein.de/DE/fachinhalte/L/landeskundegeschichte/Chronologie_Augenblicke_Landesgeschichte/1952_Wiederaufbau_Helgoland"
+    },
+    "helgoland-history-report": {
+      "publisher": "WELT, history coverage",
+      "url": "https://www.welt.de/geschichte/article223549722/Nordsee-Die-Neujahrsflut-zerriss-Helgoland.html"
+    },
+    "koenigsberg-canal-history": {
+      "publisher": "Kaliningrader Seeschifffahrtskanal historical overview",
+      "url": "https://de.wikipedia.org/wiki/Kaliningrader_Seeschifffahrtskanal"
+    },
+    "baltichub-t3": {
+      "publisher": "Baltic Hub, completion release",
+      "url": "https://baltichub.com/inwestycje/projekt-t3/aktualnosci-t3/projekt-t3-w-baltic-hub-oficjalnie-zakonczony"
+    },
+    "gdansk-port-t3": {
+      "publisher": "Port of Gdańsk Authority",
+      "url": "https://www.portgdansk.pl/wydarzenia/port-gdansk-zyskal-nowa-przestrzen-przeladunkowa-terminal-t3-baltic-hub-oficjalnie-otwarty/"
+    },
+    "herder-zimmerbude": {
+      "publisher": "Herder-Institut historical map catalogue",
+      "url": "https://dbs.herder-institut.de/maps/id/K3IIL58%3A1386"
+    },
+    "amzp-pillau": {
+      "publisher": "AMZP/MapyWIG historical map index",
+      "url": "https://igrek.amzp.pl/TK25_1385"
+    },
+    "amzp-zimmerbude": {
+      "publisher": "AMZP/MapyWIG historical map index",
+      "url": "https://igrek.amzp.pl/result.php?cat=tk25&cmd=id&god=1386"
+    },
+    "rosmorport-port-history": {
+      "publisher": "FSUE Rosmorport, maritime port history",
+      "url": "https://www.rosmorport.ru/filials/spb_seaports/"
+    },
+    "kaliningrad-local-history": {
+      "publisher": "Kaliningrad city historical almanac",
+      "url": "https://www.klgd.ru/city/history/almanac/a8_25.php"
+    },
+    "amzp-koenigsberg-west": {
+      "publisher": "AMZP/MapyWIG TK25 index",
+      "url": "https://igrek.amzp.pl/TK25_1288"
+    },
+    "amzp-koenigsberg-east": {
+      "publisher": "AMZP/MapyWIG TK25 index",
+      "url": "https://igrek.amzp.pl/TK25_1289"
+    },
+    "helgoland-1914-admiralty-chart": {
+      "publisher": "United Kingdom Hydrographic Office / Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/File:Admiralty_Chart_No_126_Helgoland,_Published_1914.jpg"
+    },
+    "helgoland-warper-map-5126": {
+      "publisher": "Wikimaps Warper (6 reported control points; georeferencing not independently verified)",
+      "url": "https://warper.wmflabs.org/maps/5126"
+    },
+    "helgoland-1890-1970-coast-figure": {
+      "publisher": "Die Küste 76 (2009), corrected historical coast-development figure after Krumbein (1975)",
+      "url": "https://izw.baw.de/publikationen/die-kueste/0/k076109.pdf"
+    },
+    "helgoland-1910-baedeker": {
+      "publisher": "Karl Baedeker, Northern Germany (1910) / Wikimedia Commons",
+      "url": "https://commons.wikimedia.org/wiki/File:Map_helgoland_1910.jpg"
+    },
+    "helgoland-1921-versailles-article115": {
+      "publisher": "United States Department of State, 1919 Treaty of Versailles Article 115",
+      "url": "https://history.state.gov/historicaldocuments/frus1919Parisv13/ch12subch13"
+    },
+    "reussenkoege-cecilien": {
+      "publisher": "Gemeinde Reußenköge (official municipality)",
+      "url": "https://www.reussenkoege.de/k%C3%B6ge-hallig/cecilienkoog/"
+    },
+    "reussenkoege-sonke": {
+      "publisher": "Gemeinde Reußenköge (official municipality)",
+      "url": "https://www.reussenkoege.de/k%C3%B6ge-hallig/s%C3%B6nke-nissen-koog/"
+    },
+    "niebuell-city-deich-history": {
+      "publisher": "Stadt Niebüll / cultural-heritage interpretive board, published 2015",
+      "url": "https://www.niebuell.de/fileadmin/user_upload/Tourismus/Marschenpark/Stadt_Nieb%C3%BCll_Infotafel_Marschenpark.pdf"
+    },
+    "northfriesland-archive-1914": {
+      "publisher": "Kreisarchiv Nordfriesland (archival finding aid; documents include 1913–1914 dyke papers)",
+      "url": "https://www.nordfriesland.de/media/custom/2271_586_1.PDF?1366096934="
+    },
+    "dehio-sonke": {
+      "publisher": "Dehio DE / Dehio-Vereinigung, cultural monuments inventory",
+      "url": "https://de.dehio.org/bauwerk/reussenkoege-soenke-nissen-koog"
+    }
+  },
+  "events": [
+    {
+      "id": "koenigsberg-sea-canal-1889-1901",
+      "name": "Königsberger Seekanal / Kaliningrad Sea Canal",
+      "modernCountry": "RUS",
+      "sea": "Baltic",
+      "eventType": "canal-and-embankments",
+      "datedWorks": {
+        "startYear": 1889,
+        "endYear": 1901,
+        "dating": "construction-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "artificial-water-corridor",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "rosmorport-port-history",
+          "kaliningrad-local-history"
+        ]
+      },
+      "note": "1889-1901 period is documented for protective canal dams by Rosmorport; the city almanac dates the beginning of the navigable channel works to 1890. Opened on 1901-11-15. Do not treat different definitions of construction start as an exact shoreline switch. The original canal and lagoons' artificial dams predate 1914."
+    },
+    {
+      "id": "cecilienkoog-1903-1905",
+      "name": "Cecilienkoog enclosure and dyke built before WWI",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "reclamation-and-sea-dyke",
+      "datedWorks": {
+        "startYear": 1903,
+        "endYear": 1905,
+        "dating": "historical construction/protective works interval; exact land-water switch separately unverified",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "new-protected-polder-dry-land-beyond-pre1903-dyke",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "reussenkoege-cecilien",
+          "northfriesland-archive-1914"
+        ]
+      },
+      "note": "Work 1903–1905; 1905 shore/land topology should be present in July 1914. Local municipality reports subsequent 1906 land auction. The WMS Chronologen 1878–1880 layer portrays Pieckhallig/Meedhallig before enclosure while the 1902–1930 group shows new dike, consistent with this chronology, but this WMS layer label does NOT establish the exact sheet publication or revision year. Need independently digitize sea-dike toe, tidal foreland and dry-land edge; do not simply extend all polder area to the waterline."
+    },
+    {
+      "id": "helgoland-south-harbor-1908-1916",
+      "name": "Helgoland Südhafen reclamation and harbor defenses",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "port-reclamation",
+      "datedWorks": {
+        "startYear": 1908,
+        "endYear": 1916,
+        "dating": "construction-interval; 1914 is within the build",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "southern-main-island-infill-and-engineered-harbor-edges",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "helgoland-1914-admiralty-chart",
+          "helgoland-1890-1970-coast-figure",
+          "helgoland-1910-baedeker"
+        ]
+      },
+      "note": "1914 is an intermediate stage, so neither a pre-construction 1903 coast nor a fully completed 1916 basin can be substituted. Historical 1914 chart is the preferred direct period check. Port structures, seawalls, reclaimed dry land, and open basin are separate geometry classes."
+    },
+    {
+      "id": "galmsbuell-summer-koog-1913",
+      "name": "Galmsbüller Sommerkoog seasonal dyke constructed 1913",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "summer-dyke",
+      "datedWorks": {
+        "startYear": 1913,
+        "endYear": 1913,
+        "dating": "historical construction/protective works interval; exact land-water switch separately unverified",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "seasonally-protected-agricultural-land-not-necessarily-permanent-dry-shoreline",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "niebuell-city-deich-history",
+          "northfriesland-archive-1914"
+        ]
+      },
+      "note": "Municipal interpretation board cites a 1913 summer polder; contemporary archive indexes 1914 correspondence and a sketch of Galmsbüll summer dyke. This is evidence of a 1914 structure, NOT automatically proof of a watertight winter dyke or permanently dry land."
+    },
+    {
+      "id": "gdynia-harbor-1921-1937",
+      "name": "Gdynia port initial construction",
+      "modernCountry": "POL",
+      "sea": "Baltic",
+      "eventType": "port-development",
+      "datedWorks": {
+        "startYear": 1921,
+        "endYear": 1937,
+        "dating": "multi-phase-construction",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "mixed-land-and-harbor-basins",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "gdynia-museum-1921",
+          "gdynia-museum-1937"
+        ]
+      },
+      "note": "1921 temporary port and later offshore piers/breakwaters; 1937 1:5,000 as-built plan is indexed. No single switch date is justified. 1914 location belonged to the German Empire but building works occurred mainly under Polish administration."
+    },
+    {
+      "id": "koenigsberg-three-harbor-basins-1921-1924",
+      "name": "Königsberg Freihafen, Holzhafen and Industriehafen",
+      "modernCountry": "RUS",
+      "sea": "Baltic",
+      "eventType": "port-development",
+      "datedWorks": {
+        "startYear": 1921,
+        "endYear": 1924,
+        "dating": "construction-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "excavated-or-engineered-harbor-basins",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "rosmorport-port-history"
+        ]
+      },
+      "note": "Rosmorport states three of five planned harbor basins were built in 1921-1924. Count only completed basins; do not mistake an inland harbor basin for a change to the open-sea shoreline."
+    },
+    {
+      "id": "soenke-nissen-koog-1924-1926",
+      "name": "Sönke-Nissen-Koog post-1914 sea-dyke construction",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "reclamation",
+      "datedWorks": {
+        "startYear": 1924,
+        "endYear": 1926,
+        "dating": "historical construction/protective works interval; exact land-water switch separately unverified",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "large-new-polder-built-after-1914",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "reussenkoege-sonke",
+          "dehio-sonke"
+        ]
+      },
+      "note": "Official municipality dates groundbreaking 1924-04-04, dyke closure December 1925, and raising to final crest 1926. Therefore modern Sönke-Nissen-Koog must not appear as 1914 protected dry land. Distinguish later dry-land closure from existing 1875 Hamburger Hallig causeway, tidal foreland, and historical foreshore."
+    },
+    {
+      "id": "galmsbuell-winter-dyke-1933-1939",
+      "name": "Galmsbüllkoog permanent winter-dyke consolidation",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "dyke-strengthening-and-enclosure",
+      "datedWorks": {
+        "startYear": 1933,
+        "endYear": 1939,
+        "dating": "historical construction/protective works interval; exact land-water switch separately unverified",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "1913-seasonal-polder-to-1939-full-winter-protection",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "niebuell-city-deich-history",
+          "northfriesland-archive-1914"
+        ]
+      },
+      "note": "The historically earlier 1913 Sommerkoog is not identical in legal/physical status to its 1939 completed winter-dyke. The decision to strengthen protection around 1933 does not establish the precise land/sea polygon change date. Inspect 1914 seasonal flooding separately."
+    },
+    {
+      "id": "peyse-pier-1935",
+      "name": "Peyse / Svetly maritime pier",
+      "modernCountry": "RUS",
+      "sea": "Baltic",
+      "eventType": "port-development",
+      "datedWorks": {
+        "startYear": 1935,
+        "endYear": 1935,
+        "dating": "construction-year",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "coastal-port-structure-extent-unverified",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "kaliningrad-local-history"
+        ]
+      },
+      "note": "Municipal history documents a 1935 maritime pier. A pier alone is not proof of land reclamation; confirm footprint and polygon visibility before any geometry change."
+    },
+    {
+      "id": "wilhelmshaven-heppenser-1936-1938",
+      "name": "Heppenser Groden",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "reclamation",
+      "datedWorks": {
+        "startYear": 1936,
+        "endYear": 1938,
+        "dating": "construction-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "new-coastal-embankment",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "wilhelmshaven-tourism"
+        ]
+      },
+      "note": "Enclosed coastal ground; separately digitize pre- and post-work water and foreshore."
+    },
+    {
+      "id": "helgoland-nordostland-dune-1938-1941",
+      "name": "Helgoland Nordostland and Düne expansion",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "island-expansion",
+      "datedWorks": {
+        "startYear": 1938,
+        "endYear": 1941,
+        "dating": "project-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "land-fill-and-breakwaters",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "schleswig-helgoland",
+          "helgoland-history-report",
+          "helgoland-1890-1970-coast-figure",
+          "helgoland-1914-admiralty-chart"
+        ]
+      },
+      "note": "1938-1941 Hummerschere expansion affected main-island Nordostland and the separate Düne island; these are separate island geometry components. Proposed mega-port plans were not all constructed. Do not use modern Nordostland / modern Düne outline as 1914 coast; 1914 already includes part of the 1908-1916 southern harbor project, which is a distinct event."
+    },
+    {
+      "id": "leybuchtpolder-1950",
+      "name": "Leybuchtpolder / Störtebekerdeich",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "reclamation",
+      "datedWorks": {
+        "startYear": 1950,
+        "endYear": 1950,
+        "dating": "completion-year-only",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "new-coastal-embankment",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "nlwkn-leybucht"
+        ]
+      },
+      "note": "1950 is the official completion/reclamation year, not an exact day and not proof that all enclosed surfaces became dry land."
+    },
+    {
+      "id": "hauke-haien-koog-1958-1959",
+      "name": "Hauke-Haien-Koog",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "tidal-enclosure",
+      "datedWorks": {
+        "startYear": 1958,
+        "endYear": 1959,
+        "dating": "construction-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "tidal-bay-to-reservoir-and-land",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "sh-hauke"
+        ]
+      },
+      "note": "Includes freshwater retention basins as well as agricultural land: never fill the full enclosed area as dry land."
+    },
+    {
+      "id": "wilhelmshaven-ruestersieler-1960-1963",
+      "name": "Rüstersieler Groden",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "reclamation",
+      "datedWorks": {
+        "startYear": 1960,
+        "endYear": 1963,
+        "dating": "construction-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "new-coastal-embankment",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "wilhelmshaven-tourism"
+        ]
+      },
+      "note": "Postwar enclosed ground on the Inner Jade."
+    },
+    {
+      "id": "eider-barrage-1967-1973",
+      "name": "Eider barrage and associated dikes",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "estuary-regulation",
+      "datedWorks": {
+        "startYear": 1967,
+        "endYear": 1973,
+        "dating": "construction-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "tidal-estuary-reconfigured",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "sh-eider"
+        ]
+      },
+      "note": "Changed tidal connection and Katinger Watt; water boundary and dry-land areas must be distinguished."
+    },
+    {
+      "id": "wilhelmshaven-voslapper-1971-1974",
+      "name": "Voslapper Groden",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "reclamation",
+      "datedWorks": {
+        "startYear": 1971,
+        "endYear": 1974,
+        "dating": "construction-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "new-coastal-embankment",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "wilhelmshaven-tourism"
+        ]
+      },
+      "note": "Inner Jade new groden."
+    },
+    {
+      "id": "dithmarschen-speicherkoog-sued-1973",
+      "name": "Speicherkoog Süd",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "tidal-enclosure",
+      "datedWorks": {
+        "startYear": 1973,
+        "endYear": 1973,
+        "dating": "reclamation-year",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "tidal-bay-to-reservoir-and-land",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "speicherkoog-history"
+        ]
+      },
+      "note": "Approx. 1,700 ha enclosed; not all dry land. Distinguish completed enclosure from later freshwater/saltwater regimes."
+    },
+    {
+      "id": "dithmarschen-speicherkoog-nord-1978",
+      "name": "Speicherkoog Nord",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "tidal-enclosure",
+      "datedWorks": {
+        "startYear": 1978,
+        "endYear": 1978,
+        "dating": "reclamation-year",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "tidal-bay-to-reservoir-and-land",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "speicherkoog-history"
+        ]
+      },
+      "note": "Approx. 3,200 ha enclosed; preserve inner water/biotopes."
+    },
+    {
+      "id": "leyhoern-1985-1991",
+      "name": "Leyhörn / Leynase and Leysiel",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "coastal-enclosure",
+      "datedWorks": {
+        "startYear": 1985,
+        "endYear": 1991,
+        "dating": "construction-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "new-coastal-projection",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "nlwkn-leybucht"
+        ]
+      },
+      "note": "Leynase dike and Leysiel completed in 1991; distinct from subsequent Störtebekerdeich closure in 2000."
+    },
+    {
+      "id": "nordstrand-beltringharder-1987",
+      "name": "Beltringharder Koog / Nordstrander Bucht",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "tidal-enclosure",
+      "datedWorks": {
+        "startYear": 1987,
+        "endYear": 1987,
+        "dating": "enclosure-year",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "island-to-peninsula-with-water-basins",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "beltringharder-koog"
+        ]
+      },
+      "note": "Nordstrand becomes a peninsula; reported 3,350 ha is reserve/enclosed area, not necessarily newly dry land."
+    },
+    {
+      "id": "leybucht-stoertebekerdeich-1994-2000",
+      "name": "New Störtebekerdeich and old Leybuchtsiel closure",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "coastal-defence",
+      "datedWorks": {
+        "startYear": 1994,
+        "endYear": 2000,
+        "dating": "construction-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "dike-line-reconfigured",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "nlwkn-leybucht"
+        ]
+      },
+      "note": "1994–2000 coastal defence completion; not equivalent to Leyhörn 1991 and not automatically all new dry land."
+    },
+    {
+      "id": "wilhelmshaven-jadeweserport-2008-2012",
+      "name": "JadeWeserPort Hafengroden",
+      "modernCountry": "DEU",
+      "sea": "North Sea",
+      "eventType": "port-development",
+      "datedWorks": {
+        "startYear": 2008,
+        "endYear": 2012,
+        "dating": "construction-interval",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "new-port-landfill",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "wilhelmshaven-tourism"
+        ]
+      },
+      "note": "Modern deep-water container port land fill; should not appear as coastline in 1914 or 1940."
+    },
+    {
+      "id": "gdansk-baltichub-t3-2022-2025",
+      "name": "Gdańsk Baltic Hub T3 reclaimed island",
+      "modernCountry": "POL",
+      "sea": "Baltic",
+      "eventType": "port-development",
+      "datedWorks": {
+        "startYear": 2022,
+        "endYear": 2025,
+        "dating": "construction-to-formal-project-completion",
+        "exactCoastlineSwitchDate": null
+      },
+      "geometryEffect": "new-port-landfill",
+      "geometry": {
+        "status": "not-digitized",
+        "screenDiscrepancyCssPx": null
+      },
+      "evidence": {
+        "status": "source-indexed",
+        "sourceIds": [
+          "baltichub-t3",
+          "gdansk-port-t3"
+        ]
+      },
+      "note": "Approximately 36 hectares of artificial port platform; opening 2025-06-06 and formal project completion 2025-11-17 do not identify the exact date the land footprint emerged."
+    }
+  ],
+  "mapSheets": [
+    {
+      "id": "tk25-1385-pillau",
+      "name": "Pillau / Baltiysk",
+      "scaleDenominator": 25000,
+      "sourceIds": [
+        "amzp-pillau"
+      ],
+      "editions": [
+        {
+          "year": 1908,
+          "kind": "topographic"
+        },
+        {
+          "year": 1914,
+          "kind": "geological",
+          "notDirectCoastlineControl": true
+        },
+        {
+          "year": 1922,
+          "kind": "topographic"
+        },
+        {
+          "year": 1933,
+          "kind": "topographic"
+        }
+      ],
+      "surveyAndRevisionDatesChecked": false,
+      "georeferencingVerified": false
+    },
+    {
+      "id": "tk25-1386-zimmerbude",
+      "name": "Zimmerbude / Svetly",
+      "scaleDenominator": 25000,
+      "sourceIds": [
+        "herder-zimmerbude",
+        "amzp-zimmerbude"
+      ],
+      "editions": [
+        {
+          "year": 1908,
+          "kind": "topographic"
+        },
+        {
+          "year": 1916,
+          "kind": "geological",
+          "notDirectCoastlineControl": true
+        },
+        {
+          "year": 1935,
+          "kind": "topographic"
+        },
+        {
+          "year": 1940,
+          "kind": "topographic"
+        },
+        {
+          "year": 1944,
+          "kind": "topographic"
+        }
+      ],
+      "surveyAndRevisionDatesChecked": false,
+      "georeferencingVerified": false
+    },
+    {
+      "id": "gdynia-port-plan-1937",
+      "name": "Plan Portu Gdynia",
+      "scaleDenominator": 5000,
+      "sourceIds": [
+        "gdynia-museum-1937"
+      ],
+      "editions": [
+        {
+          "year": 1937,
+          "kind": "port-as-built-plan"
+        }
+      ],
+      "surveyAndRevisionDatesChecked": false,
+      "georeferencingVerified": false
+    },
+    {
+      "id": "tk25-1288-koenigsberg-west",
+      "name": "Königsberg West / Kaliningrad",
+      "scaleDenominator": 25000,
+      "sourceIds": [
+        "amzp-koenigsberg-west"
+      ],
+      "editions": [
+        {
+          "year": 1908,
+          "kind": "topographic"
+        },
+        {
+          "year": 1916,
+          "kind": "topographic"
+        },
+        {
+          "year": 1930,
+          "kind": "topographic"
+        },
+        {
+          "year": 1937,
+          "kind": "topographic"
+        },
+        {
+          "year": 1939,
+          "kind": "topographic"
+        },
+        {
+          "year": 1944,
+          "kind": "topographic"
+        }
+      ],
+      "surveyAndRevisionDatesChecked": false,
+      "georeferencingVerified": false
+    },
+    {
+      "id": "tk25-1289-koenigsberg-east",
+      "name": "Königsberg Ost / Kaliningrad",
+      "scaleDenominator": 25000,
+      "sourceIds": [
+        "amzp-koenigsberg-east"
+      ],
+      "editions": [
+        {
+          "year": 1908,
+          "kind": "topographic"
+        },
+        {
+          "year": 1926,
+          "kind": "topographic"
+        },
+        {
+          "year": 1928,
+          "kind": "topographic"
+        },
+        {
+          "year": 1933,
+          "kind": "topographic"
+        },
+        {
+          "year": 1936,
+          "kind": "topographic"
+        },
+        {
+          "year": 1937,
+          "kind": "topographic"
+        }
+      ],
+      "surveyAndRevisionDatesChecked": false,
+      "georeferencingVerified": false
+    },
+    {
+      "id": "ukho-chart-126-helgoland-1914",
+      "name": "Admiralty Chart No. 126 Helgoland",
+      "scaleDenominator": 15000,
+      "sourceIds": [
+        "helgoland-1914-admiralty-chart",
+        "helgoland-warper-map-5126"
+      ],
+      "editions": [
+        {
+          "year": 1914,
+          "kind": "nautical-chart",
+          "publicationDate": "1914-09-22"
+        }
+      ],
+      "surveyAndRevisionDatesChecked": false,
+      "georeferencingVerified": false,
+      "reportedControlPointCount": 6,
+      "geometryExtracted": false,
+      "usageNote": "Public-domain UKHO nautical chart published 22 Sep 1914. Warper lists six GCPs, but target accuracy, grid correctness and actual pre-publication survey/revision time have not been verified. Coordinates must not be inferred from web page bounding-box direction labels."
+    }
+  ]
+}

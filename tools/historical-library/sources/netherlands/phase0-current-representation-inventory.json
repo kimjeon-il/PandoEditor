@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "id": "netherlands-phase0-current-representation-inventory",
+  "asOf": "2026-10-09",
+  "branch": "work/gis",
+  "sourceRevision": "535e1256904731cb336470228ce19600e2b6b223",
+  "purpose": "Read-only inventory of how the current Pando country and Natural Earth lake sources represent selected Dutch reclamation/closure events. This is not historical geometry.",
+  "sourceBlobs": {
+    "country": {
+      "path": "assets/data/territorial-entities/source/countries/nld.json",
+      "blobSha": "b6bb670257d4e73d5fc4cf1880064b91bb365c8b",
+      "entityId": "state:NLD",
+      "geometryVersionId": "state:NLD:natural-earth-5.1.1"
+    },
+    "lakes": {
+      "path": "assets/data/hydro/lakes_base.geojson",
+      "blobSha": "02ec805c9ec3347b81b7b6ec3aba5ed5eb0028a8",
+      "dataset": "Natural Earth 5.0.0 1:10m",
+      "globalFeatureCount": 1355,
+      "studyBbox": [
+        3,
+        50.5,
+        7.3,
+        53.7
+      ],
+      "intersectingFeatures": [
+        {
+          "id": "lakes_base:1159118273",
+          "nameEn": "Lauwersmeer",
+          "geometryType": "Polygon",
+          "bbox": [
+            6.146768532576743,
+            53.34007107083909,
+            6.263042362793755,
+            53.40689172769797
+          ],
+          "ringCount": 1
+        },
+        {
+          "id": "lakes_base:1159126631",
+          "nameEn": "IJsselmeer",
+          "geometryType": "Polygon",
+          "bbox": [
+            4.96813456754154,
+            52.255044898231745,
+            5.874481714979964,
+            53.07690954118337
+          ],
+          "ringCount": 2,
+          "holeCount": 1,
+          "holeBbox": [
+            5.132978478735282,
+            52.27388420236818,
+            5.858880416241959,
+            52.61151985618821
+          ]
+        }
+      ],
+      "separateMarkermeerFeatureFound": false
+    }
+  },
+  "method": {
+    "countryTest": "point-in-current-NLD-MultiPolygon and nearest-boundary distance",
+    "lakeTest": "point-in-current-Natural-Earth-lake-polygon",
+    "classificationLimit": "Sample-level representation only; no event footprint has yet been digitized or compared to a dated historical shoreline.",
+    "noGeometryModified": true
+  },
+  "findings": [
+    {
+      "id": "amsteldiepdijk-1924",
+      "classification": "current-connection-present-but-event-not-isolatable",
+      "evidence": {
+        "wieringenPoint": [
+          4.98,
+          52.92
+        ],
+        "mainlandEdgePoint": [
+          5.04,
+          52.94
+        ],
+        "wieringermeerPoint": [
+          5.02,
+          52.82
+        ],
+        "nldPolygonComponentForAll": 0
+      },
+      "confidence": "limited",
+      "note": "Modern connected topology is present, but the country union cannot distinguish the Amsteldiepdijk connection from later Wieringermeer land connections."
+    },
+    {
+      "id": "wieringermeer-1930",
+      "classification": "modern-dry-land-state-consistent-at-sample",
+      "evidence": {
+        "sample": [
+          5.02,
+          52.82
+        ],
+        "insideCurrentNld": true,
+        "insideCurrentIjsselmeerLake": false
+      },
+      "confidence": "sample-level",
+      "note": "Consistent with present-day dry land; does not establish the full polder outline."
+    },
+    {
+      "id": "afsluitdijk-1927-1932",
+      "classification": "modern-enclosed-lake-state-present-but-hydraulic-topology-not-explicit",
+      "evidence": {
+        "currentLakeFeature": "lakes_base:1159126631",
+        "currentLakeName": "IJsselmeer",
+        "currentLakeNorthernExtentLatitude": 53.07690954118337
+      },
+      "confidence": "dataset-level",
+      "note": "An enclosed IJsselmeer polygon is present, but this source does not encode an explicit hydraulic-connectivity graph or an epoch-specific Afsluitdijk geometry."
+    },
+    {
+      "id": "noordoostpolder-1942",
+      "classification": "modern-dry-land-state-consistent-at-sample",
+      "evidence": {
+        "sample": [
+          5.73,
+          52.7
+        ],
+        "insideCurrentNld": true,
+        "insideCurrentIjsselmeerLake": false
+      },
+      "confidence": "sample-level",
+      "note": "Consistent with present-day dry land; Urk/island connectivity still requires footprint-level topology work."
+    },
+    {
+      "id": "oostelijk-flevoland-1957",
+      "classification": "modern-dry-land-state-consistent-at-sample",
+      "evidence": {
+        "sample": [
+          5.56,
+          52.47
+        ],
+        "insideCurrentNld": true,
+        "insideCurrentIjsselmeerLake": false
+      },
+      "confidence": "sample-level",
+      "note": "Consistent with present-day dry land; not a full shoreline test."
+    },
+    {
+      "id": "zuidelijk-flevoland-1968",
+      "classification": "modern-dry-land-state-consistent-at-sample",
+      "evidence": {
+        "sample": [
+          5.26,
+          52.36
+        ],
+        "insideCurrentNld": true,
+        "insideCurrentIjsselmeerLake": false
+      },
+      "confidence": "sample-level",
+      "note": "Consistent with present-day dry land; not a full shoreline test."
+    },
+    {
+      "id": "lauwerszee-1969",
+      "classification": "modern-enclosed-lake-feature-present",
+      "evidence": {
+        "currentLakeFeature": "lakes_base:1159118273",
+        "currentLakeName": "Lauwersmeer",
+        "geometryDerivedInteriorPoint": [
+          6.195397424512268,
+          53.36700963218022
+        ],
+        "previousManualProbe": [
+          6.22,
+          53.38
+        ],
+        "previousManualProbeInsideLake": false
+      },
+      "confidence": "dataset-level",
+      "note": "The prior manual probe was not an interior-lake point. The modern Lauwersmeer polygon is present, but pre-1969 tidal connectivity is not encoded."
+    },
+    {
+      "id": "houtribdijk-1963-1976",
+      "classification": "modern-lake-separation-not-represented-in-current-lake-mask-at-samples",
+      "evidence": {
+        "separateMarkermeerFeatureFound": false,
+        "lakeFeatureUsedForBothSides": "lakes_base:1159126631",
+        "samples": [
+          {
+            "point": [
+              5.37,
+              52.61
+            ],
+            "insideIjsselmeerPolygon": true
+          },
+          {
+            "point": [
+              5.45,
+              52.54
+            ],
+            "insideIjsselmeerPolygon": true
+          },
+          {
+            "point": [
+              5.31,
+              52.69
+            ],
+            "insideIjsselmeerPolygon": true
+          },
+          {
+            "point": [
+              5.25,
+              52.55
+            ],
+            "role": "Markermeer water reference",
+            "insideIjsselmeerPolygon": true
+          },
+          {
+            "point": [
+              5.25,
+              52.85
+            ],
+            "role": "IJsselmeer water reference",
+            "insideIjsselmeerPolygon": true
+          }
+        ]
+      },
+      "confidence": "strong-source-representation finding",
+      "note": "The Natural Earth lake mask generalizes Markermeer and IJsselmeer into one IJsselmeer polygon across sampled Houtribdijk locations. Historical rollback must not assume the current hydro layer has correct modern barrier topology."
+    },
+    {
+      "id": "maasvlakte-2-2008-2013",
+      "classification": "current-country-outer-coast-misses-published-place-point",
+      "evidence": {
+        "publishedPlacePoint": [
+          3.9833,
+          51.9583
+        ],
+        "insideCurrentNld": false,
+        "nearestCurrentNldBoundaryPoint": [
+          4.021169,
+          51.963324
+        ],
+        "approximateGeodesicLocalDistanceMeters": 2656.34,
+        "maasvlakte1ControlPoint": [
+          4.05,
+          51.96
+        ],
+        "maasvlakte1ControlInsideCurrentNld": true
+      },
+      "confidence": "strong-point-finding-not-footprint-proof",
+      "note": "At least this published Maasvlakte 2 location lies outside the current Natural Earth country outline. A dated PDOK/TOP10NL footprint is still required before classifying the whole reclamation as absent or partial."
+    }
+  ],
+  "additionalCandidates": [
+    {
+      "id": "marker-wadden",
+      "classification": "current-lake-mask-treats-sample-as-water",
+      "sample": [
+        5.37,
+        52.59
+      ],
+      "insideCurrentIjsselmeerLake": true,
+      "externalChronology": "Construction began 2016; first five islands completed by 2021 and islands 6–7 by 2023.",
+      "sourceUrl": "https://www.natuurmonumenten.nl/projecten/marker-wadden/planning-en-voortgang",
+      "note": "Current hydro mask does not expose land at the sample; actual rendered island visibility and complete footprint still require map/geometry comparison."
+    },
+    {
+      "id": "ijburg",
+      "classification": "current-lake-mask-treats-sample-as-water",
+      "sample": [
+        5.01,
+        52.36
+      ],
+      "insideCurrentIjsselmeerLake": true,
+      "externalChronology": "First-phase island construction began in 1999; second phase began in 2013, with Strandeiland from 2018 and Buiteneiland from 2023.",
+      "sourceUrl": "https://www.amsterdam.nl/projecten/ijburg/geschiedenis/",
+      "note": "Current hydro mask does not expose land at the sample; exact island footprints require a modern authoritative geometry source."
+    },
+    {
+      "id": "braakman",
+      "classification": "modern-country-fill-consistent-at-sample-but-sea-inlet-not-tested",
+      "sample": [
+        3.63,
+        51.35
+      ],
+      "insideCurrentNld": true,
+      "currentNldPolygonComponent": 1,
+      "note": "No Dutch-area Natural Earth lake feature represents Braakman, but sea/inlet geometry is not a lake-layer question. Dated coast mapping remains required."
+    }
+  ]
+}

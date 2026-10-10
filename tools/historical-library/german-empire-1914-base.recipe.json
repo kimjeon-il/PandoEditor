@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "id": "historical-country:deutsches-reich:1914-07-31-base-r1",
+  "referenceDate": "1914-07-31",
+  "roundingDigits": 7,
+  "output": "tools/historical-library/generated/german-empire-1914-base.geojson",
+  "diagnosticsOutput": "tools/historical-library/generated/german-empire-1914-base.diagnostics.json",
+  "sources": {
+    "hgisStates": {
+      "path": "tools/historical-library/sources/german-empire-1914/hgis-germany-states-1914.geojson",
+      "crs": "EPSG:4326",
+      "expectedFeatureCount": 26,
+      "expectedBounds": [
+        4.490331,
+        47.03629,
+        23.157687,
+        56.025202
+      ],
+      "boundsToleranceDegrees": 0.35,
+      "license": "Non-commercial academic research only; see HGIS Germany / Harvard metadata",
+      "url": "https://geo.nyu.edu/catalog/harvard-ghgis1914germany"
+    },
+    "canonicalCountries": {
+      "path": "assets/data/countries-ne-5.1.1.geojson",
+      "crs": "EPSG:4326",
+      "sha256": "168286E9EE8E156CDBD19EBB026A13B66EBE2134CC89883834E32A4D58ABE416",
+      "license": "Public domain",
+      "url": "https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/"
+    }
+  },
+  "linearCorrection": {
+    "source": "https://github.com/OSHistory/hgis-germany-transformer",
+    "upstreamCommit": "80a105cc911c35434fb5dbd9cf1281fa082d6c96",
+    "method": "axis-wise linear correction in geographic coordinates",
+    "longitude": {
+      "intercept": -0.0268725,
+      "slope": 0.0011841
+    },
+    "latitude": {
+      "intercept": -0.1088705,
+      "slope": 0.0024464
+    },
+    "implementationNote": "Intentional axis-correct port. The upstream transform-coords.py passes longitude coefficients to both axes even though separate SN/WE coefficient files are provided. PandoLab applies WE coefficients to longitude and SN coefficients to latitude."
+  },
+  "heligolandPatch": {
+    "canonicalCountryId": "DEU",
+    "selectionBbox": [
+      7.85,
+      54.16,
+      7.95,
+      54.21
+    ],
+    "cleanupBbox": [
+      7.8,
+      54.12,
+      8,
+      54.25
+    ],
+    "expectedComponents": 2,
+    "insidePoints": {
+      "Heligoland main island": [
+        7.893,
+        54.19
+      ],
+      "Dune": [
+        7.918,
+        54.188
+      ]
+    }
+  },
+  "validation": {
+    "areaKm2": {
+      "minimum": 530000,
+      "maximum": 550000
+    },
+    "maximumHeligolandPatchDifferenceKm2": 0.001,
+    "insidePoints": {
+      "Berlin": [
+        13.405,
+        52.52
+      ],
+      "Strasbourg": [
+        7.75,
+        48.58
+      ],
+      "Metz": [
+        6.18,
+        49.12
+      ],
+      "Poznan": [
+        16.925,
+        52.406
+      ],
+      "Danzig": [
+        18.646,
+        54.352
+      ],
+      "Konigsberg": [
+        20.51,
+        54.71
+      ],
+      "Memel": [
+        21.14,
+        55.7
+      ],
+      "Haderslev": [
+        9.49,
+        55.25
+      ],
+      "Eupen": [
+        6.04,
+        50.63
+      ],
+      "Heligoland": [
+        7.893,
+        54.19
+      ]
+    },
+    "outsidePoints": {
+      "Belfort": [
+        6.86,
+        47.64
+      ],
+      "Copenhagen": [
+        12.568,
+        55.676
+      ],
+      "Prague": [
+        14.437,
+        50.075
+      ],
+      "Luxembourg City": [
+        6.13,
+        49.61
+      ],
+      "Warsaw": [
+        21.012,
+        52.229
+      ]
+    }
+  }
+}

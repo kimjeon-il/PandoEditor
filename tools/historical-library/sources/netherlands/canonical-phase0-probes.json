@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "id": "netherlands-current-canonical-phase0-probes",
+  "asOf": "2026-10-09",
+  "canonicalSource": "assets/data/territorial-entities/source/countries/nld.json",
+  "entityId": "state:NLD",
+  "geometryVersionId": "state:NLD:natural-earth-5.1.1",
+  "crs": "EPSG:4326",
+  "method": {
+    "kind": "read-only-point-in-national-polygon",
+    "noHistoricalGeometryCompared": true,
+    "noLandWaterClassificationInferred": true,
+    "notAnEventFootprintInventory": true,
+    "flatZoom": 64,
+    "contentWidthCssPx": 2560,
+    "coastToleranceCssPx": 0.5
+  },
+  "baselineGeometry": {
+    "totalPolygons": 12,
+    "europeanPolygons": 9,
+    "caribbeanPolygons": 3,
+    "totalInteriorRings": 0
+  },
+  "points": [
+    {
+      "locationMethod": "published approximate place point, not a land footprint",
+      "id": "maasvlakte-2",
+      "name": "Maasvlakte 2 published place point",
+      "coordinates": [
+        3.9833,
+        51.9583
+      ],
+      "kind": "port-reclamation",
+      "expectedInsideCountryPolygon": false,
+      "locationSourceUrl": "https://www.wikidata.org/wiki/Q2733197"
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "maasvlakte-1",
+      "name": "Maasvlakte 1 comparison point",
+      "coordinates": [
+        4.05,
+        51.96
+      ],
+      "kind": "port-reclamation",
+      "expectedInsideCountryPolygon": true
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "noordoostpolder",
+      "name": "Noordoostpolder sample",
+      "coordinates": [
+        5.73,
+        52.7
+      ],
+      "kind": "reclaimed-land",
+      "expectedInsideCountryPolygon": true
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "oostelijk-flevoland",
+      "name": "Oostelijk Flevoland sample",
+      "coordinates": [
+        5.56,
+        52.47
+      ],
+      "kind": "reclaimed-land",
+      "expectedInsideCountryPolygon": true
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "zuidelijk-flevoland",
+      "name": "Zuidelijk Flevoland sample",
+      "coordinates": [
+        5.26,
+        52.36
+      ],
+      "kind": "reclaimed-land",
+      "expectedInsideCountryPolygon": true
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "wieringermeer",
+      "name": "Wieringermeer sample",
+      "coordinates": [
+        5.02,
+        52.82
+      ],
+      "kind": "reclaimed-land",
+      "expectedInsideCountryPolygon": true
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "ijsselmeer-water",
+      "name": "IJsselmeer water reference point",
+      "coordinates": [
+        5.25,
+        52.85
+      ],
+      "kind": "inland-water",
+      "expectedInsideCountryPolygon": true
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "markermeer-water",
+      "name": "Markermeer water reference point",
+      "coordinates": [
+        5.25,
+        52.55
+      ],
+      "kind": "inland-water",
+      "expectedInsideCountryPolygon": true
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "marker-wadden",
+      "name": "Marker Wadden candidate sample",
+      "coordinates": [
+        5.37,
+        52.59
+      ],
+      "kind": "small-artificial-island",
+      "expectedInsideCountryPolygon": true
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "ijburg",
+      "name": "IJburg candidate sample",
+      "coordinates": [
+        5.01,
+        52.36
+      ],
+      "kind": "artificial-island",
+      "expectedInsideCountryPolygon": true
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "lauwersmeer-water",
+      "name": "Lauwersmeer water reference point",
+      "coordinates": [
+        6.22,
+        53.38
+      ],
+      "kind": "enclosed-water",
+      "expectedInsideCountryPolygon": true
+    },
+    {
+      "locationMethod": "manually selected approximate checkpoint; not source-verified land/water footprint",
+      "id": "braakman",
+      "name": "Braakman candidate sample",
+      "coordinates": [
+        3.63,
+        51.35
+      ],
+      "kind": "inlet-closure",
+      "expectedInsideCountryPolygon": true
+    }
+  ]
+}

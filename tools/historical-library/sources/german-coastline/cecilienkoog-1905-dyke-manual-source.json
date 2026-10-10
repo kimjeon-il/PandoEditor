@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "id": "cecilienkoog-1905-seaward-dyke-manual-trace-r1",
+  "asOf": "2026-10-09",
+  "referenceDate": "1914-07-31",
+  "sourceEpochGroup": "1902-1930",
+  "mapsheetYearVerified": false,
+  "geometryInterpretation": "Approximate seaward edge of visibly new Cecilienkoog protective dyke in 1902–1930 WMS layer; not independently classified land-sea/high-water boundary",
+  "source": {
+    "officialWms": "https://dienste.gdi-sh.de/WMS_SH_FD_Chronologen",
+    "license": "CC BY 4.0",
+    "attribution": "© GeoBasis-DE/LVermGeo SH/CC BY 4.0",
+    "layerName": "2",
+    "layerTitle": "Chronologen_2_1902-1930",
+    "rasterWidthPx": 1500,
+    "rasterHeightPx": 1100,
+    "bboxLonLat": [
+      8.895,
+      54.578,
+      8.936,
+      54.604
+    ],
+    "imageSha256": "90a34e2a80a1c86b6925b01b00fe1ecdb87c8c7b2793c82090db23522ec48d6f",
+    "provenanceFile": "tools/historical-library/sources/german-coastline/sh-coast-microtile-source-probe.json",
+    "sourceRunId": "37923483348",
+    "microtileId": "beltringharder-northwest-1880"
+  },
+  "traceImageFrame": {
+    "renderMethod": "PIL thumbnail of WMS image; original 1500x1100 scaled to 1159x850; no header or footer",
+    "thumbnailWidthPx": 1159,
+    "thumbnailHeightPx": 850,
+    "pixelCoordinates": "Top-left origin; point centers approximated visually from source-only screenshot",
+    "controlPointUncertaintyPx": "estimated 4–12 thumbnail image px; not measured against ground-control registration residual"
+  },
+  "historicalContext": {
+    "landReclamationName": "Cecilienkoog",
+    "worksStartYear": 1903,
+    "worksEndYear": 1905,
+    "independentChronologySource": "https://www.reussenkoege.de/k%C3%B6ge-hallig/cecilienkoog/",
+    "chronologyEvidence": "Local municipality reports enclosure completed between 1903 and 1905 and 1906 auction of protected plots",
+    "sourceLayerTemporalProblem": "1902–1930 grouped map alone cannot establish the exact survey or update year",
+    "interpretation": "Likely post-1905 seaward protection works (the 1878–1880 map does not show enclosing western branch); not verified shoreline location"
+  },
+  "manualRasterPoints": [
+    [
+      536,
+      309
+    ],
+    [
+      514,
+      320
+    ],
+    [
+      488,
+      330
+    ],
+    [
+      462,
+      342
+    ],
+    [
+      438,
+      352
+    ],
+    [
+      413,
+      365
+    ],
+    [
+      390,
+      375
+    ],
+    [
+      364,
+      386
+    ],
+    [
+      339,
+      399
+    ],
+    [
+      316,
+      411
+    ],
+    [
+      308,
+      417
+    ],
+    [
+      307,
+      434
+    ],
+    [
+      314,
+      459
+    ],
+    [
+      324,
+      483
+    ],
+    [
+      338,
+      511
+    ],
+    [
+      352,
+      541
+    ],
+    [
+      368,
+      576
+    ],
+    [
+      385,
+      611
+    ],
+    [
+      402,
+      647
+    ],
+    [
+      420,
+      683
+    ],
+    [
+      439,
+      722
+    ],
+    [
+      457,
+      755
+    ],
+    [
+      475,
+      790
+    ],
+    [
+      495,
+      827
+    ],
+    [
+      508,
+      848
+    ]
+  ],
+  "validation": {
+    "mapSymbolPeerReviewed": false,
+    "independentlyKnown1914MapSheetRevision": false,
+    "georeferencingResidualChecked": false,
+    "actual1914TideDefinedShorelineDigitized": false,
+    "unambiguousDryLandSeaClassification": false,
+    "external1914ShorelineCssDeltaMeasured": false,
+    "promoteToCountryPolygon": false
+  }
+}

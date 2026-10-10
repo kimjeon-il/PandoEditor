@@ -1,0 +1,621 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-10-09",
+  "referenceDate": "1914-07-31",
+  "repoBranch": "work/gis",
+  "state": "manual-visual-coordinate-samples-unverified-period-shoreline",
+  "description": "Illustrative manually selected black coast/sea-limit symbols on a georeferenced official WMS period raster, with distances to the temporary modern website-coastline working polygon. These ARE NOT 1914 verified shoreline coordinates and NOT whole-sector Hausdorff deviations.",
+  "wmsLayersPeriodRanges": [
+    "1878–1880",
+    "1902–1930"
+  ],
+  "sourceWms": "https://dienste.gdi-sh.de/WMS_SH_FD_Chronologen",
+  "governmentDataSource": "https://www.govdata.de/suche/daten/preussische-landesaufnahme-bis-1950-chronologen",
+  "attribution": "© GeoBasis-DE/LVermGeo SH/CC BY 4.0",
+  "sourceReviewProbe": "tools/historical-library/sources/german-coastline/sh-wms-period-overlay-probe.json",
+  "sourceGisRunId": "37921081699",
+  "sourceGisModernGeometryBlobSha": "39fce9309edbe47bf91259d9c90c68f11328eb75",
+  "method": {
+    "frame": "Web flat equirectangular, zoom 64, contentWidth 2560 CSS px",
+    "cssPixelsPerDegree": 455.1111111111111,
+    "WmsImage": {
+      "widthPx": 1500,
+      "heightPx": 1120,
+      "ephemeralOverlayImageWidthPx": 880,
+      "topBarSourcePx": 40
+    },
+    "visualDigitization": "Approximate points selected by reading WMS thumbnail coast symbols, NOT a verified continuous manually digitized coastline",
+    "nearestDistance": "Shortest projected Euclidean distance in CSS px from selected point to all consecutive segments in the largest polygon's exterior ring of work/gis 1914 modern-coast provisional working geometry",
+    "differenceDefinition": "Candidate modern website shoreline displacement from visual historical-era map symbols, NOT exact 1914-to-present reclamation displacement",
+    "uncertainties": [
+      "Hand selection of line from map could confuse foreshore, dyke, water edge, road, survey mark; selected points must be checked independently on full original.",
+      "WMS reprojected historical raster georeferencing accuracy and sheet survey/revision dates have not been checked.",
+      "Selected maxima underestimate or otherwise do not characterize the full bidirectional continuous Hausdorff distance.",
+      "Map thumbnails are scaled images; reported 0.001px reproducibility decimals are computational only, not historical precision."
+    ]
+  },
+  "historicalAccuracyVerified": false,
+  "independent1914DigitizedLine": false,
+  "actual1914MaxCssPx": null,
+  "historicAccuracyStopCriterionPassed": null,
+  "doNotChangeCountryGeometry": true,
+  "visualPointSets": [
+    {
+      "id": "H1",
+      "sector": "hauke-haien-koog",
+      "layerName": "2",
+      "epochRangeLabel": "1902–1930",
+      "bboxLonLat": [
+        8.68,
+        54.69,
+        8.8,
+        54.77
+      ],
+      "sourceWmsImageSha256": "aa2761ede5dbf320aa1e0daa139825e7410c22bfeec8852800cf0012417e7af7",
+      "sourceOriginalArtifact": "hauke-haien-koog-2-original.png",
+      "referenceMapThumbnail": {
+        "imageWidthPx": 880,
+        "imageScale": 0.5866666666666667,
+        "topHeaderPx": 23.46666666666667,
+        "rasterHeightPx": 657.0666666666667
+      },
+      "visualApproximationOnly": true,
+      "shorelineSymbolClassIndependentlyChecked": false,
+      "historical1914SheetDateVerified": false,
+      "selectedMaximumCssPx": 6.35,
+      "samples": [
+        {
+          "visualSampleThumbPx": [
+            184,
+            206
+          ],
+          "approxLonLat": [
+            8.7050909,
+            54.747776
+          ],
+          "distanceCssPx": 6.353,
+          "closestOnWorking": [
+            8.6917606,
+            54.7519198
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            202,
+            239
+          ],
+          "approxLonLat": [
+            8.7075455,
+            54.7437581
+          ],
+          "distanceCssPx": 6.069,
+          "closestOnWorking": [
+            8.7038578,
+            54.7309439
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            175,
+            272
+          ],
+          "approxLonLat": [
+            8.7038636,
+            54.7397403
+          ],
+          "distanceCssPx": 3.848,
+          "closestOnWorking": [
+            8.7015254,
+            54.7316151
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            200,
+            325
+          ],
+          "approxLonLat": [
+            8.7072727,
+            54.7332873
+          ],
+          "distanceCssPx": 1.455,
+          "closestOnWorking": [
+            8.7063887,
+            54.7302155
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            518,
+            499
+          ],
+          "approxLonLat": [
+            8.7506364,
+            54.7121023
+          ],
+          "distanceCssPx": 0.336,
+          "closestOnWorking": [
+            8.7503006,
+            54.7114437
+          ]
+        }
+      ]
+    },
+    {
+      "id": "H0",
+      "sector": "hauke-haien-koog",
+      "layerName": "3",
+      "epochRangeLabel": "1878–1880",
+      "bboxLonLat": [
+        8.68,
+        54.69,
+        8.8,
+        54.77
+      ],
+      "sourceWmsImageSha256": "24516b94101ff1f93415ed071df8e2f1becb308f66b4cfd19a7139d8fee6718b",
+      "sourceOriginalArtifact": "hauke-haien-koog-3-original.png",
+      "referenceMapThumbnail": {
+        "imageWidthPx": 880,
+        "imageScale": 0.5866666666666667,
+        "topHeaderPx": 23.46666666666667,
+        "rasterHeightPx": 657.0666666666667
+      },
+      "visualApproximationOnly": true,
+      "shorelineSymbolClassIndependentlyChecked": false,
+      "historical1914SheetDateVerified": false,
+      "selectedMaximumCssPx": 6.22,
+      "samples": [
+        {
+          "visualSampleThumbPx": [
+            182,
+            205
+          ],
+          "approxLonLat": [
+            8.7048182,
+            54.7478977
+          ],
+          "distanceCssPx": 6.218,
+          "closestOnWorking": [
+            8.6917711,
+            54.7519536
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            196,
+            235
+          ],
+          "approxLonLat": [
+            8.7067273,
+            54.7442451
+          ],
+          "distanceCssPx": 6.179,
+          "closestOnWorking": [
+            8.7029728,
+            54.7311985
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            174,
+            269
+          ],
+          "approxLonLat": [
+            8.7037273,
+            54.7401055
+          ],
+          "distanceCssPx": 3.991,
+          "closestOnWorking": [
+            8.7013024,
+            54.7316792
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            200,
+            329
+          ],
+          "approxLonLat": [
+            8.7072727,
+            54.7328003
+          ],
+          "distanceCssPx": 1.242,
+          "closestOnWorking": [
+            8.7065182,
+            54.7301783
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            519,
+            480
+          ],
+          "approxLonLat": [
+            8.7507727,
+            54.7144156
+          ],
+          "distanceCssPx": 1.303,
+          "closestOnWorking": [
+            8.7494728,
+            54.7118657
+          ]
+        }
+      ]
+    },
+    {
+      "id": "B1",
+      "sector": "beltringharder",
+      "layerName": "2",
+      "epochRangeLabel": "1902–1930",
+      "bboxLonLat": [
+        8.865,
+        54.52,
+        8.975,
+        54.6
+      ],
+      "sourceWmsImageSha256": "acb9dd547702be69130f923b54840a5da28154c3f67d9c5a6aac56dbaca0a82d",
+      "sourceOriginalArtifact": "beltringharder-2-original.png",
+      "referenceMapThumbnail": {
+        "imageWidthPx": 880,
+        "imageScale": 0.5866666666666667,
+        "topHeaderPx": 23.46666666666667,
+        "rasterHeightPx": 657.0666666666667
+      },
+      "visualApproximationOnly": true,
+      "shorelineSymbolClassIndependentlyChecked": false,
+      "historical1914SheetDateVerified": false,
+      "selectedMaximumCssPx": 5.3,
+      "samples": [
+        {
+          "visualSampleThumbPx": [
+            318,
+            55
+          ],
+          "approxLonLat": [
+            8.90475,
+            54.5961607
+          ],
+          "distanceCssPx": 5.305,
+          "closestOnWorking": [
+            8.8968918,
+            54.5875499
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            346,
+            110
+          ],
+          "approxLonLat": [
+            8.90825,
+            54.5894643
+          ],
+          "distanceCssPx": 4.128,
+          "closestOnWorking": [
+            8.9021356,
+            54.5827644
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            378,
+            171
+          ],
+          "approxLonLat": [
+            8.91225,
+            54.5820373
+          ],
+          "distanceCssPx": 2.426,
+          "closestOnWorking": [
+            8.9094114,
+            54.5775253
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            411,
+            220
+          ],
+          "approxLonLat": [
+            8.916375,
+            54.5760714
+          ],
+          "distanceCssPx": 1.128,
+          "closestOnWorking": [
+            8.9150557,
+            54.5739744
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            464,
+            298
+          ],
+          "approxLonLat": [
+            8.923,
+            54.5665747
+          ],
+          "distanceCssPx": 0.925,
+          "closestOnWorking": [
+            8.9240826,
+            54.5682955
+          ]
+        }
+      ]
+    },
+    {
+      "id": "B0",
+      "sector": "beltringharder",
+      "layerName": "3",
+      "epochRangeLabel": "1878–1880",
+      "bboxLonLat": [
+        8.865,
+        54.52,
+        8.975,
+        54.6
+      ],
+      "sourceWmsImageSha256": "40e311b6a47860f6e42c0c6ddfec466a18e595e4ba5f89cd48ef791add32abf5",
+      "sourceOriginalArtifact": "beltringharder-3-original.png",
+      "referenceMapThumbnail": {
+        "imageWidthPx": 880,
+        "imageScale": 0.5866666666666667,
+        "topHeaderPx": 23.46666666666667,
+        "rasterHeightPx": 657.0666666666667
+      },
+      "visualApproximationOnly": true,
+      "shorelineSymbolClassIndependentlyChecked": false,
+      "historical1914SheetDateVerified": false,
+      "selectedMaximumCssPx": 5.5,
+      "samples": [
+        {
+          "visualSampleThumbPx": [
+            323,
+            55
+          ],
+          "approxLonLat": [
+            8.905375,
+            54.5961607
+          ],
+          "distanceCssPx": 5.497,
+          "closestOnWorking": [
+            8.8972328,
+            54.5872388
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            354,
+            112
+          ],
+          "approxLonLat": [
+            8.90925,
+            54.5892208
+          ],
+          "distanceCssPx": 4.353,
+          "closestOnWorking": [
+            8.9028025,
+            54.5821558
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            390,
+            186
+          ],
+          "approxLonLat": [
+            8.91375,
+            54.580211
+          ],
+          "distanceCssPx": 2.086,
+          "closestOnWorking": [
+            8.9113093,
+            54.5763314
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            426,
+            237
+          ],
+          "approxLonLat": [
+            8.91825,
+            54.5740016
+          ],
+          "distanceCssPx": 0.785,
+          "closestOnWorking": [
+            8.917332,
+            54.5725424
+          ]
+        }
+      ]
+    },
+    {
+      "id": "E1",
+      "sector": "eider-mouth",
+      "layerName": "2",
+      "epochRangeLabel": "1902–1930",
+      "bboxLonLat": [
+        8.795,
+        54.224,
+        8.895,
+        54.304
+      ],
+      "sourceWmsImageSha256": "84c5ba3ce160e184a8b3c681233e74bfe3612082b21807ff1bedbb833308d130",
+      "sourceOriginalArtifact": "eider-mouth-2-original.png",
+      "referenceMapThumbnail": {
+        "imageWidthPx": 880,
+        "imageScale": 0.5866666666666667,
+        "topHeaderPx": 23.46666666666667,
+        "rasterHeightPx": 657.0666666666667
+      },
+      "visualApproximationOnly": true,
+      "shorelineSymbolClassIndependentlyChecked": false,
+      "historical1914SheetDateVerified": false,
+      "selectedMaximumCssPx": 4.44,
+      "samples": [
+        {
+          "visualSampleThumbPx": [
+            150,
+            137
+          ],
+          "approxLonLat": [
+            8.8120455,
+            54.2901769
+          ],
+          "distanceCssPx": 1.541,
+          "closestOnWorking": [
+            8.811445,
+            54.2935096
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            280,
+            97
+          ],
+          "approxLonLat": [
+            8.8268182,
+            54.2950471
+          ],
+          "distanceCssPx": 0.552,
+          "closestOnWorking": [
+            8.8266031,
+            54.2962408
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            550,
+            61
+          ],
+          "approxLonLat": [
+            8.8575,
+            54.2994302
+          ],
+          "distanceCssPx": 1.065,
+          "closestOnWorking": [
+            8.8570851,
+            54.3017331
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            580,
+            401
+          ],
+          "approxLonLat": [
+            8.8609091,
+            54.2580341
+          ],
+          "distanceCssPx": 2.039,
+          "closestOnWorking": [
+            8.8601614,
+            54.2624522
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            770,
+            415
+          ],
+          "approxLonLat": [
+            8.8825,
+            54.2563295
+          ],
+          "distanceCssPx": 4.444,
+          "closestOnWorking": [
+            8.8808709,
+            54.2659567
+          ]
+        }
+      ]
+    },
+    {
+      "id": "U1",
+      "sector": "eiderstedt-husum",
+      "layerName": "2",
+      "epochRangeLabel": "1902–1930",
+      "bboxLonLat": [
+        8.985,
+        54.44,
+        9.095,
+        54.52
+      ],
+      "sourceWmsImageSha256": "17c925c0e8d0e3d4ff7e8d5e7f87578dd3e7ddc5c4d14593eb6dcd24ec73525b",
+      "sourceOriginalArtifact": "eiderstedt-husum-2-original.png",
+      "referenceMapThumbnail": {
+        "imageWidthPx": 880,
+        "imageScale": 0.5866666666666667,
+        "topHeaderPx": 23.46666666666667,
+        "rasterHeightPx": 657.0666666666667
+      },
+      "visualApproximationOnly": true,
+      "shorelineSymbolClassIndependentlyChecked": false,
+      "historical1914SheetDateVerified": false,
+      "selectedMaximumCssPx": 0.55,
+      "samples": [
+        {
+          "visualSampleThumbPx": [
+            185,
+            105
+          ],
+          "approxLonLat": [
+            9.008125,
+            54.5100731
+          ],
+          "distanceCssPx": 0.216,
+          "closestOnWorking": [
+            9.0078077,
+            54.5097209
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            222,
+            204
+          ],
+          "approxLonLat": [
+            9.01275,
+            54.4980195
+          ],
+          "distanceCssPx": 0.551,
+          "closestOnWorking": [
+            9.0115389,
+            54.4980236
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            205,
+            345
+          ],
+          "approxLonLat": [
+            9.010625,
+            54.4808523
+          ],
+          "distanceCssPx": 0.139,
+          "closestOnWorking": [
+            9.0109075,
+            54.4807348
+          ]
+        },
+        {
+          "visualSampleThumbPx": [
+            155,
+            466
+          ],
+          "approxLonLat": [
+            9.004375,
+            54.4661201
+          ],
+          "distanceCssPx": 0.163,
+          "closestOnWorking": [
+            9.0045206,
+            54.4657941
+          ]
+        }
+      ]
+    }
+  ],
+  "next": "Period-specific survey/revision year and coastal symbol interpretation; high-resolution full WMS map tracing at Eider, Hauke-Haien and Beltringharder; WMS-to-source-residual controls and complete shoreline Hausdorff before any geometry promotion"
+}

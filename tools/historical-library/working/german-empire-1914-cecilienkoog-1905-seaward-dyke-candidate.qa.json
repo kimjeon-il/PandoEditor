@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "referenceDate": "1914-07-31",
+  "reference": "provisional period-map dyke, NOT authenticated 1914 sea-shoreline",
+  "status": "manually-digitized-provisional-dyke",
+  "source": "tools/historical-library/sources/german-coastline/cecilienkoog-1905-dyke-manual-source.json",
+  "imageLayerTemporalRange": "1902–1930; exact survey/revision year unknown",
+  "sourceMicrotileRunId": "37923483348",
+  "sourceOriginalRasterSha256": "90a34e2a80a1c86b6925b01b00fe1ecdb87c8c7b2793c82090db23522ec48d6f",
+  "modernProvisionalWorkingBlobSha": "39fce9309edbe47bf91259d9c90c68f11328eb75",
+  "traceVertexCount": 25,
+  "traceApproxLengthMetres": 2180.13,
+  "screenSpace": {
+    "projection": "flat equirectangular WGS84",
+    "mapContentWidthCssPx": 2560,
+    "flatZoom": 64,
+    "cssPxPerCoordinateDegree": 455.1111111111111,
+    "method": "directed dense samples from manual period-map DYKE trace to nearest current interim working-mainland line; includes WMS map provenance but not georegistration accuracy",
+    "samplingMaxSegmentStepCssPx": 0.08,
+    "samplePointCount": 169,
+    "minimumOneWayCssPx": 1.061,
+    "maximumOneWayCssPx": 7.591,
+    "maximumSampleAt": [
+      8.913977547,
+      54.594537102
+    ],
+    "notFullBidirectionalShorelineHausdorff": true,
+    "notMeasured1914ToPresentShorelineDeviation": true
+  },
+  "historicallyVerified1914Geometry": false,
+  "independent1914CoastlineDigitized": false,
+  "actuallyDigitizedHistoricalStructure": "period-group 1902–1930 dyke, 1903–1905 independent construction year",
+  "individualSheetRevisionDateVerified": false,
+  "tideOrWetlandLandClassificationVerified": false,
+  "georegistrationErrorMeasured": false,
+  "shouldUpdateMasterOrTimeline": false,
+  "nextValidation": "Confirm individual WMS sheet revision and georeferencing residual; examine foreshore vs dyke, trace genuine 1914 wet/dry boundary and modern matched shoreline before full Hausdorff."
+}

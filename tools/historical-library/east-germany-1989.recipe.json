@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "id": "state:deutsche-demokratische-republik:1989-04-25-r1",
+  "referenceDate": "1989-04-25",
+  "output": "assets/data/territorial-entities/source/countries/germany.json",
+  "entityId": "state:deutsche-demokratische-republik",
+  "sources": {
+    "naturalEarthAdmin1": {
+      "path": "tools/historical-library/sources/east-germany/natural-earth-admin1-germany-v5.1.1.geojson",
+      "crs": "EPSG:4326",
+      "sha256": "9D74303B45E1FAB9B3941B8305CBC3AFABBC9D4C23366587FF5E959208F3384F",
+      "license": "Public domain",
+      "url": "https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-1-states-provinces/"
+    },
+    "amtNeuhaus": {
+      "path": "tools/historical-library/sources/east-germany/bkg-vg250-amt-neuhaus-25832.geojson",
+      "crs": "EPSG:25832",
+      "sha256": "3EA25C91A9F4EED0BDCE5815D16325C575D83EC712D34BB646CE5DABE3858C56",
+      "license": "Datenlizenz Deutschland - Namensnennung - Version 2.0",
+      "url": "https://gdz.bkg.bund.de/index.php/default/verwaltungsgebiete-1-250-000-stand-31-12-vg250-31-12.html"
+    },
+    "berlinLand": {
+      "path": "tools/historical-library/sources/east-germany/bkg-vg250-berlin-land-25833.geojson",
+      "crs": "EPSG:25833",
+      "sha256": "D928F46156A846A38DB66220C9BA5EE7896805570659B219A7DF2E4B47AEF3B5",
+      "license": "Datenlizenz Deutschland - Namensnennung - Version 2.0",
+      "url": "https://gdz.bkg.bund.de/index.php/default/verwaltungsgebiete-1-250-000-stand-31-12-vg250-31-12.html"
+    },
+    "berlinWall": {
+      "path": "tools/historical-library/sources/east-germany/berlin-wall-1989-25833.geojson",
+      "crs": "EPSG:25833",
+      "sha256": "2911479F7953718D14776FF5D7214B0405DC9F143BC0A635886D10C5CA755C6B",
+      "license": "Datenlizenz Deutschland - Zero - Version 2.0",
+      "url": "https://daten.berlin.de/datensaetze/verlauf-der-berliner-mauer-1989-wfs-3dcda64c"
+    },
+    "canonicalCountries": {
+      "path": "assets/data/countries-ne-5.1.1.geojson",
+      "crs": "EPSG:4326",
+      "sha256": "6D29C349478CB2A7899573544BA580DA70BD902C12EE86A4A93662CA6E94AD72"
+    }
+  },
+  "operations": [
+    {
+      "id": "east-five-states-and-berlin",
+      "operation": "union",
+      "source": "naturalEarthAdmin1",
+      "selector": {
+        "field": "iso_3166_2",
+        "values": [
+          "DE-BB",
+          "DE-BE",
+          "DE-MV",
+          "DE-SN",
+          "DE-ST",
+          "DE-TH"
+        ]
+      }
+    },
+    {
+      "id": "west-berlin-mask",
+      "operation": "polygonize-mask",
+      "boundarySource": "berlinLand",
+      "lineSource": "berlinWall",
+      "primaryLayers": [
+        "a_grenzmauer"
+      ],
+      "priorityLayers": [
+        "c_politischegrenze"
+      ],
+      "referencePoint": [
+        13.304,
+        52.503
+      ],
+      "excludePoint": [
+        13.413,
+        52.522
+      ],
+      "maxSnapMeters": 100
+    },
+    {
+      "id": "modern-east-with-amt-neuhaus",
+      "operation": "union",
+      "inputs": [
+        "east-five-states-and-berlin",
+        "amtNeuhaus"
+      ]
+    },
+    {
+      "id": "gdr-candidate",
+      "operation": "difference",
+      "inputs": [
+        "modern-east-with-amt-neuhaus",
+        "west-berlin-mask"
+      ]
+    },
+    {
+      "id": "gdr-final",
+      "operation": "canonical-boundary-reconcile",
+      "input": "gdr-candidate",
+      "canonicalSource": "canonicalCountries",
+      "canonicalId": "DEU"
+    }
+  ],
+  "validation": {
+    "areaKm2": {
+      "minimum": 108000,
+      "maximum": 109000
+    },
+    "maximumCoordinates": 10000,
+    "maximumLibraryBytes": 6291456,
+    "maximumPuzzleDifferenceKm2": 0.001,
+    "insidePoints": {
+      "Rostock": [
+        12.0991,
+        54.0924
+      ],
+      "Potsdam": [
+        13.0645,
+        52.3906
+      ],
+      "Magdeburg": [
+        11.6276,
+        52.1205
+      ],
+      "Leipzig": [
+        12.3731,
+        51.3397
+      ],
+      "Dresden": [
+        13.7373,
+        51.0504
+      ],
+      "Erfurt": [
+        11.0299,
+        50.9848
+      ],
+      "Alexanderplatz": [
+        13.4132,
+        52.5219
+      ],
+      "Amt Neuhaus": [
+        10.928,
+        53.285
+      ]
+    },
+    "outsidePoints": {
+      "Kurfurstendamm": [
+        13.304,
+        52.503
+      ]
+    }
+  }
+}
