@@ -167,11 +167,24 @@
 - 삭제 후 웹 `main`의 추적 파일 합계 **678,784,904 bytes**, `assets/data` **580,358,795 bytes**(삭제 커밋 기준). 이번 작업은 Git 과거 커밋/객체 삭제·저장소 전체 Git GC를 수행한 것이 아님.
 - 기존 조사 기준의 별도 구형 세계지도 **20개/36,111,905 bytes**는 수계 정리 범위 밖으로 그대로 보존. 이전 수계 URL 보존은 새 정책에 따라 보장하지 않음. GitHub Pages 배포 방식의 Actions 전환 및 `work/gis` 제품 코드의 `main` 병합은 미시행.
 
+## 수계 2파일 통합 및 구버전 퇴역 4단계 — 최종 상태 (2026-10-09)
+
+- 앞선 1~3단계의 v0.13.0·v0.13.1 보존 문구는 당시 조사 결과이며, **이 절의 상태가 최신 정본**이다.
+- 웹 7개 브랜치·앱 5개 브랜치 모두 현행 배포용 수계를 `v0.13.2`의 **`manifest.json`(53,375 bytes) + `hydro.bin`(11,974,120 bytes)** 두 파일로 유지한다. 전 브랜치에서 두 파일의 Git Blob SHA가 일치한다.
+- 통합 바이너리 안의 인덱스·기본 메타데이터·상세 메타데이터·도형 샤드 3개는 기존 gzip 바이트를 변경 없이 이어 붙인 구성이다. 각 구간의 오프셋·길이·SHA-256을 별도로 검증하며, **16,548개 지형지물·902개 도형 팩**을 실제 디코딩했다.
+- 웹 `main`과 `work/gis`에서 구형 배포 자료 **v0.13.0 7개/12,045,791 bytes + v0.13.1 2개/782,600 bytes**를 각각 실제 삭제했다(각 브랜치 총 9개/12,828,391 bytes). 다른 웹 5개 브랜치는 이미 정리됐고 앱 5개 브랜치는 구형 파일 0개였다. 전 브랜치의 구형 배포 자료 잔존 **0개**. [main 삭제](https://github.com/kimjeon-il/Pando/commit/34e226e7b1db43e19c1f0e1b5bd8f19ee2008d04) · [GIS 삭제·검증](https://github.com/kimjeon-il/Pando/commit/9cf035b64991daf445723e5b0f75bb1a71f69b61).
+- 현재 지도에 쓰는 배포 패키지 외에 **수계 생성용 원본 자료 4개**(`rivers_base.geojson`, `lakes_base.geojson`, `hydronym-ko-overrides.json`, `osm-waterway-ko-v0.13.0.json`)는 그대로 유지. 마지막 파일명에 v0.13.0이 들어가도 퇴역 대상 배포 바이너리가 아닌 생성기 입력이다.
+- 과거 분석용 구형 자료는 불변 Git 커밋 `8de07030cccff5e7ec3c68e6beb6bb288c95afb2`에서 복원 가능. 사용자의 과거 앱 배포본·별도 저장 프로젝트가 구 URL을 참조하는지까지 전수 확인한 것은 아니며, 정책상 오래된 배포 URL의 상시 접근을 보장하지 않는다.
+- [통합 수계 실물·앱 정합성 검사](https://github.com/kimjeon-il/Pando/actions/runs/37941637897), [웹 7·앱 5 브랜치 및 Pages 검사](https://github.com/kimjeon-il/Pando/actions/runs/37941637853), [연구·하천 편집 검사](https://github.com/kimjeon-il/Pando/actions/runs/37940817970) 모두 성공. 현재 수계 `manifest.json`·`hydro.bin` 공개 URL은 **HTTP 200**.
+- 예전 앱 원본 v0.13.1을 고정한 GIS 6~10단계 검사도 **v0.13.2를 고정한 앱 불변 커밋**으로 수정하여 [6단계](https://github.com/kimjeon-il/Pando/actions/runs/37941938293)·[7단계](https://github.com/kimjeon-il/Pando/actions/runs/37941938227)·[8단계](https://github.com/kimjeon-il/Pando/actions/runs/37941938413)·[9단계](https://github.com/kimjeon-il/Pando/actions/runs/37941938411)·[10단계](https://github.com/kimjeon-il/Pando/actions/runs/37941938295) **전부 재통과**. 관련 변경 [커밋](https://github.com/kimjeon-il/Pando/commit/78f71fa13ff82974cb601b6fc84ba26a85c74dec).
+- 웹 `main` 삭제 직후 Git HEAD의 추적 파일은 **678,054,003 bytes**, `assets/data`는 **579,557,899 bytes**였다. Git 과거 객체 재작성·저장소 GC와 제품 코드의 무관한 타 브랜치 병합은 시행하지 않았다.
+- [4단계 상세 보고서](https://github.com/kimjeon-il/Pando/blob/work/gis/docs/validation/hydro-v0132-retirement-stage4.md). 그 밖의 과거 세계지도 자료 정리는 별도 검증 대상이다.
+
 ## 위험 및 남은 의존성
 
 - 웹 Worker는 새 데이터 매니페스트로 전환했지만 공유 국경선 캐시의 레거시 `v0.34.0` 경로는 호환 목적으로 유지함.
 - `build-world-preview.mjs`의 출력 기준은 프로그램 버전 대신 고정 데이터 입력 매니페스트로 변경됐으며, 구형 배포 자산은 호환성을 위해 유지함.
-- 웹 수계 v0.13.1은 v0.13.0 index/detail/shards를 사용하므로 현재 모두 유지.
+- 현재 웹·앱 배포용 수계는 v0.13.2의 2파일이며 v0.13.0·v0.13.1은 웹 전 브랜치에서 제거됨. 이전 단계의 보존 문구는 당시 상태만 설명한다.
 - 웹·앱 역사 라이브러리 91개 바이트 차이 중 색인 1개·국가별 90개는 5단계에서 의미 검증 완료. 국경 형상 차이는 0건이며, 앱 원본 데이터 갱신은 수행하지 않음.
 - 구버전 지형 v0.12.0과 수계 v0.12.2~v0.12.6은 모두 모든 웹 브랜치에서 실제 삭제됐다. 그 밖의 구형 세계지도 데이터는 별도 승인/의존 확인을 거쳐 정리한다.
 - 앱은 `assets/world/manifest.json` v2에 출처·SHA를 통합하고, Qt 리소스 경로를 해당 매니페스트에서 유도하도록 변경. 이미 포함된 원본 지도 바이트와 앱 오프라인 실행 정책은 유지.
