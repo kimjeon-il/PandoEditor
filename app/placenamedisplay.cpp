@@ -26,7 +26,8 @@ std::optional<PlaceLanguageSelection> toggledPlaceLanguage(
 }
 std::vector<PlaceDisplayRow> resolvePlaceDisplayRows(
     const PlaceRecord& record,const PlaceLanguageSelection& selected,const QString& mapDate) {
-    QString ko=record.name,en=record.nameEn,native=record.nameNative;
+    QString ko=record.name,en=record.nameEn;
+    QStringList nativeNames{record.nameNative};nativeNames.append(record.nameNativeExtras);
     if(!mapDate.isEmpty()) {
         static const QRegularExpression format("^[0-9]{4}-[0-9]{2}-[0-9]{2}$");
         if(!format.match(mapDate).hasMatch())throw std::invalid_argument("Invalid map label date");
@@ -35,18 +36,21 @@ std::vector<PlaceDisplayRow> resolvePlaceDisplayRows(
             if(!transition.fromDate.isEmpty()?transition.fromDate>mapDate:transition.fromYear>year)break;
             if(!transition.ko.isEmpty())ko=transition.ko;
             if(!transition.en.isEmpty())en=transition.en;
-            if(!transition.native.isEmpty())native=transition.native;
+            if(!transition.native.isEmpty()) {
+                nativeNames={transition.native};
+                if(transition.nativeExtras)nativeNames.append(*transition.nativeExtras);
+            }
         }
     }
     QSet<QString> seen;std::vector<PlaceDisplayRow> rows;
-    for(const auto& entry:std::vector<PlaceDisplayRow>{{"ko",ko},{"en",en},{"native",native}}) {
-        if((entry.language=="ko"&&!selected.ko)||
-           (entry.language=="en"&&!selected.en)||
-           (entry.language=="native"&&!selected.native))continue;
-        const auto name=entry.text.trimmed();
+    const auto add=[&](const QString& language,const QString& value) {
+        const auto name=value.trimmed();
         const auto key=name.normalized(QString::NormalizationForm_KC).toLower();
-        if(name.isEmpty()||seen.contains(key))continue;
-        seen.insert(key);rows.push_back({entry.language,name});
-    }
+        if(name.isEmpty()||seen.contains(key))return;
+        seen.insert(key);rows.push_back({language,name});
+    };
+    if(selected.ko)add("ko",ko);
+    if(selected.en)add("en",en);
+    if(selected.native)for(const auto& name:nativeNames)add("native",name);
     return rows;
 }
