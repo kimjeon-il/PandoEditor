@@ -18,6 +18,7 @@ int main() {
     const auto june=resolveWorld(records,context,"1914-06");
     const auto july=resolveWorld(records,context,"1914-07");
     const auto before=resolveWorld(records,context,"1909-12");
+    const auto januaryStart=resolveWorld(records,context,"1910-01");
     auto endedMidMonth=records;
     endedMidMonth.lifetimes.at(1).validity.to="1910-01-15";
     endedMidMonth.geometryBindings.at(2).validity.to="1910-01-15";
@@ -38,7 +39,7 @@ int main() {
     const bool good=july.month=="1914-07"&&june.entities.size()==2&&june.entities.at(0).geometryRef.version==1
         &&july.entities.at(0).geometryRef.version==2&&july.entities.at(1).parentId=="A"
         &&july.entities.at(1).rootId=="A"&&july.entities.at(1).ancestors==std::vector<std::string>{"A"}
-        &&before.entities.size()==1&&januaryAfterEnd.entities.size()==1
+        &&before.entities.size()==1&&januaryStart.entities.size()==2&&januaryAfterEnd.entities.size()==1
         &&exactEndpointChanged.geometryBindings.at(1).validity.to=="1914-12"
         &&exactEndpointChanged.geometryBindings.at(2).validity.to=="1915-12-24"
         &&changed.geometryBindings.size()==4
