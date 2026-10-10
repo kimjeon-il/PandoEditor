@@ -407,7 +407,7 @@
       "sourceUrl": "https://www.geonames.org/616052/yerevan.html",
       "sourceCountryCode": "AM",
       "defaultDisplayNameKo": "예레반",
-      "shortDescriptionKo": "1828년 할양·1918년 독립·아르메니아어 철자 개정",
+      "shortDescriptionKo": "1828년 할양·1918년 독립·철자 개정",
       "displayTimeline": [
         {
           "fromYear": 1801,
@@ -480,7 +480,7 @@
           },
           {
             "type": "russianCityNameStandardization",
-            "detail": "러시아어 Эривань→Ереван 표기 정비(원어 전환 없음)",
+            "detail": "러시아어 Эривань→Ереван 표기 정비",
             "sourceUrl": "https://www.visityerevan.am/browse/yerevan-yerevan-chronology/en/",
             "date": "1936-08-17"
           },

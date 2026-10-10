@@ -330,7 +330,9 @@ test('batch 01: Busan, Osaka and Beijing select one historically aligned native,
     [1801, '1868-06-21']);
   assert.deepEqual(at(osaka, '1868-06-20'), ['大坂', '오사카', 'Osaka', 'ja']);
   assert.deepEqual(at(osaka, '1868-06-21'), ['大阪', '오사카', 'Osaka', 'ja']);
-  assert.ok(osaka.displayTimeline[1].researchNote.includes('편집상'));
+  assert.equal(osaka.displayTimeline[1].kind,'historicalOrthographyEditorialTransition');
+  assert.ok(osaka.displayTimeline[1].sourceUrl);
+  assert.ok(osaka.displayTimeline[1].researchNote);
 
   const beijing = record(1816670);
   assert.deepEqual(beijing.displayTimeline.map(row => row.fromDate ?? row.fromYear),
