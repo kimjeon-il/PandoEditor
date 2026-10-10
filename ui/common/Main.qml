@@ -55,6 +55,12 @@ ApplicationWindow {
                 inputMethodHints: Qt.ImhNoPredictiveText
                 onEditingFinished: if(text !== editor.timelineMonth) editor.setTimelineMonth(text)
             }
+            Label {
+                objectName: "timelineMonthEndBasis"
+                text: editor.mobileMode ? "월말" : "월말 기준"
+                anchors.verticalCenter: parent.verticalCenter
+                color: window.uiColors.muted
+            }
             Button {objectName:"timelineNextMonth";text:"›";onClicked:editor.shiftTimelineMonth(1)}
         }
         Label {
