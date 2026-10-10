@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "71f778d3ac3e38eb5aafcd81334a4b3a01116899",
+  "webCommit": "56b3bd770c4ed73eaaa974c05bb2cb9ff0b55813",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -63,7 +63,7 @@
     },
     {
       "path": "reports/places/tier1-major-cities-batch13-european-microstates-mediterranean.json",
-      "gitBlobSha": "194cc5fe4cf2e86fde1b23ea00b6fcbeb5394560"
+      "gitBlobSha": "b4eba36b4d728f01df3a417e43005b10d85e7668"
     },
     {
       "path": "reports/places/tier1-major-cities-batch14-north-atlantic-anatolia-caucasus.json",
