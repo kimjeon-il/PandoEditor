@@ -3,8 +3,8 @@
   "batch": "13-european-microstates-mediterranean-capitals",
   "status": "verified-source-staging-not-runtime",
   "source": "GeoNames (CC BY 4.0), Andorra government, San Marino tourism authority, Monaco legal gazette, Valletta Local Council, Cyprus authorities and UNFICYP",
-  "checkedOn": "2026-10-10",
-  "selection": "Five GeoNames P/PPLC capital city records retained. Historical-name review finalized for Andorra la Vella, San Marino city, Monaco and Valletta; Nicosia historical transitions are pending further analysis of 1878-1914 de jure Ottoman sovereignty versus British de facto administration and languages.",
+  "checkedOn": "2026-10-11",
+  "selection": "All five capital city place records in batch 13 now have reviewed name timelines. Nicosia includes Ottoman Turkish historical name, 1878 nominal Ottoman sovereignty with British administration and multilingual texts, 1914 formal annexation editorial switch, 1930 approximate Latin Turkish reform, and 1960 coofficial Greek-Turkish names.",
   "coordinateConvention": "GeoNames WGS84 EPSG:4326 point, latitude/longitude. Never a municipality or sovereign-country boundary polygon.",
   "countryCodeSemantics": "Present-day GeoNames source metadata only, not historical political sovereignty or legal territory recognition. Nicosia CY is not an assertion that one point resolves the 1974 line.",
   "koreanMapLabelPolicyFile": "reports/places/korean-map-label-policy.json",
@@ -23,7 +23,7 @@
     "English/local text may match exactly (Andorra la Vella, San Marino, Monaco); keep distinct name fields in staging and deduplicate only the rendered text.",
     "All interface-facing short descriptions and note/detail strings contain at most 28 Unicode code points. Research details and all source URLs remain stored separately.",
     "This is reviewed staging, not publication to real PLAC v2 tile shards or an alteration of any main branch.",
-    "User approved the naming decisions for the four capitals above; Nicosia displayTimeline, names[], and historicalGeography are deliberately left untouched until its 1878-1914 naming and language history is resolved."
+    "Nicosia's 1878-1960 triple names are editorial multilingual selections, NOT an assertion of equal legal official-language status. A 1930 fromYear is intentionally approximate and is not a fictional 1930-01-01 enactment."
   ],
   "records": [
     {
@@ -619,25 +619,38 @@
       "geonameId": 146268,
       "names": [
         {
-          "text": "Λευκωσία",
-          "language": "el",
-          "script": "Grek",
-          "usage": "standard",
-          "note": "그리스어 도시명",
-          "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+          "text": "لفقوشه",
+          "language": "ota",
+          "script": "Arab",
+          "usage": "historical",
+          "variantType": "selectedOttomanTurkishName",
+          "sourceUrl": "https://en.wiktionary.org/wiki/%D9%84%D9%81%D9%82%D9%88%D8%B4%D9%87"
         },
         {
           "text": "Lefkoşa",
           "language": "tr",
           "script": "Latn",
           "usage": "standard",
-          "note": "튀르키예어 도시명",
+          "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+        },
+        {
+          "text": "Λευκωσία",
+          "language": "el",
+          "script": "Grek",
+          "usage": "standard",
           "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
         },
         {
           "text": "Nicosia",
           "language": "en",
-          "usage": "standard"
+          "usage": "standard",
+          "sourceUrl": "https://www.nicosia.org.cy/en-GB/discover/nicosia/nicosia/british/"
+        },
+        {
+          "text": "레프코샤",
+          "language": "ko",
+          "usage": "historical",
+          "variantType": "selectedOttomanBasedKoreanTranscription"
         },
         {
           "text": "니코시아",
@@ -652,18 +665,172 @@
       "sourceUrl": "https://www.geonames.org/146268/nicosia.html",
       "sourceCountryCode": "CY",
       "defaultDisplayNameKo": "니코시아",
-      "shortDescriptionKo": "그리스어·튀르키예어 병존 수도",
+      "shortDescriptionKo": "1878·1914·1960년 언어 변동",
       "displayTimeline": [
         {
           "fromYear": 1801,
+          "nameKo": "레프코샤",
+          "nameEn": "Nicosia",
+          "nameNative": "لفقوشه",
+          "nativeLanguage": "ota",
+          "nativeNames": [
+            {
+              "text": "لفقوشه",
+              "language": "ota",
+              "script": "Arab"
+            }
+          ],
+          "kind": "ottomanAdministrativeNameSelected",
+          "sourceUrl": "https://en.wiktionary.org/wiki/%D9%84%D9%81%D9%82%D9%88%D8%B4%D9%87",
+          "note": "오스만어 아랍 문자 대표 지명",
+          "researchNote": "1801년 키프로스는 오스만 제국 통치하였으며 1890 Redhouse 사전에 기록된 오스만어 لفقوشه를 대표 원어로 선정한다. 1801년 정확한 철자 최초 사용일을 뜻하지 않는다. 그리스어 Λευκωσία는 이미 지역에서 사용되었으며 이를 배제한 당시의 언어 사용 금지라는 의미가 아니다. 영어 Nicosia와 한국어 레프코샤는 지도의 언어별 역사 대응명이다."
+        },
+        {
+          "fromDate": "1878-07-05",
+          "nameKo": "레프코샤",
+          "nameEn": "Nicosia",
+          "nameNative": "لفقوشه",
+          "nativeLanguage": "ota",
+          "nativeNames": [
+            {
+              "text": "لفقوشه",
+              "language": "ota",
+              "script": "Arab"
+            },
+            {
+              "text": "Nicosia",
+              "language": "en",
+              "script": "Latn"
+            },
+            {
+              "text": "Λευκωσία",
+              "language": "el",
+              "script": "Grek"
+            }
+          ],
+          "kind": "britishAdministrationOttomanNominalSovereigntyMultilingualNames",
+          "sourceUrl": "https://www.nicosia.org.cy/en-GB/discover/nicosia/nicosia/british/",
+          "note": "영국 행정·오스만 명목 주권",
+          "researchNote": "1878-07-05 영국이 키프로스 행정권을 인수했으나 1914-11-05 정식 병합 전까지 오스만 제국의 명목상 주권은 유지되었다. 1879년 영국 하원 기록에서 기존 공식 행정언어 튀르키예어 유지 사실을 확인하며, 1878년 식민 행정기 영어·그리스어·튀르키예어 다국어 공문서 활용도 기록한다. 원어명 3종 병기는 역사적 행정 사용·도시 사회를 반영하는 편집상 선택이며 법적으로 세 언어가 동등했다는 뜻이 아니다. 1882년 지방행정 개혁을 도시명 개명으로 취급하지 않는다."
+        },
+        {
+          "fromDate": "1914-11-05",
           "nameKo": "니코시아",
-          "kind": "historicalLocalName",
-          "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+          "nameEn": "Nicosia",
+          "nameNative": "Nicosia",
+          "nativeLanguage": "en",
+          "nativeNames": [
+            {
+              "text": "Nicosia",
+              "language": "en",
+              "script": "Latn"
+            },
+            {
+              "text": "Λευκωσία",
+              "language": "el",
+              "script": "Grek"
+            },
+            {
+              "text": "لفقوشه",
+              "language": "ota",
+              "script": "Arab"
+            }
+          ],
+          "kind": "britishFormalAnnexationEditorialNamePriorityChange",
+          "sourceUrl": "https://www.mfa.gov.tr/lausanne-peace-treaty-part-i_-political-clauses.en.mfa",
+          "note": "영국 공식 병합·영어 우선",
+          "researchNote": "1914-11-05 영국의 키프로스 정식 병합 선언을 대표 원어명을 Nicosia로 바꾸는 편집 기준으로 사용한다. 다른 언어로 쓰이던 Λευκωσία와 لفقوشه는 계속 병기한다. 1923년 로잔조약 제20조가 영국의 병합을 인정했으며 별도 도시 개칭 사건은 아니다. 영어 원어와 영어명은 같은 철자이므로 화면에서 한 번만 표시한다."
+        },
+        {
+          "fromYear": 1930,
+          "nameKo": "니코시아",
+          "nameEn": "Nicosia",
+          "nameNative": "Nicosia",
+          "nativeLanguage": "en",
+          "nativeNames": [
+            {
+              "text": "Nicosia",
+              "language": "en",
+              "script": "Latn"
+            },
+            {
+              "text": "Λευκωσία",
+              "language": "el",
+              "script": "Grek"
+            },
+            {
+              "text": "Lefkoşa",
+              "language": "tr",
+              "script": "Latn"
+            }
+          ],
+          "kind": "cyprusTurkishCommunityLatinAlphabetGradualAdoption",
+          "sourceUrl": "https://atamdergi.gov.tr/tam-metin/163/tur",
+          "note": "튀르키예어 로마자 전환 반영",
+          "researchNote": "키프로스 튀르키예어 신문 Söz는 1928-10-04 제호 로마자화를 시작했고 1929-01-03 식민 정부의 튀르키예어 관청 시험에 신문자 교재가 도입되었다. 1930년은 사회·공적 기관에서 로마자 Lefkoşa 정착을 표현하는 연도 단위 편집 기준으로, 첫 시행일이 1930-01-01이었다는 뜻이 아니다. 기존 오스만어 لفقوشه를 현행 튀르키예어 철자로 전환하되 영어 Nicosia·그리스어 Λευκωσία도 유지한다."
+        },
+        {
+          "fromDate": "1960-08-16",
+          "nameKo": "니코시아",
+          "nameEn": "Nicosia",
+          "nameNative": "Λευκωσία",
+          "nativeLanguage": "el",
+          "nativeNames": [
+            {
+              "text": "Λευκωσία",
+              "language": "el",
+              "script": "Grek"
+            },
+            {
+              "text": "Lefkoşa",
+              "language": "tr",
+              "script": "Latn"
+            }
+          ],
+          "kind": "republicOfCyprusConstitutionGreekTurkishOfficialNames",
+          "sourceUrl": "https://www.cylaw.org/nomoi/enop/non-ind/syntagma/full.html",
+          "note": "키프로스 독립·그리스·튀르키예 병기",
+          "researchNote": "1960-08-16 키프로스 공화국 헌법 제3조가 그리스어와 튀르키예어를 공용어로 규정했으므로 Λευκωσία와 Lefkoşa를 공동 원어명으로 선택한다. 영어 Nicosia는 대외 영어명에 유지하지만 헌법상 제3공용어로 넣지 않는다. 1963년 그린라인 및 1974년 정전 이후 실효행정 분할은 동일 도시의 별도 개칭이 아니며 경계 GIS 자료와 별도로 다룬다."
         }
       ],
-      "historicalDisplayCoverage": "reviewed-since-1801-with-geopolitical-boundary-separation",
+      "historicalDisplayCoverage": "reviewed-since-1801-with-1878-1914-1930-1960-multilingual-editorial-thresholds",
       "historicalGeography": {
         "events": [
+          {
+            "date": "1878-07-05",
+            "type": "britishCyprusAdministrationTransferred",
+            "detail": "영국 키프로스 행정권 인수",
+            "sourceUrl": "https://www.nicosia.org.cy/en-GB/discover/nicosia/nicosia/british/",
+            "researchDetail": "1878년 키프로스 협정에 따라 영국이 행정권을 인수. 오스만 명목 주권은 1914년 병합까지 유지."
+          },
+          {
+            "year": 1882,
+            "type": "britishNicosiaMunicipalAdministrativeReforms",
+            "detail": "1882년 영국식 시 행정 개편",
+            "sourceUrl": "https://www.nicosia.org.cy/en-GB/discover/nicosia/nicosia/british/",
+            "researchDetail": "1882년에 오스만식에서 영국식 자치 행정으로 점진적 변화. 도시 개칭은 아님."
+          },
+          {
+            "date": "1914-11-05",
+            "type": "britishAnnexationOfCyprus",
+            "detail": "1914년 영국 정식 병합",
+            "sourceUrl": "https://www.mfa.gov.tr/lausanne-peace-treaty-part-i_-political-clauses.en.mfa",
+            "researchDetail": "1923년 로잔조약 제20조에 영국의 1914-11-05 병합이 명시됨. 1878년 실질 행정권 획득과 구별."
+          },
+          {
+            "year": 1930,
+            "type": "turkishLatinAlphabetCyprusAdoption",
+            "detail": "1930년경 튀르키예어 로마자 정착",
+            "sourceUrl": "https://atamdergi.gov.tr/tam-metin/163/tur",
+            "researchDetail": "1928년 민간 신문, 1929년 공무원 시험, 1930년 공적 기관의 전환 진행. 하루 단위 효력일은 확인되지 않아 fromYear만 설정."
+          },
+          {
+            "date": "1960-08-16",
+            "type": "cyprusIndependenceConstitutionLanguages",
+            "detail": "키프로스 헌법 그리스·튀르키예어",
+            "sourceUrl": "https://www.cylaw.org/nomoi/enop/non-ind/syntagma/full.html",
+            "researchDetail": "제3조의 두 공용어. 1974년 분단으로 그 명칭이 폐지된 것은 아님."
+          },
           {
             "date": "1963-12-30",
             "type": "nicosiaGreenLineFirstEstablished",
@@ -681,27 +848,57 @@
         ],
         "notes": [
           {
-            "detail": "그리스어·튀르키예어 병용",
-            "researchDetail": "Λευκωσία(그리스어), Lefkoşa(튀르키예어), Nicosia(영어)는 같은 도시의 언어별 명칭이다. 분단 시점에 일괄 법적 개칭된 이름으로 취급하지 않는다.",
-            "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+            "detail": "오스만어 لفقوشه의 문헌 근거",
+            "sourceUrl": "https://en.wiktionary.org/wiki/%D9%84%D9%81%D9%82%D9%88%D8%B4%D9%87",
+            "researchDetail": "1890년 Redhouse 사전 1636쪽에 기록된 형태를 근거로 1801년 이후 오스만어 행정 원어로 소급 선정한다. 1801년 표기 자체 최초 확인 자료는 아님."
           },
           {
-            "detail": "1974년 분단과 시 경계 구분",
-            "researchDetail": "GeoNames ID 146268은 대표점 하나를 가진 P/PPLC 취락이다. 시내 그린라인·유엔 완충지대·북부와 남부의 실효행정 범위는 기하 경계 자료로 별도 구축할 대상이지, 한 좌표로 면적을 분할해서는 안 된다.",
-            "sourceUrl": "https://unficyp.unmissions.org/en/about-buffer-zone"
+            "detail": "1878~1914 영국 행정·오스만 주권",
+            "sourceUrl": "https://hansard.parliament.uk/Commons/1879-03-18/debates/4c5ef127-14b7-4482-8098-b55a2b119cfb/Cyprus%E2%80%94TheGreekLanguage",
+            "researchDetail": "1879 영국 의회 기록에서 튀르키예어가 당시 기존 공식 행정언어였음을 확인. 영어 및 그리스어의 행정 실제 사용과 명목 주권, 법적 언어 동등성을 서로 구분한다."
           },
           {
-            "detail": "CY는 현재 GeoNames 메타",
-            "researchDetail": "sourceCountryCode CY는 GeoNames 현재 원천 데이터의 국가 코드로, 북부 실효행정·국제법상 지위의 역사 변화나 국가 승인 결론을 이 레코드 하나로 판정하지 않는다.",
-            "sourceUrl": "https://www.geonames.org/146268/nicosia.html"
+            "detail": "1878년 다언어 공문서 기록",
+            "sourceUrl": "https://www.gov.cy/culture-sa/documents/eyretirio-archeiakon-syllogon/archigrammateia-secretariat-archives/secretariat-archives-occupation/",
+            "researchDetail": "1878년 키프로스 국가기록원 기록에 영어·그리스어·튀르키예어 문서와 인쇄물이 나타난다. 같은 이름의 법적 동등한 공식 지위를 입증하는 것은 아니다."
           },
           {
-            "detail": "니코시아구 ADM1은 별도",
-            "researchDetail": "GeoNames 146267은 니코시아구 행정구역 A/ADM1이며, 검수 대상 146268은 수도 P/PPLC 취락이다.",
-            "sourceUrl": "https://www.geonames.org/146267/nicosia-district.html"
+            "detail": "1930년은 날짜 불명 연도 기준",
+            "sourceUrl": "https://atamdergi.gov.tr/tam-metin/163/tur",
+            "researchDetail": "1928~1930년 현지 튀르키예어 로마자 도입은 점진적 변화. 역사 시점 선택에서 1930년 전체를 일괄 정확일로 해석하지 않는다."
+          },
+          {
+            "detail": "1995 Lefkosia 라틴형 제안",
+            "sourceUrl": "https://www.upi.com/Archives/1995/02/17/Cypriot-capital-to-change-name/4539792997200/",
+            "researchDetail": "1995 니코시아 시의회가 라틴 문자상 Lefkosia 사용을 추진했다는 보도가 있으나 영어 국제 통용 Nicosia를 폐지하는 보편적인 공식 전환일은 확인되지 않았다. 영어 지도명 Nicosia 유지."
+          },
+          {
+            "detail": "1963·1974 분단은 경계 데이터",
+            "sourceUrl": "https://unficyp.unmissions.org/en/about-buffer-zone",
+            "researchDetail": "1963년 그린라인·1974년 분단 이후 북부 실효통치와 남부 정부 행정 경계는 GIS 지리 데이터로 별도 표현. PPLC ID 146268 하나의 좌표로 양측 관할 범위를 확정할 수 없다."
+          },
+          {
+            "detail": "니코시아 도시·행정구역 구분",
+            "sourceUrl": "https://www.geonames.org/146267/nicosia-district.html",
+            "researchDetail": "GeoNames P/PPLC 146268은 도시 중심 취락, ADM1 146267은 니코시아구. 현재 소스 CY 코드는 지역 영유권 문제의 결론이 아니다."
           }
         ]
-      }
+      },
+      "defaultDisplayNameEn": "Nicosia",
+      "defaultDisplayNameNative": "Λευκωσία",
+      "defaultNativeLanguage": "el",
+      "defaultNativeNames": [
+        {
+          "text": "Λευκωσία",
+          "language": "el",
+          "script": "Grek"
+        },
+        {
+          "text": "Lefkoşa",
+          "language": "tr",
+          "script": "Latn"
+        }
+      ]
     }
   ]
 }
