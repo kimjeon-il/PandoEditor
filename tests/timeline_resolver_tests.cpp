@@ -35,7 +35,7 @@ int main() {
     const auto originalRevision=project.revision();
     const bool cursorMoved=project.setTimelineCursor("1914-07");
     const bool cursorNoOp=!project.setTimelineCursor("1914-07");
-    const bool good=june.entities.size()==2&&june.entities.at(0).geometryRef.version==1
+    const bool good=july.month=="1914-07"&&june.entities.size()==2&&june.entities.at(0).geometryRef.version==1
         &&july.entities.at(0).geometryRef.version==2&&july.entities.at(1).parentId=="A"
         &&july.entities.at(1).rootId=="A"&&july.entities.at(1).ancestors==std::vector<std::string>{"A"}
         &&before.entities.size()==1&&januaryAfterEnd.entities.size()==1
