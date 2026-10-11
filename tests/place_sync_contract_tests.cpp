@@ -370,6 +370,58 @@ private slots:
             QCOMPARE(city.value("featureCode").toString(),QStringLiteral("PPLC"));
             QVERIFY(!names.at(i).contains(QStringLiteral("바티칸")));
         }
+        for(const auto& value:cities) {
+            const QJsonObject city=value.toObject();
+            const auto nativeNames=city.value("defaultNativeNames").toArray();
+            QCOMPARE(nativeNames.size(),1);
+            QCOMPARE(nativeNames.at(0).toObject().value("text").toString(),
+                     city.value("defaultDisplayNameNative").toString());
+            QVERIFY(!nativeNames.at(0).toObject().value("script").toString().isEmpty());
+            for(const auto& periodValue:city.value("displayTimeline").toArray()) {
+                const auto period=periodValue.toObject();
+                if(!period.contains("nameNative"))continue;
+                const auto names=period.value("nativeNames").toArray();
+                QCOMPARE(names.size(),1);
+                QCOMPARE(names.at(0).toObject().value("text").toString(),period.value("nameNative").toString());
+            }
+        }
+        const auto reykjavik=cities.at(0).toObject();
+        QCOMPARE(reykjavik.value("defaultDisplayNameEn").toString(),QStringLiteral("Reykjavik"));
+        QCOMPARE(reykjavik.value("defaultDisplayNameNative").toString(),QStringLiteral("Reykjavík"));
+        QCOMPARE(reykjavik.value("displayTimeline").toArray().size(),1);
+        const auto ankara=cities.at(1).toObject();
+        const auto ankaraHistory=ankara.value("displayTimeline").toArray();
+        QCOMPARE(ankaraHistory.size(),3);
+        QCOMPARE(ankaraHistory.at(0).toObject().value("nameEn").toString(),QStringLiteral("Angora"));
+        QCOMPARE(ankaraHistory.at(0).toObject().value("nameNative").toString(),QStringLiteral("انقره"));
+        QCOMPARE(ankaraHistory.at(1).toObject().value("fromDate").toString(),QStringLiteral("1929-01-01"));
+        QCOMPARE(ankaraHistory.at(1).toObject().value("nameNative").toString(),QStringLiteral("Ankara"));
+        QCOMPARE(ankaraHistory.at(2).toObject().value("fromDate").toString(),QStringLiteral("1930-03-28"));
+        QCOMPARE(ankaraHistory.at(2).toObject().value("nameEn").toString(),QStringLiteral("Ankara"));
+        PlaceRecord ankaraRuntime;
+        ankaraRuntime.name=QStringLiteral("앙카라");
+        ankaraRuntime.nameEn=QStringLiteral("Ankara");
+        ankaraRuntime.nameNative=QStringLiteral("Ankara");
+        for(const auto& value:ankaraHistory) {
+            const auto period=value.toObject();PlaceNameTransition name;
+            name.fromDate=period.value("fromDate").toString();
+            name.fromYear=period.value("fromYear").toInt();
+            name.ko=period.value("nameKo").toString();
+            name.en=period.value("nameEn").toString();
+            name.native=period.value("nameNative").toString();
+            ankaraRuntime.nameTimeline.push_back(std::move(name));
+        }
+        PlaceLanguageSelection selected;selected.en=true;selected.native=true;
+        const auto beforeScript=resolvePlaceDisplayRows(ankaraRuntime,selected,"1928-12-31");
+        QCOMPARE(beforeScript.size(),std::size_t(3));
+        QCOMPARE(beforeScript.at(1).text,QStringLiteral("Angora"));
+        QCOMPARE(beforeScript.at(2).text,QStringLiteral("انقره"));
+        const auto afterScript=resolvePlaceDisplayRows(ankaraRuntime,selected,"1929-01-01");
+        QCOMPARE(afterScript.size(),std::size_t(3));
+        QCOMPARE(afterScript.at(2).text,QStringLiteral("Ankara"));
+        const auto afterEnglish=resolvePlaceDisplayRows(ankaraRuntime,selected,"1930-03-28");
+        QCOMPARE(afterEnglish.size(),std::size_t(2));
+        QCOMPARE(afterEnglish.at(1).text,QStringLiteral("Ankara"));
         const auto tbilisi=cities.at(2).toObject().value("displayTimeline").toArray();
         QCOMPARE(tbilisi.size(),3);
         QCOMPARE(tbilisi.at(0).toObject().value("nameKo").toString(),
