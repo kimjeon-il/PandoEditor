@@ -1,7 +1,7 @@
 {
   "schema": "pando-editor-readonly-place-staging-v1",
   "webRepo": "kimjeon-il/Pando",
-  "webCommit": "56b3bd770c4ed73eaaa974c05bb2cb9ff0b55813",
+  "webCommit": "4808ecf854f3700d20fb93880dba735377be9166",
   "appTarget": "data/places-tier1-major-cities",
   "status": "verified-source-staging-not-runtime",
   "files": [
@@ -67,7 +67,7 @@
     },
     {
       "path": "reports/places/tier1-major-cities-batch14-north-atlantic-anatolia-caucasus.json",
-      "gitBlobSha": "5d69873335fc6190b2f9d8aa39c6ab656fcf7821"
+      "gitBlobSha": "4262744399763184f713f2a248cd135a1e18b1dd"
     },
     {
       "path": "reports/places/tier1-major-cities-batch15-central-asia-capitals.json",
